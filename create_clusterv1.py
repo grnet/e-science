@@ -10,6 +10,8 @@ from datetime import *
 from dateutil.tz import *
 from os.path import expanduser
 import os
+
+
 #  Define loggers
 log = get_logger(__name__)
 #add_file_logger('kamaki.clients', DEBUG, '%s.log' % __name__)
@@ -103,15 +105,7 @@ def upload_image(pithos, container, image_path):
                 image_path, container))
             raise
 
-def init_network(endpoint, token):
-    from kamaki.clients.network import NetworkClient
 
-    print(' Initialize a network client')
-    try:
-        return NetworkClient(endpoint, token)
-    except ClientError:
-        log.debug('Failed to initialize network client')
-        raise
     
 def init_cyclades_netclient(endpoint, token):    
     from kamaki.clients.cyclades import CycladesNetworkClient
@@ -122,6 +116,7 @@ def init_cyclades_netclient(endpoint, token):
     except ClientError:
         log.debug('Failed to initialize cyclades network client')
         raise
+    
     
 #  Image / Plankton
 
@@ -166,8 +161,7 @@ class Cluster(object):
         self.client = cyclades
         self.net_client=net_client
         self.prefix, self.size = prefix, int(size)
-        self.flavor_id_master,self.flavor_id_slave, self.image_id = flavor_id_master,flavor_id_slave, image_id,
-
+        self.flavor_id_master,self.flavor_id_slave, self.image_id = flavor_id_master,flavor_id_slave, image_id
     def list(self):
         return [s for s in self.client.list_servers(detail=True) if (
             s['name'].startswith(self.prefix))]
@@ -203,20 +197,29 @@ class Cluster(object):
         servers = []
         empty_ip_list=[]
         date_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-      
+        count=0
         server_name = '%s%s%s%s%s' % (date_time,'-',self.prefix,'-',1)
+        net_name=date_time+'-'+self.prefix
+        new_network=self.net_client.create_network('MAC_FILTERED',net_name)
+        list_floating_ips=self.net_client.list_floatingips()
+        if len(list_floating_ips)!=0:        
+         for float_ip in list_floating_ips:
+            if float_ip['instance_id']==None:
+                break;
+            else:
+                count=count+1
+                if count==len(list_floating_ips): 
+                 try:
+                    self.net_client.create_floatingip(list_floating_ips[count-1]['floating_network_id'])
+                 except ClientError:
+                    log.debug('Failed while creating ip.Cannot create new ip')
+                    self.net_client.delete_network(new_network['id'])
+                    raise
+        else:   
+         self.net_client.create_floatingip('84269') #needs to change the string for something
         servers.append(self.client.create_server(
                     server_name, self.flavor_id_master, self.image_id,
                     personality=self._personality(ssh_k_path, pub_k_path)))
-        self.client.wait_server(servers[0]['id'], current_status='BUILD', delay=1, max_wait=100)
-       
-        
-        net_name=date_time+'-'+self.prefix
-        new_network=self.net_client.create_network('MAC_FILTERED',net_name)
-        sub_network=self.net_client.create_subnet(new_network['id'],'192.168.0.0/24',enable_dhcp=True)
-        self.net_client.create_port(new_network['id'],servers[0]['id'])
-        
-        
         
         for i in range(2, self.size+1):
             try:
@@ -226,12 +229,20 @@ class Cluster(object):
                     server_name, self.flavor_id_slave, self.image_id,
                     personality=self._personality(ssh_k_path, pub_k_path),
                     networks=empty_ip_list))
-                self.client.wait_server(servers[i-1]['id'], current_status='BUILD', delay=2, max_wait=100)
-                self.net_client.create_port(new_network['id'],servers[i-1]['id'])
+              
             except ClientError:
                 log.debug('Failed while creating server %s' % server_name)
                 raise
-
+        self.client.wait_server(servers[0]['id'], current_status='BUILD', delay=1, max_wait=100)
+        sub_network=self.net_client.create_subnet(new_network['id'],'192.168.0.0/24',enable_dhcp=True)
+        self.net_client.create_port(new_network['id'],servers[0]['id'])
+        
+        
+        for i in range(1,self.size):
+           self.client.wait_server(servers[i]['id'], current_status='BUILD', delay=2, max_wait=100)
+           self.net_client.create_port(new_network['id'],servers[i]['id'])
+        
+        
         if server_log_path:
             print(' Store passwords in file %s' % server_log_path)
             with open(abspath(server_log_path), 'w+') as f:
@@ -253,29 +264,27 @@ def main(opts):
     print('1.  Credentials  and  Endpoints')  
     USER_HOME=os.path.expanduser('~')         
     pub_keys_path=os.path.join(USER_HOME,".ssh/id_rsa.pub")
-    cluster_size,flavor_master,flavor_slave,image_name,auth_url,token,name =  int(argv[1]),argv[2],argv[3],argv[4], argv[6],argv[5],argv[7]
-   
     
-    auth=test_credentials(auth_url,token)
+    auth=test_credentials(opts.auth_url,opts.token)
     endpoints, user_id = endpoints_and_user_id(auth)
     
-    plankton = init_plankton(endpoints['plankton'], token)    
+    plankton = init_plankton(endpoints['plankton'], opts.token)    
     list_current_images=plankton.list_public(True,'default')
     for lst in list_current_images:
-      if lst['name']==image_name:
+      if lst['name']==opts.image:
          chosen_image=lst
 
     print('4.  Create  virtual  cluster')
-    cluster_master = Cluster(
-        cyclades = init_cyclades(endpoints['cyclades'], token),
-        prefix=name,
-        flavor_id_master=flavor_master,
-        flavor_id_slave=flavor_slave,
+    cluster = Cluster(
+        cyclades = init_cyclades(endpoints['cyclades'], opts.token),
+        prefix=opts.name,
+        flavor_id_master=opts.flavor_id_master,
+        flavor_id_slave=opts.flavor_id_slaves,
         image_id=chosen_image['id'],
-        size=cluster_size,net_client=init_cyclades_netclient(endpoints['network'], token))
+        size=opts.clustersize,net_client=init_cyclades_netclient(endpoints['network'], opts.token))
     
 
-    server = cluster_master.create('',pub_keys_path,'')
+    server = cluster.create('',pub_keys_path,'')
     
 
     #  Group servers
@@ -310,74 +319,41 @@ if __name__ == '__main__':
                       help='The name to use for naming cluster nodes',
                       default='cluster')
     parser.add_option('--clustersize',
-                      action='store', type='string', dest='clustersize',
+                      action='store', type='int', dest='clustersize',
                       help='Number of virtual cluster nodes to create ',
                       default=2)
-    parser.add_option('--flavor-id',
-                      action='store', type='int', dest='flavorid',
-                      metavar='FLAVOR ID',
+    parser.add_option('--flavor_id_master',
+                      action='store', type='int', dest='flavor_id_master',
+                      metavar='FLAVOR ID MASTER',
                       help='Choose flavor id for the virtual hardware '
-                           'of cluster nodes',
+                           'of master node',
+                      default=42)
+    parser.add_option('--flavor_id_slaves',
+                      action='store', type='int', dest='flavor_id_slaves',
+                      metavar='FLAVOR ID SLAVES',
+                      help='Choose flavor id for the virtual hardware '
+                           'of slave nodes',
                       default=42)
     parser.add_option('--token',
                       action='store', type='string', dest='token',
                       metavar='token',
                       help='Insert token for authentication',
                       default='37cnXlDd1T4VfIsWRtXhaV-iE_2c2_gmiM40gVk3JSs')
-    
+    parser.add_option('--image',
+                      action='store', type='string', dest='image',
+                      metavar='IMAGE OS',
+                      help='Choose OS for the virtual machine cluster',
+                      default='Debian Base')
     
     parser.add_option('--auth_url',
                       action='store', type='string', dest='auth_url',
-                      metavar='FLAVOR ID',
+                      metavar='AUTHENTICATION URL',
                       help='Insert authentication url',
                       default='https://accounts.okeanos.grnet.gr/identity/v2.0')
   
    
-   
-    ''' parser.add_option('--image-file',
-                      action='store', type='string', dest='imagefile',
-                      metavar='IMAGE FILE PATH',
-                      help='The image file to upload and register ',
-                      default='my_image.diskdump')
-    parser.add_option('--delete-stale',
-                      action='store_true', dest='delete_stale',
-                      help='Delete stale servers from previous runs, whose '
-                           'name starts with the specified prefix, see '
-                           '--prefix',
-                      default=False)
-    parser.add_option('--container',
-                      action='store', type='string', dest='container',
-                      metavar='PITHOS+ CONTAINER',
-                      help='The Pithos+ container to store image file',
-                      default='images')
-    parser.add_option('--ssh-key-path',
-                      action='store', type='string', dest='sshkeypath',
-                      metavar='PATH OF SSH KEYS',
-                      help='The ssh keys to inject to server (e.g., id_rsa) ',
-                      default='')
-    parser.add_option('--pub-key-path',
-                      action='store', type='string', dest='pubkeypath',
-                      metavar='PATH OF PUBLIC KEYS',
-                      help='The public keys to inject to server',
-                      default='')
-    parser.add_option('--server-log-path',
-                      action='store', type='string', dest='serverlogpath',
-                      metavar='FILE TO LOG THE VIRTUAL SERVERS',
-                      help='Where to store information on created servers '
-                           'including superuser passwords',
-                      default='')
-    parser.add_option('--image-osfamily',
-                      action='store', type='string', dest='osfamily',
-                      metavar='OS FAMILY',
-                      help='linux, windows, etc.',
-                      default='linux')
-    parser.add_option('--image-root-partition',
-                      action='store', type='string', dest='rootpartition',
-                      metavar='IMAGE ROOT PARTITION',
-                      help='The partition where the root home is ',
-                      default='1')'''
+  
 
     opts, args = parser.parse_args(argv[1:])
 
     main(opts)
-
