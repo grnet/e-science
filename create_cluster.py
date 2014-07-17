@@ -5,12 +5,12 @@ from kamaki.clients import ClientError
 from kamaki.clients.astakos import AstakosClient
 from datetime import datetime
 import os
-
+import nose
 #  Identity,Account / Astakos
 #  Test authentication credentials
 
 
-def test_credentials(auth_url, token):
+def check_credentials(auth_url, token):
 
     print(' Test the credentials')
     try:
@@ -735,6 +735,12 @@ def get_flavor_id(C, R, D, disk_template):
     code = disk_template_no * 168+C_no * 42+R_no * 7+D_no
     return A[code]
 
+def test_get_flavor_id():
+    """get_flavor_id correct responses"""
+    assert get_flavor_id(1,2048,5,'drbd') == '30'
+    assert get_flavor_id(1,2048,5,'ext_vlmc') == '164'
+
+
 # Checks if user's quotas are enough for what he needed to create the cluster.
 # If limit minus (used and pending) are lower or
 # higher than what user requests..Also divides with 1024*1024*1024 to transform
@@ -798,7 +804,7 @@ def main(opts):
     # Finds user public ssh key
     USER_HOME = os.path.expanduser('~')
     pub_keys_path = os.path.join(USER_HOME, ".ssh/id_rsa.pub")
-    auth = test_credentials(opts.auth_url, opts.token)
+    auth = check_credentials(opts.auth_url, opts.token)
     endpoints, user_id = endpoints_and_user_id(auth)
 
     flavor_master = int(get_flavor_id(opts.cpu_master, opts.ram_master,
