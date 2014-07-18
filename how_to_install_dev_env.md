@@ -36,12 +36,13 @@
 
 ##Initial configuration of Debian
 ###Enbaling root GUI login
-<su root>
+su root
 vi /etc/pam.d/gdm3
 comment out the following line
 "#auth required pam_succeed_if.so user != root quiet_success"
 
-Improves vi editor: Apt-get install vim
+###Improves vi editor
+apt-get install vim
 Installs the curl command we need later: Apt-get install curl
 Apt-get install g++
 
