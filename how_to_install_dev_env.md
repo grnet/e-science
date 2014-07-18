@@ -36,10 +36,11 @@
 
 ##Initial configuration of Debian
 ###Enbaling root GUI login
-'<su root>'
-vi /etc/pam.d/gdm3
-comment out the following line
-"#auth required pam_succeed_if.so user != root quiet_success"
+
+      su root
+      vi /etc/pam.d/gdm3
+      comment out the following line
+      "#auth required pam_succeed_if.so user != root quiet_success"
 
 ###Improves vi editor
 apt-get install vim
