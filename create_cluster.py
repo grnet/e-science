@@ -739,6 +739,7 @@ def test_get_flavor_id():
     """get_flavor_id correct responses"""
     assert get_flavor_id(1,2048,5,'drbd') == '30'
     assert get_flavor_id(1,2048,5,'ext_vlmc') == '164'
+    assert get_flavor_id(1,2048,5,'ext_vlm') == '0'
 
 
 # Checks if user's quotas are enough for what he needed to create the cluster.
