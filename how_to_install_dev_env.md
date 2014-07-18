@@ -11,7 +11,6 @@
 * Ram: 1.4GB
 * Disk: 8GB
 
-
 ##Installation procedures
 * Start VirtualBox 
 * Select Machine | New from the menu 
@@ -30,16 +29,10 @@
 
 > > NOTE: If the Debian (64 bit) choice is not available in Version setting of Name and operating system Tab, make sure that Intel Virtualization Technology (IVT) is enabled in the host UEFI / BIOS.
 
-
-
-
-
-
-
 ##Credentials
-Root password: developer
-User: developer
-User password: escience
+* User: developer
+* User password: escience
+* Root password: developer
 
 
 
