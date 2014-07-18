@@ -34,9 +34,8 @@
 * User password: escience
 * Root password: developer
 
-
-
-##
+##Initial configuration of Debian
+###1
 Improves vi editor: Apt-get install vim
 Installs the curl command we need later: Apt-get install curl
 Apt-get install g++
