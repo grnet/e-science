@@ -72,6 +72,14 @@ Instructions based on Kamaki 0.12.9 documentation | https://www.synnefo.org/docs
 5. Install the binary package created: e.g. dpkg –i oracle-j2sdk1.7_1.7.0=update45_amd64.deb
 6. Override the default and use a specific java version compatible with Eclipse, e.g. update-alternatives –config java s
 
+###Install Eclipse Luna 4.4 (with python plugin)
 
-      
+Add to eclipse.ini following lines 
+
+    -vm
+    Path to ./jre/bin/java
+    openFile
+    --lancher.GTK_version
+    2
+
 
