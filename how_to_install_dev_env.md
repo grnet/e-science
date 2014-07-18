@@ -57,7 +57,8 @@ Comment out the following line in gdm3 file
 * In Region and Language ->Layouts tab and add Greek and English (US) and remove English(UK).
 
 ###Install Kamaki 
-* Instructions based on Kamaki 0.12.9 documentation | https://www.synnefo.org/docs/kamaki/latest/installation.html
+Instructions based on Kamaki 0.12.9 documentation | https://www.synnefo.org/docs/kamaki/latest/installation.html
+
       deb http://apt.dev.grnet.gr wheezy/
       sudo curl https://dev.grnet.gr/files/apt-grnetdev.pub|apt-key add -
       sudo apt-get update
