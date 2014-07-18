@@ -5,4 +5,4 @@ python:
 install:
   - "pip install kamaki"
 # command to run tests
-script: nosetests
+script: nosetests create_cluster.py
