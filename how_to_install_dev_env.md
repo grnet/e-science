@@ -64,14 +64,13 @@ Instructions based on Kamaki 0.12.9 documentation | https://www.synnefo.org/docs
       sudo apt-get update
       sudo apt-get install kamaki
       
-###Install Java
-1. Download Java version 1.7.0_60 oracle
-2. Add a “contrib” component to /etc/apt/sources.list , e.g. Deb http://.debian.net/debian/ wheezy main c ontrib
-3. Update the list of available packages and install the java.package: apt-get update && apt-get install java-package && exit
-4. Download the desired java JDK/JRE binary distribution(here is Java1.7.0_60 oracle).
-5. Use java-package to create a debian  package , e.g. Make-jpkg my_downloaded_java.tar.gz  
-6. Install the binary package created: e.g. Dpkg –i oracle-j2sdk1.7_1.7.0=update45_amd64.deb
-7. Override the default and use a specific java version compatible with Eclipse   update-alternatives –config java s
+###Install Java 1.7.0_60 oracle
+1. Add a “contrib” component to /etc/apt/sources.list , e.g. Deb http://.debian.net/debian/ wheezy main c ontrib
+2. Update the list of available packages and install the java.package: apt-get update && apt-get install java-package && exit
+3. Download the desired java JDK/JRE binary distribution(here is Java1.7.0_60 oracle).
+4. Use java-package to create a debian  package , e.g. Make-jpkg my_downloaded_java.tar.gz  
+5. Install the binary package created: e.g. Dpkg –i oracle-j2sdk1.7_1.7.0=update45_amd64.deb
+6. Override the default and use a specific java version compatible with Eclipse   update-alternatives –config java s
 
 
       
