@@ -30,7 +30,7 @@
 OR
       * Right click Controller SATA | add hard disk | choose existing disk | Find and select the VDI image downloaded from pithos
 
-  5. Start the Virtual Machine
+* Start the Virtual Machine
 
 
 
