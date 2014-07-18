@@ -21,7 +21,7 @@
       * Choose Create a virtual hard drive now, click Create
       * Choose VDI (VirtualBox Disk Image) in Hard drive file type, click Next
       * Dynamically allocated in Storage on physical hard drive, click Next
-      * File location and size: Select a path for the virtual disk image & Select 8 GB for size
+      * File location and size: Select a path for the virtual disk image & 8 GB for size
       * Click Create
   4. Select Debian-x64 | Settings 
       * Select Display | Video Memory: 128 MB & Disable 3D Acceleration
