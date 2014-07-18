@@ -28,10 +28,7 @@
       * Select Storage | Controller SATA | Debian-x64.vdi | Attributes | Hard Disk: Setup the virtual hard disk (icon) |  Choose a virtual hard disk file | Find and select the VDI image, click Open, click OK
 * Start the Virtual Machine
 
-
-
-  
-> > NOTE: If the Debian (64 bit) choice is not available, make sure Intel Virtualization Technology is enabled in the host UEFI / BIOS.
+> > NOTE: If the Debian (64 bit) choice is not available in Version setting of Name and operating system Tab, make sure that Intel Virtualization Technology (IVT) is enabled in the host UEFI / BIOS.
 
 
 
