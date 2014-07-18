@@ -82,4 +82,19 @@ Add to eclipse.ini the following lines
     --lancher.GTK_version
     2
 
+###Install php5
 
+    apt-get install php5
+    
+    
+###Install Bluefish 2.2.3
+
+Import additional libraries for Bluefish
+
+      apt-get install libgtk2.0-dev && libgtk-3-dev && libxml2-dev
+
+
+
+  
+    
+    
