@@ -49,11 +49,13 @@ Comment out the following line in gdm3 file
 
 ###Installation of curl and g++
 
-    apt-get install curl
-    apt-get install g++
+      apt-get install curl
+      apt-get install g++
     
 ###Change the keyboard layout
 * Applications->System Tools->Preferences->System Settings
 * In Region and Language ->Layouts tab and add Greek and English (US) and remove English(UK).
 
+###Install Kamaki 
+* instructions based on Kamaki 0.12.9 documentation | https://www.synnefo.org/docs/kamaki/latest/installation.html
 
