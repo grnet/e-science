@@ -26,10 +26,6 @@
   4. Select Debian-x64 | Settings 
       * Select Display | Video Memory: 128 MB & Disable 3D Acceleration
       * Select Storage | Controller SATA | Debian-x64.vdi | Attributes | Hard Disk: Setup the virtual hard disk (icon) |  Choose a virtual hard disk file | Find and select the VDI image, click Open, click OK
-      
-OR
-      * Right click Controller SATA | add hard disk | choose existing disk | Find and select the VDI image downloaded from pithos
-
 * Start the Virtual Machine
 
 
