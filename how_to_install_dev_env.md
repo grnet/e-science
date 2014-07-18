@@ -15,25 +15,22 @@
 ##Installation procedures
 * Start VirtualBox 
 * Select Machine | New from the menu 
-  1.	Name and operating system. Name: Debian-x64 | Type: Linux | Version: Debian (64 bit), click next
-  4.	Memory size: 1.4GB, click next
-  5.	Hard drive
-      * Choose Create a virtual hard drive now
+  1.	Name and operating system: Name: Debian-x64 | Type: Linux | Version: Debian (64 bit), click Next
+  2.	Memory size: 1.4GB, click next
+  3.	Hard drive
+      * Choose Create a virtual hard drive now, click Create
+      * Choose VDI (VirtualBox Disk Image) in Hard drive file type, click Next
+      * Dynamically allocated in Storage on physical hard drive, click Next
+      * File location and size: Select a path for the virtual disk image & Select 8 GB for size
       * Click Create
-      * Choose VDI (VirtualBox Disk Image)
-      * Click Create 
-      * File allocation and size: Select a path for the virtual disk image & Select 8 GB for size
-      * Click Create
-  6. Select Debian-x64 | Settings 
-  7. Select Display | Video & Bump up the video memory to 128 MB & Do not check Enable 3D Acceleration
-  8. Select Storage | Controller SATA 
-  9. Click on the little blue icon next to hard disk: SATA port |  Choose a virtual hard disk
-      * Find and select the VDI image downloaded from pithos
-      * Click OK
+  4. Select Debian-x64 | Settings 
+      * Select Display | Video Memory: 128 MB & Disable 3D Acceleration
+      * Select Storage | Controller SATA | Debian-x64.vdi | Attributes | Hard Disk: Setup the virtual hard disk (icon) |  Choose a virtual hard disk file | Find and select the VDI image, click Open, click OK
+      
 OR
       * Right click Controller SATA | add hard disk | choose existing disk | Find and select the VDI image downloaded from pithos
 
-  10. Start the Virtual Machine
+  5. Start the Virtual Machine
 
 
 
