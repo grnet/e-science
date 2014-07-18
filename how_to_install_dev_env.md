@@ -42,8 +42,16 @@ Comment out the following line in gdm3 file
       vi /etc/pam.d/gdm3
       "#auth required pam_succeed_if.so user != root quiet_success"
 
-###Improves vi editor
-apt-get install vim
-Installs the curl command we need later: Apt-get install curl
-Apt-get install g++
+###Improve vi editor
+
+      apt-get install vim
+
+###Installation of curl
+
+    apt-get install curl
+    
+###Change the keyboard layout
+* Applications->System Tools->Preferences->System Settings
+* In Region and Language ->Layouts tab and add Greek and English (US) and remove English(UK).
+
 
