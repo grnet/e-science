@@ -66,7 +66,7 @@ Instructions based on Kamaki 0.12.9 documentation | https://www.synnefo.org/docs
       
 ###Install Java
 1. Download Java version 1.7.0_60 oracle
-2.Add a “contrib” component to /etc/apt/sources.list , e.g. Deb http://.debian.net/debian/ wheezy main c ontrib
+2. Add a “contrib” component to /etc/apt/sources.list , e.g. Deb http://.debian.net/debian/ wheezy main c ontrib
 3. Update the list of available packages and install the java.package: apt-get update && apt-get install java-package && exit
 4. Download the desired java JDK/JRE binary distribution(here is Java1.7.0_60 oracle).
 5. Use java-package to create a debian  package , e.g. Make-jpkg my_downloaded_java.tar.gz  
