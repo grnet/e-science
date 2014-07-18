@@ -4,6 +4,7 @@
 1. General Information
 2. Installation Procedures
 3. Credentials
+4. Initial configuration of new Debian image
 
 ##General Information
 * Virtual Box: 4.3.12-93773 (with Oracle_VM_VirtualBox_Extension_Pack-4.3.12-93733)
@@ -34,7 +35,7 @@
 * User password: escience
 * Root password: developer
 
-##Initial configuration of Debian
+##Initial configuration of new Debian image
 ###Enabling root GUI login
 Comment out the following line in gdm3 file
 
@@ -46,9 +47,10 @@ Comment out the following line in gdm3 file
 
       apt-get install vim
 
-###Installation of curl
+###Installation of curl and g++
 
     apt-get install curl
+    apt-get install g++
     
 ###Change the keyboard layout
 * Applications->System Tools->Preferences->System Settings
