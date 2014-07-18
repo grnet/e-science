@@ -35,11 +35,11 @@
 * Root password: developer
 
 ##Initial configuration of Debian
-###Enbaling root GUI login
+###Enabling root GUI login
+Comment out the following line in gdm3 file
 
       su root
       vi /etc/pam.d/gdm3
-      comment out the following line
       "#auth required pam_succeed_if.so user != root quiet_success"
 
 ###Improves vi editor
