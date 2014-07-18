@@ -35,7 +35,12 @@
 * Root password: developer
 
 ##Initial configuration of Debian
-###1
+###Enbaling root GUI login
+<su root>
+vi /etc/pam.d/gdm3
+comment out the following line
+"#auth required pam_succeed_if.so user != root quiet_success"
+
 Improves vi editor: Apt-get install vim
 Installs the curl command we need later: Apt-get install curl
 Apt-get install g++
