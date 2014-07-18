@@ -15,9 +15,7 @@
 ##Installation procedures
 * Start VirtualBox 
 * Select Machine | New from the menu 
-  1.	Name: Debian-x64
-  2.	Type: Linux
-  3.	Version: Debian (64 bit), click next
+  1.	Name and operating system. Name: Debian-x64 | Type: Linux | Version: Debian (64 bit), click next
   4.	Memory size: 1.4GB, click next
   5.	Hard drive
       * Choose Create a virtual hard drive now
