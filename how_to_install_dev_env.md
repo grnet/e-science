@@ -68,7 +68,7 @@ Instructions based on Kamaki 0.12.9 documentation | https://www.synnefo.org/docs
 1. Add a “contrib” component to /etc/apt/sources.list , e.g. deb http://.debian.net/debian/ wheezy main contrib
 2. Update the list of available packages and install the java.package: apt-get update && apt-get install java-package && exit
 3. Download the desired java JDK/JRE binary distribution (here is Java1.7.0_60 oracle).
-4. Use java-package to create a debian  package, e.g. make-jpkg my_downloaded_java.tar.gz  
+4. Use java-package to create a debian  package, e.g. make-jpkg "my_downloaded_java.tar.gz"  
 5. Install the binary package created: e.g. dpkg –i oracle-j2sdk1.7_1.7.0=update45_amd64.deb
 6. Override the default and use a specific java version compatible with Eclipse, e.g. update-alternatives –config java s
 
