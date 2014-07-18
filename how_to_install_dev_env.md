@@ -74,7 +74,7 @@ Instructions based on Kamaki 0.12.9 documentation | https://www.synnefo.org/docs
 
 ###Install Eclipse Luna 4.4 (with python plugin)
 
-Add to eclipse.ini following lines 
+Add to eclipse.ini the following lines 
 
     -vm
     Path to ./jre/bin/java
