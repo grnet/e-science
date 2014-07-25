@@ -71,8 +71,7 @@ Instructions based on Kamaki 0.12.9 documentation | https://www.synnefo.org/docs
 6. Override the default and use a specific java version compatible with Eclipse, e.g. update-alternatives –config java s
 
 ###Install Eclipse Luna 4.4 (with python plugin)
-1. Download Eclipse Luna 4.4 and Extract
-2. Add to eclipse.ini the following lines 
+Download Eclipse Luna 4.4, extract it and add to eclipse.ini the following lines 
 
     openFile
     --lancher.GTK_version
