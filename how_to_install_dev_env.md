@@ -9,7 +9,7 @@
 ##General Information
 * Virtual Box: 4.3.12-93773 (with Oracle_VM_VirtualBox_Extension_Pack-4.3.12-93733)
 * OS:  Debian 7.5.0 amd64 (64bits)
-* Ram: 1.4GB
+* Ram: 1.0GB
 * Disk: 8GB
 
 ##Installation procedures
