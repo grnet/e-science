@@ -1,6 +1,6 @@
 #Create developer's environment
 
-##Table of Context
+##Table of Contents
 1. General Information
 2. Installation Procedures
 3. Credentials
@@ -16,7 +16,7 @@
 * Start VirtualBox 
 * Select Machine | New from the menu 
   1.	Name and operating system: Name: Debian-x64 | Type: Linux | Version: Debian (64 bit), click Next
-  2.	Memory size: 1.4GB, click next
+  2.	Memory size: 1.0GB, click next
   3.	Hard drive
       * Choose Create a virtual hard drive now, click Create
       * Choose VDI (VirtualBox Disk Image) in Hard drive file type, click Next
@@ -32,8 +32,6 @@
 
 ##Credentials
 * User: developer
-* User password: escience
-* Root password: developer
 
 ##Initial configuration of new Debian image
 ###Enabling root GUI login
@@ -73,21 +71,25 @@ Instructions based on Kamaki 0.12.9 documentation | https://www.synnefo.org/docs
 6. Override the default and use a specific java version compatible with Eclipse, e.g. update-alternatives –config java s
 
 ###Install Eclipse Luna 4.4 (with python plugin)
+1. Download Eclipse Luna 4.4 and Extract
+2. Add to eclipse.ini the following lines 
 
-Add to eclipse.ini the following lines 
-
-    -vm
-    Path to ./jre/bin/java
     openFile
     --lancher.GTK_version
     2
+    -vm
+    /usr/lib/jvm/j2sdk1.7-oracle/jre/bin/java
 
-###Install php5
+###Install Ansible
+Installation of Ansible (server)
 
-    apt-get install php5
-    
+      sudo apt-get install pip
+      sudo pip install paramiko PyYAML jinja2 httplib2
+      sudo apt-get install openssh-server
+      sudo apt-get install ansible
 
 
-  
-    
-    
+Installation of Ansible (clients)
+
+      install apt-get python python-apt
+      sudo apt-get install ansible
