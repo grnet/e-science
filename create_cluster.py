@@ -10,6 +10,10 @@ from base64 import b64encode
 from kamaki.clients import ClientError
 from kamaki.clients.astakos import AstakosClient
 from datetime import datetime
+import paramiko
+sys.stderr = open('/dev/null')
+sys.stderr = sys.__stderr__
+from time import sleep
 import os
 import nose
 
@@ -26,8 +30,172 @@ error_quotas_ram = -10
 error_quotas_clustersize = -11
 error_quotas_netwrok = -12
 error_flavor_id = -13
+error_ssh_connection = -14
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
+
+
+'''
+
+REMEMBER TO DISABLE SELINUX
+def internet_access_slaves()
+route add default gw 192.168.0.2  (route del default gw 192.168.0.1 if needed)
+
+'''
+
+
+def get_ready_for_reroute():
+
+    ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', 22)
+    exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv4/ip_forward', 0)
+    exec_command(ssh_client, 'iptables --table nat --append POSTROUTING --out-'
+                             'interface eth1 -j MASQUERADE', 0)
+    exec_command(ssh_client, 'iptables --table nat --append POSTROUTING --out-'
+                             'interface eth2 -j MASQUERADE', 0)
+    exec_command(ssh_client, 'iptables --append FORWARD --in-interface eth2'
+                             ' -j ACCEPT', 0)
+    ssh_client.close()
+
+
+def reroute_ssh_to_slaves(dport, slave_ip):
+
+    ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', 22)
+    exec_command(ssh_client, 'iptables -A PREROUTING -t nat -i eth1 -p tcp'
+                             ' --dport '+str(dport)+' -j DNAT --to ' + slave_ip
+                             + ':22', 0)
+    exec_command(ssh_client, 'iptables -A FORWARD -p tcp -d '+slave_ip +
+                             ' --dport 22 -j ACCEPT', 0)
+    ssh_client.close()
+    ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', dport)
+    exec_command(ssh_client, 'route add default gw 192.168.0.2', 0)
+    ssh_client.close()
+
+
+def create_hadoop_cluster(server):
+
+    get_ready_for_reroute()
+    for s in server:
+        if s['name'].split('-')[-1] == '1':
+            print "master"
+            install_hadoop(22)
+        else:
+            print 'slave'
+            port = 9998 + int(s['name'].split('-')[-1])
+            print port
+            slave_ip = '192.168.0.' + str(1+int(s['name'].split('-')[-1]))
+            print slave_ip
+            reroute_ssh_to_slaves(port, slave_ip)
+            install_hadoop(port)
+
+
+def exec_command(ssh, command, id):
+
+    stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
+
+    if id == 1:  # For ssh-keygen
+            stdin.write('\n')
+            stdin.flush()
+            print stdout.read(), stderr.read()
+    else:
+         print stdout.read(), stderr.read()
+
+
+def install_hadoop(port):
+    '''
+    Create ssh connection with master as root
+    run apt-get update,install sudo
+    call other functions
+    disconnect as root
+    reconnect as hduser
+    '''
+
+    ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', port)
+    exec_command(ssh_client, 'apt-get update;apt-get install sudo', 0)
+
+    install_python_and_java(ssh_client)
+    add_hduser_disable_ipv6(ssh_client)
+
+    ssh_client.close()
+    ssh_client = establish_connect(HOSTNAME_MASTER, 'hduser', 'hduserpass',
+                                   port)
+    connect_as_hduser_conf_ssh(ssh_client)
+
+
+def establish_connect(hostname, name, passwd, port):
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    for i in range(5):
+        try:
+            ssh.connect(hostname, username=name, password=passwd, port=port)
+            print "success in connection as", name
+            return ssh
+        except:
+            print "error connecting as", name
+    sys.exit(error_ssh_connection)
+
+
+def connect_as_hduser_conf_ssh(ssh_client):
+    '''
+    Connect as hduser to master
+    create ssh key
+    download hadoop from eu apache mirror
+    create hadoop folder in usr/local
+    per michael noll instructions
+    still needs configuration in .bashrc
+    '''
+
+    exec_command(ssh_client, 'ssh-keygen -t rsa -P "" ', 1)
+    exec_command(ssh_client, 'cat /home/hduser/.ssh/id_rsa.pub >> /home/'
+                             'hduser/.ssh/authorized_keys', 0)
+    exec_command(ssh_client, 'wget www.eu.apache.org/dist/hadoop/common/'
+                             'stable1/hadoop-1.2.1.tar.gz', 0)
+    exec_command(ssh_client, 'sudo tar -xzf $HOME/hadoop-1.2.1.tar.gz', 0)
+    exec_command(ssh_client, 'sudo mv hadoop-1.2.1 /usr/local/hadoop', 0)
+    exec_command(ssh_client, 'cd /usr/local;sudo chown -R hduser:hadoop'
+                             ' hadoop', 0)
+    ssh_client.close()
+
+
+def install_python_and_java(ssh_client):
+    '''
+    Install python-software-properties
+    and oracle java 7
+    '''
+    exec_command(ssh_client, 'apt-get -y install python-software-'
+                             'properties', 0)
+    exec_command(ssh_client, 'echo "deb http://ppa.launchpad.net/webupd8team/'
+                             'java/ubuntu precise main" | tee /etc/apt/sources'
+                             '.list.d/webupd8team-java.list;echo "deb-src '
+                             'http://ppa.launchpad.net/webupd8team/java/ubuntu'
+                             ' precise main" | tee -a /etc/apt/sources.list.d/'
+                             'webupd8team-java.list', 0)
+    exec_command(ssh_client, 'apt-key adv --keyserver keyserver.ubuntu.com --'
+                             'recv-keys EEA14886;apt-get update;echo oracle-'
+                             'java7-installer shared/accepted-oracle-license-'
+                             'v1-1 select true | /usr/bin/debconf-set-'
+                             'selections;apt-get -y install oracle-java7'
+                             '-installer', 0) # removed exit in the end
+    exec_command(ssh_client, 'apt-get install oracle-java7-set-default', 0)
+
+
+def add_hduser_disable_ipv6(ssh_client):
+    '''
+    Creates hadoop group and hduser and
+    gives them passwordless sudo to help with remaining procedure
+    Also disables ipv6
+    '''
+    exec_command(ssh_client, 'addgroup hadoop;echo "%hadoop ALL=(ALL)'
+                             ' NOPASSWD: ALL " >> /etc/sudoers', 0)
+    exec_command(ssh_client, 'adduser hduser --disabled-password --gecos "";'
+                             'adduser hduser hadoop;echo "hduser:hduserpass" |'
+                             ' chpasswd', 0)
+    exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv6/conf/all/'
+                             'disable_ipv6', 0)
+    exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv6/conf/default/'
+                             'disable_ipv6', 0)
+
+# JAVA_HOME=/usr/lib/jvm/java-7-oracle
 
 
 def check_credentials(auth_url, token):
@@ -464,7 +632,14 @@ def main(opts):
                       auth_cl=auth)
 
     server = cluster.create('', pub_keys_path, '')
-    
+    sleep(5) #for ssh connection-waiting cluster network
+    for s in server:
+        if s['name'].split('-')[-1] == '1':
+            global HOSTNAME_MASTER
+            HOSTNAME_MASTER = s['SNF:fqdn']
+            print HOSTNAME_MASTER , s['SNF:fqdn']
+    create_hadoop_cluster(server)
+
 
 if __name__ == '__main__':
 
@@ -528,8 +703,10 @@ if __name__ == '__main__':
                       action='store', type='string', dest='auth_url',
                       metavar='AUTHENTICATION URL',
                       help='Synnefo authentication url'
-                      '.Default=https://accounts.okeanos.grnet.gr/identity/v2.0',
-                      default='https://accounts.okeanos.grnet.gr/identity/v2.0')
+                      '.Default=https://accounts.okeanos.grnet.gr/'
+                      'identity/v2.0',
+                      default='https://accounts.okeanos.grnet.gr/'
+                              'identity/v2.0')
 
     opts, args = parser.parse_args(argv[1:])
 
