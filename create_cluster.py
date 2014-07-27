@@ -13,10 +13,11 @@ from datetime import datetime
 import paramiko
 sys.stderr = open('/dev/null')
 sys.stderr = sys.__stderr__
+import time
 from time import sleep
 import os
 import nose
-
+import threading
 error_syntax_clustersize = -1
 error_syntax_cpu_master = -2
 error_syntax_ram_master = -3
@@ -33,19 +34,43 @@ error_flavor_id = -13
 error_ssh_connection = -14
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
-
-
-'''
-
-REMEMBER TO DISABLE SELINUX
-def internet_access_slaves()
-route add default gw 192.168.0.2  (route del default gw 192.168.0.1 if needed)
+threadLock = threading.Lock()
 
 '''
+REMEMBER TO DISABLE SELINUX.
+Not sure if needed.
+Could be for hadoop running.
+'''
+
+
+def configuration_bashrc(ssh_client):
+    '''
+    Configures .bashrc for hduser.Adds hadoop_home, java_home
+    and useful aliases. Also adds java_home to hadoop-env.sh
+    '''
+    exec_command(ssh_client, 'echo "export HADOOP_HOME=/usr/local/hadoop"'
+                             ' >> $HOME/.bashrc', 0)
+    exec_command(ssh_client, 'echo "export JAVA_HOME=/usr/lib/jvm/java-7-'
+                             'oracle" >> $HOME/.bashrc', 0)
+    exec_command(ssh_client, 'echo "unalias fs &> /dev/null"'
+                             ' >> $HOME/.bashrc', 0)
+    exec_command(ssh_client, 'echo \'alias fs="hadoop fs"\' >> .bashrc', 0)
+    exec_command(ssh_client, 'echo "unalias hls &> /dev/null"'
+                             ' >> $HOME/.bashrc', 0)
+    exec_command(ssh_client, 'echo \'alias hls="fs -ls"\' >> .bashrc', 0)
+    exec_command(ssh_client, 'source ~/.bashrc', 0)
+    exec_command(ssh_client, 'echo "export PATH=$PATH:$HADOOP_HOME/bin"'
+                             ' >> $HOME/.bashrc', 0)
+    exec_command(ssh_client, 'echo "export JAVA_HOME=/usr/lib/jvm/java-7-'
+                             'oracle" >>'
+                             ' /usr/local/hadoop/conf/hadoop-env.sh', 0)
 
 
 def get_ready_for_reroute():
-
+    '''
+    Runs setup commands for port forwarding in master virtual machine.
+    These commands are executed only once before the threads start.
+    '''
     ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', 22)
     exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv4/ip_forward', 0)
     exec_command(ssh_client, 'iptables --table nat --append POSTROUTING --out-'
@@ -58,7 +83,12 @@ def get_ready_for_reroute():
 
 
 def reroute_ssh_to_slaves(dport, slave_ip):
-
+    '''
+    Every thread-slave virtual machine connects to master and setups
+    its port forwarding rules with the port and private ip of the slave.
+    Also connects to itself and adds the master as a default gateway,
+    so the slave has internet access through master vm.
+    '''
     ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', 22)
     exec_command(ssh_client, 'iptables -A PREROUTING -t nat -i eth1 -p tcp'
                              ' --dport '+str(dport)+' -j DNAT --to ' + slave_ip
@@ -71,44 +101,93 @@ def reroute_ssh_to_slaves(dport, slave_ip):
     ssh_client.close()
 
 
-def create_hadoop_cluster(server):
+class myThread (threading.Thread):
+    '''
+    Subclass of Thread.
+    Run function calls creat_single_hadoop
+    '''
+    def __init__(self, threadID, name, vm):
+        threading.Thread.__init__(self)
+        self.threadID = threadID  # Ranges from 1 to clustersize
+        self.name = name  # Fully qualified domain name of each vm
+        self.vm = vm  # member of the server list returned by create_server
 
+    def run(self):
+        print "Starting " + self.name
+        creat_single_hadoop_cluster(self.vm)
+
+
+def create_multi_hadoop_cluster(server):
+    '''
+    Function that starts the threads.Creates thread objects,one for every
+    virtual machine. Thread name is the fully qualified domain name of
+    the virtual machine. Before the thread creation calls the
+    get_ready_for_reroute to do a pre-setup for port forwarding
+    in the master.
+    '''
     get_ready_for_reroute()
+    i = 0
+    threads = []
     for s in server:
-        if s['name'].split('-')[-1] == '1':
-            print "master"
-            install_hadoop(22)
-        else:
-            print 'slave'
-            port = 9998 + int(s['name'].split('-')[-1])
-            print port
-            slave_ip = '192.168.0.' + str(1+int(s['name'].split('-')[-1]))
-            print slave_ip
-            reroute_ssh_to_slaves(port, slave_ip)
-            install_hadoop(port)
+        t = myThread(i, s['SNF:fqdn'], s)
+        t.start()
+        threads.append(t)
+        i = i+1
+
+# Wait for all threads to complete
+    for t in threads:
+        t.join()
 
 
-def exec_command(ssh, command, id):
+def creat_single_hadoop_cluster(s):
+    '''
+    Splits the threads. Master thread calls install_hadoop with port 22.
+    Slave ports and slave_ips are defined by the last number in their name.
+    10000 is the first slave port and 192.168.0.3 the first private slave ip.
+    By adding 1 to the port and ip we have the next slave port and ip.
+    There is a thread lock before reroute.That is because sometimes iptables
+    fails from threads giving the command at the same time.
+    The error is: resource temporarily unavailable.After the lock
+    each slave thread calls install hadoop with its port.
+    '''
+    if s['name'].split('-')[-1] == '1':
+        install_hadoop(22)
+    else:
+        port = 9998+int(s['name'].split('-')[-1])
+        slave_ip = '192.168.0.' + str(1 + int(s['name'].split('-')[-1]))
+        threadLock.acquire()
+        reroute_ssh_to_slaves(port, slave_ip)
+        threadLock.release()
+        install_hadoop(port)
 
+
+def exec_command(ssh, command, check_id):
+    '''
+    Calls paramiko exec_command function of the ssh object given
+    as argument. Command is the second argument and its a string.
+    check_id is used for commands that need additional input after
+    exec_command, e.g. ssh-keygen needs [enter] to save keys.
+    '''
     stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
 
-    if id == 1:  # For ssh-keygen
-            stdin.write('\n')
-            stdin.flush()
-            print stdout.read(), stderr.read()
+    if check_id == 1:  # For ssh-keygen
+        stdin.write('\n')
+        stdin.flush()
+        print stdout.read(), stderr.read()  # prints stdout of execcommand
     else:
-         print stdout.read(), stderr.read()
+        print stdout.read(), stderr.read()
 
 
 def install_hadoop(port):
     '''
-    Create ssh connection with master as root
-    run apt-get update,install sudo
-    call other functions
-    disconnect as root
-    reconnect as hduser
+    Function that is executed by every thread.
+    Depending on the port argument, it connects
+    and installs hadoop to the vm defined by the
+    port.First,it connects with master as root.
+    Runs apt-get update,installs sudo. Then calls 
+    other important functions and disconnects as root.
+    Reconnects as hduser and configures bashrc
     '''
-
     ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', port)
     exec_command(ssh_client, 'apt-get update;apt-get install sudo', 0)
 
@@ -119,10 +198,16 @@ def install_hadoop(port):
     ssh_client = establish_connect(HOSTNAME_MASTER, 'hduser', 'hduserpass',
                                    port)
     connect_as_hduser_conf_ssh(ssh_client)
+    configuration_bashrc(ssh_client)
+    ssh_client.close()
 
 
 def establish_connect(hostname, name, passwd, port):
-
+    '''
+    Establishes an ssh connection with given hostname, username, password
+    and port number. If connection fails, retry for five times and then
+    system exits. If a connection is succesful, returns an ssh object.
+    '''
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     for i in range(5):
@@ -137,12 +222,9 @@ def establish_connect(hostname, name, passwd, port):
 
 def connect_as_hduser_conf_ssh(ssh_client):
     '''
-    Connect as hduser to master
-    create ssh key
-    download hadoop from eu apache mirror
-    create hadoop folder in usr/local
-    per michael noll instructions
-    still needs configuration in .bashrc
+    Executes the following commands to the machine ssh_client is connected.
+    Creates ssh key for hduser, downloads hadoop from eu apache mirror
+    and creates hadoop folder in usr/local.
     '''
 
     exec_command(ssh_client, 'ssh-keygen -t rsa -P "" ', 1)
@@ -154,7 +236,6 @@ def connect_as_hduser_conf_ssh(ssh_client):
     exec_command(ssh_client, 'sudo mv hadoop-1.2.1 /usr/local/hadoop', 0)
     exec_command(ssh_client, 'cd /usr/local;sudo chown -R hduser:hadoop'
                              ' hadoop', 0)
-    ssh_client.close()
 
 
 def install_python_and_java(ssh_client):
@@ -175,7 +256,7 @@ def install_python_and_java(ssh_client):
                              'java7-installer shared/accepted-oracle-license-'
                              'v1-1 select true | /usr/bin/debconf-set-'
                              'selections;apt-get -y install oracle-java7'
-                             '-installer', 0) # removed exit in the end
+                             '-installer', 0)
     exec_command(ssh_client, 'apt-get install oracle-java7-set-default', 0)
 
 
@@ -194,8 +275,12 @@ def add_hduser_disable_ipv6(ssh_client):
                              'disable_ipv6', 0)
     exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv6/conf/default/'
                              'disable_ipv6', 0)
-
-# JAVA_HOME=/usr/lib/jvm/java-7-oracle
+    exec_command(ssh_client, 'echo "net.ipv6.conf.all.disable_ipv6 = 1"'
+                             ' >> /etc/sysctl.conf', 0)
+    exec_command(ssh_client, 'echo "net.ipv6.conf.default.disable_ipv6 = 1"'
+                             ' >> /etc/sysctl.conf', 0)
+    exec_command(ssh_client, 'echo "net.ipv6.conf.lo.disable_ipv6 = 1"'
+                             ' >> /etc/sysctl.conf', 0)
 
 
 def check_credentials(auth_url, token):
@@ -520,7 +605,6 @@ class Cluster(object):
             with open(abspath(server_log_path), 'w+') as f:
                 from json import dump
                 dump(servers, f, indent=2)
-
         return servers
 
 
@@ -587,6 +671,7 @@ def main(opts):
     flavor_ids from the arguments given and finds the image id of the
     image given as argument. Then instantiates the Cluster and creates
     the virtual machine cluster of one master and clustersize-1 slaves.
+    Calls the function to install hadoop to the cluster
     '''
     print('1.  Credentials  and  Endpoints')
     # Finds user public ssh key
@@ -632,13 +717,15 @@ def main(opts):
                       auth_cl=auth)
 
     server = cluster.create('', pub_keys_path, '')
-    sleep(5) #for ssh connection-waiting cluster network
+    print('3. Create Hadoop cluster')
     for s in server:
         if s['name'].split('-')[-1] == '1':
+            # Hostname of master is used in every ssh connection.
+            # So it is defined as global
             global HOSTNAME_MASTER
             HOSTNAME_MASTER = s['SNF:fqdn']
-            print HOSTNAME_MASTER , s['SNF:fqdn']
-    create_hadoop_cluster(server)
+
+    create_multi_hadoop_cluster(server)  # Starts the hadoop installation
 
 
 if __name__ == '__main__':
@@ -703,10 +790,8 @@ if __name__ == '__main__':
                       action='store', type='string', dest='auth_url',
                       metavar='AUTHENTICATION URL',
                       help='Synnefo authentication url'
-                      '.Default=https://accounts.okeanos.grnet.gr/'
-                      'identity/v2.0',
-                      default='https://accounts.okeanos.grnet.gr/'
-                              'identity/v2.0')
+                      '.Default=https://accounts.okeanos.grnet.gr/identity/v2.0',
+                      default='https://accounts.okeanos.grnet.gr/identity/v2.0')
 
     opts, args = parser.parse_args(argv[1:])
 
