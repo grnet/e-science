@@ -18,6 +18,7 @@ from time import sleep
 import os
 import nose
 import threading
+import logging
 error_syntax_clustersize = -1
 error_syntax_cpu_master = -2
 error_syntax_ram_master = -3
@@ -49,7 +50,7 @@ def configuration_bashrc(ssh_client):
     Configures .bashrc for hduser.Adds hadoop_home, java_home
     and useful aliases. Also adds java_home to hadoop-env.sh
     '''
-    print 'Start configuring bashrc\n'
+    logging.info('Start configuring bashrc')
     exec_command(ssh_client, 'echo "export HADOOP_HOME=/usr/local/hadoop"'
                              ' >> $HOME/.bashrc', 0)
     exec_command(ssh_client, 'echo "export JAVA_HOME=/usr/lib/jvm/java-7-'
@@ -66,7 +67,7 @@ def configuration_bashrc(ssh_client):
     exec_command(ssh_client, 'echo "export JAVA_HOME=/usr/lib/jvm/java-7-'
                              'oracle" >>'
                              ' /usr/local/hadoop/conf/hadoop-env.sh', 0)
-    print 'Start configuring bashrc\n'
+    logging.error('Done configuring bashrc')
     
 
 def get_ready_for_reroute():
@@ -116,7 +117,7 @@ class myThread (threading.Thread):
         self.vm = vm  # member of the server list returned by create_server
 
     def run(self):
-        print "Starting " + self.name
+        logging.info("Starting %s thread", self.name)
         creat_single_hadoop_cluster(self.vm)
 
 
@@ -176,9 +177,17 @@ def exec_command(ssh, command, check_id):
     if check_id == 1:  # For ssh-keygen
         stdin.write('\n')
         stdin.flush()
-        print stdout.read(), stderr.read()  # prints stdout of execcommand
+        logging.debug('%s %s',stdout.read(), stderr.read())
+    elseif check_id == 2:
+        sleep(3)
+        stdin.write('yes\n')
+        sleep(2)
+        stdin.write('hduserpass\n')
+        stdin.flush()
+        logging.debug('%s %s', stdout.read(), stderr.read())
     else:
-        print stdout.read(), stderr.read()
+        logging.debug('%s %s', stdout.read(), stderr.read())
+        
 
 
 def install_hadoop(port):
@@ -216,10 +225,10 @@ def establish_connect(hostname, name, passwd, port):
     for i in range(5):
         try:
             ssh.connect(hostname, username=name, password=passwd, port=port)
-            print "success in connection as", name
+            logging.info('success in connection as %s', name)
             return ssh
         except:
-            print "error connecting as", name
+            logging.erroe( 'error connecting as %s', name)
     sys.exit(error_ssh_connection)
 
 
@@ -229,7 +238,7 @@ def connect_as_hduser_conf_ssh(ssh_client):
     Creates ssh key for hduser, downloads hadoop from eu apache mirror
     and creates hadoop folder in usr/local.
     '''
-    print 'Start downloading hadoop \n'
+    logging.info('Start downloading hadoop.')
     exec_command(ssh_client, 'ssh-keygen -t rsa -P "" ', 1)
     exec_command(ssh_client, 'cat /home/hduser/.ssh/id_rsa.pub >> /home/'
                              'hduser/.ssh/authorized_keys', 0)
@@ -239,7 +248,7 @@ def connect_as_hduser_conf_ssh(ssh_client):
     exec_command(ssh_client, 'sudo mv hadoop-1.2.1 /usr/local/hadoop', 0)
     exec_command(ssh_client, 'cd /usr/local;sudo chown -R hduser:hadoop'
                              ' hadoop', 0)
-    print 'done downloading hadoop \n'
+    logging.info('Done downloading hadoop.')
 
 
 def install_python_and_java(ssh_client):
@@ -247,7 +256,7 @@ def install_python_and_java(ssh_client):
     Install python-software-properties
     and oracle java 7
     '''
-    print 'start installing python and java'
+    logging.info('start installing python and java.')
     exec_command(ssh_client, 'apt-get -y install python-software-'
                              'properties', 0)
     exec_command(ssh_client, 'echo "deb http://ppa.launchpad.net/webupd8team/'
@@ -263,7 +272,7 @@ def install_python_and_java(ssh_client):
                              'selections;apt-get -y install oracle-java7'
                              '-installer', 0)
     exec_command(ssh_client, 'apt-get install oracle-java7-set-default', 0)
-    print 'done install python and java'
+    logging.info('Done install python and java.')
     
 
 def add_hduser_disable_ipv6(ssh_client):
@@ -272,7 +281,7 @@ def add_hduser_disable_ipv6(ssh_client):
     gives them passwordless sudo to help with remaining procedure
     Also disables ipv6
     '''
-    print ' star creating hadoop group and hduser and disables ipv6 \n'
+    logging.info('Start creating hadoop group and hduser and disables ipv6.')
     exec_command(ssh_client, 'addgroup hadoop;echo "%hadoop ALL=(ALL)'
                              ' NOPASSWD: ALL " >> /etc/sudoers', 0)
     exec_command(ssh_client, 'adduser hduser --disabled-password --gecos "";'
@@ -288,20 +297,20 @@ def add_hduser_disable_ipv6(ssh_client):
                              ' >> /etc/sysctl.conf', 0)
     exec_command(ssh_client, 'echo "net.ipv6.conf.lo.disable_ipv6 = 1"'
                              ' >> /etc/sysctl.conf', 0)
-    print 'Done creating hadoop group and hduser and disables ipv6 \n'
+    logging.info('Done creating hadoop group and hduser and disables ipv6.')
     
 
 def check_credentials(auth_url, token):
     '''Identity,Account/Astakos. Test authentication credentials'''
-    print(' Test the credentials')
+    logging.info(' Test the credentials')
     try:
         auth = AstakosClient(auth_url, token)
         auth.authenticate()
     except ClientError:
-        print('Authentication failed with url %s and token %s' % (
+        logging.error('Authentication failed with url %s and token %s' % (
               auth_url, token))
         raise
-    print 'Authentication verified'
+    logging.warning('Authentication verified')
     return auth
 
 
@@ -314,7 +323,7 @@ def endpoints_and_user_id(auth):
     Image --> plankton
     Network --> network
     '''
-    print(' Get the endpoints')
+    logging.info('Get the endpoints')
     try:
         endpoints = dict(
             astakos=auth.get_service_endpoints('identity')['publicURL'],
@@ -325,7 +334,7 @@ def endpoints_and_user_id(auth):
             )
         user_id = auth.user_info['id']
     except ClientError:
-        print('Failed to get endpoints & user_id from identity server')
+        logging.error('Failed to get endpoints & user_id from identity server')
         raise
     return endpoints, user_id
 
@@ -337,11 +346,11 @@ def init_pithos(endpoint, token, user_id):
     '''
     from kamaki.clients.pithos import PithosClient
 
-    print(' Initialize Pithos+ client and set account to user uuid')
+    logging.info('Initialize Pithos+ client and set account to user uuid')
     try:
         return PithosClient(endpoint, token, user_id)
     except ClientError:
-        print('Failed to initialize a Pithos+ client')
+        logging.error('Failed to initialize a Pithos+ client')
         raise
 
 
@@ -350,24 +359,24 @@ def upload_image(pithos, container, image_path):
     Pithos+/Upload Image
     Not used in the script,but left for future use
     '''
-    print(' Create the container "images" and use it')
+    logging.info(' Create the container "images" and use it')
     try:
         pithos.create_container(container, success=(201, ))
     except ClientError as ce:
         if ce.status in (202, ):
-            print('Container %s already exists' % container)
+            logging.error('Container %s already exists' % container)
         else:
-            print('Failed to create container %s' % container)
+            logging.error('Failed to create container %s' % container)
             raise
     pithos.container = container
 
-    print(' Upload to "images"')
+    logging.info(' Upload to "images"')
     with open(abspath(image_path)) as f:
         try:
             pithos.upload_object(
                 image_path, f)
         except ClientError:
-            print('Failed to upload file %s to container %s' % (
+            logging.error('Failed to upload file %s to container %s' % (
                 image_path, container))
             raise
 
@@ -380,11 +389,11 @@ def init_cyclades_netclient(endpoint, token):
     '''
     from kamaki.clients.cyclades import CycladesNetworkClient
 
-    print(' Initialize a cyclades network client')
+    logging.info(' Initialize a cyclades network client')
     try:
         return CycladesNetworkClient(endpoint, token)
     except ClientError:
-        print('Failed to initialize cyclades network client')
+        logging.error('Failed to initialize cyclades network client')
         raise
 
 
@@ -395,11 +404,11 @@ def init_plankton(endpoint, token):
     '''
     from kamaki.clients.image import ImageClient
 
-    print(' Initialize ImageClient')
+    logging.info(' Initialize ImageClient')
     try:
         return ImageClient(endpoint, token)
     except ClientError:
-        print('Failed to initialize the Image client')
+        logging.error('Failed to initialize the Image client')
         raise
 
 
@@ -409,11 +418,11 @@ def register_image(plankton, name, user_id, container, path, properties):
     but left for future use
     '''
     image_location = (user_id, container, path)
-    print(' Register the image')
+    logging.info(' Register the image')
     try:
         return plankton.register(name, image_location, properties)
     except ClientError:
-        print('Failed to register image %s' % name)
+        logging.error('Failed to register image %s' % name)
         raise
 
 
@@ -424,11 +433,11 @@ def init_cyclades(endpoint, token):
     '''
     from kamaki.clients.cyclades import CycladesClient
 
-    print(' Initialize a cyclades client')
+    logging.info(' Initialize a cyclades client')
     try:
         return CycladesClient(endpoint, token)
     except ClientError:
-        print('Failed to initialize cyclades client')
+        logging.error('Failed to initialize cyclades client')
         raise
 
 
@@ -456,7 +465,7 @@ class Cluster(object):
     def clean_up(self):
         '''Deletes Cluster/Not used'''
         to_delete = self.list()
-        print('  There are %s servers to clean up' % len(to_delete))
+        logging.info('  There are %s servers to clean up' % len(to_delete))
         for server in to_delete:
             self.client.delete_server(server['id'])
         for server in to_delete:
@@ -479,7 +488,7 @@ class Cluster(object):
         try:
             return float_net_id[56:]
         except TypeError:
-            print 'Floating Network Id could not be found'
+            logging.error('Floating Network Id could not be found')
             raise
 
     def _personality(self, ssh_keys_path='', pub_keys_path=''):
@@ -511,10 +520,10 @@ class Cluster(object):
             dict_quotas['system']['cyclades.network.private']['pending']
         available_networks = limit_net-usage_net-pending_net
         if available_networks >= 1:
-            print 'Private Network quota is ok'
+            logging.info('Private Network quota is ok')
             return
         else:
-            print 'Private Network quota exceeded'
+            logging.error('Private Network quota exceeded')
             sys.exit(error_quotas_netwrok)
 
     def create(self, ssh_k_path='', pub_k_path='', server_log_path=''):
@@ -522,8 +531,8 @@ class Cluster(object):
         Creates a cluster of virtual machines using the Create_server method of
         CycladesClient.
         '''
-        print('\n Create %s servers prefixed as %s' % (
-            self.size, self.prefix))
+        logging.warning('\n Create %s servers prefixed as %s' 
+            self.size, self.prefix)
         servers = []
         empty_ip_list = []
         date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -552,7 +561,7 @@ class Cluster(object):
                                                       [count-1]
                                                       ['floating_network_id'])
                         except ClientError:
-                            print('Cannot create new ip')
+                            logging.error('Cannot create new ip')
                             self.nc.delete_network(new_network['id'])
                             raise
         else:
@@ -561,7 +570,7 @@ class Cluster(object):
             pub_net_list = self.nc.list_networks()
             float_net_id = self.get_flo_net_id(pub_net_list)
             self.nc.create_floatingip(float_net_id)
-        print(' Wait for %s servers to built' % self.size)
+        logging.info(' Wait for %s servers to built' % self.size)
 
         # Creation of master server
 
@@ -580,7 +589,7 @@ class Cluster(object):
                     networks=empty_ip_list))
 
             except ClientError:
-                print('Failed while creating server %s' % server_name)
+                logging.error('Failed while creating server %s' % server_name)
                 raise
         # We put a wait server for the master here,so we can use the
         # server id later and the slave start their building without
@@ -588,7 +597,7 @@ class Cluster(object):
         new_status = self.client.wait_server(servers[0]['id'],
                                              current_status='BUILD',
                                              delay=1, max_wait=100)
-        print(' Status for server %s is %s' % (
+        logging.info(' Status for server %s is %s' % (
               servers[0]['name'],
               new_status))
         # We create a subnet for the virtual network between master and slaves
@@ -603,13 +612,13 @@ class Cluster(object):
             new_status = self.client.wait_server(servers[i]['id'],
                                                  current_status='BUILD',
                                                  delay=2, max_wait=100)
-            print(' Status for server %s is %s' % (
+            logging.info(' Status for server %s is %s' % (
                 servers[i]['name'], new_status))
             self.nc.create_port(new_network['id'], servers[i]['id'])
 
         # Not used/Left for future use
         if server_log_path:
-            print(' Store passwords in file %s' % server_log_path)
+            logging.info(' Store passwords in file %s' % server_log_path)
             with open(abspath(server_log_path), 'w+') as f:
                 from json import dump
                 dump(servers, f, indent=2)
@@ -643,7 +652,7 @@ def check_quota(auth, req_quotas):
     pending_cd = dict_quotas['system']['cyclades.disk']['pending']
     available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd) / Bytes_to_GB
     if available_cyclades_disk_GB < req_quotas['cyclades_disk']:
-        print 'Cyclades disk out of limit'
+        logging.error('Cyclades disk out of limit')
         sys.exit(error_quotas_cyclades_disk)
 
     limit_cpu = dict_quotas['system']['cyclades.cpu']['limit']
@@ -651,7 +660,7 @@ def check_quota(auth, req_quotas):
     pending_cpu = dict_quotas['system']['cyclades.cpu']['pending']
     available_cpu = limit_cpu - usage_cpu - pending_cpu
     if available_cpu < req_quotas['cpu']:
-        print 'Cyclades cpu out of limit'
+        logging.error('Cyclades cpu out of limit')
         sys.exit(error_quotas_cpu)
 
     limit_ram = dict_quotas['system']['cyclades.ram']['limit']
@@ -659,16 +668,16 @@ def check_quota(auth, req_quotas):
     pending_ram = dict_quotas['system']['cyclades.ram']['pending']
     available_ram = (limit_ram-usage_ram-pending_ram) / Bytes_to_MB
     if available_ram < req_quotas['ram']:
-        print 'Cyclades ram out of limit'
+        logging.error('Cyclades ram out of limit')
         sys.exit(error_quotas_ram)
     limit_vm = dict_quotas['system']['cyclades.vm']['limit']
     usage_vm = dict_quotas['system']['cyclades.vm']['usage']
     pending_vm = dict_quotas['system']['cyclades.vm']['pending']
     available_vm = limit_vm-usage_vm-pending_vm
     if available_vm < req_quotas['vms']:
-        print 'Cyclades vms out of limit'
+        logging('Cyclades vms out of limit')
         sys.exit(error_quotas_clustersize)
-    print 'Cyclades Cpu,Disk and Ram quotas are ok.'
+    logging.warning('Cyclades Cpu,Disk and Ram quotas are ok.')
     return
 
 
@@ -681,7 +690,7 @@ def main(opts):
     the virtual machine cluster of one master and clustersize-1 slaves.
     Calls the function to install hadoop to the cluster
     '''
-    print('1.  Credentials  and  Endpoints')
+    logging.warning('1.  Credentials  and  Endpoints')
     # Finds user public ssh key
     USER_HOME = os.path.expanduser('~')
     pub_keys_path = os.path.join(USER_HOME, ".ssh/id_rsa.pub")
@@ -695,8 +704,8 @@ def main(opts):
                                   opts.disk_slave, opts.disk_template,
                                   cyclades)
     if flavor_master == 0 or flavor_slaves == 0:
-        print 'Combination of cpu,ram,disk and disk_template does not match'\
-            ' an existing id'
+        logging.error('Combination of cpu,ram,disk and disk_template does not match'
+                      ' an existing id')
         sys.exit(error_flavor_id)
     # Total cpu,ram and disk needed for cluster
     cpu = opts.cpu_master + (opts.cpu_slave)*(opts.clustersize-1)
@@ -713,7 +722,7 @@ def main(opts):
         if lst['name'] == opts.image:
             chosen_image = lst
 
-    print('2.  Create  virtual  cluster')
+    logging.warning('2.  Create  virtual  cluster')
     cluster = Cluster(cyclades,
                       prefix=opts.name,
                       flavor_id_master=flavor_master,
@@ -725,7 +734,7 @@ def main(opts):
                       auth_cl=auth)
 
     server = cluster.create('', pub_keys_path, '')
-    print('3. Create Hadoop cluster')
+    logging.warning('3. Create Hadoop cluster')
     for s in server:
         if s['name'].split('-')[-1] == '1':
             # Hostname of master is used in every ssh connection.
@@ -802,45 +811,45 @@ if __name__ == '__main__':
                       default='https://accounts.okeanos.grnet.gr/identity/v2.0')
 
     opts, args = parser.parse_args(argv[1:])
-
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     if opts.clustersize <= 0:
-        print 'invalid syntax for clustersize'\
-            ',clustersize must be a positive integer'
+        logging.error('invalid syntax for clustersize'
+            ',clustersize must be a positive integer')
         sys.exit(error_syntax_clustersize)
 
     if opts.cpu_master <= 0:
-        print 'invalid syntax for cpu_master'\
-            ', cpu_master must be a positive integer'
+        logging.error('invalid syntax for cpu_master'
+            ', cpu_master must be a positive integer')
         sys.exit(error_syntax_cpu_master)
 
     if opts.ram_master <= 0:
-        print 'invalid syntax for ram_master'\
-            ', ram_master must be a positive integer'
+        logging.error('invalid syntax for ram_master'
+            ', ram_master must be a positive integer')
         sys.exit(error_syntax_ram_master)
 
     if opts.disk_master <= 0:
-        print 'invalid syntax for disk_master'\
-            ', disk_master must be a positive integer'
+        logging.error('invalid syntax for disk_master'
+            ', disk_master must be a positive integer')
         sys.exit(error_syntax_disk_master)
 
     if opts.cpu_slave <= 0:
-        print 'invalid syntax for cpu_slave'\
-            ', cpu_slave must be a positive integer'
+        logging.error('invalid syntax for cpu_slave'
+            ', cpu_slave must be a positive integer')
         sys.exit(error_syntax_cpu_slave)
 
     if opts.ram_slave <= 0:
-        print 'invalid syntax for ram_slave'\
-            ', ram_slave must be a positive integer'
+        logging.error('invalid syntax for ram_slave'
+            ', ram_slave must be a positive integer')
         sys.exit(error_syntax_ram_slave)
 
     if opts.disk_slave <= 0:
-        print 'invalid syntax for disk_slave'\
-            ', disk_slave must be a positive integer'
+        logging.error('invalid syntax for disk_slave'
+            ', disk_slave must be a positive integer')
         sys.exit(error_syntax_disk_slave)
         
     if opts.disk_template not in ['drbd', 'ext_vlmc']:
-        print 'invalid syntax for disk_template'\
-            ', disk_template must be drbd or ext_vlmc'
+        logging.error('invalid syntax for disk_template'
+            ', disk_template must be drbd or ext_vlmc')
         sys.exit(error_syntax_disk_template)
 
     main(opts)
