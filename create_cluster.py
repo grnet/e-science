@@ -247,7 +247,7 @@ def install_python_and_java(ssh_client):
     Install python-software-properties
     and oracle java 7
     '''
-    pritn 'start installing python and java'
+    print 'start installing python and java'
     exec_command(ssh_client, 'apt-get -y install python-software-'
                              'properties', 0)
     exec_command(ssh_client, 'echo "deb http://ppa.launchpad.net/webupd8team/'
@@ -838,7 +838,7 @@ if __name__ == '__main__':
             ', disk_slave must be a positive integer'
         sys.exit(error_syntax_disk_slave)
         
-    if opts.disk_template == 'drbd' or opts.disk_template == 'ext_vlmc':
+    if opts.disk_template not in ['drbd', 'ext_vlmc']:
         print 'invalid syntax for disk_template'\
             ', disk_template must be drbd or ext_vlmc'
         sys.exit(error_syntax_disk_template)
