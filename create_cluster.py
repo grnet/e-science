@@ -26,18 +26,17 @@ error_syntax_disk_master = -4
 error_syntax_cpu_slave = -5
 error_syntax_ram_slave = -6
 error_syntax_disk_slave = -7
-error_syntax_disk_template= -8
-error_quotas_cyclades_disk = -9
-error_quotas_cpu = -10
-error_quotas_ram = -11
-error_quotas_clustersize = -12
-error_quotas_netwrok = -13
-error_flavor_id = -14
-error_ssh_connection = -15
+error_quotas_cyclades_disk = -8
+error_quotas_cpu = -9
+error_quotas_ram = -10
+error_quotas_clustersize = -11
+error_quotas_netwrok = -12
+error_flavor_id = -13
+error_ssh_connection = -14
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 threadLock = threading.Lock()
-
+list_of_hosts=[]  #  List of virtual machine hostnames and their private ips 
 '''
 REMEMBER TO DISABLE SELINUX.
 Not sure if needed.
@@ -50,7 +49,6 @@ def configuration_bashrc(ssh_client):
     Configures .bashrc for hduser.Adds hadoop_home, java_home
     and useful aliases. Also adds java_home to hadoop-env.sh
     '''
-    logging.info('Start configuring bashrc')
     exec_command(ssh_client, 'echo "export HADOOP_HOME=/usr/local/hadoop"'
                              ' >> $HOME/.bashrc', 0)
     exec_command(ssh_client, 'echo "export JAVA_HOME=/usr/lib/jvm/java-7-'
@@ -61,14 +59,15 @@ def configuration_bashrc(ssh_client):
     exec_command(ssh_client, 'echo "unalias hls &> /dev/null"'
                              ' >> $HOME/.bashrc', 0)
     exec_command(ssh_client, 'echo \'alias hls="fs -ls"\' >> .bashrc', 0)
+    sleep(1)
     exec_command(ssh_client, 'source ~/.bashrc', 0)
+    sleep(1)
     exec_command(ssh_client, 'echo "export PATH=$PATH:$HADOOP_HOME/bin"'
                              ' >> $HOME/.bashrc', 0)
     exec_command(ssh_client, 'echo "export JAVA_HOME=/usr/lib/jvm/java-7-'
                              'oracle" >>'
                              ' /usr/local/hadoop/conf/hadoop-env.sh', 0)
-    logging.error('Done configuring bashrc')
-    
+
 
 def get_ready_for_reroute():
     '''
@@ -117,7 +116,7 @@ class myThread (threading.Thread):
         self.vm = vm  # member of the server list returned by create_server
 
     def run(self):
-        logging.info("Starting %s thread", self.name)
+        logging.info('Starting thread at %s', self.name)
         creat_single_hadoop_cluster(self.vm)
 
 
@@ -129,6 +128,19 @@ def create_multi_hadoop_cluster(server):
     get_ready_for_reroute to do a pre-setup for port forwarding
     in the master.
     '''
+    dict_s = {}
+    for s in server:
+        if s['name'].split('-')[-1] == '1':
+            # Hostname of master is used in every ssh connection.
+            # So it is defined as global
+            dict_s = {'fqdn': s['SNF:fqdn'], 'private_ip': '192.168.0.2'}
+            global HOSTNAME_MASTER
+            HOSTNAME_MASTER = s['SNF:fqdn']
+            list_of_hosts.append(dict_s)
+        else:
+            slave_ip = '192.168.0.' + str(1 + int(s['name'].split('-')[-1]))
+            dict_s = {'fqdn': s['SNF:fqdn'], 'private_ip': slave_ip}
+            list_of_hosts.append(dict_s)
     get_ready_for_reroute()
     i = 0
     threads = []
@@ -175,19 +187,19 @@ def exec_command(ssh, command, check_id):
     stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
 
     if check_id == 1:  # For ssh-keygen
+
         stdin.write('\n')
         stdin.flush()
-        logging.debug('%s %s',stdout.read(), stderr.read())
-    elif check_id == 2:
-        sleep(3)
+        logging.debug('%s %s', stdout.read(), stderr.read())
+    elif check_id == 2:  # For ssh-copy-id
+        sleep(3)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
-        sleep(2)
+        sleep(3)  # Sleep is necessary for stdin to read hduser pass
         stdin.write('hduserpass\n')
         stdin.flush()
         logging.debug('%s %s', stdout.read(), stderr.read())
     else:
         logging.debug('%s %s', stdout.read(), stderr.read())
-        
 
 
 def install_hadoop(port):
@@ -205,13 +217,90 @@ def install_hadoop(port):
 
     install_python_and_java(ssh_client)
     add_hduser_disable_ipv6(ssh_client)
-
+    configuration_hosts_file(ssh_client)
     ssh_client.close()
     ssh_client = establish_connect(HOSTNAME_MASTER, 'hduser', 'hduserpass',
                                    port)
     connect_as_hduser_conf_ssh(ssh_client)
     configuration_bashrc(ssh_client)
+    hadoop_xml_conf(ssh_client)
+    if port == 22:
+        configure_ssh_master_with_slaves(ssh_client)
+
     ssh_client.close()
+
+
+def configure_ssh_master_with_slaves(ssh_client):
+    '''
+    Creates passwordless ssh from master to slaves.
+    Copy the master public key to every slave virtual machine
+    '''
+    for vm in list_of_hosts:
+        if vm['private_ip'] == '192.168.0.2':
+            exec_command(ssh_client, 'echo "'+vm['fqdn']+ '"> /usr/local/hadoop/conf/masters', 0)
+        else:
+            exec_command(ssh_client, 'echo "'+vm['fqdn']+ '">> /usr/local/hadoop/conf/slaves', 0)
+            exec_command(ssh_client, 'ssh-copy-id -i $HOME/.ssh/id_rsa.pub'
+                                     ' hduser@'+vm['fqdn'], 2)
+            sleep(3)
+
+    exec_command(ssh_client, 'sed -i".bak" "1d" /usr/local/hadoop/conf/slaves', 0) #  Delete localhost from slaves file
+
+
+def hadoop_xml_conf(ssh_client):
+
+    core_site='<configuration><property>'\
+        '<name>hadoop.tmp.dir</name>'\
+        '<value>/app/hadoop/tmp</value>'\
+        '<description>A base for other temporary directories.</description>'\
+        '</property>'\
+        '<property>'\
+        '<name>fs.default.name</name>'\
+        '<value>hdfs://'+HOSTNAME_MASTER+':54310</value>'\
+        '<description>The name of the default file system.  A URI whose'\
+        'scheme and authority determine the FileSystem implementation.  The'\
+        'uris scheme determines the config property (fs.SCHEME.impl) naming'\
+        'the FileSystem implementation class.  The uris authority is used to'\
+        'determine the host, port, etc. for a filesystem.</description>'\
+        '</property></configuration>'
+
+
+    mapred_site='<configuration><property>'\
+        '<name>mapred.job.tracker</name>'\
+        '<value>'+HOSTNAME_MASTER+':54311</value>'\
+        '<description>The host and port that the MapReduce job tracker runs'\
+        'at.  If "local", then jobs are run in-process as a single map'\
+        'and reduce task.'\
+        '</description>'\
+        '</property></configuration>'
+
+    
+    hdfs_site='<?xml version="1.0"?>'\
+        '<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>'\
+        '<configuration><property>'\
+        '<name>dfs.replication</name>'\
+        '<value>2</value>'\
+        '<description>Default block replication.'\
+        'The actual number of replications can be specified when the file is created.'\
+        'The default is used if replication is not specified in create time.'\
+        '</description>'\
+        '</property></configuration>'
+
+    exec_command(ssh_client,'sudo mkdir -p /app/hadoop/tmp',0)
+    exec_command(ssh_client,'sudo chown hduser:hadoop /app/hadoop/tmp',0)
+    exec_command(ssh_client,'echo "'+core_site+'" > /usr/local/hadoop/conf/core-site.xml' , 0)
+    exec_command(ssh_client,'echo "'+mapred_site+'" > /usr/local/hadoop/conf/mapred-site.xml' , 0)
+    exec_command(ssh_client,'echo "'+hdfs_site+'" > /usr/local/hadoop/conf/hdfs-site.xml' , 0)
+
+
+def configuration_hosts_file(ssh_client):
+    '''
+    Configures /etc/hosts file for every machine as root.
+    Adds hostnames and private ip addresses.
+    '''
+    for machine in list_of_hosts:
+        exec_command(ssh_client, 'echo '
+                                     '"'+machine['private_ip']+ '     '+machine['fqdn']+'" >> /etc/hosts', 0)
 
 
 def establish_connect(hostname, name, passwd, port):
@@ -222,13 +311,14 @@ def establish_connect(hostname, name, passwd, port):
     '''
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    #sleep(5)  # Needs to be checked for ssh connection
     for i in range(5):
         try:
             ssh.connect(hostname, username=name, password=passwd, port=port)
-            logging.info('success in connection as %s', name)
+            logging.info('success in connection as %s at %s in port %s', name, hostname, str(port))
             return ssh
         except:
-            logging.error( 'error connecting as %s', name)
+            logging.error('error in connection as %s at %s in port %s', name, hostname, str(port))
     sys.exit(error_ssh_connection)
 
 
@@ -238,7 +328,7 @@ def connect_as_hduser_conf_ssh(ssh_client):
     Creates ssh key for hduser, downloads hadoop from eu apache mirror
     and creates hadoop folder in usr/local.
     '''
-    logging.info('Start downloading hadoop.')
+
     exec_command(ssh_client, 'ssh-keygen -t rsa -P "" ', 1)
     exec_command(ssh_client, 'cat /home/hduser/.ssh/id_rsa.pub >> /home/'
                              'hduser/.ssh/authorized_keys', 0)
@@ -248,7 +338,6 @@ def connect_as_hduser_conf_ssh(ssh_client):
     exec_command(ssh_client, 'sudo mv hadoop-1.2.1 /usr/local/hadoop', 0)
     exec_command(ssh_client, 'cd /usr/local;sudo chown -R hduser:hadoop'
                              ' hadoop', 0)
-    logging.info('Done downloading hadoop.')
 
 
 def install_python_and_java(ssh_client):
@@ -256,9 +345,8 @@ def install_python_and_java(ssh_client):
     Install python-software-properties
     and oracle java 7
     '''
-    logging.info('start installing python and java.')
-    exec_command(ssh_client, 'apt-get -y install python-software-'
-                             'properties', 0)
+    #exec_command(ssh_client, 'apt-get -y install python-software-'
+                             #'properties', 0)
     exec_command(ssh_client, 'echo "deb http://ppa.launchpad.net/webupd8team/'
                              'java/ubuntu precise main" | tee /etc/apt/sources'
                              '.list.d/webupd8team-java.list;echo "deb-src '
@@ -272,8 +360,7 @@ def install_python_and_java(ssh_client):
                              'selections;apt-get -y install oracle-java7'
                              '-installer', 0)
     exec_command(ssh_client, 'apt-get install oracle-java7-set-default', 0)
-    logging.info('Done install python and java.')
-    
+
 
 def add_hduser_disable_ipv6(ssh_client):
     '''
@@ -281,7 +368,6 @@ def add_hduser_disable_ipv6(ssh_client):
     gives them passwordless sudo to help with remaining procedure
     Also disables ipv6
     '''
-    logging.info('Start creating hadoop group and hduser and disables ipv6.')
     exec_command(ssh_client, 'addgroup hadoop;echo "%hadoop ALL=(ALL)'
                              ' NOPASSWD: ALL " >> /etc/sudoers', 0)
     exec_command(ssh_client, 'adduser hduser --disabled-password --gecos "";'
@@ -297,8 +383,7 @@ def add_hduser_disable_ipv6(ssh_client):
                              ' >> /etc/sysctl.conf', 0)
     exec_command(ssh_client, 'echo "net.ipv6.conf.lo.disable_ipv6 = 1"'
                              ' >> /etc/sysctl.conf', 0)
-    logging.info('Done creating hadoop group and hduser and disables ipv6.')
-    
+
 
 def check_credentials(auth_url, token):
     '''Identity,Account/Astakos. Test authentication credentials'''
@@ -346,7 +431,7 @@ def init_pithos(endpoint, token, user_id):
     '''
     from kamaki.clients.pithos import PithosClient
 
-    logging.info('Initialize Pithos+ client and set account to user uuid')
+    logging.debug(' Initialize Pithos+ client and set account to user uuid')
     try:
         return PithosClient(endpoint, token, user_id)
     except ClientError:
@@ -359,7 +444,7 @@ def upload_image(pithos, container, image_path):
     Pithos+/Upload Image
     Not used in the script,but left for future use
     '''
-    logging.info(' Create the container "images" and use it')
+    logging.debug(' Create the container "images" and use it')
     try:
         pithos.create_container(container, success=(201, ))
     except ClientError as ce:
@@ -437,7 +522,7 @@ def init_cyclades(endpoint, token):
     try:
         return CycladesClient(endpoint, token)
     except ClientError:
-        logging.error('Failed to initialize cyclades client')
+        logging.info('Failed to initialize cyclades client')
         raise
 
 
@@ -520,7 +605,7 @@ class Cluster(object):
             dict_quotas['system']['cyclades.network.private']['pending']
         available_networks = limit_net-usage_net-pending_net
         if available_networks >= 1:
-            logging.info('Private Network quota is ok')
+            logging.warning('Private Network quota is ok')
             return
         else:
             logging.error('Private Network quota exceeded')
@@ -531,7 +616,8 @@ class Cluster(object):
         Creates a cluster of virtual machines using the Create_server method of
         CycladesClient.
         '''
-        logging.warning('\n Create %s servers prefixed as %s', self.size, self.prefix)
+        logging.warning('\n Create %s servers prefixed as %s', 
+            self.size, self.prefix)
         servers = []
         empty_ip_list = []
         date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -569,7 +655,7 @@ class Cluster(object):
             pub_net_list = self.nc.list_networks()
             float_net_id = self.get_flo_net_id(pub_net_list)
             self.nc.create_floatingip(float_net_id)
-        logging.info(' Wait for %s servers to built' % self.size)
+        logging.warning(' Wait for %s servers to built', self.size)
 
         # Creation of master server
 
@@ -588,7 +674,7 @@ class Cluster(object):
                     networks=empty_ip_list))
 
             except ClientError:
-                logging.error('Failed while creating server %s' % server_name)
+                logging.error('Failed while creating server %s', server_name)
                 raise
         # We put a wait server for the master here,so we can use the
         # server id later and the slave start their building without
@@ -596,9 +682,9 @@ class Cluster(object):
         new_status = self.client.wait_server(servers[0]['id'],
                                              current_status='BUILD',
                                              delay=1, max_wait=100)
-        logging.info(' Status for server %s is %s' % (
+        logging.info(' Status for server %s is %s',
               servers[0]['name'],
-              new_status))
+              new_status)
         # We create a subnet for the virtual network between master and slaves
         # along with the ports needed
         self.nc.create_subnet(new_network['id'], '192.168.0.0/24',
@@ -611,13 +697,13 @@ class Cluster(object):
             new_status = self.client.wait_server(servers[i]['id'],
                                                  current_status='BUILD',
                                                  delay=2, max_wait=100)
-            logging.info(' Status for server %s is %s' % (
-                servers[i]['name'], new_status))
+            logging.info(' Status for server %s is %s',
+                servers[i]['name'], new_status)
             self.nc.create_port(new_network['id'], servers[i]['id'])
 
         # Not used/Left for future use
         if server_log_path:
-            logging.info(' Store passwords in file %s' % server_log_path)
+            logging.info(' Store passwords in file %s', server_log_path)
             with open(abspath(server_log_path), 'w+') as f:
                 from json import dump
                 dump(servers, f, indent=2)
@@ -667,14 +753,14 @@ def check_quota(auth, req_quotas):
     pending_ram = dict_quotas['system']['cyclades.ram']['pending']
     available_ram = (limit_ram-usage_ram-pending_ram) / Bytes_to_MB
     if available_ram < req_quotas['ram']:
-        logging.error('Cyclades ram out of limit')
+        logging('Cyclades ram out of limit')
         sys.exit(error_quotas_ram)
     limit_vm = dict_quotas['system']['cyclades.vm']['limit']
     usage_vm = dict_quotas['system']['cyclades.vm']['usage']
     pending_vm = dict_quotas['system']['cyclades.vm']['pending']
     available_vm = limit_vm-usage_vm-pending_vm
     if available_vm < req_quotas['vms']:
-        logging('Cyclades vms out of limit')
+        logging.error('Cyclades vms out of limit')
         sys.exit(error_quotas_clustersize)
     logging.warning('Cyclades Cpu,Disk and Ram quotas are ok.')
     return
@@ -703,8 +789,8 @@ def main(opts):
                                   opts.disk_slave, opts.disk_template,
                                   cyclades)
     if flavor_master == 0 or flavor_slaves == 0:
-        logging.error('Combination of cpu,ram,disk and disk_template does not match'
-                      ' an existing id')
+        logging.error('Combination of cpu,ram,disk and disk_template does not match'\
+            ' an existing id')
         sys.exit(error_flavor_id)
     # Total cpu,ram and disk needed for cluster
     cpu = opts.cpu_master + (opts.cpu_slave)*(opts.clustersize-1)
@@ -734,13 +820,6 @@ def main(opts):
 
     server = cluster.create('', pub_keys_path, '')
     logging.warning('3. Create Hadoop cluster')
-    for s in server:
-        if s['name'].split('-')[-1] == '1':
-            # Hostname of master is used in every ssh connection.
-            # So it is defined as global
-            global HOSTNAME_MASTER
-            HOSTNAME_MASTER = s['SNF:fqdn']
-
     create_multi_hadoop_cluster(server)  # Starts the hadoop installation
 
 
@@ -810,9 +889,10 @@ if __name__ == '__main__':
                       default='https://accounts.okeanos.grnet.gr/identity/v2.0')
 
     opts, args = parser.parse_args(argv[1:])
+
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     if opts.clustersize <= 0:
-        logging.error('invalid syntax for clustersize'
+        logging.error('invalid syntax for clustersize'\
             ',clustersize must be a positive integer')
         sys.exit(error_syntax_clustersize)
 
@@ -845,10 +925,5 @@ if __name__ == '__main__':
         logging.error('invalid syntax for disk_slave'
             ', disk_slave must be a positive integer')
         sys.exit(error_syntax_disk_slave)
-        
-    if opts.disk_template not in ['drbd', 'ext_vlmc']:
-        logging.error('invalid syntax for disk_template'
-            ', disk_template must be drbd or ext_vlmc')
-        sys.exit(error_syntax_disk_template)
 
     main(opts)
