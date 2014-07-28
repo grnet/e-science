@@ -21,4 +21,4 @@ python script_name.py "arguments"
 
 example
 
-python script_name.py --name=Hadoop_Test --clustersize=3 --cpu_master=4 --ram_master=2048 --disk_master=5 --cpu_slave=2 --ram_slave=1024 --disk_slave=5 --disktemplate=ext_vlmc --image=Debian Base --token=VZr7y4nGDoB57KaFNPYnbgBOWnBZsMCP3mc_KK0x9zQ --auth_url=https://accounts.okeanos.grnet.gr/identity/v2.0
+    python script_name.py --name=Hadoop_Test --clustersize=3 --cpu_master=4 --ram_master=2048 --disk_master=5 --cpu_slave=2 --ram_slave=1024 --disk_slave=5 --disktemplate=ext_vlmc --image=Debian Base --token=VZr7y4nGDoB57KaFNPYnbgBOWnBZsMCP3mc_KK0x9zQ --auth_url=https://accounts.okeanos.grnet.gr/identity/v2.0
