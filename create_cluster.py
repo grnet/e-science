@@ -178,7 +178,7 @@ def exec_command(ssh, command, check_id):
         stdin.write('\n')
         stdin.flush()
         logging.debug('%s %s',stdout.read(), stderr.read())
-    elseif check_id == 2:
+    elif check_id == 2:
         sleep(3)
         stdin.write('yes\n')
         sleep(2)
@@ -228,7 +228,7 @@ def establish_connect(hostname, name, passwd, port):
             logging.info('success in connection as %s', name)
             return ssh
         except:
-            logging.erroe( 'error connecting as %s', name)
+            logging.error( 'error connecting as %s', name)
     sys.exit(error_ssh_connection)
 
 
@@ -531,8 +531,7 @@ class Cluster(object):
         Creates a cluster of virtual machines using the Create_server method of
         CycladesClient.
         '''
-        logging.warning('\n Create %s servers prefixed as %s' 
-            self.size, self.prefix)
+        logging.warning('\n Create %s servers prefixed as %s', self.size, self.prefix)
         servers = []
         empty_ip_list = []
         date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
