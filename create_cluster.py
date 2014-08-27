@@ -1,7 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 '''
-Created on 22 Jul 2014
+This script creates a virtual cluster and installs hadoop.
 
-@author: developer
+@author: Ioannis Stenos, Nick Vrionis
 '''
 import sys
 from sys import argv
@@ -9,16 +11,21 @@ from os.path import abspath
 from base64 import b64encode
 from kamaki.clients import ClientError
 from kamaki.clients.astakos import AstakosClient
+from kamaki.clients.pithos import PithosClient
+from kamaki.clients.cyclades import CycladesNetworkClient
+from kamaki.clients.image import ImageClient
+from kamaki.clients.cyclades import CycladesClient
+from optparse import OptionParser
 from datetime import datetime
 import paramiko
-sys.stderr = open('/dev/null')
-sys.stderr = sys.__stderr__
 import time
 from time import sleep
 import os
 import nose
 import threading
 import logging
+sys.stderr = open('/dev/null')
+sys.stderr = sys.__stderr__
 error_syntax_clustersize = -1  # Definitions of different errors
 error_syntax_cpu_master = -2
 error_syntax_ram_master = -3
@@ -35,7 +42,7 @@ error_quotas_clustersize = -13
 error_quotas_netwrok = -14
 error_flavor_id = -15
 error_ssh_connection = -16
-
+error_exec_command = -17
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 threadLock = threading.Lock()
@@ -74,14 +81,16 @@ def get_ready_for_reroute():
     These commands are executed only once before the threads start.
     '''
     ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', 22)
-    exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv4/ip_forward', 0)
-    exec_command(ssh_client, 'iptables --table nat --append POSTROUTING --out-'
-                             'interface eth1 -j MASQUERADE', 0)
-    exec_command(ssh_client, 'iptables --table nat --append POSTROUTING --out-'
-                             'interface eth2 -j MASQUERADE', 0)
-    exec_command(ssh_client, 'iptables --append FORWARD --in-interface eth2'
-                             ' -j ACCEPT', 0)
-    ssh_client.close()
+    try:
+        exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv4/ip_forward', 0)
+        exec_command(ssh_client, 'iptables --table nat --append POSTROUTING '
+                                 '--out-interface eth1 -j MASQUERADE', 0)
+        exec_command(ssh_client, 'iptables --table nat --append POSTROUTING '
+                                 '--out-interface eth2 -j MASQUERADE', 0)
+        exec_command(ssh_client, 'iptables --append FORWARD --in-interface '
+                                 'eth2 -j ACCEPT', 0)
+    finally:
+        ssh_client.close()
 
 
 def reroute_ssh_to_slaves(dport, slave_ip):
@@ -93,15 +102,21 @@ def reroute_ssh_to_slaves(dport, slave_ip):
     Arguments are the port and the private ip of the slave vm.
     '''
     ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', 22)
-    exec_command(ssh_client, 'iptables -A PREROUTING -t nat -i eth1 -p tcp'
-                             ' --dport '+str(dport)+' -j DNAT --to ' + slave_ip
-                             + ':22', 0)
-    exec_command(ssh_client, 'iptables -A FORWARD -p tcp -d '+slave_ip +
-                             ' --dport 22 -j ACCEPT', 0)
-    ssh_client.close()
+    try:
+        exec_command(ssh_client, 'iptables -A PREROUTING -t nat -i eth1 -p tcp'
+                                 ' --dport '+str(dport)+' -j DNAT --to '
+                                 + slave_ip + ':22', 0)
+        exec_command(ssh_client, 'iptables -A FORWARD -p tcp -d '
+                                 + slave_ip + ' --dport 22 -j ACCEPT', 0)
+    finally:
+        ssh_client.close()
+
     ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', dport)
-    exec_command(ssh_client, 'route add default gw 192.168.0.2', 0)
-    ssh_client.close()
+    try:
+        exec_command(ssh_client, 'route add default gw 192.168.0.2', 0)
+
+    finally:
+        ssh_client.close()
 
 
 class myThread (threading.Thread):
@@ -116,8 +131,12 @@ class myThread (threading.Thread):
         self.vm = vm  # member of the server list returned by create_server
 
     def run(self):
-        logging.info("Starting %s thread ", self.name)
-        creat_single_hadoop_cluster(self.vm)
+        logging.debug("Starting %s thread ", self.name)
+        try:
+            creat_single_hadoop_cluster(self.vm)
+        except Exception, e:
+            logging.exception(e.args)  # Catch an exception of one thread
+            os._exit(18)  # Terminate program if a thread throws an exception
 
 
 def create_multi_hadoop_cluster(server):
@@ -150,7 +169,11 @@ def create_multi_hadoop_cluster(server):
             dict_s = {'fqdn': s['SNF:fqdn'], 'private_ip': slave_ip}
             list_of_hosts.append(dict_s)
     # Pre-setup the port forwarding that will happen later
-    get_ready_for_reroute()
+    try:
+        get_ready_for_reroute()
+    except Exception, e:
+        logging.exception(e.args)
+        sys.exit(1)
     i = 0
     # Threads are created, one for each virtual machine
     threads = []
@@ -160,22 +183,24 @@ def create_multi_hadoop_cluster(server):
         threads.append(t)
         i = i+1
 
-    # Wait for all threads to complete
     for t in threads:
-        t.join()
-
+        t.join(3600)
+    # Wait for all threads to complete
     ssh_client = establish_connect(HOSTNAME_MASTER, 'hduser',
                                    'hduserpass', 22)
     # Copy ssh public key from master to every slave
     # Needed for passwordless ssh in hadoop
-    for vm in list_of_hosts:
-        if vm['private_ip'] != '192.168.0.2':
-            exec_command(ssh_client, 'ssh-copy-id -i $HOME/.ssh/id_rsa.pub'
-                                     ' hduser@'+vm['fqdn'], 2)
-
-    logging.warning("Hadoop is installed and configured")
-    format_and_start_hadoop(ssh_client)
-    ssh_client.close()
+    try:
+        for vm in list_of_hosts:
+            if vm['private_ip'] != '192.168.0.2':
+                exec_command(ssh_client, 'ssh-copy-id -i $HOME/.ssh/id_rsa.pub'
+                                         ' hduser@'+vm['fqdn'], 2)
+        logging.info("Hadoop is installed and configured")
+        format_and_start_hadoop(ssh_client)
+    except Exception, e:
+        logging.error(e.args)
+    finally:
+        ssh_client.close()
 
 
 def format_and_start_hadoop(ssh_client):
@@ -184,13 +209,13 @@ def format_and_start_hadoop(ssh_client):
     and then start the hadoop daemons.Takes as argument an ssh object
     returned from establish_connect.
     '''
-    logging.warning('Formating hadoop')
+    logging.info('Formating hadoop')
     exec_command(ssh_client, '/usr/local/hadoop/bin/hadoop'
                              ' namenode -format', 0)
-    logging.warning('Starting hadoop')
+    logging.info('Starting hadoop')
     exec_command(ssh_client, '/usr/local/hadoop/bin/start-dfs.sh', 3)
     exec_command(ssh_client, '/usr/local/hadoop/bin/start-mapred.sh', 0)
-    logging.warning('Hadoop has started')
+    logging.info('Hadoop has started')
 
 
 def creat_single_hadoop_cluster(s):
@@ -211,11 +236,29 @@ def creat_single_hadoop_cluster(s):
         # Forwarding Ports are 10000,10001, etc for every slave vm
         port = 9998+int(s['name'].split('-')[-1])
         slave_ip = '192.168.0.' + str(1 + int(s['name'].split('-')[-1]))
-        threadLock.acquire()
+        # reroute_ssh_to_slaves should be executed by one thread at a time
+        sleep(port-9999)
         reroute_ssh_to_slaves(port, slave_ip)
-        # Only one thread will call reroute or else reroute could error.
-        threadLock.release()
         install_hadoop(port)
+
+
+def check_command_exit_status(ex_status, command):
+    '''
+    Checks the exit status of every command executed in virtual machines
+    by paramiko exec_command.If the value is different from zero,it raises
+    a RuntimeError exception.If the value is zero it logs the appropriate
+    message.
+    '''
+    if ex_status != 0:
+            logging.error('Command %s failed to execute with exit status: %d',
+                          command, ex_status)
+            logging.error('Program shutting down')
+            msg = 'Command %s failed with exit status: %d'\
+                  % (command, ex_status)
+            raise RuntimeError(msg)
+    else:
+        logging.info('Command: %s execute with exit status:%d',
+                     command, ex_status)
 
 
 def exec_command(ssh, command, check_id):
@@ -225,14 +268,21 @@ def exec_command(ssh, command, check_id):
     check_id is used for commands that need additional input after
     exec_command, e.g. ssh-keygen needs [enter] to save keys.
     '''
-    stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
-
+    try:
+        stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
+    except Exception, e:
+        logging.exception(e.args)
+        raise
     if check_id == 1:  # For ssh-keygen
         stdin.flush()
         stdin.write('\n')
         stdin.flush()
         # prints stdout of execcommand
-        logging.info('%s %s', stdout.read(), stderr.read())
+        logging.debug('%s %s', stdout.read(), stderr.read())
+        # get exit status of command executed and check it with check_command
+        ex_status = stdout.channel.recv_exit_status()
+        check_command_exit_status(ex_status, command)
+
     elif check_id == 2:  # For ssh-copy-id
         stdin.flush()
         sleep(3)  # Sleep is necessary for stdin to read yes
@@ -240,15 +290,26 @@ def exec_command(ssh, command, check_id):
         sleep(3)  # Sleep is necessary for stdin to read hduser pass
         stdin.write('hduserpass\n')
         stdin.flush()
-        logging.info('%s %s', stdout.read(), stderr.read())
+        logging.debug('%s %s', stdout.read(), stderr.read())
+        # get exit status of command executed and check it with check_command
+        ex_status = stdout.channel.recv_exit_status()
+        check_command_exit_status(ex_status, command)
+
     elif check_id == 3:  # For ssh to master after starting hadoop
         stdin.flush()
         sleep(10)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
         stdin.flush()
-        logging.info('%s %s', stdout.read(), stderr.read())
+        logging.debug('%s %s', stdout.read(), stderr.read())
+        # get exit status of command executed and check it with check_command
+        ex_status = stdout.channel.recv_exit_status()
+        check_command_exit_status(ex_status, command)
+
     else:
-        logging.info('%s %s', stdout.read(), stderr.read())
+        logging.debug('%s %s', stdout.read(), stderr.read())
+        # get exit status of command executed and check it with check_command
+        ex_status = stdout.channel.recv_exit_status()
+        check_command_exit_status(ex_status, command)
 
 
 def install_hadoop(port):
@@ -263,21 +324,25 @@ def install_hadoop(port):
     '''
     # Connect as root and install sudo
     ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', port)
-    exec_command(ssh_client, 'apt-get update;apt-get install sudo', 0)
+    try:
+        exec_command(ssh_client, 'apt-get update;apt-get install sudo', 0)
 
-    install_python_and_java(ssh_client)  # Install java
-    add_hduser_disable_ipv6(ssh_client)  # Add hduser and disable ipv6
-    configuration_hosts_file(ssh_client)  # Configures /etc/hosts file
-    ssh_client.close()
+        install_python_and_java(ssh_client)  # Install java
+        add_hduser_disable_ipv6(ssh_client)  # Add hduser and disable ipv6
+        configuration_hosts_file(ssh_client)  # Configures /etc/hosts file
+    finally:
+        ssh_client.close()
+
     ssh_client = establish_connect(HOSTNAME_MASTER, 'hduser', 'hduserpass',
                                    port)  # Reconnect as hduser
-    connect_as_hduser_conf_ssh(ssh_client)
-    configuration_bashrc(ssh_client)  # Configures .bashrc for hduser
-    hadoop_xml_conf(ssh_client)  # Creates the needed xml files for hadoop
-    if port == 22:  # For Master vm only
-        configure_master_slaves(ssh_client)
-
-    ssh_client.close()
+    try:
+        connect_as_hduser_conf_ssh(ssh_client)
+        configuration_bashrc(ssh_client)  # Configures .bashrc for hduser
+        hadoop_xml_conf(ssh_client)  # Creates the needed xml files for hadoop
+        if port == 22:  # For Master vm only
+            configure_master_slaves(ssh_client)
+    finally:
+        ssh_client.close()
 
 
 def configure_master_slaves(ssh_client):
@@ -390,21 +455,45 @@ def configuration_hosts_file(ssh_client):
 def establish_connect(hostname, name, passwd, port):
     '''
     Establishes an ssh connection with given hostname, username, password
-    and port number. If connection fails, retry for five times and then
-    system exits. If a connection is succesful, returns an ssh object.
+    and port number.Tries to ping given hostname.If the ping is successfull
+    it tries to ssh connect.If an ssh connection is succesful, returns an
+    ssh object.If ssh connection fails or throws an exception,logs the error
+    and tries to ping again.After a number of failed pings or failed ssh
+    connections throws RuntimeError exception.Number of tries is four.
     '''
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    for i in range(100):
-        try:
-            ssh.connect(hostname, username=name, password=passwd, port=port)
-            logging.warning("Success in connection as %s at %s in port %s",
-                            name, hostname, str(port))
-            return ssh
-        except:
-            logging.error("Error in connection as %s at %s in port %s",
-                          name, hostname, str(port))         
-    sys.exit(error_ssh_connection)
+    i = 0
+    while True:
+        response = os.system("ping -c 1 -w2 " + hostname + " > /dev/null 2>&1")
+        if response == 0:
+            try:
+                logging.info('Pinged %s machine,trying to ssh connect',
+                             hostname)
+                ssh.connect(hostname, username=name, password=passwd,
+                            port=port)
+                logging.info("Success in ssh connect as %s to %s at port %s",
+                             name, hostname, str(port))
+                return ssh
+            except Exception, e:
+                logging.warning(e.args)
+                logging.warning("Problem in ssh connection as %s to %s at port"
+                                " %s trying again", name, hostname, str(port))
+                if i > 3:
+                    break
+                i = i+1
+        else:
+            if i > 3:
+                break
+            logging.warning('Cannot ping %s machine in port %s, trying again',
+                            hostname, str(port))
+            i = i+1
+    ssh.close()
+    logging.error("Failed connecting as %s to %s at port %s",
+                  name, hostname, str(port))
+    logging.error("Program is shutting down")
+    msg = 'Failed connecting to %s virtual machine' % hostname
+    raise RuntimeError(msg)
 
 
 def connect_as_hduser_conf_ssh(ssh_client):
@@ -472,7 +561,7 @@ def add_hduser_disable_ipv6(ssh_client):
 
 def check_credentials(auth_url, token):
     '''Identity,Account/Astakos. Test authentication credentials'''
-    logging.info(' Test the credentials')
+    logging.debug(' Test the credentials')
     try:
         auth = AstakosClient(auth_url, token)
         auth.authenticate()
@@ -480,7 +569,7 @@ def check_credentials(auth_url, token):
         logging.error('Authentication failed with url %s and token %s' % (
                       auth_url, token))
         raise
-    logging.warning('Authentication verified')
+    logging.info('Authentication verified')
     return auth
 
 
@@ -493,7 +582,7 @@ def endpoints_and_user_id(auth):
     Image --> plankton
     Network --> network
     '''
-    logging.info(' Get the endpoints')
+    logging.debug(' Get the endpoints')
     try:
         endpoints = dict(
             astakos=auth.get_service_endpoints('identity')['publicURL'],
@@ -514,9 +603,7 @@ def init_pithos(endpoint, token, user_id):
     Object-store / Pithos+.Not used in the script,
     but left for future use
     '''
-    from kamaki.clients.pithos import PithosClient
-
-    logging.info(' Initialize Pithos+ client and set account to user uuid')
+    logging.debug(' Initialize Pithos+ client and set account to user uuid')
     try:
         return PithosClient(endpoint, token, user_id)
     except ClientError:
@@ -529,7 +616,7 @@ def upload_image(pithos, container, image_path):
     Pithos+/Upload Image
     Not used in the script,but left for future use
     '''
-    logging.info(' Create the container "images" and use it')
+    logging.debug(' Create the container "images" and use it')
     try:
         pithos.create_container(container, success=(201, ))
     except ClientError as ce:
@@ -540,7 +627,7 @@ def upload_image(pithos, container, image_path):
             raise
     pithos.container = container
 
-    logging.info(' Upload to "images"')
+    logging.debug(' Upload to "images"')
     with open(abspath(image_path)) as f:
         try:
             pithos.upload_object(
@@ -557,9 +644,7 @@ def init_cyclades_netclient(endpoint, token):
     Cyclades Network client needed for all network functions
     e.g. create network,create floating ip
     '''
-    from kamaki.clients.cyclades import CycladesNetworkClient
-
-    logging.info(' Initialize a cyclades network client')
+    logging.debug(' Initialize a cyclades network client')
     try:
         return CycladesNetworkClient(endpoint, token)
     except ClientError:
@@ -572,9 +657,7 @@ def init_plankton(endpoint, token):
     Plankton/Initialize Imageclient.
     ImageClient has all registered images.
     '''
-    from kamaki.clients.image import ImageClient
-
-    logging.info(' Initialize ImageClient')
+    logging.debug(' Initialize ImageClient')
     try:
         return ImageClient(endpoint, token)
     except ClientError:
@@ -588,7 +671,7 @@ def register_image(plankton, name, user_id, container, path, properties):
     but left for future use
     '''
     image_location = (user_id, container, path)
-    logging.info(' Register the image')
+    logging.debug(' Register the image')
     try:
         return plankton.register(name, image_location, properties)
     except ClientError:
@@ -601,9 +684,7 @@ def init_cyclades(endpoint, token):
     Compute / Initialize Cyclades client.CycladesClient is used
     to create virtual machines
     '''
-    from kamaki.clients.cyclades import CycladesClient
-
-    logging.info(' Initialize a cyclades client')
+    logging.debug(' Initialize a cyclades client')
     try:
         return CycladesClient(endpoint, token)
     except ClientError:
@@ -635,7 +716,7 @@ class Cluster(object):
     def clean_up(self):
         '''Deletes Cluster/Not used'''
         to_delete = self.list()
-        logging.info('  There are %s servers to clean up', len(to_delete))
+        logging.debug('  There are %s servers to clean up', len(to_delete))
         for server in to_delete:
             self.client.delete_server(server['id'])
         for server in to_delete:
@@ -690,7 +771,7 @@ class Cluster(object):
             dict_quotas['system']['cyclades.network.private']['pending']
         available_networks = limit_net-usage_net-pending_net
         if available_networks >= 1:
-            logging.warning('Private Network quota is ok')
+            logging.info('Private Network quota is ok')
             return
         else:
             logging.error('Private Network quota exceeded')
@@ -701,8 +782,8 @@ class Cluster(object):
         Creates a cluster of virtual machines using the Create_server method of
         CycladesClient.
         '''
-        logging.warning('\n Create %s servers prefixed as %s',
-                        self.size, self.prefix)
+        logging.info('\n Create %s servers prefixed as %s',
+                     self.size, self.prefix)
         servers = []
         empty_ip_list = []
         date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -740,7 +821,7 @@ class Cluster(object):
             pub_net_list = self.nc.list_networks()
             float_net_id = self.get_flo_net_id(pub_net_list)
             self.nc.create_floatingip(float_net_id)
-        logging.info(' Wait for %s servers to built', self.size)
+        logging.debug(' Wait for %s servers to built', self.size)
 
         # Creation of master server
 
@@ -767,8 +848,8 @@ class Cluster(object):
         new_status = self.client.wait_server(servers[0]['id'],
                                              current_status='BUILD',
                                              delay=1, max_wait=100)
-        logging.info(' Status for server %s is %s',
-                     servers[0]['name'], new_status)
+        logging.debug(' Status for server %s is %s',
+                      servers[0]['name'], new_status)
         # We create a subnet for the virtual network between master and slaves
         # along with the ports needed
         self.nc.create_subnet(new_network['id'], '192.168.0.0/24',
@@ -781,13 +862,13 @@ class Cluster(object):
             new_status = self.client.wait_server(servers[i]['id'],
                                                  current_status='BUILD',
                                                  delay=2, max_wait=100)
-            logging.info(' Status for server %s is %s',
-                         servers[i]['name'], new_status)
+            logging.debug(' Status for server %s is %s',
+                          servers[i]['name'], new_status)
             self.nc.create_port(new_network['id'], servers[i]['id'])
 
         # Not used/Left for future use
         if server_log_path:
-            logging.info(' Store passwords in file %s', server_log_path)
+            logging.debug(' Store passwords in file %s', server_log_path)
             with open(abspath(server_log_path), 'w+') as f:
                 from json import dump
                 dump(servers, f, indent=2)
@@ -846,7 +927,7 @@ def check_quota(auth, req_quotas):
     if available_vm < req_quotas['vms']:
         logging.error('Cyclades vms out of limit')
         sys.exit(error_quotas_clustersize)
-    logging.error('Cyclades Cpu,Disk and Ram quotas are ok.')
+    logging.info('Cyclades Cpu,Disk and Ram quotas are ok.')
     return
 
 
@@ -859,7 +940,7 @@ def main(opts):
     the virtual machine cluster of one master and clustersize-1 slaves.
     Calls the function to install hadoop to the cluster
     '''
-    logging.warning('1.  Credentials  and  Endpoints')
+    logging.info('1.  Credentials  and  Endpoints')
     # Finds user public ssh key
     USER_HOME = os.path.expanduser('~')
     pub_keys_path = os.path.join(USER_HOME, ".ssh/id_rsa.pub")
@@ -892,7 +973,7 @@ def main(opts):
         if lst['name'] == opts.image:
             chosen_image = lst
 
-    logging.warning('2.  Create  virtual  cluster')
+    logging.info('2.  Create  virtual  cluster')
     cluster = Cluster(cyclades,
                       prefix=opts.name,
                       flavor_id_master=flavor_master,
@@ -904,14 +985,13 @@ def main(opts):
                       auth_cl=auth)
 
     server = cluster.create('', pub_keys_path, '')
-    logging.warning('3. Create Hadoop cluster')
+    logging.info('3. Create Hadoop cluster')
     create_multi_hadoop_cluster(server)  # Starts the hadoop installation
 
 
 if __name__ == '__main__':
 
     #  Add some interaction candy
-    from optparse import OptionParser
 
     kw = {}
     kw['usage'] = '%prog [options]'
@@ -979,8 +1059,8 @@ if __name__ == '__main__':
                       action='store', type='string', dest='logging_level',
                       metavar='LOGGING LEVEL',
                       help='Level of logging messages'
-                      '.Default=warning',
-                      default='warning')
+                      '.Default=info',
+                      default='info')
 
     opts, args = parser.parse_args(argv[1:])
 
@@ -991,8 +1071,13 @@ if __name__ == '__main__':
               'debug': logging.DEBUG}
 
     logging_level = levels[opts.logging_level]
-    logging.basicConfig(format='%(levelname)s:%(message)s',
-                        level=logging_level)
+    if opts.logging_level == 'debug':
+        USER_HOME = os.path.expanduser('~')
+        log_file_path = os.path.join(USER_HOME, "create_cluster_debug.log")
+        logging.basicConfig(filename=log_file_path, level=logging.DEBUG)
+    else:
+        logging.basicConfig(format='%(levelname)s:%(message)s',
+                            level=logging_level)
 
     if opts.logging_level not in ['critical', 'error', 'warning',
                                   'info', 'debug']:
