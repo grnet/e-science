@@ -46,7 +46,17 @@ error_exec_command = -17
 error_ready_reroute = -18
 error_ssh_copyid_format_start_hadoop = -19
 error_fatal = -20
-
+error_cluster_not_exist = -21
+error_user_quota = -22
+error_flavor_list = -23
+error_get_list_servers = -24
+error_delete_server = -25
+error_delete_network = -26
+error_delete_float_ip = -27
+error_get_network_quota = -28
+error_create_network = -29
+error_get_ip = -30
+error_create_server = -31
 
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
 CHAN_TIMEOUT = 360  # Paramiko channel timeout
@@ -63,6 +73,79 @@ Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56
 threadLock = threading.Lock()
 list_of_hosts = []  # List of virtual machine hostnames and their private ips
+
+
+def destroy_cluster(cluster_name, token):
+    '''
+    Destroys cluster and deletes network and floating ip.Finds the machines
+    that belong to the cluster that is requested to be destroyed and the
+    floating ip of the master virtual machine and terminates them.Then
+    deletes the network and the floating ip.
+    '''
+    servers_to_delete = []
+    auth = check_credentials(token)
+    endpoints, user_id = endpoints_and_user_id(auth)
+    cyclades = init_cyclades(endpoints['cyclades'], token)
+    nc = init_cyclades_netclient(endpoints['network'], token)
+    try:
+        list_of_servers = cyclades.list_servers(detail=True)
+    except Exception:
+        logging.exception('Could not get list of servers.'
+                          'Cannot delete cluster')
+        sys.exit(error_get_list_servers)
+
+    for server in list_of_servers:  # Find the servers to be deleted
+        if cluster_name == server['name'].rsplit('-', 1)[0]:
+            servers_to_delete.append(server)
+    # If the list of servers to delete is empty then abort
+    if not servers_to_delete:
+        logging.log(REPORT, " Cluster with name %s does not exist"
+                    % cluster_name)
+        sys.exit(error_cluster_not_exist)
+    # Find the floating ip of master virtual machine
+    for i in servers_to_delete[0]['attachments']:
+        if i['OS-EXT-IPS:type'] == 'floating':
+            float_ip_to_delete = i['ipv4']
+    # Start cluster deleting
+    try:
+        for server in servers_to_delete:
+            cyclades.delete_server(server['id'])
+        logging.log(REPORT, ' There are %d servers to clean up'
+                    % servers_to_delete.__len__())
+    # Wait for every server of the cluster to be deleted
+        for server in servers_to_delete:
+            new_status = cyclades.wait_server(server['id'],
+                                              current_status='ACTIVE')
+            logging.log(REPORT, ' Server %s is being %s', server['name'],
+                        new_status)
+        logging.log(REPORT, ' Cluster %s is %s', cluster_name, new_status)
+    # Find the correct network of deleted cluster and delete it
+    except Exception:
+        logging.exception('Error in deleting server')
+        sys.exit(error_delete_server)
+
+    try:
+        list_of_networks = nc.list_networks()
+        for net_work in list_of_networks:
+            if net_work['name'] == \
+                    servers_to_delete[0]['name'].rsplit('-', 1)[0]:
+                nc.delete_network(net_work['id'])
+                sleep(1)
+                logging.log(REPORT, ' Network %s is deleted' %
+                            net_work['name'])
+    except Exception:
+        logging.exception('Error in deleting network')
+        sys.exit(error_delete_network)
+    # Find the correct floating ip of deleted master machine and delete it
+    try:
+        for float_ip in nc.list_floatingips():
+            if float_ip_to_delete == float_ip['floating_ip_address']:
+                nc.delete_floatingip(float_ip['id'])
+                logging.log(REPORT, ' Floating ip %s is deleted'
+                            % float_ip['floating_ip_address'])
+    except Exception:
+        logging.exception('Error in deleting floating ip')
+        sys.exit(error_delete_float_ip)
 
 
 def configuration_bashrc(ssh_client):
@@ -613,7 +696,8 @@ def add_hduser_disable_ipv6(ssh_client):
                              ' >> /etc/sysctl.conf', 0)
 
 
-def check_credentials(auth_url, token):
+def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
+                      '/identity/v2.0'):
     '''Identity,Account/Astakos. Test authentication credentials'''
     logging.log(REPORT, ' Test the credentials')
     try:
@@ -763,25 +847,6 @@ class Cluster(object):
         self.flavor_id_master, self.auth = flavor_id_master, auth_cl
         self.flavor_id_slave, self.image_id = flavor_id_slave, image_id
 
-    def clean_up(self, server):
-        '''Deletes Cluster and Network'''
-        logging.log(REPORT, ' There are %d servers to clean up'
-                    % server.__len__())
-        for s in server:
-            self.client.delete_server(s['id'])
-
-        for s in server:
-            new_status = self.client.wait_server(
-                s['id'], current_status='ACTIVE')
-        logging.log(REPORT, ' Cluster %s is %s', server[0]['name'][0:-2],
-                    new_status)
-
-        list_of_networks = self.nc.list_networks()
-        for net_work in list_of_networks:
-            if net_work['name'] == server[0]['name'][0:-2]:
-                self.nc.delete_network(net_work['id'])
-                logging.log(REPORT, ' Network %s is deleted', net_work['name'])
-
     def get_flo_net_id(self, list_public_networks):
         '''
         Gets an Ipv4 floating network id from the list of public networks Ipv4
@@ -823,7 +888,11 @@ class Cluster(object):
         Subtracts the number of networks used and pending from the max allowed
         number of networks
         '''
-        dict_quotas = self.auth.get_quotas()
+        try:
+            dict_quotas = self.auth.get_quotas()
+        except Exception:
+            logging.exception('Error in getting user network quota')
+            sys.exit(error_get_network_quota)
         limit_net = dict_quotas['system']['cyclades.network.private']['limit']
         usage_net = dict_quotas['system']['cyclades.network.private']['usage']
         pending_net = \
@@ -854,9 +923,17 @@ class Cluster(object):
         net_name = date_time + '-' + self.prefix
         self.check_network_quota()
         # Creates network
-        new_network = self.nc.create_network('MAC_FILTERED', net_name)
+        try:
+            new_network = self.nc.create_network('MAC_FILTERED', net_name)
+        except Exception:
+            logging.exception('Error in creating network')
+            sys.exit(error_create_network)
         # Gets list of floating ips
-        list_float_ips = self.nc.list_floatingips()
+        try:
+            list_float_ips = self.nc.list_floatingips()
+        except Exception:
+            logging.exception('Error getting list of floating ips')
+            sys.exit(error_get_ip)
         # If there are existing floating ips,we check if there is any free or
         # if all of them are attached to a machine
         if len(list_float_ips) != 0:
@@ -871,22 +948,30 @@ class Cluster(object):
                                                       [count-1]
                                                       ['floating_network_id'])
                         except ClientError:
-                            logging.error('Cannot create new ip')
-                            self.nc.delete_network(new_network['id'])
-                            raise
+                            logging.exception('Cannot create new ip')
+                            sys.exit(error_get_ip)
         else:
             # No existing ips,so we create a new one
             # with the floating  network id
-            pub_net_list = self.nc.list_networks()
-            float_net_id = self.get_flo_net_id(pub_net_list)
-            self.nc.create_floatingip(float_net_id)
+            try:
+                pub_net_list = self.nc.list_networks()
+                float_net_id = self.get_flo_net_id(pub_net_list)
+                self.nc.create_floatingip(float_net_id)
+            except Exception:
+                logging.exception('Error in creating float ip')
+                sys.exit(error_get_ip)
         logging.log(REPORT, ' Wait for %s servers to built', self.size)
 
         # Creation of master server
 
-        servers.append(self.client.create_server(
-            server_name, self.flavor_id_master, self.image_id,
-            personality=self._personality(ssh_k_path, pub_k_path)))
+        try:
+            servers.append(self.client.create_server(
+                server_name, self.flavor_id_master, self.image_id,
+                personality=self._personality(ssh_k_path, pub_k_path)))
+        except Exception:
+            logging.exception('Error creating master virtual machine'
+                              % server_name)
+            sys.exit(error_create_server)
         # Creation of slave servers
         for i in range(2, self.size+1):
             try:
@@ -898,34 +983,38 @@ class Cluster(object):
                     personality=self._personality(ssh_k_path, pub_k_path),
                     networks=empty_ip_list))
 
-            except ClientError:
-                logging.error('Failed while creating server %s', server_name)
-                raise
+            except Exception:
+                logging.exception('Error creating server %s' % server_name)
+                sys.exit(error_create_server)
         # We put a wait server for the master here,so we can use the
         # server id later and the slave start their building without
         # waiting for the master to finish building
-        new_status = self.client.wait_server(servers[0]['id'],
-                                             current_status='BUILD',
-                                             delay=1, max_wait=100)
-        logging.log(REPORT, ' Status for server %s is %s',
-                    servers[0]['name'], new_status)
-        # We create a subnet for the virtual network between master and slaves
-        # along with the ports needed
-        self.nc.create_subnet(new_network['id'], '192.168.0.0/24',
-                              enable_dhcp=True)
-        self.nc.create_port(new_network['id'], servers[0]['id'])
-
-        # Wait server for the slaves, so we can use their server id
-        # in port creation
-        for i in range(1, self.size):
-            new_status = self.client.wait_server(servers[i]['id'],
-                                                 current_status='BUILD',
-                                                 delay=2, max_wait=100)
+        try:
+            new_status = self.client.wait_server(servers[0]['id'],
+                                                 max_wait=300)
             logging.log(REPORT, ' Status for server %s is %s',
-                        servers[i]['name'], new_status)
-            self.nc.create_port(new_network['id'], servers[i]['id'])
+                        servers[0]['name'], new_status)
+            # Create a subnet for the virtual network between master
+            #  and slaves along with the ports needed
+            self.nc.create_subnet(new_network['id'], '192.168.0.0/24',
+                                  enable_dhcp=True)
+            port_details = self.nc.create_port(new_network['id'],
+                                               servers[0]['id'])
+            self.nc.wait_port(port_details['id'], max_wait=300)
+            # Wait server for the slaves, so we can use their server id
+            # in port creation
+            for i in range(1, self.size):
+                new_status = self.client.wait_server(servers[i]['id'],
+                                                     max_wait=300)
+                logging.log(REPORT, ' Status for server %s is %s',
+                            servers[i]['name'], new_status)
+                port_details = self.nc.create_port(new_network['id'],
+                                                   servers[i]['id'])
+                self.nc.wait_port(port_details['id'], max_wait=300)
+        except Exception:
+            logging.exception('Error in finalizing cluster creation')
+            sys.exit(error_create_server)
 
-        # Not used/Left for future use
         if server_log_path:
             logging.info(' Store passwords in file %s', server_log_path)
             with open(abspath(server_log_path), 'w+') as f:
@@ -936,7 +1025,11 @@ class Cluster(object):
 
 def get_flavor_id(cpu, ram, disk, disk_template, cycladesclient):
     '''Return the flavor id based on cpu,ram,disk_size and disk template'''
-    flavor_list = cycladesclient.list_flavors(True)
+    try:
+        flavor_list = cycladesclient.list_flavors(True)
+    except Exception:
+        logging.exception('Could not get list of flavors')
+        sys.exit(error_flavor_list)
     flavor_id = 0
     for flavor in flavor_list:
         if flavor['ram'] == ram and \
@@ -955,7 +1048,11 @@ def check_quota(auth, req_quotas):
     higher than what user requests.Also divides with 1024*1024*1024
     to transform bytes to gigabytes.
      '''
-    dict_quotas = auth.get_quotas()
+    try:
+        dict_quotas = auth.get_quotas()
+    except Exception:
+        logging.exception('Could not get user quota')
+        sys.exit(error_user_quota)
     limit_cd = dict_quotas['system']['cyclades.disk']['limit']
     usage_cd = dict_quotas['system']['cyclades.disk']['usage']
     pending_cd = dict_quotas['system']['cyclades.disk']['pending']
@@ -1003,7 +1100,7 @@ def main(opts):
     # Finds user public ssh key
     USER_HOME = os.path.expanduser('~')
     pub_keys_path = os.path.join(USER_HOME, ".ssh/id_rsa.pub")
-    auth = check_credentials(opts.auth_url, opts.token)
+    auth = check_credentials(opts.token, opts.auth_url)
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], opts.token)
     flavor_master = get_flavor_id(opts.cpu_master, opts.ram_master,
@@ -1047,7 +1144,9 @@ def main(opts):
     sleep(60)  # Sleep to wait for virtual machines become pingable
     logging.log(REPORT, ' 3.Create Hadoop cluster')
     create_multi_hadoop_cluster(server)  # Start the hadoop installation
-    cluster.clean_up(server)  # Start cluster deleting
+    # Start cluster deleting
+    logging.log(REPORT, ' 4.Destroying Hadoop cluster')
+    destroy_cluster(server[0]['name'].rsplit('-', 1)[0], opts.token)
 
 
 if __name__ == '__main__':
@@ -1148,8 +1247,8 @@ if __name__ == '__main__':
         log_file_path = os.path.join(log_directory, "create_cluster_debug.log")
         logging.basicConfig(filename=log_file_path, level=logging.DEBUG)
     else:
-        logging.basicConfig(format='%(levelname)s:%(message)s',
-                            level=logging_level)
+        logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
+                            level=logging_level, datefmt='%H:%M:%S')
 
     if opts.clustersize <= 0:
         logging.error('invalid syntax for clustersize'
