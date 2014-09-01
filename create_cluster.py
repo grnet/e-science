@@ -45,7 +45,7 @@ error_ssh_connection = -16
 error_exec_command = -17
 error_ready_reroute = -18
 error_ssh_copyid_format_start_hadoop = -19
-error_fatal = 18
+error_fatal = -20
 
 
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
@@ -55,7 +55,7 @@ JOIN_THREADS_TIME = 1000  # Time to wait for threads to join
 ADD_TO_GET_PORT = 9998
 # How many times plus one it tries to connect to a virtual
 # machine before aborting.
-CONNECTION_TRIES = 3
+CONNECTION_TRIES = 9
 REPORT = 25  # Define logging level of REPORT
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
@@ -279,6 +279,11 @@ def creat_single_hadoop_cluster(s):
         try:
             threadLock.acquire()
             reroute_ssh_to_slaves(port, slave_ip)
+        except Exception, e:
+            logging.exception(e.args)
+            # Exit is here because otherwise another thread could
+            # get lock before exit and the lock wouldnt get released.
+            os._exit(error_fatal)
         finally:
             threadLock.release()
 
@@ -502,7 +507,7 @@ def establish_connect(hostname, name, passwd, port):
     it tries to ssh connect.If an ssh connection is succesful, returns an
     ssh object.If ssh connection fails or throws an exception,logs the error
     and tries to ping again.After a number of failed pings or failed ssh
-    connections throws RuntimeError exception.Number of tries is four.
+    connections throws RuntimeError exception.Number of tries is ten.
     '''
     try:
         ssh = mySSHClient()
@@ -529,14 +534,14 @@ def establish_connect(hostname, name, passwd, port):
                 if i > CONNECTION_TRIES:
                     break
                 i = i+1
-                sleep(0.5)
+                sleep(1)
         else:
             if i > CONNECTION_TRIES:
                 break
             logging.warning('Cannot ping %s machine in port %s, trying again',
                             hostname, str(port))
             i = i+1
-            sleep(0.5)
+            sleep(1)
     ssh.close()
     logging.error("Failed connecting as %s to %s at port %s",
                   name, hostname, str(port))
@@ -1039,7 +1044,7 @@ def main(opts):
                       auth_cl=auth)
 
     server = cluster.create('', pub_keys_path, '')
-    # sleep(5)
+    sleep(60)  # Sleep to wait for virtual machines become pingable
     logging.log(REPORT, ' 3.Create Hadoop cluster')
     create_multi_hadoop_cluster(server)  # Start the hadoop installation
     cluster.clean_up(server)  # Start cluster deleting
