@@ -58,6 +58,7 @@ error_create_network = -29
 error_get_ip = -30
 error_create_server = -31
 
+
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
 CHAN_TIMEOUT = 360  # Paramiko channel timeout
 JOIN_THREADS_TIME = 1000  # Time to wait for threads to join
@@ -73,6 +74,33 @@ Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56
 threadLock = threading.Lock()
 list_of_hosts = []  # List of virtual machine hostnames and their private ips
+
+
+def exec_command_hadoop(ssh_client, command):
+    '''
+    exec_command for the check_hadoop_cluster, run_pi and wordcount.
+    This one is used because for these methods we want to see the output
+    in report logging level and not in debug.
+    '''
+    try:
+        stdin, stdout, stderr = ssh_client.exec_command(command, get_pty=True)
+    except Exception, e:
+        logging.exception(e.args)
+        raise
+    logging.log(REPORT, '%s %s', stdout.read(), stderr.read())
+    ex_status = stdout.channel.recv_exit_status()
+    check_command_exit_status(ex_status, command)
+
+
+def check_hadoop_cluster_and_run_pi(ssh_client, pi_map=2, pi_sec=10000):
+    '''Checks hadoop cluster health and runs a pi job'''
+    logging.log(REPORT, 'Checking Hadoop cluster')
+    command = '/usr/local/hadoop/bin/hadoop dfsadmin -report'
+    exec_command_hadoop(ssh_client, command)
+    logging.log(REPORT, 'Running pi job')
+    command = '/usr/local/hadoop/bin/hadoop jar' \
+              ' /usr/local/hadoop/hadoop-examples-1.2.1.jar pi '+str(pi_map)+' '+str(pi_sec)
+    exec_command_hadoop(ssh_client, command)
 
 
 def destroy_cluster(cluster_name, token):
@@ -106,6 +134,16 @@ def destroy_cluster(cluster_name, token):
     for i in servers_to_delete[0]['attachments']:
         if i['OS-EXT-IPS:type'] == 'floating':
             float_ip_to_delete = i['ipv4']
+    # Find network to be deleted
+    try:
+        list_of_networks = nc.list_networks()
+        for net_work in list_of_networks:
+            if net_work['name'] == \
+                    servers_to_delete[0]['name'].rsplit('-', 1)[0]:
+                network_to_delete_id = net_work['id']
+    except Exception:
+        logging.exception('Error in getting network to delete')
+        sys.exit(error_delete_network)
     # Start cluster deleting
     try:
         for server in servers_to_delete:
@@ -115,9 +153,13 @@ def destroy_cluster(cluster_name, token):
     # Wait for every server of the cluster to be deleted
         for server in servers_to_delete:
             new_status = cyclades.wait_server(server['id'],
-                                              current_status='ACTIVE')
+                                              current_status='ACTIVE',
+                                              max_wait=300)
             logging.log(REPORT, ' Server %s is being %s', server['name'],
                         new_status)
+            if new_status != 'DELETED':
+                logging.error('Error deleting server %s' % server['name'])
+                sys.exit(error_delete_server)
         logging.log(REPORT, ' Cluster %s is %s', cluster_name, new_status)
     # Find the correct network of deleted cluster and delete it
     except Exception:
@@ -125,17 +167,14 @@ def destroy_cluster(cluster_name, token):
         sys.exit(error_delete_server)
 
     try:
-        list_of_networks = nc.list_networks()
-        for net_work in list_of_networks:
-            if net_work['name'] == \
-                    servers_to_delete[0]['name'].rsplit('-', 1)[0]:
-                nc.delete_network(net_work['id'])
-                sleep(1)
-                logging.log(REPORT, ' Network %s is deleted' %
+        nc.delete_network(network_to_delete_id)
+        sleep(10)
+        logging.log(REPORT, ' Network %s is deleted' %
                             net_work['name'])
     except Exception:
         logging.exception('Error in deleting network')
         sys.exit(error_delete_network)
+
     # Find the correct floating ip of deleted master machine and delete it
     try:
         for float_ip in nc.list_floatingips():
@@ -315,9 +354,10 @@ def create_multi_hadoop_cluster(server):
         for vm in list_of_hosts:
             if vm['private_ip'] != '192.168.0.2':
                 exec_command(ssh_client, 'ssh-copy-id -i $HOME/.ssh/id_rsa.pub'
-                                         ' hduser@'+vm['fqdn'], 2)
+                             ' hduser@'+vm['fqdn'].split('.', 1)[0], 2)
         logging.log(REPORT, " Hadoop is installed and configured")
         format_and_start_hadoop(ssh_client)
+        #check_hadoop_cluster_and_run_pi(ssh_client)
     except Exception, e:
         logging.error(e.args)
         sys.exit(error_ssh_copyid_format_start_hadoop)
@@ -486,11 +526,11 @@ def configure_master_slaves(ssh_client):
         # Adds fully qualified domain names for master and slaves in
         # the masters and slaves files in hadoop/conf
         if vm['private_ip'] == '192.168.0.2':
-            exec_command(ssh_client, 'echo "' + vm['fqdn'] + '"> /usr/local'
-                                     '/hadoop/conf/masters', 0)
+            exec_command(ssh_client, 'echo "' + vm['fqdn'].split('.', 1)[0] +
+                                     '"> /usr/local/hadoop/conf/masters', 0)
         else:
-            exec_command(ssh_client, 'echo "' + vm['fqdn'] + '">> /usr/local'
-                                     '/hadoop/conf/slaves', 0)
+            exec_command(ssh_client, 'echo "' + vm['fqdn'].split('.', 1)[0] +
+                                     '">> /usr/local/hadoop/conf/slaves', 0)
 
     #  Delete localhost from slaves file
     exec_command(ssh_client, 'sed -i".bak" "1d" /usr/local/hadoop'
@@ -515,7 +555,7 @@ def hadoop_xml_conf(ssh_client):
                  r'</property>',
                  r'<property>',
                  r'<name>fs.default.name</name>',
-                 r'<value>hdfs://'+HOSTNAME_MASTER+':54310</value>',
+                 r'<value>hdfs://'+HOSTNAME_MASTER.split('.', 1)[0]+':54310</value>',
                  r'</property>',
                  r'</configuration>']
 
@@ -525,7 +565,7 @@ def hadoop_xml_conf(ssh_client):
                    r'<configuration>',
                    r'<property>',
                    r'<name>mapred.job.tracker</name>',
-                   r'<value>'+HOSTNAME_MASTER+':54311</value>',
+                   r'<value>'+HOSTNAME_MASTER.split('.', 1)[0]+':54311</value>',
                    r'<description>The host and port that'
                    ' the MapReduce job tracker runs',
                    r'and reduce task.',
@@ -579,8 +619,8 @@ def configuration_hosts_file(ssh_client):
     for machine in list_of_hosts:
         exec_command(ssh_client, 'sed -i".bak" "2d" /etc/hosts', 0)
         exec_command(ssh_client, 'echo '
-                                 '"' + machine['private_ip'] + '     ' +
-                                 machine['fqdn']+'" >> /etc/hosts', 0)
+                     '"' + machine['private_ip'] + '     ' +
+                     machine['fqdn'].split('.', 1)[0]+'" >> /etc/hosts', 0)
 
 
 def establish_connect(hostname, name, passwd, port):
@@ -1145,8 +1185,8 @@ def main(opts):
     logging.log(REPORT, ' 3.Create Hadoop cluster')
     create_multi_hadoop_cluster(server)  # Start the hadoop installation
     # Start cluster deleting
-    logging.log(REPORT, ' 4.Destroying Hadoop cluster')
-    destroy_cluster(server[0]['name'].rsplit('-', 1)[0], opts.token)
+    # logging.log(REPORT, ' 4.Destroying Hadoop cluster')
+    # destroy_cluster(server[0]['name'].rsplit('-', 1)[0], opts.token)
 
 
 if __name__ == '__main__':
