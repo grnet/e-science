@@ -7,7 +7,7 @@ This script destroys a virtual cluster in synnefo.
 @author: Ioannis Stenos, Nick Vrionis
 '''
 from sys import argv
-from create_cluster import destroy_cluster
+from create_cluster import destroy_cluster, REPORT
 import logging
 from optparse import OptionParser
 
@@ -37,15 +37,13 @@ if __name__ == '__main__':
                       action='store', type='string', dest='token',
                       metavar='AUTH TOKEN',
                       help='Synnefo authentication token')
-    
+
     opts, args = parser.parse_args(argv[1:])
-    logging.addLevelName(25, "REPORT")
+    logging.addLevelName(REPORT, "REPORT")
     logger = logging.getLogger("report")
 
-
-
-    
-    logging_level = 25
+    logging_level = REPORT
     logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-                            level=logging_level, datefmt='%H:%M:%S')
+                        level=logging_level, datefmt='%H:%M:%S')
     main(opts)
+
