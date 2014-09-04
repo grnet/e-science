@@ -57,6 +57,9 @@ error_get_network_quota = -28
 error_create_network = -29
 error_get_ip = -30
 error_create_server = -31
+error_syntax_auth_token = -32
+error_cluster_corrupt = -33
+error_authentication = -99
 
 
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
@@ -72,10 +75,10 @@ Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 # Href string characters without IpV4 public network id number
 HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56
+list_of_hosts = []  # List of virtual machine hostnames and their private ips 
 string_of_levels = ''
 
 threadLock = threading.Lock()
-list_of_hosts = []  # List of virtual machine hostnames and their private ips
 
 
 def exec_command_hadoop(ssh_client, command):
@@ -132,10 +135,15 @@ def destroy_cluster(cluster_name, token):
         logging.log(REPORT, " Cluster with name [%s] does not exist"
                     % cluster_name)
         sys.exit(error_cluster_not_exist)
+
+    number_of_nodes = servers_to_delete.__len__()
     # Find the floating ip of master virtual machine
     for i in servers_to_delete[0]['attachments']:
         if i['OS-EXT-IPS:type'] == 'floating':
             float_ip_to_delete = i['ipv4']
+        else:
+            logging.error(' Cluster [%s] is corrupted', cluster_name)
+            sys.exit(error_cluster_corrupt)
     # Find network to be deleted
     try:
         list_of_networks = nc.list_networks()
@@ -152,7 +160,7 @@ def destroy_cluster(cluster_name, token):
         for server in servers_to_delete:
             cyclades.delete_server(server['id'])
         logging.log(REPORT, ' There are %d servers to clean up'
-                    % servers_to_delete.__len__())
+                    % number_of_nodes)
     # Wait for every server of the cluster to be deleted
         for server in servers_to_delete:
             new_status = cyclades.wait_server(server['id'],
@@ -178,16 +186,20 @@ def destroy_cluster(cluster_name, token):
         logging.exception('Error in deleting network')
         sys.exit(error_delete_network)
 
-    # Find the correct floating ip of deleted master machine and delete it
+    # Find the correct floating ip id of deleted master machine and delete it
     try:
         for float_ip in nc.list_floatingips():
             if float_ip_to_delete == float_ip['floating_ip_address']:
                 nc.delete_floatingip(float_ip['id'])
-                logging.log(REPORT, ' Floating ip %s is deleted'
+                logging.log(REPORT, ' Floating ip [%s] is deleted'
                             % float_ip['floating_ip_address'])
     except Exception:
-        logging.exception('Error in deleting floating ip')
+        logging.exception('Error in deleting floating ip [%s]',
+                          float_ip_to_delete)
         sys.exit(error_delete_float_ip)
+
+    logging.log(REPORT, ' Cluster [%s] with %d nodes was deleted',
+                cluster_name, number_of_nodes)
 
 
 def configuration_bashrc(ssh_client):
@@ -750,7 +762,7 @@ def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
     except ClientError:
         logging.error('Authentication failed with url %s and token %s' % (
                       auth_url, token))
-        raise
+        sys.exit(error_authentication)
     logging.log(REPORT, ' Authentication verified')
     return auth
 
@@ -1192,7 +1204,7 @@ def main(opts):
                       auth_cl=auth)
 
     server = cluster.create('', pub_keys_path, '')
-    sleep(60)  # Sleep to wait for virtual machines become pingable
+    sleep(20)  # Sleep to wait for virtual machines become pingable
     logging.log(REPORT, ' 3.Create Hadoop cluster')
     # Start the hadoop installation
     create_multi_hadoop_cluster(server)
@@ -1346,4 +1358,9 @@ if __name__ == '__main__':
     if opts.disk_template not in ['drbd', 'ext_vlmc']:
         logging.error('invalid syntax for disk_template')
         sys.exit(error_syntax_disk_template)
+
+    if not opts.token:
+        logging.error('invalid syntax for authentication token')
+        sys.exit(error_syntax_auth_token)
+
     main(opts)
