@@ -7,14 +7,12 @@ This script destroys a virtual cluster in synnefo.
 @author: Ioannis Stenos, Nick Vrionis
 '''
 import sys
-from kamaki.clients.astakos import AstakosClient,AstakosClientError
 from sys import argv
 from create_cluster import destroy_cluster, REPORT
 import logging
 from optparse import OptionParser
 
 error_syntax_auth_url = -32
-error_authorization = -99
 
 
 def main(opts):
@@ -24,11 +22,7 @@ def main(opts):
     '''
     cluster_name = opts.name
     auth = opts.token
-    try:
-        destroy_cluster(cluster_name, auth)
-    except AstakosClientError:
-        logging.error('You are not authorized to create virtual machine')
-        sys.exit(error_authorization)
+    destroy_cluster(cluster_name, auth)
 
 if __name__ == '__main__':
 

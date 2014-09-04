@@ -58,6 +58,7 @@ error_create_network = -29
 error_get_ip = -30
 error_create_server = -31
 error_syntax_auth_url = -32
+error_authentication = -99
 
 
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
@@ -755,7 +756,7 @@ def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
     except ClientError:
         logging.error('Authentication failed with url %s and token %s' % (
                       auth_url, token))
-        raise
+        sys.exit(error_authentication)
     logging.log(REPORT, ' Authentication verified')
     return auth
 
@@ -1075,8 +1076,6 @@ class Cluster(object):
                 from json import dump
                 dump(servers, f, indent=2)
 
-        for port in self.nc.list_ports():
-            logging.log(REPORT,'port with id %s is %s', port['device_id'], port['status'])
         return servers
 
 
@@ -1198,7 +1197,7 @@ def main(opts):
                       auth_cl=auth)
 
     server = cluster.create('', pub_keys_path, '')
-    sleep(60)  # Sleep to wait for virtual machines become pingable
+    sleep(20)  # Sleep to wait for virtual machines become pingable
     logging.log(REPORT, ' 3.Create Hadoop cluster')
     # Start the hadoop installation
     create_multi_hadoop_cluster(server)
