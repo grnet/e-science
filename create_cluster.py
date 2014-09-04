@@ -72,6 +72,7 @@ Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 # Href string characters without IpV4 public network id number
 HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56
+string_of_levels = ''
 
 threadLock = threading.Lock()
 list_of_hosts = []  # List of virtual machine hostnames and their private ips
@@ -1209,6 +1210,18 @@ if __name__ == '__main__':
     kw['usage'] = '%prog [options]'
     kw['description'] = '%prog deploys a compute cluster on Synnefo w. kamaki'
 
+	levels = {'critical': logging.CRITICAL,
+              'error': logging.ERROR,
+              'warning': logging.WARNING,
+              'report': REPORT,
+              'info': logging.INFO,
+              'debug': logging.DEBUG}
+
+	for level_name in levels.keys():
+		string_of_levels = string_of_levels + level_name + ','
+	string_of_levels = string_of_levels[:-1]
+
+	
     parser = OptionParser(**kw)
     parser.disable_interspersed_args()
     parser.add_option('--name',
@@ -1270,25 +1283,17 @@ if __name__ == '__main__':
     parser.add_option('--logging_level',
                       action='store', type='string', dest='logging_level',
                       metavar='LOGGING LEVEL',
-                      help='Levels of logging messages:critical,'
-                      'error,warning,report,info and debug'
+                      help='Levels of logging messages:' +
+                      string_of_levels +
                       '.Default is report',
                       default='report')
 
     opts, args = parser.parse_args(argv[1:])
     logging.addLevelName(REPORT, "REPORT")
     logger = logging.getLogger("report")
-
-    levels = {'critical': logging.CRITICAL,
-              'error': logging.ERROR,
-              'warning': logging.WARNING,
-              'report': REPORT,
-              'info': logging.INFO,
-              'debug': logging.DEBUG}
-
+	
     #  If clause to catch syntax error in logging argument
-    if opts.logging_level not in ['critical', 'error', 'warning',
-                                  'info', 'report', 'debug']:
+    if opts.logging_level not in levels.keys():
         logging.error('invalid syntax for logging_level')
         sys.exit(error_syntax_logging_level)
 
