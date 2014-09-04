@@ -138,12 +138,14 @@ def destroy_cluster(cluster_name, token):
 
     number_of_nodes = servers_to_delete.__len__()
     # Find the floating ip of master virtual machine
-    for i in servers_to_delete[0]['attachments']:
-        if i['OS-EXT-IPS:type'] == 'floating':
-            float_ip_to_delete = i['ipv4']
-        else:
-            logging.error(' Cluster [%s] is corrupted', cluster_name)
-            sys.exit(error_cluster_corrupt)
+    float_ip_to_delete = ''
+    for attachment in servers_to_delete[0]['attachments']:
+        if attachment['OS-EXT-IPS:type'] == 'floating':
+            float_ip_to_delete = attachment['ipv4']
+
+    if not float_ip_to_delete:
+        logging.error(' Cluster [%s] is corrupted', cluster_name)
+        sys.exit(error_cluster_corrupt)
     # Find network to be deleted
     try:
         list_of_networks = nc.list_networks()
@@ -1204,6 +1206,7 @@ def main(opts):
                       auth_cl=auth)
 
     server = cluster.create('', pub_keys_path, '')
+    return
     sleep(20)  # Sleep to wait for virtual machines become pingable
     logging.log(REPORT, ' 3.Create Hadoop cluster')
     # Start the hadoop installation
