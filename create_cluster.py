@@ -1206,7 +1206,7 @@ def main(opts):
                       auth_cl=auth)
 
     server = cluster.create('', pub_keys_path, '')
-    return
+    
     sleep(20)  # Sleep to wait for virtual machines become pingable
     logging.log(REPORT, ' 3.Create Hadoop cluster')
     # Start the hadoop installation
