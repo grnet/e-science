@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 '''
-This script creates a virtual cluster and installs hadoop.
+This script creates a virtual cluster on ~okeanos and installs Hadoop.
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
+
 import sys
 from sys import argv
 from os.path import abspath
@@ -25,8 +27,8 @@ import nose
 import threading
 import logging
 
-
-error_syntax_clustersize = -1  # Definitions of different errors
+# Definitions of return value errors
+error_syntax_clustersize = -1  
 error_syntax_cpu_master = -2
 error_syntax_ram_master = -3
 error_syntax_disk_master = -4
@@ -61,24 +63,20 @@ error_syntax_auth_token = -32
 error_cluster_corrupt = -33
 error_authentication = -99
 
-
+#Global constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
 CHAN_TIMEOUT = 360  # Paramiko channel timeout
 JOIN_THREADS_TIME = 1000  # Time to wait for threads to join
-# Value to add machine name numbers and get slave port numbers
-ADD_TO_GET_PORT = 9998
-# How many times plus one it tries to connect to a virtual
-# machine before aborting.
-CONNECTION_TRIES = 9
+ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
+CONNECTION_TRIES = 9    # Max number(+1) of connection attempts to a VM
 REPORT = 25  # Define logging level of REPORT
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
-# Href string characters without IpV4 public network id number
-HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56
-list_of_hosts = []  # List of virtual machine hostnames and their private ips 
-string_of_levels = ''
+HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56 # IpV4 public network id offset
+list_of_hosts = []  # List of dicts wit VM hostnames and their private IPs 
 
-threadLock = threading.Lock()
+#Global variables
+threadLock = threading.Lock() # Declare thread lock
 
 
 def exec_command_hadoop(ssh_client, command):
@@ -98,7 +96,7 @@ def exec_command_hadoop(ssh_client, command):
 
 
 def check_hadoop_cluster_and_run_pi(ssh_client, pi_map=2, pi_sec=10000):
-    '''Checks hadoop cluster health and runs a pi job'''
+    '''Checks Hadoop cluster health and runs a pi job'''
     logging.log(REPORT, 'Checking Hadoop cluster')
     command = '/usr/local/hadoop/bin/hadoop dfsadmin -report'
     exec_command_hadoop(ssh_client, command)
@@ -110,9 +108,9 @@ def check_hadoop_cluster_and_run_pi(ssh_client, pi_map=2, pi_sec=10000):
 
 def destroy_cluster(cluster_name, token):
     '''
-    Destroys cluster and deletes network and floating ip.Finds the machines
+    Destroys cluster and deletes network and floating ip. Finds the machines
     that belong to the cluster that is requested to be destroyed and the
-    floating ip of the master virtual machine and terminates them.Then
+    floating ip of the master virtual machine and terminates them. Then
     deletes the network and the floating ip.
     '''
     servers_to_delete = []
@@ -181,7 +179,7 @@ def destroy_cluster(cluster_name, token):
 
     try:
         nc.delete_network(network_to_delete_id)
-        sleep(10)
+        sleep(10) # Take some time to ensure it is deleted
         logging.log(REPORT, ' Network [%s] is deleted' %
                             net_work['name'])
     except Exception:
@@ -318,7 +316,7 @@ class mySSHClient(paramiko.SSHClient):
 
 def create_multi_hadoop_cluster(server):
     '''
-    Function that starts the threads.Creates thread objects,one for every
+    Function that starts the threads. Creates thread objects, one for every
     virtual machine. Thread name is the fully qualified domain name of
     the virtual machine. Before the thread creation calls the
     get_ready_for_reroute to do a pre-setup for port forwarding
@@ -1019,7 +1017,7 @@ class Cluster(object):
             except Exception:
                 logging.exception('Error in creating float ip')
                 sys.exit(error_get_ip)
-        logging.log(REPORT, ' Wait for %s servers to built', self.size)
+        logging.log(REPORT, ' Wait for %s servers to build', self.size)
 
         # Creation of master server
 
@@ -1175,7 +1173,7 @@ def main(opts):
                                   opts.disk_slave, opts.disk_template,
                                   cyclades)
     if flavor_master == 0 or flavor_slaves == 0:
-        logging.error('Combination of cpu,ram,disk and disk_template does'
+        logging.error('Combination of cpu, ram, disk and disk_template do'
                       ' not match an existing id')
 
         sys.exit(error_flavor_id)
@@ -1206,14 +1204,11 @@ def main(opts):
                       auth_cl=auth)
 
     server = cluster.create('', pub_keys_path, '')
-    
     sleep(20)  # Sleep to wait for virtual machines become pingable
     logging.log(REPORT, ' 3.Create Hadoop cluster')
-    # Start the hadoop installation
+    # Start Hadoop installation
     create_multi_hadoop_cluster(server)
-    # Start cluster deleting
-    # logging.log(REPORT, ' 4.Destroying Hadoop cluster')
-    # destroy_cluster(server[0]['name'].rsplit('-', 1)[0], opts.token)
+    
 
 
 if __name__ == '__main__':
@@ -1231,11 +1226,11 @@ if __name__ == '__main__':
               'info': logging.INFO,
               'debug': logging.DEBUG}
 
-
+    # Create string with all available logging levels
+    string_of_levels = ''
     for level_name in levels.keys():
-        string_of_levels = string_of_levels + level_name + ','
+        string_of_levels = string_of_levels + level_name + '|'
     string_of_levels = string_of_levels[:-1]
-
 
 
     parser = OptionParser(**kw)
@@ -1299,9 +1294,9 @@ if __name__ == '__main__':
     parser.add_option('--logging_level',
                       action='store', type='string', dest='logging_level',
                       metavar='LOGGING LEVEL',
-                      help='Levels of logging messages:' +
+                      help='logging level:[' +
                       string_of_levels +
-                      '.Default is report',
+                      ']. Default is report',
                       default='report')
 
     opts, args = parser.parse_args(argv[1:])
@@ -1325,7 +1320,7 @@ if __name__ == '__main__':
 
     if opts.clustersize <= 0:
         logging.error('invalid syntax for clustersize'
-                      ',clustersize must be a positive integer')
+                      ', clustersize must be a positive integer')
         sys.exit(error_syntax_clustersize)
 
     if opts.cpu_master <= 0:
