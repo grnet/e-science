@@ -57,7 +57,8 @@ error_get_network_quota = -28
 error_create_network = -29
 error_get_ip = -30
 error_create_server = -31
-error_syntax_auth_url = -32
+error_syntax_auth_token = -32
+error_cluster_corrupt = -33
 error_authentication = -99
 
 
@@ -75,6 +76,8 @@ Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 # Href string characters without IpV4 public network id number
 HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56
 list_of_hosts = []  # List of virtual machine hostnames and their private ips 
+string_of_levels = ''
+
 threadLock = threading.Lock()
 
 
@@ -138,6 +141,9 @@ def destroy_cluster(cluster_name, token):
     for i in servers_to_delete[0]['attachments']:
         if i['OS-EXT-IPS:type'] == 'floating':
             float_ip_to_delete = i['ipv4']
+        else:
+            logging.error(' Cluster [%s] is corrupted', cluster_name)
+            sys.exit(error_cluster_corrupt)
     # Find network to be deleted
     try:
         list_of_networks = nc.list_networks()
@@ -203,23 +209,23 @@ def configuration_bashrc(ssh_client):
     Takes as argument an ssh object returned from establish_connect
     '''
     exec_command(ssh_client, 'echo "export HADOOP_HOME=/usr/local/hadoop"'
-                             ' >> $HOME/.bashrc', 0)
+                             ' >> $HOME/.bashrc')
     exec_command(ssh_client, 'echo "export JAVA_HOME=/usr/lib/jvm/java-7-'
-                             'oracle" >> $HOME/.bashrc', 0)
+                             'oracle" >> $HOME/.bashrc')
     exec_command(ssh_client, 'echo "unalias fs &> /dev/null"'
-                             ' >> $HOME/.bashrc', 0)
-    exec_command(ssh_client, 'echo \'alias fs="hadoop fs"\' >> .bashrc', 0)
+                             ' >> $HOME/.bashrc')
+    exec_command(ssh_client, 'echo \'alias fs="hadoop fs"\' >> .bashrc')
     exec_command(ssh_client, 'echo "unalias hls &> /dev/null"'
-                             ' >> $HOME/.bashrc', 0)
-    exec_command(ssh_client, 'echo \'alias hls="fs -ls"\' >> .bashrc', 0)
+                             ' >> $HOME/.bashrc')
+    exec_command(ssh_client, 'echo \'alias hls="fs -ls"\' >> .bashrc')
     sleep(1)
-    exec_command(ssh_client, 'source ~/.bashrc', 0)
+    exec_command(ssh_client, 'source ~/.bashrc')
     sleep(1)
     exec_command(ssh_client, 'echo "export PATH=$PATH:$HADOOP_HOME/bin"'
-                             ' >> $HOME/.bashrc', 0)
+                             ' >> $HOME/.bashrc')
     exec_command(ssh_client, 'echo "export JAVA_HOME=/usr/lib/jvm/java-7-'
                              'oracle" >>'
-                             ' /usr/local/hadoop/conf/hadoop-env.sh', 0)
+                             ' /usr/local/hadoop/conf/hadoop-env.sh')
 
 
 def get_ready_for_reroute():
@@ -230,13 +236,13 @@ def get_ready_for_reroute():
     ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '',
                                    MASTER_SSH_PORT)
     try:
-        exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv4/ip_forward', 0)
+        exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv4/ip_forward')
         exec_command(ssh_client, 'iptables --table nat --append POSTROUTING '
-                                 '--out-interface eth1 -j MASQUERADE', 0)
+                                 '--out-interface eth1 -j MASQUERADE')
         exec_command(ssh_client, 'iptables --table nat --append POSTROUTING '
-                                 '--out-interface eth2 -j MASQUERADE', 0)
+                                 '--out-interface eth2 -j MASQUERADE')
         exec_command(ssh_client, 'iptables --append FORWARD --in-interface '
-                                 'eth2 -j ACCEPT', 0)
+                                 'eth2 -j ACCEPT')
     finally:
         ssh_client.close()
 
@@ -254,15 +260,15 @@ def reroute_ssh_to_slaves(dport, slave_ip):
     try:
         exec_command(ssh_client, 'iptables -A PREROUTING -t nat -i eth1 -p tcp'
                                  ' --dport '+str(dport)+' -j DNAT --to '
-                                 + slave_ip + ':22', 0)
+                                 + slave_ip + ':22')
         exec_command(ssh_client, 'iptables -A FORWARD -p tcp -d '
-                                 + slave_ip + ' --dport 22 -j ACCEPT', 0)
+                                 + slave_ip + ' --dport 22 -j ACCEPT')
     finally:
         ssh_client.close()
 
     ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', dport)
     try:
-        exec_command(ssh_client, 'route add default gw 192.168.0.2', 0)
+        exec_command(ssh_client, 'route add default gw 192.168.0.2')
 
     finally:
         ssh_client.close()
@@ -364,7 +370,7 @@ def create_multi_hadoop_cluster(server):
         for vm in list_of_hosts:
             if vm['private_ip'] != '192.168.0.2':
                 exec_command(ssh_client, 'ssh-copy-id -i $HOME/.ssh/id_rsa.pub'
-                             ' hduser@'+vm['fqdn'].split('.', 1)[0], 2)
+                            ' hduser@'+vm['fqdn'].split('.', 1)[0], 'ssh_copy_id')
         logging.log(REPORT, " Hadoop is installed and configured")
         format_and_start_hadoop(ssh_client)
         #check_hadoop_cluster_and_run_pi(ssh_client)
@@ -383,10 +389,10 @@ def format_and_start_hadoop(ssh_client):
     '''
     logging.log(REPORT, ' Formating hadoop')
     exec_command(ssh_client, '/usr/local/hadoop/bin/hadoop'
-                             ' namenode -format', 0)
+                             ' namenode -format')
     logging.log(REPORT, ' Starting hadoop')
-    exec_command(ssh_client, '/usr/local/hadoop/bin/start-dfs.sh', 3)
-    exec_command(ssh_client, '/usr/local/hadoop/bin/start-mapred.sh', 0)
+    exec_command(ssh_client, '/usr/local/hadoop/bin/start-dfs.sh', 'ssh_after_hadoop')
+    exec_command(ssh_client, '/usr/local/hadoop/bin/start-mapred.sh')
     logging.log(REPORT, ' Hadoop has started')
 
 
@@ -442,11 +448,11 @@ def check_command_exit_status(ex_status, command):
                     command, ex_status)
 
 
-def exec_command(ssh, command, check_id):
+def exec_command(ssh, command, check_command_id = None ):
     '''
     Calls overloaded exec_command function of the ssh object given
     as argument. Command is the second argument and its a string.
-    check_id is used for commands that need additional input after
+    check_command_id is used for commands that need additional input after
     exec_command, e.g. ssh-keygen needs [enter] to save keys.
     '''
     try:
@@ -454,7 +460,7 @@ def exec_command(ssh, command, check_id):
     except Exception, e:
         logging.exception(e.args)
         raise
-    if check_id == 1:  # For ssh-keygen
+    if check_command_id == 'ssh_keygen':  # For ssh-keygen
         stdin.flush()
         stdin.write('\n')
         stdin.flush()
@@ -464,7 +470,7 @@ def exec_command(ssh, command, check_id):
         ex_status = stdout.channel.recv_exit_status()
         check_command_exit_status(ex_status, command)
 
-    elif check_id == 2:  # For ssh-copy-id
+    elif check_command_id == 'ssh_copy_id':  # For ssh-copy-id
         stdin.flush()
         sleep(3)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
@@ -476,7 +482,7 @@ def exec_command(ssh, command, check_id):
         ex_status = stdout.channel.recv_exit_status()
         check_command_exit_status(ex_status, command)
 
-    elif check_id == 3:  # For ssh to master after starting hadoop
+    elif check_command_id == 'ssh_after_hadoop':  # For ssh to master after starting hadoop
         stdin.flush()
         sleep(10)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
@@ -506,7 +512,7 @@ def install_hadoop(port):
     # Connect as root and install sudo
     ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', port)
     try:
-        exec_command(ssh_client, 'apt-get update;apt-get install sudo', 0)
+        exec_command(ssh_client, 'apt-get update;apt-get install sudo')
 
         install_python_and_java(ssh_client)  # Install java
         add_hduser_disable_ipv6(ssh_client)  # Add hduser and disable ipv6
@@ -532,19 +538,19 @@ def configure_master_slaves(ssh_client):
     The files are $Hadoop_HOME/conf/masters and
     $Hadoop_HOME/conf/slaves.
     '''
-    for vm in list_of_hosts:
-        # Adds fully qualified domain names for master and slaves in
-        # the masters and slaves files in hadoop/conf
-        if vm['private_ip'] == '192.168.0.2':
-            exec_command(ssh_client, 'echo "' + vm['fqdn'].split('.', 1)[0] +
-                                     '"> /usr/local/hadoop/conf/masters', 0)
-        else:
-            exec_command(ssh_client, 'echo "' + vm['fqdn'].split('.', 1)[0] +
-                                     '">> /usr/local/hadoop/conf/slaves', 0)
+    # Adds fully qualified domain names for master in
+    # the masters files in hadoop/conf    
+    exec_command(ssh_client, 'echo "' + list_of_hosts[0]['fqdn'].split('.', 1)[0] +
+                             '"> /usr/local/hadoop/conf/masters')
+    for vm in list_of_hosts[1:]:
+        # Adds fully qualified domain names for slaves in
+        # the slaves files in hadoop/conf
+        exec_command(ssh_client, 'echo "' + vm['fqdn'].split('.', 1)[0] +
+                                 '">> /usr/local/hadoop/conf/slaves')
 
     #  Delete localhost from slaves file
     exec_command(ssh_client, 'sed -i".bak" "1d" /usr/local/hadoop'
-                             '/conf/slaves', 0)
+                             '/conf/slaves')
 
 
 def hadoop_xml_conf(ssh_client):
@@ -600,23 +606,23 @@ def hadoop_xml_conf(ssh_client):
                  r'</configuration>']
 
     # Create a temp directory needed for hadoop and gives nesessary ownership
-    exec_command(ssh_client, 'sudo mkdir -p /app/hadoop/tmp', 0)
-    exec_command(ssh_client, 'sudo chown hduser:hadoop /app/hadoop/tmp', 0)
+    exec_command(ssh_client, 'sudo mkdir -p /app/hadoop/tmp')
+    exec_command(ssh_client, 'sudo chown hduser:hadoop /app/hadoop/tmp')
     # Remove the default xml files
-    exec_command(ssh_client, 'rm -f /usr/local/hadoop/conf/core-site.xml', 0)
-    exec_command(ssh_client, 'rm -f /usr/local/hadoop/conf/mapred-site.xml', 0)
-    exec_command(ssh_client, 'rm -f /usr/local/hadoop/conf/hdfs-site.xml', 0)
+    exec_command(ssh_client, 'rm -f /usr/local/hadoop/conf/core-site.xml')
+    exec_command(ssh_client, 'rm -f /usr/local/hadoop/conf/mapred-site.xml')
+    exec_command(ssh_client, 'rm -f /usr/local/hadoop/conf/hdfs-site.xml')
     # Create and configure the xml files so hadoop
     # can format and start its daemons.
     for l in core_site:
         exec_command(ssh_client, 'echo "'+l+'" >> /usr/local/'
-                                 'hadoop/conf/core-site.xml', 0)
+                                 'hadoop/conf/core-site.xml')
     for l in mapred_site:
         exec_command(ssh_client, 'echo "'+l+'" >> /usr/local'
-                                 '/hadoop/conf/mapred-site.xml', 0)
+                                 '/hadoop/conf/mapred-site.xml')
     for l in hdfs_site:
         exec_command(ssh_client, 'echo "'+l+'" >> /usr/local'
-                                 '/hadoop/conf/hdfs-site.xml', 0)
+                                 '/hadoop/conf/hdfs-site.xml')
 
 
 def configuration_hosts_file(ssh_client):
@@ -627,10 +633,10 @@ def configuration_hosts_file(ssh_client):
     so there can be only one private ip for each virtual machine.
     '''
     for machine in list_of_hosts:
-        exec_command(ssh_client, 'sed -i".bak" "2d" /etc/hosts', 0)
+        exec_command(ssh_client, 'sed -i".bak" "2d" /etc/hosts')
         exec_command(ssh_client, 'echo '
                      '"' + machine['private_ip'] + '     ' +
-                     machine['fqdn'].split('.', 1)[0]+'" >> /etc/hosts', 0)
+                     machine['fqdn'].split('.', 1)[0]+'" >> /etc/hosts')
 
 
 def establish_connect(hostname, name, passwd, port):
@@ -691,35 +697,35 @@ def connect_as_hduser_conf_ssh(ssh_client):
     to hduser.
     '''
 
-    exec_command(ssh_client, 'ssh-keygen -t rsa -P "" ', 1)
+    exec_command(ssh_client, 'ssh-keygen -t rsa -P "" ', 'ssh_keygen')
     exec_command(ssh_client, 'cat /home/hduser/.ssh/id_rsa.pub >> /home/'
-                             'hduser/.ssh/authorized_keys', 0)
+                             'hduser/.ssh/authorized_keys')
 
     exec_command(ssh_client, 'wget www.eu.apache.org/dist/hadoop/common/'
-                             'stable1/hadoop-1.2.1.tar.gz', 0)
-    exec_command(ssh_client, 'sudo tar -xzf $HOME/hadoop-1.2.1.tar.gz', 0)
-    exec_command(ssh_client, 'sudo mv hadoop-1.2.1 /usr/local/hadoop', 0)
+                             'stable1/hadoop-1.2.1.tar.gz')
+    exec_command(ssh_client, 'sudo tar -xzf $HOME/hadoop-1.2.1.tar.gz')
+    exec_command(ssh_client, 'sudo mv hadoop-1.2.1 /usr/local/hadoop')
     exec_command(ssh_client, 'cd /usr/local;sudo chown -R hduser:hadoop'
-                             ' hadoop', 0)
+                             ' hadoop')
 
 
 def install_python_and_java(ssh_client):
     '''Installs oracle java 7'''
     #  exec_command(ssh_client, 'apt-get -y install python-software-'
-    # 'properties', 0)... Python-software-properties was commented out
+    # 'properties')... Python-software-properties was commented out
     exec_command(ssh_client, 'echo "deb http://ppa.launchpad.net/webupd8team/'
                              'java/ubuntu precise main" | tee /etc/apt/sources'
                              '.list.d/webupd8team-java.list;echo "deb-src '
                              'http://ppa.launchpad.net/webupd8team/java/ubuntu'
                              ' precise main" | tee -a /etc/apt/sources.list.d/'
-                             'webupd8team-java.list', 0)
+                             'webupd8team-java.list')
     exec_command(ssh_client, 'apt-key adv --keyserver keyserver.ubuntu.com --'
                              'recv-keys EEA14886;apt-get update;echo oracle-'
                              'java7-installer shared/accepted-oracle-license-'
                              'v1-1 select true | /usr/bin/debconf-set-'
                              'selections;apt-get -y install oracle-java7'
-                             '-installer', 0)
-    exec_command(ssh_client, 'apt-get install oracle-java7-set-default', 0)
+                             '-installer')
+    exec_command(ssh_client, 'apt-get install oracle-java7-set-default')
 
 
 def add_hduser_disable_ipv6(ssh_client):
@@ -730,20 +736,20 @@ def add_hduser_disable_ipv6(ssh_client):
     from establish_connect.
     '''
     exec_command(ssh_client, 'addgroup hadoop;echo "%hadoop ALL=(ALL)'
-                             ' NOPASSWD: ALL " >> /etc/sudoers', 0)
+                             ' NOPASSWD: ALL " >> /etc/sudoers')
     exec_command(ssh_client, 'adduser hduser --disabled-password --gecos "";'
                              'adduser hduser hadoop;echo "hduser:'
-                             + HDUSER_PASS + '" | chpasswd', 0)
+                             + HDUSER_PASS + '" | chpasswd')
     exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv6/conf/all/'
-                             'disable_ipv6', 0)
+                             'disable_ipv6')
     exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv6/conf/default/'
-                             'disable_ipv6', 0)
+                             'disable_ipv6')
     exec_command(ssh_client, 'echo "net.ipv6.conf.all.disable_ipv6 = 1"'
-                             ' >> /etc/sysctl.conf', 0)
+                             ' >> /etc/sysctl.conf')
     exec_command(ssh_client, 'echo "net.ipv6.conf.default.disable_ipv6 = 1"'
-                             ' >> /etc/sysctl.conf', 0)
+                             ' >> /etc/sysctl.conf')
     exec_command(ssh_client, 'echo "net.ipv6.conf.lo.disable_ipv6 = 1"'
-                             ' >> /etc/sysctl.conf', 0)
+                             ' >> /etc/sysctl.conf')
 
 
 def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
@@ -1155,6 +1161,7 @@ def main(opts):
     logging.log(REPORT, ' 1.Credentials  and  Endpoints')
     # Finds user public ssh key
     USER_HOME = os.path.expanduser('~')
+
     pub_keys_path = os.path.join(USER_HOME, ".ssh/id_rsa.pub")
     auth = check_credentials(opts.token, opts.auth_url)
     endpoints, user_id = endpoints_and_user_id(auth)
@@ -1213,6 +1220,20 @@ if __name__ == '__main__':
     kw = {}
     kw['usage'] = '%prog [options]'
     kw['description'] = '%prog deploys a compute cluster on Synnefo w. kamaki'
+
+    levels = {'critical': logging.CRITICAL,
+              'error': logging.ERROR,
+              'warning': logging.WARNING,
+              'report': REPORT,
+              'info': logging.INFO,
+              'debug': logging.DEBUG}
+
+
+    for level_name in levels.keys():
+        string_of_levels = string_of_levels + level_name + ','
+    string_of_levels = string_of_levels[:-1]
+
+
 
     parser = OptionParser(**kw)
     parser.disable_interspersed_args()
@@ -1275,25 +1296,17 @@ if __name__ == '__main__':
     parser.add_option('--logging_level',
                       action='store', type='string', dest='logging_level',
                       metavar='LOGGING LEVEL',
-                      help='Levels of logging messages:critical,'
-                      'error,warning,report,info and debug'
+                      help='Levels of logging messages:' +
+                      string_of_levels +
                       '.Default is report',
                       default='report')
 
     opts, args = parser.parse_args(argv[1:])
     logging.addLevelName(REPORT, "REPORT")
     logger = logging.getLogger("report")
-
-    levels = {'critical': logging.CRITICAL,
-              'error': logging.ERROR,
-              'warning': logging.WARNING,
-              'report': REPORT,
-              'info': logging.INFO,
-              'debug': logging.DEBUG}
-
+    
     #  If clause to catch syntax error in logging argument
-    if opts.logging_level not in ['critical', 'error', 'warning',
-                                  'info', 'report', 'debug']:
+    if opts.logging_level not in levels.keys():
         logging.error('invalid syntax for logging_level')
         sys.exit(error_syntax_logging_level)
 
@@ -1348,6 +1361,6 @@ if __name__ == '__main__':
 
     if not opts.token:
         logging.error('invalid syntax for authentication token')
-        sys.exit(error_syntax_auth_url)
+        sys.exit(error_syntax_auth_token)
 
     main(opts)
