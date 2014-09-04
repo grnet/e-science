@@ -448,7 +448,7 @@ def exec_command(ssh, command, check_command_id = None ):
     except Exception, e:
         logging.exception(e.args)
         raise
-    if check_command_id == 'ssh-keygen':  # For ssh-keygen
+    if check_command_id == 'ssh_keygen':  # For ssh-keygen
         stdin.flush()
         stdin.write('\n')
         stdin.flush()
@@ -458,7 +458,7 @@ def exec_command(ssh, command, check_command_id = None ):
         ex_status = stdout.channel.recv_exit_status()
         check_command_exit_status(ex_status, command)
 
-    elif check_command_id == 'ssh-copy-id':  # For ssh-copy-id
+    elif check_command_id == 'ssh_copy_id':  # For ssh-copy-id
         stdin.flush()
         sleep(3)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
@@ -527,8 +527,8 @@ def configure_master_slaves(ssh_client):
     $Hadoop_HOME/conf/slaves.
     '''
     # Adds fully qualified domain names for master in
-    # the masters files in hadoop/conf	
-	exec_command(ssh_client, 'echo "' + list_of_hosts[0]['fqdn'].split('.', 1)[0] +
+    # the masters files in hadoop/conf    
+    exec_command(ssh_client, 'echo "' + list_of_hosts[0]['fqdn'].split('.', 1)[0] +
                              '"> /usr/local/hadoop/conf/masters')
     for vm in list_of_hosts[1:]:
         # Adds fully qualified domain names for slaves in
@@ -685,7 +685,7 @@ def connect_as_hduser_conf_ssh(ssh_client):
     to hduser.
     '''
 
-    exec_command(ssh_client, 'ssh-keygen -t rsa -P "" ', 'ssh-keygen')
+    exec_command(ssh_client, 'ssh-keygen -t rsa -P "" ', 'ssh_keygen')
     exec_command(ssh_client, 'cat /home/hduser/.ssh/id_rsa.pub >> /home/'
                              'hduser/.ssh/authorized_keys')
 
@@ -1070,8 +1070,6 @@ class Cluster(object):
                 from json import dump
                 dump(servers, f, indent=2)
 
-        for port in self.nc.list_ports():
-            logging.log(REPORT,'port with id %s is %s', port['device_id'], port['status'])
         return servers
 
 
@@ -1151,6 +1149,7 @@ def main(opts):
     logging.log(REPORT, ' 1.Credentials  and  Endpoints')
     # Finds user public ssh key
     USER_HOME = os.path.expanduser('~')
+
     pub_keys_path = os.path.join(USER_HOME, ".ssh/id_rsa.pub")
     auth = check_credentials(opts.token, opts.auth_url)
     endpoints, user_id = endpoints_and_user_id(auth)
@@ -1210,18 +1209,20 @@ if __name__ == '__main__':
     kw['usage'] = '%prog [options]'
     kw['description'] = '%prog deploys a compute cluster on Synnefo w. kamaki'
 
-	levels = {'critical': logging.CRITICAL,
+    levels = {'critical': logging.CRITICAL,
               'error': logging.ERROR,
               'warning': logging.WARNING,
               'report': REPORT,
               'info': logging.INFO,
               'debug': logging.DEBUG}
 
-	for level_name in levels.keys():
-		string_of_levels = string_of_levels + level_name + ','
-	string_of_levels = string_of_levels[:-1]
 
-	
+    for level_name in levels.keys():
+        string_of_levels = string_of_levels + level_name + ','
+    string_of_levels = string_of_levels[:-1]
+
+
+
     parser = OptionParser(**kw)
     parser.disable_interspersed_args()
     parser.add_option('--name',
@@ -1291,7 +1292,7 @@ if __name__ == '__main__':
     opts, args = parser.parse_args(argv[1:])
     logging.addLevelName(REPORT, "REPORT")
     logger = logging.getLogger("report")
-	
+    
     #  If clause to catch syntax error in logging argument
     if opts.logging_level not in levels.keys():
         logging.error('invalid syntax for logging_level')
