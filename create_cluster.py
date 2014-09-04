@@ -312,14 +312,15 @@ def create_multi_hadoop_cluster(server):
     dict_s = {}  # Dictionary that will contain fully qualified domain names
     # and private ips temporarily for each machine. It will be appended
     # each time to list_of_hosts. List_of_hosts is the list that has every
-    #  fqdn and private ip of the virtual machines.
+    #  fqdn and private ip of the virtual machines.Also master's adminPass.
     for s in server:
         if s['name'].split('-')[-1] == '1':  # Master vm
             # Hostname of master is used in every ssh connection.
             # So it is defined as global
             dict_s = {'fqdn': s['SNF:fqdn'], 'private_ip': '192.168.0.2'}
-            global HOSTNAME_MASTER
+            global HOSTNAME_MASTER, HDUSER_PASS
             HOSTNAME_MASTER = s['SNF:fqdn']
+            HDUSER_PASS = s['adminPass']
             list_of_hosts.append(dict_s)
         else:
             # Every slave ip is increased by 1 from the private ip of the
@@ -347,7 +348,7 @@ def create_multi_hadoop_cluster(server):
         t.join(JOIN_THREADS_TIME)
     # Wait for all threads to complete
     ssh_client = establish_connect(HOSTNAME_MASTER, 'hduser',
-                                   'hduserpass', MASTER_SSH_PORT)
+                                   HDUSER_PASS, MASTER_SSH_PORT)
     # Copy ssh public key from master to every slave
     # Needed for passwordless ssh in hadoop
     try:
@@ -459,7 +460,7 @@ def exec_command(ssh, command, check_id):
         sleep(3)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
         sleep(3)  # Sleep is necessary for stdin to read hduser pass
-        stdin.write('hduserpass\n')
+        stdin.write(HDUSER_PASS+'\n')
         stdin.flush()
         logging.debug('%s %s', stdout.read(), stderr.read())
         # get exit status of command executed and check it with check_command
@@ -504,7 +505,7 @@ def install_hadoop(port):
     finally:
         ssh_client.close()
 
-    ssh_client = establish_connect(HOSTNAME_MASTER, 'hduser', 'hduserpass',
+    ssh_client = establish_connect(HOSTNAME_MASTER, 'hduser', HDUSER_PASS,
                                    port)  # Reconnect as hduser
     try:
         connect_as_hduser_conf_ssh(ssh_client)
@@ -643,12 +644,12 @@ def establish_connect(hostname, name, passwd, port):
         response = os.system("ping -c1 -w4 " + hostname + " > /dev/null 2>&1")
         if response == 0:
             try:
-                logging.log(REPORT, ' Pinged %s machine,trying to ssh connect',
-                            hostname)
+                logging.log(REPORT, ' Pinged %s machine,trying to ssh connect'
+                            ' at port %s', hostname, port)
                 ssh.connect(hostname, username=name, password=passwd,
                             port=port)
                 logging.log(REPORT, " Success in ssh connect as %s to %s"
-                            "at port %s", name, hostname, str(port))
+                            " at port %s", name, hostname, str(port))
                 return ssh
             except Exception, e:
                 logging.warning(e.args)
@@ -661,7 +662,7 @@ def establish_connect(hostname, name, passwd, port):
         else:
             if i > CONNECTION_TRIES:
                 break
-            logging.warning('Cannot ping %s machine in port %s, trying again',
+            logging.warning('Cannot ping %s machine at port %s, trying again',
                             hostname, str(port))
             i = i+1
             sleep(1)
@@ -722,8 +723,8 @@ def add_hduser_disable_ipv6(ssh_client):
     exec_command(ssh_client, 'addgroup hadoop;echo "%hadoop ALL=(ALL)'
                              ' NOPASSWD: ALL " >> /etc/sudoers', 0)
     exec_command(ssh_client, 'adduser hduser --disabled-password --gecos "";'
-                             'adduser hduser hadoop;echo "hduser:hduserpass" |'
-                             ' chpasswd', 0)
+                             'adduser hduser hadoop;echo "hduser:'
+                             + HDUSER_PASS + '" | chpasswd', 0)
     exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv6/conf/all/'
                              'disable_ipv6', 0)
     exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv6/conf/default/'
@@ -954,6 +955,7 @@ class Cluster(object):
                     self.size, self.prefix)
         servers = []
         empty_ip_list = []
+        list_of_ports = []
         date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         count = 0
         # Names the master machine with a timestamp and a prefix name
@@ -1050,7 +1052,11 @@ class Cluster(object):
                             servers[i]['name'], new_status)
                 port_details = self.nc.create_port(new_network['id'],
                                                    servers[i]['id'])
-                self.nc.wait_port(port_details['id'], max_wait=300)
+                list_of_ports.append(port_details)
+
+            for port_details in list_of_ports:
+                if port_details['status'] == 'BUILD':
+                    self.nc.wait_port(port_details['id'], max_wait=300)
         except Exception:
             logging.exception('Error in finalizing cluster creation')
             sys.exit(error_create_server)
@@ -1060,6 +1066,9 @@ class Cluster(object):
             with open(abspath(server_log_path), 'w+') as f:
                 from json import dump
                 dump(servers, f, indent=2)
+
+        for port in self.nc.list_ports():
+            logging.log(REPORT,'port with id %s is %s', port['device_id'], port['status'])
         return servers
 
 
@@ -1183,7 +1192,8 @@ def main(opts):
     server = cluster.create('', pub_keys_path, '')
     sleep(60)  # Sleep to wait for virtual machines become pingable
     logging.log(REPORT, ' 3.Create Hadoop cluster')
-    create_multi_hadoop_cluster(server)  # Start the hadoop installation
+    # Start the hadoop installation
+    create_multi_hadoop_cluster(server)
     # Start cluster deleting
     # logging.log(REPORT, ' 4.Destroying Hadoop cluster')
     # destroy_cluster(server[0]['name'].rsplit('-', 1)[0], opts.token)
