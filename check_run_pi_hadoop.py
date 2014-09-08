@@ -8,75 +8,52 @@ This script checks a hadoop cluster and run a pi job in ~okeanos.
 '''
 import create_cluster
 from create_cluster import *
-import subprocess
 
 
-'''def test_run_pi_2_10000():
-
-    name = 'snf-581845.vm.okeanos.grnet.gr'
+def test_run_pi():
+    '''
+    Test that runs two pi jobs with different arguments on
+    an existing hadoop cluster.
+    '''
+    name = 'snf-582584.vm.okeanos.grnet.gr'
     assert check_hadoop_cluster_and_run_pi(name, 2, 10000) == \
         3.14280000000000000000
+    assert check_hadoop_cluster_and_run_pi(name, 10, 1000000) == \
+        3.14158440000000000000
 
 
-def test_run_pi_2_100000():
-
-    name = 'snf-580910.vm.okeanos.grnet.gr'
+def test_create_cluster_check_pi():
+    '''
+    Test that calls create_cluster and then tests it with pi job. Pi is
+    called with different first argument the second time.
+    '''
+    os.system('kamaki user authenticate > ' + FILE_KAMAKI)
+    output = subprocess.check_output("awk '/expires/{getline; print}' "
+                                     + FILE_KAMAKI, shell=True)
+    token = output.replace(" ", "")[3:-1]
+    name = create_cluster('hadoop', 4, 4, 4096, 20,
+                          'ext_vlmc', 4, 4096, 20, token,
+                          'Debian Base')
     assert check_hadoop_cluster_and_run_pi(name, 2, 100000) == \
         3.14118000000000000000
 
-
-def test_run_pi_10_100000():
-
-    name = 'snf-580910.vm.okeanos.grnet.gr'
     assert check_hadoop_cluster_and_run_pi(name, 10, 100000) == \
-        3.14155200000000000000'''
-
-
-def test_create_cluster_low():
-
-    os.system('kamaki user authenticate > ' + FILE_KAMAKI)
-    output = subprocess.check_output("awk '/expires/{getline; print}' " + FILE_KAMAKI, shell=True)
-    token = output.replace(" ", "")[3:-1]
-    assert create_cluster('hadoop', 3, 2, 1024, 5,
-                          'ext_vlmc', 2, 512, 5, token,
-                          'Debian Base') == 3.14280000000000000000
-
-
-'''def test_create_cluster_medium():
-
-    os.system('kamaki user authenticate > ' + FILE_KAMAKI)
-    output = subprocess.check_output("awk '/expires/{getline; print}' " + FILE_KAMAKI, shell=True)
-    token = output.replace(" ", "")[3:-1]
-    assert create_cluster('hadoop', 4, 4, 4096, 20,
-                          'ext_vlmc', 4, 4096, 20, token,
-                          'Debian Base') == 3.14280000000000000000'''
-
-
-'''def test_create_cluster_high():
-
-    os.system('kamaki user authenticate > ' + FILE_KAMAKI)
-    output = subprocess.check_output("awk '/expires/{getline; print}' " + FILE_KAMAKI, shell=True)
-    token = output.replace(" ", "")[3:-1]
-    assert create_cluster('hadoop', 9, 4, 4096, 20,
-                          'ext_vlmc', 2, 2048, 20, token,
-                          'Debian Base') == 3.14280000000000000000'''
-
+        3.14155200000000000000
 
 
 def main(opts):
     '''
-    The main function first establish ssh connection and then calls
-    check_hadoop_cluster_and_run_pi.
+    The main function calls check_hadoop_cluster_and_run_pi with
+    arguments given in command line.
     '''
-    check_hadoop_cluster_and_run_pi('snf-581716.vm.okeanos.grnet.gr',
-                                    2, 10000)
+    check_hadoop_cluster_and_run_pi(opts.name, opts.pi_first, opts.pi_second)
 
 
 if __name__ == '__main__':
 
     kw = {}
     kw['usage'] = '%prog [options]'
-    kw['description'] = '%prog checks a hadoop cluster and runs a job on' \
+    kw['description'] = '%prog checks a hadoop cluster and runs a pi job on' \
                         'Synnefo w. kamaki'
 
     parser = OptionParser(**kw)
@@ -86,12 +63,12 @@ if __name__ == '__main__':
                       metavar="MASTER NODE NAME",
                       help='The fully qualified domain name of master node')
     parser.add_option('--pi_first',
-                      action='store', type='int', dest='pifirst',
+                      action='store', type='int', dest='pi_first',
                       metavar='PI FIRST ARG',
                       help='pi job first argument.Default is 2',
                       default=2)
     parser.add_option('--pi_second',
-                      action='store', type='int', dest='pisec',
+                      action='store', type='int', dest='pi_second',
                       metavar='PI SECOND ARG',
                       help='pi job second argument.Defaut is 10000',
                       default=10000)

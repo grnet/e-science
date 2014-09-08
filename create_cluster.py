@@ -27,6 +27,8 @@ import nose
 import threading
 import logging
 import re
+import subprocess
+import string
 
 # Definitions of return value errors
 error_syntax_clustersize = -1
@@ -67,6 +69,7 @@ error_authentication = -99
 # Global constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
 CHAN_TIMEOUT = 360  # Paramiko channel timeout
+CHAN_TIMEOUT_HADOOP = 1000  # Paramiko channel timeout for hadoop wordcount job
 JOIN_THREADS_TIME = 1000  # Time to wait for threads to join
 ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
 CONNECTION_TRIES = 9    # Max number(+1) of connection attempts to a VM
@@ -75,11 +78,72 @@ Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56  # IpV4 public network id offset
 list_of_hosts = []  # List of dicts wit VM hostnames and their private IPs
-FILENAME = 'temp_file.txt'
-FILE_KAMAKI = 'kamaki_info.txt'
+PITHOS_FILE = 'elwiki-20140818-pages-meta-current-5000000.xml'  # WordCountFile
+FILENAME = 'temp_file.txt'  # File used from pi function to write stdout
+FILE_KAMAKI = 'kamaki_info.txt'  # File to write kamaki info and retrieve token
 
 # Global variables
 threadLock = threading.Lock()  # Declare thread lock
+
+
+def wordcount_hadoop(name):
+    '''
+    Connect as root to master node and download kamaki and needed dependencies.
+    Then, connect as hduser, setup kamaki, download file from pithos and
+    run a wordcount job with it. Return the number of times string !important
+    is appearing in the output file.
+    '''
+    ssh_client = establish_connect(name, 'root', '', 22)
+    # Download and install kamaki
+    exec_command(ssh_client, 'echo "deb http://apt.dev.grnet.gr wheezy/"'
+                 ' >> /etc/apt/sources.list')
+    exec_command(ssh_client, 'apt-get -y install curl')
+    exec_command(ssh_client, 'curl https://dev.grnet.gr/files/'
+                 'apt-grnetdev.pub|apt-key add - ')
+    exec_command(ssh_client, 'apt-get update')
+    exec_command_hadoop(ssh_client, 'apt-get -y install kamaki')
+    ssh_client.close()
+
+    os.system('kamaki user authenticate > ' + FILE_KAMAKI)
+    output = subprocess.check_output("awk '/expires/{getline; print}' "
+                                     + FILE_KAMAKI, shell=True)
+    token = output.replace(" ", "")[3:-1]
+
+    auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
+
+    hduser_pass = get_hduser_pass()
+    ssh_client = establish_connect(name, 'hduser', hduser_pass, 22)
+    # kamaki setup from hduser and download file from pithos
+    exec_command(ssh_client, 'kamaki config set cloud.hduser.url ' + auth_url)
+    exec_command(ssh_client, 'kamaki config set cloud.hduser.token ' + token,
+                 'hide_output')
+
+    exec_command_hadoop(ssh_client, 'kamaki file download WordCount/'
+                        + PITHOS_FILE, extend_timeout=True)
+
+    # Perform WordCount job
+
+    exec_command(ssh_client, '/usr/local/hadoop/bin/hadoop dfs -mkdir '
+                 '/hdfs/input')
+    exec_command_hadoop(ssh_client, '/usr/local/hadoop/bin/hadoop dfs '
+                        '-copyFromLocal ' + PITHOS_FILE + ' /hdfs/input',
+                        extend_timeout=True)
+    exec_command_hadoop(ssh_client, '/usr/local/hadoop/bin/hadoop jar '
+                        '/usr/local/hadoop/hadoop-examples-1.*.jar wordcount '
+                        '/hdfs/input /hdfs/output', extend_timeout=True)
+    exec_command(ssh_client, '/usr/local/hadoop/bin/hadoop fs -copyToLocal '
+                 '/hdfs/output/ $HOME/')
+
+    # Find number of times that string [!important] appeared in the pithos file
+    command = "cd output;grep -m 1 'important' p*"
+    stdin, stdout, stderr = ssh_client.exec_command(command, get_pty=True)
+    stdout_hadoop = stdout.read()
+    # Replace /t/r/n characters and remove spaces
+    line = stdout_hadoop.translate(string.maketrans("\n\t\r", "   "))
+    to_return_value = line.replace(" ", "")
+    ssh_client.close()
+    # Return the value
+    return int(to_return_value[-2:])
 
 
 def check_string(to_check_file, to_find_str):
@@ -110,20 +174,33 @@ def get_hduser_pass():
     return hduser_pass
 
 
-def exec_command_hadoop(ssh_client, command):
+def exec_command_hadoop(ssh_client, command, extend_timeout=False):
     '''
     exec_command for the check_hadoop_cluster, run_pi and wordcount.
     This one is used because for these methods we want to see the output
-    in report logging level and not in debug.
+    in report logging level and not in debug. Also wordcount increases
+    the channel timeout because the command takes more time than every
+    other command of the script.
     '''
     try:
-        stdin, stdout, stderr = ssh_client.exec_command(command, get_pty=True)
-        stdout_hadoop = stdout.read()
+        if extend_timeout:
+            # This is only for wordcount commands that need bigger timeout
+            stdin, stdout, stderr = ssh_client.exec_command(command,
+                                                            get_pty=True,
+                                        chan_timeout=CHAN_TIMEOUT_HADOOP)   
+            stdout_hadoop = stdout.read()
+        else:
+            # This is for every other command of pi and wordcount
+            stdin, stdout, stderr = ssh_client.exec_command(command,
+                                                            get_pty=True)
+            stdout_hadoop = stdout.read()
+            # For pi command. Writes stdout to a file so we get the pi value
+            if " pi " in command:
+                with open(FILENAME, 'w') as file_out:
+                    file_out.write(stdout_hadoop)
     except Exception, e:
         logging.exception(e.args)
         raise
-    with open(FILENAME, 'w') as file_out:
-        file_out.write(stdout_hadoop)
     logging.log(REPORT, '%s %s', stdout_hadoop, stderr.read())
     ex_status = stdout.channel.recv_exit_status()
     check_command_exit_status(ex_status, command)
@@ -221,7 +298,7 @@ def destroy_cluster(cluster_name, token):
 
     try:
         nc.delete_network(network_to_delete_id)
-        sleep(10) # Take some time to ensure it is deleted
+        sleep(10)  # Take some time to ensure it is deleted
         logging.log(REPORT, ' Network [%s] is deleted' %
                             net_work['name'])
     except Exception:
@@ -339,7 +416,8 @@ class myThread (threading.Thread):
 
 class mySSHClient(paramiko.SSHClient):
     '''Class that inherits paramiko SSHClient'''
-    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False):
+    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False,
+                     chan_timeout=CHAN_TIMEOUT):
         '''
         Overload paramiko exec_command by adding a timeout.
         Timeout is needed because script hangs when there is not an answer
@@ -348,7 +426,7 @@ class mySSHClient(paramiko.SSHClient):
         chan = self._transport.open_session()
         if get_pty:
             chan.get_pty()
-        chan.settimeout(CHAN_TIMEOUT)  # Add a timeout to the exec_command
+        chan.settimeout(chan_timeout)  # Add a timeout to the exec_command
         chan.exec_command(command)
         stdin = chan.makefile('wb', bufsize)
         stdout = chan.makefile('r', bufsize)
@@ -416,7 +494,6 @@ def create_multi_hadoop_cluster(server):
                              'ssh_copy_id')
         logging.log(REPORT, " Hadoop is installed and configured")
         format_and_start_hadoop(ssh_client)
-        return check_hadoop_cluster_and_run_pi(HOSTNAME_MASTER)
     except Exception, e:
         logging.error(e.args)
         sys.exit(error_ssh_copyid_format_start_hadoop)
@@ -492,7 +569,7 @@ def check_command_exit_status(ex_status, command):
                     command, ex_status)
 
 
-def exec_command(ssh, command, check_command_id = None ):
+def exec_command(ssh, command, check_command_id =None):
     '''
     Calls overloaded exec_command function of the ssh object given
     as argument. Command is the second argument and its a string.
@@ -526,7 +603,8 @@ def exec_command(ssh, command, check_command_id = None ):
         ex_status = stdout.channel.recv_exit_status()
         check_command_exit_status(ex_status, command)
 
-    elif check_command_id == 'ssh_after_hadoop':  # For ssh to master after starting hadoop
+        # For ssh to master after starting hadoop
+    elif check_command_id == 'ssh_after_hadoop':
         stdin.flush()
         sleep(10)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
@@ -536,16 +614,17 @@ def exec_command(ssh, command, check_command_id = None ):
         ex_status = stdout.channel.recv_exit_status()
         check_command_exit_status(ex_status, command)
 
-    elif check_command_id == 'hide_output':  # Hide password command
+        # Hide password and token from stdout
+    elif check_command_id == 'hide_output':
         stdin.flush()
         stdout_hadoop, stderr_hadoop = stdout.read(), stderr.read()
         stdin.flush()
         ex_status = stdout.channel.recv_exit_status()
         if ex_status != 0:
-            logging.error('chpasswd failed to execute with exit status: %d',
+            logging.error('Command failed to execute with exit status: %d',
                           ex_status)
             logging.error('Program shutting down')
-            msg = 'chpasswd failed with exit status: %d'\
+            msg = 'Command failed with exit status: %d'\
                   % ex_status
             raise RuntimeError(msg)
     else:
@@ -1215,8 +1294,7 @@ def create_cluster(name, clustersize, cpu_master, ram_master, disk_master,
     flavor_ids from the arguments given and finds the image id of the
     image given as argument. Then instantiates the Cluster and creates
     the virtual machine cluster of one master and clustersize-1 slaves.
-    Calls the function to install hadoop to the cluster and returns
-    the value returned from check_hadoop_cluster_and_run_pi.
+    Calls the function to install hadoop to the cluster.
     '''
     logging.log(REPORT, ' 1.Credentials  and  Endpoints')
     # Finds user public ssh key
@@ -1267,13 +1345,15 @@ def create_cluster(name, clustersize, cpu_master, ram_master, disk_master,
     sleep(20)  # Sleep to wait for virtual machines become pingable
     logging.log(REPORT, ' 3.Create Hadoop cluster')
     # Start Hadoop installation
-    pi_value = create_multi_hadoop_cluster(server)
-    return pi_value
+    create_multi_hadoop_cluster(server)
+    # Return master node fully qualified domain name
+    return HOSTNAME_MASTER
 
 
 def main(opts):
     '''
-    The main function calls
+    The main function calls create_cluster with the arguments given from
+    command line.
     '''
     create_cluster(opts.name, opts.clustersize, opts.cpu_master,
                    opts.ram_master, opts.disk_master, opts.disk_template,
