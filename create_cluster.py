@@ -26,9 +26,12 @@ import os
 import nose
 import threading
 import logging
+import re
+import subprocess
+import string
 
 # Definitions of return value errors
-error_syntax_clustersize = -1  
+error_syntax_clustersize = -1
 error_syntax_cpu_master = -2
 error_syntax_ram_master = -3
 error_syntax_disk_master = -4
@@ -63,47 +66,69 @@ error_syntax_auth_token = -32
 error_cluster_corrupt = -33
 error_authentication = -99
 
-#Global constants
+# Global constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
 CHAN_TIMEOUT = 360  # Paramiko channel timeout
+CHAN_TIMEOUT_HADOOP = 1000  # Paramiko channel timeout for hadoop wordcount job
 JOIN_THREADS_TIME = 1000  # Time to wait for threads to join
 ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
 CONNECTION_TRIES = 9    # Max number(+1) of connection attempts to a VM
 REPORT = 25  # Define logging level of REPORT
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
-HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56 # IpV4 public network id offset
-list_of_hosts = []  # List of dicts wit VM hostnames and their private IPs 
+HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56  # IpV4 public network id offset
+list_of_hosts = []  # List of dicts wit VM hostnames and their private IPs
+PITHOS_FILE = 'elwiki-20140818-pages-meta-current-5000000.xml'  # WordCountFile
+FILE_RUN_PI = 'temp_file.txt'  # File used from pi function to write stdout
+FILE_KAMAKI = 'kamaki_info.txt'  # File to write kamaki info and retrieve token
 
-#Global variables
-threadLock = threading.Lock() # Declare thread lock
+# Global variables
+threadLock = threading.Lock()  # Declare thread lock
 
 
-def exec_command_hadoop(ssh_client, command):
+def get_hduser_pass():
     '''
-    exec_command for the check_hadoop_cluster, run_pi and wordcount.
+    Create the password of Hadoop user.
+    Password is the first 24 characters of user's
+    private public key.
+    '''
+    USER_HOME = os.path.expanduser('~')
+    key_path = os.path.join(USER_HOME, ".ssh/id_rsa")
+    with open(key_path, 'r') as f:
+        hduser_pass = f.readlines()[2][0:25]
+    return hduser_pass
+
+
+def exec_command_hadoop(ssh_client, command, extend_timeout=False):
+    '''
+    exec_command for the run_pi_hadoop and run_wordcount_hadoop.
     This one is used because for these methods we want to see the output
-    in report logging level and not in debug.
+    in report logging level and not in debug. Also wordcount increases
+    the channel timeout because the command takes more time than every
+    other command of the script.
     '''
     try:
-        stdin, stdout, stderr = ssh_client.exec_command(command, get_pty=True)
+        if extend_timeout:
+            # This is only for wordcount commands that need bigger timeout
+            stdin, stdout, stderr = ssh_client.exec_command(command,
+                                                            get_pty=True,
+                                        chan_timeout=CHAN_TIMEOUT_HADOOP)
+            stdout_hadoop = stdout.read()
+        else:
+            # This is for every other command of pi and wordcount
+            stdin, stdout, stderr = ssh_client.exec_command(command,
+                                                            get_pty=True)
+            stdout_hadoop = stdout.read()
+            # For pi command. Writes stdout to a file so we get the pi value
+            if " pi " in command:
+                with open(FILE_RUN_PI, 'w') as file_out:
+                    file_out.write(stdout_hadoop)
     except Exception, e:
         logging.exception(e.args)
         raise
-    logging.log(REPORT, '%s %s', stdout.read(), stderr.read())
+    logging.log(REPORT, '%s %s', stdout_hadoop, stderr.read())
     ex_status = stdout.channel.recv_exit_status()
     check_command_exit_status(ex_status, command)
-
-
-def check_hadoop_cluster_and_run_pi(ssh_client, pi_map=2, pi_sec=10000):
-    '''Checks Hadoop cluster health and runs a pi job'''
-    logging.log(REPORT, 'Checking Hadoop cluster')
-    command = '/usr/local/hadoop/bin/hadoop dfsadmin -report'
-    exec_command_hadoop(ssh_client, command)
-    logging.log(REPORT, 'Running pi job')
-    command = '/usr/local/hadoop/bin/hadoop jar' \
-              ' /usr/local/hadoop/hadoop-examples-1.2.1.jar pi '+str(pi_map)+' '+str(pi_sec)
-    exec_command_hadoop(ssh_client, command)
 
 
 def destroy_cluster(cluster_name, token):
@@ -179,7 +204,7 @@ def destroy_cluster(cluster_name, token):
 
     try:
         nc.delete_network(network_to_delete_id)
-        sleep(10) # Take some time to ensure it is deleted
+        sleep(10)  # Take some time to ensure it is deleted
         logging.log(REPORT, ' Network [%s] is deleted' %
                             net_work['name'])
     except Exception:
@@ -297,7 +322,8 @@ class myThread (threading.Thread):
 
 class mySSHClient(paramiko.SSHClient):
     '''Class that inherits paramiko SSHClient'''
-    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False):
+    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False,
+                     chan_timeout=CHAN_TIMEOUT):
         '''
         Overload paramiko exec_command by adding a timeout.
         Timeout is needed because script hangs when there is not an answer
@@ -306,7 +332,7 @@ class mySSHClient(paramiko.SSHClient):
         chan = self._transport.open_session()
         if get_pty:
             chan.get_pty()
-        chan.settimeout(CHAN_TIMEOUT)  # Add a timeout to the exec_command
+        chan.settimeout(chan_timeout)  # Add a timeout to the exec_command
         chan.exec_command(command)
         stdin = chan.makefile('wb', bufsize)
         stdout = chan.makefile('r', bufsize)
@@ -335,7 +361,7 @@ def create_multi_hadoop_cluster(server):
             dict_s = {'fqdn': s['SNF:fqdn'], 'private_ip': '192.168.0.2'}
             global HOSTNAME_MASTER, HDUSER_PASS
             HOSTNAME_MASTER = s['SNF:fqdn']
-            HDUSER_PASS = s['adminPass']
+            HDUSER_PASS = get_hduser_pass()
             list_of_hosts.append(dict_s)
         else:
             # Every slave ip is increased by 1 from the private ip of the
@@ -370,10 +396,10 @@ def create_multi_hadoop_cluster(server):
         for vm in list_of_hosts:
             if vm['private_ip'] != '192.168.0.2':
                 exec_command(ssh_client, 'ssh-copy-id -i $HOME/.ssh/id_rsa.pub'
-                            ' hduser@'+vm['fqdn'].split('.', 1)[0], 'ssh_copy_id')
+                             ' hduser@'+vm['fqdn'].split('.', 1)[0],
+                             'ssh_copy_id')
         logging.log(REPORT, " Hadoop is installed and configured")
         format_and_start_hadoop(ssh_client)
-        #check_hadoop_cluster_and_run_pi(ssh_client)
     except Exception, e:
         logging.error(e.args)
         sys.exit(error_ssh_copyid_format_start_hadoop)
@@ -391,7 +417,8 @@ def format_and_start_hadoop(ssh_client):
     exec_command(ssh_client, '/usr/local/hadoop/bin/hadoop'
                              ' namenode -format')
     logging.log(REPORT, ' Starting hadoop')
-    exec_command(ssh_client, '/usr/local/hadoop/bin/start-dfs.sh', 'ssh_after_hadoop')
+    exec_command(ssh_client, '/usr/local/hadoop/bin/start-dfs.sh',
+                 'ssh_after_hadoop')
     exec_command(ssh_client, '/usr/local/hadoop/bin/start-mapred.sh')
     logging.log(REPORT, ' Hadoop has started')
 
@@ -448,7 +475,7 @@ def check_command_exit_status(ex_status, command):
                     command, ex_status)
 
 
-def exec_command(ssh, command, check_command_id = None ):
+def exec_command(ssh, command, check_command_id =None):
     '''
     Calls overloaded exec_command function of the ssh object given
     as argument. Command is the second argument and its a string.
@@ -482,7 +509,8 @@ def exec_command(ssh, command, check_command_id = None ):
         ex_status = stdout.channel.recv_exit_status()
         check_command_exit_status(ex_status, command)
 
-    elif check_command_id == 'ssh_after_hadoop':  # For ssh to master after starting hadoop
+        # For ssh to master after starting hadoop
+    elif check_command_id == 'ssh_after_hadoop':
         stdin.flush()
         sleep(10)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
@@ -492,6 +520,19 @@ def exec_command(ssh, command, check_command_id = None ):
         ex_status = stdout.channel.recv_exit_status()
         check_command_exit_status(ex_status, command)
 
+        # Hide password and token from stdout
+    elif check_command_id == 'hide_output':
+        stdin.flush()
+        stdout_hadoop, stderr_hadoop = stdout.read(), stderr.read()
+        stdin.flush()
+        ex_status = stdout.channel.recv_exit_status()
+        if ex_status != 0:
+            logging.error('Command failed to execute with exit status: %d',
+                          ex_status)
+            logging.error('Program shutting down')
+            msg = 'Command failed with exit status: %d'\
+                  % ex_status
+            raise RuntimeError(msg)
     else:
         logging.debug('%s %s', stdout.read(), stderr.read())
         # get exit status of command executed and check it with check_command
@@ -539,7 +580,7 @@ def configure_master_slaves(ssh_client):
     $Hadoop_HOME/conf/slaves.
     '''
     # Adds fully qualified domain names for master in
-    # the masters files in hadoop/conf    
+    # the masters files in hadoop/conf
     exec_command(ssh_client, 'echo "' + list_of_hosts[0]['fqdn'].split('.', 1)[0] +
                              '"> /usr/local/hadoop/conf/masters')
     for vm in list_of_hosts[1:]:
@@ -739,7 +780,7 @@ def add_hduser_disable_ipv6(ssh_client):
                              ' NOPASSWD: ALL " >> /etc/sudoers')
     exec_command(ssh_client, 'adduser hduser --disabled-password --gecos "";'
                              'adduser hduser hadoop;echo "hduser:'
-                             + HDUSER_PASS + '" | chpasswd')
+                             + HDUSER_PASS + '" | chpasswd', 'hide_output')
     exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv6/conf/all/'
                              'disable_ipv6')
     exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv6/conf/default/'
@@ -1149,28 +1190,31 @@ def check_quota(auth, req_quotas):
     return
 
 
-def main(opts):
+def create_cluster(name, clustersize, cpu_master, ram_master, disk_master,
+                   disk_template, cpu_slave, ram_slave, disk_slave, token,
+                   image, auth_url='https://accounts.okeanos.grnet.gr'
+                   '/identity/v2.0'):
     '''
-    The main function of our script takes the arguments given and calls the
+    This function of our script takes the arguments given and calls the
     check_quota function. Also, calls get_flavor_id to find the matching
     flavor_ids from the arguments given and finds the image id of the
     image given as argument. Then instantiates the Cluster and creates
     the virtual machine cluster of one master and clustersize-1 slaves.
-    Calls the function to install hadoop to the cluster
+    Calls the function to install hadoop to the cluster.
     '''
     logging.log(REPORT, ' 1.Credentials  and  Endpoints')
     # Finds user public ssh key
     USER_HOME = os.path.expanduser('~')
 
     pub_keys_path = os.path.join(USER_HOME, ".ssh/id_rsa.pub")
-    auth = check_credentials(opts.token, opts.auth_url)
+    auth = check_credentials(token, auth_url)
     endpoints, user_id = endpoints_and_user_id(auth)
-    cyclades = init_cyclades(endpoints['cyclades'], opts.token)
-    flavor_master = get_flavor_id(opts.cpu_master, opts.ram_master,
-                                  opts.disk_master, opts.disk_template,
+    cyclades = init_cyclades(endpoints['cyclades'], token)
+    flavor_master = get_flavor_id(cpu_master, ram_master,
+                                  disk_master, disk_template,
                                   cyclades)
-    flavor_slaves = get_flavor_id(opts.cpu_slave, opts.ram_slave,
-                                  opts.disk_slave, opts.disk_template,
+    flavor_slaves = get_flavor_id(cpu_slave, ram_slave,
+                                  disk_slave, disk_template,
                                   cyclades)
     if flavor_master == 0 or flavor_slaves == 0:
         logging.error('Combination of cpu, ram, disk and disk_template do'
@@ -1178,29 +1222,29 @@ def main(opts):
 
         sys.exit(error_flavor_id)
     # Total cpu,ram and disk needed for cluster
-    cpu = opts.cpu_master + (opts.cpu_slave)*(opts.clustersize-1)
-    ram = opts.ram_master + (opts.ram_slave)*(opts.clustersize-1)
-    cyclades_disk = opts.disk_master + (opts.disk_slave)*(opts.clustersize-1)
+    cpu = cpu_master + (cpu_slave)*(clustersize-1)
+    ram = ram_master + (ram_slave)*(clustersize-1)
+    cyclades_disk = disk_master + (disk_slave)*(clustersize-1)
     # The resources requested by user in a dictionary
     req_quotas = {'cpu': cpu, 'ram': ram, 'cyclades_disk': cyclades_disk,
-                  'vms': opts.clustersize}
+                  'vms': clustersize}
     check_quota(auth, req_quotas)
-    plankton = init_plankton(endpoints['plankton'], opts.token)
+    plankton = init_plankton(endpoints['plankton'], token)
     list_current_images = plankton.list_public(True, 'default')
     # Find image id of the arg given
     for lst in list_current_images:
-        if lst['name'] == opts.image:
+        if lst['name'] == image:
             chosen_image = lst
 
     logging.log(REPORT, ' 2.Create  virtual  cluster')
     cluster = Cluster(cyclades,
-                      prefix=opts.name,
+                      prefix=name,
                       flavor_id_master=flavor_master,
                       flavor_id_slave=flavor_slaves,
                       image_id=chosen_image['id'],
-                      size=opts.clustersize,
+                      size=clustersize,
                       net_client=init_cyclades_netclient(endpoints['network'],
-                                                         opts.token),
+                                                         token),
                       auth_cl=auth)
 
     server = cluster.create('', pub_keys_path, '')
@@ -1208,8 +1252,19 @@ def main(opts):
     logging.log(REPORT, ' 3.Create Hadoop cluster')
     # Start Hadoop installation
     create_multi_hadoop_cluster(server)
-    
+    # Return master node fully qualified domain name
+    return HOSTNAME_MASTER
 
+
+def main(opts):
+    '''
+    The main function calls create_cluster with the arguments given from
+    command line.
+    '''
+    create_cluster(opts.name, opts.clustersize, opts.cpu_master,
+                   opts.ram_master, opts.disk_master, opts.disk_template,
+                   opts.cpu_slave, opts.ram_slave, opts.disk_slave,
+                   opts.token, opts.image, opts.auth_url)
 
 if __name__ == '__main__':
 
@@ -1231,7 +1286,6 @@ if __name__ == '__main__':
     for level_name in levels.keys():
         string_of_levels = string_of_levels + level_name + '|'
     string_of_levels = string_of_levels[:-1]
-
 
     parser = OptionParser(**kw)
     parser.disable_interspersed_args()
@@ -1302,7 +1356,7 @@ if __name__ == '__main__':
     opts, args = parser.parse_args(argv[1:])
     logging.addLevelName(REPORT, "REPORT")
     logger = logging.getLogger("report")
-    
+
     #  If clause to catch syntax error in logging argument
     if opts.logging_level not in levels.keys():
         logging.error('invalid syntax for logging_level')
