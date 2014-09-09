@@ -50,7 +50,7 @@ def test_run_pi():
     Test that runs two pi jobs with different arguments on
     an existing hadoop cluster.
     '''
-    name = 'snf-583127.vm.okeanos.grnet.gr'
+    name = 'xxx'
     assert run_pi_hadoop(name, 2, 10000) == 3.14280000000000000000
     assert run_pi_hadoop(name, 10, 1000000) == 3.14158440000000000000
 

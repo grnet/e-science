@@ -85,7 +85,7 @@ def test_wordcount():
     Test that runs wordcount job on an existing hadoop cluster.
     Must define existing fqdn of the master node.
     '''
-    name = 'snf-583127.vm.okeanos.grnet.gr'
+    name = 'xxx'
     assert run_wordcount_hadoop(name) == 13
 
 
