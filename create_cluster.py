@@ -79,86 +79,11 @@ Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56  # IpV4 public network id offset
 list_of_hosts = []  # List of dicts wit VM hostnames and their private IPs
 PITHOS_FILE = 'elwiki-20140818-pages-meta-current-5000000.xml'  # WordCountFile
-FILENAME = 'temp_file.txt'  # File used from pi function to write stdout
+FILE_RUN_PI = 'temp_file.txt'  # File used from pi function to write stdout
 FILE_KAMAKI = 'kamaki_info.txt'  # File to write kamaki info and retrieve token
 
 # Global variables
 threadLock = threading.Lock()  # Declare thread lock
-
-
-def wordcount_hadoop(name):
-    '''
-    Connect as root to master node and download kamaki and needed dependencies.
-    Then, connect as hduser, setup kamaki, download file from pithos and
-    run a wordcount job with it. Return the number of times string !important
-    is appearing in the output file.
-    '''
-    ssh_client = establish_connect(name, 'root', '', 22)
-    # Download and install kamaki
-    exec_command(ssh_client, 'echo "deb http://apt.dev.grnet.gr wheezy/"'
-                 ' >> /etc/apt/sources.list')
-    exec_command(ssh_client, 'apt-get -y install curl')
-    exec_command(ssh_client, 'curl https://dev.grnet.gr/files/'
-                 'apt-grnetdev.pub|apt-key add - ')
-    exec_command(ssh_client, 'apt-get update')
-    exec_command_hadoop(ssh_client, 'apt-get -y install kamaki')
-    ssh_client.close()
-
-    os.system('kamaki user authenticate > ' + FILE_KAMAKI)
-    output = subprocess.check_output("awk '/expires/{getline; print}' "
-                                     + FILE_KAMAKI, shell=True)
-    token = output.replace(" ", "")[3:-1]
-
-    auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
-
-    hduser_pass = get_hduser_pass()
-    ssh_client = establish_connect(name, 'hduser', hduser_pass, 22)
-    # kamaki setup from hduser and download file from pithos
-    exec_command(ssh_client, 'kamaki config set cloud.hduser.url ' + auth_url)
-    exec_command(ssh_client, 'kamaki config set cloud.hduser.token ' + token,
-                 'hide_output')
-
-    exec_command_hadoop(ssh_client, 'kamaki file download WordCount/'
-                        + PITHOS_FILE, extend_timeout=True)
-
-    # Perform WordCount job
-
-    exec_command(ssh_client, '/usr/local/hadoop/bin/hadoop dfs -mkdir '
-                 '/hdfs/input')
-    exec_command_hadoop(ssh_client, '/usr/local/hadoop/bin/hadoop dfs '
-                        '-copyFromLocal ' + PITHOS_FILE + ' /hdfs/input',
-                        extend_timeout=True)
-    exec_command_hadoop(ssh_client, '/usr/local/hadoop/bin/hadoop jar '
-                        '/usr/local/hadoop/hadoop-examples-1.*.jar wordcount '
-                        '/hdfs/input /hdfs/output', extend_timeout=True)
-    exec_command(ssh_client, '/usr/local/hadoop/bin/hadoop fs -copyToLocal '
-                 '/hdfs/output/ $HOME/')
-
-    # Find number of times that string [!important] appeared in the pithos file
-    command = "cd output;grep -m 1 'important' p*"
-    stdin, stdout, stderr = ssh_client.exec_command(command, get_pty=True)
-    stdout_hadoop = stdout.read()
-    # Replace /t/r/n characters and remove spaces
-    line = stdout_hadoop.translate(string.maketrans("\n\t\r", "   "))
-    to_return_value = line.replace(" ", "")
-    ssh_client.close()
-    # Return the value
-    return int(to_return_value[-2:])
-
-
-def check_string(to_check_file, to_find_str):
-    '''
-    Search the string passed as argument in the to_check file.
-    If string is found, returns the whole line where the string was
-    found. Function is used by the pi function.
-    '''
-    with open(to_check_file, 'r') as f:
-        found = False
-        for line in f:
-            if re.search(to_find_str, line):
-                return line
-        if not found:
-            logging.warning('The line %s cannot be found!', to_find_str)
 
 
 def get_hduser_pass():
@@ -176,7 +101,7 @@ def get_hduser_pass():
 
 def exec_command_hadoop(ssh_client, command, extend_timeout=False):
     '''
-    exec_command for the check_hadoop_cluster, run_pi and wordcount.
+    exec_command for the run_pi_hadoop and run_wordcount_hadoop.
     This one is used because for these methods we want to see the output
     in report logging level and not in debug. Also wordcount increases
     the channel timeout because the command takes more time than every
@@ -187,7 +112,7 @@ def exec_command_hadoop(ssh_client, command, extend_timeout=False):
             # This is only for wordcount commands that need bigger timeout
             stdin, stdout, stderr = ssh_client.exec_command(command,
                                                             get_pty=True,
-                                        chan_timeout=CHAN_TIMEOUT_HADOOP)   
+                                        chan_timeout=CHAN_TIMEOUT_HADOOP)
             stdout_hadoop = stdout.read()
         else:
             # This is for every other command of pi and wordcount
@@ -196,7 +121,7 @@ def exec_command_hadoop(ssh_client, command, extend_timeout=False):
             stdout_hadoop = stdout.read()
             # For pi command. Writes stdout to a file so we get the pi value
             if " pi " in command:
-                with open(FILENAME, 'w') as file_out:
+                with open(FILE_RUN_PI, 'w') as file_out:
                     file_out.write(stdout_hadoop)
     except Exception, e:
         logging.exception(e.args)
@@ -204,25 +129,6 @@ def exec_command_hadoop(ssh_client, command, extend_timeout=False):
     logging.log(REPORT, '%s %s', stdout_hadoop, stderr.read())
     ex_status = stdout.channel.recv_exit_status()
     check_command_exit_status(ex_status, command)
-
-
-def check_hadoop_cluster_and_run_pi(name, pi_map=2, pi_sec=10000):
-    '''Checks Hadoop cluster health and runs a pi job'''
-    hduser_pass = get_hduser_pass()
-    ssh_client = establish_connect(name, 'hduser', hduser_pass,
-                                   MASTER_SSH_PORT)
-
-    logging.log(REPORT, ' Checking Hadoop cluster')
-    command = '/usr/local/hadoop/bin/hadoop dfsadmin -report'
-    exec_command_hadoop(ssh_client, command)
-    logging.log(REPORT, ' Running pi job')
-    command = '/usr/local/hadoop/bin/hadoop jar' \
-              ' /usr/local/hadoop/hadoop-examples-1.*.jar pi ' + \
-              str(pi_map)+' '+str(pi_sec)
-    exec_command_hadoop(ssh_client, command)
-    line = check_string(FILENAME, "Estimated value of Pi is")
-    ssh_client.close()
-    return float(line[25:])
 
 
 def destroy_cluster(cluster_name, token):
