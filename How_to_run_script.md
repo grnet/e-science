@@ -1,11 +1,25 @@
 e-science
 =========
 
-How to run the code:
+How to run script:
 
-script_name.py -arguments-
+python script_name.py "arguments"
 
-arguments:  --name= , --clustersize=, --cpu_master= (cores_number eg 2),  --ram_master= (MB eg 1024),  --disk_master= (GB eg 10),  --cpu_slave= (no eg 2),  --ram_slave= (MB eg 1024),  --disk_slave= (GB eg 10), --disktemplate= (drbd or ext_vlmc)
---image= (eg Debian Base), --token=, --auth_url=
+    arguments: 
+      --name="name of the cluster" 
+      --clustersize="total VMs,including master node" 
+      --cpu_master="master's node number of cores" 
+      --ram_master= "master's node memory in MB",  
+      --disk_master= "master's node hard drive in GB",  
+      --cpu_slave= "slave's node number of cores",  
+      --ram_slave= "slaves's node memory in MB",  
+      --disk_slave= "slave's node hard drive in GB", 
+      --disk_template= "drbd or ext_vlmc" 
+      --image="operating System (Default Value)", 
+      --token="token", 
+      --auth_url="authentication url (Default Value)"
+      --logging_level="6 logging levels:critical, error, warning, report, info, debug"
 
-note: if one or more are omitted they have default values
+example
+
+    python script_name.py --name=Hadoop_Test --clustersize=3 --cpu_master=4 --ram_master=2048 --disk_master=5 --cpu_slave=2 --ram_slave=1024 --disk_slave=5 --disk_template=ext_vlmc --image='Debian Base' --token=token number --auth_url=https://accounts.okeanos.grnet.gr/identity/v2.0 --logging_level=report
