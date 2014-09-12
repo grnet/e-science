@@ -178,7 +178,7 @@ def destroy_cluster(cluster_name, token):
                 network_to_delete_id = net_work['id']
     except Exception:
         logging.exception('Error in getting network [%s] to delete' %
-                            net_work['name'])
+                          net_work['name'])
         sys.exit(error_delete_network)
     # Start cluster deleting
     try:
@@ -348,7 +348,7 @@ def create_multi_hadoop_cluster(server):
     get_ready_for_reroute to do a pre-setup for port forwarding
     in the master. Takes as argument the server list that is returned
     from create_cluster. We get from server list the fully qualified
-    names and we find the virtual machine master.
+    names.
     '''
     dict_s = {}  # Dictionary that will contain fully qualified domain names
     # and private ips temporarily for each machine. It will be appended
@@ -359,8 +359,7 @@ def create_multi_hadoop_cluster(server):
             # Hostname of master is used in every ssh connection.
             # So it is defined as global
             dict_s = {'fqdn': s['SNF:fqdn'], 'private_ip': '192.168.0.2'}
-            global HOSTNAME_MASTER, HDUSER_PASS
-            HOSTNAME_MASTER = s['SNF:fqdn']
+            global HDUSER_PASS
             HDUSER_PASS = get_hduser_pass()
             list_of_hosts.append(dict_s)
         else:
@@ -475,7 +474,7 @@ def check_command_exit_status(ex_status, command):
                     command, ex_status)
 
 
-def exec_command(ssh, command, check_command_id =None):
+def exec_command(ssh, command, check_command_id=None):
     '''
     Calls overloaded exec_command function of the ssh object given
     as argument. Command is the second argument and its a string.
@@ -612,7 +611,7 @@ def hadoop_xml_conf(ssh_client):
                  r'</property>',
                  r'<property>',
                  r'<name>fs.default.name</name>',
-                 r'<value>hdfs://'+HOSTNAME_MASTER.split('.', 1)[0]+':54310</value>',
+                 r'<value>hdfs://'+list_of_hosts[0]['fqdn'].split('.', 1)[0]+':54310</value>',
                  r'</property>',
                  r'</configuration>']
 
@@ -622,7 +621,7 @@ def hadoop_xml_conf(ssh_client):
                    r'<configuration>',
                    r'<property>',
                    r'<name>mapred.job.tracker</name>',
-                   r'<value>'+HOSTNAME_MASTER.split('.', 1)[0]+':54311</value>',
+                   r'<value>'+list_of_hosts[0]['fqdn'].split('.', 1)[0]+':54311</value>',
                    r'<description>The host and port that'
                    ' the MapReduce job tracker runs',
                    r'and reduce task.',
@@ -1123,6 +1122,23 @@ class Cluster(object):
                 from json import dump
                 dump(servers, f, indent=2)
 
+        # HOSTNAME_MASTER is always the public ip of master node
+        global HOSTNAME_MASTER
+        try:
+            list_of_servers = self.client.list_servers(detail=True)
+        except Exception:
+            logging.exception('Could not get list of servers.')
+            sys.exit(error_get_list_servers)
+
+        # Find our newly created master server in list of servers
+        # Then get its public ip and assign it to HOSTNAME_MASTER
+        for server in list_of_servers:
+            if servers[0]['name'].rsplit('-', 1)[0] == \
+                    server['name'].rsplit('-', 1)[0]:
+                for attachment in server['attachments']:
+                    if attachment['OS-EXT-IPS:type'] == 'floating':
+                        HOSTNAME_MASTER = attachment['ipv4']
+
         return servers
 
 
@@ -1416,3 +1432,4 @@ if __name__ == '__main__':
         sys.exit(error_syntax_auth_token)
 
     main(opts)
+    
