@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 '''
-This script creates a virtual cluster on ~okeanos and installs Hadoop.
+This script creates a virtual cluster on ~okeanos and installs Hadoop
+using Ansible.
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -59,9 +60,11 @@ error_get_ip = -30
 error_create_server = -31
 error_syntax_auth_token = -32
 error_cluster_corrupt = -33
+error_ansible_playbook = -34
 error_authentication = -99
 
 # Global constants
+MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
 CHAN_TIMEOUT = 360  # Paramiko channel timeout
 ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
@@ -174,12 +177,19 @@ def create_multi_hadoop_cluster(server):
     except Exception, e:
         logging.exception(e.args)
         sys.exit(error_ready_reroute)
+    # Port-forwarding now for every slave machine
     for vm in list_of_hosts:
         call_reroute_for_every_vm(vm)
-
-    file_name = create_ansible_hosts()
-    run_ansible(file_name)
-
+    # Create ansible_hosts file
+    try:
+        file_name = create_ansible_hosts()
+        # Run Ansible playbook
+        run_ansible(file_name)
+    except Exception, e:
+        logging.exception(e.args)
+        sys.exit(error_ansible_playbook)
+    # create_cluster script finishes the Hadoop configuration
+    # after the execution of install-hadoop.yml playbook.
     ssh_client = establish_connect(HOSTNAME_MASTER, 'hduser',
                                    '', MASTER_SSH_PORT)
     # Copy ssh public key from master to every slave
@@ -191,6 +201,7 @@ def create_multi_hadoop_cluster(server):
                              ' hduser@'+vm['fqdn'].split('.', 1)[0],
                              'ssh_copy_id')
         logging.log(REPORT, " Hadoop is installed and configured")
+        # Format and start Hadoop daemons
         format_and_start_hadoop(ssh_client)
     except Exception, e:
         logging.error(e.args)
@@ -205,17 +216,44 @@ def run_ansible(filename):
     hadoop and everything needed for hadoop to be functional.
     Filename as argument is the name of ansible_hosts file.
     '''
-    os.system('export ANSIBLE_HOST_KEY_CHECKING=False;ansible-playbook -i ' +
-              filename + ' ./ansible_scripts/install_hadoop.yml -f ' +
-              str(cluster_size))
+    logging.log(REPORT, ' Ansible starts Hadoop installation on master and '
+                        'slave nodes')
+    # First time call of Ansible playbook install_hadoop.yml executes tasks
+    # required for hadoop installation on every virtual machine. Runs with
+    # -f flag which is the fork argument of Ansible. Fork number used is size
+    # of cluster.
+    exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
+                            'ansible-playbook -i ' + filename +
+                            ' ./ansible/install_hadoop.yml -f ' +
+                            str(cluster_size))
+    if exit_status != 0:
+        logging.error(' Ansible failed during Hadoop installation')
+        raise
 
-    os.system('ansible-playbook -i ' +
-              filename + ' ./ansible_scripts/install_hadoop.yml '
-              '-e "is_master=True" -l master')
+    logging.log(REPORT, ' Ansible executes master-only tasks.')
 
-    os.system('ansible-playbook -i ' +
-              filename + ' ./ansible_scripts/install_hadoop.yml '
-              '-e "is_slave=True" -l slaves -f '+str(cluster_size-1))
+    # Playbook install_hadoop.yml is called now for tasks executed on master
+    # node only. This is why 'the is_master=True' and '-l master' arguments
+    # are used.
+    exit_status = os.system('ansible-playbook -i ' + filename +
+                            ' ./ansible/install_hadoop.yml '
+                            '-e "is_master=True" -l master')
+    if exit_status != 0:
+        logging.error(' Ansible failed executing master-only tasks')
+        raise
+
+    logging.log(REPORT, ' Ansible executes slave-only tasks.')
+
+    # Playbook install_hadoop.yml is called now for tasks executed on the
+    # slave nodes only. That is why 'is_slave=True' and '-l slaves' arguments
+    # are used. Also it uses the fork argument for the slave nodes.
+    exit_status = os.system('ansible-playbook -i ' + filename +
+                            ' ./ansible/install_hadoop.yml '
+                            '-e "is_slave=True" -l slaves -f '
+                            + str(cluster_size-1))
+    if exit_status != 0:
+        logging.error(' Ansible failed executing slaves-only tasks')
+        raise
 
 
 def format_and_start_hadoop(ssh_client):
@@ -641,7 +679,12 @@ class Cluster(object):
         # waiting for the master to finish building
         try:
             new_status = self.client.wait_server(servers[0]['id'],
-                                                 max_wait=300)
+                                                 max_wait=MAX_WAIT)
+            if not new_status:
+                logging.error(' Status for server %s is %s',
+                              servers[i]['name'], new_status)
+                logging.error(' Program shutting down')
+                sys.exit(error_create_server)
             logging.log(REPORT, ' Status for server %s is %s',
                         servers[0]['name'], new_status)
             # Create a subnet for the virtual network between master
@@ -650,12 +693,17 @@ class Cluster(object):
                                   enable_dhcp=True)
             port_details = self.nc.create_port(new_network['id'],
                                                servers[0]['id'])
-            self.nc.wait_port(port_details['id'], max_wait=300)
+            self.nc.wait_port(port_details['id'], max_wait=MAX_WAIT)
             # Wait server for the slaves, so we can use their server id
             # in port creation
             for i in range(1, self.size):
                 new_status = self.client.wait_server(servers[i]['id'],
-                                                     max_wait=300)
+                                                     max_wait=MAX_WAIT)
+                if not new_status:
+                    logging.error(' Status for server %s is %s',
+                                  servers[i]['name'], new_status)
+                    logging.error(' Program shutting down')
+                    sys.exit(error_create_server)
                 logging.log(REPORT, ' Status for server %s is %s',
                             servers[i]['name'], new_status)
                 port_details = self.nc.create_port(new_network['id'],
@@ -664,7 +712,13 @@ class Cluster(object):
 
             for port_details in list_of_ports:
                 if port_details['status'] == 'BUILD':
-                    self.nc.wait_port(port_details['id'], max_wait=300)
+                    status = self.nc.wait_port(port_details['id'],
+                                               max_wait=MAX_WAIT)
+                    if not status:
+                        logging.error(' Status for port %s is %s',
+                                      port_details['id'], status)
+                        logging.error(' Program shutting down')
+                        sys.exit(error_create_server)
         except Exception:
             logging.exception('Error in finalizing cluster creation')
             sys.exit(error_create_server)
@@ -759,33 +813,37 @@ def check_quota(auth, req_quotas):
 
 
 def create_ansible_hosts():
-    '''Function that creates the ansible_hosts file'''
+    '''
+    Function that creates the ansible_hosts file and
+    returns the name of the file.
+    '''
     ansible_hosts_prefix = cluster_name.replace(" ", "")
     ansible_hosts_prefix = ansible_hosts_prefix.replace(":", "")
-    filename = './ansible_scripts/ansible_hosts' + ansible_hosts_prefix
-    # filename = os.path.join('c:/your/full/path', 'filename')
-    # if not os.path.exists('c:/your/full/path'):
-        #os.makedirs('c:/your/full/path')
 
-    target = open(filename, 'w+')
+    # Removes spaces and ':' from cluster name and appends it to ansible_hosts
+    # The ansible_hosts file will now have a timestamped name to seperate it
+    # from ansible_hosts files of different clusters.
+    filename = './ansible/ansible_hosts' + ansible_hosts_prefix
 
-    target.write('[master]')
-    target.write('\n')
-    target.write(list_of_hosts[0]['fqdn'])
-    target.write(' private_ip='+list_of_hosts[0]['private_ip'])
-    target.write(' ansible_ssh_host=' + HOSTNAME_MASTER)
-    target.write('\n')
-    target.write('\n')
-    target.write('[slaves]')
-    target.write('\n')
+    # Create ansible_hosts file and write all information that is
+    # required from Ansible playbook.
+    with open(filename, 'w+') as target:
+        target.write('[master]')
+        target.write('\n')
+        target.write(list_of_hosts[0]['fqdn'])
+        target.write(' private_ip='+list_of_hosts[0]['private_ip'])
+        target.write(' ansible_ssh_host=' + HOSTNAME_MASTER)
+        target.write('\n')
+        target.write('\n')
+        target.write('[slaves]')
+        target.write('\n')
 
-    for host in list_of_hosts[1:]:
-        target.write(host['fqdn'])
-        target.write(' private_ip='+host['private_ip'])
-        target.write(' ansible_ssh_port='+str(host['port']))
-        target.write(' ansible_ssh_host='+list_of_hosts[0]['fqdn'])
-        target.write("\n")
-    target.close()
+        for host in list_of_hosts[1:]:
+            target.write(host['fqdn'])
+            target.write(' private_ip='+host['private_ip'])
+            target.write(' ansible_ssh_port='+str(host['port']))
+            target.write(' ansible_ssh_host='+list_of_hosts[0]['fqdn'])
+            target.write("\n")
     return filename
 
 
