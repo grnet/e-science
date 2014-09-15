@@ -1,3 +1,0 @@
-{% for host in groups['all'] %}
-{{hostvars[host].inventory_hostname_short}} {{ hostvars[host].private_ip }}
-{% endfor %} 
