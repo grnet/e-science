@@ -82,7 +82,7 @@ Download Eclipse Luna 4.4, extract it and add to eclipse.ini the following lines
 ###Install Ansible
 Installation of Ansible (server)
 
-      sudo apt-get install pip
+      sudo apt-get install python-pip
       sudo pip install paramiko PyYAML jinja2 httplib2
       sudo apt-get install openssh-server
       sudo apt-get install ansible
@@ -90,5 +90,5 @@ Installation of Ansible (server)
 
 Installation of Ansible (clients)
 
-      install apt-get python python-apt
-      sudo apt-get install ansible
+      apt-get install python
+      
