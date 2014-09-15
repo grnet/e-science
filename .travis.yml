@@ -5,5 +5,6 @@ python:
 install:
   - "pip install kamaki"
   - "pip install paramiko"
+  - "pip install ansible"
 # command to run tests
 script: nosetests create_cluster.py
