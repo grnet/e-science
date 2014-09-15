@@ -186,7 +186,7 @@ def create_multi_hadoop_cluster(server):
         # Run Ansible playbook
         run_ansible(file_name)
     except Exception, e:
-        logging.exception(e.args)
+        logging.error(' Program is exiting')
         sys.exit(error_ansible_playbook)
     # create_cluster script finishes the Hadoop configuration
     # after the execution of install-hadoop.yml playbook.
@@ -228,7 +228,7 @@ def run_ansible(filename):
                             str(cluster_size))
     if exit_status != 0:
         logging.error(' Ansible failed during Hadoop installation')
-        raise
+        raise RuntimeError
 
     logging.log(REPORT, ' Ansible executes master-only tasks.')
 
@@ -240,7 +240,7 @@ def run_ansible(filename):
                             '-e "is_master=True" -l master')
     if exit_status != 0:
         logging.error(' Ansible failed executing master-only tasks')
-        raise
+        raise RuntimeError
 
     logging.log(REPORT, ' Ansible executes slave-only tasks.')
 
@@ -253,7 +253,7 @@ def run_ansible(filename):
                             + str(cluster_size-1))
     if exit_status != 0:
         logging.error(' Ansible failed executing slaves-only tasks')
-        raise
+        raise RuntimeError
 
 
 def format_and_start_hadoop(ssh_client):
