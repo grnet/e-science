@@ -1,0 +1,5 @@
+export HADOOP_HOME=/usr/local/hadoop
+export JAVA_HOME=/usr/lib/jvm/java-7-oracle
+export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true
+export PATH=$PATH:$HADOOP_HOME/bin
+

@@ -1,0 +1,2 @@
+{{hostvars[groups[master].inventory_hostname_short }}
+ 
