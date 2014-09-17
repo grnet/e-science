@@ -9,22 +9,21 @@
 Prerequisites for the installation of web environment.
 
 * Python 2.7.3
-* easy_install and pip
-* Git 1.7/1.8
+* easy_install and pip and Git 1.7/1.8
+* MySQL Database 
 * virtualenv
 * Django
-* Database (SQLite, MySQL, PostgreSQL)
 * South
 * Sublime Text editor
 
 
 ##Installation Procedures
-* Install python 2.7.3 
+1. Install python 2.7.3 
 
 To check your Python version, run the command:
 
       python -V
-* Install Python Package Managers: easy_install and pip
+2. Install Python Package Managers: easy_install and pip and git
  
 Install setup tools
 
@@ -33,12 +32,11 @@ Install setup tools
 Install pip
 
       easy_install pip
+      
+Install git
 
-* Install git for version control
+      apt-get install git  
 
-To check your current version, run the command:
-
-      git --version
-* 
+3. 
 
 
