@@ -1,4 +1,4 @@
-#Create web environment
+#Create web environment, based on http://realdjango.herokuapp.com/
 
 ##Table of Contents
 1. General Information
@@ -18,12 +18,12 @@ Prerequisites for the installation of web environment.
 
 
 ##Installation Procedures
-1. Install python 2.7.3 
+Install python 2.7.3 
 
 To check your Python version, run the command:
 
       python -V
-2. Install Python Package Managers: easy_install and pip and git
+Install Python Package Managers: easy_install and pip and git
  
 Install setup tools
 
@@ -37,6 +37,12 @@ Install git
 
       apt-get install git  
 
-3. 
+Install MySQL Database
 
+      $ mysql.server start 
+      $ mysql -u root -p
+
+Install virtualenv
+
+Install Django
 
