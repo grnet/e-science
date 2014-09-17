@@ -1,4 +1,5 @@
-#Create web environment, based on http://realdjango.herokuapp.com/
+#Create web environment 
+based on http://realdjango.herokuapp.com/
 
 ##Table of Contents
 1. General Information
