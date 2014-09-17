@@ -15,12 +15,30 @@ Prerequisites for the installation of web environment.
 * Django
 * Database (SQLite, MySQL, PostgreSQL)
 * South
-* Text editor (Sublime, vim, Komodo, gedit)
+* Sublime Text editor
 
 
 ##Installation Procedures
 1. Install python 2.7.3 
+
 To check your Python version, run the command:
-      
+
       python -V
+2. Install Python Package Managers: easy_install and pip
+ 
+Install setup tools
+
+      sudo apt-get install python-setuptools
+      
+Install pip
+
+      easy_install pip
+
+3. Install git for version control
+
+To check your current version, run the command:
+
+      git --version
+4. 
+
 
