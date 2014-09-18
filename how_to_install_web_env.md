@@ -11,11 +11,11 @@ Prerequisites for the installation of web environment.
 
 * Python 2.7.3
 * easy_install and pip and Git 1.7/1.8
-* MySQL Database 
-* virtualenv
-* Django
-* South
-* Sublime Text editor
+* MySQL 5.7 Database 
+* Django 1.7
+* Sublime Text editor 2.0.2
+* virtualenv (optional)
+* South (optional)
 
 
 ##Installation Procedures
@@ -38,12 +38,16 @@ Install git
 
       apt-get install git  
 
-Install MySQL Database
+Install MySQL Database from http://dev.mysql.com/doc/refman/5.7/en/installing.html
+
+Start the server 
 
       $ mysql.server start 
       $ mysql -u root -p
-
-Install virtualenv
+      
+Create a new Database: django_db
 
 Install Django
+
+
 
