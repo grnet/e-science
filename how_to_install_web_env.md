@@ -40,14 +40,16 @@ Install git
 
 Install MySQL Database from http://dev.mysql.com/doc/refman/5.7/en/installing.html
 
-Start the server 
+After the installation, Start the server 
 
       $ mysql.server start 
       $ mysql -u root -p
       
-Create a new Database: django_db
+and create a new Database: django_db
 
 Install Django
+
+Install Sublime text editor
 
 
 
