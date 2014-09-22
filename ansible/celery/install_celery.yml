@@ -1,0 +1,43 @@
+-
+  hosts: all
+  user: root
+  vars:
+   is_daemon: False
+   is_periodic_task: False
+  tasks:
+
+  - name: Install Python
+    tags: pythoninstall
+    apt: name=python state=latest
+
+  - name: Install Pip
+    tags: pipinstall
+    apt: name=python-pip state=latest
+
+  - name: Install the RabbitMQ broker needed for celery
+    tags: rabbitmqinstall
+    apt: name=rabbitmq-server state=latest
+
+  - name: Install Celery
+    tags: celeryinstall
+    shell: pip install celery
+
+  - name: Copy script celeryd for daemonic workers
+    tags: celerydcopy
+    copy: src=./celeryd dest=/etc/init.d/celeryd owner=root mode=0744
+    when: is_daemon
+
+  - name: Copy celeryd configuration
+    tags: celerydconfcopy
+    template: src=../templates/celeryd.j2 dest=/etc/default/celeryd owner=root
+    when: is_daemon
+
+  - name: Copy script celerybeat for daemonic periodic tasks
+    tags: celerybeatcopy
+    copy: src=./celerybeat dest=/etc/init.d/celerybeat owner=root mode=0744
+    when: is_periodic_task
+
+  - name: Copy celerybeat configuration
+    tags: celerybeatconfcopy
+    template: src=../templates/celerybeat.j2 dest=/etc/default/celerybeat owner=root
+    when: is_periodic_task
