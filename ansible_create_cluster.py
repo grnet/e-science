@@ -183,6 +183,7 @@ def create_multi_hadoop_cluster(server):
     # Create ansible_hosts file
     try:
         file_name = create_ansible_hosts()
+        sys.exit(0)
         # Run Ansible playbook
         run_ansible(file_name)
     except Exception, e:
@@ -224,7 +225,7 @@ def run_ansible(filename):
     # of cluster.
     exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                             'ansible-playbook -i ' + filename +
-                            ' ./ansible/hadoop/install_hadoop.yml -f ' +
+                            ' ./ansible/Hadoop/install.yml -f ' +
                             str(cluster_size))
     if exit_status != 0:
         logging.error(' Ansible failed during Hadoop installation')
@@ -236,7 +237,7 @@ def run_ansible(filename):
     # node only. This is why 'the is_master=True' and '-l master' arguments
     # are used.
     exit_status = os.system('ansible-playbook -i ' + filename +
-                            ' ./ansible/hadoop/install_hadoop.yml '
+                            ' ./ansible/Hadoop/install.yml '
                             '-e "is_master=True" -l master')
     if exit_status != 0:
         logging.error(' Ansible failed executing master-only tasks')
@@ -248,7 +249,7 @@ def run_ansible(filename):
     # slave nodes only. That is why 'is_slave=True' and '-l slaves' arguments
     # are used. Also it uses the fork argument for the slave nodes.
     exit_status = os.system('ansible-playbook -i ' + filename +
-                            ' ./ansible/hadoop/install_hadoop.yml '
+                            ' ./ansible/Hadoop/install.yml '
                             '-e "is_slave=True" -l slaves -f '
                             + str(cluster_size-1))
     if exit_status != 0:

@@ -74,7 +74,7 @@
     when: is_master==False and is_slave==False
 
   - name: Add virtual machine private ips in /etc/hosts
-    template: src=../templates/hosts.j2 dest={{etchosts_filename}}
+    template: src=./templates/hosts.j2 dest={{etchosts_filename}}
     tags: edithosts2
     when: is_master==False and is_slave==False
 
@@ -168,25 +168,25 @@
 
   - name: copy core-site.xml to /usr/local/hadoop/conf directory
     tags: coresite
-    action: template src=../templates/core-site.j2 dest=/usr/local/hadoop/conf/core-site.xml
+    action: template src=./templates/core-site.j2 dest=/usr/local/hadoop/conf/core-site.xml
     when: is_master==False and is_slave==False
 
   - name: copy mapred-site.xml to /usr/local/hadoop/conf directory
     tags: mapredsite
-    action: template src=../templates/mapred-site.j2 dest=/usr/local/hadoop/conf/mapred-site.xml
+    action: template src=./templates/mapred-site.j2 dest=/usr/local/hadoop/conf/mapred-site.xml
     when: is_master==False and is_slave==False
 
   - name: copy hdfs-site.xml to /usr/local/hadoop/conf directory
     tags: hdfssite
-    action: template src=../templates/hdfs-site.j2 dest=/usr/local/hadoop/conf/hdfs-site.xml
+    action: template src=./templates/hdfs-site.j2 dest=/usr/local/hadoop/conf/hdfs-site.xml
     when: is_master==False and is_slave==False
 
   - name: create masters file
     tags: masters
-    template: src=../templates/masters.j2 dest=/usr/local/hadoop/conf/masters owner=hduser group=hadoop
+    template: src=./templates/masters.j2 dest=/usr/local/hadoop/conf/masters owner=hduser group=hadoop
     when: is_master
 
   - name: create slaves file
     tags: slaves
-    template: src=../templates/slaves.j2 dest=/usr/local/hadoop/conf/slaves owner=hduser group=hadoop
+    template: src=./templates/slaves.j2 dest=/usr/local/hadoop/conf/slaves owner=hduser group=hadoop
     when: is_master

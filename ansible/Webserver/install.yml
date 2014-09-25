@@ -2,10 +2,10 @@
   hosts: all
   user: root
   vars:
-   db_user: developer
+   db_user: myuser
    password_db: lalakia
-   db_name: escience
-   admin_django_name: developer
+   db_name: mydatabase
+   admin_django_name: mydjangouser
    password_admin_django: lalakia
    is_daemon: False
    is_periodic_task: False
