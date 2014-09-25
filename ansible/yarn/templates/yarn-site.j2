@@ -88,7 +88,13 @@
   <property>
     <name>yarn.nodemanager.aux-services</name>
     <value>mapreduce_shuffle</value>
-    <description>shuffle service that needs to be set for Map Reduce to run </description>
+    <description>Shuffle service that needs to be set for Map Reduce to run </description>
+  </property>
+
+  <property>
+    <name>yarn.resourcemanager.webapp.address</name>
+    <value>{{ ansible_ssh_host}}:8088</value>
+    <description>The http address of the RM web application </description>
   </property>
 
 </configuration>
