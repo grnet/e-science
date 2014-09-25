@@ -10,3 +10,5 @@ It contains generic bash init scripts for the celery worker program. These shoul
 
 
 For more information please check https://celery.readthedocs.org/en/latest/tutorials/daemonizing.html#daemonizing
+
+The Webserver install playbook should be given new values from the command line for the following variables: db_user, password_db, admin_django_name, password_admin_django
