@@ -1,0 +1,132 @@
+-
+  hosts: all
+  user: root
+  vars:
+   db_user: myuser
+   password_db: lalakia
+   db_name: mydatabase
+   admin_django_name: mydjangouser
+   password_admin_django: lalakia
+   is_daemon: False
+   is_periodic_task: False
+   Webserver_templates_path: ./templates
+   celery_bash_scripts_path: ./celery_bash_scripts
+  tasks:
+
+  - name: Update and Upgrade
+    apt: state=latest upgrade=yes update_cache=yes
+    
+  - name: Configure locales problem
+    tags: localeconf
+    locale_gen: name=en_GB.UTF-8 state=present
+    
+  - name: Install Sudo
+    tags: sudoinstall
+    apt: name=sudo force=yes 
+
+  - name: Install Python
+    tags: pythoninstall
+    apt: name=python state=latest
+
+  - name: Install Pip
+    tags: pipinstall
+    apt: name=python-pip state=latest
+
+  - name: Install the RabbitMQ broker needed for celery
+    tags: rabbitmqinstall
+    apt: name=rabbitmq-server state=latest
+
+  - name: Install Celery
+    tags: celeryinstall
+    pip: name=celery
+
+  - name: Copy script celeryd for daemonic workers
+    tags: celerydcopy
+    copy: src={{celery_bash_scripts_path}}/celeryd dest=/etc/init.d/celeryd owner=root mode=0744
+    when: is_daemon
+
+  - name: Copy celeryd configuration
+    tags: celerydconfcopy
+    template: src={{Webserver_templates_path}}/celeryd_conf.j2 dest=/etc/default/celeryd owner=root
+    when: is_daemon
+
+  - name: Copy script celerybeat for daemonic periodic tasks
+    tags: celerybeatcopy
+    copy: src={{celery_bash_scripts_path}}/celerybeat dest=/etc/init.d/celerybeat owner=root mode=0744
+    when: is_periodic_task
+
+  - name: Copy celerybeat configuration
+    tags: celerybeatconfcopy
+    template: src={{Webserver_templates_path}}/celerybeat_conf.j2 dest=/etc/default/celerybeat owner=root
+    when: is_periodic_task
+
+  - name: Install Django
+    tags: djangoinstall
+    pip: name=Django
+
+  - name: Install PostgreSql
+    tags: postgresqlinstall
+    shell: apt-get -y install postgresql postgresql-client
+
+  - name: Install psycopg2
+    tags: psycopginstall
+    shell: apt-get -y install python-psycopg2
+
+  - name: Install package libpq-dev
+    apt: name=libpq-dev state=latest
+
+  - name: create django project directory
+    tags: createdjprojectdir
+    command: mkdir myproject
+
+  - name: create django project
+    tags: createdjproject 
+    command:  django-admin.py startproject mysite chdir=./myproject creates=./myproject/mysite/manage.py
+
+  - name: Edit pg_hba.conf
+    lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
+    tags: pghbaconf
+ 
+  - name: Restart PostgreSql service
+    service: name=postgresql state=restarted
+    tags: postgresrestart
+
+  - name: Create PostgreSql user
+    postgresql_user: name={{db_user}} password={{password_db}} role_attr_flags=CREATEDB,NOSUPERUSER,NOCREATEROLE
+    tags: createpostgresuser
+
+  - name: Create PostgreSql database
+    postgresql_db: name={{db_name}} owner={{db_user}}
+    tags: createpostgresdb
+
+  - name: set Django settings.py,command1
+    template: src=./templates/settings.j2 dest=/etc/
+    tags: djangosettingsfirst
+    
+  - name: set Django settings.py,command2
+    command: sed -i '/# Database/,$d' settings.py chdir=myproject/mysite/mysite
+    tags: djangosettingssec
+    
+  - name: set Django settings.py,command3
+    shell: cat /etc/settings.j2 >> myproject/mysite/mysite/settings.py
+    tags: djangosettingsthree
+  
+  - name: Django migrate command
+    command: python manage.py migrate chdir=myproject/mysite
+    tags: djangomigrate
+
+  - name: Revert pg_hba.conf to default
+    lineinfile: line="local\tall\t\tpostgres\t\t\t\tpeer" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=trust)" backrefs=yes
+    tags: pghbaconf
+ 
+  - name: Restart PostgreSql service
+    service: name=postgresql state=restarted
+    tags: postgresrestart
+   
+  - name: Create Django superuser
+    shell: echo "from django.contrib.auth.models import User; User.objects.create_superuser('{{admin_django_name}}', 'myemail@example.com', '{{password_admin_django}}')" | python manage.py shell chdir=myproject/mysite
+    tags: djangosuperuser
+
+  - name: django run server
+    command: python manage.py runserver {{ansible_ssh_host}}:8000 chdir=myproject/mysite
+    tags: runserver
