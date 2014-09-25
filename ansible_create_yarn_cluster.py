@@ -329,10 +329,10 @@ def exec_command(ssh, command, check_command_id=None):
         check_command_exit_status(ex_status, command)
     elif check_command_id == 'ssh_dfs':
         stdin.flush()
-        sleep(15)  # Sleep is necessary for stdin to read yes
+        sleep(30)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
         stdin.flush()
-        sleep(15)  # Sleep is necessary for stdin to read yes
+        sleep(30)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
         stdin.flush()
         logging.debug('%s %s', stdout.read(), stderr.read())
