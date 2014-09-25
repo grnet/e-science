@@ -218,13 +218,13 @@ def run_ansible(filename):
     '''
     logging.log(REPORT, ' Ansible starts Hadoop installation on master and '
                         'slave nodes')
-    # First time call of Ansible playbook install_hadoop.yml executes tasks
+    # First time call of Ansible playbook install.yml executes tasks
     # required for hadoop installation on every virtual machine. Runs with
     # -f flag which is the fork argument of Ansible. Fork number used is size
     # of cluster.
     exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                             'ansible-playbook -i ' + filename +
-                            ' ./ansible/yarn/install_hadoop.yml -f ' +
+                            ' ./ansible/yarn/install.yml -f ' +
                             str(cluster_size))
     if exit_status != 0:
         logging.error(' Ansible failed during Hadoop installation')
@@ -232,11 +232,11 @@ def run_ansible(filename):
 
     logging.log(REPORT, ' Ansible executes master-only tasks.')
 
-    # Playbook install_hadoop.yml is called now for tasks executed on master
+    # Playbook install.yml is called now for tasks executed on master
     # node only. This is why 'the is_master=True' and '-l master' arguments
     # are used.
     exit_status = os.system('ansible-playbook -i ' + filename +
-                            ' ./ansible/yarn/install_hadoop.yml '
+                            ' ./ansible/yarn/install.yml '
                             '-e "is_master=True" -l master')
     if exit_status != 0:
         logging.error(' Ansible failed executing master-only tasks')
@@ -244,11 +244,11 @@ def run_ansible(filename):
 
     logging.log(REPORT, ' Ansible executes slave-only tasks.')
 
-    # Playbook install_hadoop.yml is called now for tasks executed on the
+    # Playbook install.yml is called now for tasks executed on the
     # slave nodes only. That is why 'is_slave=True' and '-l slaves' arguments
     # are used. Also it uses the fork argument for the slave nodes.
     exit_status = os.system('ansible-playbook -i ' + filename +
-                            ' ./ansible/yarn/install_hadoop.yml '
+                            ' ./ansible/yarn/install.yml '
                             '-e "is_slave=True" -l slaves -f '
                             + str(cluster_size-1))
     if exit_status != 0:
@@ -329,10 +329,10 @@ def exec_command(ssh, command, check_command_id=None):
         check_command_exit_status(ex_status, command)
     elif check_command_id == 'ssh_dfs':
         stdin.flush()
-        sleep(15)  # Sleep is necessary for stdin to read yes
+        sleep(30)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
         stdin.flush()
-        sleep(15)  # Sleep is necessary for stdin to read yes
+        sleep(30)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
         stdin.flush()
         logging.debug('%s %s', stdout.read(), stderr.read())
