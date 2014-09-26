@@ -62,7 +62,7 @@ def test_create_cluster_run_pi():
                                      + FILE_KAMAKI, shell=True)
     token = output.replace(" ", "")[3:-1]
     os.system('rm ' + FILE_KAMAKI)
-    name = create_cluster('yarn', 4, 4, 4096, 20,
+    name = ansible_create_cluster('yarn', 4, 4, 4096, 20,
                           'ext_vlmc', 4, 4096, 20, token,
                           'Debian Base')
     assert run_pi_yarn(name, 2, 100000) == 3.14118000000000000000
