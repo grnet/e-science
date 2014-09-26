@@ -8,7 +8,7 @@ This script checks a yarn cluster and run a pi job in ~okeanos.
 '''
 
 
-from create_cluster import *
+from ansible_create_yarn_cluster import *
 
 
 def check_string(to_check_file, to_find_str):
