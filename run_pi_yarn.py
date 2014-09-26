@@ -26,10 +26,10 @@ def check_string(to_check_file, to_find_str):
             logging.warning('The line %s cannot be found!', to_find_str)
 
 
-def run_pi_yarn(name, pi_map=2, pi_sec=10000):
+def run_pi_yarn(master_ip, pi_map=2, pi_sec=10000):
     '''Runs a pi job'''
     #hduser_pass = get_hduser_pass()
-    ssh_client = establish_connect(name, 'hduser', '',
+    ssh_client = establish_connect(master_ip, 'hduser', '',
                                    MASTER_SSH_PORT)
 
     logging.log(REPORT, ' Running pi job')
@@ -48,9 +48,9 @@ def test_run_pi():
     Test that runs two pi jobs with different arguments on
     an existing yarn cluster.
     '''
-    name = 'xxxx'
-    assert run_pi_yarn(name, 2, 10000) == 3.14280000000000000000
-    assert run_pi_yarn(name, 10, 1000000) == 3.14158440000000000000
+    master_ip = 'xxxx'
+    assert run_pi_yarn(master_ip, 2, 10000) == 3.14280000000000000000
+    assert run_pi_yarn(master_ip, 10, 1000000) == 3.14158440000000000000
 
 
 def test_create_cluster_run_pi():
@@ -63,19 +63,19 @@ def test_create_cluster_run_pi():
                                      + FILE_KAMAKI, shell=True)
     token = output.replace(" ", "")[3:-1]
     os.system('rm ' + FILE_KAMAKI)
-    name = create_cluster('yarn', 4, 4, 4096, 20,
+    master_ip = create_cluster('yarn', 4, 4, 4096, 20,
                           'ext_vlmc', 4, 4096, 20, token,
                           'Debian Base')
-    assert run_pi_yarn(name, 2, 100000) == 3.14118000000000000000
+    assert run_pi_yarn(master_ip, 2, 100000) == 3.14118000000000000000
 
-    assert run_pi_yarn(name, 10, 100000) == 3.14155200000000000000
+    assert run_pi_yarn(master_ip, 10, 100000) == 3.14155200000000000000
 
 def main(opts):
     '''
     The main function calls run_pi_yarn with
     arguments given in command line.
     '''
-    pi_value = run_pi_yarn(opts.name, opts.pi_first, opts.pi_second)
+    pi_value = run_pi_yarn(opts.master_ip, opts.pi_first, opts.pi_second)
     logging.log(REPORT, 'Pi value for arguments %d and %d is %f',
                 opts.pi_first, opts.pi_second, pi_value)
 
@@ -89,10 +89,10 @@ if __name__ == '__main__':
 
     parser = OptionParser(**kw)
     parser.disable_interspersed_args()
-    parser.add_option('--name',
-                      action='store', type='string', dest='name',
-                      metavar="MASTER NODE NAME",
-                      help='The fully qualified domain name of master node')
+    parser.add_option('--master_ip',
+                      action='store', type='string', dest='master_ip',
+                      metavar="MASTER NODE IP",
+                      help='The fully qualified domain name of master node or master_ip')
     parser.add_option('--pi_first',
                       action='store', type='int', dest='pi_first',
                       metavar='PI FIRST ARG',

@@ -238,6 +238,7 @@ def create_multi_hadoop_cluster(server):
         logging.log(REPORT, " Hadoop is installed and configured")
         # Format and start Hadoop daemons
         format_and_start_hadoop(ssh_client)
+	logging.log(REPORT,'Cluster is active. You can access it through ' + HOSTNAME_MASTER +':8088/cluster')
     except Exception, e:
         logging.error(e.args)
         sys.exit(error_ssh_copyid_format_start_hadoop)
