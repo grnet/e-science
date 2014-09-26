@@ -25,6 +25,9 @@ from time import sleep
 import os
 import nose
 import logging
+import subprocess
+import re
+import string
 
 # Definitions of return value errors
 error_syntax_clustersize = -1
@@ -75,8 +78,40 @@ Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56  # IpV4 public network id offset
 list_of_hosts = []  # List of dicts wit VM hostnames and their private IPs
 PITHOS_FILE = 'elwiki-20140818-pages-meta-current-5000000.xml'  # WordCountFile
-FILE_RUN_PI = 'temp_file.txt'  # File used from pi function to write stdout
+FILE_RUN_PI = '/home/developer/e-science/temp_file.txt'  # File used from pi function to write stdout
 FILE_KAMAKI = 'kamaki_info.txt'  # File to write kamaki info and retrieve token
+
+
+def exec_command_yarn(ssh_client, command, extend_timeout=False):
+    '''
+    exec_command for the run_pi_hadoop and run_wordcount_hadoop.
+    This one is used because for these methods we want to see the output
+    in report logging level and not in debug. Also wordcount increases
+    the channel timeout because the command takes more time than every
+    other command of the script.
+    '''
+    try:
+        if extend_timeout:
+            # This is only for wordcount commands that need bigger timeout
+            stdin, stdout, stderr = ssh_client.exec_command(command,
+                                                            get_pty=True,
+                                        chan_timeout=CHAN_TIMEOUT_HADOOP)
+            stdout_hadoop = stdout.read()
+        else:
+            # This is for every other command of pi and wordcount
+            stdin, stdout, stderr = ssh_client.exec_command(command,
+                                                            get_pty=True)
+            stdout_hadoop = stdout.read()
+            # For pi command. Writes stdout to a file so we get the pi value
+            if " pi " in command:
+                with open(FILE_RUN_PI, 'w') as file_out:
+                    file_out.write(stdout_hadoop)
+    except Exception, e:
+        logging.exception(e.args)
+        raise
+    logging.log(REPORT, '%s %s', stdout_hadoop, stderr.read())
+    ex_status = stdout.channel.recv_exit_status()
+    check_command_exit_status(ex_status, command)
 
 
 def get_ready_for_reroute():
@@ -329,10 +364,10 @@ def exec_command(ssh, command, check_command_id=None):
         check_command_exit_status(ex_status, command)
     elif check_command_id == 'ssh_dfs':
         stdin.flush()
-        sleep(30)  # Sleep is necessary for stdin to read yes
+        sleep(100)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
         stdin.flush()
-        sleep(30)  # Sleep is necessary for stdin to read yes
+        sleep(100)  # Sleep is necessary for stdin to read yes
         stdin.write('yes\n')
         stdin.flush()
         logging.debug('%s %s', stdout.read(), stderr.read())
