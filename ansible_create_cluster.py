@@ -183,7 +183,6 @@ def create_multi_hadoop_cluster(server):
     # Create ansible_hosts file
     try:
         file_name = create_ansible_hosts()
-        sys.exit(0)
         # Run Ansible playbook
         run_ansible(file_name)
     except Exception, e:

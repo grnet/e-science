@@ -7,6 +7,7 @@
    db_name: mydatabase
    admin_django_name: mydjangouser
    password_admin_django: lalakia
+   public_ip: "{{ansible_ssh_host}}"
    is_daemon: False
    is_periodic_task: False
    Webserver_templates_path: ./templates
@@ -128,5 +129,5 @@
     tags: djangosuperuser
 
   - name: django run server
-    command: python manage.py runserver {{ansible_ssh_host}}:8000 chdir=myproject/mysite
+    command: python manage.py runserver {{public_ip}}:8000 chdir=myproject/mysite
     tags: runserver
