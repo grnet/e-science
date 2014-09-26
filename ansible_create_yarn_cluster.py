@@ -78,7 +78,7 @@ Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56  # IpV4 public network id offset
 list_of_hosts = []  # List of dicts wit VM hostnames and their private IPs
 PITHOS_FILE = 'elwiki-20140818-pages-meta-current-5000000.xml'  # WordCountFile
-FILE_RUN_PI = '/home/developer/e-science/temp_file.txt'  # File used from pi function to write stdout
+FILE_RUN_PI = 'temp_file.txt'  # File used from pi function to write stdout
 FILE_KAMAKI = 'kamaki_info.txt'  # File to write kamaki info and retrieve token
 
 
