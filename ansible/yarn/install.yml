@@ -68,6 +68,17 @@
     shell: echo net.ipv6.conf.lo.disable_ipv6 = 1 >> /etc/sysctl.conf
     when: is_master==False and is_slave==False
 
+
+  - name: Change ssh_config
+    lineinfile: dest=/etc/ssh/ssh_config regexp'=ask' line='StrictHostKeyChecking no' state=present
+    tags: skipssh1
+    when: is_master
+
+  - name : Change ssh_config (2)
+    lineinfile: dest=/etc/ssh/ssh_config line='UserKnownHostsFile=/dev/null' insertafter='EOF' state=present
+    tags: skipssh2
+    when: is_master
+
   - name: Remove second line of /etc/hosts
     lineinfile: dest=/etc/hosts regexp='^127\.0\.1\.1' state=absent
     tags: edithosts1

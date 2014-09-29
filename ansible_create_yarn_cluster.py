@@ -230,15 +230,10 @@ def create_multi_hadoop_cluster(server):
     # Copy ssh public key from master to every slave
     # Needed for passwordless ssh in hadoop
     try:
-        for vm in list_of_hosts:
-            if vm['private_ip'] != '192.168.0.2':
-                exec_command(ssh_client, 'ssh-copy-id -i ~/.ssh/id_rsa.pub'
-                             ' hduser@'+vm['fqdn'].split('.', 1)[0],
-                             'ssh_copy_id')
         logging.log(REPORT, " Hadoop is installed and configured")
         # Format and start Hadoop daemons
         format_and_start_hadoop(ssh_client)
-	logging.log(REPORT,'Cluster is active. You can access it through ' + HOSTNAME_MASTER +':8088/cluster')
+	logging.log(REPORT,' Cluster is active. You can access it through ' + HOSTNAME_MASTER +':8088/cluster')
     except Exception, e:
         logging.error(e.args)
         sys.exit(error_ssh_copyid_format_start_hadoop)
@@ -302,7 +297,7 @@ def format_and_start_hadoop(ssh_client):
     exec_command(ssh_client, '/usr/local/hadoop/bin/hadoop'
                              ' namenode -format')
     logging.log(REPORT, ' Starting dfs')
-    exec_command(ssh_client, '/usr/local/hadoop/sbin/start-dfs.sh','ssh_dfs')
+    exec_command(ssh_client, '/usr/local/hadoop/sbin/start-dfs.sh')
     logging.log(REPORT, ' Starting historyserver')
     exec_command(ssh_client, '/usr/local/hadoop/sbin/mr-jobhistory-daemon.sh start historyserver')
     logging.log(REPORT, ' Starting yarn')
@@ -341,7 +336,7 @@ def check_command_exit_status(ex_status, command):
                     command, ex_status)
 
 
-def exec_command(ssh, command, check_command_id=None):
+def exec_command(ssh, command):
     '''
     Calls overloaded exec_command function of the ssh object given
     as argument. Command is the second argument and its a string.
@@ -354,32 +349,11 @@ def exec_command(ssh, command, check_command_id=None):
         logging.exception(e.args)
         raise
 
-    if check_command_id == 'ssh_copy_id':  # For ssh-copy-id
-        stdin.flush()
-        sleep(5)  # Sleep is necessary for stdin to read yes
-        stdin.write('yes\n')
-        stdin.flush()
-        logging.debug('%s %s', stdout.read(), stderr.read())
-        # get exit status of command executed and check it with check_command
-        ex_status = stdout.channel.recv_exit_status()
-        check_command_exit_status(ex_status, command)
-    elif check_command_id == 'ssh_dfs':
-        stdin.flush()
-        sleep(100)  # Sleep is necessary for stdin to read yes
-        stdin.write('yes\n')
-        stdin.flush()
-        sleep(100)  # Sleep is necessary for stdin to read yes
-        stdin.write('yes\n')
-        stdin.flush()
-        logging.debug('%s %s', stdout.read(), stderr.read())
-        # get exit status of command executed and check it with check_command
-        ex_status = stdout.channel.recv_exit_status()
-        check_command_exit_status(ex_status, command)
-    else:
-        logging.debug('%s %s', stdout.read(), stderr.read())
-        # get exit status of command executed and check it with check_command
-        ex_status = stdout.channel.recv_exit_status()
-        check_command_exit_status(ex_status, command)
+
+    logging.debug('%s %s', stdout.read(), stderr.read())
+    # get exit status of command executed and check it with check_command
+    ex_status = stdout.channel.recv_exit_status()
+    check_command_exit_status(ex_status, command)
 
 
 def establish_connect(hostname, name, passwd, port):
