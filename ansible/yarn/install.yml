@@ -68,15 +68,14 @@
     shell: echo net.ipv6.conf.lo.disable_ipv6 = 1 >> /etc/sysctl.conf
     when: is_master==False and is_slave==False
 
-
-  - name: Change ssh_config
+  - name: Change ssh_config so we can skip StrictHostKeyChecking
     lineinfile: dest=/etc/ssh/ssh_config regexp'=ask' line='StrictHostKeyChecking no' state=present
-    tags: skipssh1
+    tags: sshcofig
     when: is_master
 
-  - name : Change ssh_config (2)
+  - name : Change ssh_config so will never run into a mismatched host key.
     lineinfile: dest=/etc/ssh/ssh_config line='UserKnownHostsFile=/dev/null' insertafter='EOF' state=present
-    tags: skipssh2
+    tags: sshconfig
     when: is_master
 
   - name: Remove second line of /etc/hosts
