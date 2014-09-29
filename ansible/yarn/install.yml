@@ -69,8 +69,8 @@
     when: is_master==False and is_slave==False
 
   - name: Change ssh_config so we can skip StrictHostKeyChecking
-    lineinfile: dest=/etc/ssh/ssh_config regexp'=ask' line='StrictHostKeyChecking no' state=present
-    tags: sshcofig
+    lineinfile: dest=/etc/ssh/ssh_config regexp='ask' line='StrictHostKeyChecking no' state=present
+    tags: sshcofig2
     when: is_master
 
   - name : Change ssh_config so will never run into a mismatched host key.
