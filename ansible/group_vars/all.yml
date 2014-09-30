@@ -1,5 +1,5 @@
 ---
-  choose_role: all
+  choose_role: yarn
   format: True
   is_master: False
   is_slave: False

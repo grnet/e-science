@@ -6,9 +6,12 @@
  django_admin_email: joe@example.com
  django_admin_password: lalakia
  webserver_ip: "{{ansible_ssh_host}}"
- is_daemon: False
- is_periodic_task: False
- django_port: 8000
  myprojectdir: myproject
  myprojectname: mysite
  settings_path: "{{myprojectdir}}/{{myprojectname}}/{{myprojectname}}/settings.py"
+ django_port: 8000
+ 
+ is_daemon: False
+ is_periodic_task: False
+ 
+ 

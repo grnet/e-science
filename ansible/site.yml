@@ -9,28 +9,13 @@
   hosts: webserver
   user: root
   roles:
-     - {role: webserver, when: choose_role == 'webserver' or choose_role == 'all'}
+     - {role: webserver, when: choose_role == 'webserver'}
 
-- name: Installing and configuring {{hadoop_version}} on master node
+- name: Installing and configuring Hadoop
   user: root
-  hosts: master
+  hosts: 
+    - master
+    - slaves
   roles:
-     - {role: hadoop, is_master: True, when: choose_role == 'hadoop' or choose_role == 'all'}
-
-- name: Installing and configuring {{hadoop_version}} on slave nodes
-  user: root
-  hosts: slaves
-  roles:
-     - {role: hadoop, is_slave: True, when: choose_role == 'hadoop' or choose_role == 'all'}
-
-- name: Installing and configuring {{yarn_version}} on master node
-  user: root
-  hosts: master
-  roles:
-     - {role: yarn, is_master: True, when: choose_role == 'yarn' or choose_role == 'all'}
-
-- name: Installing and configuring {{yarn_version}} on slave nodes
-  user: root
-  hosts: slaves
-  roles:
-     - {role: yarn, is_slave: True, when: choose_role == 'yarn' or choose_role == 'all'}
+    - {role: "{{choose_role}}", is_master: True, when: "ansible_hostname == '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and choose_role != 'webserver'"}
+    - {role: "{{choose_role}}", is_slave: True, when: "ansible_hostname != '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and choose_role != 'webserver'"}
