@@ -9,3 +9,4 @@ install:
   - "pip install django"
 # command to run tests
 script: nosetests create_cluster.py
+script: nosetests run_pi_yarn:test_create_cluster_run_pi

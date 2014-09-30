@@ -1,0 +1,4 @@
+{% for host in groups['master'] %}
+{{hostvars[host].inventory_hostname_short}}
+{% endfor %}
+ 

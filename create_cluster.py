@@ -76,6 +76,14 @@ CONNECTION_TRIES = 9    # Max number(+1) of connection attempts to a VM
 REPORT = 25  # Define logging level of REPORT
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
+
+# Href string characters without IpV4 public network id number
+HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56
+list_of_hosts = []  # List of virtual machine hostnames and their private ips 
+string_of_levels = ''
+
+threadLock = threading.Lock()
+
 HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56  # IpV4 public network id offset
 list_of_hosts = []  # List of dicts wit VM hostnames and their private IPs
 PITHOS_FILE = 'elwiki-20140818-pages-meta-current-5000000.xml'  # WordCountFile
@@ -97,6 +105,7 @@ def get_hduser_pass():
     with open(key_path, 'r') as f:
         hduser_pass = f.readlines()[2][0:25]
     return hduser_pass
+
 
 
 def exec_command_hadoop(ssh_client, command, extend_timeout=False):
@@ -1432,4 +1441,3 @@ if __name__ == '__main__':
         sys.exit(error_syntax_auth_token)
 
     main(opts)
-    

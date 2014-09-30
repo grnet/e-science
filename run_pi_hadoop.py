@@ -6,7 +6,8 @@ This script checks a hadoop cluster and run a pi job in ~okeanos.
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
-import create_cluster
+
+
 from create_cluster import *
 
 
@@ -26,17 +27,14 @@ def check_string(to_check_file, to_find_str):
 
 
 def run_pi_hadoop(name, pi_map=2, pi_sec=10000):
-    '''Checks Hadoop cluster health and runs a pi job'''
-    hduser_pass = get_hduser_pass()
-    ssh_client = establish_connect(name, 'hduser', hduser_pass,
+    '''Runs a pi job'''
+    #hduser_pass = get_hduser_pass()
+    ssh_client = establish_connect(name, 'hduser', '',
                                    MASTER_SSH_PORT)
 
-    logging.log(REPORT, ' Checking Hadoop cluster')
-    command = '/usr/local/hadoop/bin/hadoop dfsadmin -report'
-    exec_command_hadoop(ssh_client, command)
     logging.log(REPORT, ' Running pi job')
     command = '/usr/local/hadoop/bin/hadoop jar' \
-              ' /usr/local/hadoop/hadoop-examples-1.*.jar pi ' + \
+              ' /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.5.1.jar pi ' + \
               str(pi_map)+' '+str(pi_sec)
     exec_command_hadoop(ssh_client, command)
     line = check_string(FILE_RUN_PI, "Estimated value of Pi is")
@@ -50,7 +48,7 @@ def test_run_pi():
     Test that runs two pi jobs with different arguments on
     an existing hadoop cluster.
     '''
-    name = 'xxx'
+    name = 'xxxx'
     assert run_pi_hadoop(name, 2, 10000) == 3.14280000000000000000
     assert run_pi_hadoop(name, 10, 1000000) == 3.14158440000000000000
 
@@ -71,7 +69,6 @@ def test_create_cluster_run_pi():
     assert run_pi_hadoop(name, 2, 100000) == 3.14118000000000000000
 
     assert run_pi_hadoop(name, 10, 100000) == 3.14155200000000000000
-
 
 def main(opts):
     '''
