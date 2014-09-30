@@ -74,15 +74,16 @@ Instructions based on Kamaki 0.12.9 documentation | https://www.synnefo.org/docs
 Download Eclipse Luna 4.4, extract it and add to eclipse.ini the following lines 
 
     openFile
-    --lancher.GTK_version
+    --launcher.GTK_version
     2
     -vm
-    /usr/lib/jvm/j2sdk1.7-oracle/jre/bin/java
+    [path/JAVA_HOME/bin]
 
 ###Install Ansible
 Installation of Ansible (server)
 
       sudo apt-get install python-pip
+      sudo apt-get install python-dev
       sudo pip install paramiko PyYAML jinja2 httplib2
       sudo apt-get install openssh-server
       sudo apt-get install ansible
