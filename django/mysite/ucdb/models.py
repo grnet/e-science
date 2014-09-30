@@ -37,9 +37,9 @@ ACTION_STATUS_CHOICES=(
 class UserLogin(models.Model):
     """Definition of a User Login relationship model.""" 
     login_id = models.AutoField("Login ID", primary_key=True, null=False, 
-      help_text="Auto-increment login id (primary key)")
+      help_text="Auto-increment login id")
     user_id = models.ForeignKey(UserInfo, null=False, 
-      help_text="User ID (foreign key, user)")
+      help_text="User ID")
     action_date = models.DateTimeField("Action Date", null=False, 
       help_text="Date and time for the creation of this entry")
     login_status = models.CharField("Login Status", max_length=1, 
@@ -63,7 +63,7 @@ CLUSTER_STATUS_CHOICES=(
 class ClusterInfo(models.Model):
     """Definition of a Hadoop Cluster object model.""" 
     cluster_id = models.AutoField("Cluster ID", primary_key=True, null=False, 
-	help_text="Auto-increment cluster id (primary key)")
+	help_text="Auto-increment cluster id")
     cluster_name = models.CharField("Cluster Name", max_length=255, null=False, 
 	help_text="Name of the cluster")
     action_date = models.DateTimeField("Action Date", null=False, 
@@ -82,7 +82,7 @@ class ClusterInfo(models.Model):
     master_IP = models.CharField("Master IP", max_length=255, null=False, 
         help_text="IP address of Master's node")  
     user_id = models.ForeignKey(UserInfo, null=False, 
-	help_text="User ID (foreign key, user)")
+	help_text="User ID (user ID who owns the cluster)")
   
     class Meta:
         verbose_name = "Cluster" 
