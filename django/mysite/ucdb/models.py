@@ -18,7 +18,7 @@ from django.template.defaultfilters import slugify
 class UserInfo(models.Model):
     """Definition of a User object model.""" 
     user_id = models.AutoField("User ID", primary_key=True, null=False,
-        help_text="Auto-increment user id (primary key)")
+        help_text="Auto-increment user id")
     email = models.EmailField("User email", null=False,
         help_text="User email (username for astakos authentication)")
 
