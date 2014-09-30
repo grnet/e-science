@@ -1,0 +1,128 @@
+---
+  - name: Setup Java Installation
+    shell: "{{item}}"
+    tags: javasetupinst
+    with_items:
+       - echo deb http://ppa.launchpad.net/webupd8team/java/ubuntu precise main | tee -a /etc/apt/sources.list
+       - echo deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu precise main | tee -a /etc/apt/sources.list
+       - apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EEA14886
+       - apt-get update
+       - echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
+
+  - name: Install Java
+    apt: "{{item}}"
+    tags: javainstall
+    with_items:
+       - pkg=oracle-java7-installer state=latest install_recommends=yes
+       - pkg=oracle-java7-set-default state=latest install_recommends=yes 
+
+  - name: Disable ipv6
+    sysctl: "{{item}}"
+    tags: disableipv6
+    with_items:
+       - name="net.ipv6.conf.all.disable_ipv6" value=1 state=present
+       - name="net.ipv6.conf.default.disable_ipv6" value=1 state=present
+       - name="net.ipv6.conf.lo.disable_ipv6" value=1 state=present
+
+  - name: Change ssh_config to ssh from master with no StrictHostKeyCheck
+    lineinfile: "{{item}}"
+    tags: sshconfig
+    with_items:
+       - dest=/etc/ssh/ssh_config regexp'=ask' line='StrictHostKeyChecking no' state=present
+       - dest=/etc/ssh/ssh_config line='UserKnownHostsFile=/dev/null' insertafter='EOF' state=present
+    when: is_master
+
+  - name: Remove second line of /etc/hosts
+    lineinfile: dest=/etc/hosts regexp='^127\.0\.1\.1' state=absent
+    tags: edithosts1
+
+  - name: Add virtual machine private ips in /etc/hosts
+    template: src=hosts.j2 dest={{etchosts_filename}}
+    tags: edithosts2
+
+  - name: Append the host file
+    shell: cat {{etchosts_filename}} >> /etc/hosts
+    tags: edithosts3
+
+  - name: create hadoop group
+    group: name=hadoop state=present
+    tags: hdgroup
+
+  - name: create hadoop user
+    user: name=hduser group=hadoop generate_ssh_key=yes shell=/bin/bash
+    tags: hduser
+
+  - name: copy authorized_keys to hduser .ssh directory
+    tags: copyauth
+    copy: src=~/.ssh/id_rsa.pub dest=~hduser/.ssh/authorized_keys owner=hduser group=hadoop mode=0600
+ 
+  - name: prepare ssh 
+    tags: preparessh
+    shell: sudo -u hduser cat /home/hduser/.ssh/id_rsa.pub >> /home/hduser/.ssh/authorized_keys
+    when: is_master
+
+  - name: copy master public ssh key to local box
+    tags: copymasterssh
+    local_action: command  scp -v -o StrictHostKeyChecking=no root@{{ hostvars[groups['master'][0]].inventory_hostname }}:/home/hduser/.ssh/id_rsa.pub ./roles/yarn/files/master_id_rsa_pub
+    when: is_master
+
+  - name: copy local box master ssh key to hduser
+    tags: slavessh
+    authorized_key: user=hduser key="{{ lookup('file', 'master_id_rsa_pub') }}"
+    when: is_slave
+
+  - name: download hadoop-yarn src
+    tags: downloadhadoop
+    get_url: dest=/usr/local url={{yarn_common_url}}/{{ yarn_version }}/{{ yarn_version }}.tar.gz
+
+  - name: unzip hadoop-yarn src
+    tags: unzip
+    action: command tar -xzf {{ yarn_version }}.tar.gz chdir=/usr/local
+
+  - name: chown hadoop-src from root to hadoop group
+    tags: chown
+    action: |
+      command /bin/sh -c '
+      cd /usr/local
+      mv {{ yarn_version }} hadoop
+      chown -R hduser:hadoop hadoop'
+  
+  - name: update ~/.bashrc and hadoop-env.sh files
+    tags: bashhadoop
+    lineinfile: "{{item}}"
+    with_items:
+      - dest=/home/hduser/.bashrc state=present insertafter=EOF regexp="$"  line="{{ lookup('file', 'conf_bashrc') }}"
+      - dest=/usr/local/hadoop/etc/hadoop/hadoop-env.sh state=present insertafter=EOF line="export JAVA_HOME=/usr/lib/jvm/java-7-oracle"
+      - dest=/usr/local/hadoop/etc/hadoop/hadoop-env.sh state=present insertafter=EOF line="export HADOOP_PREFIX=/usr/local/hadoop"
+
+  - name: create app/hadoop/tmp to store HDFS
+    tags: tmp
+    action: |
+      command /bin/sh -c '
+      mkdir -p /app/hadoop/tmp
+      chown hduser:hadoop /app/hadoop/tmp
+      chmod 750 /app/hadoop/tmp'
+
+  - name: copy yarn configuration xml files in every node
+    tags: configurexmlfiles
+    template: "{{item}}"
+    with_items: 
+      - src=core-site.j2 dest=/usr/local/hadoop/etc/hadoop/core-site.xml owner=hduser group=hadoop
+      - src=mapred-site.j2 dest=/usr/local/hadoop/etc/hadoop/mapred-site.xml owner=hduser group=hadoop
+      - src=hdfs-site.j2 dest=/usr/local/hadoop/etc/hadoop/hdfs-site.xml owner=hduser group=hadoop
+      - src=yarn-site.j2 dest=/usr/local/hadoop/etc/hadoop/yarn-site.xml owner=hduser group=hadoop
+ 
+  - name: create masters and slaves files in hadoop-yarn master node
+    tags: mastersslaves
+    template: "{{item}}"
+    with_items: 
+      - src=masters.j2 dest=/usr/local/hadoop/etc/hadoop/masters owner=hduser group=hadoop
+      - src=slaves.j2 dest=/usr/local/hadoop/etc/hadoop/slaves owner=hduser group=hadoop
+    when: is_master
+
+  - name: create app/hadoop/tmp/namenode and datanode
+    tags: node_dir
+    file: "{{item}}"
+    with_items:
+      - dest=/app/hadoop/tmp/namenode mode=750 group=hadoop owner=hduser state=directory
+      - dest=/app/hadoop/tmp/datanode mode=750 group=hadoop owner=hduser state=directory

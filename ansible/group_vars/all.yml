@@ -1,0 +1,12 @@
+---
+  choose_role: all
+  format: True
+  is_master: False
+  is_slave: False
+  hadoop_common_url: http://archive.apache.org/dist/hadoop/common
+  hadoop_version: hadoop-1.2.1
+  dfs_replication: 2
+  filename: /home/hduser/.ssh/id_rsa
+  etchosts_filename: /etc/hosts_2 
+  yarn_common_url: http://archive.apache.org/dist/hadoop/common
+  yarn_version: hadoop-2.5.1
