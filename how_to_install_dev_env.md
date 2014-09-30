@@ -35,6 +35,8 @@
 * Password: escience
 
 ##Git Configuration
-Each user should define his own personal info for git, see: http://git-scm.com/book/en/Getting-Started-First-Time-Git-Setup
-git config --global user.name "John Doe"
-git config --global user.email johndoe@example.com
+Each user should define his own personal info for git
+(see: http://git-scm.com/book/en/Getting-Started-First-Time-Git-Setup)
+
+    git config --global user.name "John Doe"
+    git config --global user.email johndoe@example.com
