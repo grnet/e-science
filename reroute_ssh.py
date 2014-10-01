@@ -20,7 +20,7 @@ from sys import argv
 from os.path import abspath
 from base64 import b64encode
 from time import sleep
-from create_bare_cluster import *
+from create_bare_cluster import*
 
 
 # Definitions of return value errors
@@ -36,26 +36,6 @@ CONNECTION_TRIES = 9    # Max number(+1) of connection attempts to a VM
 REPORT = 25  # Define logging level of REPORT
 list_of_hosts = []  # List of dicts wit VM hostnames and their private IPs
 
-
-def get_ready_for_reroute():
-    '''
-    Runs pre-setup commands for port forwarding in master virtual machine.
-    These commands are executed only.
-    '''
-    ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '',
-                                   MASTER_SSH_PORT)
-    try:
-        exec_command(ssh_client, 'apt-get -y install python')
-        exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv4/ip_forward')
-        exec_command(ssh_client, 'iptables --table nat --append POSTROUTING '
-                                 '--out-interface eth1 -j MASQUERADE')
-        exec_command(ssh_client, 'iptables --table nat --append POSTROUTING '
-                                 '--out-interface eth2 -j MASQUERADE')
-        exec_command(ssh_client, 'iptables --append FORWARD --in-interface '
-                                 'eth2 -j ACCEPT')
-    finally:
-        ssh_client.close()
-        
 
 def reroute_ssh_prep(server,master_ip):
     '''
@@ -93,8 +73,26 @@ def reroute_ssh_prep(server,master_ip):
     for vm in list_of_hosts:
         call_reroute_for_every_vm(vm)
         
-    return list_of_hosts
-	
+    return list_of_hosts 
+                
+def get_ready_for_reroute():
+    '''
+    Runs pre-setup commands for port forwarding in master virtual machine.
+    These commands are executed only.
+    '''
+    ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '',
+                                   MASTER_SSH_PORT)
+    try:
+        exec_command(ssh_client, 'apt-get -y install python')
+        exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv4/ip_forward')
+        exec_command(ssh_client, 'iptables --table nat --append POSTROUTING '
+                                 '--out-interface eth1 -j MASQUERADE')
+        exec_command(ssh_client, 'iptables --table nat --append POSTROUTING '
+                                 '--out-interface eth2 -j MASQUERADE')
+        exec_command(ssh_client, 'iptables --append FORWARD --in-interface '
+                                 'eth2 -j ACCEPT')
+    finally:
+        ssh_client.close()	
 
 def exec_command(ssh, command):
     '''
@@ -235,4 +233,33 @@ def establish_connect(hostname, name, passwd, port):
     logging.error("Program is shutting down")
     msg = 'Failed connecting to %s virtual machine' % hostname
     raise RuntimeError(msg)
+
+
+def main(opts):
+    '''
+    The main function calls reroute_ssh_prep with the arguments given from
+    command line.
+    '''
+    reroute_ssh_prep(opts.server,opts.master_ip)
+
+if __name__ == '__main__':
+
+    #  Add some interaction candy
+
+    kw = {}
+    kw['usage'] = '%prog [options]'
+    kw['description'] = '%prog deploys a compute cluster on Synnefo w. kamaki'
+
+
+    parser = OptionParser(**kw)
+    parser.disable_interspersed_args()
+    parser.add_option('--server',
+                      action='store', type='string', dest='server',
+                      metavar="SERVER",
+                      help='it is  a list with informatinos about the cluster(names and fqdn of the nodes)')
+    parser.add_option('--public_ip',
+                      action='store', type='string', dest='public_ip',
+                      metavar="PUBLIC_IP",
+                      help='it is the ipv4 of the master node ')
+    main(opts)
     

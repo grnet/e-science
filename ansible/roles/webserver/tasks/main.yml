@@ -11,10 +11,10 @@
 
   - name: Install Celery and Django
     tags: celerydjangoinstall
-    pip: "{{item}}"
+    pip: "name={{item.name}}"
     with_items:
-      - name=celery
-      - name=Django
+      - { name: 'celery' }
+      - { name: 'Django' }
 
   - name: Copy script celeryd for daemonic workers
     tags: celerydcopy
@@ -36,12 +36,13 @@
     template: src=celerybeat_conf.j2 dest=/etc/default/celerybeat owner=root
     when: is_periodic_task
 
-  - name: create Django project
-    tags: createdjangoproject
-    command: "{{item}}"
-    with_items:
-      - mkdir {{myprojectdir}} creates={{myprojectdir}}
-      - django-admin.py startproject {{myprojectname}} chdir={{myprojectdir}} creates={{myprojectname}}/manage.py 
+  - name: create Django project,command1
+    tags: createdjangoproject1
+    command: mkdir {{myprojectdir}} creates={{myprojectdir}}
+    
+  - name: create Django project,command2
+    tags: createdjangoproject2
+    command: django-admin.py startproject {{myprojectname}} chdir={{myprojectdir}} creates={{myprojectname}}/manage.py
 
   - name: Edit pg_hba.conf
     lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
@@ -63,12 +64,16 @@
     template: src=settings.j2 dest=/etc/
     tags: djangosettingscopy
     
-  - name: set Django settings.py and migrate
-    shell: "{{item}}"
-    with_items:
-      - sed -i '/# Database/,$d' settings.py chdir={{myprojectdir}}/{{myprojectname}}/{{myprojectname}}
-      - cat /etc/settings.j2 >> {{settings_path}}
-      - python manage.py migrate chdir={{myprojectdir}}/{{myprojectname}}
+  - name: Edit Django project settings.py
+    shell: sed -i '/# Database/,$d' settings.py chdir={{myprojectdir}}/{{myprojectname}}/{{myprojectname}}
+    tags: editsettings
+
+  - name: Append settings template
+    shell: cat /etc/settings.j2 >> {{settings_path}}
+    tags: appendsettings
+
+  - name: Django project migrate
+    shell: python manage.py migrate chdir={{myprojectdir}}/{{myprojectname}}
     tags: djangomigrate
 
   - name: Revert pg_hba.conf to default

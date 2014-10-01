@@ -167,19 +167,23 @@ def create_cluster(name, clustersize, cpu_master, ram_master, disk_master,
                                                          token),
                       auth_cl=auth)
 
-    HOSTNAME_MASTER , server = cluster.create('', pub_keys_path, '')
-    sleep(10)  # Sleep to wait for virtual machines become pingable
+    HOSTNAME_MASTER , server = cluster.create('', pub_keys_path,'')
+    sleep(15)
+    #wait for the machines to be pingable
     logging.log(REPORT, ' Bare cluster has been created.')	
     # Return master node ip and server dict
-    return HOSTNAME_MASTER , server
+    return HOSTNAME_MASTER , server 
 
 
 def main(opts):
-    
+    '''
+    The main function calls create_cluster with the arguments given from
+    command line.
+    '''
     create_cluster(opts.name, opts.clustersize, opts.cpu_master,
-                           opts.ram_master, opts.disk_master, opts.disk_template,
-                           opts.cpu_slave, opts.ram_slave, opts.disk_slave,
-                           opts.token, opts.image, opts.auth_url)
+                   opts.ram_master, opts.disk_master, opts.disk_template,
+                   opts.cpu_slave, opts.ram_slave, opts.disk_slave,
+                   opts.token, opts.image, opts.auth_url)
 
 if __name__ == '__main__':
 
@@ -329,5 +333,7 @@ if __name__ == '__main__':
     if not opts.token:
         logging.error('invalid syntax for authentication token')
         sys.exit(error_syntax_auth_token)
-        
+
     main(opts)
+
+            

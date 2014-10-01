@@ -20,9 +20,9 @@ from os.path import abspath
 from datetime import datetime
 from optparse import OptionParser
 
-from create_bare_cluster import *
-from reroute_ssh import *
-from run_ansible_playbook import *
+from create_bare_cluster import*
+from reroute_ssh import*
+from run_ansible_playbook import*
 
 def main(opts):
     '''
@@ -34,7 +34,9 @@ def main(opts):
                    		opts.cpu_slave, opts.ram_slave, opts.disk_slave,
                    		opts.token, opts.image, opts.auth_url)
     list_of_hosts = reroute_ssh_prep(server,HOSTNAME_MASTER)
-    install_yarn(list_of_hosts,HOSTNAME_MASTER, opts.name)
+    logging.log(REPORT, list_of_hosts)
+    
+    # install_yarn(list_of_hosts,HOSTNAME_MASTER, opts.name)
 
 
 
@@ -189,6 +191,5 @@ if __name__ == '__main__':
     if not opts.token:
         logging.error('invalid syntax for authentication token')
         sys.exit(error_syntax_auth_token)
-        
-    main(opts)
+main(opts)
 

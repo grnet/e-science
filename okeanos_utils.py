@@ -331,7 +331,8 @@ class Cluster(object):
                 from json import dump
                 dump(servers, f, indent=2)
 
-        # public_ip is the public ip of master node
+        # HOSTNAME_MASTER is always the public ip of master node
+        global HOSTNAME_MASTER
         try:
             list_of_servers = self.client.list_servers(detail=True)
         except Exception:
@@ -345,5 +346,5 @@ class Cluster(object):
                     server['name'].rsplit('-', 1)[0]:
                 for attachment in server['attachments']:
                     if attachment['OS-EXT-IPS:type'] == 'floating':
-                        public_ip = attachment['ipv4']
-        return public_ip, servers
+                        HOSTNAME_MASTER = attachment['ipv4']
+        return HOSTNAME_MASTER , servers

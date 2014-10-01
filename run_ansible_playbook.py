@@ -17,7 +17,7 @@ import re
 import string
 import paramiko
 from sys import argv
-from reroute_ssh import *
+from reroute_ssh import*
 
 # Definitions of return value errors
 error_ansible_playbook = -34
@@ -25,8 +25,8 @@ error_ansible_playbook = -34
 # Global constants
 ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
 REPORT = 25  # Define logging level of REPORT
-ANSIBLE_HOST_PATH = './ansible/ansible_hosts'
-ANSIBLE_PLAYBOOK_PATH = './ansible/site.yml'
+ANSIBLE_HOST_PATH = './ansible2/ansible_hosts'
+ANSIBLE_PLAYBOOK_PATH = './ansible2/site.yml'
 
 def install_yarn(hosts_list , master_ip, cluster_name):
     '''
@@ -98,4 +98,43 @@ def run_ansible(filename):
     if exit_status != 0:
         logging.error(' Ansible failed')
         raise RuntimeError
+
+def main(opts):
+    '''
+    The main function calls reroute_ssh_prep with the arguments given from
+    command line.
+    '''
+    reroute_ssh_prep(opts.hosts_list,opts.master_ip,opts.cluster_name)
+
+
+if __name__ == '__main__':
+
+    #  Add some interaction candy
+
+    kw = {}
+    kw['usage'] = '%prog [options]'
+    kw['description'] = '%prog deploys a compute cluster on Synnefo w. kamaki'
+
+
+
+    parser = OptionParser(**kw)
+    parser.disable_interspersed_args()
+    parser.add_option('--server',
+                      action='store', type='string', dest='server',
+                      metavar="SERVER",
+                      help='it is  a list with information about the cluster (names and fqdn of the nodes)')
+    parser.add_option('--public_ip',
+                      action='store', type='string', dest='public_ip',
+                      metavar="PUBLIC_IP",
+                      help='it is the ipv4 of the master node ')
+    parser.add_option('--cluster_name',
+                      action='store', type='string', dest='cluster_name',
+                      metavar='CLUSTER_NAME',
+                      help='the name of the cluster')
+
+
+    main(opts)
+
+
+
 
