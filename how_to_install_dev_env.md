@@ -11,6 +11,7 @@
 * OS:  Debian 7.6.0 amd64 (64bits)
 * Ram: 1.0GB
 * Disk: 20GB
+* Installed Software components: Oracle Java 1.7, pip, git-core, Kamaki, Ansible, Python, Celery, PostgreSql, Django, RabbitMQ, PHP5, Eclipse luna 4.4, Skype
 
 ##Installation procedures
 * Start VirtualBox 
