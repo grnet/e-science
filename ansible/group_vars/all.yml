@@ -1,6 +1,7 @@
 ---
   choose_role: yarn
-  format: True
+  start_yarn: False
+  format: False
   is_master: False
   is_slave: False
   hadoop_common_url: http://archive.apache.org/dist/hadoop/common

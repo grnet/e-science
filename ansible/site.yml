@@ -19,3 +19,10 @@
   roles:
     - {role: "{{choose_role}}", is_master: True, when: "ansible_hostname == '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and choose_role != 'webserver'"}
     - {role: "{{choose_role}}", is_slave: True, when: "ansible_hostname != '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and choose_role != 'webserver'"}
+
+- name: Format (if needed) and start Hadoop daemons
+  user: root
+  hosts: master
+  tasks:
+     - { include: start_yarn.yml, when: start_yarn == 'True'}
+

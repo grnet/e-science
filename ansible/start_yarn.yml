@@ -1,9 +1,4 @@
----
-- hosts: master
-  user: root
-   
-  tasks:
-  
+--- 
   - name: format hdfs
     tags: formathdfs
     shell: sudo -u hduser ./hadoop namenode -format  chdir=/usr/local/hadoop/bin
