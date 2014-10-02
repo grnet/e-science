@@ -7,4 +7,4 @@ install:
   - "pip install paramiko"
   - "pip install ansible"
 # command to run tests
-script: nosetests create_cluster.py
+script: nosetests create_yarn_cluster.py
