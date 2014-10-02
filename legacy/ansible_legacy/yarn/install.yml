@@ -1,0 +1,215 @@
+-
+  hosts: all
+  user: root
+  vars:
+   is_master: False
+   is_slave: False
+   hadoop_common_url: http://archive.apache.org/dist/hadoop/common
+   hadoop_version: hadoop-2.5.1
+   dfs_replication: 2
+   filename: /home/hduser/.ssh/id_rsa
+   etchosts_filename: /etc/hosts_2
+  tasks:
+
+  - name: Update
+    apt: state=latest update_cache=yes
+    when: is_master==False and is_slave==False
+
+  - name: Install Sudo
+    apt: name=sudo force=yes  
+    when: is_master==False and is_slave==False
+
+  - name: Add Java repository to sources, command1
+    shell: echo deb http://ppa.launchpad.net/webupd8team/java/ubuntu precise main | tee -a /etc/apt/sources.list
+    when: is_master==False and is_slave==False
+
+  - name: Add Java repository to sources, command2
+    shell: echo deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu precise main | tee -a /etc/apt/sources.list
+    when: is_master==False and is_slave==False
+
+  - name: Add the webupd8 APT repository key
+    shell: apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EEA14886
+    when: is_master==False and is_slave==False
+
+  - name: Update APT package cache
+    apt: state=latest update_cache=yes
+    when: is_master==False and is_slave==False
+
+  - name: Autoaccept license for Java
+    shell: echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
+    when: is_master==False and is_slave==False
+
+  - name: Install Java 7
+    apt: pkg=oracle-java7-installer state=latest install_recommends=yes
+    tags: installjava
+    when: is_master==False and is_slave==False
+
+  - name: Set Java 7 Env
+    apt: pkg=oracle-java7-set-default state=latest install_recommends=yes
+    when: is_master==False and is_slave==False
+
+  - name: Disable ipv6 instantly,command1
+    shell: echo 1 > /proc/sys/net/ipv6/conf/all/disable_ipv6
+    when: is_master==False and is_slave==False
+
+  - name: Disable ipv6 instantly,command1
+    shell: echo 1 > /proc/sys/net/ipv6/conf/default/disable_ipv6
+    when: is_master==False and is_slave==False
+
+  - name: Make sure ipv6 is disabled after reboot, command1
+    shell: echo net.ipv6.conf.all.disable_ipv6 = 1 >> /etc/sysctl.conf
+    when: is_master==False and is_slave==False
+
+  - name: Make sure ipv6 is disabled after reboot, command2
+    shell: echo net.ipv6.conf.default.disable_ipv6 = 1 >> /etc/sysctl.conf
+    when: is_master==False and is_slave==False
+
+  - name: Make sure ipv6 is disabled after reboot, command3
+    shell: echo net.ipv6.conf.lo.disable_ipv6 = 1 >> /etc/sysctl.conf
+    when: is_master==False and is_slave==False
+
+  - name: Change ssh_config so we can skip StrictHostKeyChecking
+    lineinfile: dest=/etc/ssh/ssh_config regexp='ask' line='StrictHostKeyChecking no' state=present
+    tags: sshcofig2
+    when: is_master
+
+  - name : Change ssh_config so will never run into a mismatched host key.
+    lineinfile: dest=/etc/ssh/ssh_config line='UserKnownHostsFile=/dev/null' insertafter='EOF' state=present
+    tags: sshconfig
+    when: is_master
+
+  - name: Remove second line of /etc/hosts
+    lineinfile: dest=/etc/hosts regexp='^127\.0\.1\.1' state=absent
+    tags: edithosts1
+    when: is_master==False and is_slave==False
+
+  - name: Add virtual machine private ips in /etc/hosts
+    template: src=./templates/hosts.j2 dest={{etchosts_filename}}
+    tags: edithosts2
+    when: is_master==False and is_slave==False
+
+  - name: Append the host file
+    shell: cat {{etchosts_filename}} >> /etc/hosts
+    tags: edithosts3
+    when: is_master==False and is_slave==False
+
+  - name: create hadoop group
+    action: group name=hadoop state=present
+    tags: hdgroup
+    when: is_master==False and is_slave==False
+
+  - name: create hadoop user
+    action: user name=hduser group=hadoop ssh_key_file=~/.ssh/id_rsa.pub shell=/bin/bash
+    tags: hduser
+    when: is_master==False and is_slave==False
+
+  - name: create hduser .ssh directory
+    action: file path=~hduser/.ssh owner=hduser group=hadoop mode=0700 state=directory
+    tags: hdusersshdir
+    when: is_master==False and is_slave==False
+
+  - name: copy authorized_keys to hduser .ssh directory
+    tags: copyauth
+    action: copy src=~/.ssh/id_rsa.pub dest=~hduser/.ssh/authorized_keys owner=hduser group=hadoop mode=0600
+    when: is_master==False and is_slave==False
+ 
+  - name: prepare ssh 
+    tags: preparessh
+    action: |
+      command /bin/sh -c '
+      sudo -u hduser ssh-keygen -q -t rsa -P "" -f {{filename}} creates={{filename}}
+      sudo -u hduser cat /home/hduser/.ssh/id_rsa.pub >> /home/hduser/.ssh/authorized_keys'
+    when: is_master
+
+  - name: copy master public ssh key to local box
+    tags: copymasterssh
+    local_action: command  scp -v -o StrictHostKeyChecking=no root@{{ hostvars[groups['master'][0]].inventory_hostname }}:/home/hduser/.ssh/id_rsa.pub master_id_rsa_pub
+    when: is_master
+
+  - name: copy local box master ssh key to hduser
+    tags: slavessh
+    authorized_key: user=hduser key="{{ lookup('file', './master_id_rsa_pub') }}"
+    when: is_slave
+
+  - name: update ~/.bashrc file
+    tags: bashrc
+    action: lineinfile dest=/home/hduser/.bashrc state=present insertafter=EOF regexp="$"  line="{{ lookup('file', 'conf_bashrc') }}"
+    when: is_master==False and is_slave==False
+
+  - name: copy hadoop src from local (if exists)
+    tags: copysrc
+    action: copy src={{ hadoop_version }}.tar.gz dest=/usr/local
+    register: result
+    ignore_errors: True
+    when: is_master==False and is_slave==False
+
+  - name: download hadoop src
+    tags: downloadhadoop
+    action: get_url dest=/usr/local url={{hadoop_common_url}}/{{ hadoop_version }}/{{ hadoop_version }}.tar.gz
+    when: result|failed
+
+  - name: unzip hadoop src
+    tags: unzip
+    action: command tar -xzf {{ hadoop_version }}.tar.gz chdir=/usr/local
+    when: is_master==False and is_slave==False
+
+  - name: chown hadoop-src from root to hadoop group
+    tags: chown
+    action: |
+      command /bin/sh -c '
+      cd /usr/local
+      mv {{ hadoop_version }} hadoop
+      chown -R hduser:hadoop hadoop'
+    when: is_master==False and is_slave==False
+
+  - name: update hadoop-env.sh file
+    tags: env-sh
+    action: lineinfile dest=/usr/local/hadoop/etc/hadoop/hadoop-env.sh state=present insertafter=EOF line="export JAVA_HOME=/usr/lib/jvm/java-7-oracle"
+    when: is_master==False and is_slave==False
+
+  - name: create app/hadoop/tmp to store HDFS
+    tags: tmp
+    action: |
+      command /bin/sh -c '
+      mkdir -p /app/hadoop/tmp
+      chown hduser:hadoop /app/hadoop/tmp
+      chmod 750 /app/hadoop/tmp'
+    when: is_master==False and is_slave==False
+
+  - name: copy core-site.xml to node
+    tags: coresite
+    action: template src=./templates/core-site.j2 dest=/usr/local/hadoop/etc/hadoop/core-site.xml owner=hduser group=hadoop
+
+  - name: copy mapred-site.xml to node
+    tags: mapredsite
+    action: template src=./templates/mapred-site.j2 dest=/usr/local/hadoop/etc/hadoop/mapred-site.xml owner=hduser group=hadoop
+
+  - name: copy hdfs-site.xml (with terasort-specific values) to node
+    tags: hdfssite
+    action: template src=./templates/hdfs-site.j2 dest=/usr/local/hadoop/etc/hadoop/hdfs-site.xml owner=hduser group=hadoop
+
+  - name: copy yarn-site.xml to node
+    tags: yarnsite
+    action: template src=./templates/yarn-site.j2 dest=/usr/local/hadoop/etc/hadoop/yarn-site.xml owner=hduser group=hadoop
+
+  - name: create masters file
+    tags: masters
+    template: src=./templates/masters.j2 dest=/usr/local/hadoop/etc/hadoop/masters owner=hduser group=hadoop
+    when: is_master
+
+  - name: create slaves file
+    tags: slaves
+    template: src=./templates/slaves.j2 dest=/usr/local/hadoop/etc/hadoop/slaves owner=hduser group=hadoop
+    when: is_master
+
+  - name: update hadoop-env.sh file (2)
+    tags: env-sh
+    action: lineinfile dest=/usr/local/hadoop/etc/hadoop/hadoop-env.sh state=present insertafter=EOF line="export HADOOP_PREFIX=/usr/local/hadoop"
+
+  - name: create app/hadoop/tmp/datanode
+    tags: datanode_dir
+    file: dest=/app/hadoop/tmp/datanode mode=750 group=hadoop owner=hduser state=directory
+
+  - name: create app/hadoop/tmp/namenode
+    tags: namenode_dir
+    file: dest=/app/hadoop/tmp/namenode mode=750 group=hadoop owner=hduser state=directory
