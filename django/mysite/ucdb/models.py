@@ -19,14 +19,14 @@ class UserInfo(models.Model):
     """Definition of a User object model.""" 
     user_id = models.AutoField("User ID", primary_key=True, null=False,
         help_text="Auto-increment user id")
-    email = models.EmailField("User email", null=False,
-        help_text="User email (username for astakos authentication)")
+    uuid = models.CharField("UUID", null=False, blank=False, unique=True, default="", max_length=255,
+        help_text="Universally unique identifier (for astakos authentication)")
 
     class Meta:
         verbose_name = "User" 
 
     def __unicode__(self):
-        return self.email
+        return self.uuid
 
     
 ACTION_STATUS_CHOICES=(
@@ -52,7 +52,7 @@ class UserLogin(models.Model):
         verbose_name = "Login" 
 
     def __unicode__(self):
-        return ("%s, %s") % (self.user_id.email, self.login_status)
+        return ("%s, %s") % (self.user_id.uuid, self.login_status)
         
 
 CLUSTER_STATUS_CHOICES=(
