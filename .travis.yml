@@ -8,4 +8,4 @@ install:
   - "pip install ansible"
   - "pip install django"
 # command to run tests
-script: nosetests create_cluster.py
+script: nosetests create_yarn_cluster.py

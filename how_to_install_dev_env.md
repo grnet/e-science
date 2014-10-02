@@ -40,4 +40,4 @@ Each user should define his own personal info for git
 (see: http://git-scm.com/book/en/Getting-Started-First-Time-Git-Setup)
 
     git config --global user.name [your username]
-    git config --global user.email [your email]
+    git config --global user.email [your email] 

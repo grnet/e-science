@@ -1,0 +1,28 @@
+---
+- name: Setting up common tasks for every host 
+  hosts: all
+  user: root
+  roles:
+     - commons
+
+- name: Installing and configuring webserver
+  hosts: webserver
+  user: root
+  roles:
+     - {role: webserver, when: choose_role == 'webserver'}
+
+- name: Installing and configuring Hadoop
+  user: root
+  hosts: 
+    - master
+    - slaves
+  roles:
+    - {role: "{{choose_role}}", is_master: True, when: "ansible_hostname == '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and choose_role != 'webserver'"}
+    - {role: "{{choose_role}}", is_slave: True, when: "ansible_hostname != '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and choose_role != 'webserver'"}
+
+- name: Format (if needed) and start Hadoop daemons
+  user: root
+  hosts: master
+  tasks:
+     - { include: start_yarn.yml, when: start_yarn == 'True'}
+

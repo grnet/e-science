@@ -25,6 +25,9 @@ from time import sleep
 import os
 import nose
 import logging
+import subprocess
+import re
+import string
 
 # Definitions of return value errors
 error_syntax_clustersize = -1
@@ -77,6 +80,39 @@ list_of_hosts = []  # List of dicts wit VM hostnames and their private IPs
 PITHOS_FILE = 'elwiki-20140818-pages-meta-current-5000000.xml'  # WordCountFile
 FILE_RUN_PI = 'temp_file.txt'  # File used from pi function to write stdout
 FILE_KAMAKI = 'kamaki_info.txt'  # File to write kamaki info and retrieve token
+
+
+
+def exec_command_yarn(ssh_client, command, extend_timeout=False):
+    '''
+    exec_command for the run_pi_hadoop and run_wordcount_hadoop.
+    This one is used because for these methods we want to see the output
+    in report logging level and not in debug. Also wordcount increases
+    the channel timeout because the command takes more time than every
+    other command of the script.
+    '''
+    try:
+        if extend_timeout:
+            # This is only for wordcount commands that need bigger timeout
+            stdin, stdout, stderr = ssh_client.exec_command(command,
+                                                            get_pty=True,
+                                        chan_timeout=CHAN_TIMEOUT_HADOOP)
+            stdout_hadoop = stdout.read()
+        else:
+            # This is for every other command of pi and wordcount
+            stdin, stdout, stderr = ssh_client.exec_command(command,
+                                                            get_pty=True)
+            stdout_hadoop = stdout.read()
+            # For pi command. Writes stdout to a file so we get the pi value
+            if " pi " in command:
+                with open(FILE_RUN_PI, 'w') as file_out:
+                    file_out.write(stdout_hadoop)
+    except Exception, e:
+        logging.exception(e.args)
+        raise
+    logging.log(REPORT, '%s %s', stdout_hadoop, stderr.read())
+    ex_status = stdout.channel.recv_exit_status()
+    check_command_exit_status(ex_status, command)
 
 
 def get_ready_for_reroute():
@@ -195,14 +231,10 @@ def create_multi_hadoop_cluster(server):
     # Copy ssh public key from master to every slave
     # Needed for passwordless ssh in hadoop
     try:
-        for vm in list_of_hosts:
-            if vm['private_ip'] != '192.168.0.2':
-                exec_command(ssh_client, 'ssh-copy-id -i ~/.ssh/id_rsa.pub'
-                             ' hduser@'+vm['fqdn'].split('.', 1)[0],
-                             'ssh_copy_id')
         logging.log(REPORT, " Hadoop is installed and configured")
         # Format and start Hadoop daemons
         format_and_start_hadoop(ssh_client)
+	logging.log(REPORT,' Cluster is active. You can access it through ' + HOSTNAME_MASTER +':8088/cluster')
     except Exception, e:
         logging.error(e.args)
         sys.exit(error_ssh_copyid_format_start_hadoop)
@@ -218,13 +250,13 @@ def run_ansible(filename):
     '''
     logging.log(REPORT, ' Ansible starts Hadoop installation on master and '
                         'slave nodes')
-    # First time call of Ansible playbook install_hadoop.yml executes tasks
+    # First time call of Ansible playbook install.yml executes tasks
     # required for hadoop installation on every virtual machine. Runs with
     # -f flag which is the fork argument of Ansible. Fork number used is size
     # of cluster.
     exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                             'ansible-playbook -i ' + filename +
-                            ' ./ansible/install_hadoop.yml -f ' +
+                            ' ./ansible_legacy/yarn/install.yml -f ' +
                             str(cluster_size))
     if exit_status != 0:
         logging.error(' Ansible failed during Hadoop installation')
@@ -232,11 +264,11 @@ def run_ansible(filename):
 
     logging.log(REPORT, ' Ansible executes master-only tasks.')
 
-    # Playbook install_hadoop.yml is called now for tasks executed on master
+    # Playbook install.yml is called now for tasks executed on master
     # node only. This is why 'the is_master=True' and '-l master' arguments
     # are used.
     exit_status = os.system('ansible-playbook -i ' + filename +
-                            ' ./ansible/install_hadoop.yml '
+                            ' ./ansible_legacy/yarn/install.yml '
                             '-e "is_master=True" -l master')
     if exit_status != 0:
         logging.error(' Ansible failed executing master-only tasks')
@@ -244,11 +276,11 @@ def run_ansible(filename):
 
     logging.log(REPORT, ' Ansible executes slave-only tasks.')
 
-    # Playbook install_hadoop.yml is called now for tasks executed on the
+    # Playbook install.yml is called now for tasks executed on the
     # slave nodes only. That is why 'is_slave=True' and '-l slaves' arguments
     # are used. Also it uses the fork argument for the slave nodes.
     exit_status = os.system('ansible-playbook -i ' + filename +
-                            ' ./ansible/install_hadoop.yml '
+                            ' ./ansible_legacy/yarn/install.yml '
                             '-e "is_slave=True" -l slaves -f '
                             + str(cluster_size-1))
     if exit_status != 0:
@@ -262,14 +294,16 @@ def format_and_start_hadoop(ssh_client):
     and then start the hadoop daemons.Takes as argument an ssh object
     returned from establish_connect.
     '''
-    logging.log(REPORT, ' Formating hadoop')
+    logging.log(REPORT, ' Formating HDFS')
     exec_command(ssh_client, '/usr/local/hadoop/bin/hadoop'
                              ' namenode -format')
-    logging.log(REPORT, ' Starting hadoop')
-    exec_command(ssh_client, '/usr/local/hadoop/bin/start-dfs.sh',
-                 'ssh_copy_id')
-    exec_command(ssh_client, '/usr/local/hadoop/bin/start-mapred.sh')
-    logging.log(REPORT, ' Hadoop has started')
+    logging.log(REPORT, ' Starting dfs')
+    exec_command(ssh_client, '/usr/local/hadoop/sbin/start-dfs.sh')
+    logging.log(REPORT, ' Starting historyserver')
+    exec_command(ssh_client, '/usr/local/hadoop/sbin/mr-jobhistory-daemon.sh start historyserver')
+    logging.log(REPORT, ' Starting yarn')
+    exec_command(ssh_client, '/usr/local/hadoop/sbin/start-yarn.sh')
+    logging.log(REPORT, ' Yarn has started')
 
 
 def call_reroute_for_every_vm(vm):
@@ -303,7 +337,7 @@ def check_command_exit_status(ex_status, command):
                     command, ex_status)
 
 
-def exec_command(ssh, command, check_command_id=None):
+def exec_command(ssh, command):
     '''
     Calls overloaded exec_command function of the ssh object given
     as argument. Command is the second argument and its a string.
@@ -316,21 +350,11 @@ def exec_command(ssh, command, check_command_id=None):
         logging.exception(e.args)
         raise
 
-    if check_command_id == 'ssh_copy_id':  # For ssh-copy-id
-        stdin.flush()
-        sleep(5)  # Sleep is necessary for stdin to read yes
-        stdin.write('yes\n')
-        stdin.flush()
-        logging.debug('%s %s', stdout.read(), stderr.read())
-        # get exit status of command executed and check it with check_command
-        ex_status = stdout.channel.recv_exit_status()
-        check_command_exit_status(ex_status, command)
 
-    else:
-        logging.debug('%s %s', stdout.read(), stderr.read())
-        # get exit status of command executed and check it with check_command
-        ex_status = stdout.channel.recv_exit_status()
-        check_command_exit_status(ex_status, command)
+    logging.debug('%s %s', stdout.read(), stderr.read())
+    # get exit status of command executed and check it with check_command
+    ex_status = stdout.channel.recv_exit_status()
+    check_command_exit_status(ex_status, command)
 
 
 def establish_connect(hostname, name, passwd, port):
@@ -823,7 +847,7 @@ def create_ansible_hosts():
     # Removes spaces and ':' from cluster name and appends it to ansible_hosts
     # The ansible_hosts file will now have a timestamped name to seperate it
     # from ansible_hosts files of different clusters.
-    filename = './ansible/ansible_hosts' + ansible_hosts_prefix
+    filename = './ansible_legacy/ansible_hosts' + ansible_hosts_prefix
 
     # Create ansible_hosts file and write all information that is
     # required from Ansible playbook.
