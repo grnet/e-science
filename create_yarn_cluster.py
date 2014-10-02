@@ -189,5 +189,5 @@ if __name__ == '__main__':
     if not opts.token:
         logging.error('invalid syntax for authentication token')
         sys.exit(error_syntax_auth_token)
-main(opts)
+    main(opts)
 
