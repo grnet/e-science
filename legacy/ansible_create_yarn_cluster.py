@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 '''
-This script creates a virtual cluster on ~okeanos and installs Hadoop.
+This script creates a virtual cluster on ~okeanos and installs Hadoop
+using Ansible.
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -20,14 +21,12 @@ from kamaki.clients.cyclades import CycladesClient
 from optparse import OptionParser
 from datetime import datetime
 import paramiko
-import time
 from time import sleep
 import os
 import nose
-import threading
 import logging
-import re
 import subprocess
+import re
 import string
 
 # Definitions of return value errors
@@ -64,51 +63,27 @@ error_get_ip = -30
 error_create_server = -31
 error_syntax_auth_token = -32
 error_cluster_corrupt = -33
+error_ansible_playbook = -34
 error_authentication = -99
 
 # Global constants
+MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
 CHAN_TIMEOUT = 360  # Paramiko channel timeout
-CHAN_TIMEOUT_HADOOP = 1000  # Paramiko channel timeout for hadoop wordcount job
-JOIN_THREADS_TIME = 1000  # Time to wait for threads to join
 ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
 CONNECTION_TRIES = 9    # Max number(+1) of connection attempts to a VM
 REPORT = 25  # Define logging level of REPORT
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
-
-# Href string characters without IpV4 public network id number
-HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56
-list_of_hosts = []  # List of virtual machine hostnames and their private ips 
-string_of_levels = ''
-
-threadLock = threading.Lock()
-
 HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56  # IpV4 public network id offset
 list_of_hosts = []  # List of dicts wit VM hostnames and their private IPs
 PITHOS_FILE = 'elwiki-20140818-pages-meta-current-5000000.xml'  # WordCountFile
 FILE_RUN_PI = 'temp_file.txt'  # File used from pi function to write stdout
 FILE_KAMAKI = 'kamaki_info.txt'  # File to write kamaki info and retrieve token
 
-# Global variables
-threadLock = threading.Lock()  # Declare thread lock
 
 
-def get_hduser_pass():
-    '''
-    Create the password of Hadoop user.
-    Password is the first 24 characters of user's
-    private public key.
-    '''
-    USER_HOME = os.path.expanduser('~')
-    key_path = os.path.join(USER_HOME, ".ssh/id_rsa")
-    with open(key_path, 'r') as f:
-        hduser_pass = f.readlines()[2][0:25]
-    return hduser_pass
-
-
-
-def exec_command_hadoop(ssh_client, command, extend_timeout=False):
+def exec_command_yarn(ssh_client, command, extend_timeout=False):
     '''
     exec_command for the run_pi_hadoop and run_wordcount_hadoop.
     This one is used because for these methods we want to see the output
@@ -140,136 +115,15 @@ def exec_command_hadoop(ssh_client, command, extend_timeout=False):
     check_command_exit_status(ex_status, command)
 
 
-def destroy_cluster(cluster_name, token):
-    '''
-    Destroys cluster and deletes network and floating ip. Finds the machines
-    that belong to the cluster that is requested to be destroyed and the
-    floating ip of the master virtual machine and terminates them. Then
-    deletes the network and the floating ip.
-    '''
-    servers_to_delete = []
-    auth = check_credentials(token)
-    endpoints, user_id = endpoints_and_user_id(auth)
-    cyclades = init_cyclades(endpoints['cyclades'], token)
-    nc = init_cyclades_netclient(endpoints['network'], token)
-    try:
-        list_of_servers = cyclades.list_servers(detail=True)
-    except Exception:
-        logging.exception('Could not get list of servers.'
-                          'Cannot delete cluster')
-        sys.exit(error_get_list_servers)
-
-    for server in list_of_servers:  # Find the servers to be deleted
-        if cluster_name == server['name'].rsplit('-', 1)[0]:
-            servers_to_delete.append(server)
-    # If the list of servers to delete is empty then abort
-    if not servers_to_delete:
-        logging.log(REPORT, " Cluster with name [%s] does not exist"
-                    % cluster_name)
-        sys.exit(error_cluster_not_exist)
-
-    number_of_nodes = servers_to_delete.__len__()
-    # Find the floating ip of master virtual machine
-    float_ip_to_delete = ''
-    for attachment in servers_to_delete[0]['attachments']:
-        if attachment['OS-EXT-IPS:type'] == 'floating':
-            float_ip_to_delete = attachment['ipv4']
-
-    if not float_ip_to_delete:
-        logging.error(' Cluster [%s] is corrupted', cluster_name)
-        sys.exit(error_cluster_corrupt)
-    # Find network to be deleted
-    try:
-        list_of_networks = nc.list_networks()
-        for net_work in list_of_networks:
-            if net_work['name'] == \
-                    servers_to_delete[0]['name'].rsplit('-', 1)[0]:
-                network_to_delete_id = net_work['id']
-    except Exception:
-        logging.exception('Error in getting network [%s] to delete' %
-                          net_work['name'])
-        sys.exit(error_delete_network)
-    # Start cluster deleting
-    try:
-        for server in servers_to_delete:
-            cyclades.delete_server(server['id'])
-        logging.log(REPORT, ' There are %d servers to clean up'
-                    % number_of_nodes)
-    # Wait for every server of the cluster to be deleted
-        for server in servers_to_delete:
-            new_status = cyclades.wait_server(server['id'],
-                                              current_status='ACTIVE',
-                                              max_wait=300)
-            logging.log(REPORT, ' Server [%s] is being %s', server['name'],
-                        new_status)
-            if new_status != 'DELETED':
-                logging.error('Error deleting server [%s]' % server['name'])
-                sys.exit(error_delete_server)
-        logging.log(REPORT, ' Cluster [%s] is %s', cluster_name, new_status)
-    # Find the correct network of deleted cluster and delete it
-    except Exception:
-        logging.exception('Error in deleting server')
-        sys.exit(error_delete_server)
-
-    try:
-        nc.delete_network(network_to_delete_id)
-        sleep(10)  # Take some time to ensure it is deleted
-        logging.log(REPORT, ' Network [%s] is deleted' %
-                            net_work['name'])
-    except Exception:
-        logging.exception('Error in deleting network')
-        sys.exit(error_delete_network)
-
-    # Find the correct floating ip id of deleted master machine and delete it
-    try:
-        for float_ip in nc.list_floatingips():
-            if float_ip_to_delete == float_ip['floating_ip_address']:
-                nc.delete_floatingip(float_ip['id'])
-                logging.log(REPORT, ' Floating ip [%s] is deleted'
-                            % float_ip['floating_ip_address'])
-    except Exception:
-        logging.exception('Error in deleting floating ip [%s]',
-                          float_ip_to_delete)
-        sys.exit(error_delete_float_ip)
-
-    logging.log(REPORT, ' Cluster [%s] with %d nodes was deleted',
-                cluster_name, number_of_nodes)
-
-
-def configuration_bashrc(ssh_client):
-    '''
-    Configures .bashrc for hduser.Adds hadoop_home, java_home
-    and useful aliases. Also adds java_home to hadoop-env.sh
-    Takes as argument an ssh object returned from establish_connect
-    '''
-    exec_command(ssh_client, 'echo "export HADOOP_HOME=/usr/local/hadoop"'
-                             ' >> $HOME/.bashrc')
-    exec_command(ssh_client, 'echo "export JAVA_HOME=/usr/lib/jvm/java-7-'
-                             'oracle" >> $HOME/.bashrc')
-    exec_command(ssh_client, 'echo "unalias fs &> /dev/null"'
-                             ' >> $HOME/.bashrc')
-    exec_command(ssh_client, 'echo \'alias fs="hadoop fs"\' >> .bashrc')
-    exec_command(ssh_client, 'echo "unalias hls &> /dev/null"'
-                             ' >> $HOME/.bashrc')
-    exec_command(ssh_client, 'echo \'alias hls="fs -ls"\' >> .bashrc')
-    sleep(1)
-    exec_command(ssh_client, 'source ~/.bashrc')
-    sleep(1)
-    exec_command(ssh_client, 'echo "export PATH=$PATH:$HADOOP_HOME/bin"'
-                             ' >> $HOME/.bashrc')
-    exec_command(ssh_client, 'echo "export JAVA_HOME=/usr/lib/jvm/java-7-'
-                             'oracle" >>'
-                             ' /usr/local/hadoop/conf/hadoop-env.sh')
-
-
 def get_ready_for_reroute():
     '''
     Runs pre-setup commands for port forwarding in master virtual machine.
-    These commands are executed only once before the threads start.
+    These commands are executed only.
     '''
     ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '',
                                    MASTER_SSH_PORT)
     try:
+        exec_command(ssh_client, 'apt-get -y install python')
         exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv4/ip_forward')
         exec_command(ssh_client, 'iptables --table nat --append POSTROUTING '
                                  '--out-interface eth1 -j MASQUERADE')
@@ -283,11 +137,10 @@ def get_ready_for_reroute():
 
 def reroute_ssh_to_slaves(dport, slave_ip):
     '''
-    Every thread-slave virtual machine connects to master and setups
-    its port forwarding rules with the port and private ip of the slave.
-    Also connects to itself and adds the master as a default gateway,
-    so the slave has internet access through master vm.
-    Arguments are the port and the private ip of the slave vm.
+    For every slave vm in the cluster this function is called.
+    Finishes the port forwarding and installs python for ansible
+    in every machine. Arguments are the port and the private ip of
+    the slave vm.
     '''
     ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '',
                                    MASTER_SSH_PORT)
@@ -303,36 +156,15 @@ def reroute_ssh_to_slaves(dport, slave_ip):
     ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', dport)
     try:
         exec_command(ssh_client, 'route add default gw 192.168.0.2')
+        exec_command(ssh_client, 'apt-get -y install python')
 
     finally:
         ssh_client.close()
 
 
-class myThread (threading.Thread):
-    '''
-    Subclass of Thread.
-    Run function calls creat_single_hadoop
-    '''
-    def __init__(self, threadID, name, vm):
-        threading.Thread.__init__(self)
-        self.threadID = threadID  # Ranges from 1 to clustersize
-        self.name = name  # Fully qualified domain name of each vm
-        self.vm = vm  # member of the server list returned by create_server
-
-    def run(self):
-        logging.log(REPORT, "Starting %s thread ", self.name)
-        try:
-            creat_single_hadoop_cluster(self.vm)
-        except Exception, e:
-            logging.exception(e.args)  # Catch an exception of one thread
-            # Terminate program if a thread throws an exception
-            os._exit(error_fatal)
-
-
 class mySSHClient(paramiko.SSHClient):
     '''Class that inherits paramiko SSHClient'''
-    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False,
-                     chan_timeout=CHAN_TIMEOUT):
+    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False):
         '''
         Overload paramiko exec_command by adding a timeout.
         Timeout is needed because script hangs when there is not an answer
@@ -341,7 +173,7 @@ class mySSHClient(paramiko.SSHClient):
         chan = self._transport.open_session()
         if get_pty:
             chan.get_pty()
-        chan.settimeout(chan_timeout)  # Add a timeout to the exec_command
+        chan.settimeout(CHAN_TIMEOUT)  # Add a timeout to the exec_command
         chan.exec_command(command)
         stdin = chan.makefile('wb', bufsize)
         stdout = chan.makefile('r', bufsize)
@@ -351,32 +183,29 @@ class mySSHClient(paramiko.SSHClient):
 
 def create_multi_hadoop_cluster(server):
     '''
-    Function that starts the threads. Creates thread objects, one for every
-    virtual machine. Thread name is the fully qualified domain name of
-    the virtual machine. Before the thread creation calls the
-    get_ready_for_reroute to do a pre-setup for port forwarding
-    in the master. Takes as argument the server list that is returned
-    from create_cluster. We get from server list the fully qualified
-    names.
+    Calls every function needed for the installation of hadoop and all
+    required dependencies. Also calls the function that formats and starts
+    hadoop.
     '''
     dict_s = {}  # Dictionary that will contain fully qualified domain names
     # and private ips temporarily for each machine. It will be appended
     # each time to list_of_hosts. List_of_hosts is the list that has every
-    #  fqdn and private ip of the virtual machines.Also master's adminPass.
+    #  fqdn and private ip of the virtual machines.
     for s in server:
         if s['name'].split('-')[-1] == '1':  # Master vm
-            # Hostname of master is used in every ssh connection.
-            # So it is defined as global
-            dict_s = {'fqdn': s['SNF:fqdn'], 'private_ip': '192.168.0.2'}
-            global HDUSER_PASS
-            HDUSER_PASS = get_hduser_pass()
+            dict_s = {'fqdn': s['SNF:fqdn'], 'private_ip': '192.168.0.2',
+                      'port': 22}
+            global cluster_name
+            cluster_name = s['name'].rsplit('-', 1)[0]
             list_of_hosts.append(dict_s)
         else:
             # Every slave ip is increased by 1 from the private ip of the
             # previous slave.The first slave is increased by 1 from the
             # master ip which is 192.168.0.2.
             slave_ip = '192.168.0.' + str(1 + int(s['name'].split('-')[-1]))
-            dict_s = {'fqdn': s['SNF:fqdn'], 'private_ip': slave_ip}
+            port = ADD_TO_GET_PORT+int(s['name'].split('-')[-1])
+            dict_s = {'fqdn': s['SNF:fqdn'], 'private_ip': slave_ip,
+                      'port': port}
             list_of_hosts.append(dict_s)
     # Pre-setup the port forwarding that will happen later
     try:
@@ -384,35 +213,79 @@ def create_multi_hadoop_cluster(server):
     except Exception, e:
         logging.exception(e.args)
         sys.exit(error_ready_reroute)
-    i = 0
-    # Threads are created, one for each virtual machine
-    threads = []
-    for s in server:
-        t = myThread(i, s['SNF:fqdn'], s)
-        t.start()
-        threads.append(t)
-        i = i+1
-
-    for t in threads:
-        t.join(JOIN_THREADS_TIME)
-    # Wait for all threads to complete
+    # Port-forwarding now for every slave machine
+    for vm in list_of_hosts:
+        call_reroute_for_every_vm(vm)
+    # Create ansible_hosts file
+    try:
+        file_name = create_ansible_hosts()
+        # Run Ansible playbook
+        run_ansible(file_name)
+    except Exception, e:
+        logging.error(' Program is exiting')
+        sys.exit(error_ansible_playbook)
+    # create_cluster script finishes the Hadoop configuration
+    # after the execution of install-hadoop.yml playbook.
     ssh_client = establish_connect(HOSTNAME_MASTER, 'hduser',
-                                   HDUSER_PASS, MASTER_SSH_PORT)
+                                   '', MASTER_SSH_PORT)
     # Copy ssh public key from master to every slave
     # Needed for passwordless ssh in hadoop
     try:
-        for vm in list_of_hosts:
-            if vm['private_ip'] != '192.168.0.2':
-                exec_command(ssh_client, 'ssh-copy-id -i $HOME/.ssh/id_rsa.pub'
-                             ' hduser@'+vm['fqdn'].split('.', 1)[0],
-                             'ssh_copy_id')
         logging.log(REPORT, " Hadoop is installed and configured")
+        # Format and start Hadoop daemons
         format_and_start_hadoop(ssh_client)
+	logging.log(REPORT,' Cluster is active. You can access it through ' + HOSTNAME_MASTER +':8088/cluster')
     except Exception, e:
         logging.error(e.args)
         sys.exit(error_ssh_copyid_format_start_hadoop)
     finally:
         ssh_client.close()
+
+
+def run_ansible(filename):
+    '''
+    Calls the ansible playbook that installs and configures
+    hadoop and everything needed for hadoop to be functional.
+    Filename as argument is the name of ansible_hosts file.
+    '''
+    logging.log(REPORT, ' Ansible starts Hadoop installation on master and '
+                        'slave nodes')
+    # First time call of Ansible playbook install.yml executes tasks
+    # required for hadoop installation on every virtual machine. Runs with
+    # -f flag which is the fork argument of Ansible. Fork number used is size
+    # of cluster.
+    exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
+                            'ansible-playbook -i ' + filename +
+                            ' ./ansible_legacy/yarn/install.yml -f ' +
+                            str(cluster_size))
+    if exit_status != 0:
+        logging.error(' Ansible failed during Hadoop installation')
+        raise RuntimeError
+
+    logging.log(REPORT, ' Ansible executes master-only tasks.')
+
+    # Playbook install.yml is called now for tasks executed on master
+    # node only. This is why 'the is_master=True' and '-l master' arguments
+    # are used.
+    exit_status = os.system('ansible-playbook -i ' + filename +
+                            ' ./ansible_legacy/yarn/install.yml '
+                            '-e "is_master=True" -l master')
+    if exit_status != 0:
+        logging.error(' Ansible failed executing master-only tasks')
+        raise RuntimeError
+
+    logging.log(REPORT, ' Ansible executes slave-only tasks.')
+
+    # Playbook install.yml is called now for tasks executed on the
+    # slave nodes only. That is why 'is_slave=True' and '-l slaves' arguments
+    # are used. Also it uses the fork argument for the slave nodes.
+    exit_status = os.system('ansible-playbook -i ' + filename +
+                            ' ./ansible_legacy/yarn/install.yml '
+                            '-e "is_slave=True" -l slaves -f '
+                            + str(cluster_size-1))
+    if exit_status != 0:
+        logging.error(' Ansible failed executing slaves-only tasks')
+        raise RuntimeError
 
 
 def format_and_start_hadoop(ssh_client):
@@ -421,47 +294,28 @@ def format_and_start_hadoop(ssh_client):
     and then start the hadoop daemons.Takes as argument an ssh object
     returned from establish_connect.
     '''
-    logging.log(REPORT, ' Formating hadoop')
+    logging.log(REPORT, ' Formating HDFS')
     exec_command(ssh_client, '/usr/local/hadoop/bin/hadoop'
                              ' namenode -format')
-    logging.log(REPORT, ' Starting hadoop')
-    exec_command(ssh_client, '/usr/local/hadoop/bin/start-dfs.sh',
-                 'ssh_after_hadoop')
-    exec_command(ssh_client, '/usr/local/hadoop/bin/start-mapred.sh')
-    logging.log(REPORT, ' Hadoop has started')
+    logging.log(REPORT, ' Starting dfs')
+    exec_command(ssh_client, '/usr/local/hadoop/sbin/start-dfs.sh')
+    logging.log(REPORT, ' Starting historyserver')
+    exec_command(ssh_client, '/usr/local/hadoop/sbin/mr-jobhistory-daemon.sh start historyserver')
+    logging.log(REPORT, ' Starting yarn')
+    exec_command(ssh_client, '/usr/local/hadoop/sbin/start-yarn.sh')
+    logging.log(REPORT, ' Yarn has started')
 
 
-def creat_single_hadoop_cluster(s):
-    '''
-    Splits the threads. Master thread calls install_hadoop with port 22.
-    Slave ports and slave_ips are defined by the last number in their name.
-    10000 is the first slave port and 192.168.0.3 the first private slave ip.
-    By adding 1 to the port and ip we have the next slave port and ip.
-    There is a thread lock before reroute.That is because sometimes iptables
-    fails from threads giving the command at the same time.
-    The error is: resource temporarily unavailable.After the lock
-    each slave thread calls install hadoop with its port.
-    Argument s is an element of the server list returned from create_cluster
-    '''
-    if s['name'].split('-')[-1] == '1':  # Master virtual machine
-        install_hadoop(MASTER_SSH_PORT)
-    else:  # Slave virtual machines
+def call_reroute_for_every_vm(vm):
+    '''Calls reroute_ssh_to_slaves function to finish port forwarding '''
+    if vm['port'] != 22:  # Not Master virtual machine
+        # Slave virtual machines
         # Forwarding Ports are 10000,10001, etc for every slave vm
-        port = ADD_TO_GET_PORT+int(s['name'].split('-')[-1])
-        slave_ip = '192.168.0.' + str(1 + int(s['name'].split('-')[-1]))
-        # reroute_ssh_to_slaves should be executed by one thread at a time
         try:
-            threadLock.acquire()
-            reroute_ssh_to_slaves(port, slave_ip)
+            reroute_ssh_to_slaves(vm['port'], vm['private_ip'])
         except Exception, e:
             logging.exception(e.args)
-            # Exit is here because otherwise another thread could
-            # get lock before exit and the lock wouldnt get released.
             os._exit(error_fatal)
-        finally:
-            threadLock.release()
-
-        install_hadoop(port)
 
 
 def check_command_exit_status(ex_status, command):
@@ -483,209 +337,24 @@ def check_command_exit_status(ex_status, command):
                     command, ex_status)
 
 
-def exec_command(ssh, command, check_command_id=None):
+def exec_command(ssh, command):
     '''
     Calls overloaded exec_command function of the ssh object given
     as argument. Command is the second argument and its a string.
     check_command_id is used for commands that need additional input after
-    exec_command, e.g. ssh-keygen needs [enter] to save keys.
+    exec_command, e.g. ssh-_after_hadoop needs yes[enter].
     '''
     try:
         stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
     except Exception, e:
         logging.exception(e.args)
         raise
-    if check_command_id == 'ssh_keygen':  # For ssh-keygen
-        stdin.flush()
-        stdin.write('\n')
-        stdin.flush()
-        # prints stdout of execcommand
-        logging.debug('%s %s', stdout.read(), stderr.read())
-        # get exit status of command executed and check it with check_command
-        ex_status = stdout.channel.recv_exit_status()
-        check_command_exit_status(ex_status, command)
-
-    elif check_command_id == 'ssh_copy_id':  # For ssh-copy-id
-        stdin.flush()
-        sleep(3)  # Sleep is necessary for stdin to read yes
-        stdin.write('yes\n')
-        sleep(3)  # Sleep is necessary for stdin to read hduser pass
-        stdin.write(HDUSER_PASS+'\n')
-        stdin.flush()
-        logging.debug('%s %s', stdout.read(), stderr.read())
-        # get exit status of command executed and check it with check_command
-        ex_status = stdout.channel.recv_exit_status()
-        check_command_exit_status(ex_status, command)
-
-        # For ssh to master after starting hadoop
-    elif check_command_id == 'ssh_after_hadoop':
-        stdin.flush()
-        sleep(10)  # Sleep is necessary for stdin to read yes
-        stdin.write('yes\n')
-        stdin.flush()
-        logging.debug('%s %s', stdout.read(), stderr.read())
-        # get exit status of command executed and check it with check_command
-        ex_status = stdout.channel.recv_exit_status()
-        check_command_exit_status(ex_status, command)
-
-        # Hide password and token from stdout
-    elif check_command_id == 'hide_output':
-        stdin.flush()
-        stdout_hadoop, stderr_hadoop = stdout.read(), stderr.read()
-        stdin.flush()
-        ex_status = stdout.channel.recv_exit_status()
-        if ex_status != 0:
-            logging.error('Command failed to execute with exit status: %d',
-                          ex_status)
-            logging.error('Program shutting down')
-            msg = 'Command failed with exit status: %d'\
-                  % ex_status
-            raise RuntimeError(msg)
-    else:
-        logging.debug('%s %s', stdout.read(), stderr.read())
-        # get exit status of command executed and check it with check_command
-        ex_status = stdout.channel.recv_exit_status()
-        check_command_exit_status(ex_status, command)
 
 
-def install_hadoop(port):
-    '''
-    Function that is executed by every thread.
-    Depending on the port argument, it connects
-    and installs hadoop to the vm defined by the
-    port.First,it connects with master as root.
-    Runs apt-get update,installs sudo. Then calls
-    other important functions and disconnects as root.
-    Reconnects as hduser and configures bashrc
-    '''
-    # Connect as root and install sudo
-    ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', port)
-    try:
-        exec_command(ssh_client, 'apt-get update;apt-get install sudo')
-
-        install_python_and_java(ssh_client)  # Install java
-        add_hduser_disable_ipv6(ssh_client)  # Add hduser and disable ipv6
-        configuration_hosts_file(ssh_client)  # Configures /etc/hosts file
-    finally:
-        ssh_client.close()
-
-    ssh_client = establish_connect(HOSTNAME_MASTER, 'hduser', HDUSER_PASS,
-                                   port)  # Reconnect as hduser
-    try:
-        connect_as_hduser_conf_ssh(ssh_client)
-        configuration_bashrc(ssh_client)  # Configures .bashrc for hduser
-        hadoop_xml_conf(ssh_client)  # Creates the needed xml files for hadoop
-        if port == MASTER_SSH_PORT:  # For Master vm only
-            configure_master_slaves(ssh_client)
-    finally:
-        ssh_client.close()
-
-
-def configure_master_slaves(ssh_client):
-    '''
-    Configures two files only in the master virtual machine.
-    The files are $Hadoop_HOME/conf/masters and
-    $Hadoop_HOME/conf/slaves.
-    '''
-    # Adds fully qualified domain names for master in
-    # the masters files in hadoop/conf
-    exec_command(ssh_client, 'echo "' + list_of_hosts[0]['fqdn'].split('.', 1)[0] +
-                             '"> /usr/local/hadoop/conf/masters')
-    for vm in list_of_hosts[1:]:
-        # Adds fully qualified domain names for slaves in
-        # the slaves files in hadoop/conf
-        exec_command(ssh_client, 'echo "' + vm['fqdn'].split('.', 1)[0] +
-                                 '">> /usr/local/hadoop/conf/slaves')
-
-    #  Delete localhost from slaves file
-    exec_command(ssh_client, 'sed -i".bak" "1d" /usr/local/hadoop'
-                             '/conf/slaves')
-
-
-def hadoop_xml_conf(ssh_client):
-    '''
-    This function creates the three xml files hadoop needs to start.
-    The default files are empty. The function removes the empty files
-    and writes the new ones with everything configured.
-    '''
-    core_site = [r'<?xml version=\"1.0\"?>',
-                 r'<?xml-stylesheet type=\"text/xsl\" '
-                 'href=\"configuration.xsl\"?>',
-                 r'<configuration>',
-                 r'<property>',
-                 r'<name>hadoop.tmp.dir</name>',
-                 r'<value>/app/hadoop/tmp</value>',
-                 r'<description>A base for other temporary'
-                 ' directories.</description>',
-                 r'</property>',
-                 r'<property>',
-                 r'<name>fs.default.name</name>',
-                 r'<value>hdfs://'+list_of_hosts[0]['fqdn'].split('.', 1)[0]+':54310</value>',
-                 r'</property>',
-                 r'</configuration>']
-
-    mapred_site = [r'<?xml version=\"1.0\"?>',
-                   r'<?xml-stylesheet type=\"text/xsl\" '
-                   'href=\"configuration.xsl\"?>',
-                   r'<configuration>',
-                   r'<property>',
-                   r'<name>mapred.job.tracker</name>',
-                   r'<value>'+list_of_hosts[0]['fqdn'].split('.', 1)[0]+':54311</value>',
-                   r'<description>The host and port that'
-                   ' the MapReduce job tracker runs',
-                   r'and reduce task.',
-                   r'</description>',
-                   r'</property>',
-                   r'</configuration>']
-
-    hdfs_site = [r'<?xml version=\"1.0\"?>',
-                 r'<?xml-stylesheet type=\"text/xsl\" '
-                 'href=\"configuration.xsl\"?>',
-                 r'<configuration>',
-                 r'<property>',
-                 r'<name>dfs.replication</name>',
-                 r'<value>2</value>',
-                 r'<description>Default block replication.',
-                 r'The actual number of replications can be'
-                 ' specified when the file is created.',
-                 r'The default is used if replication is not'
-                 ' specified in create time.',
-                 r'</description>',
-                 r'</property>',
-                 r'</configuration>']
-
-    # Create a temp directory needed for hadoop and gives nesessary ownership
-    exec_command(ssh_client, 'sudo mkdir -p /app/hadoop/tmp')
-    exec_command(ssh_client, 'sudo chown hduser:hadoop /app/hadoop/tmp')
-    # Remove the default xml files
-    exec_command(ssh_client, 'rm -f /usr/local/hadoop/conf/core-site.xml')
-    exec_command(ssh_client, 'rm -f /usr/local/hadoop/conf/mapred-site.xml')
-    exec_command(ssh_client, 'rm -f /usr/local/hadoop/conf/hdfs-site.xml')
-    # Create and configure the xml files so hadoop
-    # can format and start its daemons.
-    for l in core_site:
-        exec_command(ssh_client, 'echo "'+l+'" >> /usr/local/'
-                                 'hadoop/conf/core-site.xml')
-    for l in mapred_site:
-        exec_command(ssh_client, 'echo "'+l+'" >> /usr/local'
-                                 '/hadoop/conf/mapred-site.xml')
-    for l in hdfs_site:
-        exec_command(ssh_client, 'echo "'+l+'" >> /usr/local'
-                                 '/hadoop/conf/hdfs-site.xml')
-
-
-def configuration_hosts_file(ssh_client):
-    '''
-    Configures /etc/hosts file for every machine as root.
-    Adds hostnames and private ip addresses.
-    Also deletes the second line of /etc/hosts
-    so there can be only one private ip for each virtual machine.
-    '''
-    for machine in list_of_hosts:
-        exec_command(ssh_client, 'sed -i".bak" "2d" /etc/hosts')
-        exec_command(ssh_client, 'echo '
-                     '"' + machine['private_ip'] + '     ' +
-                     machine['fqdn'].split('.', 1)[0]+'" >> /etc/hosts')
+    logging.debug('%s %s', stdout.read(), stderr.read())
+    # get exit status of command executed and check it with check_command
+    ex_status = stdout.channel.recv_exit_status()
+    check_command_exit_status(ex_status, command)
 
 
 def establish_connect(hostname, name, passwd, port):
@@ -736,69 +405,6 @@ def establish_connect(hostname, name, passwd, port):
     logging.error("Program is shutting down")
     msg = 'Failed connecting to %s virtual machine' % hostname
     raise RuntimeError(msg)
-
-
-def connect_as_hduser_conf_ssh(ssh_client):
-    '''
-    Executes the following commands to the machine ssh_client is connected.
-    Creates ssh key for hduser, downloads hadoop from eu apache mirror
-    and creates hadoop folder in usr/local, giving ownership and permissions
-    to hduser.
-    '''
-
-    exec_command(ssh_client, 'ssh-keygen -t rsa -P "" ', 'ssh_keygen')
-    exec_command(ssh_client, 'cat /home/hduser/.ssh/id_rsa.pub >> /home/'
-                             'hduser/.ssh/authorized_keys')
-
-    exec_command(ssh_client, 'wget www.eu.apache.org/dist/hadoop/common/'
-                             'stable1/hadoop-1.2.1.tar.gz')
-    exec_command(ssh_client, 'sudo tar -xzf $HOME/hadoop-1.2.1.tar.gz')
-    exec_command(ssh_client, 'sudo mv hadoop-1.2.1 /usr/local/hadoop')
-    exec_command(ssh_client, 'cd /usr/local;sudo chown -R hduser:hadoop'
-                             ' hadoop')
-
-
-def install_python_and_java(ssh_client):
-    '''Installs oracle java 7'''
-    #  exec_command(ssh_client, 'apt-get -y install python-software-'
-    # 'properties')... Python-software-properties was commented out
-    exec_command(ssh_client, 'echo "deb http://ppa.launchpad.net/webupd8team/'
-                             'java/ubuntu precise main" | tee /etc/apt/sources'
-                             '.list.d/webupd8team-java.list;echo "deb-src '
-                             'http://ppa.launchpad.net/webupd8team/java/ubuntu'
-                             ' precise main" | tee -a /etc/apt/sources.list.d/'
-                             'webupd8team-java.list')
-    exec_command(ssh_client, 'apt-key adv --keyserver keyserver.ubuntu.com --'
-                             'recv-keys EEA14886;apt-get update;echo oracle-'
-                             'java7-installer shared/accepted-oracle-license-'
-                             'v1-1 select true | /usr/bin/debconf-set-'
-                             'selections;apt-get -y install oracle-java7'
-                             '-installer')
-    exec_command(ssh_client, 'apt-get install oracle-java7-set-default')
-
-
-def add_hduser_disable_ipv6(ssh_client):
-    '''
-    Creates hadoop group and hduser and
-    gives them passwordless sudo to help with remaining procedure
-    Also disables ipv6. Takes as argument an ssh object returned
-    from establish_connect.
-    '''
-    exec_command(ssh_client, 'addgroup hadoop;echo "%hadoop ALL=(ALL)'
-                             ' NOPASSWD: ALL " >> /etc/sudoers')
-    exec_command(ssh_client, 'adduser hduser --disabled-password --gecos "";'
-                             'adduser hduser hadoop;echo "hduser:'
-                             + HDUSER_PASS + '" | chpasswd', 'hide_output')
-    exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv6/conf/all/'
-                             'disable_ipv6')
-    exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv6/conf/default/'
-                             'disable_ipv6')
-    exec_command(ssh_client, 'echo "net.ipv6.conf.all.disable_ipv6 = 1"'
-                             ' >> /etc/sysctl.conf')
-    exec_command(ssh_client, 'echo "net.ipv6.conf.default.disable_ipv6 = 1"'
-                             ' >> /etc/sysctl.conf')
-    exec_command(ssh_client, 'echo "net.ipv6.conf.lo.disable_ipv6 = 1"'
-                             ' >> /etc/sysctl.conf')
 
 
 def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
@@ -1097,7 +703,12 @@ class Cluster(object):
         # waiting for the master to finish building
         try:
             new_status = self.client.wait_server(servers[0]['id'],
-                                                 max_wait=300)
+                                                 max_wait=MAX_WAIT)
+            if not new_status:
+                logging.error(' Status for server %s is %s',
+                              servers[i]['name'], new_status)
+                logging.error(' Program shutting down')
+                sys.exit(error_create_server)
             logging.log(REPORT, ' Status for server %s is %s',
                         servers[0]['name'], new_status)
             # Create a subnet for the virtual network between master
@@ -1106,12 +717,17 @@ class Cluster(object):
                                   enable_dhcp=True)
             port_details = self.nc.create_port(new_network['id'],
                                                servers[0]['id'])
-            self.nc.wait_port(port_details['id'], max_wait=300)
+            self.nc.wait_port(port_details['id'], max_wait=MAX_WAIT)
             # Wait server for the slaves, so we can use their server id
             # in port creation
             for i in range(1, self.size):
                 new_status = self.client.wait_server(servers[i]['id'],
-                                                     max_wait=300)
+                                                     max_wait=MAX_WAIT)
+                if not new_status:
+                    logging.error(' Status for server %s is %s',
+                                  servers[i]['name'], new_status)
+                    logging.error(' Program shutting down')
+                    sys.exit(error_create_server)
                 logging.log(REPORT, ' Status for server %s is %s',
                             servers[i]['name'], new_status)
                 port_details = self.nc.create_port(new_network['id'],
@@ -1120,7 +736,13 @@ class Cluster(object):
 
             for port_details in list_of_ports:
                 if port_details['status'] == 'BUILD':
-                    self.nc.wait_port(port_details['id'], max_wait=300)
+                    status = self.nc.wait_port(port_details['id'],
+                                               max_wait=MAX_WAIT)
+                    if not status:
+                        logging.error(' Status for port %s is %s',
+                                      port_details['id'], status)
+                        logging.error(' Program shutting down')
+                        sys.exit(error_create_server)
         except Exception:
             logging.exception('Error in finalizing cluster creation')
             sys.exit(error_create_server)
@@ -1147,7 +769,6 @@ class Cluster(object):
                 for attachment in server['attachments']:
                     if attachment['OS-EXT-IPS:type'] == 'floating':
                         HOSTNAME_MASTER = attachment['ipv4']
-
         return servers
 
 
@@ -1215,6 +836,41 @@ def check_quota(auth, req_quotas):
     return
 
 
+def create_ansible_hosts():
+    '''
+    Function that creates the ansible_hosts file and
+    returns the name of the file.
+    '''
+    ansible_hosts_prefix = cluster_name.replace(" ", "")
+    ansible_hosts_prefix = ansible_hosts_prefix.replace(":", "")
+
+    # Removes spaces and ':' from cluster name and appends it to ansible_hosts
+    # The ansible_hosts file will now have a timestamped name to seperate it
+    # from ansible_hosts files of different clusters.
+    filename = './ansible_legacy/ansible_hosts' + ansible_hosts_prefix
+
+    # Create ansible_hosts file and write all information that is
+    # required from Ansible playbook.
+    with open(filename, 'w+') as target:
+        target.write('[master]')
+        target.write('\n')
+        target.write(list_of_hosts[0]['fqdn'])
+        target.write(' private_ip='+list_of_hosts[0]['private_ip'])
+        target.write(' ansible_ssh_host=' + HOSTNAME_MASTER)
+        target.write('\n')
+        target.write('\n')
+        target.write('[slaves]')
+        target.write('\n')
+
+        for host in list_of_hosts[1:]:
+            target.write(host['fqdn'])
+            target.write(' private_ip='+host['private_ip'])
+            target.write(' ansible_ssh_port='+str(host['port']))
+            target.write(' ansible_ssh_host='+list_of_hosts[0]['fqdn'])
+            target.write("\n")
+    return filename
+
+
 def create_cluster(name, clustersize, cpu_master, ram_master, disk_master,
                    disk_template, cpu_slave, ram_slave, disk_slave, token,
                    image, auth_url='https://accounts.okeanos.grnet.gr'
@@ -1230,7 +886,8 @@ def create_cluster(name, clustersize, cpu_master, ram_master, disk_master,
     logging.log(REPORT, ' 1.Credentials  and  Endpoints')
     # Finds user public ssh key
     USER_HOME = os.path.expanduser('~')
-
+    global cluster_size
+    cluster_size = clustersize
     pub_keys_path = os.path.join(USER_HOME, ".ssh/id_rsa.pub")
     auth = check_credentials(token, auth_url)
     endpoints, user_id = endpoints_and_user_id(auth)
