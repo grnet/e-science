@@ -1,17 +1,21 @@
 ---
+ # PostgreSql variables
  db_user: myuser
  db_password: lalakia
  db_name: mydatabase
+
+ # Django admin variables
  django_admin_name: mydjangouser
  django_admin_email: joe@example.com
  django_admin_password: lalakia
- webserver_ip: "{{ansible_ssh_host}}"
+ ansible_sudo_pass: lalakia
+ 
+ # Django project variables
  myprojectdir: myproject
  myprojectname: mysite
  settings_path: "{{myprojectdir}}/{{myprojectname}}/{{myprojectname}}/settings.py"
  django_port: 8000
  
+ # Celery variables
  is_daemon: False
  is_periodic_task: False
- 
- 
