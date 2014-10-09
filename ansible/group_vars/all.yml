@@ -1,11 +1,15 @@
 ---
   choose_role: yarn
+  
+  # setup_djuser variables
+  djuser_password: $1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20
+  create_djuser: False
+  
+  # Hadoop-yarn variables
   start_yarn: False
   format: False
   is_master: False
   is_slave: False
-  hadoop_common_url: http://archive.apache.org/dist/hadoop/common
-  hadoop_version: hadoop-1.2.1
   dfs_replication: 2
   filename: /home/hduser/.ssh/id_rsa
   etchosts_filename: /etc/hosts_2 

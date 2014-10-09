@@ -1,20 +1,23 @@
 --- 
-  - name: Install Pip, RabbitMQ broker, PostgreSQL and needed dependencies
+  - name: Install RabbitMQ broker, PostgreSQL and needed dependencies
     tags: installall
-    shell: "{{item}}"
+    shell: apt-get -y install "{{item}}"
     with_items:
-      - apt-get -y install python-pip
-      - apt-get -y install rabbitmq-server
-      - apt-get -y install postgresql postgresql-client
-      - apt-get -y install python-psycopg2
-      - apt-get -y install libpq-dev
+      - rabbitmq-server
+      - postgresql
+      - postgresql-client
+      - python-psycopg2
+      - libpq-dev
 
-  - name: Install Celery and Django
+  - name: Install Celery, Django and Django rest framework
     tags: celerydjangoinstall
-    pip: "{{item}}"
+    pip: "name={{item.name}}"
     with_items:
-      - name=celery
-      - name=Django
+      - { name: 'celery' }
+      - { name: 'Django' }
+      - { name: 'djangorestframework' }
+      - { name: 'markdown' }
+      - { name: 'django-filter' }
 
   - name: Copy script celeryd for daemonic workers
     tags: celerydcopy
@@ -36,12 +39,13 @@
     template: src=celerybeat_conf.j2 dest=/etc/default/celerybeat owner=root
     when: is_periodic_task
 
-  - name: create Django project
-    tags: createdjangoproject
-    command: "{{item}}"
-    with_items:
-      - mkdir {{myprojectdir}} creates={{myprojectdir}}
-      - django-admin.py startproject {{myprojectname}} chdir={{myprojectdir}} creates={{myprojectname}}/manage.py 
+  - name: create Django project,command1
+    tags: createdjangoproject1
+    command: mkdir {{myprojectdir}} creates={{myprojectdir}}
+    
+  - name: create Django project,command2
+    tags: createdjangoproject2
+    command: django-admin.py startproject {{myprojectname}} chdir={{myprojectdir}} creates={{myprojectname}}/manage.py
 
   - name: Edit pg_hba.conf
     lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
@@ -63,12 +67,16 @@
     template: src=settings.j2 dest=/etc/
     tags: djangosettingscopy
     
-  - name: set Django settings.py and migrate
-    shell: "{{item}}"
-    with_items:
-      - sed -i '/# Database/,$d' settings.py chdir={{myprojectdir}}/{{myprojectname}}/{{myprojectname}}
-      - cat /etc/settings.j2 >> {{settings_path}}
-      - python manage.py migrate chdir={{myprojectdir}}/{{myprojectname}}
+  - name: Edit Django project settings.py
+    shell: sed -i '/# Database/,$d' settings.py chdir={{myprojectdir}}/{{myprojectname}}/{{myprojectname}}
+    tags: editsettings
+
+  - name: Append settings template
+    shell: cat /etc/settings.j2 >> {{settings_path}}
+    tags: appendsettings
+
+  - name: Django project migrate
+    shell: python manage.py migrate chdir={{myprojectdir}}/{{myprojectname}}
     tags: djangomigrate
 
   - name: Revert pg_hba.conf to default
@@ -84,5 +92,5 @@
     tags: djangosuperuser
 
   - name: Django runserver
-    command: python manage.py runserver {{webserver_ip}}:{{django_port}} chdir={{myprojectdir}}/{{myprojectname}}
+    command: python manage.py runserver 0.0.0.0:{{django_port}} chdir={{myprojectdir}}/{{myprojectname}}
     tags: runserver

@@ -11,7 +11,7 @@ It contains generic bash init scripts for the celery worker program. These shoul
 So, if we want to run celery workers as daemons, then Webserver install.yml playbook must be run with the variable is_daemon=True.
 Likewise, when a scheduler must run as a daemon, then the playbook must be executed with variable is_periodic_task=True.
 
-For example: ansible-playbook -i [path/ansible_hosts] [path/Webserver/install.yml] -e "is_daemon=True is_periodic_task=True"
+For example: ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "is_daemon=True is_periodic_task=True choose_role=webserver"
 
 
 For more information please check https://celery.readthedocs.org/en/latest/tutorials/daemonizing.html#daemonizing

@@ -1,4 +1,3 @@
-fi
 export HADOOP_HOME=/usr/local/hadoop
 export JAVA_HOME=/usr/lib/jvm/java-7-oracle
 export HADOOP_INSTALL=/usr/local/hadoop
