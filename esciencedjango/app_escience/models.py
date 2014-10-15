@@ -23,7 +23,7 @@ class UserInfo(models.Model):
         help_text="Universally unique identifier (for astakos authentication)")
 
     class Meta:
-        verbose_name = "User"
+        app_label='app_escience'
 
     def __unicode__(self):
         return str(self.user_id)
@@ -49,7 +49,7 @@ class UserLogin(models.Model):
       help_text="Integer value for Browser, OS, other info (lookup tables))")
 
     class Meta:
-        verbose_name = "Login" 
+        app_label='app_escience' 
 
     def __unicode__(self):
         return ("%s, %s") % (self.user_id.user_id, self.login_status)
@@ -85,7 +85,7 @@ class ClusterInfo(models.Model):
 	help_text="User ID (user ID who owns the cluster)")
   
     class Meta:
-        verbose_name = "Cluster" 
+        app_label='app_escience' 
 
     def __unicode__(self):
         return ("%s, %d, %s") % (self.cluster_name, self.cluster_size, self.cluster_status)

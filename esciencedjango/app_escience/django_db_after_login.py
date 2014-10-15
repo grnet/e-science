@@ -50,13 +50,20 @@ def get_user_id(token):
 
 
 def db_after_login(given_uuid):
+    '''
+    Check if user already exits in DB or if 
+    it is a new user,make anew entry in UserInfo
+    Each user must be only oncee in the UserInfo 
+    if there are multiple entires raise an error
+    '''
 
     try:
         existing_user = UserInfo.objects.get(uuid=given_uuid)
         logging.log(REPORT, ' The id of the user %s is %d', existing_user.uuid,
                     existing_user.user_id)
+        print 'test'
         # user already in db
-        db_login_entry(existing_user)
+        db_logout_entry(existing_user)
         return existing_user
 
     except ObjectDoesNotExist:
@@ -75,7 +82,10 @@ def db_after_login(given_uuid):
 
 
 def db_login_entry(user):
-
+    '''
+    Makes a new entry in the UserLogin
+    table when the user logs in 
+    '''
     current_date = datetime.datetime.now()
     new_login = UserLogin(user_id =user , action_date = current_date , login_status = "0")
     new_login.save()
@@ -83,7 +93,10 @@ def db_login_entry(user):
 
 
 def db_logout_entry(user):
-
+    '''
+    Makes a new entry in the UserLogin
+    table when the user logs out 
+    '''  
     current_date = datetime.datetime.now()
     new_logout = UserLogin(user_id = user , action_date = current_date , login_status = "1")
     new_logout.save()
