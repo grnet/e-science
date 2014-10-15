@@ -1,5 +1,5 @@
 # setup testing framework
-from unittest import TestCase
+from unittest import TestCase,main
 from nose.tools import assert_equal,assert_raises
 from mock import Mock,patch
 
@@ -33,4 +33,4 @@ class TestCreate_cluster(TestCase):
         pass
 
 if __name__ == '__main__':
-    unittest.main()
+    main()
