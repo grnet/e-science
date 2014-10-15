@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-This script update the databe after a new login or log out action
+Django backend to update the database after a new login or logout action
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -41,9 +41,9 @@ def get_user_id(token):
 def db_after_login(given_uuid):
     '''
     Check if user already exits in DB or if 
-    it is a new user,make anew entry in UserInfo
-    Each user must be only oncee in the UserInfo 
-    if there are multiple entires raise an error
+    it is a new user,make a new entry in UserInfo
+    Each user must be only once in the UserInfo 
+    if there are multiple entries raise an error
     '''
 
     try:
@@ -93,7 +93,7 @@ def db_logout_entry(user):
 
 def main():
 
-    token = 'fhjcj'
+    token = 'random'
     if check_credentials(token) == AUTHENTICATED:
         get_user_id(token)
     else:
