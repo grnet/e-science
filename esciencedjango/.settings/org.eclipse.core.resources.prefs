@@ -1,0 +1,6 @@
+eclipse.preferences.version=1
+encoding//app_escience/__init__.py=utf-8
+encoding//app_escience/authenticate_user.py=utf-8
+encoding//app_escience/dbtes.py=utf-8
+encoding//app_escience/django_db_after_login.py=utf-8
+encoding//app_escience/views.py=utf-8
