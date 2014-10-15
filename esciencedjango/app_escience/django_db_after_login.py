@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-This script creates a virtual cluster on ~okeanos and installs Hadoop
-using Ansible.
+This script update the databe after a new login or log out action
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -10,13 +9,13 @@ import django
 import os
 import sys
 import datetime
-django.setup()
 import logging
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients import ClientError
 from app_escience.models import *
 from django.core.exceptions import *
 from authenticate_user import *
+django.setup()
 
 # Constants
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
@@ -25,18 +24,9 @@ REPORT = 25
 # Definitions of return value errors
 error_multiple_entries = -1
 
-
-
-
-
 def get_user_id(token):
     '''
-    Get the endpoints
-    Identity, Account --> astakos
-    Compute --> cyclades
-    Object-store --> pithos
-    Image --> plankton
-    Network --> network
+    Check kamaki and returns user uuid from matching token
     '''
     auth = AstakosClient(auth_url, token)
     try:
@@ -46,7 +36,6 @@ def get_user_id(token):
     except ClientError:
         logging.error('Failed to get user_id from identity server')
         raise
-
 
 
 def db_after_login(given_uuid):
@@ -78,7 +67,6 @@ def db_after_login(given_uuid):
         # Problem with database table
         logging.error(' Table has multiple entries for the same uuid')
         sys.exit(error_multiple_entries)
-
 
 
 def db_login_entry(user):
