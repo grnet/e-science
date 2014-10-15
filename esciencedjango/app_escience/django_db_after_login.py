@@ -93,7 +93,7 @@ def db_logout_entry(user):
 
 def main():
 
-    token = 'random'
+    token = ''
     if check_credentials(token) == AUTHENTICATED:
         get_user_id(token)
     else:
