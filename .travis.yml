@@ -4,5 +4,8 @@ python:
 # command to install dependencies
 install:
   - "pip install kamaki"
+  - "pip install paramiko"
+  - "pip install ansible"
+  - "pip install django"
 # command to run tests
-script: nosetests
+script: nosetests create_yarn_cluster.py
