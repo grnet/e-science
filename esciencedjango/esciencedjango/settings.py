@@ -59,8 +59,11 @@ WSGI_APPLICATION = 'esciencedjango.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'mydatabase',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'escience',
+        'USER': 'developer',
+        'PASSWORD': 'escience',
+        'HOST': '127.0.0.1',
     }
 }
 
