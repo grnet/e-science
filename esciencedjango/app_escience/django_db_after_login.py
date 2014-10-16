@@ -8,13 +8,13 @@ Django backend to update the database after a new login or logout action
 import django
 import os
 import sys
-import datetime
 import logging
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients import ClientError
 from app_escience.models import *
 from django.core.exceptions import *
 from authenticate_user import *
+from django.utils import timezone
 django.setup()
 
 # Constants
@@ -72,7 +72,7 @@ def db_login_entry(user):
     Makes a new entry in the UserLogin
     table when the user logs in 
     '''
-    current_date = datetime.datetime.now()
+    current_date = timezone.now()
     new_login = UserLogin(user_id =user , action_date = current_date , login_status = "0")
     new_login.save()
     return
@@ -83,7 +83,7 @@ def db_logout_entry(user):
     Makes a new entry in the UserLogin
     table when the user logs out 
     '''  
-    current_date = datetime.datetime.now()
+    current_date = timezone.now()
     new_logout = UserLogin(user_id = user , action_date = current_date , login_status = "1")
     new_logout.save()
     return
