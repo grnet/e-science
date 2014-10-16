@@ -6,6 +6,8 @@ using Ansible.
 @author: Ioannis Stenos, Nick Vrionis
 '''
 from rest_framework.views import APIView
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.views import generic
@@ -14,7 +16,7 @@ from app_escience.serializers import TokenSerializer, UserInfoSerializer
 from app_escience.django_db_after_login import *
 
 class MainPageView(generic.TemplateView):
-  template_name = 'index.html'
+  template_name =  'index.html'    #'./ES-133/index.html'
   
 main_page = MainPageView.as_view()
 
@@ -22,6 +24,8 @@ class SessionView(APIView):
     """
     View to handle requests from ember.
     """
+    #authentication_classes = (TokenAuthentication)
+    #permission_classes = (IsAuthenticated,)
     resource_name = 'user'
     serializer_class = TokenSerializer
     user = None

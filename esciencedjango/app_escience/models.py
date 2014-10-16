@@ -34,7 +34,7 @@ ACTION_STATUS_CHOICES=(
     ("0","login"),
     ("1","logout"),    
 )
-    
+  
 class UserLogin(models.Model):
     """Definition of a User Login relationship model.""" 
     login_id = models.AutoField("Login ID", primary_key=True, null=False,

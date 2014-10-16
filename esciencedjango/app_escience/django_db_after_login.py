@@ -1,44 +1,33 @@
 # -*- coding: utf-8 -*-
 
 '''
-This script creates a virtual cluster on ~okeanos and installs Hadoop
-using Ansible.
+Django backend to update the database after a new login or logout action
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
 import django
 import os
 import sys
-import datetime
-#sys.path.append("~/workspace/esciencedjango")
-django.setup()
 import logging
+#sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients import ClientError
 from app_escience.models import *
 from django.core.exceptions import *
 from authenticate_user import *
-from esciencedjango import settings
+from django.utils import timezone
+django.setup()
 
 # Constants
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
-REPORT = 25
 
 # Definitions of return value errors
 error_multiple_entries = -1
 
 
-
-
-
 def get_user_id(token):
     '''
-    Get the endpoints
-    Identity, Account --> astakos
-    Compute --> cyclades
-    Object-store --> pithos
-    Image --> plankton
-    Network --> network
+    Check kamaki and returns user uuid from matching token
     '''
     auth = AstakosClient(auth_url, token)
     try:
@@ -50,12 +39,16 @@ def get_user_id(token):
         raise
 
 
-
 def db_after_login(given_uuid):
-
+    '''
+    Check if user already exits in DB or if 
+    it is a new user,make a new entry in UserInfo
+    Each user must be only once in the UserInfo 
+    if there are multiple entries raise an error
+    '''
     try:
         existing_user = UserInfo.objects.get(uuid=given_uuid)
-        logging.log(REPORT, ' The id of the user %s is %d', existing_user.uuid,
+        logging.info(' The id of the user %s is %d', existing_user.uuid,
                     existing_user.user_id)
         # user already in db
         db_login_entry(existing_user)
@@ -66,7 +59,7 @@ def db_after_login(given_uuid):
         new_entry = UserInfo(uuid=given_uuid)
         new_entry.save()
         new_user = UserInfo.objects.get(uuid=given_uuid)
-        logging.log(REPORT, ' The id of the new user is ', new_user.user_id)
+        logging.info(' The id of the new user is ', new_user.user_id)
         db_login_entry(new_user)
         return new_user
     except MultipleObjectsReturned:
@@ -75,45 +68,24 @@ def db_after_login(given_uuid):
         sys.exit(error_multiple_entries)
 
 
-
 def db_login_entry(user):
-
-    current_date = datetime.datetime.now()
+    '''
+    Makes a new entry in the UserLogin
+    table when the user logs in 
+    '''
+    current_date = timezone.now()
     new_login = UserLogin(user_id =user , action_date = current_date , login_status = "0")
     new_login.save()
     return
 
 
 def db_logout_entry(user):
-
-    current_date = datetime.datetime.now()
+    '''
+    Makes a new entry in the UserLogin
+    table when the user logs out 
+    '''  
+    current_date = timezone.now()
     new_logout = UserLogin(user_id = user , action_date = current_date , login_status = "1")
     new_logout.save()
     return
 
-
-def main():
-
-    token = 'fhjcj'
-    if check_credentials(token) == AUTHENTICATED:
-        get_user_id(token)
-    else:
-        logging.error('Not Authorized!!! ')
-    
-if __name__ == '__main__':
-    
-    levels = {'critical': logging.CRITICAL,
-              'error': logging.ERROR,
-              'warning': logging.WARNING,
-              'report': REPORT,
-              'info': logging.INFO,
-              'debug': logging.DEBUG}
-    
-    logging.addLevelName(REPORT, "REPORT")
-    logger = logging.getLogger(__name__)
-
-    logging_level = REPORT
-    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-                        level=logging_level, datefmt='%H:%M:%S')
-
-    main()

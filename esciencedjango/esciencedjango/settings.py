@@ -16,7 +16,7 @@ BASE_DIR = 'os.path.dirname(os.path.dirname(__file__))'
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'something'
+SECRET_KEY = 'y@ug3)d_wdw914#@33tx9vp_yihruoisv+=8!o=79xen65h)%8'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -24,6 +24,7 @@ DEBUG = True
 TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = ['*', ]
+
 
 
 # Application definition
@@ -38,6 +39,7 @@ INSTALLED_APPS = (
     'app_escience',
     'rest_framework',
     'rest_framework_ember',
+    'rest_framework.authtoken',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -57,6 +59,16 @@ WSGI_APPLICATION = 'esciencedjango.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'escience',
+        'USER': 'developer',
+        'PASSWORD': 'escience',
+        'HOST': '127.0.0.1',
+    }
+}
 
 
 REST_FRAMEWORK = {
@@ -78,7 +90,6 @@ REST_FRAMEWORK = {
 }
 
 APPEND_SLASH = False
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
