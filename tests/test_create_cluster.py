@@ -23,7 +23,6 @@ class TestCreate_cluster(TestCase):
         # arrange
         self.mock_cluster.create.return_value = "127.0.0.1"
         # act
-        # cluster = create_cluster() #"test",2,2,4096,5,'ext_vlmc',2,2048,5,'xAFj2zGeNeRl-JbeSM55OMdpjh_1dYmXSrGB7PmTbhA','Debian Base')
         cluster = self.mock_cluster.create()
         # assert
         self.assertEqual(cluster,"127.0.0.1")
