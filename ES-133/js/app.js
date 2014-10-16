@@ -20,6 +20,15 @@ App.LogoutRoute = Ember.Route.extend({
 }  
 });
 
+App.WelcomeRoute = Ember.Route.extend({
+  model: function() {
+    return this.store.all('user');
+  }
+});
+
+App.User = DS.Model.extend({
+  token:  DS.attr('string')
+});
 
 App.HomepageController = Ember.Controller.extend({
   start: function() {
@@ -28,21 +37,27 @@ App.HomepageController = Ember.Controller.extend({
 });
 
 App.LoginController = Ember.Controller.extend({
-//  token: '',
+  token: '',
   actions: {
     login: function(text) {
       
       if (text) {
 
-//	this.store.createRecord('user', {
-//	  'usertoken': text
-//	});
+	this.store.createRecord('user', {
+	  'token': text
+	});	  
 
-//	this.set('token', '');
+	this.set('token', '');
 	this.transitionToRoute('welcome');
       }
     }    
   }
+});
+
+App.WelcomeController = Ember.Controller.extend({
+  logout: function() {
+    this.transitionTo('logout');
+}
 });
 
 App.LoginView = Ember.View.extend({
@@ -51,14 +66,3 @@ App.LoginView = Ember.View.extend({
       this.get('controller').send('login', text);
     }
 });
-
-
-App.WelcomeController = Ember.Controller.extend({
-  logout: function() {
-    this.transitionTo('logout');
-}
-});
-
-//App.User = DS.Model.extend({
-//  usertoken:  DS.attr('string')
-//});
