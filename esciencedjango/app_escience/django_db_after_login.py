@@ -19,10 +19,10 @@ django.setup()
 
 # Constants
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
-REPORT = 25
 
 # Definitions of return value errors
 error_multiple_entries = -1
+
 
 def get_user_id(token):
     '''
@@ -45,14 +45,12 @@ def db_after_login(given_uuid):
     Each user must be only once in the UserInfo 
     if there are multiple entries raise an error
     '''
-
     try:
         existing_user = UserInfo.objects.get(uuid=given_uuid)
-        logging.log(REPORT, ' The id of the user %s is %d', existing_user.uuid,
+        logging.info(' The id of the user %s is %d', existing_user.uuid,
                     existing_user.user_id)
-        print 'test'
         # user already in db
-        db_logout_entry(existing_user)
+        db_login_entry(existing_user)
         return existing_user
 
     except ObjectDoesNotExist:
@@ -60,7 +58,7 @@ def db_after_login(given_uuid):
         new_entry = UserInfo(uuid=given_uuid)
         new_entry.save()
         new_user = UserInfo.objects.get(uuid=given_uuid)
-        logging.log(REPORT, ' The id of the new user is ', new_user.user_id)
+        logging.info(' The id of the new user is ', new_user.user_id)
         db_login_entry(new_user)
         return new_user
     except MultipleObjectsReturned:
@@ -90,29 +88,3 @@ def db_logout_entry(user):
     new_logout.save()
     return
 
-
-def main():
-
-    token = ''
-    if check_credentials(token) == AUTHENTICATED:
-        get_user_id(token)
-    else:
-        logging.error('Not Authorized!!! ')
-    
-if __name__ == '__main__':
-    
-    levels = {'critical': logging.CRITICAL,
-              'error': logging.ERROR,
-              'warning': logging.WARNING,
-              'report': REPORT,
-              'info': logging.INFO,
-              'debug': logging.DEBUG}
-    
-    logging.addLevelName(REPORT, "REPORT")
-    logger = logging.getLogger(__name__)
-
-    logging_level = REPORT
-    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-                        level=logging_level, datefmt='%H:%M:%S')
-
-    main()
