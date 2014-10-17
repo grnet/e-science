@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+  <title>ES-133 (UI, Ember, HTML)</title>
+  <meta charset="utf-8"/>
+  <link rel="stylesheet" href="../static/ES-133/css/normalize.css">
+  <link rel="stylesheet" href="../static/ES-133/css/style.css">
+  <script src="../static/ES-133/js/libs/jquery-1.10.2.js"></script>
+  <script src="../static/ES-133/js/libs/handlebars-1.1.2.js"></script>
+  <script src="../static/ES-133/js/libs/ember-1.7.0.js"></script>
+  <script src="../static/ES-133/js/libs/ember-data.js"></script>
+  <script src="../static/ES-133/js/app.js"></script>  
+  <!-- to activate the test runner, add the "?test" query string parameter -->
+  <script src="../static/ES-133/tests/runner.js"></script>
+</head>
+<body>
+{% verbatim %}
+  <script type="text/x-handlebars">
+    {{outlet}}
+  </script>
+  
+  <script type="text/x-handlebars" id="homepage">
+      <h2>Home page</h2>
+      <form class="form-horizontal" {{action "start" on="submit"}}>
+	<button type="submit">Start</button>
+      </form>
+  </script>
+  
+  <script type="text/x-handlebars" id="login">
+      <h3>Login page</h3>
+      <h2>Enter your token: </h2>
+      <form>
+            {{view Ember.TextField valueBinding="token" placeholder="token"}}
+            <button type="login">Login</button>
+      </form>
+      {{#if loginFailed}}
+	  <div class="alert">Unknown user.</div>
+      {{/if}}
+  </script>
+
+  <script type="text/x-handlebars" id="welcome">
+      <h2>Welcome</h2>
+     {{#each user in content}}
+      <h3>User: {{user.user_id}}</h3>
+      <h3>Clusters: {{user.cluster}}</h3>
+     {{/each}}
+      <form class="form-horizontal" {{action "logout" on="submit"}}>
+	<button type="submit">Logout</button>
+      </form>
+  </script>
+
+  <script type="text/x-handlebars" id="notauthorized">
+    <h2>Not authorized</h2>
+  </script>
+  
+{% endverbatim %}
+</body>
+</html>
