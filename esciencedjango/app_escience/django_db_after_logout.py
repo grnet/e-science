@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Django backend to update the database after a new login action
+Django backend to update the database after a new logout action
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -32,13 +32,13 @@ def get_user_id(token):
     try:
         logging.info(' Get the uuid')
         uuid = auth.user_info['id']
-        return db_after_login(uuid)
+        return db_after_logout(uuid)
     except ClientError:
         logging.error('Failed to get user_id from identity server')
         raise
 
 
-def db_after_login(given_uuid):
+def db_after_logout(given_uuid):
     '''
     Check if user already exits in DB or if 
     it is a new user,make a new entry in UserInfo
@@ -50,29 +50,25 @@ def db_after_login(given_uuid):
         logging.info(' The id of the user %s is %d', existing_user.uuid,
                     existing_user.user_id)
         # user already in db
-        db_login_entry(existing_user)
+        db_logout_entry(existing_user)
         return existing_user
 
     except ObjectDoesNotExist:
-        # new user database entry
-        new_entry = UserInfo(uuid=given_uuid)
-        new_entry.save()
-        new_user = UserInfo.objects.get(uuid=given_uuid)
-        logging.info(' The id of the new user is ', new_user.user_id)
-        db_login_entry(new_user)
-        return new_user
+        # new user 
+        logging.warning(' Logout functionality only for existing users not new ones ')
+        return 
     except MultipleObjectsReturned:
         # Problem with database table
         logging.error(' Table has multiple entries for the same uuid')
 
-
-def db_login_entry(user):
+def db_logout_entry(user):
     '''
     Makes a new entry in the UserLogin
-    table when the user logs in 
-    '''
+    table when the user logs out 
+    '''  
     current_date = timezone.now()
-    new_login = UserLogin(user_id =user , action_date = current_date , login_status = "0")
-    new_login.save()
+    new_logout = UserLogin(user_id = user , action_date = current_date , login_status = "1")
+    new_logout.save()
     return
+
 
