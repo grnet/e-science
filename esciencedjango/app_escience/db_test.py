@@ -127,7 +127,7 @@ def db_after_login(given_uuid):
         # Problem with database table
         logging.error(' Table has multiple entries for the same uuid')
         sys.exit(error_multiple_entries)
-
+ 
 
 def db_login_entry(user):
     '''
@@ -147,6 +147,7 @@ def db_logout_entry(user):
     When user logs out makes an new entry in UserLogin table
     with the time and the log out status 
     '''
+    
     current_date = timezone.now()
     new_logout = UserLogin(user_id = user , action_date = current_date , login_status = "1")
     new_logout.save()
@@ -158,25 +159,3 @@ def test_db():
     assert db_logout() == '1 1, 1' # expected output after logout action in existing user
    # assert db_logout() == 'New users can not log out in first interaction with the db'
 
-def main():
-
-    db_login()
-    db_logout()    
-    
-if __name__ == '__main__':
-    
-    levels = {'critical': logging.CRITICAL,
-              'error': logging.ERROR,
-              'warning': logging.WARNING,
-              'report': REPORT,
-              'info': logging.INFO,
-              'debug': logging.DEBUG}
-    
-    logging.addLevelName(REPORT, "REPORT")
-    logger = logging.getLogger(__name__)
-
-    logging_level = REPORT
-    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-                        level=logging_level, datefmt='%H:%M:%S')
-
-    main()
