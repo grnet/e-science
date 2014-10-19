@@ -1,6 +1,8 @@
 App = Ember.Application.create();
 
 var attr = DS.attr;
+var escience_token;
+this.App.set('escience_token', "null");
 
 App.User = DS.Model.extend({
      token: attr('string'),
@@ -8,9 +10,16 @@ App.User = DS.Model.extend({
      cluster: attr('number'),
     });
 
-App.UserAdapter = DS.RESTAdapter.extend({
-  namespace: 'api'
+App.ApplicationAdapter = DS.ActiveModelAdapter.extend({
+   
+   namespace: 'api',
+   headers: function() {
+   return { "Authorization": App.escience_token  };}.property("App.escience_token") 
+   
+
 });
+
+
 
 
 App.Router.map(function() {
@@ -29,19 +38,29 @@ App.IndexRoute = Ember.Route.extend({
 
 App.LogoutRoute = Ember.Route.extend({
   redirect: function() {
-    this.transitionTo('homepage');
+    this.transitionToRoute('homepage');
 }  
 });
 
 App.WelcomeRoute = Ember.Route.extend({
         model: function() {
-            return this.store.all('user');
+             
+	     var current_user = this.store.find('user');
+             return current_user;
+	    //var current_user = this.store.find('user').then(
+	    //function(current_user) {
+            //console.log(current_user.content);
+	    //return current_user.content;
+            //});
+            //var current_user_2 = this.store.push('user', current_user);
+            
         }
     });
 
+
 App.HomepageController = Ember.Controller.extend({
   start: function() {
-    this.transitionTo('login');
+    this.transitionToRoute('login');
 }
 });
 
@@ -49,18 +68,26 @@ App.LoginController = Ember.Controller.extend({
   token: '',
   actions: {
     login: function(text) {
-      
+      var self = this;
       if (text) {
 
-	this.store.createRecord('user', {
+	var response = this.store.createRecord('user', {
 	  'token': text
 	}).save();
-
-	this.set('token', '');
-	this.transitionToRoute('welcome');
+        response.then(
+        function() {		
+               App.set('escience_token', "Token "+response.content._data.escience_token);
+               self.set('token', '');
+               self.transitionToRoute('welcome');             
+            }, function(){
+	       console.log("Not Authorized");
+        });
+	
+      
       }
     }    
   }
+
 });
 
 App.LoginView = Ember.View.extend({
@@ -73,7 +100,7 @@ App.LoginView = Ember.View.extend({
 
 App.WelcomeController = Ember.Controller.extend({
   logout: function() {
-    this.transitionTo('logout');
+    this.transitionToRoute('homepage');
 }
 });
 

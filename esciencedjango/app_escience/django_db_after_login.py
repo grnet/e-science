@@ -58,6 +58,8 @@ def db_after_login(given_uuid):
         # new user database entry
         new_entry = UserInfo(uuid=given_uuid)
         new_entry.save()
+        new_token = Token(user=new_entry)
+        new_token.save()
         new_user = UserInfo.objects.get(uuid=given_uuid)
         logging.info(' The id of the new user is ', new_user.user_id)
         db_login_entry(new_user)

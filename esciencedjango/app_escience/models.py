@@ -5,7 +5,8 @@
 """ 
 import logging 
 import datetime
-
+import binascii
+import os
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator 
@@ -21,6 +22,10 @@ class UserInfo(models.Model):
         help_text="Auto-increment user id")
     uuid = models.CharField("UUID", null=False, blank=False, unique=True, default="", max_length=255,
         help_text="Universally unique identifier (for astakos authentication)")
+    
+    def is_authenticated(self):
+        return True
+
 
     class Meta:
         verbose_name = "User"
@@ -34,6 +39,22 @@ ACTION_STATUS_CHOICES=(
     ("0","login"),
     ("1","logout"),    
 )
+
+class Token(models.Model):
+    user = models.OneToOneField(UserInfo, related_name='escience_token')
+    key = models.CharField(max_length=40, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.key:
+            self.key = self.generate_token()
+        return super(Token, self).save(*args, **kwargs)
+
+    def generate_token(self):
+        return binascii.hexlify(os.urandom(20)).decode()
+
+    def __unicode__(self):
+        return self.key
+
   
 class UserLogin(models.Model):
     """Definition of a User Login relationship model.""" 
@@ -92,4 +113,3 @@ class ClusterInfo(models.Model):
 
     def __unicode__(self):
         return ("%s, %d, %s") % (self.cluster_name, self.cluster_size, self.cluster_status)
-  

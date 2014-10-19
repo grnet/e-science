@@ -5,3 +5,4 @@ from app_escience.models import *
 admin.site.register(UserInfo)
 admin.site.register(UserLogin)
 admin.site.register(ClusterInfo)
+admin.site.register(Token)

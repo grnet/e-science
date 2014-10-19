@@ -61,7 +61,6 @@ WSGI_APPLICATION = 'esciencedjango.wsgi.application'
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 
 
-
 REST_FRAMEWORK = {
     'PAGINATE_BY': 10,
     'PAGINATE_BY_PARAM': 'page_size',

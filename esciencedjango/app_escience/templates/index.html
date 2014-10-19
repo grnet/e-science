@@ -37,10 +37,8 @@
 
   <script type="text/x-handlebars" id="welcome">
       <h2>Welcome</h2>
-     {{#each user in content}}
-      <h3>User: {{user.user_id}}</h3>
-      <h3>Clusters: {{user.cluster}}</h3>
-     {{/each}}
+      <h3>User: {{content.lastObject.user_id}}</h3>
+      <h3>Clusters: {{content.lastObject.cluster}}</h3>
       <form class="form-horizontal" {{action "logout" on="submit"}}>
 	<button type="submit">Logout</button>
       </form>
