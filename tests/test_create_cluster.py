@@ -20,9 +20,11 @@ def mock_createcluster(*args):
 
 def mock_sleep(*args):
     print 'in mock sleep'
+    pass
 
 def mock_checkcredentials(*args):
     print 'in mock check credentials'
+    pass
 
 def mock_endpoints_userid(arg1):
     print 'in mock endpoints'
@@ -51,6 +53,7 @@ def mock_init_plankton(*args):
 
 def mock_init_cyclades_netclient(*args):
     print 'in mock init cyclades netclient'
+    pass
 
 # replace unmanaged calls with the mocks
 @patch('create_bare_cluster.Cluster.create', mock_createcluster)
