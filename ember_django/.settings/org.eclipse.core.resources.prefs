@@ -1,0 +1,16 @@
+eclipse.preferences.version=1
+encoding//app_escience/__init__.py=utf-8
+encoding//app_escience/authenticate_user.py=utf-8
+encoding//app_escience/django_db_after_login.py=utf-8
+encoding//app_escience/views.py=utf-8
+encoding//ember_django/settings.py=utf-8
+encoding//ember_django/urls.py=utf-8
+encoding//ember_django/wsgi.py=utf-8
+encoding//login_logout/admin.py=utf-8
+encoding//login_logout/authenticate_user.py=utf-8
+encoding//login_logout/django_db_after_login.py=utf-8
+encoding//login_logout/models.py=utf-8
+encoding//login_logout/serializers.py=utf-8
+encoding//login_logout/urls.py=utf-8
+encoding//login_logout/views.py=utf-8
+encoding/manage.py=utf-8

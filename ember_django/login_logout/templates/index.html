@@ -1,17 +1,15 @@
 <!doctype html>
 <html>
 <head>
-  <title>ES-133 (UI, Ember, HTML)</title>
+  <title>Login/Logout Escience</title>
   <meta charset="utf-8"/>
-  <link rel="stylesheet" href="../static/ES-133/css/normalize.css">
-  <link rel="stylesheet" href="../static/ES-133/css/style.css">
-  <script src="../static/ES-133/js/libs/jquery-1.10.2.js"></script>
-  <script src="../static/ES-133/js/libs/handlebars-1.1.2.js"></script>
-  <script src="../static/ES-133/js/libs/ember-1.7.0.js"></script>
-  <script src="../static/ES-133/js/libs/ember-data.js"></script>
-  <script src="../static/ES-133/js/app.js"></script>  
-  <!-- to activate the test runner, add the "?test" query string parameter -->
-  <script src="../static/ES-133/tests/runner.js"></script>
+  <link rel="stylesheet" href="../static/ember_app/css/normalize.css">
+  <link rel="stylesheet" href="../static/ember_app/css/style.css">
+  <script src="../static/ember_app/js/libs/jquery-1.10.2.js"></script>
+  <script src="../static/ember_app/js/libs/handlebars-1.1.2.js"></script>
+  <script src="../static/ember_app/js/libs/ember-1.7.0.js"></script>
+  <script src="../static/ember_app/js/libs/ember-data.js"></script>
+  <script src="../static/ember_app/js/app.js"></script>  
 </head>
 <body>
 {% verbatim %}
@@ -33,6 +31,9 @@
             {{view Ember.TextField valueBinding="token" placeholder="token"}}
             <button type="login">Login</button>
       </form>
+      {{#if loginFailed}}
+	  <div class="alert">Wrong Token. Please try again</div>
+      {{/if}}
   </script>
 
   <script type="text/x-handlebars" id="welcome">
@@ -43,11 +44,6 @@
 	<button type="submit">Logout</button>
       </form>
   </script>
-
-  <script type="text/x-handlebars" id="notauthorized">
-    <h2>Not authorized</h2>
-  </script>
-  
 {% endverbatim %}
 </body>
 </html>
