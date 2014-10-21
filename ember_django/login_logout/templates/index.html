@@ -1,0 +1,49 @@
+<!doctype html>
+<html>
+<head>
+  <title>Login/Logout Escience</title>
+  <meta charset="utf-8"/>
+  <link rel="stylesheet" href="../static/ember_app/css/normalize.css">
+  <link rel="stylesheet" href="../static/ember_app/css/style.css">
+  <script src="../static/ember_app/js/libs/jquery-1.10.2.js"></script>
+  <script src="../static/ember_app/js/libs/handlebars-1.1.2.js"></script>
+  <script src="../static/ember_app/js/libs/ember-1.7.0.js"></script>
+  <script src="../static/ember_app/js/libs/ember-data.js"></script>
+  <script src="../static/ember_app/js/app.js"></script>  
+</head>
+<body>
+{% verbatim %}
+  <script type="text/x-handlebars">
+    {{outlet}}
+  </script>
+  
+  <script type="text/x-handlebars" id="homepage">
+      <h2>Home page</h2>
+      <form class="form-horizontal" {{action "start" on="submit"}}>
+	<button type="submit">Start</button>
+      </form>
+  </script>
+  
+  <script type="text/x-handlebars" id="login">
+      <h3>Login page</h3>
+      <h2>Enter your token: </h2>
+      <form>
+            {{view Ember.TextField valueBinding="token" placeholder="token"}}
+            <button type="login">Login</button>
+      </form>
+      {{#if loginFailed}}
+	  <div class="alert">Wrong Token. Please try again</div>
+      {{/if}}
+  </script>
+
+  <script type="text/x-handlebars" id="welcome">
+      <h2>Welcome</h2>
+      <h3>User: {{content.lastObject.user_id}}</h3>
+      <h3>Clusters: {{content.lastObject.cluster}}</h3>
+      <form class="form-horizontal" {{action "logout" on="submit"}}>
+	<button type="submit">Logout</button>
+      </form>
+  </script>
+{% endverbatim %}
+</body>
+</html>
