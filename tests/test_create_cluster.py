@@ -92,7 +92,8 @@ class TestCreateCluster(TestCase):
     # initialize objects common to all tests in this test case
     def setUp(self):
         parser = RawConfigParser()
-        parser.read('../.private/.kamakirc')
+        config_file = os.path.join(os.path.dirname(os.path.dirname(__file__)),'.private/.kamakirc')
+        parser.read(config_file)
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
