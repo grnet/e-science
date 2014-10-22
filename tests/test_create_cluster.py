@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # setup testing framework
 from unittest import TestCase, main
 from mock import patch
