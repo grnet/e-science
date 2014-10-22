@@ -61,16 +61,7 @@ WSGI_APPLICATION = 'ember_django.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/1.7/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'escience',
-        'USER': 'developer',
-        'PASSWORD': 'escience',
-        'HOST': '127.0.0.1',
-    }
-}
+# https://docs.djangoproject.com/en/1.7/ref/settings/#database
 
 
 # rest_framework settings for the rest_framework_ember
