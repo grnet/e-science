@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+
+'''
+This script tests logout from web form using selenium
+
+@author: Ioannis Stenos, Nick Vrionis
+'''
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -8,7 +14,7 @@ from selenium.common.exceptions import NoAlertPresentException
 import unittest, time, re
 
 # Constants
-INPUT_FILE = 'token_file'
+INPUT_FILE = 'token_file' # file tha has stored okeanos token
 
 class LogoutTest(unittest.TestCase):
     def setUp(self):
@@ -19,6 +25,12 @@ class LogoutTest(unittest.TestCase):
         self.accept_next_alert = True
     
     def test_logout(self):
+        '''
+        Opens homepage then enters login 
+        screen and after succesfully logged in 
+        it logout and check if returned to login screen
+
+        '''
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_css_selector("button[type=\"submit\"]").click()

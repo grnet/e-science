@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+
+'''
+This script tests login from web form using selenium
+
+@author: Ioannis Stenos, Nick Vrionis
+'''
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -19,6 +25,11 @@ class LoginTest(unittest.TestCase):
         self.accept_next_alert = True
     
     def test_login(self):
+        '''
+        Opens homepage then enters login screen 
+        and place a valid okeanos token
+        checks if it has loged in 
+        '''
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_css_selector("button[type=\"submit\"]").click()

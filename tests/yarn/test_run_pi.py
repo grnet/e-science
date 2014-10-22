@@ -167,7 +167,7 @@ def run_pi(master_ip, pi_map, pi_sec):
 
 def test_run_pi_2_10000():
     '''
-    Test that runs two pi jobs with different arguments on
+    Test that runs  pi job with  arguments 2 and 10000 on
     an existing yarn cluster.
     '''
     f = open(INPUT_FILE)
@@ -178,7 +178,7 @@ def test_run_pi_2_10000():
 
 def test_run_pi_10_1000000():
     '''
-    Test that runs two pi jobs with different arguments on
+    Test that runs  pi job with  arguments 10 and 1000000 on
     an existing yarn cluster.
     '''
     f = open(INPUT_FILE)
