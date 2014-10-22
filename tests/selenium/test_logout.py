@@ -7,6 +7,9 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 import unittest, time, re
 
+# Constants
+INPUT_FILE = 'token_file'
+
 class LogoutTest(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
@@ -20,7 +23,11 @@ class LogoutTest(unittest.TestCase):
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_css_selector("button[type=\"submit\"]").click()
         driver.find_element_by_id("token").clear()
-        driver.find_element_by_id("token").send_keys("GQH5r3E8POC4RUKchC_WazIBGowFhf1RYqY3t4A872I")
+        f = open (INPUT_FILE ,'r')
+        token = f.readline()
+        f.close()
+        token = token.strip()
+        driver.find_element_by_id("token").send_keys(token)
         driver.find_element_by_css_selector("button[type=\"login\"]").click()
         for i in range(60):
             try:
