@@ -165,7 +165,7 @@ def run_pi(master_ip, pi_map, pi_sec):
     return float(line[25:])
 
 
-def test_run_pi():
+def test_run_pi_2_10000():
     '''
     Test that runs two pi jobs with different arguments on
     an existing yarn cluster.
@@ -174,7 +174,16 @@ def test_run_pi():
     master_ip = f.readline()
     f.close()
     master_ip = master_ip.strip()
-    print master_ip
     assert run_pi(master_ip, 2, 10000) == 3.14280000000000000000
+
+def test_run_pi_10_1000000():
+    '''
+    Test that runs two pi jobs with different arguments on
+    an existing yarn cluster.
+    '''
+    f = open(INPUT_FILE)
+    master_ip = f.readline()
+    f.close()
+    master_ip = master_ip.strip()
     assert run_pi(master_ip, 10, 1000000) == 3.14158440000000000000
 
