@@ -7,6 +7,7 @@ To run the test you need:
 2. The script needs the master node's ip to run which will be located in .master_ip file in <projectroot>/.private/ this is the format of the file:
 
     [cluster]
+    
     master_ip = x.x.x.x
 
 
