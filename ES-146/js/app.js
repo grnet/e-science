@@ -1,10 +1,25 @@
 // create an Ember application
 App = Ember.Application.create();
 
+// status model... to be retrieved from the backend
+App.Status = DS.Model.extend({
+    vms_max: DS.attr('number'),        // maximum (limit) number of VMs 
+    vms_av: DS.attr('number'),         // available VMs
+    cpu_max: DS.attr('number'),        // maximum CPUs
+    cpu_av: DS.attr('number'),         // available CPUs
+    mem_max: DS.attr('number'),        // maximum memory
+    mem_av: DS.attr('number'),         // available memory     
+    disk_max: DS.attr('number'),       // maximum disk space
+    disk_av: DS.attr('number'),        // available disk space
+    cpu_poss: DS.attr('string'),       // CPU choices
+    mem_poss: DS.attr('string'),       // memory choices
+    disk_poss: DS.attr('string'),      // disk choices
+    disk_template: DS.attr('string')   // storage choices
+});
+
 // define possible routes
 App.Router.map(function() {
   this.route('flavor');
-  this.route('personalize');
   this.route('confirm');
 });
 
@@ -18,26 +33,8 @@ App.IndexRoute = Ember.Route.extend({
 
 // controller for flavor
 App.FlavorController = Ember.Controller.extend({
-  actions: {
-    // when next button is pressed
-    // gotopersonalize action is triggered
-    gotopersonalize: function() {
-        // redirect to personalize template
-        this.transitionTo('personalize');
-    }
-  }  
-});
-
-// controller for personalize
-App.PersonalizeController = Ember.Controller.extend({
     clname: '',
     actions: {
-        // when previous button is pressed
-        // gotoflavor action is triggered
-        gotoflavor: function() {
-            // redirect to flavor template
-            this.transitionTo('flavor');
-        },
         // when next button is pressed
         // gotoconfirm action is triggered
         gotoconfirm: function() {
@@ -54,13 +51,13 @@ App.PersonalizeController = Ember.Controller.extend({
 // controller for confirm
 App.ConfirmController = Ember.Controller.extend({
     // in order to have access to personalize
-    needs: "personalize",
+    needs: "flavor",
     actions: {
         // when previous button is pressed
-        // gotopersonalize action is triggered
-        gotopersonalize: function() {
-            // redirect to personalize template
-            this.transitionTo('personalize');
+        // gotoflavor action is triggered
+        gotoflavor: function() {
+            // redirect to flavor template
+            this.transitionTo('flavor');
         },
         // when next button is pressed
         // gotocreate action is triggered

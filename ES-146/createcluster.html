@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Create Cluster</title>
+  <title>Create new cluster</title>
   <link rel="stylesheet" href="css/normalize.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -11,29 +11,92 @@
   <script type="text/x-handlebars">
     <nav>
       {{#link-to "flavor"}}Flavor{{/link-to}} |
-      {{#link-to "personalize"}}Personalize{{/link-to}} |
       {{#link-to "confirm"}}Confirm{{/link-to}} |
     </nav>
     {{outlet}}
   </script>
-   
-  <script type="text/x-handlebars" id="flavor">
-    <h1>Flavor information</h1>
-    <button id="next" {{action "gotopersonalize"}}> Next </button>
+
+  <script type="text/x-handlebars" id="flavor">  
+    <div id="header">
+        Select CPUs, RAM and Disk Size...
+    </div>
+    <div id="main-wrap">
+        <div id="sidebar">
+            <p> Cluster size:
+                <select class="ember-select">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+            </select> </p>
+            <p><button id="master" {{action "displaymaster"}}> Master </button></p>
+            <p><button id="slaves" {{action "displayslaves"}}> Slaves </button></p>
+            <p> Operating system:
+                <select class="ember-select">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+            </select> 
+            </p>
+        </div>
+        <div id="content-wrap">      
+            <h4>CPUs (max av):</h4>    
+            <p>
+                <button id="1" {{action "choice1"}}> 1x </button>
+                <button id="2" {{action "choice2"}}> 2x </button>
+                <button id="3" {{action "choice3"}}> 4x </button>                             
+            </p>
+            <h4>Memory size (max av):</h4>    
+            <p>
+                <button id="1" {{action "choice1"}}> 5Gb </button>
+                <button id="2" {{action "choice2"}}> 10Gb </button>
+                <button id="3" {{action "choice3"}}> 20Gb </button>
+                                
+            </p>
+            <h4>Disk size (max av):</h4>    
+            <p>
+                <button id="1" {{action "choice1"}}> 5Gb </button>
+                <button id="2" {{action "choice2"}}> 10Gb </button>
+                <button id="3" {{action "choice3"}}> 20Gb </button>
+                                
+            </p>
+            <h4>Storage:</h4>    
+            <p>
+                <button id="standard" {{action "selectstandard"}}> Standard </button>
+                <button id="archipelago" {{action "selectarchipelago"}}> Archipelago </button>
+            </p>
+            <h4>Cluster Name: {{view Ember.TextField valueBinding="clustername" placeholder="cluster name"}}</h4>        
+        </div>
+    </div>
+    <div id="footer">
+        <button id="next" {{action "gotoconfirm"}}> Next </button>
+    </div>    
   </script>
 
-  <script type="text/x-handlebars" id="personalize">
-    <h1>Cluster Name:</h1>
-    <p>{{view Ember.TextField valueBinding="clustername" placeholder="cluster name"}}</p>
-    <button id="previous" {{action "gotoflavor"}}> Previous </button>
-    <button id="next" {{action "gotoconfirm"}}> Next </button>
-  </script>
-
-  <script type="text/x-handlebars" id="confirm">
-    <h1>Summary</h1>
-    <h2>Cluster Name: {{controllers.personalize.clname}}</h2>
-    <button id="previous" {{action "gotopersonalize"}}> Previous </button>
-    <button id="next" {{action "gotocreate"}}> Create Cluster! </button>
+  <script type="text/x-handlebars" id="confirm">  
+    <div id="header">
+        Summary
+    </div>
+    <div id="main-wrap">
+        <div id="content-wrap">
+            <h4>Cluster Name: {{controllers.flavor.clname}}</h4>          
+            <div id="area1">
+                <h3>Image</h3>
+                <h4>OS: </h4>
+                <h4>Size: </h4>
+            </div>
+            <div id="area2">
+                <h3>Flavor</h3>
+                <h4>CPUs: </h4>
+                <h4>Memory: </h4>
+                <h4>Disk: </h4>
+                <h4>Storage type: </h4>
+            </div>
+        </div>
+    </div>
+    <div id="footer">
+        <button id="previous" {{action "gotoflavor"}}> Previous </button>
+        <button id="next" {{action "gotocreate"}}> Create Cluster! </button>
+    </div>
   </script>
   
   <script src="js/libs/jquery-1.10.2.js"></script>
