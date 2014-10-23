@@ -7,9 +7,11 @@ To run the tests you need:
 2. For the login and logout tests you will need an ~okeanos token which will be located in .kamakirc file in <projectroot>/.private/ this is the format of the file:
 
     [global] 
+
     default_cloud = ~okeanos
 
     [cloud "~okeanos"]
+    
     url = okeanos url
     token = Your token
 
