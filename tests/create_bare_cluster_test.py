@@ -7,7 +7,7 @@ from mock import patch
 from ConfigParser import RawConfigParser, NoSectionError
 
 # get relative path references so imports will work,
-# even if __init__.py is missing (/tests is a simple directory not a module)
+# even if __init__.py is missing (/tests is a simple directory not a package)
 import sys
 from os.path import join, dirname
 
