@@ -4,17 +4,18 @@
 # setup testing framework
 from unittest import TestCase, main
 from mock import patch
-from ConfigParser import RawConfigParser
+from ConfigParser import RawConfigParser, NoSectionError
 
 # get relative path references so imports will work,
 # even if __init__.py is missing (/tests is a simple directory not a module)
 import sys
-import os.path
+from os.path import join, dirname
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(join(dirname(__file__), '..'))
 
 # import objects we aim to test
 from create_bare_cluster import create_cluster
+
 
 def mock_createcluster(*args):
     """ :returns proper master_ip and image list types with dummy values. """
@@ -35,7 +36,7 @@ def mock_checkcredentials(*args):
 
 
 def mock_endpoints_userid(arg1):
-    """ :return  """
+    """ :return valid keys for endpoints with placeholder values. """
     print 'in mock endpoints'
     fake_uid = 'id'
     fake_endpoints = {'cyclades': 0, 'plankton': 0, 'network': 0}
@@ -92,9 +93,16 @@ class TestCreateCluster(TestCase):
     # initialize objects common to all tests in this test case
     def setUp(self):
         parser = RawConfigParser()
-        parser.read('../.private/.kamakirc')
-        self.token = parser.get('cloud \"~okeanos\"', 'token')
-        self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
+        config_file = join(dirname(dirname(__file__)), '.private/.kamakirc')
+        parser.read(config_file)
+        try:
+            self.token = parser.get('cloud \"~okeanos\"', 'token')
+            self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
+        except NoSectionError:
+            self.token = 'INVALID_TOKEN'
+            self.auth_url = "INVALID_AUTH_URL"
+            print 'Current authentication details are kept off source control. ' \
+                  '\nUpdate your .kamakirc file in <projectroot>/.private/'
 
     def test_create_cluster(self):
         # arrange
@@ -103,12 +111,12 @@ class TestCreateCluster(TestCase):
                 'ram_slave': 2048, 'disk_slave': 5, 'token': self.token,
                 'disk_template': 'ext_vlmc', 'image': 'Debian Base',
                 'auth_url': self.auth_url}
-        fake_masterip = '127.0.0.1'
-        fake_vm_dict = {1: 'f vm'}
+        expected_masterip = '127.0.0.1'
+        expected_vm_dict = {1: 'f vm'}
         # act
-        ret_ip, ret_vm_dict = create_cluster(**opts)
+        returned_masterip, returned_vm_dict = create_cluster(**opts)
         # assert
-        self.assertTupleEqual((fake_masterip, fake_vm_dict), (ret_ip, ret_vm_dict))
+        self.assertTupleEqual((expected_masterip, expected_vm_dict), (returned_masterip, returned_vm_dict))
 
     # more testcases go here
 

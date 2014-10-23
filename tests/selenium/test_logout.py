@@ -11,10 +11,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
-import unittest, time, re
+from os.path import join, dirname
+from ConfigParser import RawConfigParser, NoSectionError
+import unittest, time, re, sys
 
-# Constants
-INPUT_FILE = 'token_file' # file tha has stored okeanos token
 
 class LogoutTest(unittest.TestCase):
     def setUp(self):
@@ -23,6 +23,15 @@ class LogoutTest(unittest.TestCase):
         self.base_url = "http://127.0.0.1:8000/"
         self.verificationErrors = []
         self.accept_next_alert = True
+        parser = RawConfigParser()
+        config_file = join(dirname(dirname(dirname(__file__))), '.private/.kamakirc')
+        parser.read(config_file)
+        try:
+            self.token = parser.get('cloud \"~okeanos\"', 'token')
+        except NoSectionError:
+            self.token = 'INVALID_TOKEN'
+            print 'Current authentication details are kept off source control. ' \
+                  '\nUpdate your .kamakirc file in <projectroot>/.private/'
     
     def test_logout(self):
         '''
@@ -35,11 +44,7 @@ class LogoutTest(unittest.TestCase):
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_css_selector("button[type=\"submit\"]").click()
         driver.find_element_by_id("token").clear()
-        f = open (INPUT_FILE ,'r')
-        token = f.readline()
-        f.close()
-        token = token.strip()
-        driver.find_element_by_id("token").send_keys(token)
+        driver.find_element_by_id("token").send_keys(self.token)
         driver.find_element_by_css_selector("button[type=\"login\"]").click()
         for i in range(60):
             try:
