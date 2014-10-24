@@ -16,14 +16,12 @@ import paramiko
 from time import sleep
 from ConfigParser import RawConfigParser, NoSectionError
 from os.path import join, dirname
-
 #GLobal constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
 CONNECTION_TRIES = 9  # Max number (+1)of connection attempts to a VM
 REPORT = 25  # Define logging level of REPORT
 CHAN_TIMEOUT = 360  # Paramiko channel timeout
 FILE_RUN_PI = 'temp_file.txt'  # File used from pi function to write stdout
-#INPUT_FILE = 'master_ip'  # Single line file contains master ip to run pi
 
 def exec_command(ssh_client, command):
     '''
@@ -151,9 +149,13 @@ def check_string(to_check_file, to_find_str):
             logging.warning('The line %s cannot be found!', to_find_str)
 
 
-def run_pi(master_ip, pi_map, pi_sec):
+def run_pi(pi_map, pi_sec):
     '''Runs a pi job'''
     #hduser_pass = get_hduser_pass()
+    parser = RawConfigParser()
+    config_file = join(dirname(dirname(dirname(__file__))), '.private/.config.txt')
+    parser.read(config_file)
+    master_ip = parser.get('cluster', 'master_ip')
     ssh_client = establish_connect(master_ip, 'hduser', '',
                                    MASTER_SSH_PORT)
 
@@ -170,17 +172,9 @@ def run_pi(master_ip, pi_map, pi_sec):
 
 def test_run_pi_2_10000():
 
-    parser = RawConfigParser()
-    config_file = join(dirname(dirname(dirname(__file__))), '.private/.master_ip')
-    parser.read(config_file)
-    master_ip = parser.get('cluster', 'master_ip')
-    assert run_pi(master_ip, 2, 10000) == 3.14280000000000000000
+    assert run_pi(2, 10000) == 3.14280000000000000000
 
 def test_run_pi_10_1000000():
 
-    parser = RawConfigParser()
-    config_file = join(dirname(dirname(dirname(__file__))), '.private/.master_ip')
-    parser.read(config_file)
-    master_ip = parser.get('cluster', 'master_ip')
-    assert run_pi(master_ip, 10, 1000000) == 3.14158440000000000000
+    assert run_pi(10, 1000000) == 3.14158440000000000000
 

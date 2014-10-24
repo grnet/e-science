@@ -20,18 +20,18 @@ class LogoutTest(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
-        self.base_url = "http://127.0.0.1:8000/"
+        self.base_url = "http://83.212.123.218:8000/"
         self.verificationErrors = []
         self.accept_next_alert = True
         parser = RawConfigParser()
-        config_file = join(dirname(dirname(dirname(__file__))), '.private/.kamakirc')
+        config_file = join(dirname(dirname(dirname(__file__))), '.private/.config.txt')
         parser.read(config_file)
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             print 'Current authentication details are kept off source control. ' \
-                  '\nUpdate your .kamakirc file in <projectroot>/.private/'
+                  '\nUpdate your .config.txt file in <projectroot>/.private/'
     
     def test_logout(self):
         '''
