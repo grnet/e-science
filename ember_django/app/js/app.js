@@ -60,7 +60,7 @@ App.WelcomeRoute = Ember.Route.extend({
         //Return user records from store.
         //Show latest record in template with latestObject.
 	return this.store.find('user');   
-     },
+     }
 
 });
 
