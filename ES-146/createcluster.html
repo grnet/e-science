@@ -22,47 +22,49 @@
     </div>
     <div id="main-wrap">
         <div id="sidebar">
-            <p> Cluster size:
+            <p> Cluster size ({{content.lastObject.vms_max}} at maximum):
                 <select class="ember-select">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-            </select> </p>
+                    {{#each item in content.lastObject.vms_av}}
+                        <option>{{item}}</option>
+                    {{/each}}
+                </select>             
+            </p>
             <p><button id="master" {{action "displaymaster"}}> Master </button></p>
             <p><button id="slaves" {{action "displayslaves"}}> Slaves </button></p>
             <p> Operating system:
+            <p> Operating Systems:
                 <select class="ember-select">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-            </select> 
+                    {{#each item in content.lastObject.os_p}}
+                        <option>{{item}}</option>
+                    {{/each}}
+                </select>             
+            </p>
             </p>
         </div>
         <div id="content-wrap">      
-            <h4>CPUs (max av):</h4>    
-            <p>
-                <button id="1" {{action "choice1"}}> 1x </button>
-                <button id="2" {{action "choice2"}}> 2x </button>
-                <button id="3" {{action "choice3"}}> 4x </button>                             
+            <h4>CPUs ({{content.lastObject.cpu_av}} available)</h4>    
+            <p>    
+                {{#each item in content.lastObject.cpu_p}}
+                    <button> {{item}} </button>                          
+                {{/each}}                
             </p>
-            <h4>Memory size (max av):</h4>    
+            <h4>Memory size ({{content.lastObject.mem_av}} available)</h4>    
             <p>
-                <button id="1" {{action "choice1"}}> 5Gb </button>
-                <button id="2" {{action "choice2"}}> 10Gb </button>
-                <button id="3" {{action "choice3"}}> 20Gb </button>
-                                
+                {{#each item in content.lastObject.mem_p}}
+                    <button> {{item}} </button>                          
+                {{/each}}                                                
             </p>
-            <h4>Disk size (max av):</h4>    
+            <h4>Disk size ({{content.lastObject.disk_av}} available)</h4>    
             <p>
-                <button id="1" {{action "choice1"}}> 5Gb </button>
-                <button id="2" {{action "choice2"}}> 10Gb </button>
-                <button id="3" {{action "choice3"}}> 20Gb </button>
-                                
+                {{#each item in content.lastObject.disk_p}}
+                    <button> {{item}} </button>                          
+                {{/each}}                                
             </p>
             <h4>Storage:</h4>    
             <p>
-                <button id="standard" {{action "selectstandard"}}> Standard </button>
-                <button id="archipelago" {{action "selectarchipelago"}}> Archipelago </button>
+                {{#each item in content.lastObject.disk_template}}
+                    <button> {{item}} </button>                          
+                {{/each}}   
             </p>
             <h4>Cluster Name: {{view Ember.TextField valueBinding="clustername" placeholder="cluster name"}}</h4>        
         </div>

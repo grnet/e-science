@@ -1,20 +1,44 @@
 // create an Ember application
 App = Ember.Application.create();
 
+App.ApplicationAdapter = DS.FixtureAdapter;
+
 // status model... to be retrieved from the backend
 App.Status = DS.Model.extend({
-    vms_max: DS.attr('number'),        // maximum (limit) number of VMs 
-    vms_av: DS.attr('number'),         // available VMs
-    cpu_max: DS.attr('number'),        // maximum CPUs
-    cpu_av: DS.attr('number'),         // available CPUs
-    mem_max: DS.attr('number'),        // maximum memory
-    mem_av: DS.attr('number'),         // available memory     
-    disk_max: DS.attr('number'),       // maximum disk space
-    disk_av: DS.attr('number'),        // available disk space
-    cpu_poss: DS.attr('string'),       // CPU choices
-    mem_poss: DS.attr('string'),       // memory choices
-    disk_poss: DS.attr('string'),      // disk choices
-    disk_template: DS.attr('string')   // storage choices
+    vms_max: DS.attr('number'),         // maximum (limit) number of VMs
+    vms_av: DS.attr(),                  // available VMs
+    cpu_max: DS.attr('number'),         // maximum CPUs
+    cpu_av: DS.attr('number'),          // available CPUs
+    mem_max: DS.attr('number'),         // maximum memory
+    mem_av: DS.attr('number'),          // available memory
+    disk_max: DS.attr('number'),        // maximum disk space
+    disk_av: DS.attr('number'),         // available disk space
+    cpu_p: DS.attr(),                   // CPU choices
+    mem_p: DS.attr(),                   // memory choices
+    disk_p: DS.attr(),                  // disk choices
+    disk_template: DS.attr(),            // storage choices
+    os_p: DS.attr()                     // OS choices    
+});
+
+App.Status.reopenClass({
+  FIXTURES: [
+    { 
+        id: 1,
+        vms_max: 10,
+        vms_av: [1,2,3,4,5,6],
+        cpu_max: 8,
+        cpu_av: 4,
+        mem_max: 8192,
+        mem_av: 2024,
+        disk_max: 100,
+        disk_av: 20,
+        cpu_p: [1,2,4,8],
+        mem_p: [512,1024,2048,4096,8192],
+        disk_p: [5,10,20,40,60,80,100],
+        disk_template: ['Standard','Archipelago'],
+        os_p: ['Debian','Linux','Ubuntu']        
+    }
+  ]
 });
 
 // define possible routes
@@ -28,6 +52,14 @@ App.Router.map(function() {
 App.IndexRoute = Ember.Route.extend({
   redirect: function() {
     this.transitionTo('flavor');
+  }
+});
+
+// for the flavor route
+// access model status
+App.FlavorRoute = Ember.Route.extend({
+  model: function() {
+    return this.store.find('status');
   }
 });
 
