@@ -13,4 +13,4 @@ install:
 script: nosetests -sv
 before_install:
 - openssl aes-256-cbc -K $encrypted_4522808536cf_key -iv $encrypted_4522808536cf_iv
-  -in .config.txt.enc -out .config.txt -d
+  -in .profile/.config.txt.enc -out .profile/.config.txt -d
