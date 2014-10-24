@@ -9,4 +9,4 @@ install:
 script: nosetests create_yarn_cluster.py
 before_install:
 - openssl aes-256-cbc -K $encrypted_908d3e898427_key -iv $encrypted_908d3e898427_iv
-  -in .kamakirc.enc -out .kamakirc -d
+  -in .private/.kamakirc.enc -out .private/.kamakirc -d
