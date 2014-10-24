@@ -7,5 +7,9 @@ install:
   - "pip install paramiko"
   - "pip install ansible"
   - "pip install django"
+  - "pip install selenium"
+  - "pip install mock"
+  - "pip install rednose"
+  - "pip install nose-cov"
 # command to run tests
-script: nosetests create_yarn_cluster.py
+script: nosetests -sv
