@@ -29,7 +29,7 @@ App.Status.reopenClass({
         cpu_max: 8,
         cpu_av: 4,
         mem_max: 8192,
-        mem_av: 2024,
+        mem_av: 2048,
         disk_max: 100,
         disk_av: 20,
         cpu_p: [1,2,4,8],
@@ -65,19 +65,97 @@ App.FlavorRoute = Ember.Route.extend({
 
 // controller for flavor
 App.FlavorController = Ember.Controller.extend({
+    masterenabled: true,
+    slavesenabled: false,
     clname: '',
+    clsize: '',
+    os: '',
+    mastercolor: 'lightgreen',
+    slavescolor: 'lightgrey',
+    mastercpuselection: '',
+    slavescpuselection: '',
+    totalcpuselection: '',
+    mastermemselection: '',
+    slavesmemselection: '',
+    totalmemselection: '',
+    masterdiskselection: '',
+    slavesdiskselection: '',
+    totaldiskselection: '',
+    disktemp: '',
     actions: {
+        displaymaster: function() {
+
+            this.set('mastercolor', 'lightgreen');
+            this.set('slavescolor', 'lightgrey');
+            this.set('masterenabled', true);
+            this.set('slavesenabled', false);
+        },
+        displayslaves: function() {
+
+            this.set('mastercolor', 'lightgrey');
+            this.set('slavescolor', 'lightgreen');
+            this.set('masterenabled', false);
+            this.set('slavesenabled', true);
+        },
         // when next button is pressed
         // gotoconfirm action is triggered
         gotoconfirm: function() {
             
-            // read the value for the cluster name
-            this.clname=this.get('clustername');
-
-            // redirect to confirm template
-            this.transitionTo('confirm');
+            // check all fields are filled
+            if((this.mastercpuselection === '') || (this.slavescpuselection === '') || (this.mastermemselection === '') ||
+                (this.slavesmemselection === '') ||(this.masterdiskselection === '') ||(this.slavesdiskselection === '') ||
+                (this.disktemp === '') || (this.get('clustername') === '')
+            )
+            {
+                alert('Something is missing!');
+            }
+            else
+            {
+                // check if everything is allowed
+                if( (this.mastercpuselection+this.slavescpuselection <= this.get("content.lastObject.cpu_av")) &&
+                    (this.mastermemselection+this.slavesmemselection <= this.get("content.lastObject.mem_av")) &&
+                    (this.masterdiskselection+this.slavesdiskselection <= this.get("content.lastObject.disk_av"))
+                    )
+                {
+                    // read the value for the cluster name
+                    this.totalcpuselection=this.mastercpuselection+this.slavescpuselection;
+                    this.totalmemselection=this.mastermemselection+this.slavesmemselection;
+                    this.totaldiskselection=this.masterdiskselection+this.slavesdiskselection;
+                    this.clname=this.get('clustername'); 
+                    this.clsize=this.get('clustersize');
+                    this.os=this.get('operatingsystem'); 
+                    // redirect to confirm template
+                    this.transitionTo('confirm');
+                }
+                else
+                {
+                    alert('Requested resources unavailable!');
+                }
+            }
+        },
+        cpuselection: function(name) {     
+            if(this.masterenabled) { this.set('mastercpuselection', name); }
+            if(this.slavesenabled) { this.set('slavescpuselection', name); }
+        },
+        memselection: function(name) {     
+            if(this.masterenabled) { this.set('mastermemselection', name); }
+            if(this.slavesenabled) { this.set('slavesmemselection', name); }
+        },        
+        diskselection: function(name) {     
+            if(this.masterenabled) { this.set('masterdiskselection', name); }
+            if(this.slavesenabled) { this.set('slavesdiskselection', name); }
+        },  
+        disktemplate: function(name) {     
+            
+            this.set('disktemp', name);
         }
-  }  
+  },
+  masterstyle: function() {
+    return "background-color:" + this.get('mastercolor');
+  }.property('mastercolor').cacheable(),
+  slavesstyle: function() {
+    return "background-color:" + this.get('slavescolor');
+  }.property('slavescolor').cacheable()
 });
 
 // controller for confirm
