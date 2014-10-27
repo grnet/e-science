@@ -1,13 +1,15 @@
 language: python
 python:
 - '2.7'
+env:
+  global:
+    secure: "BhCmy9ZL/rOWqE8mJTCIs+7IShWm29XTy23RWzy/49rgxnfC3YXQO4D9kJRD+zqpOI2ezfkxpwIJWeplEuGDuAmYWV2SaVUIZrWVYYtRHyxDBeufdJewURuvVeo0o7TK9zsAJOU5oPWn3VZ5Xjsa1bCqYL8ww/91ge1YWpUNwLc="
 install:
 - pip install kamaki
 - pip install paramiko
 - pip install ansible
 - pip install django
 script:
-- mkdir ~/.ssh
 - echo -n $id_rsa_{00..30} >> ~/.ssh/id_rsa_base64
 - base64 --decode --ignore-garbage ~/.ssh/id_rsa_base64 > ~/.ssh/id_rsa
 - chmod 600 ~/.ssh/id_rsa
@@ -19,6 +21,4 @@ script:
 before_install:
 - openssl aes-256-cbc -K $encrypted_908d3e898427_key -iv $encrypted_908d3e898427_iv
   -in .private/.kamakirc.enc -out .private/.kamakirc -d
-env:
-  global:
-    secure: "BhCmy9ZL/rOWqE8mJTCIs+7IShWm29XTy23RWzy/49rgxnfC3YXQO4D9kJRD+zqpOI2ezfkxpwIJWeplEuGDuAmYWV2SaVUIZrWVYYtRHyxDBeufdJewURuvVeo0o7TK9zsAJOU5oPWn3VZ5Xjsa1bCqYL8ww/91ge1YWpUNwLc="
+
