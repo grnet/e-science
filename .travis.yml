@@ -17,6 +17,5 @@ install:
 - pip install mock
 - pip install rednose
 - pip install nose-cov
-- apt_get 
 script: nosetests -sv
 
