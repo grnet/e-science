@@ -16,16 +16,16 @@ install:
 - pip install paramiko
 - pip install ansible
 - pip install django
-script:
 
+script:
 - echo "decrypt public"
 - for i in {0..10}; do eval $(printf "echo \$id_rsa_pub_%02d\n" $i) >> ~/.ssh/id_rsa_base64.pub; done
 - base64 --decode ~/.ssh/id_rsa_base64.pub > ~/.ssh/id_rsa.pub
 - chmod 600 ~/.ssh/id_rsa.pub
 - head -1 ~/.ssh/id_rsa.pub
-
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 - echo -e $master_ip >> .master_ip
+- wc .master_ip
 - python legacy/run_pi_yarn.py --master_ip=`cat .master_ip` 2 100000
 before_install:
 - openssl aes-256-cbc -K $encrypted_908d3e898427_key -iv $encrypted_908d3e898427_iv
