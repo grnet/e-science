@@ -3,23 +3,16 @@ python:
 - '2.7'
 env:
   global:
-    secure: "BhCmy9ZL/rOWqE8mJTCIs+7IShWm29XTy23RWzy/49rgxnfC3YXQO4D9kJRD+zqpOI2ezfkxpwIJWeplEuGDuAmYWV2SaVUIZrWVYYtRHyxDBeufdJewURuvVeo0o7TK9zsAJOU5oPWn3VZ5Xjsa1bCqYL8ww/91ge1YWpUNwLc="
-    secure: "JN4emJbqbrRAxa5WxV2hfHmUrJS6P3SFKQ/9ArSUH6+dIum02eyZ73BUdM4BVZfSY+fKqttmCADTzlI2tu+fUmGqcn86sg16P4x4QLzteMP30wgZf2w/e0dfdqnJuCPhNGpNrRVlO7N5jvykdaipCbp1ON5t5lY1EQEj135jbKQ="
-    secure: "Ja82FBRf2kx0ajU21XxvdB7zpeeNLqjuOpyX30kdPPvaYZR+5qu+tLgIqVI/TTCvhKQ+5iLyM5DhZBjFOOcRcdYjCyPHerUDHzwOmqKV2MDM5/L8JZzetFypFK98YbGlYieg/T11JPcgg4OnH+M8lccoUkctQjOWoO3Y2XasB/0="
-    secure: "CQdLbn+Xay9Oo3o+/xYLLieaoDZbCSaMguMLME+yopL+zAHFMfoK2VNo9a1rX8ETALys2kBMSrloHo6aEv7t/ZIU0Vpo+pLtiUcLVNPJegPyAj8RhiBeUeF+vWrF39iIoy4QAHVqIvvoEJLUr49EgtVq1pirncSFc97Ac8ttH8Q="
-    secure: "XY5Ubj6Co6ayNBqSRtrZWuJldAmUcEfqLaJmTairuW3WDl0KlKLqO3ovNxQOQGC7+qbDdAUfDiZ0YUmWjueDCAmp0VMrqGu6wVaWWB1EBCo71iwa+lewk5IXUoFSKI3TmnAy4dejFWP1GURK8JMFX3io/o7wMiwvLW+NuyKFotc="
-    secure: "fib+Dq2F5GvggA/7e2PY3QeL3f6DSJnbsIxiQlrEa0mj18e8P/T1HeP6JB/ahIssdkQpibU4O4qPKF+fNZPI8z3LRRy9yACDCMFwydZ1aISpeJJitAulH+y3Hp+v11V5LXUMPvzH25WQqHIwQZ18ujdtjR1UC7sLk9DMzpQaiag="
-    secure: "hhNGNP/7jPbJqrDvv+rW8QB846q4EPuDdugf+Mac2JgkqXWr7m5Uwm+GijJrBWfWzFjX8Xar72ncEikZ9su11OBd6+y1HRtBpGBmMIHivJI0iPzeSAHKB73dORNfsNU8CAJa1JR2MjWlG910R5vV1gBNqM4RdhKS/HVRe/hhbsI="
-
+    secure: "YELLNiIaLsnIch5DFHgKk9ZFlWasujveMGc8qkIFrct1bis///wa0oa1BB8KGgPv4KWy8KUaBNZEv8L+DTRjHr2km1T5zf/G3OERQlrFrTqyunBaYazllDQTmqB7P+oDx3b4lTrHuD1vmdns9fJHqQaEnshA4VKSs5biox3avww="
 install:
 - pip install kamaki
 - pip install paramiko
 - pip install ansible
 - pip install django
-
 script:
 - echo "decrypt public"
-- for i in {0..10}; do eval $(printf "echo \$id_rsa_pub_%02d\n" $i) >> ~/.ssh/id_rsa_base64.pub; done
+- for i in {0..10}; do eval $(printf "echo \$id_rsa_pub_%02d\n" $i) >> ~/.ssh/id_rsa_base64.pub;
+  done
 - base64 --decode ~/.ssh/id_rsa_base64.pub > ~/.ssh/id_rsa.pub
 - chmod 600 ~/.ssh/id_rsa.pub
 - head -1 ~/.ssh/id_rsa.pub
@@ -36,4 +29,3 @@ script:
 before_install:
 - openssl aes-256-cbc -K $encrypted_908d3e898427_key -iv $encrypted_908d3e898427_iv
   -in .private/.kamakirc.enc -out .private/.kamakirc -d
-
