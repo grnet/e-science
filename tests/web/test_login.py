@@ -15,8 +15,6 @@ from os.path import join, dirname
 from ConfigParser import RawConfigParser, NoSectionError
 import unittest, time, re, sys
 
-# Constants
-INPUT_FILE = 'token_file'
 
 class LoginTest(unittest.TestCase):
     def setUp(self):
@@ -40,6 +38,7 @@ class LoginTest(unittest.TestCase):
     
     def test_login(self):
         '''
+        LoginTest
         Opens homepage then enters login screen 
         and place a valid okeanos token
         checks if it has loged in 
