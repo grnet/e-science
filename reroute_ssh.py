@@ -257,9 +257,12 @@ if __name__ == '__main__':
                       action='store', type='string', dest='server',
                       metavar="SERVER",
                       help='it is  a list with informatinos about the cluster(names and fqdn of the nodes)')
-    parser.add_option('--public_ip',
-                      action='store', type='string', dest='public_ip',
-                      metavar="PUBLIC_IP",
+    parser.add_option('--master_ip',
+                      action='store', type='string', dest='master_ip',
+                      metavar="MASTER_IP",
                       help='it is the ipv4 of the master node ')
+
+    opts, args = parser.parse_args(argv[1:])
+    
     main(opts)
     
