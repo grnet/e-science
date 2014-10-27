@@ -14,6 +14,7 @@ import nose
 import logging
 import paramiko
 from time import sleep
+from unittest import TestCase, main as unittest_main
 from ConfigParser import RawConfigParser, NoSectionError
 from os.path import join, dirname, abspath
 sys.path.append(join(dirname(__file__), '../..'))
@@ -62,33 +63,41 @@ def check_string(to_check_file, to_find_str):
         if not found:
             logging.warning('The line %s cannot be found!', to_find_str)
 
-
-def run_pi(pi_map, pi_sec):
-    '''Runs a pi job'''
-    #hduser_pass = get_hduser_pass()
-    parser = RawConfigParser()
-    config_file = join(dirname(dirname(dirname(abspath(__file__)))), '.private/.config.txt')
-    parser.read(config_file)
-    master_ip = parser.get('cluster', 'master_ip')
-    ssh_client = establish_connect(master_ip, 'hduser', '',
+class TestHadoopRunPi(TestCase):
+    """ Test Hadoop MapReduce Examples
+    """
+    def setUp(self):
+        self.parser = RawConfigParser()
+        self.config_file = join(dirname(dirname(dirname(abspath(__file__)))), '.private/.config.txt')
+        self.parser.read(self.config_file)
+        self.master_ip = self.parser.get('cluster', 'master_ip')
+        self.ssh_client = establish_connect(self.master_ip, 'hduser', '',
                                    MASTER_SSH_PORT)
+    def tearDown(self):
+        self.ssh_client.close();
+        os.system('rm ' + FILE_RUN_PI)
 
-    logging.log(REPORT, ' Running pi job')
-    command = '/usr/local/hadoop/bin/hadoop jar' \
-              ' /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi ' + \
-              str(pi_map)+' '+str(pi_sec)
-    exec_command(ssh_client, command)
-    line = check_string(FILE_RUN_PI, "Estimated value of Pi is")
-    os.system('rm ' + FILE_RUN_PI)
-    ssh_client.close()
-    return float(line[25:])
+    def run_pi(self, pi_map, pi_sec):
+        '''Runs a pi job'''
+        #hduser_pass = get_hduser_pass()
+        logging.log(REPORT, ' Running pi job')
+        command = '/usr/local/hadoop/bin/hadoop jar' \
+                  ' /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi ' + \
+                  str(pi_map)+' '+str(pi_sec)
+        exec_command(self.ssh_client, command)
+        line = check_string(FILE_RUN_PI, "Estimated value of Pi is")
+        return float(line[25:])
 
 
-def test_run_pi_2_10000():
+    def test_run_pi_2_10000(self):
+        expected = 3.14280000000000000000;
+        returned = self.run_pi(2, 10000);
+        self.assertEqual(returned, expected);
 
-    assert run_pi(2, 10000) == 3.14280000000000000000
+    def test_run_pi_10_1000000(self):
+        expected = 3.14158440000000000000;
+        returned = self.run_pi(10, 1000000);
+        self.assertEqual(returned, expected);
 
-def test_run_pi_10_1000000():
-
-    assert run_pi(10, 1000000) == 3.14158440000000000000
-
+if __name__ == "__main__":
+    unittest_main();
