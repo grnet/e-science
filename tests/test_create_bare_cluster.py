@@ -9,7 +9,7 @@ from ConfigParser import RawConfigParser, NoSectionError
 # get relative path references so imports will work,
 # even if __init__.py is missing (/tests is a simple directory not a module)
 import sys
-from os.path import join, dirname
+from os.path import join, dirname, abspath
 
 sys.path.append(join(dirname(__file__), '..'))
 
@@ -93,7 +93,7 @@ class TestCreateCluster(TestCase):
     # initialize objects common to all tests in this test case
     def setUp(self):
         parser = RawConfigParser()
-        config_file = join(dirname(dirname(__file__)), '.private/.config.txt')
+        config_file = join(dirname(dirname(abspath(__file__))), '.private/.config.txt')
         parser.read(config_file)
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')

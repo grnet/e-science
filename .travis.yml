@@ -2,7 +2,7 @@ language: python
 python:
 - '2.7'
 install:
-- pip install kamaki
+- pip install kamaki==0.13rc3
 - pip install paramiko
 - pip install ansible
 - pip install django

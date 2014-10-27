@@ -16,6 +16,8 @@ import paramiko
 from time import sleep
 from ConfigParser import RawConfigParser, NoSectionError
 from os.path import join, dirname
+sys.path.append('/home/developer/e-science')
+from reroute_ssh import *
 #GLobal constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
 CONNECTION_TRIES = 9  # Max number (+1)of connection attempts to a VM
@@ -46,94 +48,6 @@ def exec_command(ssh_client, command):
     check_command_exit_status(ex_status, command)
 
 
-def establish_connect(hostname, name, passwd, port):
-    '''
-    Establishes an ssh connection with given hostname, username, password
-    and port number.Tries to ping given hostname.If the ping is successfull
-    it tries to ssh connect.If an ssh connection is succesful, returns an
-    ssh object.If ssh connection fails or throws an exception,logs the error
-    and tries to ping again.After a number of failed pings or failed ssh
-    connections throws RuntimeError exception.Number of tries is ten.
-    '''
-    try:
-        ssh = mySSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    except:
-        logging.error("Failed creating ssh.client")
-        raise
-    i = 0
-    while True:
-        response = os.system("ping -c1 -w4 " + hostname + " > /dev/null 2>&1")
-        if response == 0:
-            try:
-                logging.log(REPORT, ' Pinged %s machine,trying to ssh connect'
-                            ' at port %s', hostname, port)
-                ssh.connect(hostname, username=name, password=passwd,
-                            port=port)
-                logging.log(REPORT, " Success in ssh connect as %s to %s"
-                            " at port %s", name, hostname, str(port))
-                return ssh
-            except Exception, e:
-                logging.warning(e.args)
-                logging.warning("Problem in ssh connection as %s to %s at port"
-                                " %s trying again", name, hostname, str(port))
-                if i > CONNECTION_TRIES:
-                    break
-                i = i+1
-                sleep(1)
-        else:
-            if i > CONNECTION_TRIES:
-                break
-            logging.warning('Cannot ping %s machine at port %s, trying again',
-                            hostname, str(port))
-            i = i+1
-            sleep(1)
-    ssh.close()
-    logging.error("Failed connecting as %s to %s at port %s",
-                  name, hostname, str(port))
-    logging.error("Program is shutting down")
-    msg = 'Failed connecting to %s virtual machine' % hostname
-    raise RuntimeError(msg)
-
-
-class mySSHClient(paramiko.SSHClient):
-    '''Class that inherits paramiko SSHClient'''
-    def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False):
-        '''
-        Overload paramiko exec_command by adding a timeout.
-        Timeout is needed because script hangs when there is not an answer
-        from paramiko exec_command,e.g.in a disconnect.
-        '''
-        chan = self._transport.open_session()
-        if get_pty:
-            chan.get_pty()
-        chan.settimeout(CHAN_TIMEOUT)  # Add a timeout to the exec_command
-        chan.exec_command(command)
-        stdin = chan.makefile('wb', bufsize)
-        stdout = chan.makefile('r', bufsize)
-        stderr = chan.makefile_stderr('r', bufsize)
-        return stdin, stdout, stderr
-
-
-def check_command_exit_status(ex_status, command):
-    '''
-    Checks the exit status of every command executed in virtual machines
-    by paramiko exec_command.If the value is different from zero,it raises
-    a RuntimeError exception.If the value is zero it logs the appropriate
-    message.
-    '''
-    if ex_status != 0:
-            logging.error('Command %s failed to execute with exit status: %d',
-                          command, ex_status)
-            logging.error('Program shutting down')
-            msg = 'Command %s failed with exit status: %d'\
-                  % (command, ex_status)
-            raise RuntimeError(msg)
-    else:
-        logging.log(REPORT, ' Command: %s execute with exit status:%d',
-                    command, ex_status)
-
-
 def check_string(to_check_file, to_find_str):
     '''
     Search the string passed as argument in the to_check file.
@@ -161,7 +75,7 @@ def run_pi(pi_map, pi_sec):
 
     logging.log(REPORT, ' Running pi job')
     command = '/usr/local/hadoop/bin/hadoop jar' \
-              ' /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.5.1.jar pi ' + \
+              ' /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi ' + \
               str(pi_map)+' '+str(pi_sec)
     exec_command(ssh_client, command)
     line = check_string(FILE_RUN_PI, "Estimated value of Pi is")
