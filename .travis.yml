@@ -24,7 +24,7 @@ script:
 - chmod 600 ~/.ssh/id_rsa.pub
 - head -1 ~/.ssh/id_rsa.pub
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-- echo -e $master_ip >> .master_ip
+- echo -e "$master_ip" > .master_ip
 - wc .master_ip
 - python legacy/run_pi_yarn.py --master_ip=`cat .master_ip` 2 100000
 before_install:
