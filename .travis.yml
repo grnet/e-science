@@ -24,9 +24,12 @@ script:
 - chmod 600 ~/.ssh/id_rsa.pub
 - head -1 ~/.ssh/id_rsa.pub
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-- echo -e "Host $master_ip\n" >> .my_ip
-- echo -e "$master_ip\n" > .master_ip
 - ls -la ~/.ssh/config
+- head -1 ~/.ssh/config
+- echo -e "Host $master_ip\n" >> .my_ip
+- ls -la .my_ip
+- head -1 .my_ip
+- echo -e "$master_ip\n" > .master_ip
 - ls -la .master_ip
 - sed 's/Host //' .my_ip | head -1
 - python legacy/run_pi_yarn.py --master_ip=`cat .master_ip` 2 100000
