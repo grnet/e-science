@@ -10,7 +10,6 @@ install:
 - pip install ansible
 - pip install django
 script:
-- echo "decrypt public"
 - for i in {0..10}; do eval $(printf "echo \$id_rsa_pub_%02d\n" $i) >> ~/.ssh/id_rsa_base64.pub;
   done
 - base64 --decode ~/.ssh/id_rsa_base64.pub > ~/.ssh/id_rsa.pub
