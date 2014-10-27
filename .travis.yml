@@ -11,7 +11,7 @@ script:
 - base64 --decode --ignore-garbage ~/.ssh/id_rsa_base64 > ~/.ssh/id_rsa
 - chmod 600 ~/.ssh/id_rsa
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-- cat ~/.ssh/config
+- echo -n $master_ip
 #- nosetests create_yarn_cluster.py
 - cd legacy; python run_pi_yarn.py $master_ip 2 100000
 before_install:
