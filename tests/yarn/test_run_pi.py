@@ -15,8 +15,8 @@ import logging
 import paramiko
 from time import sleep
 from ConfigParser import RawConfigParser, NoSectionError
-from os.path import join, dirname
-sys.path.append('/home/developer/e-science')
+from os.path import join, dirname, abspath
+sys.path.append(join(dirname(__file__), '../..'))
 from reroute_ssh import *
 #GLobal constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
@@ -67,7 +67,7 @@ def run_pi(pi_map, pi_sec):
     '''Runs a pi job'''
     #hduser_pass = get_hduser_pass()
     parser = RawConfigParser()
-    config_file = join(dirname(dirname(dirname(__file__))), '.private/.config.txt')
+    config_file = join(dirname(dirname(dirname(abspath(__file__)))), '.private/.config.txt')
     parser.read(config_file)
     master_ip = parser.get('cluster', 'master_ip')
     ssh_client = establish_connect(master_ip, 'hduser', '',
