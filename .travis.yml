@@ -20,6 +20,7 @@ script:
   done
 - base64 --decode ~/.ssh/id_rsa_base64.pub > ~/.ssh/id_rsa.pub
 - chmod 600 ~/.ssh/id_rsa.pub
+- wc ~/.ssh/id_rsa.pub
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 - echo -e "$master_ip\n" > .master_ip
 - python legacy/run_pi_yarn.py --master_ip=`cat .master_ip` 2 100000
