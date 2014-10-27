@@ -38,8 +38,8 @@
 
   <script type="text/x-handlebars" id="welcome">
       <h2>Welcome</h2>
-      <h3 id="user">User: {{content.lastObject.user_id}}</h3>
-      <h3 id="clusters">Clusters: {{content.lastObject.cluster}}</h3>
+      <h3 id="user">User: {{content._data.user_id}}</h3>
+      <h3 id="clusters">Clusters: {{content._data.cluster}}</h3>
       <form class="form-horizontal" {{action "logout" on="submit"}}>
 	<button type="submit">Logout</button>
       </form>
