@@ -13,8 +13,8 @@ install:
 script:
 - ls -la ~/.ssh
 - ssh-keygen -q -t rsa -P "" -f ~/.ssh/id_rsa
-- scp ~/.ssh/id_rsa.pub -p $hpass hduser@$master_ip/.ssh/new_key
-- ssh -p $hpass hduser@$master_ip sh -c "'cat >> ~/.ssh/authorized_keys'" < ~/.ssh/new_key
+- scp ~/.ssh/id_rsa.pub -p $hpass hduser@$master_ip:/home/hduser/.ssh/new_key
+- ssh -p $hpass hduser@$master_ip sh -c "'cat >> /home/hduser/.ssh/authorized_keys'" < /home/hduser/.ssh/new_key
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 - echo -e "$master_ip\n" > .master_ip
 - python legacy/run_pi_yarn.py --master_ip=`cat .master_ip` 2 100000
