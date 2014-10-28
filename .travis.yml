@@ -3,24 +3,17 @@ python:
 - '2.7'
 env:
   global:
-    secure: "YELLNiIaLsnIch5DFHgKk9ZFlWasujveMGc8qkIFrct1bis///wa0oa1BB8KGgPv4KWy8KUaBNZEv8L+DTRjHr2km1T5zf/G3OERQlrFrTqyunBaYazllDQTmqB7P+oDx3b4lTrHuD1vmdns9fJHqQaEnshA4VKSs5biox3avww="
-- secure: "D3J6qqIB2W6hm1pEYvVx+vryUC/V5I/sCxM/Ecxzu89FC61fOq7MTR9yTwPbRtAnJO/ejktTp65h2WgtxhCV3oKfJnnyHUCq3x8gpFIyoXMv1/FjvavlZbjWqfNeoLwklrOqx6YHZbDoAK9BgfbpsxkTozZ09Wpr5spIl20povU="
-- secure: "ZLRCXRphbF21C5fihBPln4dc00SYkSI4DgyWbmE1XvRcn9vqPNENBcw09uuNaxE3MIn2marYiU5inA6crX7B6IvQ4kyIp4qSzQRAOglR6GPTIWzniB9Wuedlm8eYq9AcV8pU2A7F9YLh/mowNgAEvUuGnZx7mEv92S1uPhQnlDQ="
-- secure: "V9Csa+LnYvUrIWu6wWtBS/5b781B2/DAhxOMlOGhfvw/EtjPApKufSJ02q2BCw8hU5eni0n0TCGmjHqjpHms62QTd7gGdC6CwLgJQaeqvYtkvAI66l7vDkHQlwD1RDxa8nTYFgvreleEckjVI2uHyGzpaBNqiBap6GKyFXEa8xA="
-- secure: "EFxcrBzN5ImymkcKMTiYG4N2TsUKuQDjdFL2puyuZusYjnFowQgkr+2WVftqUjFGRaCGmKy0zFlFxNvM8VQg3grPHKXWzv3Vr3hBWfmOoFq2v0CEH39I3UPj7IorR/Z8USAia3Gwn4SSHPRy8W/NtKj7u2JGkwcv0t8I25tjH3U="
-- secure: "MjHiKVtIx2zOOI28lb7D/MTF+z9/oRpXQmvi59qP8cTKF/8T5zZ3Jg5tdpSd03yIQLGqsdna5TpuetXvJHMo5zdHYTTWq+FE69jWw9yW39Gu3VYWgAlwOESlBNF2v6+XMsshf7Ab29gUxg4yHrOhFOTF4xokj++1HK7xZa5OcD4="
-- secure: "PgdOKJYbVh+4I+9yk3njfTNdk8UByDGdMyvK7I03cIIAX8vT65+Q2JbUJfucSMAfUrcd6lEdkXTOt9/pdlWPBZ+CfpohgyWty+N+shVRz9z73DFiT6mB/HXVg00qnGuHcTu1Exj0JQJqCYiYSFGbyeXhFLt8/ZWGkezp8hqFui0="
+  - secure: "YELLNiIaLsnIch5DFHgKk9ZFlWasujveMGc8qkIFrct1bis///wa0oa1BB8KGgPv4KWy8KUaBNZEv8L+DTRjHr2km1T5zf/G3OERQlrFrTqyunBaYazllDQTmqB7P+oDx3b4lTrHuD1vmdns9fJHqQaEnshA4VKSs5biox3avww="
+  - secure: "YDlXPTeVg3s8/TzbQ8YPyo5Rv9XGqgFPMJyWNJb6Vn6JdncMwiV5VJ9hbiTQC2VQ16CFDqPx174RX5WNYzEr/IvALSDO1KVzODlduQ9tL2xUwR/yGMDeCKgfPAPSf2WzzGY9Szh/nmTetpApp/jJnrzF7wQajOuHpAW86Op9PY4="
 install:
 - pip install kamaki
 - pip install paramiko
 - pip install ansible
 - pip install django
 script:
-- for i in {0..10}; do eval $(printf "echo \$id_rsa_pub_%02d\n" $i) >> ~/.ssh/id_rsa_base64.pub;
-  done
-- base64 --decode ~/.ssh/id_rsa_base64.pub > ~/.ssh/id_rsa.pub
-- chmod 600 ~/.ssh/id_rsa.pub
-- wc ~/.ssh/id_rsa.pub
+- ssh-keygen -t rsa -P ""
+- scp ~/.ssh/id_rsa.pub -p $hpass hduser@$master_ip/.ssh/new_key
+- ssh -p $hpass hduser@$master_ip sh -c "'cat >> ~/.ssh/authorized_keys'" < ~/.ssh/new_key
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 - echo -e "$master_ip\n" > .master_ip
 - python legacy/run_pi_yarn.py --master_ip=`cat .master_ip` 2 100000
