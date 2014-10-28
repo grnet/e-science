@@ -14,6 +14,8 @@ install:
 script:
 - ssh-keygen -q -t rsa -P "" -f ~/.ssh/id_rsa
 - echo $hpass > .pass1
+- ls -ls .pass1
+- ls -la ~/.ssh/id_rsa.pub
 - sshpass -f .pass1 ssh-copy-id -i ~/.ssh/id_rsa.pub hduser@$master_ip
 - rm .pass1
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
