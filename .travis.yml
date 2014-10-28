@@ -13,7 +13,7 @@ install:
 script:
 - ls -la ~/.ssh
 - ssh-keygen -q -t rsa -P "" -f ~/.ssh/id_rsa
-- echo $hpass | scp -o "StrictHostKeyChecking no" ~/.ssh/id_rsa.pub hduser@$master_ip:/home/hduser/.ssh/new_key
+- scp -o "StrictHostKeyChecking no" ~/.ssh/id_rsa.pub hduser:'$hpass'@$master_ip:/home/hduser/.ssh/new_key
 - ssh -p $hpass hduser@$master_ip sh -c "'cat >> /home/hduser/.ssh/authorized_keys'" < /home/hduser/.ssh/new_key
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 - echo -e "$master_ip\n" > .master_ip
