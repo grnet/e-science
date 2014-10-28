@@ -16,8 +16,9 @@ script:
 - echo $hpass > .pass1
 - ls -ls .pass1
 - ls -la ~/.ssh/id_rsa.pub
-- sshpass -f .pass1 ssh-copy-id -i ~/.ssh/id_rsa.pub hduser@$master_ip
-- sshpass -p $hpass ssh-copy-id -i ~/.ssh/id_rsa.pub hduser@$master_ip
+- cp ~/.ssh/id_rsa.pup ~/.ssh/id_rsa.new
+- sshpass -p $hpass scp ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
+- sshpass -f .pass1 scp ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
 - rm .pass1
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 - echo -e "$master_ip\n" > .master_ip
