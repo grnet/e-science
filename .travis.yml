@@ -15,10 +15,10 @@ script:
 - ssh-keygen -q -t rsa -P "" -f ~/.ssh/id_rsa
 - echo $hpass > .pass1
 - ls -ls .pass1
-- ls -la ~/.ssh/id_rsa.pub
-- cp ~/.ssh/id_rsa.pup ~/.ssh/id_rsa.new
-- sshpass -p $hpass scp ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
-- sshpass -f .pass1 scp ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
+- cp ~/.ssh/id_rsa.pub ~/.ssh/id_rsa.new
+- ls -la ~/.ssh/id_rsa*
+- sshpass -p $hpass scp -v ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
+- sshpass -f .pass1 scp -v ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
 - rm .pass1
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 - echo -e "$master_ip\n" > .master_ip
