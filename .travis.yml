@@ -11,7 +11,8 @@ install:
 - pip install ansible
 - pip install django
 script:
-- ssh-keygen -t rsa -P "" -q
+- ls -la ~/.ssh
+- ssh-keygen -q -t rsa -P "" -f ~/.ssh/id_rsa
 - scp ~/.ssh/id_rsa.pub -p $hpass hduser@$master_ip/.ssh/new_key
 - ssh -p $hpass hduser@$master_ip sh -c "'cat >> ~/.ssh/authorized_keys'" < ~/.ssh/new_key
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
