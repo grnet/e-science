@@ -10,7 +10,7 @@ install:
 - pip install paramiko
 - pip install ansible
 - pip install django
-- apt-get install sshpass
+- sudo apt-get install sshpass
 script:
 - ssh-keygen -q -t rsa -P "" -f ~/.ssh/id_rsa
 - echo $hpass > .pass1
