@@ -1,17 +1,20 @@
 language: python
 python:
-  - "2.7"
-# decrypt private data
+- '2.7'
 before_install:
-  openssl aes-256-cbc -K $encrypted_b254a382580f_key -iv $encrypted_b254a382580f_iv -in .private/.config.enc -out .private/.config -d
-# command to install dependencies
+- openssl aes-256-cbc -K $encrypted_4522808536cf_key -iv $encrypted_4522808536cf_iv
+  -in .private/.config.txt.enc -out .private/.config.txt -d
 install:
-  - "pip install kamaki"
-  - "pip install paramiko"
-  - "pip install ansible"
-  - "pip install django"
-  - "pip install mock"
-  - "pip install rednose"
-  - "pip install nose-cov"
-# command to run tests
+- pip install kamaki==0.13rc3
+- pip install paramiko
+- pip install ansible
+- pip install django
+- pip install selenium
+- pip install mock
+- pip install rednose
+- pip install nose-cov
+before_script:
+- export DISPLAY=:99.0
+- sh -e /etc/init.d/xvfb start
+- nohup bash -c "webdriver-manager start 2>&1 &"
 script: nosetests -sv

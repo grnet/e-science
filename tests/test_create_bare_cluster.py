@@ -93,7 +93,7 @@ class TestCreateCluster(TestCase):
     # initialize objects common to all tests in this test case
     def setUp(self):
         parser = RawConfigParser()
-        config_file = join(dirname(dirname(abspath(__file__))), '.private/.config')
+        config_file = join(dirname(dirname(abspath(__file__))), '.private/.config.txt')
         parser.read(config_file)
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
@@ -102,7 +102,7 @@ class TestCreateCluster(TestCase):
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
             print 'Current authentication details are kept off source control. ' \
-                  '\nUpdate your .config file in <projectroot>/.private/'
+                  '\nUpdate your .config.txt file in <projectroot>/.private/'
 
     def test_create_cluster(self):
         # arrange

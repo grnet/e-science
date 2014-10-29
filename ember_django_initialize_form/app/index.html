@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+<head>
+  <title>GRNET e-Science</title>
+  <meta charset="utf-8"/>
+  <link rel="stylesheet" href="{{ STATIC_URL }}css/normalize.css">
+  <link rel="stylesheet" href="{{ STATIC_URL }}css/style.css">
+  <script src="{{ STATIC_URL }}js/libs/jquery-1.11.1.js"></script>
+  <script src="{{ STATIC_URL }}js/libs/package/dist/handlebars.js"></script>
+  <script src="{{ STATIC_URL }}js/libs/ember-1.7.0.js"></script>
+  <script src="{{ STATIC_URL }}js/libs/ember-data.js"></script>
+  <script src="{{ STATIC_URL }}js/app.js"></script>  
+</head>
+<body>
+{% verbatim %}
+  <script type="text/x-handlebars">
+    {{outlet}}
+  </script>
+  
+  <script type="text/x-handlebars" id="homepage">
+      <h2>Home page</h2>
+      <form class="form-horizontal" {{action "start" on="submit"}}>
+	<button type="submit">Start</button>
+      </form>
+  </script>
+  
+  <script type="text/x-handlebars" id="login">
+      <h3>Login page</h3>
+      <h2>Enter your token: </h2>
+      <form>
+            {{view Ember.TextField valueBinding="token" placeholder="token" id="token"}}
+            <button type="login">Login</button>
+      </form>
+      {{#if loginFailed}}
+	  <div class="alert">Wrong Token. Please try again</div>
+      {{/if}}
+  </script>
+
+  <script type="text/x-handlebars" id="welcome">
+      <h2>Welcome</h2>
+      <h3 id="user">User: {{content._data.user_id}}</h3>
+      <h3 id="clusters">Clusters: {{content._data.cluster}}</h3>
+      <form class="form-horizontal" {{action "createcluster" on="submit"}}>
+	<button type="submit">CreateHadoopCluster</button>
+      </form>
+      <form class="form-horizontal" {{action "logout" on="submit"}}>
+	<button type="submit">Logout</button>
+      </form>
+  </script>
+  <script type="text/x-handlebars" id="flavor">  
+    <div id="header">
+        Select CPUs, RAM and Disk Size...
+    </div>
+    <div id="main-wrap">
+        <div id="sidebar">
+            <p> Cluster size ({{content._data.vms_max}} at maximum):
+                {{view Ember.Select contentBinding="content._data.vms_av" valueBinding="clustersize"}}          
+            </p>            
+            <p><button id="master" {{action "displaymaster"}} {{bindAttr style="this.masterstyle"}}> Master </button></p>          
+            <p><button id="slaves" {{action "displayslaves"}} {{bindAttr style="this.slavesstyle"}}> Slaves </button></p>
+            <p> Operating Systems:
+                {{view Ember.Select contentBinding="content._data.os_p" valueBinding="operatingsystem"}}          
+            </p>             
+        </div>
+        <div id="content-wrap">      
+            <h4>CPUs ({{content._data.cpu_av}} available): Master ({{this.mastercpuselection}}) Each Slave ({{this.slavescpuselection}})</h4>    
+            <p>    
+                {{#each item in content._data.cpu_p}}
+                    <button {{action "cpuselection" item}}> {{item}} </button>                          
+                {{/each}}                
+            </p>
+            <h4>Memory size ({{content._data.mem_av}} available): Master ({{this.mastermemselection}}) Each Slave ({{this.slavesmemselection}})</h4>    
+            <p>
+                {{#each item in content._data.mem_p}}
+                    <button {{action "memselection" item}}> {{item}} </button>                          
+                {{/each}}                                                
+            </p>
+            <h4>Disk size ({{content._data.disk_av}} available): Master ({{this.masterdiskselection}}) Each Slave ({{this.slavesdiskselection}})</h4>    
+            <p>
+                {{#each item in content._data.disk_p}}
+                    <button {{action "diskselection" item}}> {{item}} </button>                          
+                {{/each}}                                
+            </p>
+            <h4>Storage (common all cluster machines): {{this.disktemp}}</h4>    
+            <p>
+                {{#each item in content._data.disk_template}}
+                    <button {{action "disktemplate" item}}> {{item}} </button>                          
+                {{/each}}   
+            </p>
+            <h4>Cluster Name: {{view Ember.TextField valueBinding="clustername" placeholder="cluster name"}}</h4>        
+        </div>
+    </div>
+    <div id="footer">
+        <button id="next" {{action "gotoconfirm"}}> Next </button>
+    </div>    
+  </script>
+
+  <script type="text/x-handlebars" id="confirm">  
+    <div id="header">
+        Summary
+    </div>
+    <div id="main-wrap">
+        <div id="content-wrap">
+            <h4>Cluster Name: {{controllers.flavor.clname}}</h4>          
+            <div id="area1">
+                <h3>Image</h3>
+                <h4>OS: {{controllers.flavor.os}}</h4>
+                <h4>Size: {{controllers.flavor.clsize}}</h4>
+            </div>
+            <div id="area2">
+                <h3>Flavor</h3>
+                <h4>CPUs: {{controllers.flavor.totalcpuselection}}</h4>
+                <h4>Memory: {{controllers.flavor.totalmemselection}}</h4>
+                <h4>Disk: {{controllers.flavor.totaldiskselection}}</h4>
+                <h4>Storage type: {{controllers.flavor.disktemp}}</h4>
+            </div>
+        </div>
+    </div>
+    <div id="footer">
+        <button id="previous" {{action "gotoflavor"}}> Previous </button>
+        <button id="next" {{action "gotocreate"}}> Create Cluster! </button>
+    </div>
+  </script>
+{% endverbatim %}
+</body>
+</html>

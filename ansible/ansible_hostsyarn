@@ -1,0 +1,5 @@
+[master]
+snf-599114.vm.okeanos.grnet.gr private_ip=192.168.0.2 ansible_ssh_host=83.212.123.231
+
+[slaves]
+snf-599115.vm.okeanos.grnet.gr private_ip=192.168.0.3 ansible_ssh_port=10000 ansible_ssh_host=snf-599114.vm.okeanos.grnet.gr
