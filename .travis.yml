@@ -17,7 +17,7 @@ install:
 - sudo apt-get install sshpass
 script: nosetests -sv tests/test_create_bare_cluster.py
 before_install:
-- openssl aes-256-cbc -K $encrypted_eb1514eff63b_key -iv $encrypted_eb1514eff63b_iv
+- openssl aes-256-cbc -K $encrypted_908d3e898427_key -iv $encrypted_908d3e898427_iv
   -in .private/.config.txt.enc -out .private/.config.txt -d
 before_script:
 - export DISPLAY=:99.0
