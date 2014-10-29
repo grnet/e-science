@@ -15,8 +15,8 @@ script:
 - ssh-keygen -q -t rsa -P "" -f ~/.ssh/id_rsa
 - echo $hpass > .pass1
 - cp ~/.ssh/id_rsa.pub ~/.ssh/id_rsa.new
-- sshpass -p $hpass scp -vv -o StrictHostKeyChecking=no ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
-- sshpass -p $hpass ssh -vv hduser@$master_ip "cat /home/hduser/.ssh/id_rsa.new >> /home/hduser/.ssh/authorized_keys"
+- sshpass -p $hpass scp -o StrictHostKeyChecking=no ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
+- sshpass -p $hpass ssh hduser@$master_ip "cat /home/hduser/.ssh/id_rsa.new >> /home/hduser/.ssh/authorized_keys"
 - rm .pass1
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 - echo -e "$master_ip\n" > .master_ip
