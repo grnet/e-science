@@ -3,8 +3,8 @@ python:
 - '2.7'
 env:
   global:
-  - secure: YELLNiIaLsnIch5DFHgKk9ZFlWasujveMGc8qkIFrct1bis///wa0oa1BB8KGgPv4KWy8KUaBNZEv8L+DTRjHr2km1T5zf/G3OERQlrFrTqyunBaYazllDQTmqB7P+oDx3b4lTrHuD1vmdns9fJHqQaEnshA4VKSs5biox3avww=
-  - secure: YDlXPTeVg3s8/TzbQ8YPyo5Rv9XGqgFPMJyWNJb6Vn6JdncMwiV5VJ9hbiTQC2VQ16CFDqPx174RX5WNYzEr/IvALSDO1KVzODlduQ9tL2xUwR/yGMDeCKgfPAPSf2WzzGY9Szh/nmTetpApp/jJnrzF7wQajOuHpAW86Op9PY4=
+  - secure: "K+JlJYjqHmO/5bRvkKSJoh6YfZGYf9/kyqM/j3HNUG0o5gvTa6zTcI2kjxpnnYvEpz64n58YcinusNTimUM4Y1eIaoxcKlCW0MyWkQcBAg8jB8mxttH3Igw0dSblo8XZcxLBMFr7mm6I9Z0cbRRyrDr+ebp6t/+m7xf/3hMozh4="
+  - secure: "X6F9qYcVNhPYHSHF15WnTmOgR3GToC0DISFhCyTD0Lb3qsoxu4PuNWA3X6LazQ57U5we/7keZuwVJAhJzy3JiVUYPOIM6AnYmG/qqdmvuTwyzqqXR9E0ULBWPTtA4HKaz/3P3RjkAyQ3WjcD2dHbRaGA+cFvXoTRAzsUmWYBTx8="
 install:
 - pip install kamaki==0.13rc3
 - pip install paramiko
