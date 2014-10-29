@@ -11,7 +11,7 @@ import datetime
 import binascii
 import os
 from django.db import models
-
+from djorm_pgarray.fields import IntegerArrayField, TextArrayField
 
 class UserInfo(models.Model):
     '''Definition of a User object model.'''
@@ -21,6 +21,9 @@ class UserInfo(models.Model):
                             default="", max_length=255,
                             help_text="Universally unique identifier "
                             "(for astakos authentication)")
+    okeanos_token = models.CharField('Okeanos Token', max_length=64,
+                                     null=True, blank=True, unique=True,
+                                     help_text="Okeanos Authentication Token ")
 
     def is_authenticated(self):
         return True
@@ -38,8 +41,52 @@ ACTION_STATUS_CHOICES = (
 )
 
 
+class Create_cluster(models.Model):
+    '''
+    Definition of Create_cluster model for retrieving create_cluster
+    information from okeanos. Imported djorm_pgarray package
+    is needed for custom Arrayfields.
+    '''
+    user_id = models.OneToOneField(UserInfo, null=False,
+                                   help_text="User ID")
+    # Maximum allowed vms
+    vms_max = models.IntegerField("Max Vms", null=True,
+                                  help_text="Maximum Allowed Virtual"
+                                  " machines")
+    # Available vms for user
+    vms_av = IntegerArrayField()  # ArrayField
+    # Maximum allowed cpus
+    cpu_max = models.IntegerField("Max Cpus", null=True,
+                                  help_text="Maximum Allowed Cpus")
+    # Available cpus
+    cpu_av = models.IntegerField("Available Cpus", null=True,
+                                 help_text="Available Cpus")
+    # Maximum allowed memory
+    mem_max = models.IntegerField("Max Ram", null=True,
+                                  help_text="Maximum Allowed Ram")
+    # Available memory
+    mem_av = models.IntegerField("Available Ram", null=True,
+                                 help_text="Available Ram")
+    # Maximum allowed disk size
+    disk_max = models.IntegerField("Max disk size", null=True,
+                                   help_text="Max disk size")
+    # Available disk size
+    disk_av = models.IntegerField("Available disk size", null=True,
+                                  help_text="Available disk size")
+    # Cpu choices
+    cpu_choices = IntegerArrayField()  # ArrayField
+    # Memory choices
+    mem_choices = IntegerArrayField()  # ArrayField
+    # Disk size choices
+    disk_choices = IntegerArrayField()  # ArrayField
+    # Disk template choices
+    disk_template = TextArrayField()  # ArrayField
+    # Operating system choices
+    os_choices = TextArrayField()  # ArrayField
+
+
 class Token(models.Model):
-    '''Definition of a Token Authentication model.'''
+    '''Definition of a e-science Token Authentication model.'''
     user = models.OneToOneField(UserInfo, related_name='escience_token')
     key = models.CharField(max_length=40, null=True)
 

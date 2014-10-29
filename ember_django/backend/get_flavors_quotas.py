@@ -12,7 +12,7 @@ import sys
 import logging
 from okeanos_utils import *
 from kamaki.clients.cyclades import CycladesClient
-from backend.models import Status
+from backend.models import Create_cluster
 
 # Definitions of return value errors
 error_flavor_list = -23
@@ -101,11 +101,11 @@ def get_flavor_id(token):
     return flavors
 
 
-def updateStatus(user):
+def update_Create_cluster(user):
     '''
     Method that retrieves user quotas and flavor list from kamaki
     using get_flavor_id and check_quota methods and returns the updated
-    Status model.
+    Create_cluster model.
     '''
     i = 0
     j = 1
@@ -125,16 +125,20 @@ def updateStatus(user):
     mem_av = quotas['ram']['available']
     disk_max = quotas['disk']['limit']
     disk_av = quotas['disk']['available']
-    cpu_p = flavors['cpus']
-    mem_p = flavors['ram']
-    disk_p = flavors['disk']
+    cpu_choices = flavors['cpus']
+    mem_choices = flavors['ram']
+    disk_choices = flavors['disk']
     disk_template = flavors['disk_template']
-    os_p = ['Debian Base']
+    os_choices = ['Debian Base']
 
-    new_status = Status(user_id=user, vms_max=vms_max, vms_av=vms_av,
-                        cpu_max=cpu_max, cpu_av=cpu_av, mem_max=mem_max,
-                        mem_av=mem_av, disk_max=disk_max, disk_av=disk_av,
-                        cpu_p=cpu_p, mem_p=mem_p,
-                        disk_p=disk_p, disk_template=disk_template, os_p=os_p)
+    create_cluster = Create_cluster(user_id=user, vms_max=vms_max,
+                                    vms_av=vms_av, cpu_max=cpu_max,
+                                    cpu_av=cpu_av, mem_max=mem_max,
+                                    mem_av=mem_av, disk_max=disk_max,
+                                    disk_av=disk_av, cpu_choices=cpu_choices,
+                                    mem_choices=mem_choices,
+                                    disk_choices=disk_choices,
+                                    disk_template=disk_template,
+                                    os_choices=os_choices)
 
-    return new_status
+    return create_cluster

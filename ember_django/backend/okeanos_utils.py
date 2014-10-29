@@ -9,7 +9,6 @@ This script initialize okeanos utils.
 
 import os
 import sys
-import nose
 import string
 import logging
 

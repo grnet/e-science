@@ -40,9 +40,86 @@
       <h2>Welcome</h2>
       <h3 id="user">User: {{content._data.user_id}}</h3>
       <h3 id="clusters">Clusters: {{content._data.cluster}}</h3>
+      <form class="form-horizontal" {{action "createcluster" on="submit"}}>
+	<button type="submit">CreateHadoopCluster</button>
+      </form>
       <form class="form-horizontal" {{action "logout" on="submit"}}>
 	<button type="submit">Logout</button>
       </form>
+  </script>
+  <script type="text/x-handlebars" id="flavor">  
+    <div id="header">
+        Select CPUs, RAM and Disk Size...
+    </div>
+    <div id="main-wrap">
+        <div id="sidebar">
+            <p> Cluster size ({{content._data.vms_max}} at maximum):
+                {{view Ember.Select contentBinding="content._data.vms_av" valueBinding="cluster_size"}}          
+            </p>            
+            <p><button id="master" {{action "display_master"}} {{bindAttr style="this.master_style"}}> Master </button></p>          
+            <p><button id="slaves" {{action "display_slaves"}} {{bindAttr style="this.slaves_style"}}> Slaves </button></p>
+            <p> Operating Systems:
+                {{view Ember.Select contentBinding="content._data.os_choices" valueBinding="operating_system"}}          
+            </p>             
+        </div>
+        <div id="content-wrap">      
+            <h4>CPUs ({{this.cpu_available}} available): Master ({{this.master_cpu_selection}}) Each Slave ({{this.slaves_cpu_selection}})</h4>    
+            <p>    
+                {{#each item in content._data.cpu_choices}}
+                    <button {{action "cpu_selection" item}}> {{item}} </button>                          
+                {{/each}}                
+            </p>
+            <h4>Memory size ({{this.mem_available}} available): Master ({{this.master_mem_selection}}) Each Slave ({{this.slaves_mem_selection}})</h4>    
+            <p>
+                {{#each item in content._data.mem_choices}}
+                    <button {{action "mem_selection" item}}> {{item}} </button>                          
+                {{/each}}                                                
+            </p>
+            <h4>Disk size ({{this.disk_available}} available): Master ({{this.master_disk_selection}}) Each Slave ({{this.slaves_disk_selection}})</h4>    
+            <p>
+                {{#each item in content._data.disk_choices}}
+                    <button {{action "disk_selection" item}}> {{item}} </button>                          
+                {{/each}}                                
+            </p>
+            <h4>Storage (common all cluster machines): {{this.disk_temp}}</h4>    
+            <p>
+                {{#each item in content._data.disk_template}}
+                    <button {{action "disk_template" item}}> {{item}} </button>                          
+                {{/each}}   
+            </p>
+            <h4>Cluster Name: {{view Ember.TextField valueBinding="cluster_name" placeholder="cluster_name"}}</h4>        
+        </div>
+    </div>
+    <div id="footer">
+        <button id="next" {{action "gotoconfirm"}}> Next </button>
+    </div>    
+  </script>
+
+  <script type="text/x-handlebars" id="confirm">  
+    <div id="header">
+        Summary
+    </div>
+    <div id="main-wrap">
+        <div id="content-wrap">
+            <h4>Cluster Name: {{controllers.flavor.cluster_name}}</h4>          
+            <div id="area1">
+                <h3>Image</h3>
+                <h4>OS: {{controllers.flavor.operating_system}}</h4>
+                <h4>Size: {{controllers.flavor.cluster_size}}</h4>
+            </div>
+            <div id="area2">
+                <h3>Flavor</h3>
+                <h4>CPUs: {{controllers.flavor.total_cpu_selection}}</h4>
+                <h4>Memory: {{controllers.flavor.total_mem_selection}}</h4>
+                <h4>Disk: {{controllers.flavor.total_disk_selection}}</h4>
+                <h4>Storage type: {{controllers.flavor.disk_temp}}</h4>
+            </div>
+        </div>
+    </div>
+    <div id="footer">
+        <button id="previous" {{action "gotoflavor"}}> Previous </button>
+        <button id="next" {{action "gotocreate"}}> Create Cluster! </button>
+    </div>
   </script>
 {% endverbatim %}
 </body>
