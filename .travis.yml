@@ -17,4 +17,4 @@ before_script:
 - export DISPLAY=:99.0
 - sh -e /etc/init.d/xvfb start
 - nohup bash -c "webdriver-manager start 2>&1 &"
-script: nosetests -sv
+script: nosetests -sv tests/test_create_bare_cluster.py
