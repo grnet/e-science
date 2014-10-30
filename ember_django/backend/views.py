@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Views for django rest framework.
+Views for django rest framework .
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -12,9 +12,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from authenticate_user import EscienceTokenAuthentication, IsAuthenticatedOrIsCreation
 from django.views import generic
-from backend.get_flavors_quotas import update_Create_cluster
+from backend.get_flavors_quotas import retrieve_ClusterCreationParams
 from backend.models import UserInfo
-from backend.serializers import OkeanosTokenSerializer, UserInfoSerializer, Create_clusterSerializer
+from backend.serializers import OkeanosTokenSerializer, UserInfoSerializer, ClusterCreationParamsSerializer
 from backend.django_db_after_login import *
 
 
@@ -27,30 +27,31 @@ main_page = MainPageView.as_view()
 
 class StatusView(APIView):
     '''
-    View to handle requests for retrieving create_cluster information
+    View to handle requests for retrieving cluster creation parameters
     from ~okeanos.
     '''
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticatedOrIsCreation, )
     resource_name = 'createcluster'
-    serializer_class = Create_clusterSerializer
+    serializer_class = ClusterCreationParamsSerializer
 
     def get(self, request, *args, **kwargs):
         '''
-        Return a serialized Create_cluster model with information retrieved by
-        kamaki calls. User with corresponding status will be found by the
-        escience token.
+        Return a serialized ClusterCreationParams model with information
+        retrieved by kamaki calls. User with corresponding status will be
+        found by the escience token.
         '''
         user_token = Token.objects.get(key=request.auth)
         self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
-        create_cluster = update_Create_cluster(self.user)
-        serializer = self.serializer_class(create_cluster)
+        retrieved_cluster_info = retrieve_ClusterCreationParams(self.user)
+        serializer = self.serializer_class(retrieved_cluster_info)
         return Response(serializer.data)
 
     def put(self, request, *args, **kwargs):
         '''
         Not used right now, just a placeholder. Will be needed later
-        for passing the create_cluster information to okeanos.
+        for passing the ClusterCreationParams information from client
+        to okeanos.
         '''
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():

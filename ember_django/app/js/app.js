@@ -1,41 +1,41 @@
-//Ember.js application for Escience. Extending login/logout functionality 
-//with choice of create cluster details from a form.
-//Django backend communicating with Ember through Django REST framework.
+// Ember.js application for Escience. Extending login/logout functionality 
+// with choice of create cluster details from a form.
+// Django backend communicating with Ember through Django REST framework.
 
 App = Ember.Application.create();
 
 var attr = DS.attr;
 
-//Global variable for Escience token
+// Global variable for Escience token
 var escience_token;
 this.App.set('escience_token', "null");
 
-//User model used in our app 
+// User model used in our app 
 App.User = DS.Model.extend({
      token: attr('string'),     //okeanos token
      user_id: attr('number'),   // user_id in backend database
      cluster: attr('number')    // number of user clusters
     });
 
-//Model used for retrieving create cluster information 
+// Model used for retrieving create cluster information 
 App.Createcluster = DS.Model.extend({
-    vms_max: DS.attr('number'),        // maximum (limit) number of VMs 
-    vms_av: DS.attr(),                  // available VMs
-    cpu_max: DS.attr('number'),        // maximum CPUs
-    cpu_av: DS.attr('number'),         // available CPUs
-    mem_max: DS.attr('number'),        // maximum memory
-    mem_av: DS.attr('number'),         // available memory     
-    disk_max: DS.attr('number'),       // maximum disk space
-    disk_av: DS.attr('number'),        // available disk space
-    cpu_choices: DS.attr(),               // CPU choices
-    mem_choices: DS.attr(),              // memory choices
-    disk_choices: DS.attr(),             // disk choices
+    vms_max: DS.attr('number'),       // maximum (limit) number of VMs 
+    vms_av: DS.attr(),                // available VMs
+    cpu_max: DS.attr('number'),       // maximum CPUs
+    cpu_av: DS.attr('number'),        // available CPUs
+    mem_max: DS.attr('number'),       // maximum memory
+    mem_av: DS.attr('number'),        // available memory     
+    disk_max: DS.attr('number'),      // maximum disk space
+    disk_av: DS.attr('number'),       // available disk space
+    cpu_choices: DS.attr(),           // CPU choices
+    mem_choices: DS.attr(),           // memory choices
+    disk_choices: DS.attr(),          // disk choices
     disk_template: DS.attr(),         // storage choices
-    os_choices: DS.attr()                   //Operating System choices
+    os_choices: DS.attr()             // Operating System choices
 });
 
-//Extend Application Adapter settings for Token Authentication and REST calls to /api
-//Changes of global var escience_token are reflected in the Authorization header of our REST calls
+// Extend Application Adapter settings for Token Authentication and REST calls to /api
+// Changes of global var escience_token are reflected in the Authorization header of our REST calls
 App.ApplicationAdapter = DS.ActiveModelAdapter.extend({
    
    namespace: 'api',
@@ -44,7 +44,7 @@ App.ApplicationAdapter = DS.ActiveModelAdapter.extend({
    
 });
 
-//Application routes
+// Application routes
 App.Router.map(function() {
   this.route('homepage');
   this.resource('user', function() {
@@ -52,32 +52,32 @@ App.Router.map(function() {
       this.route('logout');
       this.route('welcome');
   });
-  this.resource('createcluster', function(){
-         this.route('confirm');
+  this.resource('createcluster', { path: "/cluster/create" }, function(){
+         this.route('confirm', { path: "/confirm" });
      });
-  //Route to enforce login policy
+  // Route to enforce login policy
   this.route('restricted'); 
 });
 
-//Index route (e.g localhost:port/) redirects to homepage
+// Index route (e.g localhost:port/) redirects to homepage
 App.IndexRoute = Ember.Route.extend({
   redirect: function() {
     this.transitionTo('homepage');
 }  
 });
 
-//Redirect to login screen when user press start in homepage 
+// Redirect to login screen when user press start in homepage 
 App.HomepageController = Ember.Controller.extend({
   start: function() {
     this.transitionToRoute('user.login');
 }
 });
 
-//Every route that requires loggedIn user will extend this route
+// Every route that requires loggedIn user will extend this route
 App.RestrictedRoute = Ember.Route.extend({
   beforeModel: function() {
-                //Check if user is logged in.
-                //If not, redirect to login screen.
+                // Check if user is logged in.
+                // If not, redirect to login screen.
         	if (!this.controllerFor('user.login').isLoggedIn()) {
             	this.transitionTo('user.login');
                 } 
@@ -87,24 +87,21 @@ App.RestrictedRoute = Ember.Route.extend({
     }
 });
 
-
-//Welcome user screen.
-//Show user id and clusters number.
+// Welcome functionality
+// Welcome user route.
+// Show user id and clusters number.
 App.UserWelcomeRoute = App.RestrictedRoute.extend({
    
   model: function() {     
-        //Return user record with id 1.
-        //If user record not in store, perform a GET request
-        //and get user record from server.     
-     return this.store.find('user', 1);
-   
-
-     
-     
+        // Return user record with id 1.
+        // If user record not in store, perform a GET request
+        // and get user record from server.     
+     return this.store.find('user', 1);     
  }   
 });
 
-//Redirect to logout route when user press logout in welcome screen 
+// Welcome route controller
+// Redirect to logout route when user press logout in welcome screen 
 App.UserWelcomeController = Ember.Controller.extend({  
   logout: function(){
     this.transitionToRoute('user.logout');
@@ -114,12 +111,12 @@ App.UserWelcomeController = Ember.Controller.extend({
 }
 });
 
-
-//Login functionality happens here
+// Login functionality
+// Login controller
 App.UserLoginController = Ember.Controller.extend({
   token: '',
   isLoggedIn: function() {
-                //Check localstorage auth token for user login status.
+                // Check localstorage auth token for user login status.
         	if ( window.localStorage.escience_auth_token != 'null' && !Ember.isEmpty(window.localStorage.escience_auth_token) && window.localStorage.escience_auth_token !== 'undefined') {
             	  return true;
                 }
@@ -132,30 +129,30 @@ App.UserLoginController = Ember.Controller.extend({
     login: function(text) {
       var self = this;
       if (text) {
-        //POST ~okeanos token to Django backend.
+        // POST ~okeanos token to Django backend.
 	var response = this.store.createRecord('user', {
 	  'token': text
 	}).save();
-        //Handling the promise of POST request
+        // Handling the promise of POST request
         response.then(
         function(data) {
-               //Succesfull login.
-               //Set global and localStorage variables to escience token.	
+               // Succesfull login.
+               // Set global and localStorage variables to escience token.	
                App.set('escience_token', "Token "+data._data.escience_token);
                window.localStorage.escience_auth_token = App.get('escience_token');
-               //Push to store the user retrieved from Django backend.
+               // Push to store the user retrieved from Django backend.
                self.store.push('user', {
                id: 1,
                user_id: data._data.user_id,
                token: data._data.escience_token,
                cluster: data._data.cluster
 	       });
-               //Set the text in login screen to blank and redirect to welcome screen       
+               // Set the text in login screen to blank and redirect to welcome screen       
                self.set('loginFailed', false);
                self.set('token', '');
                self.transitionToRoute('user.welcome');             
             }, function(){
-               //Failed login.
+               // Failed login.
 	       self.set('loginFailed', true);
 	       self.set('token', '');
         });
@@ -167,7 +164,8 @@ App.UserLoginController = Ember.Controller.extend({
 
 });
 
-//If user is logged in, redirect to welcome screen
+// Login route
+// If user is logged in, redirect to welcome screen
 App.UserLoginRoute = Ember.Route.extend({
   redirect: function() {
     if (this.controllerFor('user.login').isLoggedIn()) {
@@ -176,7 +174,8 @@ App.UserLoginRoute = Ember.Route.extend({
 }
 });
 
-//After user submits ~okeanos token, sends it to login controller
+// Login view
+// After user submits ~okeanos token, sends it to login controller
 App.UserLoginView = Ember.View.extend({
   submit: function() {
       var text = this.get('controller.token');
@@ -184,18 +183,19 @@ App.UserLoginView = Ember.View.extend({
     }
 });
 
-//Log out user.
+// Logout route
+// Log out user.
 App.UserLogoutRoute = Ember.Route.extend({
   redirect: function() {
-    //Send PUT request for backend logout update.
+    // Send PUT request for backend logout update.
     var current_user = this.store.update('user', {'id': 1}).save();
     current_user.then(
     function(){
-        //Set global var escience and localStorage token to null when put is successful.
+        // Set global var escience and localStorage token to null when put is successful.
     	App.set('escience_token', "null");
         window.localStorage.escience_auth_token = App.get('escience_token');
     }, function(){
-     //Set global var escience and localStorage token to null when put fails.
+     // Set global var escience and localStorage token to null when put fails.
     	App.set('escience_token', "null");
         window.localStorage.escience_auth_token = App.get('escience_token'); 
     });
@@ -203,8 +203,8 @@ App.UserLogoutRoute = Ember.Route.extend({
 }  
 });
 
-// for the flavor route
-// access model Create_cluster
+// Createcluster resource functionality
+// Createcluster index route (/cluster/create url)
 App.CreateclusterIndexRoute = App.RestrictedRoute.extend({
   
   model: function() {
@@ -212,13 +212,13 @@ App.CreateclusterIndexRoute = App.RestrictedRoute.extend({
   }
 });
 
-// controller for flavor
+// Createcluster index controller
 App.CreateclusterIndexController = Ember.Controller.extend({
     master_enabled: true,
     slaves_enabled: false,
     Allow: true,
     cluster_name: '',
-    cluster_size: 0,
+    cluster_size: 1,
     operating_system: 'Debian Base',
     master_color: 'lightgreen',
     slaves_color: 'lightgrey',
@@ -342,19 +342,19 @@ App.CreateclusterIndexController = Ember.Controller.extend({
   }.property('slaves_color').cacheable()
 });
 
-
+// Createcluster confirm route (/cluster/create/confirm url)
 App.CreateclusterConfirmRoute = App.RestrictedRoute.extend({
    
   model: function() {     
-        //Return user record with id 1.
-        //If user record not in store, perform a GET request
-        //and get user record from server.     
+        // Return user record with id 1.
+        // If user record not in store, perform a GET request
+        // and get user record from server.     
      return this.store.find('user', 1);
         
  }   
 });
 
-// controller for confirm
+// Createcluster confirm controller
 App.CreateclusterConfirmController = Ember.Controller.extend({
     // in order to have access to personalize
     needs: 'createclusterIndex',

@@ -13,6 +13,7 @@ import os
 from django.db import models
 from djorm_pgarray.fields import IntegerArrayField, TextArrayField
 
+
 class UserInfo(models.Model):
     '''Definition of a User object model.'''
     user_id = models.AutoField("User ID", primary_key=True, null=False,
@@ -41,10 +42,10 @@ ACTION_STATUS_CHOICES = (
 )
 
 
-class Create_cluster(models.Model):
+class ClusterCreationParams(models.Model):
     '''
-    Definition of Create_cluster model for retrieving create_cluster
-    information from okeanos. Imported djorm_pgarray package
+    Definition of  ClusterChoices model for retrieving cluster creation
+    parameters from okeanos. Imported djorm_pgarray package
     is needed for custom Arrayfields.
     '''
     user_id = models.OneToOneField(UserInfo, null=False,

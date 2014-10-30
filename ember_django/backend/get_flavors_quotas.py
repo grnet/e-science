@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 '''
-This returns the flavors based on kamaki flavor list.
+Methods for check and return ~okeanos user quota, return ~okeanos flavor list
+and update the ClusterCreationParams model.
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -12,7 +13,7 @@ import sys
 import logging
 from okeanos_utils import *
 from kamaki.clients.cyclades import CycladesClient
-from backend.models import Create_cluster
+from backend.models import ClusterCreationParams
 
 # Definitions of return value errors
 error_flavor_list = -23
@@ -25,7 +26,7 @@ error_syntax_auth_token = -25
 Mbytes_to_GB = 1024  # Global to convert megabytes to gigabytes
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
-auth_url='https://accounts.okeanos.grnet.gr/identity/v2.0'
+auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 
 
 def check_quota(token):
@@ -62,10 +63,11 @@ def check_quota(token):
     pending_vm = dict_quotas['system']['cyclades.vm']['pending']
     available_vm = limit_vm-usage_vm-pending_vm
 
-    quotas = {'cpus' : { 'limit' : limit_cpu , 'available' : available_cpu } , 
-              'ram' : {'limit' : limit_ram , 'available' : available_ram } , 
-              'disk' : {'limit' : limit_cd , 'available' : available_cyclades_disk_GB } , 
-              'cluster_size' : {'limit' : limit_vm , 'available' : available_vm }}
+    quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
+              'ram': {'limit': limit_ram, 'available': available_ram},
+              'disk': {'limit': limit_cd,
+                       'available': available_cyclades_disk_GB},
+              'cluster_size': {'limit': limit_vm, 'available': available_vm}}
     logging.info(quotas)
     return quotas
 
@@ -94,19 +96,20 @@ def get_flavor_id(token):
             disk_list.append(flavor['disk'])
         if flavor['SNF:disk_template'] not in disk_template_list:
             disk_template_list.append(flavor['SNF:disk_template'])
-    cpu_list = sorted (cpu_list)
+    cpu_list = sorted(cpu_list)
     ram_list = sorted(ram_list)
     disk_list = sorted(disk_list)
-    flavors = {'cpus' : cpu_list, 'ram' : ram_list , 'disk' : disk_list , 'disk_template' : disk_template_list}
+    flavors = {'cpus': cpu_list, 'ram': ram_list,
+               'disk': disk_list, 'disk_template': disk_template_list}
     logging.info(flavors)
     return flavors
 
 
-def update_Create_cluster(user):
+def retrieve_ClusterCreationParams(user):
     '''
-    Method that retrieves user quotas and flavor list from kamaki
+    Retrieves user quotas and flavor list from kamaki
     using get_flavor_id and check_quota methods and returns the updated
-    Create_cluster model.
+    ClusterCreationParams model.
     '''
     i = 0
     j = 1
@@ -132,14 +135,21 @@ def update_Create_cluster(user):
     disk_template = flavors['disk_template']
     os_choices = ['Debian Base']
 
-    create_cluster = Create_cluster(user_id=user, vms_max=vms_max,
-                                    vms_av=vms_av, cpu_max=cpu_max,
-                                    cpu_av=cpu_av, mem_max=mem_max,
-                                    mem_av=mem_av, disk_max=disk_max,
-                                    disk_av=disk_av, cpu_choices=cpu_choices,
-                                    mem_choices=mem_choices,
-                                    disk_choices=disk_choices,
-                                    disk_template=disk_template,
-                                    os_choices=os_choices)
-
-    return create_cluster
+    # Create a ClusterCreationParams object with the parameters returned from
+    # get_flavor_id and check_quota.
+    cluster_creation_params = ClusterCreationParams(user_id=user,
+                                                    vms_max=vms_max,
+                                                    vms_av=vms_av,
+                                                    cpu_max=cpu_max,
+                                                    cpu_av=cpu_av,
+                                                    mem_max=mem_max,
+                                                    mem_av=mem_av,
+                                                    disk_max=disk_max,
+                                                    disk_av=disk_av,
+                                                    cpu_choices=cpu_choices,
+                                                    mem_choices=mem_choices,
+                                                    disk_choices=disk_choices,
+                                                    disk_template=disk_template,
+                                                    os_choices=os_choices)
+    # Return the ClusterCreationParams object
+    return cluster_creation_params
