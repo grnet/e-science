@@ -14,7 +14,8 @@ from os.path import join, dirname, abspath
 sys.path.append(join(dirname(__file__), '..'))
 
 # import objects we aim to test
-from create_bare_cluster import create_cluster
+# from create_bare_cluster import create_cluster
+from create_cluster import YarnCluster, HadoopCluster
 
 
 def mock_createcluster(*args):
@@ -77,17 +78,27 @@ def mock_init_cyclades_netclient(*args):
     """ No implementation, just declaration.  """
     print 'in mock init cyclades netclient'
 
+def mock_reroute_ssh_prep(*args):
+    """ No implementation, just declaration   """
+    print 'in mock reroute ssh prep'
+
+def mock_install_yarn(*args):
+    """ No implementation, just declaration   """
+    print 'in mock install yarn'
 
 # replace unmanaged calls with the mocks
-@patch('create_bare_cluster.Cluster.create', mock_createcluster)
-# @patch('create_bare_cluster.check_credentials', mock_checkcredentials)
-# @patch('create_bare_cluster.endpoints_and_user_id', mock_endpoints_userid)
-# @patch('create_bare_cluster.init_cyclades', mock_init_cyclades)
-# @patch('create_bare_cluster.get_flavor_id', mock_get_flavorid)
-# @patch('create_bare_cluster.check_quota', mock_check_quota)
-# @patch('create_bare_cluster.init_plankton', mock_init_plankton)
-# @patch('create_bare_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
-@patch('create_bare_cluster.sleep', mock_sleep)
+@patch('create_cluster.Cluster.create', mock_createcluster)
+# @patch('create_cluster.check_credentials', mock_checkcredentials)
+# @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+# @patch('create_cluster.init_cyclades', mock_init_cyclades)
+# @patch('create_cluster.HadoopCluster.get_flavor_id_master', mock_get_flavorid)
+# @patch('create_cluster.HadoopCluster.get_flavor_id_slave', mock_get_flavorid)
+# @patch('create_cluster.HadoopCluster.check_quota', mock_check_quota)
+# @patch('create_cluster.init_plankton', mock_init_plankton)
+# @patch('create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
+@patch('create_cluster.reroute_ssh_prep', mock_reroute_ssh_prep)
+@patch('create_cluster.install_yarn', mock_install_yarn)
+@patch('create_cluster.sleep', mock_sleep)
 class TestCreateCluster(TestCase):
     """ Test cases with separate un-managed resources mocked. """
     # initialize objects common to all tests in this test case
@@ -104,7 +115,7 @@ class TestCreateCluster(TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
 
-    def test_create_cluster(self):
+    def test_create_bare_cluster(self):
         # arrange
         opts = {'name': 'Test', 'clustersize': 2, 'cpu_master': 2,
                 'ram_master': 4096, 'disk_master': 5, 'cpu_slave': 2,
@@ -113,12 +124,26 @@ class TestCreateCluster(TestCase):
                 'auth_url': self.auth_url}
         expected_masterip = '127.0.0.1'
         expected_vm_dict = {1: 'f vm'}
+        c_yarn_cluster = YarnCluster(opts)
         # act
-        returned_masterip, returned_vm_dict = create_cluster(**opts)
+        returned_masterip, returned_vm_dict = c_yarn_cluster.create_bare_cluster()
         # assert
         self.assertTupleEqual((expected_masterip, expected_vm_dict), (returned_masterip, returned_vm_dict))
 
-    # more testcases go here
+    def test_create_yarn_cluster(self):
+        # arrange
+        opts = {'name': 'Test', 'clustersize': 2, 'cpu_master': 2,
+                'ram_master': 4096, 'disk_master': 5, 'cpu_slave': 2,
+                'ram_slave': 2048, 'disk_slave': 5, 'token': self.token,
+                'disk_template': 'ext_vlmc', 'image': 'Debian Base',
+                'auth_url': self.auth_url, 'yarn': True}
+        expected_masterip = '127.0.0.1'
+        expected_vm_dict = {1: 'f vm'}
+        c_yarn_cluster = YarnCluster(opts)
+        # act
+        returned_masterip, returned_vm_dict = c_yarn_cluster.create_yarn_cluster()
+        # assert
+        self.assertTupleEqual((expected_masterip, expected_vm_dict), (returned_masterip, returned_vm_dict))
 
     # free up any resources not automatically released
     def tearDown(self):
