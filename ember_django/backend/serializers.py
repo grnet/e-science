@@ -41,7 +41,7 @@ class Create_clusterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Create_cluster
-        fields = ('id', 'vms_max', 'vms_av', 'cpu_max', 'cpu_av',
+        fields = ('id', 'user_id', 'vms_max', 'vms_av', 'cpu_max', 'cpu_av',
                   'mem_max', 'mem_av', 'disk_max', 'disk_av', 'cpu_choices',
                   'mem_choices', 'disk_choices', 'disk_template', 'os_choices')
 

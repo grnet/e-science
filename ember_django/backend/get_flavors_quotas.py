@@ -22,6 +22,7 @@ error_syntax_auth_token = -25
 
 
 # Global constants
+Mbytes_to_GB = 1024  # Global to convert megabytes to gigabytes
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 auth_url='https://accounts.okeanos.grnet.gr/identity/v2.0'
@@ -44,14 +45,14 @@ def check_quota(token):
     limit_cd = dict_quotas['system']['cyclades.disk']['limit'] / Bytes_to_GB
     usage_cd = dict_quotas['system']['cyclades.disk']['usage'] / Bytes_to_GB
     pending_cd = dict_quotas['system']['cyclades.disk']['pending'] / Bytes_to_GB
-    available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd) 
+    available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd)
 
     limit_cpu = dict_quotas['system']['cyclades.cpu']['limit']
     usage_cpu = dict_quotas['system']['cyclades.cpu']['usage']
     pending_cpu = dict_quotas['system']['cyclades.cpu']['pending']
     available_cpu = limit_cpu - usage_cpu - pending_cpu
 
-    limit_ram = dict_quotas['system']['cyclades.ram']['limit'] / Bytes_to_MB  
+    limit_ram = dict_quotas['system']['cyclades.ram']['limit'] / Bytes_to_MB
     usage_ram = dict_quotas['system']['cyclades.ram']['usage'] / Bytes_to_MB
     pending_ram = dict_quotas['system']['cyclades.ram']['pending'] / Bytes_to_MB
     available_ram = (limit_ram-usage_ram-pending_ram)

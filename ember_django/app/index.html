@@ -24,7 +24,7 @@
       </form>
   </script>
   
-  <script type="text/x-handlebars" id="login">
+  <script type="text/x-handlebars" id="user/login">
       <h3>Login page</h3>
       <h2>Enter your token: </h2>
       <form>
@@ -36,7 +36,7 @@
       {{/if}}
   </script>
 
-  <script type="text/x-handlebars" id="welcome">
+  <script type="text/x-handlebars" id="user/welcome">
       <h2>Welcome</h2>
       <h3 id="user">User: {{content._data.user_id}}</h3>
       <h3 id="clusters">Clusters: {{content._data.cluster}}</h3>
@@ -47,9 +47,10 @@
 	<button type="submit">Logout</button>
       </form>
   </script>
-  <script type="text/x-handlebars" id="flavor">  
+  <script type="text/x-handlebars" id="createcluster/index">  
     <div id="header">
-        Select CPUs, RAM and Disk Size...
+        User: {{content._data.user_id}}
+        <h3>Select CPUs, RAM and Disk Size...</h3>
     </div>
     <div id="main-wrap">
         <div id="sidebar">
@@ -66,7 +67,7 @@
             <h4>CPUs ({{this.cpu_available}} available): Master ({{this.master_cpu_selection}}) Each Slave ({{this.slaves_cpu_selection}})</h4>    
             <p>    
                 {{#each item in content._data.cpu_choices}}
-                    <button {{action "cpu_selection" item}}> {{item}} </button>                          
+                    <button {{action "cpu_selection" item}}> {{item}}x </button>                          
                 {{/each}}                
             </p>
             <h4>Memory size ({{this.mem_available}} available): Master ({{this.master_mem_selection}}) Each Slave ({{this.slaves_mem_selection}})</h4>    
@@ -95,25 +96,35 @@
     </div>    
   </script>
 
-  <script type="text/x-handlebars" id="confirm">  
+  <script type="text/x-handlebars" id="createcluster/confirm">  
     <div id="header">
         Summary
     </div>
     <div id="main-wrap">
         <div id="content-wrap">
-            <h4>Cluster Name: {{controllers.flavor.cluster_name}}</h4>          
+            <h4>Cluster Name: {{controllers.createclusterIndex.cluster_name}}</h4>          
             <div id="area1">
                 <h3>Image</h3>
-                <h4>OS: {{controllers.flavor.operating_system}}</h4>
-                <h4>Size: {{controllers.flavor.cluster_size}}</h4>
+                <h4>OS: {{controllers.createclusterIndex.operating_system}}</h4>
+                <h4>Size: {{controllers.createclusterIndex.cluster_size}}</h4>
+                <h4>Storage type: {{controllers.createclusterIndex.disk_temp}}</h4>
             </div>
             <div id="area2">
-                <h3>Flavor</h3>
-                <h4>CPUs: {{controllers.flavor.total_cpu_selection}}</h4>
-                <h4>Memory: {{controllers.flavor.total_mem_selection}}</h4>
-                <h4>Disk: {{controllers.flavor.total_disk_selection}}</h4>
-                <h4>Storage type: {{controllers.flavor.disk_temp}}</h4>
+                <h3>Flavor of Master vm</h3>
+                <h4>CPUs: {{controllers.createclusterIndex.master_cpu_selection}}</h4>
+                <h4>Memory: {{controllers.createclusterIndex.master_mem_selection}}</h4>
+                <h4>Disk: {{controllers.createclusterIndex.master_disk_selection}}</h4>
+                
             </div>
+            <div id="area3">
+                <h3>Flavor of each slave vm</h3>
+                <h4>CPUs: {{controllers.createclusterIndex.slaves_cpu_selection}}</h4>
+                <h4>Memory: {{controllers.createclusterIndex.slaves_mem_selection}}</h4>
+                <h4>Disk: {{controllers.createclusterIndex.slaves_disk_selection}}</h4>
+                
+            </div>
+
+
         </div>
     </div>
     <div id="footer">

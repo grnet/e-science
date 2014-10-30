@@ -35,10 +35,14 @@
 
 #area1 {
     float: left;
-    width: 50%;
+    width: 30%;
 }   
 #area2 {
-    float: right;
-    width: 50%;
-}   
+    float: left;
+    width: 30%;
+}
+#area3 {
+    float: left;
+    width: 30%;
+} 
 

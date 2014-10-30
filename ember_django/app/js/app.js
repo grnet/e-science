@@ -47,12 +47,14 @@ App.ApplicationAdapter = DS.ActiveModelAdapter.extend({
 //Application routes
 App.Router.map(function() {
   this.route('homepage');
-  
-  this.route('login');
-  this.route('welcome');
-  this.route('flavor');
-  this.route('confirm');
-  this.route('logout');
+  this.resource('user', function() {
+      this.route('login');
+      this.route('logout');
+      this.route('welcome');
+  });
+  this.resource('createcluster', function(){
+         this.route('confirm');
+     });
 });
 
 //Index route (e.g localhost:port/) redirects to homepage
@@ -62,15 +64,23 @@ App.IndexRoute = Ember.Route.extend({
 }  
 });
 
+//Redirect to login screen when user press start in homepage 
+App.HomepageController = Ember.Controller.extend({
+  start: function() {
+    this.transitionToRoute('user.login');
+}
+});
+
+
 //Welcome user screen.
 //Show user id and clusters number.
-App.WelcomeRoute = Ember.Route.extend({
+App.UserWelcomeRoute = Ember.Route.extend({
   
   beforeModel: function() {
                 //Check if user is logged in.
                 //If not, redirect to login screen.
-        	if (!this.controllerFor('login').isLoggedIn()) {
-            	this.transitionTo('login');
+        	if (!this.controllerFor('user.login').isLoggedIn()) {
+            	this.transitionTo('user.login');
                 } 
                 else {
 		App.set('escience_token', window.localStorage.escience_auth_token);		
@@ -89,24 +99,18 @@ App.WelcomeRoute = Ember.Route.extend({
 });
 
 //Redirect to logout route when user press logout in welcome screen 
-App.WelcomeController = Ember.Controller.extend({  
+App.UserWelcomeController = Ember.Controller.extend({  
   logout: function(){
-    this.transitionToRoute('logout');
+    this.transitionToRoute('user.logout');
   },
   createcluster: function(){
-    this.transitionToRoute('flavor');
+    this.transitionToRoute('createcluster.index');
 }
 });
 
-//Redirect to login screen when user press start in homepage 
-App.HomepageController = Ember.Controller.extend({
-  start: function() {
-    this.transitionToRoute('login');
-}
-});
 
 //Login functionality happens here
-App.LoginController = Ember.Controller.extend({
+App.UserLoginController = Ember.Controller.extend({
   token: '',
   isLoggedIn: function() {
                 //Check localstorage auth token for user login status.
@@ -143,7 +147,7 @@ App.LoginController = Ember.Controller.extend({
                //Set the text in login screen to blank and redirect to welcome screen       
                self.set('loginFailed', false);
                self.set('token', '');
-               self.transitionToRoute('welcome');             
+               self.transitionToRoute('user.welcome');             
             }, function(){
                //Failed login.
 	       self.set('loginFailed', true);
@@ -158,16 +162,16 @@ App.LoginController = Ember.Controller.extend({
 });
 
 //If user is logged in, redirect to welcome screen
-App.LoginRoute = Ember.Route.extend({
+App.UserLoginRoute = Ember.Route.extend({
   redirect: function() {
-    if (this.controllerFor('login').isLoggedIn()) {
-            	this.transitionTo('welcome');
+    if (this.controllerFor('user.login').isLoggedIn()) {
+            	this.transitionTo('user.welcome');
                 }    
 }
 });
 
 //After user submits ~okeanos token, sends it to login controller
-App.LoginView = Ember.View.extend({
+App.UserLoginView = Ember.View.extend({
   submit: function() {
       var text = this.get('controller.token');
       this.get('controller').send('login', text);
@@ -175,7 +179,7 @@ App.LoginView = Ember.View.extend({
 });
 
 //Log out user.
-App.LogoutRoute = Ember.Route.extend({
+App.UserLogoutRoute = Ember.Route.extend({
   redirect: function() {
     //Send PUT request for backend logout update.
     var current_user = this.store.update('user', {'id': 1}).save();
@@ -195,13 +199,13 @@ App.LogoutRoute = Ember.Route.extend({
 
 // for the flavor route
 // access model Create_cluster
-App.FlavorRoute = Ember.Route.extend({
+App.CreateclusterIndexRoute = Ember.Route.extend({
   
   beforeModel: function() {
                 //Check if user is logged in.
                 //If not, redirect to login screen.
-        	if (!this.controllerFor('login').isLoggedIn()) {
-            	this.transitionTo('login');
+        	if (!this.controllerFor('user.login').isLoggedIn()) {
+            	this.transitionTo('user.login');
                 } 
                 else {
 		App.set('escience_token', window.localStorage.escience_auth_token);		
@@ -213,7 +217,7 @@ App.FlavorRoute = Ember.Route.extend({
 });
 
 // controller for flavor
-App.FlavorController = Ember.Controller.extend({
+App.CreateclusterIndexController = Ember.Controller.extend({
     master_enabled: true,
     slaves_enabled: false,
     Allow: true,
@@ -222,7 +226,7 @@ App.FlavorController = Ember.Controller.extend({
     operating_system: '',
     master_color: 'lightgreen',
     slaves_color: 'lightgrey',
-
+    
     master_cpu_selection: 0,
     slaves_cpu_selection: 0,
 
@@ -265,7 +269,7 @@ App.FlavorController = Ember.Controller.extend({
     return this.get('content._data.disk_av') - this.get('total_disk_selection');
     }.property('total_disk_selection'),
 
-    disk_temp: '',
+    disk_temp: 'ext_vlmc',
     actions: {
         display_master: function() {
 
@@ -303,7 +307,7 @@ App.FlavorController = Ember.Controller.extend({
                     )
                 { 
                     // redirect to confirm template
-                    this.transitionTo('confirm');
+                    this.transitionTo('createcluster.confirm');
                 }
                 else
                 {
@@ -337,31 +341,31 @@ App.FlavorController = Ember.Controller.extend({
 });
 
 
-App.ConfirmRoute = Ember.Route.extend({
+App.CreateclusterConfirmRoute = Ember.Route.extend({
  
   beforeModel: function() {
                 //Check if user is logged in.
                 //If not, redirect to login screen.
-        	if (!this.controllerFor('login').isLoggedIn()) {
-            	this.transitionTo('login');
+        	if (!this.controllerFor('user.login').isLoggedIn()) {
+            	this.transitionTo('user.login');
                 } 
                 else {
 		App.set('escience_token', window.localStorage.escience_auth_token);		
 		}     
-    }
+    },
 
 });
 
 // controller for confirm
-App.ConfirmController = Ember.Controller.extend({
+App.CreateclusterConfirmController = Ember.Controller.extend({
     // in order to have access to personalize
-    needs: "flavor",
+    needs: 'createclusterIndex',
     actions: {
         // when previous button is pressed
         // gotoflavor action is triggered
         gotoflavor: function() {
             // redirect to flavor template
-            this.transitionTo('flavor');
+            this.transitionTo('createcluster.index');
         },
         // when next button is pressed
         // gotocreate action is triggered
