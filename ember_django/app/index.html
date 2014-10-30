@@ -70,13 +70,13 @@
                     <button {{action "cpu_selection" item}}> {{item}}x </button>                          
                 {{/each}}                
             </p>
-            <h4>Memory size ({{this.mem_available}} available): Master ({{this.master_mem_selection}}) Each Slave ({{this.slaves_mem_selection}})</h4>    
+            <h4>Memory size ({{this.mem_available}} MB available): Master ({{this.master_mem_selection}}) Each Slave ({{this.slaves_mem_selection}})</h4>    
             <p>
                 {{#each item in content._data.mem_choices}}
                     <button {{action "mem_selection" item}}> {{item}} </button>                          
                 {{/each}}                                                
             </p>
-            <h4>Disk size ({{this.disk_available}} available): Master ({{this.master_disk_selection}}) Each Slave ({{this.slaves_disk_selection}})</h4>    
+            <h4>Disk size ({{this.disk_available}} GB available): Master ({{this.master_disk_selection}}) Each Slave ({{this.slaves_disk_selection}})</h4>    
             <p>
                 {{#each item in content._data.disk_choices}}
                     <button {{action "disk_selection" item}}> {{item}} </button>                          
@@ -93,6 +93,9 @@
     </div>
     <div id="footer">
         <button id="next" {{action "gotoconfirm"}}> Next </button>
+        <form class="form-horizontal" {{action "logout" on="submit"}}>
+	<button type="submit">Logout</button>
+      </form>
     </div>    
   </script>
 
@@ -102,6 +105,7 @@
     </div>
     <div id="main-wrap">
         <div id="content-wrap">
+            <h4>User: {{content._data.user_id}}</h4>
             <h4>Cluster Name: {{controllers.createclusterIndex.cluster_name}}</h4>          
             <div id="area1">
                 <h3>Image</h3>
@@ -130,6 +134,9 @@
     <div id="footer">
         <button id="previous" {{action "gotoflavor"}}> Previous </button>
         <button id="next" {{action "gotocreate"}}> Create Cluster! </button>
+        <form class="form-horizontal" {{action "logout" on="submit"}}>
+	<button type="submit">Logout</button>
+      </form>
     </div>
   </script>
 {% endverbatim %}

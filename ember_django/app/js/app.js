@@ -55,6 +55,8 @@ App.Router.map(function() {
   this.resource('createcluster', function(){
          this.route('confirm');
      });
+  //Route to enforce login policy
+  this.route('restricted'); 
 });
 
 //Index route (e.g localhost:port/) redirects to homepage
@@ -71,11 +73,8 @@ App.HomepageController = Ember.Controller.extend({
 }
 });
 
-
-//Welcome user screen.
-//Show user id and clusters number.
-App.UserWelcomeRoute = Ember.Route.extend({
-  
+//Every route that requires loggedIn user will extend this route
+App.RestrictedRoute = Ember.Route.extend({
   beforeModel: function() {
                 //Check if user is logged in.
                 //If not, redirect to login screen.
@@ -85,7 +84,14 @@ App.UserWelcomeRoute = Ember.Route.extend({
                 else {
 		App.set('escience_token', window.localStorage.escience_auth_token);		
 		}     
-    },  
+    }
+});
+
+
+//Welcome user screen.
+//Show user id and clusters number.
+App.UserWelcomeRoute = App.RestrictedRoute.extend({
+   
   model: function() {     
         //Return user record with id 1.
         //If user record not in store, perform a GET request
@@ -199,18 +205,8 @@ App.UserLogoutRoute = Ember.Route.extend({
 
 // for the flavor route
 // access model Create_cluster
-App.CreateclusterIndexRoute = Ember.Route.extend({
+App.CreateclusterIndexRoute = App.RestrictedRoute.extend({
   
-  beforeModel: function() {
-                //Check if user is logged in.
-                //If not, redirect to login screen.
-        	if (!this.controllerFor('user.login').isLoggedIn()) {
-            	this.transitionTo('user.login');
-                } 
-                else {
-		App.set('escience_token', window.localStorage.escience_auth_token);		
-		}     
-    },
   model: function() {
    return this.store.find('createcluster', 1);
   }
@@ -223,7 +219,7 @@ App.CreateclusterIndexController = Ember.Controller.extend({
     Allow: true,
     cluster_name: '',
     cluster_size: 0,
-    operating_system: '',
+    operating_system: 'Debian Base',
     master_color: 'lightgreen',
     slaves_color: 'lightgrey',
     
@@ -271,6 +267,12 @@ App.CreateclusterIndexController = Ember.Controller.extend({
 
     disk_temp: 'ext_vlmc',
     actions: {
+
+        logout: function() {
+            // redirect to logout
+            this.transitionTo('user.logout');
+        },
+
         display_master: function() {
 
             this.set('master_color', 'lightgreen');
@@ -341,26 +343,26 @@ App.CreateclusterIndexController = Ember.Controller.extend({
 });
 
 
-App.CreateclusterConfirmRoute = Ember.Route.extend({
- 
-  beforeModel: function() {
-                //Check if user is logged in.
-                //If not, redirect to login screen.
-        	if (!this.controllerFor('user.login').isLoggedIn()) {
-            	this.transitionTo('user.login');
-                } 
-                else {
-		App.set('escience_token', window.localStorage.escience_auth_token);		
-		}     
-    },
-
+App.CreateclusterConfirmRoute = App.RestrictedRoute.extend({
+   
+  model: function() {     
+        //Return user record with id 1.
+        //If user record not in store, perform a GET request
+        //and get user record from server.     
+     return this.store.find('user', 1);
+        
+ }   
 });
 
 // controller for confirm
 App.CreateclusterConfirmController = Ember.Controller.extend({
     // in order to have access to personalize
     needs: 'createclusterIndex',
-    actions: {
+    actions: {         
+        logout: function() {
+            // redirect to logout
+            this.transitionTo('user.logout');
+        },       
         // when previous button is pressed
         // gotoflavor action is triggered
         gotoflavor: function() {
