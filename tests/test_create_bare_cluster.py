@@ -145,6 +145,15 @@ class TestCreateCluster(TestCase):
         # assert
         self.assertTupleEqual((expected_masterip, expected_vm_dict), (returned_masterip, returned_vm_dict))
 
+    def test_check_all_resources(self):
+        # arrange
+        c_yarn_cluster = YarnCluster(None)
+        expected = 0
+        # act
+        returned = c_yarn_cluster.check_all_resources()
+        # assert
+        self.assertEqual(expected, returned)
+
     # free up any resources not automatically released
     def tearDown(self):
         pass

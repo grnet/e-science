@@ -109,6 +109,7 @@ class HadoopCluster(object):
     """
     Wrapper class for create hadoop cluster functionality
     """
+
     def __init__(self, opts):
         if not opts or len(opts) == 0:
             self.opts = _defaults.copy()
@@ -116,6 +117,15 @@ class HadoopCluster(object):
             self.opts = opts
         self.HOSTNAME_MASTER_IP = '127.0.0.1'
         self.server_dict = {}
+        self._DispatchCheckers = {}
+        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_clustersize_quotas
+        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_flavor_quotas
+        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_network_quotas
+        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_ip_quotas
+        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_cpu_valid
+        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_ram_valid
+        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_disk_valid
+
 
     def get_flavor_id_master(self, cyclades_client):
         """ Return the flavor id for the master based on cpu,ram,disk_size and disk template """
@@ -133,6 +143,43 @@ class HadoopCluster(object):
                 flavor_id = flavor['id']
 
         return flavor_id
+
+    def check_clustersize_quotas(self):
+        print 'check clustersize'
+        return 0
+
+    def  check_flavor_quotas(self):
+        print 'check flavor quota'
+        return 0
+
+    def check_network_quotas(self):
+        print 'check network'
+        return 0
+
+    def check_ip_quotas(self):
+        print 'check ip'
+        return 0
+
+    def check_cpu_valid(self):
+        print 'check cpu'
+        return 0
+
+    def check_ram_valid(self):
+        print 'check ram'
+        return 0
+
+    def check_disk_valid(self):
+        print 'check disk'
+        return 0
+
+    def check_all_resources(self):
+        for k, func in self._DispatchCheckers.iteritems():
+            if func() != 0:
+                print(" failed")
+            else:
+                print(" passed")
+            print "All passed."
+        return 0
 
     def get_flavor_id_slave(self, cyclades_client):
         """ Return the flavor id for the slave based on cpu,ram,disk_size and disk template """
