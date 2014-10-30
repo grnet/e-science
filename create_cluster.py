@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 This script creates a cluster on ~okeanos.
 
 @author: Ioannis Stenos, Nick Vrionis
-'''
+"""
 import logging
 from argparse import ArgumentParser, ArgumentTypeError
 # from optparse import OptionParser
@@ -42,6 +42,7 @@ REPORT = 25  # Define logging level of REPORT
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 
+
 _defaults = {
     'name': '_Prefix',
     'clustersize': 2,
@@ -50,48 +51,74 @@ _defaults = {
     'disk_master': 5,
     'cpu_slave': 2,
     'ram_slave': 2048,
-    'disk_slave': 2,
+    'disk_slave': 5,
     'disk_template': 'ext_vlmc',
     'image': 'Debian Base',
     'token': 'PLACEHOLDER',
     'auth_url': 'https://accounts.okeanos.grnet.gr/identity/v2.0',
     'yarn': False,
-    'logging': 'info'
+    'logging': 'report'
 }
 
 
 class _ArgCheck(object):
+    """
+    Used for type checking arguments supplied for use with type= and choices= argparse attributes
+    """
+
     def __init__(self):
         self.logging_levels = {
             'critical': logging.CRITICAL,
             'error': logging.ERROR,
             'warning': logging.WARNING,
+            'report': REPORT,
             'info': logging.INFO,
             'debug': logging.DEBUG,
         }
+        logging.addLevelName(REPORT, "REPORT")
 
     def unsigned_int(self, val):
+        """
+        :param val: int
+        :return: val if val > 0 or raise exception
+        """
         ival = int(val)
         if ival < 0:
             raise ArgumentTypeError("%s must be a positive number." % val)
         return ival
 
     def two_or_bigger(self, val):
+
+        """
+        :param val: int
+        :return: val if > 2 or raise exception
+        """
         ival = int(val)
         if ival < 2:
             raise ArgumentTypeError("%s must be at least 2." % val)
         return ival
 
+    def five_or_bigger(self, val):
+        ival = int(val)
+        if ival < 5:
+            raise ArgumentTypeError("%s must be at least 5." % val)
+        return ival
+
 
 class HadoopCluster(object):
+    """
+    Wrapper class for create hadoop cluster functionality
+    """
     def __init__(self, opts):
         if not opts or len(opts) == 0:
             self.opts = _defaults.copy()
         else:
             self.opts = opts
+        self.HOSTNAME_MASTER_IP = '127.0.0.1'
+        self.server_dict = {}
 
     def get_flavor_id_master(self, cyclades_client):
-        '''Return the flavor id for the master based on cpu,ram,disk_size and disk template'''
+        """ Return the flavor id for the master based on cpu,ram,disk_size and disk template """
         try:
             flavor_list = cyclades_client.list_flavors(True)
         except Exception:
@@ -108,7 +135,7 @@ class HadoopCluster(object):
         return flavor_id
 
     def get_flavor_id_slave(self, cyclades_client):
-        '''Return the flavor id for the slave based on cpu,ram,disk_size and disk template'''
+        """ Return the flavor id for the slave based on cpu,ram,disk_size and disk template """
         try:
             flavor_list = cyclades_client.list_flavors(True)
         except Exception:
@@ -125,12 +152,12 @@ class HadoopCluster(object):
         return flavor_id
 
     def check_quota(self, auth, req_quotas):
-        '''
+        """
         Checks if user quota are enough for what he needed to create the cluster.
         If limit minus (used and pending) are lower or
         higher than what user requests.Also divides with 1024*1024*1024
         to transform bytes to gigabytes.
-        '''
+        """
         try:
             dict_quotas = auth.get_quotas()
         except Exception:
@@ -166,19 +193,19 @@ class HadoopCluster(object):
         if available_vm < req_quotas['vms']:
             logging.error('Cyclades vms out of limit')
             exit(error_quotas_clustersize)
-        logging.log(logging.INFO, ' Cyclades Cpu,Disk and Ram quotas are ok.')
+        logging.log(REPORT, ' Cyclades Cpu,Disk and Ram quotas are ok.')
         return
 
     def create_bare_cluster(self):
-        '''
+        """
         This function of our script takes the arguments given and calls the
         check_quota function. Also, calls get_flavor_id to find the matching
         flavor_ids from the arguments given and finds the image id of the
         image given as argument. Then instantiates the Cluster and creates
         the virtual machine cluster of one master and clustersize-1 slaves.
         Calls the function to install hadoop to the cluster.
-        '''
-        logging.log(logging.INFO, ' 1.Credentials  and  Endpoints')
+        """
+        logging.log(REPORT, ' 1.Credentials  and  Endpoints')
         # Finds user public ssh key
         USER_HOME = expanduser('~')
         pub_keys_path = join(USER_HOME, ".ssh/id_rsa.pub")
@@ -207,7 +234,7 @@ class HadoopCluster(object):
             if lst['name'] == self.opts['image']:
                 chosen_image = lst
 
-        logging.log(logging.INFO, ' 2.Create  virtual  cluster')
+        logging.log(REPORT, ' 2.Create  virtual  cluster')
         cluster = Cluster(cyclades,
                           prefix=self.opts['name'],
                           flavor_id_master=flavor_master,
@@ -221,13 +248,14 @@ class HadoopCluster(object):
         self.HOSTNAME_MASTER_IP, self.server_dict = cluster.create('', pub_keys_path, '')
         sleep(15)
         # wait for the machines to be pingable
-        logging.log(logging.INFO, ' Bare cluster has been created.')
+        logging.log(REPORT, ' Bare cluster has been created.')
         # Return master node ip and server dict
         return self.HOSTNAME_MASTER_IP, self.server_dict
 
 
 class YarnCluster(HadoopCluster):
     def __init__(self, opts):
+        super(YarnCluster, self).__init__(opts)
         self.opts = opts
         self.c_hadoop_cluster = HadoopCluster(self.opts)
 
@@ -235,27 +263,27 @@ class YarnCluster(HadoopCluster):
         self.HOSTNAME_MASTER_IP, self.server_dict = self.c_hadoop_cluster.create_bare_cluster()
         list_of_hosts = reroute_ssh_prep(self.server_dict, self.HOSTNAME_MASTER_IP)
         install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP, self.opts['name'])
-        logging.log(logging.INFO, ' Bare cluster has been created.')
+        logging.log(REPORT, ' Bare cluster has been created.')
         return self.HOSTNAME_MASTER_IP, self.server_dict
 
 
 def main(opts):
-    '''
-    The main function calls create_cluster with the arguments given from
+    """
+    The main function calls create_cluster or resource check methods with the arguments given from
     command line.
-    '''
+    """
     c_yarn_cluster = YarnCluster(opts)
     if opts['yarn']:
-        HOSTNAME_MASTER_IP, server_dict = c_yarn_cluster.create_yarn_cluster()
+        c_yarn_cluster.create_yarn_cluster()
     else:
-        HOSTNAME_MASTER_IP, server_dict = c_yarn_cluster.create_bare_cluster()
+        c_yarn_cluster.create_bare_cluster()
 
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     checker = _ArgCheck()
     parser.add_argument("--name", help='The prefix name of the cluster',
-                        dest='name', default='Test')  # , required=True)
+                        dest='name', default='Test')
     parser.add_argument("--clustersize", help='Number of virtual cluster nodes to create',
                         dest='clustersize', type=checker.two_or_bigger, default=_defaults['clustersize'])
     parser.add_argument("--cpu_master", help='Number of cpu cores for the master node',
@@ -263,13 +291,13 @@ if __name__ == "__main__":
     parser.add_argument("--ram_master", help='Size of RAM (MB) for the master node',
                         dest='ram_master', type=checker.unsigned_int, default=_defaults['ram_master'])
     parser.add_argument("--disk_master", help='Disk size (GB) for the master node',
-                        dest='disk_master', type=int, default=_defaults['disk_master'])
+                        dest='disk_master', type=checker.five_or_bigger, default=_defaults['disk_master'])
     parser.add_argument("--cpu_slave", help='Number of cpu cores for the slave node(s)',
                         dest='cpu_slave', type=int, default=_defaults['cpu_slave'])
     parser.add_argument("--ram_slave", help='Size of RAM (MB) for the slave node(s)',
                         dest='ram_slave', type=int, default=_defaults['ram_slave'])
     parser.add_argument("--disk_slave", help='Disk size (GB) for the slave node(s)',
-                        dest='disk_slave', type=int, default=_defaults['disk_slave'])
+                        dest='disk_slave', type=checker.five_or_bigger, default=_defaults['disk_slave'])
     parser.add_argument("--disk_template", help='Disk template',
                         dest='disk_template', default=_defaults['disk_template'], choices=['drbd', 'ext_vlmc'])
     parser.add_argument("--image", help='OS for the virtual machine cluster',
