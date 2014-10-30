@@ -11,6 +11,7 @@ from argparse import ArgumentParser, ArgumentTypeError
 # from optparse import OptionParser
 from sys import argv, exit
 from time import sleep
+from random import randint
 from os.path import dirname, abspath, expanduser, join
 from reroute_ssh import reroute_ssh_prep
 from run_ansible_playbooks import install_yarn
@@ -32,6 +33,7 @@ error_quotas_cyclades_disk = -10
 error_quotas_cpu = -11
 error_quotas_ram = -12
 error_quotas_clustersize = -13
+error_quotas_network = -14
 error_flavor_id = -15
 error_user_quota = -22
 error_flavor_list = -23
@@ -88,7 +90,6 @@ class _ArgCheck(object):
         return ival
 
     def two_or_bigger(self, val):
-
         """
         :param val: int
         :return: val if > 2 or raise exception
@@ -119,13 +120,95 @@ class HadoopCluster(object):
         self.server_dict = {}
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_clustersize_quotas
-        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_flavor_quotas
         self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_network_quotas
         self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_ip_quotas
         self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_cpu_valid
         self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_ram_valid
         self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_disk_valid
 
+
+    def check_clustersize_quotas(self):
+        auth = check_credentials(self.opts['token'], self.opts['auth_url'])
+        dict_quotas = auth.get_quotas()
+        limit_vm = dict_quotas['system']['cyclades.vm']['limit']
+        usage_vm = dict_quotas['system']['cyclades.vm']['usage']
+        pending_vm = dict_quotas['system']['cyclades.vm']['pending']
+        available_vm = limit_vm - usage_vm - pending_vm
+        if available_vm < self.opts['clustersize']:
+            logging.error('Cyclades vms out of limit')
+            return error_quotas_clustersize
+        else:
+            return 0
+
+
+    def check_network_quotas(self):
+        auth = check_credentials(self.opts['token'], self.opts['auth_url'])
+        dict_quotas = auth.get_quotas()
+        limit_net = dict_quotas['system']['cyclades.network.private']['limit']
+        usage_net = dict_quotas['system']['cyclades.network.private']['usage']
+        pending_net = dict_quotas['system']['cyclades.network.private']['pending']
+        available_networks = limit_net-usage_net-pending_net
+        if available_networks >= 1:
+            logging.log(REPORT, ' Private Network quota is ok')
+            return 0
+        else:
+            logging.error('Private Network quota exceeded')
+            return error_quotas_network
+
+    def check_ip_quotas(self):
+        return 0
+
+    def check_cpu_valid(self):
+        auth = check_credentials(self.opts['token'], self.opts['auth_url'])
+        dict_quotas = auth.get_quotas()
+        limit_cpu = dict_quotas['system']['cyclades.cpu']['limit']
+        usage_cpu = dict_quotas['system']['cyclades.cpu']['usage']
+        pending_cpu = dict_quotas['system']['cyclades.cpu']['pending']
+        available_cpu = limit_cpu - usage_cpu - pending_cpu
+        cpu_req = self.opts['cpu_master'] + (self.opts['cpu_slave']) * (self.opts['clustersize'] - 1)
+        if available_cpu < cpu_req:
+            logging.error('Cyclades cpu out of limit')
+            return error_quotas_cpu
+        else:
+            return 0
+
+    def check_ram_valid(self):
+        auth = check_credentials(self.opts['token'], self.opts['auth_url'])
+        dict_quotas = auth.get_quotas()
+        limit_ram = dict_quotas['system']['cyclades.ram']['limit']
+        usage_ram = dict_quotas['system']['cyclades.ram']['usage']
+        pending_ram = dict_quotas['system']['cyclades.ram']['pending']
+        available_ram = (limit_ram - usage_ram - pending_ram) / Bytes_to_MB
+        ram_req = self.opts['ram_master'] + (self.opts['ram_slave']) * (self.opts['clustersize'] - 1)
+        if available_ram < ram_req:
+            logging.error('Cyclades ram out of limit')
+            return error_quotas_ram
+        else:
+            return 0
+
+    def check_disk_valid(self):
+        auth = check_credentials(self.opts['token'], self.opts['auth_url'])
+        dict_quotas = auth.get_quotas()
+        limit_cd = dict_quotas['system']['cyclades.disk']['limit']
+        usage_cd = dict_quotas['system']['cyclades.disk']['usage']
+        pending_cd = dict_quotas['system']['cyclades.disk']['pending']
+        cyclades_disk_req = self.opts['disk_master'] + (self.opts['disk_slave']) * (self.opts['clustersize'] - 1)
+        available_cyclades_disk_GB = (limit_cd - usage_cd - pending_cd) / Bytes_to_GB
+        if available_cyclades_disk_GB < cyclades_disk_req:
+            logging.error('Cyclades disk out of limit')
+            return error_quotas_cyclades_disk
+        else:
+            return 0
+
+    def check_all_resources(self):
+        for k, func in self._DispatchCheckers.iteritems():
+            if func() != 0:
+                print(func.__name__ + " failed")
+                return 1
+            else:
+                print(func.__name__ + " passed")
+        print "All passed."
+        return 0
 
     def get_flavor_id_master(self, cyclades_client):
         """ Return the flavor id for the master based on cpu,ram,disk_size and disk template """
@@ -143,43 +226,6 @@ class HadoopCluster(object):
                 flavor_id = flavor['id']
 
         return flavor_id
-
-    def check_clustersize_quotas(self):
-        print 'check clustersize'
-        return 0
-
-    def  check_flavor_quotas(self):
-        print 'check flavor quota'
-        return 0
-
-    def check_network_quotas(self):
-        print 'check network'
-        return 0
-
-    def check_ip_quotas(self):
-        print 'check ip'
-        return 0
-
-    def check_cpu_valid(self):
-        print 'check cpu'
-        return 0
-
-    def check_ram_valid(self):
-        print 'check ram'
-        return 0
-
-    def check_disk_valid(self):
-        print 'check disk'
-        return 0
-
-    def check_all_resources(self):
-        for k, func in self._DispatchCheckers.iteritems():
-            if func() != 0:
-                print(" failed")
-            else:
-                print(" passed")
-            print "All passed."
-        return 0
 
     def get_flavor_id_slave(self, cyclades_client):
         """ Return the flavor id for the slave based on cpu,ram,disk_size and disk template """
