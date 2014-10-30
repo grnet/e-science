@@ -33,17 +33,18 @@ def get_user_id(token):
     try:
         logging.info(' Get the uuid')
         uuid = auth.user_info['id']
-        return db_after_login(uuid)
+        return db_after_login(uuid, token)
     except ClientError:
         logging.error('Failed to get uuid from identity server')
         raise
 
 
-def db_after_login(given_uuid):
+def db_after_login(given_uuid, given_token):
     '''
     Check if a user already exists in DB or make a new entry in UserInfo
     if it is a new user. Each user must have one entry in the UserInfo.
     If there are multiple entries, then raise an error.
+    Also checks if okeanos token has changed and updates it in db.
     '''
     try:
         existing_user = UserInfo.objects.get(uuid=given_uuid)
@@ -51,11 +52,13 @@ def db_after_login(given_uuid):
                      existing_user.user_id)
         # user already in db
         db_login_entry(existing_user)
+        if existing_user.okeanos_token != given_token:
+            existing_user.okeanos_token = given_token
         return existing_user
 
     except ObjectDoesNotExist:
         # new user database entry
-        new_entry = UserInfo(uuid=given_uuid)
+        new_entry = UserInfo(uuid=given_uuid, okeanos_token=given_token)
         new_entry.save()
         new_token = Token(user=new_entry)
         new_token.save()

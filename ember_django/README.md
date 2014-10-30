@@ -12,6 +12,8 @@ sudo pip install djangorestframework
 
 sudo pip install rest_framework_ember
 
+sudo pip install djorm-pgarray
+
 django version: 1.7
 
 A database backend for Django. PostgreSQL was used for the application, but by default the Django configuration uses SQLite.
