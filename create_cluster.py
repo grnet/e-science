@@ -8,7 +8,6 @@ This script creates a cluster on ~okeanos.
 """
 import logging
 from argparse import ArgumentParser, ArgumentTypeError
-# from optparse import OptionParser
 from sys import argv, exit
 from time import sleep
 from random import randint
@@ -16,7 +15,7 @@ from os.path import dirname, abspath, expanduser, join
 from reroute_ssh import reroute_ssh_prep
 from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
-    init_cyclades, init_plankton, init_cyclades_netclient
+    init_cyclades, init_cyclades_netclient, init_plankton
 
 
 # Definitions of return value errors
@@ -35,15 +34,16 @@ error_quotas_ram = -12
 error_quotas_clustersize = -13
 error_quotas_network = -14
 error_flavor_id = -15
+error_image_id = -16
 error_user_quota = -22
 error_flavor_list = -23
+error_get_ip = -30
 error_syntax_auth_token = -32
 
 # Global constants
 REPORT = 25  # Define logging level of REPORT
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
-
 
 _defaults = {
     'name': '_Prefix',
@@ -118,18 +118,18 @@ class HadoopCluster(object):
             self.opts = opts
         self.HOSTNAME_MASTER_IP = '127.0.0.1'
         self.server_dict = {}
+        self.status = {}
+        self.auth = check_credentials(self.opts['token'], self.opts['auth_url'])
         self._DispatchCheckers = {}
-        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_clustersize_quotas
-        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_network_quotas
-        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_ip_quotas
-        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_cpu_valid
-        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_ram_valid
-        self._DispatchCheckers[len(self._DispatchCheckers)+1] = self.check_disk_valid
-
+        self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_clustersize_quotas
+        self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_network_quotas
+        self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_ip_quotas
+        self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_cpu_valid
+        self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_ram_valid
+        self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_disk_valid
 
     def check_clustersize_quotas(self):
-        auth = check_credentials(self.opts['token'], self.opts['auth_url'])
-        dict_quotas = auth.get_quotas()
+        dict_quotas = self.auth.get_quotas()
         limit_vm = dict_quotas['system']['cyclades.vm']['limit']
         usage_vm = dict_quotas['system']['cyclades.vm']['usage']
         pending_vm = dict_quotas['system']['cyclades.vm']['pending']
@@ -140,14 +140,12 @@ class HadoopCluster(object):
         else:
             return 0
 
-
     def check_network_quotas(self):
-        auth = check_credentials(self.opts['token'], self.opts['auth_url'])
-        dict_quotas = auth.get_quotas()
+        dict_quotas = self.auth.get_quotas()
         limit_net = dict_quotas['system']['cyclades.network.private']['limit']
         usage_net = dict_quotas['system']['cyclades.network.private']['usage']
         pending_net = dict_quotas['system']['cyclades.network.private']['pending']
-        available_networks = limit_net-usage_net-pending_net
+        available_networks = limit_net - usage_net - pending_net
         if available_networks >= 1:
             logging.log(REPORT, ' Private Network quota is ok')
             return 0
@@ -156,11 +154,25 @@ class HadoopCluster(object):
             return error_quotas_network
 
     def check_ip_quotas(self):
-        return 0
+        dict_quotas = self.auth.get_quotas()
+        endpoints, user_id = endpoints_and_user_id(self.auth)
+        net_client = init_cyclades_netclient(endpoints['network'], self.opts['token'])
+        list_float_ips = net_client.list_floatingips()
+        limit_ips = dict_quotas['system']['cyclades.floating_ip']['limit']
+        usage_ips = dict_quotas['system']['cyclades.floating_ip']['usage']
+        pending_ips = dict_quotas['system']['cyclades.floating_ip']['pending']
+        available_ips = limit_ips - (usage_ips + pending_ips)
+        for d in list_float_ips:
+            if d['instance_id'] is None:
+                available_ips += 1
+        if available_ips > 0:
+            return 0
+        else:
+            logging.error('Floating IP not available')
+            return error_get_ip
 
     def check_cpu_valid(self):
-        auth = check_credentials(self.opts['token'], self.opts['auth_url'])
-        dict_quotas = auth.get_quotas()
+        dict_quotas = self.auth.get_quotas()
         limit_cpu = dict_quotas['system']['cyclades.cpu']['limit']
         usage_cpu = dict_quotas['system']['cyclades.cpu']['usage']
         pending_cpu = dict_quotas['system']['cyclades.cpu']['pending']
@@ -173,8 +185,7 @@ class HadoopCluster(object):
             return 0
 
     def check_ram_valid(self):
-        auth = check_credentials(self.opts['token'], self.opts['auth_url'])
-        dict_quotas = auth.get_quotas()
+        dict_quotas = self.auth.get_quotas()
         limit_ram = dict_quotas['system']['cyclades.ram']['limit']
         usage_ram = dict_quotas['system']['cyclades.ram']['usage']
         pending_ram = dict_quotas['system']['cyclades.ram']['pending']
@@ -187,8 +198,7 @@ class HadoopCluster(object):
             return 0
 
     def check_disk_valid(self):
-        auth = check_credentials(self.opts['token'], self.opts['auth_url'])
-        dict_quotas = auth.get_quotas()
+        dict_quotas = self.auth.get_quotas()
         limit_cd = dict_quotas['system']['cyclades.disk']['limit']
         usage_cd = dict_quotas['system']['cyclades.disk']['usage']
         pending_cd = dict_quotas['system']['cyclades.disk']['pending']
@@ -207,7 +217,7 @@ class HadoopCluster(object):
                 return 1
             else:
                 print(func.__name__ + " passed")
-        print "All passed."
+        print "All checks passed."
         return 0
 
     def get_flavor_id_master(self, cyclades_client):
@@ -326,6 +336,10 @@ class HadoopCluster(object):
         for lst in list_current_images:
             if lst['name'] == self.opts['image']:
                 chosen_image = lst
+                break
+        else:
+            logging.error(self.opts['image'] + ' is not a valid image option')
+            exit(error_image_id)
 
         logging.log(REPORT, ' 2.Create  virtual  cluster')
         cluster = Cluster(cyclades,
