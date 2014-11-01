@@ -28,6 +28,6 @@ script:
 - sshpass -p $hpass scp -o StrictHostKeyChecking=no -q ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
 - sshpass -p $hpass ssh hduser@$master_ip "cat /home/hduser/.ssh/id_rsa.new >> /home/hduser/.ssh/authorized_keys"
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-- nosetests -sv tests/test_create_bare_cluster.py
+- nosetests -sv tests/test_create_cluster.py
 - python legacy/run_pi_yarn.py --master_ip=$master_ip 2 100000
 
