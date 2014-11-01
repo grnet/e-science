@@ -18,6 +18,7 @@ sys.path.append(join(dirname(__file__), '..'))
 from create_cluster import YarnCluster, HadoopCluster
 
 
+
 def mock_createcluster(*args):
     """ :returns proper master_ip and image list types with dummy values. """
     print 'in mock create cluster'
@@ -124,9 +125,8 @@ class TestCreateCluster(TestCase):
                 'auth_url': self.auth_url}
         expected_masterip = '127.0.0.1'
         expected_vm_dict = {1: 'f vm'}
-        c_yarn_cluster = YarnCluster(opts)
         # act
-        returned_masterip, returned_vm_dict = c_yarn_cluster.create_bare_cluster()
+        returned_masterip, returned_vm_dict = create_cluster(**opts)
         # assert
         self.assertTupleEqual((expected_masterip, expected_vm_dict), (returned_masterip, returned_vm_dict))
 

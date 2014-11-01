@@ -53,13 +53,13 @@ class InvalidTokenTest(unittest.TestCase):
         return True
     
     def is_alert_present(self):
-        try: self.driver.switch_to.alert()
+        try: self.driver.switch_to_alert()
         except NoAlertPresentException, e: return False
         return True
     
     def close_alert_and_get_its_text(self):
         try:
-            alert = self.driver.switch_to.alert()
+            alert = self.driver.switch_to_alert()
             alert_text = alert.text
             if self.accept_next_alert:
                 alert.accept()
