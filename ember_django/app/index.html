@@ -67,19 +67,19 @@
             <h4>CPUs ({{this.cpu_available}} available): Master ({{this.master_cpu_selection}}) Each Slave ({{this.slaves_cpu_selection}})</h4>    
             <p>    
                 {{#each item in content._data.cpu_choices}}
-                    <button {{action "cpu_selection" item}} {{bind-attr disabled=cpu_Not_Allow}}> {{item}}x </button>                          
+                    <button {{action "cpu_selection" item}} {{bindAttr disabled="cpu_Not_Allow"}}> {{item}}x </button>                          
                 {{/each}}                
             </p>
             <h4>Memory size ({{this.mem_available}} MB available): Master ({{this.master_mem_selection}}) Each Slave ({{this.slaves_mem_selection}})</h4>    
             <p>
                 {{#each item in content._data.mem_choices}}
-                    <button {{action "mem_selection" item}} {{bind-attr disabled=mem_Not_Allow}}> {{item}} </button>                          
+                    <button {{action "mem_selection" item}} {{bind-attr disabled="mem_Not_Allow"}}> {{item}} </button>                          
                 {{/each}}                                                
             </p>
             <h4>Disk size ({{this.disk_available}} GB available): Master ({{this.master_disk_selection}}) Each Slave ({{this.slaves_disk_selection}})</h4>    
             <p>
                 {{#each item in content._data.disk_choices}}
-                    <button {{action "disk_selection" item}} {{bind-attr disabled=disk_Not_Allow}}> {{item}} </button>                          
+                    <button {{action "disk_selection" item}} {{bind-attr disabled="disk_Not_Allow"}}> {{item}} </button>                          
                 {{/each}}                                
             </p>
             <h4>Storage (common all cluster machines): {{this.disk_temp}}</h4>    
@@ -134,11 +134,13 @@
     <div id="footer">
         <button id="previous" {{action "gotoflavor"}}> Previous </button>
         <button id="next" {{action "gotocreate"}}> Create Cluster! </button>
+        <h4>{{message}}</h4>
         <form class="form-horizontal" {{action "logout" on="submit"}}>
 	<button type="submit">Logout</button>
       </form>
     </div>
   </script>
+
 {% endverbatim %}
 </body>
 </html>

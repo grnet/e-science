@@ -17,7 +17,7 @@ App.User = DS.Model.extend({
      cluster: attr('number')    // number of user clusters
     });
 
-// Model used for retrieving create cluster information 
+// Model used for retrieving create cluster information based on user's quota and kamaki flavors
 App.Createcluster = DS.Model.extend({
     vms_max: DS.attr('number'),       // maximum (limit) number of VMs 
     vms_av: DS.attr(),                // available VMs
@@ -32,6 +32,21 @@ App.Createcluster = DS.Model.extend({
     disk_choices: DS.attr(),          // disk choices
     disk_template: DS.attr(),         // storage choices
     os_choices: DS.attr()             // Operating System choices
+});
+
+// Model used for sending user's choices regarding create cluster information
+App.Clusterchoice = DS.Model.extend({
+    cluster_name: DS.attr('string'),
+    cluster_size: DS.attr('number'),
+    cpu_master: DS.attr('number'),
+    mem_master: DS.attr('number'),
+    disk_master: DS.attr('number'),
+    cpu_slaves: DS.attr('number'),
+    mem_slaves: DS.attr('number'),
+    disk_slaves: DS.attr('number'),
+    disk_template: DS.attr('string'),
+    os_choice: DS.attr('string')
+
 });
 
 // Extend Application Adapter settings for Token Authentication and REST calls to /api
@@ -197,9 +212,10 @@ App.UserLogoutRoute = Ember.Route.extend({
     }, function(){
      // Set global var escience and localStorage token to null when put fails.
     	App.set('escience_token', "null");
-        window.localStorage.escience_auth_token = App.get('escience_token'); 
+        window.localStorage.escience_auth_token = App.get('escience_token');
     });
     this.transitionTo('homepage');
+
 }  
 });
 
@@ -431,6 +447,7 @@ App.CreateclusterConfirmRoute = App.RestrictedRoute.extend({
 App.CreateclusterConfirmController = Ember.Controller.extend({
     // in order to have access to personalize
     needs: 'createclusterIndex',
+    message: '',
     actions: {         
         logout: function() {
             // redirect to logout
@@ -440,13 +457,33 @@ App.CreateclusterConfirmController = Ember.Controller.extend({
         // gotoflavor action is triggered
         gotoflavor: function() {
             // redirect to flavor template
+            this.set('message', '');
             this.transitionTo('createcluster.index');
         },
         // when next button is pressed
         // gotocreate action is triggered
+        // User's cluster creation choices are send to backend for checking
         gotocreate: function() {
-            // do nothing for now
-            
+            var self = this;
+            var cluster_selection = this.store.update('clusterchoice', {'id': 1, 
+		'cluster_name': this.controllerFor('createclusterIndex').get('cluster_name'),
+    		'cluster_size': this.controllerFor('createclusterIndex').get('cluster_size'),
+    		'cpu_master': this.controllerFor('createclusterIndex').get('master_cpu_selection'),
+    		'mem_master': this.controllerFor('createclusterIndex').get('master_mem_selection'),
+    		'disk_master': this.controllerFor('createclusterIndex').get('master_disk_selection'),
+    		'cpu_slaves': this.controllerFor('createclusterIndex').get('slaves_cpu_selection'),
+    		'mem_slaves': this.controllerFor('createclusterIndex').get('slaves_mem_selection'),
+    		'disk_slaves': this.controllerFor('createclusterIndex').get('slaves_disk_selection'),
+    		'disk_template': this.controllerFor('createclusterIndex').get('disk_temp'),
+    		'os_choice': this.controllerFor('createclusterIndex').get('operating_system')}).save();
+            cluster_selection.then(
+    		function(data){
+     		// Set the response to user's create cluster click when put succeeds.
+    		self.set('message',data._data.message);
+    		}, function(){
+     		// Set the response to user's create cluster click when put fails.
+    		 self.set('message','A problem occured during your request. Please check your cluster parameters and try again');
+    		});
         }
     }  
 });

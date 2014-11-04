@@ -14,6 +14,8 @@ from backend import views
 urlpatterns = patterns('', url(r'^$', 'backend.views.main_page'),
                        url(r'^admin', include(admin.site.urls)),
                        url(r'^api/users', views.SessionView.as_view()),
-                       url(r'^api/createclusters', views.StatusView.as_view())
+                       url(r'^api/createclusters', views.StatusView.as_view()),
+                       url(r'^api/clusterchoices', views.StatusView.as_view())
+
 
                        )

@@ -9,8 +9,10 @@ and update the ClusterCreationParams model.
 '''
 
 import os
+from os.path import join, dirname
 import sys
 import logging
+sys.path.append(join(dirname(__file__), '../..'))
 from okeanos_utils import *
 from kamaki.clients.cyclades import CycladesClient
 from backend.models import ClusterCreationParams
