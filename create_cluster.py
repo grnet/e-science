@@ -10,7 +10,6 @@ import logging
 from argparse import ArgumentParser, ArgumentTypeError
 from sys import argv, exit
 from time import sleep
-from random import randint
 from os.path import dirname, abspath, expanduser, join
 from reroute_ssh import reroute_ssh_prep
 from run_ansible_playbooks import install_yarn
@@ -119,7 +118,8 @@ class HadoopCluster(object):
         self.HOSTNAME_MASTER_IP = '127.0.0.1'
         self.server_dict = {}
         self.status = {}
-        self.auth = check_credentials(self.opts['token'], self.opts['auth_url'])
+        self.auth = check_credentials(self.opts.get('token', _defaults['token']),
+                                      self.opts.get('auth_url', _defaults['auth_url']))
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_clustersize_quotas
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_network_quotas
@@ -134,7 +134,7 @@ class HadoopCluster(object):
         usage_vm = dict_quotas['system']['cyclades.vm']['usage']
         pending_vm = dict_quotas['system']['cyclades.vm']['pending']
         available_vm = limit_vm - usage_vm - pending_vm
-        if available_vm < self.opts['clustersize']:
+        if available_vm < self.opts.get('clustersize', _defaults['clustersize']):
             logging.error('Cyclades vms out of limit')
             return error_quotas_clustersize
         else:
@@ -156,7 +156,7 @@ class HadoopCluster(object):
     def check_ip_quotas(self):
         dict_quotas = self.auth.get_quotas()
         endpoints, user_id = endpoints_and_user_id(self.auth)
-        net_client = init_cyclades_netclient(endpoints['network'], self.opts['token'])
+        net_client = init_cyclades_netclient(endpoints['network'], self.opts.get('token', _defaults['token']))
         list_float_ips = net_client.list_floatingips()
         limit_ips = dict_quotas['system']['cyclades.floating_ip']['limit']
         usage_ips = dict_quotas['system']['cyclades.floating_ip']['usage']
@@ -177,7 +177,9 @@ class HadoopCluster(object):
         usage_cpu = dict_quotas['system']['cyclades.cpu']['usage']
         pending_cpu = dict_quotas['system']['cyclades.cpu']['pending']
         available_cpu = limit_cpu - usage_cpu - pending_cpu
-        cpu_req = self.opts['cpu_master'] + (self.opts['cpu_slave']) * (self.opts['clustersize'] - 1)
+        cpu_req = self.opts.get('cpu_master', _defaults['cpu_master']) + \
+                  (self.opts.get('cpu_slave', _defaults['cpu_slave']) * (
+                      self.opts.get('clustersize', _defaults['clustersize']) - 1))
         if available_cpu < cpu_req:
             logging.error('Cyclades cpu out of limit')
             return error_quotas_cpu
@@ -190,7 +192,9 @@ class HadoopCluster(object):
         usage_ram = dict_quotas['system']['cyclades.ram']['usage']
         pending_ram = dict_quotas['system']['cyclades.ram']['pending']
         available_ram = (limit_ram - usage_ram - pending_ram) / Bytes_to_MB
-        ram_req = self.opts['ram_master'] + (self.opts['ram_slave']) * (self.opts['clustersize'] - 1)
+        ram_req = self.opts.get('ram_master', _defaults['ram_master']) + \
+                  (self.opts.get('ram_slave', _defaults['ram_slave']) * (
+                      self.opts.get('clustersize', _defaults['clustersize']) - 1))
         if available_ram < ram_req:
             logging.error('Cyclades ram out of limit')
             return error_quotas_ram
@@ -202,7 +206,9 @@ class HadoopCluster(object):
         limit_cd = dict_quotas['system']['cyclades.disk']['limit']
         usage_cd = dict_quotas['system']['cyclades.disk']['usage']
         pending_cd = dict_quotas['system']['cyclades.disk']['pending']
-        cyclades_disk_req = self.opts['disk_master'] + (self.opts['disk_slave']) * (self.opts['clustersize'] - 1)
+        cyclades_disk_req = self.opts.get('disk_master', _defaults['disk_master']) + \
+                            (self.opts.get('disk_slave', _defaults['disk_slave']) *
+                             (self.opts.get('clustersize', _defaults['clustersize']) - 1))
         available_cyclades_disk_GB = (limit_cd - usage_cd - pending_cd) / Bytes_to_GB
         if available_cyclades_disk_GB < cyclades_disk_req:
             logging.error('Cyclades disk out of limit')
@@ -211,12 +217,15 @@ class HadoopCluster(object):
             return 0
 
     def check_all_resources(self):
-        for k, func in self._DispatchCheckers.iteritems():
-            if func() != 0:
-                print(func.__name__ + " failed")
-                return 1
+        # use a list comprehension if we want to always run checks in specific order
+        for checker in [func for (order, func) in sorted(self._DispatchCheckers.items())]:
+            # for k, checker in self._DispatchCheckers.iteritems():
+            retval = checker()
+            if retval != 0:
+                print(checker.__name__ + " failed")
+                return retval
             else:
-                print(func.__name__ + " passed")
+                print(checker.__name__ + " passed")
         print "All checks passed."
         return 0
 
