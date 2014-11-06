@@ -12,13 +12,16 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
 import unittest, time, re
-from okeanos_utils import check_quota
-from create_bare_cluster import create_cluster
+from okeanos_utils import check_credentials, endpoints_and_user_id, init_cyclades_netclient
+import logging
+
+error_quotas_network = -14
+error_create_network = -29
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
 
-class TestClusterSize(unittest.TestCase):
+class TestClusterNetwork(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -27,7 +30,6 @@ class TestClusterSize(unittest.TestCase):
         self.accept_next_alert = True
         parser = RawConfigParser()
         config_file = join(BASE_DIR, '.private/.config.txt')
-        self.name = 'testcluster'
         parser.read(config_file)
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
@@ -83,12 +85,12 @@ class TestClusterSize(unittest.TestCase):
         driver.find_element_by_id("next").click()
         for i in range(60):
             try:
-                if "Selected cluster size exceeded cyclades virtual machines limit" == driver.find_element_by_css_selector("#footer > h4").text: break
+                if "Private Network quota exceeded" == driver.find_element_by_css_selector("#footer > h4").text: break
             except: pass
             time.sleep(1)
         else: self.fail("time out")
         time.sleep(3)
-        self.assertEqual("Selected cluster size exceeded cyclades virtual machines limit", driver.find_element_by_css_selector("#footer > h4").text)
+        self.assertEqual("Private Network quota exceeded", driver.find_element_by_css_selector("#footer > h4").text)
         
     def is_element_present(self, how, what):
         try: self.driver.find_element(by=how, value=what)
@@ -117,13 +119,26 @@ class TestClusterSize(unittest.TestCase):
 
     def bind_okeanos_resources(self):
 
-        user_quota = check_quota(self.token)
-        create_cluster(name=self.name,
-                       clustersize=user_quota['cluster_size']['available'],
-                       cpu_master=1, ram_master=1024, disk_master=5,
-                       disk_template='ext_vlmc', cpu_slave=1, ram_slave=1024,
-                       disk_slave=5, token=self.token,
-                       image='Debian Base')
+        auth = check_credentials(self.token)
+        endpoints, user_id = endpoints_and_user_id(auth)
+        net_client=init_cyclades_netclient(endpoints['network'], self.token)
+        dict_quotas = auth.get_quotas()
+        limit_net = dict_quotas['system']['cyclades.network.private']['limit']
+        usage_net = dict_quotas['system']['cyclades.network.private']['usage']
+        pending_net = dict_quotas['system']['cyclades.network.private']['pending']
+        available_networks = limit_net - usage_net - pending_net
+        if available_networks >= 1:
+            logging.info(' Private Network quota is ok')
+            try:
+                for i in range(available_networks):
+                    new_network = net_client.create_network('MAC_FILTERED', 'mycluster ' + str(i))
+            except Exception:
+                logging.exception('Error in creating network')
+                sys.exit(error_create_network)
+        else:
+            logging.error('Private Network quota exceeded')
+            return error_quotas_network
+
 
 if __name__ == "__main__":
     unittest.main()
