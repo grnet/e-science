@@ -1,52 +1,37 @@
-/* Put your CSS here */
-.ember-application {
-    margin: 20px;
-    background-color: rgb(211,211,211);
-}
-/* sizes */
-#main-wrap > div { min-height: 300px; }
-
-#header {
-    min-height: 20px;
-    text-align: left;
-    font-size: 20px;   
-    font-style: bold;    
-}
-#footer {
-    min-height: 40px;
-    text-align: center;
-}
-
+/*      vf addition start          */
 /* layout */
+#main-wrap > div {
+	min-height: 250px;
+}
 #main-wrap {
-    /* overflow to handle inner floating block */
-    overflow: hidden;
+	/* overflow to handle inner floating block */
+	overflow: hidden;
 }
 
 #sidebar {
-    float: left;
-    width: 30%;
+	float: left;
+	text-align: left;
+	width: 30%;
 }
 
 #content-wrap {
-    float: right;
-    width: 70%;
+	float: right;
+	text-align: left;
+	width: 70%;
 }
-
 #area1 {
-    float: left;
-    width: 30%;
-}   
+	float: left;
+	width: 30%;
+}
 #area2 {
-    float: left;
-    width: 30%;
+	float: left;
+	width: 30%;
 }
 #area3 {
-    float: left;
-    width: 30%;
-} 
-
-#btnVM {
+	float: left;
+	width: 30%;
+}
+.master_enable {
 	-moz-box-shadow:inset 0px 39px 0px -24px #e67a73;
 	-webkit-box-shadow:inset 0px 39px 0px -24px #e67a73;
 	box-shadow:inset 0px 39px 0px -24px #e67a73;
@@ -64,15 +49,32 @@
 	text-decoration:none;
 	text-shadow:0px 1px 0px #b23e35;
 }
-#btnVM:hover {
+.master_disable, .slaves_disable {
+	-moz-box-shadow:inset 0px 39px 0px -24px #768d87;
+	-webkit-box-shadow:inset 0px 39px 0px -24px #768d87;
+	box-shadow:inset 0px 39px 0px -24px #768d87;
+	background-color:#768d87;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	border-radius:4px;
+	border:1px solid #566963;
+	display:inline-block;
+	cursor:pointer;
+	color:#ffffff;
+	font-family:arial;
+	font-size:15px;
+	padding:6px 15px;
+	text-decoration:none;
+	text-shadow:0px 1px 0px #2b665e;
+}
+.master_enable:hover {
 	background-color:#eb675e;
 }
-#btnVM:active {
+.master_enable:active {
 	position:relative;
 	top:1px;
 }
-
-#slaves {
+.slaves_enable {
 	-moz-box-shadow:inset 0px 39px 0px -24px #3dc21b;
 	-webkit-box-shadow:inset 0px 39px 0px -24px #3dc21b;
 	box-shadow:inset 0px 39px 0px -24px #3dc21b;
@@ -80,7 +82,7 @@
 	-moz-border-radius:4px;
 	-webkit-border-radius:4px;
 	border-radius:4px;
-	border:1px solid #18ab29;
+	border:1px solid #ffffff;
 	display:inline-block;
 	cursor:pointer;
 	color:#ffffff;
@@ -90,10 +92,12 @@
 	text-decoration:none;
 	text-shadow:0px 1px 0px #2f6627;
 }
-#slaves:hover {
+.slaves_enabled:hover {
 	background-color:#5cbf2a;
 }
-#slaves:active {
+.slaves_enabled:active {
 	position:relative;
 	top:1px;
 }
+
+/*      vf addition end          */
