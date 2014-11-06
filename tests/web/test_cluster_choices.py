@@ -12,8 +12,6 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
 import unittest, time, re
-from create_bare_cluster import create_cluster
-from okeanos_utils import check_quota
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
@@ -26,7 +24,6 @@ class TestCluster(unittest.TestCase):
         self.accept_next_alert = True
         parser = RawConfigParser()
         config_file = join(BASE_DIR, '.private/.config.txt')
-        self.name = 'testcluster'
         parser.read(config_file)
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
@@ -112,16 +109,6 @@ class TestCluster(unittest.TestCase):
     def tearDown(self):
         self.driver.quit()
         self.assertEqual([], self.verificationErrors)
-
-    def bind_okeanos_resources(self):
-
-        user_quota = check_quota(self.token)
-        create_cluster(name=self.name,
-                       clustersize=user_quota['cluster_size']['available'],
-                       cpu_master=1, ram_master=1024, disk_master=5,
-                       disk_template='ext_vlmc', cpu_slave=1, ram_slave=1024,
-                       disk_slave=5, token=self.token,
-                       image='Debian Base')
 
 if __name__ == "__main__":
     unittest.main()
