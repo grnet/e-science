@@ -14,11 +14,11 @@ sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from authenticate_user import EscienceTokenAuthentication, IsAuthenticatedOrIsCreation
+from authenticate_user import *
 from django.views import generic
 from get_flavors_quotas import retrieve_ClusterCreationParams
-from models import UserInfo, Token
-from serializers import OkeanosTokenSerializer, UserInfoSerializer, ClusterCreationParamsSerializer, ClusterchoicesSerializer
+from backend.models import *
+from backend.serializers import OkeanosTokenSerializer, UserInfoSerializer, ClusterCreationParamsSerializer, ClusterchoicesSerializer
 from django_db_after_login import *
 from create_cluster import HadoopCluster
 
@@ -136,7 +136,7 @@ class SessionView(APIView):
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
             token = serializer.data['token']
-            if check_credentials(token) == AUTHENTICATED:
+            if check_user_credentials(token) == AUTHENTICATED:
                 self.user = get_user_id(token)
                 self.serializer_class = UserInfoSerializer(self.user)
                 return Response(self.serializer_class.data)

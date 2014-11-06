@@ -12,7 +12,6 @@ import sys
 import nose
 import string
 import logging
-
 from base64 import b64encode
 from os.path import abspath
 from datetime import datetime
@@ -21,7 +20,6 @@ from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.cyclades import CycladesClient
 from kamaki.clients.cyclades import CycladesNetworkClient
-
 
 # Definitions of return value errors
 error_quotas_network = -14
@@ -40,7 +38,102 @@ Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56  # IpV4 public network id offset
 
 
+def destroy_cluster(cluster_name, token):
+    '''
+    Destroys cluster and deletes network and floating ip. Finds the machines
+    that belong to the cluster that is requested to be destroyed and the
+    floating ip of the master virtual machine and terminates them. Then
+    deletes the network and the floating ip.
+    '''
+    servers_to_delete = []
+    auth = check_credentials(token)
+    endpoints, user_id = endpoints_and_user_id(auth)
+    cyclades = init_cyclades(endpoints['cyclades'], token)
+    nc = init_cyclades_netclient(endpoints['network'], token)
+    try:
+        list_of_servers = cyclades.list_servers(detail=True)
+    except Exception:
+        logging.exception('Could not get list of servers.'
+                          'Cannot delete cluster')
+        sys.exit(error_get_list_servers)
 
+    for server in list_of_servers:  # Find the servers to be deleted
+        if cluster_name == server['name'].rsplit('-', 1)[0]:
+            servers_to_delete.append(server)
+    # If the list of servers to delete is empty then abort
+    if not servers_to_delete:
+        logging.log(REPORT, " Cluster with name [%s] does not exist"
+                    % cluster_name)
+        sys.exit(error_cluster_not_exist)
+
+    number_of_nodes = servers_to_delete.__len__()
+    # Find the floating ip of master virtual machine
+    float_ip_to_delete = ''
+    for attachment in servers_to_delete[0]['attachments']:
+        if attachment['OS-EXT-IPS:type'] == 'floating':
+            float_ip_to_delete = attachment['ipv4']
+
+    if not float_ip_to_delete:
+        logging.error(' Cluster [%s] is corrupted', cluster_name)
+        sys.exit(error_cluster_corrupt)
+    # Find network to be deleted
+    try:
+        list_of_networks = nc.list_networks()
+        for net_work in list_of_networks:
+            if net_work['name'] == \
+                    servers_to_delete[0]['name'].rsplit('-', 1)[0]:
+                network_to_delete_id = net_work['id']
+    except Exception:
+        logging.exception('Error in getting network [%s] to delete' %
+                          net_work['name'])
+        sys.exit(error_delete_network)
+    # Start cluster deleting
+    try:
+        for server in servers_to_delete:
+            cyclades.delete_server(server['id'])
+        logging.log(REPORT, ' There are %d servers to clean up'
+                    % number_of_nodes)
+    # Wait for every server of the cluster to be deleted
+        for server in servers_to_delete:
+            new_status = cyclades.wait_server(server['id'],
+                                              current_status='ACTIVE',
+                                              max_wait=300)
+            logging.log(REPORT, ' Server [%s] is being %s', server['name'],
+                        new_status)
+            if new_status != 'DELETED':
+                logging.error('Error deleting server [%s]' % server['name'])
+                sys.exit(error_delete_server)
+        logging.log(REPORT, ' Cluster [%s] is %s', cluster_name, new_status)
+    # Find the correct network of deleted cluster and delete it
+    except Exception:
+        logging.exception('Error in deleting server')
+        sys.exit(error_delete_server)
+
+    try:
+        nc.delete_network(network_to_delete_id)
+        sleep(10)  # Take some time to ensure it is deleted
+        logging.log(REPORT, ' Network [%s] is deleted' %
+                            net_work['name'])
+    except Exception:
+        logging.exception('Error in deleting network')
+        sys.exit(error_delete_network)
+
+    # Find the correct floating ip id of deleted master machine and delete it
+    try:
+        for float_ip in nc.list_floatingips():
+            if float_ip_to_delete == float_ip['floating_ip_address']:
+                nc.delete_floatingip(float_ip['id'])
+                logging.log(REPORT, ' Floating ip [%s] is deleted'
+                            % float_ip['floating_ip_address'])
+    except Exception:
+        logging.exception('Error in deleting floating ip [%s]',
+                          float_ip_to_delete)
+        sys.exit(error_delete_float_ip)
+
+    logging.log(REPORT, ' Cluster [%s] with %d nodes was deleted',
+                cluster_name, number_of_nodes)
+    
+    
 def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
                       '/identity/v2.0'):
     '''Identity,Account/Astakos. Test authentication credentials'''
@@ -54,6 +147,82 @@ def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
         sys.exit(error_authentication)
     logging.log(REPORT, ' Authentication verified')
     return auth
+
+
+def check_quota(token):
+    '''
+    Checks if user available quota .
+    Available = limit minus (used and pending).Also divides with 1024*1024*1024
+    to transform bytes to gigabytes.
+     '''
+
+    auth = check_credentials(token)
+
+    try:
+        dict_quotas = auth.get_quotas()
+    except Exception:
+        logging.exception('Could not get user quota')
+        sys.exit(error_user_quota)
+    limit_cd = dict_quotas['system']['cyclades.disk']['limit'] / Bytes_to_GB
+    usage_cd = dict_quotas['system']['cyclades.disk']['usage'] / Bytes_to_GB
+    pending_cd = dict_quotas['system']['cyclades.disk']['pending'] / Bytes_to_GB
+    available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd)
+
+    limit_cpu = dict_quotas['system']['cyclades.cpu']['limit']
+    usage_cpu = dict_quotas['system']['cyclades.cpu']['usage']
+    pending_cpu = dict_quotas['system']['cyclades.cpu']['pending']
+    available_cpu = limit_cpu - usage_cpu - pending_cpu
+
+    limit_ram = dict_quotas['system']['cyclades.ram']['limit'] / Bytes_to_MB
+    usage_ram = dict_quotas['system']['cyclades.ram']['usage'] / Bytes_to_MB
+    pending_ram = dict_quotas['system']['cyclades.ram']['pending'] / Bytes_to_MB
+    available_ram = (limit_ram-usage_ram-pending_ram)
+
+    limit_vm = dict_quotas['system']['cyclades.vm']['limit']
+    usage_vm = dict_quotas['system']['cyclades.vm']['usage']
+    pending_vm = dict_quotas['system']['cyclades.vm']['pending']
+    available_vm = limit_vm-usage_vm-pending_vm
+
+    quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
+              'ram': {'limit': limit_ram, 'available': available_ram},
+              'disk': {'limit': limit_cd,
+                       'available': available_cyclades_disk_GB},
+              'cluster_size': {'limit': limit_vm, 'available': available_vm}}
+    logging.info(quotas)
+    return quotas
+
+
+def get_flavor_id(token):
+    '''From kamaki flavor list get all possible flavors '''
+    auth = check_credentials(token)
+    endpoints, user_id = endpoints_and_user_id(auth)
+    cyclades = init_cyclades(endpoints['cyclades'], token)
+    try:
+        flavor_list = cyclades.list_flavors(True)
+    except Exception:
+        logging.exception('Could not get list of flavors')
+        sys.exit(error_flavor_list)
+    cpu_list = []
+    ram_list = []
+    disk_list = []
+    disk_template_list = []
+
+    for flavor in flavor_list:
+        if flavor['vcpus'] not in cpu_list:
+            cpu_list.append(flavor['vcpus'])
+        if flavor['ram'] not in ram_list:
+            ram_list.append(flavor['ram'])
+        if flavor['disk'] not in disk_list:
+            disk_list.append(flavor['disk'])
+        if flavor['SNF:disk_template'] not in disk_template_list:
+            disk_template_list.append(flavor['SNF:disk_template'])
+    cpu_list = sorted(cpu_list)
+    ram_list = sorted(ram_list)
+    disk_list = sorted(disk_list)
+    flavors = {'cpus': cpu_list, 'ram': ram_list,
+               'disk': disk_list, 'disk_template': disk_template_list}
+    logging.info(flavors)
+    return flavors
 
 
 def endpoints_and_user_id(auth):

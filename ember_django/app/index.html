@@ -41,10 +41,10 @@
       <h3 id="user">User: {{content._data.user_id}}</h3>
       <h3 id="clusters">Clusters: {{content._data.cluster}}</h3>
       <form class="form-horizontal" {{action "createcluster" on="submit"}}>
-	<button type="submit">CreateHadoopCluster</button>
+	<button id="CreateHadoopCluster" type="submit">CreateHadoopCluster</button>
       </form>
       <form class="form-horizontal" {{action "logout" on="submit"}}>
-	<button type="submit">Logout</button>
+	<button id="Logout" type="submit">Logout</button>
       </form>
   </script>
   <script type="text/x-handlebars" id="createcluster/index">  
