@@ -305,24 +305,28 @@ class Cluster(object):
         self.flavor_id_master, self.auth = flavor_id_master, auth_cl
         self.flavor_id_slave, self.image_id = flavor_id_slave, image_id
 
-    def get_flo_net_id(self, list_public_networks):
+    def get_flo_net_id(self):
         '''
         Gets an Ipv4 floating network id from the list of public networks Ipv4
         and Ipv6. Takes the href value and removes first 56 characters.
         The number that is left is the public network id
         '''
-        float_net_id = 0
-        for lst in list_public_networks:
+        
+        pub_net_list = self.nc.list_networks()
+        float_net_id = 1
+        i = 1
+        for lst in pub_net_list:
             if(lst['status'] == 'ACTIVE' and
                lst['name'] == 'Public IPv4 Network'):
-                    float_net_id = lst['links'][0]['href']
-                    break
+                float_net_id = lst['id']
+                try:
+                    self.nc.create_floatingip(float_net_id)
+                    return 0
+                except ClientError:
+                    if i < len(pub_net_list):
+                        i = i+1                                             
 
-        try:
-            return float_net_id[HREF_VALUE_MINUS_PUBLIC_NETWORK_ID:]
-        except TypeError:
-            logging.error('Floating Network Id could not be found')
-            raise
+        return error_get_ip
 
     def _personality(self, ssh_keys_path='', pub_keys_path=''):
         '''Personality injects ssh keys to the virtual machines we create'''
@@ -407,18 +411,16 @@ class Cluster(object):
                                                       [count-1]
                                                       ['floating_network_id'])
                         except ClientError:
-                            logging.exception('Cannot create new ip')
-                            sys.exit(error_get_ip)
+                            if self.get_flo_net_id() !=0:
+                                logging.error('Error in creating float ip')
+                                sys.exit(error_get_ip)      
         else:
             # No existing ips,so we create a new one
             # with the floating  network id
-            try:
-                pub_net_list = self.nc.list_networks()
-                float_net_id = self.get_flo_net_id(pub_net_list)
-                self.nc.create_floatingip(float_net_id)
-            except Exception:
-                logging.exception('Error in creating float ip')
+            if self.get_flo_net_id() !=0:
+                logging.error('Error in creating float ip')
                 sys.exit(error_get_ip)
+                
         logging.log(REPORT, ' Wait for %s servers to build', self.size)
 
         # Creation of master server
@@ -428,8 +430,8 @@ class Cluster(object):
                 server_name, self.flavor_id_master, self.image_id,
                 personality=self._personality(ssh_k_path, pub_k_path)))
         except Exception:
-            logging.exception('Error creating master virtual machine'
-                              % server_name)
+            logging.exception('Error creating master virtual machine')
+                             # % server_name)
             sys.exit(error_create_server)
         # Creation of slave servers
         for i in range(2, self.size+1):
