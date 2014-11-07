@@ -12,7 +12,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
 import unittest, time, re
-from okeanos_utils import check_quota
+from okeanos_utils import check_quota, get_flavor_id
 from create_bare_cluster import create_cluster
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
@@ -58,7 +58,12 @@ class TestClusterSize(unittest.TestCase):
             except: pass
             time.sleep(1)
         else: self.fail("time out")
-        Select(driver.find_element_by_xpath("//div[@id='sidebar']/p/select")).select_by_visible_text("3")
+        # Get user quota from kamaki
+        user_quota = check_quota(self.token)
+        # Maximum available clustersize
+        max_vms = str(user_quota['cluster_size']['available'])
+        # Tell selenium to get the max available clustersize from dropdown
+        Select(driver.find_element_by_xpath("//div[@id='sidebar']/p/select")).select_by_visible_text(max_vms)
         time.sleep(1)
         self.bind_okeanos_resources()
         driver.find_element_by_css_selector("#content-wrap > p > button").click()
@@ -115,11 +120,12 @@ class TestClusterSize(unittest.TestCase):
         self.driver.quit()
         self.assertEqual([], self.verificationErrors)
 
+    # create a bare cluster with two vms, so we can
+    # bind the resources  
     def bind_okeanos_resources(self):
 
-        user_quota = check_quota(self.token)
         create_cluster(name=self.name,
-                       clustersize=user_quota['cluster_size']['available'],
+                       clustersize=2,
                        cpu_master=1, ram_master=1024, disk_master=5,
                        disk_template='ext_vlmc', cpu_slave=1, ram_slave=1024,
                        disk_slave=5, token=self.token,
