@@ -20,7 +20,7 @@ class LoginTest(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
-        self.base_url = "http://83.212.123.218:8000/"
+        self.base_url = "http://127.0.0.1:8000/"
         self.verificationErrors = []
         self.accept_next_alert = True
         parser = RawConfigParser()
