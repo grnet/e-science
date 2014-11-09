@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+'''
+Selenium test for the network limit error message in summary screen
+
+@author: Ioannis Stenos, Nick Vrionis
+'''
+
 from selenium import webdriver
 import sys
 from os.path import join, dirname, abspath
@@ -26,7 +32,7 @@ class TestClusterNetwork(ClusterTest):
 
     def test_cluster(self):
 
-        driver = super(TestClusterNetwork,self).login()
+        driver = self.login()
         Select(driver.find_element_by_xpath("//div[@id='sidebar']/p/select")).select_by_visible_text("3")
         time.sleep(1)
         try:

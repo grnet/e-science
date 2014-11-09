@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+'''
+unittest class used in Selenium tests. Every test_cluster_* inherits methods
+from ClusterTest.
+
+@author: Ioannis Stenos, Nick Vrionis
+'''
+
 from selenium import webdriver
 import sys
 from os.path import join, dirname, abspath
@@ -15,7 +22,13 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
+
 class ClusterTest(unittest.TestCase):
+    '''
+    setUp method is common for all test_cluster tests.
+    Defines the path to okeanos token and the base url for
+    the selenium test.
+    '''
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -36,7 +49,7 @@ class ClusterTest(unittest.TestCase):
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
 
     def login(self):
-
+        '''Method used for login by all test_cluster tests'''
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_css_selector("button[type=\"submit\"]").click()
@@ -84,36 +97,42 @@ class ClusterTest(unittest.TestCase):
         self.assertEqual([], self.verificationErrors)
 
     def calculate_cluster_resources(self, resource_list, available_resource):
-
+        '''
+        Method used by test_cluster_cpu, test_cluster_memory and
+        test_cluster_disk to calculate the resources needed to be binded
+        during the test in cluster/create screen. Those resources are
+        the buttons pressed by selenium test and are not binded in ~okeanos.
+        '''
         avail = available_resource
         cluster_size = 0
         vms = []
-        # Create a vms_disk list with values the combinations of disk size
+        # Create a vms list with values the combinations of resource size
         # and number of vms we will bind in selenium with a particular,
-        # disk size flavor e.g vms_disk = [{100:2}, {80:1}] means 2 vms with 100
-        # disk size each and 1 vm with 80 disk size.
+        # resource flavor e.g for test_cluster_disk vms = [{100:2}, {80:1}]
+        # means 2 vms with 100 disk size each and 1 vm with 80 disk size.
         for resource in reversed(resource_list):
             if (available_resource/resource) >= 1:
                 vms.append({resource: available_resource/resource})
                 if available_resource%resource ==0:
                     break
                 available_resource = available_resource - resource*(available_resource/resource)
-        # If the vms_disk list has two or more elements
+        # If the vms list has two or more elements
         if len(vms) >= 2:
-            # Find the remaining disk size that we will bind in ~okeanos for the test.
+            # Find the remaining resource that we will bind in ~okeanos for the test.
             remaining_resource = avail - vms[0].values()[0] * resource_list[len(resource_list)-1] - vms[1].values()[0] * resource_list[len(resource_list)-2]
             # Calculate the cluster_size we will use as input in selenium
             cluster_size = vms[0].values()[0] + vms[1].values()[0]
             for resource in resource_list:
                 if resource == vms[0].keys()[0]:
-                    # Select the buttons selenium will press in create_cluster screen
+                    # Select the buttons selenium will press
+                    # in create_cluster screen
                     slave = str(resource_list.index(resource) + 1)
                     master = str(resource_list.index(resource))
                     break
-        # If the vms_disk list has zero elements
+        # If the vms list has zero elements
         elif len(vms) == 0:
             raise RuntimeError
-        # If the vms_disk list has only one element
+        # If the vms list has only one element
         else:
             remaining_resource = 0
             cluster_size = cluster_size + vms[0].values()[0]
@@ -123,4 +142,3 @@ class ClusterTest(unittest.TestCase):
                     master = str(resource_list.index(resource) + 1)
                     break
         return cluster_size, master, slave, remaining_resource
-

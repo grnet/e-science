@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+'''
+Selenium test for the cpu limit error message in summary screen
+
+@author: Ioannis Stenos, Nick Vrionis
+'''
+
 from selenium import webdriver
 import sys
 from os.path import join, dirname, abspath
@@ -23,7 +29,7 @@ class TestClusterCpu(ClusterTest):
 
     def test_cluster(self):
 
-        driver = super(TestClusterCpu,self).login()
+        driver = self.login()
         # Get user quota from kamaki
         user_quota = check_quota(self.token)
         flavors = get_flavor_id(self.token)
@@ -31,7 +37,7 @@ class TestClusterCpu(ClusterTest):
         cpu_list = flavors['cpus']
         # Avalable user cpu
         available_cpu = user_quota['cpus']['available']
-        cluster_size, master, slave ,remaining_cpu= super(TestClusterCpu,self).calculate_cluster_resources(cpu_list, available_cpu)
+        cluster_size, master, slave ,remaining_cpu= self.calculate_cluster_resources(cpu_list, available_cpu)
 
         # Give Selenium the values cluster_size, master and slave to use for
         # the cluster_size and cpus buttons of cluster/create screen.

@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+'''
+Selenium test for the cluster_size error message in summary screen
+
+@author: Ioannis Stenos, Nick Vrionis
+'''
+
 from selenium import webdriver
 import sys
 from os.path import join, dirname, abspath
@@ -23,7 +29,7 @@ class TestClusterSize(ClusterTest):
 
     def test_cluster(self):
 
-        driver = super(TestClusterSize,self).login()
+        driver = self.login()
         # Get user quota from kamaki
         user_quota = check_quota(self.token)
         # Maximum available clustersize
@@ -66,7 +72,7 @@ class TestClusterSize(ClusterTest):
             destroy_cluster(cluster_name, self.token)
 
     # create a bare cluster with two vms, so we can
-    # bind the resources  
+    # bind the resources in ~okeanos
     def bind_okeanos_resources(self):
 
         return create_cluster(name=self.name,

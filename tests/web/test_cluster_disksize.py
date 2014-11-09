@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+'''
+Selenium test for the disk_size limit error message in summary screen
+
+@author: Ioannis Stenos, Nick Vrionis
+'''
+
 from selenium import webdriver
 import sys
 from os.path import join, dirname, abspath
@@ -23,7 +29,7 @@ class TestClusterDiskSize(ClusterTest):
 
     def test_cluster(self):
 
-        driver = super(TestClusterDiskSize,self).login()
+        driver = self.login()
         # Get user quota from kamaki
         user_quota = check_quota(self.token)
         flavors = get_flavor_id(self.token)
@@ -31,7 +37,7 @@ class TestClusterDiskSize(ClusterTest):
         disk_list = flavors['disk']
         # Avalable user disk size
         available_disk = user_quota['disk']['available']
-        cluster_size, master, slave ,remaining_disk = super(TestClusterDiskSize,self).calculate_cluster_resources(disk_list, available_disk)
+        cluster_size, master, slave ,remaining_disk = self.calculate_cluster_resources(disk_list, available_disk)
         # Give Selenium the values cluster_size, master and slave to use for
         # the cluster_size and disk size buttons of cluster/create screen.
         Select(driver.find_element_by_xpath("//div[@id='sidebar']/p/select")).select_by_visible_text(str(cluster_size))
@@ -81,6 +87,10 @@ class TestClusterDiskSize(ClusterTest):
                                   ram_slave=1024, disk_slave=5,
                                   token=self.token, image='Debian Base')
         else:
+            # Checks if remaining size is not 5 GB and
+            # last digit is not 5, then add 5 GB to remaining size.
+            # This happens because ~okeanos does not have a flavor
+            # for disk size with 5 as last digit, except 5 GB.
             if remaining_disk != 5 and remaining_disk % 10 != 0:
                 remaining_disk = remaining_disk + 5
 

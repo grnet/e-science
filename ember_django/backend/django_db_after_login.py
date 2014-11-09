@@ -54,6 +54,7 @@ def db_after_login(given_uuid, given_token):
         db_login_entry(existing_user)
         if existing_user.okeanos_token != given_token:
             existing_user.okeanos_token = given_token
+            existing_user.save()
         return existing_user
 
     except ObjectDoesNotExist:
