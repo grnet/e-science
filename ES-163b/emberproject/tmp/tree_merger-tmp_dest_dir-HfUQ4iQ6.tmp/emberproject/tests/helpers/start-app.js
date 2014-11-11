@@ -1,1 +1,0 @@
-/home/developer/workspace/ES-163/emberproject/tmp/custom_static_compiler-tmp_dest_dir-3z9LWybH.tmp/emberproject/tests/helpers/start-app.js

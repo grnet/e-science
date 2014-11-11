@@ -1,4 +1,0 @@
-module('JSHint - libs/package/dist/amd/handlebars/compiler');
-test('libs/package/dist/amd/handlebars/compiler/javascript-compiler.js should pass jshint', function() { 
-  ok(false, 'libs/package/dist/amd/handlebars/compiler/javascript-compiler.js should pass jshint.\nlibs/package/dist/amd/handlebars/compiler/javascript-compiler.js: line 519, col 13, Bad line breaking before \'+\'.\nlibs/package/dist/amd/handlebars/compiler/javascript-compiler.js: line 520, col 13, Bad line breaking before \'+\'.\nlibs/package/dist/amd/handlebars/compiler/javascript-compiler.js: line 521, col 15, Bad line breaking before \'+\'.\nlibs/package/dist/amd/handlebars/compiler/javascript-compiler.js: line 522, col 15, Bad line breaking before \'+\'.\nlibs/package/dist/amd/handlebars/compiler/javascript-compiler.js: line 1, col 1, \'define\' is not defined.\n\n5 errors'); 
-});

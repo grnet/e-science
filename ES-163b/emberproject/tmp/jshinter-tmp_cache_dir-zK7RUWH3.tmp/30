@@ -1,4 +1,0 @@
-module('JSHint - libs/package/dist/cjs/handlebars');
-test('libs/package/dist/cjs/handlebars/utils.js should pass jshint', function() { 
-  ok(false, 'libs/package/dist/cjs/handlebars/utils.js should pass jshint.\nlibs/package/dist/cjs/handlebars/utils.js: line 1, col 1, Use the function form of "use strict".\nlibs/package/dist/cjs/handlebars/utils.js: line 3, col 18, \'require\' is not defined.\nlibs/package/dist/cjs/handlebars/utils.js: line 29, col 1, \'exports\' is not defined.\nlibs/package/dist/cjs/handlebars/utils.js: line 30, col 1, \'exports\' is not defined.\nlibs/package/dist/cjs/handlebars/utils.js: line 43, col 1, \'exports\' is not defined.\nlibs/package/dist/cjs/handlebars/utils.js: line 47, col 1, \'exports\' is not defined.\nlibs/package/dist/cjs/handlebars/utils.js: line 66, col 1, \'exports\' is not defined.\nlibs/package/dist/cjs/handlebars/utils.js: line 76, col 1, \'exports\' is not defined.\n\n8 errors'); 
-});

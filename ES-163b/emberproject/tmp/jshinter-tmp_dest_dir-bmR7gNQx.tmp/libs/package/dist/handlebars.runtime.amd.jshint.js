@@ -1,4 +1,0 @@
-module('JSHint - libs/package/dist');
-test('libs/package/dist/handlebars.runtime.amd.js should pass jshint', function() { 
-  ok(false, 'libs/package/dist/handlebars.runtime.amd.js should pass jshint.\nlibs/package/dist/handlebars.runtime.amd.js: line 300, col 38, Expected \'{\' and instead saw \'return\'.\nlibs/package/dist/handlebars.runtime.amd.js: line 28, col 1, \'define\' is not defined.\nlibs/package/dist/handlebars.runtime.amd.js: line 43, col 1, \'define\' is not defined.\nlibs/package/dist/handlebars.runtime.amd.js: line 123, col 1, \'define\' is not defined.\nlibs/package/dist/handlebars.runtime.amd.js: line 155, col 1, \'define\' is not defined.\nlibs/package/dist/handlebars.runtime.amd.js: line 339, col 1, \'define\' is not defined.\nlibs/package/dist/handlebars.runtime.amd.js: line 480, col 1, \'define\' is not defined.\nlibs/package/dist/handlebars.runtime.amd.js: line 484, col 5, \'Handlebars\' is defined but never used.\n\n8 errors'); 
-});
