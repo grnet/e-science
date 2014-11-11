@@ -1,1 +1,0 @@
-ES-146: Frontend initialise and display values in form
