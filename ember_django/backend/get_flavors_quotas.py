@@ -8,12 +8,18 @@ and update the ClusterCreationParams model.
 @author: Ioannis Stenos, Nick Vrionis
 '''
 
+import django
 import os
+from os.path import join, dirname, abspath
 import sys
 import logging
+sys.path.append(join(dirname(abspath(__file__)), '../..'))
+sys.path.append(join(dirname(abspath(__file__)), '..'))
+#import okeanos_utils
 from okeanos_utils import *
 from kamaki.clients.cyclades import CycladesClient
 from backend.models import ClusterCreationParams
+
 
 # Definitions of return value errors
 error_flavor_list = -23

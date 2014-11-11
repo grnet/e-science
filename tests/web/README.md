@@ -19,6 +19,4 @@ To run the tests you need:
 	
 	master_ip = x.x.x.x
 
-3. Also (for the moment) you need to have a running server in your [localhost:8000](localhost:8000) where Selenium expects to reach the Ember/Django app.
-
 Run the selenium tests either with `nosetests`, or separately with `python test_*`

@@ -7,6 +7,9 @@ This script tests logout from web form using selenium
 '''
 
 from selenium import webdriver
+import sys
+from os.path import join, dirname, abspath
+sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
@@ -16,22 +19,25 @@ from os.path import join, dirname
 from ConfigParser import RawConfigParser, NoSectionError
 import unittest, time, re, sys
 
+BASE_DIR = join(dirname(abspath(__file__)), "../..")
+
 class TestLogout(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
-        self.base_url = "http://83.212.123.218:8000/"
         self.verificationErrors = []
         self.accept_next_alert = True
         parser = RawConfigParser()
-        config_file = join(dirname(dirname(dirname(__file__))), '.private/.config.txt')
+        config_file = join(BASE_DIR, '.private/.config.txt')
         parser.read(config_file)
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
+            self.base_url = parser.get('application', 'url')
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
+            self.base_url = "INVALID_APP_URL"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     

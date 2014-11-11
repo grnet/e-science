@@ -38,7 +38,84 @@ REPORT = 25  # Define logging level of REPORT
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56  # IpV4 public network id offset
+auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 
+
+
+def check_quota(token):
+    '''
+    Checks if user available quota .
+    Available = limit minus (used and pending).Also divides with 1024*1024*1024
+    to transform bytes to gigabytes.
+     '''
+
+    auth = check_credentials(token, auth_url)
+
+    try:
+        dict_quotas = auth.get_quotas()
+    except Exception:
+        logging.exception('Could not get user quota')
+        sys.exit(error_user_quota)
+    limit_cd = dict_quotas['system']['cyclades.disk']['limit'] / Bytes_to_GB
+    usage_cd = dict_quotas['system']['cyclades.disk']['usage'] / Bytes_to_GB
+    pending_cd = dict_quotas['system']['cyclades.disk']['pending'] / Bytes_to_GB
+    available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd)
+
+    limit_cpu = dict_quotas['system']['cyclades.cpu']['limit']
+    usage_cpu = dict_quotas['system']['cyclades.cpu']['usage']
+    pending_cpu = dict_quotas['system']['cyclades.cpu']['pending']
+    available_cpu = limit_cpu - usage_cpu - pending_cpu
+
+    limit_ram = dict_quotas['system']['cyclades.ram']['limit'] / Bytes_to_MB
+    usage_ram = dict_quotas['system']['cyclades.ram']['usage'] / Bytes_to_MB
+    pending_ram = dict_quotas['system']['cyclades.ram']['pending'] / Bytes_to_MB
+    available_ram = (limit_ram-usage_ram-pending_ram)
+
+    limit_vm = dict_quotas['system']['cyclades.vm']['limit']
+    usage_vm = dict_quotas['system']['cyclades.vm']['usage']
+    pending_vm = dict_quotas['system']['cyclades.vm']['pending']
+    available_vm = limit_vm-usage_vm-pending_vm
+
+    quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
+              'ram': {'limit': limit_ram, 'available': available_ram},
+              'disk': {'limit': limit_cd,
+                       'available': available_cyclades_disk_GB},
+              'cluster_size': {'limit': limit_vm, 'available': available_vm}}
+    logging.info(quotas)
+    return quotas
+
+
+def get_flavor_id(token):
+    '''From kamaki flavor list get all possible flavors '''
+    auth = check_credentials(token, auth_url)
+    endpoints, user_id = endpoints_and_user_id(auth)
+    cyclades = init_cyclades(endpoints['cyclades'], token)
+    try:
+        flavor_list = cyclades.list_flavors(True)
+    except Exception:
+        logging.exception('Could not get list of flavors')
+        sys.exit(error_flavor_list)
+    cpu_list = []
+    ram_list = []
+    disk_list = []
+    disk_template_list = []
+
+    for flavor in flavor_list:
+        if flavor['vcpus'] not in cpu_list:
+            cpu_list.append(flavor['vcpus'])
+        if flavor['ram'] not in ram_list:
+            ram_list.append(flavor['ram'])
+        if flavor['disk'] not in disk_list:
+            disk_list.append(flavor['disk'])
+        if flavor['SNF:disk_template'] not in disk_template_list:
+            disk_template_list.append(flavor['SNF:disk_template'])
+    cpu_list = sorted(cpu_list)
+    ram_list = sorted(ram_list)
+    disk_list = sorted(disk_list)
+    flavors = {'cpus': cpu_list, 'ram': ram_list,
+               'disk': disk_list, 'disk_template': disk_template_list}
+    logging.info(flavors)
+    return flavors
 
 
 def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
