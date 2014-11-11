@@ -1,0 +1,4 @@
+module('JSHint - libs/package/dist/cjs');
+test('libs/package/dist/cjs/handlebars.runtime.js should pass jshint', function() { 
+  ok(false, 'libs/package/dist/cjs/handlebars.runtime.js should pass jshint.\nlibs/package/dist/cjs/handlebars.runtime.js: line 1, col 1, Use the function form of "use strict".\nlibs/package/dist/cjs/handlebars.runtime.js: line 3, col 12, \'require\' is not defined.\nlibs/package/dist/cjs/handlebars.runtime.js: line 7, col 18, \'require\' is not defined.\nlibs/package/dist/cjs/handlebars.runtime.js: line 8, col 17, \'require\' is not defined.\nlibs/package/dist/cjs/handlebars.runtime.js: line 9, col 13, \'require\' is not defined.\nlibs/package/dist/cjs/handlebars.runtime.js: line 10, col 15, \'require\' is not defined.\nlibs/package/dist/cjs/handlebars.runtime.js: line 32, col 1, \'exports\' is not defined.\n\n7 errors'); 
+});

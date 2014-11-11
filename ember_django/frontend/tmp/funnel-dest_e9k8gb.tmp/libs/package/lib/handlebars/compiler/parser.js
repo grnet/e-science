@@ -1,0 +1,1 @@
+/home/developer/workspace/ES-163/frontend/app/libs/package/lib/handlebars/compiler/parser.js
