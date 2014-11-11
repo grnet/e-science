@@ -20,6 +20,7 @@ from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.cyclades import CycladesClient
 from kamaki.clients.cyclades import CycladesNetworkClient
+from time import sleep
 
 # Definitions of return value errors
 error_quotas_network = -14
@@ -35,7 +36,6 @@ MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 REPORT = 25  # Define logging level of REPORT
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
-HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56  # IpV4 public network id offset
 
 
 def destroy_cluster(cluster_name, token):

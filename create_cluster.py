@@ -163,7 +163,7 @@ class HadoopCluster(object):
         pending_ips = dict_quotas['system']['cyclades.floating_ip']['pending']
         available_ips = limit_ips - (usage_ips + pending_ips)
         for d in list_float_ips:
-            if d['instance_id'] is None:
+            if d['instance_id'] is None and d['port_id'] is None:
                 available_ips += 1
         if available_ips > 0:
             return 0

@@ -7,26 +7,20 @@ Selenium test for the cluster_size error message in summary screen
 @author: Ioannis Stenos, Nick Vrionis
 '''
 
-from selenium import webdriver
 import sys
 from os.path import join, dirname, abspath
 sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import NoAlertPresentException
-from ConfigParser import RawConfigParser, NoSectionError
 import unittest, time, re
 from okeanos_utils import check_quota, get_flavor_id, destroy_cluster
 from create_bare_cluster import create_cluster
 from ClusterTest import ClusterTest
 
-BASE_DIR = join(dirname(abspath(__file__)), "../..")
-
 
 class TestClusterSize(ClusterTest):
-
+    '''Test Class for cluster_size error message'''
     def test_cluster(self):
 
         driver = self.login()
@@ -66,21 +60,24 @@ class TestClusterSize(ClusterTest):
                 time.sleep(1)
             else: self.fail("time out")
             time.sleep(3)
-            self.assertEqual("Selected cluster size exceeded cyclades virtual machines limit", driver.find_element_by_css_selector("#footer > h4").text)
+            self.assertEqual("Selected cluster size exceeded cyclades"
+                             " virtual machines limit",
+                             driver.find_element_by_css_selector("#footer > h4").text)
         finally:
             cluster_name = server[0]['name'].rsplit('-', 1)[0]
             destroy_cluster(cluster_name, self.token)
 
-    # create a bare cluster with two vms, so we can
-    # bind the resources in ~okeanos
     def bind_okeanos_resources(self):
-
+        '''
+        Create a bare cluster with two vms, so we can bind the
+        resources in ~okeanos
+        '''
         return create_cluster(name=self.name,
-                       clustersize=2,
-                       cpu_master=1, ram_master=1024, disk_master=5,
-                       disk_template='ext_vlmc', cpu_slave=1, ram_slave=1024,
-                       disk_slave=5, token=self.token,
-                       image='Debian Base')
+                              clustersize=2,
+                              cpu_master=1, ram_master=1024, disk_master=5,
+                              disk_template='ext_vlmc', cpu_slave=1,
+                              ram_slave=1024, disk_slave=5, token=self.token,
+                              image='Debian Base')
 
 if __name__ == "__main__":
     unittest.main()

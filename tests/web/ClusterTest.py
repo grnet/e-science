@@ -32,7 +32,6 @@ class ClusterTest(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
-        self.base_url = "http://127.0.0.1:8000/"
         self.verificationErrors = []
         self.accept_next_alert = True
         parser = RawConfigParser()
@@ -42,9 +41,11 @@ class ClusterTest(unittest.TestCase):
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
+            self.base_url = parser.get('cloud \"~okeanos\"', 'app_url')
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
+            self.base_url = "INVALID_ESCIENCE_APP_HOST_URL"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
 
@@ -70,17 +71,17 @@ class ClusterTest(unittest.TestCase):
             time.sleep(1)
         else: self.fail("time out")
         return driver
-    
+
     def is_element_present(self, how, what):
         try: self.driver.find_element(by=how, value=what)
         except NoSuchElementException, e: return False
         return True
-    
+
     def is_alert_present(self):
         try: self.driver.switch_to_alert()
         except NoAlertPresentException, e: return False
         return True
-    
+
     def close_alert_and_get_its_text(self):
         try:
             alert = self.driver.switch_to_alert()
@@ -100,8 +101,10 @@ class ClusterTest(unittest.TestCase):
         '''
         Method used by test_cluster_cpu, test_cluster_memory and
         test_cluster_disk to calculate the resources needed to be binded
-        during the test in cluster/create screen. Those resources are
-        the buttons pressed by selenium test and are not binded in ~okeanos.
+        during each test in cluster/create screen. Those resources are
+        the buttons pressed by selenium test and are not really binded
+        in ~okeanos. The result is that much less real resources are binded
+        in ~okeanos for the tests.
         '''
         avail = available_resource
         cluster_size = 0

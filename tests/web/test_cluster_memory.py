@@ -14,20 +14,14 @@ sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import NoAlertPresentException
-from ConfigParser import RawConfigParser, NoSectionError
 import unittest, time, re
 from okeanos_utils import check_quota, get_flavor_id, destroy_cluster
 from create_bare_cluster import create_cluster
 from ClusterTest import ClusterTest
 
-BASE_DIR = join(dirname(abspath(__file__)), "../..")
-
 
 class TestClusterMemory(ClusterTest):
-
-
+    '''Test Class for the memory limit error message'''
     def test_cluster(self):
 
         driver = self.login()
@@ -73,15 +67,17 @@ class TestClusterMemory(ClusterTest):
                 time.sleep(1)
             else: self.fail("time out")
             time.sleep(3)
-            self.assertEqual("Ram selection exceeded cyclades memory limit", driver.find_element_by_css_selector("#footer > h4").text)
+            self.assertEqual("Ram selection exceeded cyclades memory limit",
+                             driver.find_element_by_css_selector("#footer > h4").text)
         finally:
             cluster_name = server[0]['name'].rsplit('-', 1)[0]
             destroy_cluster(cluster_name, self.token)
 
-    # Create a bare cluster with two vms. The ram depend
-    # on remaining_ram argument.
     def bind_okeanos_resources(self, remaining_ram):
-
+        '''
+        Create a bare cluster in ~okeanos with two vms. The ram depend
+        on remaining_ram argument.
+        '''
         if remaining_ram == 0:
             return create_cluster(name=self.name,
                                   clustersize=2,

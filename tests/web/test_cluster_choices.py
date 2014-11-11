@@ -15,16 +15,15 @@ from os.path import join, dirname, abspath
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import NoAlertPresentException
-from ConfigParser import RawConfigParser, NoSectionError
 import unittest, time, re
 from ClusterTest import ClusterTest
 
 
 class TestClusterChoices(ClusterTest):
-
-
+    '''
+    Test Class for the backend response that user's cluster
+    choices are valid
+    '''
     def test_cluster(self):
 
         driver = self.login()
@@ -57,7 +56,8 @@ class TestClusterChoices(ClusterTest):
             time.sleep(1)
         else: self.fail("time out")
         time.sleep(3)
-        self.assertEqual("Everything is ok with your cluster creation parameters", driver.find_element_by_css_selector("#footer > h4").text)
+        self.assertEqual("Everything is ok with your cluster creation parameters",
+                         driver.find_element_by_css_selector("#footer > h4").text)
 
 
 if __name__ == "__main__":

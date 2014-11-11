@@ -14,19 +14,14 @@ sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import NoAlertPresentException
-from ConfigParser import RawConfigParser, NoSectionError
 import unittest, time, re
 from okeanos_utils import check_quota, get_flavor_id, destroy_cluster
 from create_bare_cluster import create_cluster
 from ClusterTest import ClusterTest
 
-BASE_DIR = join(dirname(abspath(__file__)), "../..")
-
 
 class TestClusterCpu(ClusterTest):
-
+    '''Test Class for the cpu limit error message '''
     def test_cluster(self):
 
         driver = self.login()
@@ -37,7 +32,7 @@ class TestClusterCpu(ClusterTest):
         cpu_list = flavors['cpus']
         # Avalable user cpu
         available_cpu = user_quota['cpus']['available']
-        cluster_size, master, slave ,remaining_cpu= self.calculate_cluster_resources(cpu_list, available_cpu)
+        cluster_size, master, slave, remaining_cpu= self.calculate_cluster_resources(cpu_list, available_cpu)
 
         # Give Selenium the values cluster_size, master and slave to use for
         # the cluster_size and cpus buttons of cluster/create screen.
@@ -72,15 +67,17 @@ class TestClusterCpu(ClusterTest):
                 time.sleep(1)
             else: self.fail("time out")
             time.sleep(3)
-            self.assertEqual("Cpu selection exceeded cyclades cpu limit", driver.find_element_by_css_selector("#footer > h4").text)
+            self.assertEqual("Cpu selection exceeded cyclades cpu limit",
+                             driver.find_element_by_css_selector("#footer > h4").text)
         finally:
             cluster_name = server[0]['name'].rsplit('-', 1)[0]
             destroy_cluster(cluster_name, self.token)
 
-    # Create a bare cluster with two vms. The cpus depend
-    # on remaining_cpu argument.
     def bind_okeanos_resources(self, remaining_cpu):
-
+        '''
+        Create a bare cluster in ~okeanos with two vms. The cpus depend
+        on remaining_cpu argument.
+        '''
         if remaining_cpu == 0:
             return create_cluster(name=self.name,
                                   clustersize=2,

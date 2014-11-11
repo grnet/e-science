@@ -14,19 +14,14 @@ sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import NoAlertPresentException
-from ConfigParser import RawConfigParser, NoSectionError
 import unittest, time, re
 from okeanos_utils import check_quota, get_flavor_id, destroy_cluster
 from create_bare_cluster import create_cluster
 from ClusterTest import ClusterTest
 
-BASE_DIR = join(dirname(abspath(__file__)), "../..")
-
 
 class TestClusterDiskSize(ClusterTest):
-
+    '''Test Class for the disk_size limit error message'''
     def test_cluster(self):
 
         driver = self.login()
@@ -71,14 +66,17 @@ class TestClusterDiskSize(ClusterTest):
                 time.sleep(1)
             else: self.fail("time out")
             time.sleep(3)
-            self.assertEqual("Disk size selection exceeded cyclades disk size limit", driver.find_element_by_css_selector("#footer > h4").text)
+            self.assertEqual("Disk size selection exceeded cyclades disk size limit",
+                             driver.find_element_by_css_selector("#footer > h4").text)
         finally:
             cluster_name = server[0]['name'].rsplit('-', 1)[0]
             destroy_cluster(cluster_name, self.token)
 
-    # Create a bare cluster with two vms. The disk size depend
-    # on remaining_disk argument.
     def bind_okeanos_resources(self, remaining_disk):
+        '''
+        Create a bare cluster in ~okeanos with two vms. The disk size depend
+        on remaining_disk argument.
+        '''
         if remaining_disk == 0:
             return create_cluster(name=self.name,
                                   clustersize=2,
@@ -106,4 +104,3 @@ class TestClusterDiskSize(ClusterTest):
 
 if __name__ == "__main__":
     unittest.main()
-
