@@ -39,7 +39,7 @@ class TestClusterMemory(ClusterTest):
         Select(driver.find_element_by_xpath("//div[@id='sidebar']/p/select")).select_by_visible_text(str(cluster_size))
         time.sleep(1)
         try:
-            master_ip, server = self.bind_okeanos_resources(remaining_ram)
+            master_ip, server = self.bind_okeanos_resources(remaining_ram, ram_list)
             driver.find_element_by_xpath("//div[@id='content-wrap']/p[1]/button").click()
             time.sleep(1)
             driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button["+ master +"]").click()
@@ -73,7 +73,7 @@ class TestClusterMemory(ClusterTest):
             cluster_name = server[0]['name'].rsplit('-', 1)[0]
             destroy_cluster(cluster_name, self.token)
 
-    def bind_okeanos_resources(self, remaining_ram):
+    def bind_okeanos_resources(self, remaining_ram, ram_list):
         '''
         Create a bare cluster in ~okeanos with two vms. The ram depend
         on remaining_ram argument.
@@ -86,14 +86,16 @@ class TestClusterMemory(ClusterTest):
                                   ram_slave=1024, disk_slave=5,
                                   token=self.token, image='Debian Base')
         else:
-            return create_cluster(name=self.name,
-                                  clustersize=2,
-                                  cpu_master=remaining_ram, ram_master=1024,
-                                  disk_master=5, disk_template='ext_vlmc',
-                                  cpu_slave=remaining_ram, ram_slave=1024,
-                                  disk_slave=5, token=self.token,
-                                  image='Debian Base')
+            for ram in ram_list:
+                if ram >= remaining_ram:
+                    remaining_ram = ram
+                    return create_cluster(name=self.name,
+                                          clustersize=2,
+                                          cpu_master=1, ram_master=remaining_ram,
+                                          disk_master=5, disk_template='ext_vlmc',
+                                          cpu_slave=1, ram_slave=remaining_ram,
+                                          disk_slave=5, token=self.token,
+                                          image='Debian Base')
 
 if __name__ == "__main__":
     unittest.main()
-

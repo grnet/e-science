@@ -38,7 +38,7 @@ class TestClusterDiskSize(ClusterTest):
         Select(driver.find_element_by_xpath("//div[@id='sidebar']/p/select")).select_by_visible_text(str(cluster_size))
         time.sleep(1)
         try:
-            master_ip, server = self.bind_okeanos_resources(remaining_disk)
+            master_ip, server = self.bind_okeanos_resources(remaining_disk, disk_list)
             driver.find_element_by_xpath("//div[@id='content-wrap']/p[1]/button").click()
             time.sleep(1)
             driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button").click()
@@ -72,7 +72,7 @@ class TestClusterDiskSize(ClusterTest):
             cluster_name = server[0]['name'].rsplit('-', 1)[0]
             destroy_cluster(cluster_name, self.token)
 
-    def bind_okeanos_resources(self, remaining_disk):
+    def bind_okeanos_resources(self, remaining_disk, disk_list):
         '''
         Create a bare cluster in ~okeanos with two vms. The disk size depend
         on remaining_disk argument.
@@ -85,22 +85,18 @@ class TestClusterDiskSize(ClusterTest):
                                   ram_slave=1024, disk_slave=5,
                                   token=self.token, image='Debian Base')
         else:
-            # Checks if remaining size is not 5 GB and
-            # last digit is not 5, then add 5 GB to remaining size.
-            # This happens because ~okeanos does not have a flavor
-            # for disk size with 5 as last digit, except 5 GB.
-            if remaining_disk != 5 and remaining_disk % 10 != 0:
-                remaining_disk = remaining_disk + 5
-
-            return create_cluster(name=self.name,
-                                  clustersize=2,
-                                  cpu_master=1, ram_master=1024,
-                                  disk_master=remaining_disk,
-                                  disk_template='ext_vlmc',
-                                  cpu_slave=1, ram_slave=1024,
-                                  disk_slave=remaining_disk, token=self.token,
-                                  image='Debian Base')
-
+            for disk in disk_list:
+                if disk >= remaining_disk:
+                    remaining_disk = disk
+                    return create_cluster(name=self.name,
+                                          clustersize=2,
+                                          cpu_master=1, ram_master=1024,
+                                          disk_master=remaining_disk,
+                                          disk_template='ext_vlmc',
+                                          cpu_slave=1, ram_slave=1024,
+                                          disk_slave=remaining_disk,
+                                          token=self.token,
+                                          image='Debian Base')
 
 if __name__ == "__main__":
     unittest.main()
