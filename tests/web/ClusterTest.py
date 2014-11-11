@@ -129,8 +129,8 @@ class ClusterTest(unittest.TestCase):
                 if resource == vms[0].keys()[0]:
                     # Select the buttons selenium will press
                     # in create_cluster screen
-                    slave = str(resource_list.index(resource) + 1)
-                    master = str(resource_list.index(resource))
+                    slave = str(resource_list.index(vms[0].values()[0]) + 1)
+                    master = str(resource_list.index(vms[1].values()[0]))
                     break
         # If the vms list has zero elements
         elif len(vms) == 0:
@@ -141,7 +141,7 @@ class ClusterTest(unittest.TestCase):
             cluster_size = cluster_size + vms[0].values()[0]
             for resource in resource_list:
                 if resource == vms[0].keys()[0]:
-                    slave = str(resource_list.index(resource) + 1)
-                    master = str(resource_list.index(resource) + 1)
+                    slave = str(resource_list.index(vms[0].keys()[0]) + 1)
+                    master = str(resource_list.index(vms[0].keys()[0]) + 1)
                     break
         return cluster_size, master, slave, remaining_resource
