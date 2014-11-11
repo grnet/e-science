@@ -163,7 +163,7 @@ class HadoopCluster(object):
         pending_ips = dict_quotas['system']['cyclades.floating_ip']['pending']
         available_ips = limit_ips - (usage_ips + pending_ips)
         for d in list_float_ips:
-            if d['instance_id'] is None:
+            if d['instance_id'] is None and d['port_id'] is None:
                 available_ips += 1
         if available_ips > 0:
             return 0
@@ -321,7 +321,7 @@ class HadoopCluster(object):
         # Finds user public ssh key
         USER_HOME = expanduser('~')
         pub_keys_path = join(USER_HOME, ".ssh/id_rsa.pub")
-        auth = check_credentials(self.opts['token'], self.opts['auth_url'])
+        auth = check_credentials(self.opts['token'])
         endpoints, user_id = endpoints_and_user_id(auth)
         cyclades = init_cyclades(endpoints['cyclades'], self.opts['token'])
         flavor_master = self.get_flavor_id_master(cyclades)
@@ -341,14 +341,14 @@ class HadoopCluster(object):
         self.check_quota(auth, req_quotas)
         plankton = init_plankton(endpoints['plankton'], self.opts['token'])
         list_current_images = plankton.list_public(True, 'default')
-        # Find image id of the arg given
+        # Find image id of the arg given       
         for lst in list_current_images:
             if lst['name'] == self.opts['image']:
                 chosen_image = lst
                 break
-        else:
-            logging.error(self.opts['image'] + ' is not a valid image option')
-            exit(error_image_id)
+            else:
+                logging.error(self.opts['image'] + ' is not a valid image option')
+                exit(error_image_id)
 
         logging.log(REPORT, ' 2.Create  virtual  cluster')
         cluster = Cluster(cyclades,
