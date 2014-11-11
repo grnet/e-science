@@ -125,10 +125,13 @@ class ClusterTest(unittest.TestCase):
             remaining_resource = avail - vms[0].values()[0] * resource_list[len(resource_list)-1] - vms[1].values()[0] * resource_list[len(resource_list)-2]
             # Calculate the cluster_size we will use as input in selenium
             cluster_size = vms[0].values()[0] + vms[1].values()[0]
-            # Select the buttons selenium will press
-            # in create_cluster screen
-            slave = str(resource_list[len(resource_list)-1])
-            master = str(resource_list[len(resource_list)-2])
+            for resource in resource_list:
+                if resource == vms[0].keys()[0]:
+                    # Select the buttons selenium will press
+                    # in create_cluster screen
+                    slave = str(resource_list.index(resource) + 1)
+                    master = str(resource_list.index(resource))
+                    break
         # If the vms list has zero elements
         elif len(vms) == 0:
             raise RuntimeError
@@ -136,6 +139,9 @@ class ClusterTest(unittest.TestCase):
         else:
             remaining_resource = 0
             cluster_size = cluster_size + vms[0].values()[0]
-            slave = str(resource_list[len(resource_list)-1])
-            master = str(resource_list[len(resource_list)-1])
+            for resource in resource_list:
+                if resource == vms[0].keys()[0]:
+                    slave = str(resource_list.index(resource) + 1)
+                    master = str(resource_list.index(resource) + 1)
+                    break
         return cluster_size, master, slave, remaining_resource
