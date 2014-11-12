@@ -55,6 +55,32 @@ class OkeanosTokenSerializer(serializers.Serializer):
     token = serializers.CharField()
 
 
+class ClusterchoicesSerializer(serializers.Serializer):
+    '''
+    Serializer for ember request with user's
+    choices for cluster creation.
+    '''
+    cluster_name = serializers.CharField()
+
+    cluster_size = serializers.IntegerField()
+
+    cpu_master = serializers.IntegerField()
+
+    mem_master = serializers.IntegerField()
+
+    disk_master = serializers.IntegerField()
+
+    cpu_slaves = serializers.IntegerField()
+
+    mem_slaves = serializers.IntegerField()
+
+    disk_slaves = serializers.IntegerField()
+
+    disk_template = serializers.CharField()
+
+    os_choice = serializers.CharField()
+
+
 class UserInfoSerializer(serializers.ModelSerializer):
     '''
     Serializer for UserInfo object with cluster and escience_token

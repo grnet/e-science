@@ -7,16 +7,20 @@ Views for django rest framework .
 @author: Ioannis Stenos, Nick Vrionis
 '''
 
+import os
+from os.path import join, dirname, abspath
+import sys
+sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from authenticate_user import EscienceTokenAuthentication, IsAuthenticatedOrIsCreation
+from authenticate_user import *
 from django.views import generic
-from backend.get_flavors_quotas import retrieve_ClusterCreationParams
-from backend.models import UserInfo
-from backend.serializers import OkeanosTokenSerializer, UserInfoSerializer, ClusterCreationParamsSerializer
-from backend.django_db_after_login import *
-
+from get_flavors_quotas import retrieve_ClusterCreationParams
+from backend.models import *
+from backend.serializers import OkeanosTokenSerializer, UserInfoSerializer, ClusterCreationParamsSerializer, ClusterchoicesSerializer
+from django_db_after_login import *
+from create_cluster import HadoopCluster
 
 class MainPageView(generic.TemplateView):
     '''Load the template file'''
@@ -28,7 +32,8 @@ main_page = MainPageView.as_view()
 class StatusView(APIView):
     '''
     View to handle requests for retrieving cluster creation parameters
-    from ~okeanos.
+    from ~okeanos and checking user's choices for cluster creation
+    coming from ember.
     '''
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticatedOrIsCreation, )
@@ -49,14 +54,58 @@ class StatusView(APIView):
 
     def put(self, request, *args, **kwargs):
         '''
-        Not used right now, just a placeholder. Will be needed later
-        for passing the ClusterCreationParams information from client
-        to okeanos.
+        Handles ember requests with user's cluster creation parameters.
+        Check the parameters with HadoopCluster object from create_cluster
+        script.
         '''
+        self.resource_name = 'clusterchoice'
+        self.serializer_class = ClusterchoicesSerializer
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
-            return Response({"id": "1"})
-        return Response({"id": "1"})
+            user_token = Token.objects.get(key=request.auth)
+            user = UserInfo.objects.get(user_id=user_token.user.user_id)
+            # Dictionary of HadoopCluster arguments
+            choices = {'name': serializer.data['cluster_name'],
+                       'clustersize': serializer.data['cluster_size'],
+                       'cpu_master': serializer.data['cpu_master'],
+                       'ram_master': serializer.data['mem_master'],
+                       'disk_master': serializer.data['disk_master'],
+                       'cpu_slave': serializer.data['cpu_slaves'],
+                       'ram_slave': serializer.data['mem_slaves'],
+                       'disk_slave': serializer.data['disk_slaves'],
+                       'disk_template': serializer.data['disk_template'],
+                       'os_choice': serializer.data['os_choice'],
+                       'token': user.okeanos_token}
+
+            new_hadoop_cluster = HadoopCluster(choices)
+            # Check user's cluster choices and send message if everything ok.
+            # Else send appropriate error message.
+            cluster_check = new_hadoop_cluster.check_all_resources()
+
+            if cluster_check == 0:
+                return Response({"id": 1, "message": "Everything is ok with "
+                                 "your cluster creation parameters"})
+            elif cluster_check == -13:
+                return Response({"id": 1, "message": "Selected cluster size "
+                                 "exceeded cyclades virtual machines limit"})
+            elif cluster_check == -14:
+                return Response({"id": 1, "message": "Private Network quota"
+                                 " exceeded"})
+            elif cluster_check == -30:
+                return Response({"id": 1, "message": "Public ip quota "
+                                 "exceeded"})
+            elif cluster_check == -11:
+                return Response({"id": 1, "message": "Cpu selection exceeded"
+                                 " cyclades cpu limit"})
+            elif cluster_check == -12:
+                return Response({"id": 1, "message": "Ram selection exceeded"
+                                 " cyclades memory limit"})
+            elif cluster_check == -10:
+                return Response({"id": 1, "message": "Disk size selection"
+                                 " exceeded cyclades disk size limit"})
+        # This will be send if user's cluster parameters are not de-serialized
+        # correctly.
+        return Response({"Something is not valid"})
 
 
 class SessionView(APIView):
@@ -87,7 +136,7 @@ class SessionView(APIView):
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
             token = serializer.data['token']
-            if check_credentials(token) == AUTHENTICATED:
+            if check_user_credentials(token) == AUTHENTICATED:
                 self.user = get_user_id(token)
                 self.serializer_class = UserInfoSerializer(self.user)
                 return Response(self.serializer_class.data)

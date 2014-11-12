@@ -9,7 +9,7 @@
 
 //Ember.MODEL_FACTORY_INJECTIONS = true;
 
-Orka = Ember.Application.create({
+window.App = Ember.Application.create({
     // from enber-cli
 //    modulePrefix: config.modulePrefix,
 //    podModulePrefix: config.podModulePrefix,
@@ -19,22 +19,22 @@ Orka = Ember.Application.create({
     LOG_TRANSITIONS : true
 });
 
+App.attr = DS.attr;
+
 // Global variable for Escience token
 var escience_token;
-Orka.set('escience_token', "null");
+App.set('escience_token', "null");
 
+/* 
+ The store holds data loaded from the server (i.e. records). 
+ Routes and controllers can query the store for records. 
+ If a given record is called for the first time, then the store tells the adapter to load it over the network. 
+ Then, the store caches it for the next time you ask for it. 
+ */
 // Extend Application Adapter settings for Token Authentication and REST calls to /api
 // Changes of global var escience_token are reflected in the Authorization header of our REST calls
-Orka.ApplicationAdapter = DS.ActiveModelAdapter.extend({
-    namespace : 'api',
-    headers : function() {
-        return {
-            "Authorization" : Orka.escience_token
-        };
-    }.property("Orka.escience_token")
-});
 
 // from ember-cli
-//loadInitializers(Orka, config.modulePrefix);
-//export default Orka;
+//loadInitializers(App, config.modulePrefix);
+//export default App;
 // from ember-cli

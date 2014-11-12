@@ -2,7 +2,7 @@
 //import config from './config/environment';
 
 // Application routes
-Orka.Router.map(function() {
+App.Router.map(function() {
         this.route('homepage');
         this.resource('user', function() {
                 this.route('login');
@@ -20,11 +20,10 @@ Orka.Router.map(function() {
         this.route('restricted');
 });
 
-
-//export default Orka.IndexRoute;
-//export default Orka.RestrictedRoute;
-//export default Orka.UserWelcomeRoute;
-//export default Orka.UserLoginRoute;
-//export default Orka.UserLogoutRoute;
-//export default Orka.CreateclusterIndexRoute;
-//export default Orka.CreateclusterConfirmRoute;
+//export default App.IndexRoute;
+//export default App.RestrictedRoute;
+//export default App.UserWelcomeRoute;
+//export default App.UserLoginRoute;
+//export default App.UserLogoutRoute;
+//export default App.CreateclusterIndexRoute;
+//export default App.CreateclusterConfirmRoute;
