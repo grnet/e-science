@@ -4,7 +4,7 @@ To run the tests you need:
 
 1. `pip install -U selenium` or `pip install selenium`
 
-2. For all the selenium tests you will need an ~okeanos token which will be located in .config.txt file in <projectroot>/.private/ 
+2. For all the selenium tests you will need an ~okeanos token which will be located in .config.txt file in projectroot/.private/ 
 
 This is the format of the .config.txt file:
 
