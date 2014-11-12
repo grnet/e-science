@@ -122,13 +122,13 @@ class ClusterTest(unittest.TestCase):
         # If the vms list has two or more elements
         if len(vms) >= 2:
             # Find the remaining resource that we will bind in ~okeanos for the test.
-            remaining_resource = avail - vms[0].values()[0] * resource_list[len(resource_list)-1] - vms[1].values()[0] * resource_list[len(resource_list)-2]
+            remaining_resource = avail - vms[0].values()[0] *vms[0].keys()[0] - vms[1].values()[0] * vms[1].keys()[0]
             # Calculate the cluster_size we will use as input in selenium
             cluster_size = vms[0].values()[0] + vms[1].values()[0]
             # Select the buttons selenium will press
             # in create_cluster screen
             slave = str(resource_list.index(vms[0].keys()[0]) + 1)
-            master = str(resource_list.index(vms[1].keys()[0]))
+            master = str(resource_list.index(vms[1].keys()[0])+ 1)
 
         # If the vms list has zero elements
         elif len(vms) == 0:
