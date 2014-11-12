@@ -41,11 +41,11 @@ class ClusterTest(unittest.TestCase):
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
-            self.base_url = parser.get('cloud \"~okeanos\"', 'app_url')
+            self.base_url = parser.get('deploy', 'url')
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
-            self.base_url = "INVALID_ESCIENCE_APP_HOST_URL"
+            self.base_url = "INVALID_APP_URL"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
 

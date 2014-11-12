@@ -17,10 +17,15 @@ This is the format of the .config.txt file:
 	url = https://accounts.okeanos.grnet.gr/identity/v2.0
 	
 	token = YOUR ~okeanos TOKEN
+
+	[cluster]
 	
-	app_url = The url where ember app runs. 
+	master_ip = x.x.x.x (not needed for the selenium tests)
 	
-	It could be http://127.0.0.1:8000 if testrunning in localhost or a public ip in ~okeanos (http://okeanos_public_ip:8000).
+	[deploy]
+
+	url = your deploy application url (eg for localhost http://127.0.0.1:8000/ or a public ip in ~okeanos (http://okeanos_public_ip:8000)) 
+	
 
 Of course you need to have a running django server in your [localhost:8000](localhost:8000) or a public one in ~okeanos where Selenium expects to reach the Ember/Django app.
 
