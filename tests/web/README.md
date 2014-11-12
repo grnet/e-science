@@ -19,4 +19,8 @@ To run the tests you need:
 	
 	master_ip = x.x.x.x
 
+	[deploy]
+
+	url = your base url (eg for localhost http://127.0.0.1:8000/)
+
 Run the selenium tests either with `nosetests`, or separately with `python test_*`

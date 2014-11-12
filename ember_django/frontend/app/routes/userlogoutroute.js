@@ -1,6 +1,7 @@
 // Logout route
 // Log out user.
 App.UserLogoutRoute = Ember.Route.extend({
+	// redirect accordingly
 	redirect : function() {
 		// Send PUT request for backend logout update.
 		var current_user = this.store.update('user', {

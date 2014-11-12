@@ -16,17 +16,17 @@ App.CreateclusterConfirmController = Ember.Controller.extend({
 			this.transitionTo('user.logout');
 		},
 		// when previous button is pressed
-		// gotoflavor action is triggered
-		gotoflavor : function() {
+		// go_to_flavor action is triggered
+		go_to_flavor : function() {
 			// redirect to flavor template
 			this.set('message', '');
 			this.goback();
 			this.transitionTo('createcluster.index');
 		},
 		// when next button is pressed
-		// gotocreate action is triggered
+		// go_to_create action is triggered
 		// User's cluster creation choices are send to backend for checking
-		gotocreate : function() {
+		go_to_create : function() {
 			var self = this;
 			var cluster_selection = this.store.update('clusterchoice', {
 				'id' : 1,

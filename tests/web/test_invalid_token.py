@@ -34,7 +34,7 @@ class InvalidTokenTest(unittest.TestCase):
         config_file = join(BASE_DIR, '.private/.config.txt')
         parser.read(config_file)
         try:
-            self.base_url = parser.get('application', 'url')
+            self.base_url = parser.get('deploy', 'url')
         except NoSectionError:
             self.base_url = "INVALID_APP_URL"
             print 'Current authentication details are kept off source control. ' \

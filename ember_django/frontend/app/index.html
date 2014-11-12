@@ -139,7 +139,7 @@
                 </div>
             </div>
 			<div id="footer">
-		        <button id="next" class="next btn btn-success btn-md" {{action "gotoconfirm"}}> Next </button>
+		        <button id="next" class="next btn btn-success btn-md" {{action "go_to_confirm"}}> Next </button>
 		        <form class="form-horizontal" {{action "logout" on="submit"}}>
 					<button type="submit" class="btn btn-danger btn-md">Logout</button>
 			    </form>
@@ -175,8 +175,8 @@
                 </div>
             </div>
 		    <div id="footer">
-		        <button id="previous" class="btn btn-warning" {{action "gotoflavor"}}> Previous </button>
-		        <button id="next" class="btn btn-success" {{action "gotocreate"}}> Create Cluster! </button>
+		        <button id="previous" class="btn btn-warning" {{action "go_to_flavor"}}> Previous </button>
+		        <button id="next" class="btn btn-success" {{action "go_to_create"}}> Create Cluster! </button>
 		        <h4>{{message}}</h4>
 		        <form class="form-horizontal" {{action "logout" on="submit"}}>
 			<button type="submit" class="btn btn-danger">Logout</button>

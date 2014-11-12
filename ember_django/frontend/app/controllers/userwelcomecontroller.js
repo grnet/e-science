@@ -5,7 +5,8 @@ App.UserWelcomeController = Ember.Controller.extend({
 
   needs: 'createclusterIndex',
 
-  goforward: function(){
+  // Function which disable all flavor buttons so user will have to selecet a role frist (master/slaves) to interact with the buttons
+  go_forward: function(){
     this.controllerFor('createclusterIndex').set('master_enabled', false);
     this.controllerFor('createclusterIndex').set('master_color', "lightblue");
     this.controllerFor('createclusterIndex').set('slaves_enabled', false);
@@ -15,10 +16,13 @@ App.UserWelcomeController = Ember.Controller.extend({
 
   actions:{
     logout: function(){
+      // redirect to logout
       this.transitionToRoute('user.logout');
     },
+
+    // go to crete/cluster screen
     createcluster: function(){
-      this.goforward();
+      this.go_forward();
       this.transitionToRoute('createcluster.index');
     }    
   }

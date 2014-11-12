@@ -2,7 +2,9 @@ Ember application with Django backend.
 ---
  
 Communication happens through Django REST framework.
-Ember application files are inside app folder and django backend files are in backend folder. 
+2 folders for this project:
+  Backend: django
+  Frontend: ember (following the ember-cli structure) 
 
 Requirements:
 --
@@ -27,6 +29,18 @@ handlebars: 1.3.0
 ember: 1.7.0
 
 ember-data: 1.0.0-beta.11
+
+for ember-cli (installation is optional at this point)
+---
+curl https://raw.githubusercontent.com/creationix/nvm/v0.12.1/install.sh | bash
+source ~/.profile
+nvm install [version-no]
+(e.g. nvm install 0.11.13)
+npm install -g ember-cli
+npm install -g bower
+npm install -g phantomjs
+nvm alias default [version-no]
+(e.g. nvm alias default v0.11.13)
 
 How to run locally
 --

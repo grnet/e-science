@@ -1,4 +1,0 @@
-module('JSHint - models');
-test('models/clusterchoice.js should pass jshint', function() { 
-  ok(false, 'models/clusterchoice.js should pass jshint.\nmodels/clusterchoice.js: line 2, col 1, \'Orka\' is not defined.\nmodels/clusterchoice.js: line 2, col 22, \'DS\' is not defined.\nmodels/clusterchoice.js: line 3, col 20, \'DS\' is not defined.\nmodels/clusterchoice.js: line 4, col 20, \'DS\' is not defined.\nmodels/clusterchoice.js: line 5, col 18, \'DS\' is not defined.\nmodels/clusterchoice.js: line 6, col 18, \'DS\' is not defined.\nmodels/clusterchoice.js: line 7, col 19, \'DS\' is not defined.\nmodels/clusterchoice.js: line 8, col 18, \'DS\' is not defined.\nmodels/clusterchoice.js: line 9, col 18, \'DS\' is not defined.\nmodels/clusterchoice.js: line 10, col 19, \'DS\' is not defined.\nmodels/clusterchoice.js: line 11, col 21, \'DS\' is not defined.\nmodels/clusterchoice.js: line 12, col 17, \'DS\' is not defined.\n\n12 errors'); 
-});
