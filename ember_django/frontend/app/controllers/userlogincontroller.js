@@ -1,9 +1,8 @@
-// Login functionality
 // Login controller
 App.UserLoginController = Ember.Controller.extend({
 	token : '',
 	isLoggedIn : function() {
-		// Check localstorage auth token for user login status.
+		// Check local storage auth token for user login status.
 		if (window.localStorage.escience_auth_token != 'null' && !Ember.isEmpty(window.localStorage.escience_auth_token) && window.localStorage.escience_auth_token !== 'undefined') {
 			return true;
 		} else {

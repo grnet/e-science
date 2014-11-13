@@ -1,5 +1,4 @@
-// Logout route
-// Log out user.
+// Logout route (Log out user).
 App.UserLogoutRoute = Ember.Route.extend({
 	// redirect accordingly
 	redirect : function() {
@@ -17,6 +16,5 @@ App.UserLogoutRoute = Ember.Route.extend({
 			window.localStorage.escience_auth_token = App.get('escience_token');
 		});
 		this.transitionTo('homepage');
-
 	}
 });

@@ -2,7 +2,7 @@
 App.HomepageController = Ember.Controller.extend({
 	actions: {
 		start : function() {
-                this.transitionToRoute('user.login');
-        }
+			this.transitionToRoute('user.login');
+		}
 	}     
 });
