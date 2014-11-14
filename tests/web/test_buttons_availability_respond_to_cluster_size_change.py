@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
-
 '''
-This script tests logout from web form using selenium
-
+This script is a test generator and checks that the buttons are enabled or disabled upon cluster_size change
 @author: Ioannis Stenos, Nick Vrionis
 '''
-
 from selenium import webdriver
 import sys
 from os.path import join, dirname, abspath
@@ -15,13 +12,13 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
-from os.path import join, dirname
 from ConfigParser import RawConfigParser, NoSectionError
-import unittest, time, re, sys
+from okeanos_utils import check_quota, get_flavor_id
+import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class TestLogout(unittest.TestCase):
+class TestButtonDisable(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -29,6 +26,7 @@ class TestLogout(unittest.TestCase):
         self.accept_next_alert = True
         parser = RawConfigParser()
         config_file = join(BASE_DIR, '.private/.config.txt')
+        self.name = 'testcluster'
         parser.read(config_file)
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
@@ -40,14 +38,9 @@ class TestLogout(unittest.TestCase):
             self.base_url = "INVALID_APP_URL"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
+
     
-    def test_logout(self):
-        '''
-        LogoutTest
-        Opens homepage then enters login screen 
-        and place a valid okeanos token
-        and logout check f returns back in homepage 
-        '''
+    def test_button_disable(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_css_selector("button[type=\"submit\"]").click()
@@ -60,10 +53,32 @@ class TestLogout(unittest.TestCase):
             except: pass
             time.sleep(1)
         else: self.fail("time out")
-        driver.find_element_by_xpath("(//button[@type='submit'])[2]").click()
-        try: self.assertEqual("Home page", driver.find_element_by_css_selector("h2").text)
-        except AssertionError as e: self.verificationErrors.append(str(e))
-    
+        driver.find_element_by_css_selector("button[type=\"submit\"]").click()
+        for i in range(60):
+            try:
+                if "Select CPUs, RAM and Disk Size..." == driver.find_element_by_css_selector("h3").text: break
+            except: pass
+            time.sleep(1)
+        else: self.fail("time out")
+        current_cluster_size = 2
+        cluster_sizes = driver.find_element_by_id("size_of_cluster").text
+        current_cluster_size = int(cluster_sizes.rsplit('\n', 1)[-1])
+        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(cluster_sizes.rsplit('\n', 1)[-1])
+        user_quota = check_quota(self.token)
+        kamaki_flavors = get_flavor_id(self.token)
+        for role in ["master" , "slaves"]:
+            driver.find_element_by_id(role).click()
+            for flavor in ['cpus' , 'ram' , 'disk']:
+                for item in kamaki_flavors[flavor]:
+                    if ((user_quota[flavor]['available']-(item + (current_cluster_size-1)*kamaki_flavors[flavor][0])) >= 0):
+                        on = driver.find_element_by_id(str(item))
+                        try: self.assertTrue(on.is_enabled())
+                        except AssertionError as e: self.verificationErrors.append(str(e))
+                    else:
+                        off = driver.find_element_by_id(str(item))
+                        try: self.assertFalse(off.is_enabled())
+                        except AssertionError as e: self.verificationErrors.append(str(e))
+
     def is_element_present(self, how, what):
         try: self.driver.find_element(by=how, value=what)
         except NoSuchElementException, e: return False
@@ -87,7 +102,6 @@ class TestLogout(unittest.TestCase):
     
     def tearDown(self):
         self.driver.quit()
-        self.assertEqual([], self.verificationErrors)
 
 if __name__ == "__main__":
     unittest.main()

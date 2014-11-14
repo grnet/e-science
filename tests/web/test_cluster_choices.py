@@ -27,7 +27,8 @@ class TestClusterChoices(ClusterTest):
     def test_cluster(self):
 
         driver = self.login()
-        Select(driver.find_element_by_xpath("//div[@id='sidebar']/p/select")).select_by_visible_text("3")
+        driver.find_element_by_id("master").click()
+        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text("3")
         time.sleep(1)
         driver.find_element_by_css_selector("#content-wrap > p > button").click()
         time.sleep(1)

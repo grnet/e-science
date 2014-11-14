@@ -25,7 +25,8 @@ class TestClusterIps(ClusterTest):
     def test_cluster(self):
 
         driver = self.login()
-        Select(driver.find_element_by_xpath("//div[@id='sidebar']/p/select")).select_by_visible_text("3")
+        driver.find_element_by_id("master").click()
+        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text("3")
         time.sleep(1)
         try:
             float_ids, port_ids, net_client = self.bind_okeanos_resources()

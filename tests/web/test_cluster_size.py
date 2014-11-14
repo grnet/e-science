@@ -29,7 +29,8 @@ class TestClusterSize(ClusterTest):
         # Maximum available clustersize
         max_vms = str(user_quota['cluster_size']['available'])
         # Tell selenium to get the max available clustersize from dropdown
-        Select(driver.find_element_by_xpath("//div[@id='sidebar']/p/select")).select_by_visible_text(max_vms)
+        driver.find_element_by_id("master").click()
+        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(max_vms)
         time.sleep(1)
         try:
             master_ip, server = self.bind_okeanos_resources()

@@ -35,7 +35,8 @@ class TestClusterDiskSize(ClusterTest):
         cluster_size, master, slave ,remaining_disk = self.calculate_cluster_resources(disk_list, available_disk)
         # Give Selenium the values cluster_size, master and slave to use for
         # the cluster_size and disk size buttons of cluster/create screen.
-        Select(driver.find_element_by_xpath("//div[@id='sidebar']/p/select")).select_by_visible_text(str(cluster_size))
+        driver.find_element_by_id("master").click()
+        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(str(cluster_size))
         time.sleep(1)
         try:
             master_ip, server = self.bind_okeanos_resources(remaining_disk, disk_list)
