@@ -1,4 +1,4 @@
-// Createcluster index controller
+// Cluster/create controller
 App.ClusterCreateController = Ember.Controller.extend({
 
 	// Initialization phase

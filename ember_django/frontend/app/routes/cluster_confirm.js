@@ -1,4 +1,4 @@
-// Createcluster confirm route (/cluster/create/confirm url)
+// Cluster/confirm route (/cluster/confirm url)
 App.ClusterConfirmRoute = App.RestrictedRoute.extend({
     model : function() {
 	// Return user record with id 1.

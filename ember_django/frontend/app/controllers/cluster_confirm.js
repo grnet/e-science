@@ -1,9 +1,9 @@
-// Createcluster confirm controller
+// Cluster/confirm controller
 App.ClusterConfirmController = Ember.Controller.extend({
-	// in order to have access to create cluster controller
+	// in order to have access to Cluster/create controller
 	needs : 'clusterCreate',
 	message : '',
-	// return to previous screen (create cluster)
+	// return to previous screen (cluster/create)
 	go_back : function() {
 		// reset some variables
 		this.controllerFor('clusterCreate').set('master_enabled', false);
@@ -15,7 +15,7 @@ App.ClusterConfirmController = Ember.Controller.extend({
 	actions : {
 		// logout functionality
 		logout : function() {
-			// clear variables in create cluster
+			// clear variables in  cluster/create
 			this.controllerFor('clusterCreate').reset_variables();
 			// redirect to logout
 			this.transitionTo('user.logout');

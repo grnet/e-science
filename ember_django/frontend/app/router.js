@@ -10,7 +10,9 @@ App.Router.map(function() {
                 this.route('welcome');
         });
         this.resource('cluster', function() {
-				this.route('create');
+		// /cluster/create
+		this.route('create');
+		// /cluster/confirm
                 this.route('confirm');
         });
         // Route to enforce login policy
