@@ -2,3 +2,4 @@
 *.py~
 *~
 .idea
+ember_django/frontend/bower_components/
