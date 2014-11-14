@@ -58,7 +58,7 @@ class IsAuthenticatedOrIsCreation(BasePermission):
             )
 
 
-def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
+def check_user_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
                       '/identity/v2.0'):
     '''Identity,Account/Astakos. Test ~okeanos authentication credentials'''
     logging.info(' Test the credentials')

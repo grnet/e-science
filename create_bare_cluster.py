@@ -47,7 +47,7 @@ Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 
 
-def get_flavor_id(cpu, ram, disk, disk_template, cycladesclient):
+def get_flavor_ids(cpu, ram, disk, disk_template, cycladesclient):
     '''Return the flavor id based on cpu,ram,disk_size and disk template'''
     try:
         flavor_list = cycladesclient.list_flavors(True)
@@ -64,7 +64,7 @@ def get_flavor_id(cpu, ram, disk, disk_template, cycladesclient):
 
     return flavor_id
     
-def check_quota(auth, req_quotas):
+def check_quotas(auth, req_quotas):
     '''
     Checks if user quota are enough for what he needed to create the cluster.
     If limit minus (used and pending) are lower or
@@ -109,6 +109,7 @@ def check_quota(auth, req_quotas):
     logging.log(REPORT, ' Cyclades Cpu,Disk and Ram quotas are ok.')
     return
 
+
 def create_cluster(name, clustersize, cpu_master, ram_master, disk_master,
                    disk_template, cpu_slave, ram_slave, disk_slave, token,
                    image, auth_url='https://accounts.okeanos.grnet.gr'
@@ -130,10 +131,10 @@ def create_cluster(name, clustersize, cpu_master, ram_master, disk_master,
     auth = check_credentials(token, auth_url)
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
-    flavor_master = get_flavor_id(cpu_master, ram_master,
+    flavor_master = get_flavor_ids(cpu_master, ram_master,
                                   disk_master, disk_template,
                                   cyclades)
-    flavor_slaves = get_flavor_id(cpu_slave, ram_slave,
+    flavor_slaves = get_flavor_ids(cpu_slave, ram_slave,
                                   disk_slave, disk_template,
                                   cyclades)
     if flavor_master == 0 or flavor_slaves == 0:
@@ -148,7 +149,7 @@ def create_cluster(name, clustersize, cpu_master, ram_master, disk_master,
     # The resources requested by user in a dictionary
     req_quotas = {'cpu': cpu, 'ram': ram, 'cyclades_disk': cyclades_disk,
                   'vms': clustersize}
-    check_quota(auth, req_quotas)
+    check_quotas(auth, req_quotas)
     plankton = init_plankton(endpoints['plankton'], token)
     list_current_images = plankton.list_public(True, 'default')
     # Find image id of the arg given
