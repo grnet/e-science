@@ -76,7 +76,7 @@ class MockPlankton():
     """ Support class for faking .list_public method. """
     def list_public(self, *args):
         """ :returns static image list with valid keys. """
-        return [{'name': 'Debian Base', 'id': 0}]
+        return [{'name': 'ubuntu', 'id': 0}]
 
 
 def mock_init_plankton(*args):
@@ -88,7 +88,7 @@ def mock_init_plankton(*args):
 class MockCycladesNetClient():
     """ support class for faking CycladesNetworkClient.list_floatingips """
     def list_floatingips(self):
-        return [{'instance_id': '604863'}, {'instance_id': None}, {'instance_id': '615302'}]
+        return [{'instance_id': '604863', 'port_id': '1743733'}, {'instance_id': None, 'port_id': None}, {'instance_id': '615302', 'port_id': '1773954'}]
  # [{'floating_network_id': '6783', 'user_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'deleted': False, 'tenant_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'instance_id': '604863', 'fixed_ip_address': None, 'floating_ip_address': '83.212.123.218', 'port_id': '1743733', 'id': '527909'},
  # {'floating_network_id': '6783', 'user_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'deleted': False, 'tenant_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'instance_id': None, 'fixed_ip_address': None, 'floating_ip_address': '83.212.123.253', 'port_id': None, 'id': '570931'},
  # {'floating_network_id': '2216', 'user_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'deleted': False, 'tenant_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'instance_id': '615302', 'fixed_ip_address': None, 'floating_ip_address': '83.212.118.250', 'port_id': '1773954', 'id': '572851'}]
@@ -133,7 +133,7 @@ class TestCreateCluster(TestCase):
             self.opts = {'name': 'Test', 'clustersize': 2, 'cpu_master': 2,
                 'ram_master': 4096, 'disk_master': 5, 'cpu_slave': 2,
                 'ram_slave': 2048, 'disk_slave': 5, 'token': self.token,
-                'disk_template': 'ext_vlmc', 'image': 'Debian Base',
+                'disk_template': 'ext_vlmc', 'image': 'ubuntu',
                 'auth_url': self.auth_url}
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
@@ -141,6 +141,7 @@ class TestCreateCluster(TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
 
+    # @patch('create_cluster.init_plankton', mock_init_plankton)
     def test_create_bare_cluster(self):
         # arrange
         expected_masterip = '127.0.0.1'
@@ -151,6 +152,7 @@ class TestCreateCluster(TestCase):
         # assert
         self.assertTupleEqual((expected_masterip, expected_vm_dict), (returned_masterip, returned_vm_dict))
 
+    # @patch('create_cluster.init_plankton', mock_init_plankton)
     def test_create_yarn_cluster(self):
         # arrange
         self.opts['yarn'] = True
@@ -296,3 +298,4 @@ class TestCreateCluster(TestCase):
 
 if __name__ == '__main__':
     main()
+
