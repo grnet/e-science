@@ -12,8 +12,9 @@ import sys
 import nose
 import string
 import logging
+import subprocess,StringIO
 from base64 import b64encode
-from os.path import abspath
+from os.path import abspath, dirname, join
 from datetime import datetime
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
@@ -21,6 +22,7 @@ from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.cyclades import CycladesClient
 from kamaki.clients.cyclades import CycladesNetworkClient
 from time import sleep
+from ConfigParser import RawConfigParser, NoSectionError
 
 # Definitions of return value errors
 error_quotas_network = -14
@@ -30,14 +32,32 @@ error_create_network = -29
 error_get_ip = -30
 error_create_server = -31
 error_authentication = -99
+error_proj_id = -71
 
 # Global constants
 MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 REPORT = 25  # Define logging level of REPORT
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
+BASE_DIR = dirname(abspath(__file__))
 
-
+def get_project_id(project_name="escience.grnet.gr"):
+    '''
+    Return the id of the e-science project.
+    The id is found with [kamaki project list] command 
+    or is read from a config file that is not uploaded to 
+    remote repositories.
+    '''  
+    parser = RawConfigParser()
+    config_file = join(BASE_DIR, '.private/.config.txt')
+    parser.read(config_file)
+    try:
+        project_id = parser.get('cloud \"~okeanos\"', 'project_id')
+        return project_id
+    except NoSectionError:
+        logging.error('No project_id was found for this project_name')
+        sys.exit(error_proj_id)
+  
 def destroy_cluster(cluster_name, token):
     '''
     Destroys cluster and deletes network and floating ip. Finds the machines
@@ -155,7 +175,7 @@ def check_quota(token):
     Available = limit minus (used and pending).Also divides with 1024*1024*1024
     to transform bytes to gigabytes.
      '''
-
+    uuid = get_project_id()
     auth = check_credentials(token)
 
     try:
@@ -163,24 +183,24 @@ def check_quota(token):
     except Exception:
         logging.exception('Could not get user quota')
         sys.exit(error_user_quota)
-    limit_cd = dict_quotas['system']['cyclades.disk']['limit'] / Bytes_to_GB
-    usage_cd = dict_quotas['system']['cyclades.disk']['usage'] / Bytes_to_GB
-    pending_cd = dict_quotas['system']['cyclades.disk']['pending'] / Bytes_to_GB
+    limit_cd = dict_quotas[uuid]['cyclades.disk']['limit'] / Bytes_to_GB
+    usage_cd = dict_quotas[uuid]['cyclades.disk']['usage'] / Bytes_to_GB
+    pending_cd = dict_quotas[uuid]['cyclades.disk']['pending'] / Bytes_to_GB
     available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd)
 
-    limit_cpu = dict_quotas['system']['cyclades.cpu']['limit']
-    usage_cpu = dict_quotas['system']['cyclades.cpu']['usage']
-    pending_cpu = dict_quotas['system']['cyclades.cpu']['pending']
+    limit_cpu = dict_quotas[uuid]['cyclades.cpu']['limit']
+    usage_cpu = dict_quotas[uuid]['cyclades.cpu']['usage']
+    pending_cpu = dict_quotas[uuid]['cyclades.cpu']['pending']
     available_cpu = limit_cpu - usage_cpu - pending_cpu
 
-    limit_ram = dict_quotas['system']['cyclades.ram']['limit'] / Bytes_to_MB
-    usage_ram = dict_quotas['system']['cyclades.ram']['usage'] / Bytes_to_MB
-    pending_ram = dict_quotas['system']['cyclades.ram']['pending'] / Bytes_to_MB
+    limit_ram = dict_quotas[uuid]['cyclades.ram']['limit'] / Bytes_to_MB
+    usage_ram = dict_quotas[uuid]['cyclades.ram']['usage'] / Bytes_to_MB
+    pending_ram = dict_quotas[uuid]['cyclades.ram']['pending'] / Bytes_to_MB
     available_ram = (limit_ram-usage_ram-pending_ram)
 
-    limit_vm = dict_quotas['system']['cyclades.vm']['limit']
-    usage_vm = dict_quotas['system']['cyclades.vm']['usage']
-    pending_vm = dict_quotas['system']['cyclades.vm']['pending']
+    limit_vm = dict_quotas[uuid]['cyclades.vm']['limit']
+    usage_vm = dict_quotas[uuid]['cyclades.vm']['usage']
+    pending_vm = dict_quotas[uuid]['cyclades.vm']['pending']
     available_vm = limit_vm-usage_vm-pending_vm
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
@@ -350,15 +370,16 @@ class Cluster(object):
         Subtracts the number of networks used and pending from the max allowed
         number of networks
         '''
+        uuid = get_project_id()
         try:
             dict_quotas = self.auth.get_quotas()
         except Exception:
             logging.exception('Error in getting user network quota')
             sys.exit(error_get_network_quota)
-        limit_net = dict_quotas['system']['cyclades.network.private']['limit']
-        usage_net = dict_quotas['system']['cyclades.network.private']['usage']
+        limit_net = dict_quotas[uuid]['cyclades.network.private']['limit']
+        usage_net = dict_quotas[uuid]['cyclades.network.private']['usage']
         pending_net = \
-            dict_quotas['system']['cyclades.network.private']['pending']
+            dict_quotas[uuid]['cyclades.network.private']['pending']
         available_networks = limit_net-usage_net-pending_net
         if available_networks >= 1:
             logging.log(REPORT, ' Private Network quota is ok')

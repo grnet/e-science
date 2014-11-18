@@ -12,8 +12,6 @@ App.Router.map(function() {
         this.resource('cluster', function() {
 		// /cluster/create
 		this.route('create');
-		// /cluster/confirm
-                this.route('confirm');
         });
         // Route to enforce login policy
 	// other routes that require login extend this

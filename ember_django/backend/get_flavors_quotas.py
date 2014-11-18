@@ -43,10 +43,9 @@ def check_quota(token):
      '''
 
     auth = check_credentials(token, auth_url)
-
+    uuid = get_project_id()
     try:
         dict_quotas = auth.get_quotas()
-	uuid = '10bdefe7-07dd-43ae-a32e-d9b569640717'
     except Exception:
         logging.exception('Could not get user quota')
         sys.exit(error_user_quota)
