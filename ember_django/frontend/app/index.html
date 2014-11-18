@@ -209,12 +209,11 @@
 		</script>
 
         <script type="text/x-handlebars" data-template-name="cluster/create">
-		<div class="page-header row">
-			<div class="col-xs-12"
+		<div id="header">
 			User: {{content._data.user_id}}
 			<h3>Select CPUs, RAM and Disk Size...</h3>
-			</div>
 		</div>
+		<div id="main-wrap">
 			<div class="row">
 				<h3> *** Cluster configuration </h3>
 				<h4>Cluster Name: {{view Ember.TextField valueBinding="cluster_name" placeholder="cluster_name" classBinding=":textfieldcolor"}}</h4>
@@ -290,33 +289,34 @@
 			<button id="next" class="next btn btn-success btn-md" {{action "go_to_confirm"}}>
 				Next
 			</button>
+		</div>
         </script>
 
-		<script type="text/x-handlebars" data-template-name="createcluster/confirm">
+        <script type="text/x-handlebars" data-template-name="cluster/confirm">
 		<div id="header">
 			Summary
 		</div>
 		<div id="main-wrap">
 			<div id="content-wrap">
 				<h4>User: {{content._data.user_id}}</h4>
-				<h4>Cluster Name: {{controllers.createclusterIndex.cluster_name}}</h4>
+                    <h4>Cluster Name: {{controllers.clusterCreate.cluster_name}}</h4>
 				<div id="area1">
 					<h3>Image</h3>
-					<h4>OS: {{controllers.createclusterIndex.operating_system}}</h4>
-					<h4>Size: {{controllers.createclusterIndex.cluster_size}}</h4>
-					<h4>Storage type: {{controllers.createclusterIndex.disk_temp}}</h4>
+                        <h4>OS: {{controllers.clusterCreate.operating_system}}</h4>
+                        <h4>Size: {{controllers.clusterCreate.cluster_size}}</h4>
+                        <h4>Storage type: {{controllers.clusterCreate.disk_temp}}</h4>
 				</div>
 				<div id="area2">
 					<h3>Flavor of Master vm</h3>
-					<h4>CPUs: {{controllers.createclusterIndex.master_cpu_selection}}</h4>
-					<h4>Memory: {{controllers.createclusterIndex.master_mem_selection}}</h4>
-					<h4>Disk: {{controllers.createclusterIndex.master_disk_selection}}</h4>
+                        <h4>CPUs: {{controllers.clusterCreate.master_cpu_selection}}</h4>
+                        <h4>Memory: {{controllers.clusterCreate.master_mem_selection}}</h4>
+                        <h4>Disk: {{controllers.clusterCreate.master_disk_selection}}</h4>
 				</div>
 				<div id="area3">
 					<h3>Flavor of each slave vm</h3>
-					<h4>CPUs: {{controllers.createclusterIndex.slaves_cpu_selection}}</h4>
-					<h4>Memory: {{controllers.createclusterIndex.slaves_mem_selection}}</h4>
-					<h4>Disk: {{controllers.createclusterIndex.slaves_disk_selection}}</h4>
+                        <h4>CPUs: {{controllers.clusterCreate.slaves_cpu_selection}}</h4>
+                        <h4>Memory: {{controllers.clusterCreate.slaves_mem_selection}}</h4>
+                        <h4>Disk: {{controllers.clusterCreate.slaves_disk_selection}}</h4>
 				</div>
 			</div>
 		</div>
@@ -344,30 +344,31 @@
 
 		<script src="{{ STATIC_URL }}app.js"></script>
 
-		<script src="{{ STATIC_URL }}controllers/application.js"></script>
-		<script src="{{ STATIC_URL }}controllers/userwelcomecontroller.js"></script>
-		<script src="{{ STATIC_URL }}controllers/homepagecontroller.js"></script>
-		<script src="{{ STATIC_URL }}controllers/userlogincontroller.js"></script>
-		<script src="{{ STATIC_URL }}controllers/createclusterindexcontroller.js"></script>
-		<script src="{{ STATIC_URL }}controllers/createclusterconfirmcontroller.js"></script>
+        <script src="{{ STATIC_URL }}controllers/application.js"></script>
+        <script src="{{ STATIC_URL }}controllers/user_welcome.js"></script>
+        <script src="{{ STATIC_URL }}controllers/homepage.js"></script>
+        <script src="{{ STATIC_URL }}controllers/user_login.js"></script>
+        <script src="{{ STATIC_URL }}controllers/cluster_create.js"></script>
+        <script src="{{ STATIC_URL }}controllers/cluster_confirm.js"></script> 
 
-		<script src="{{ STATIC_URL }}router.js"></script>
-		<script src="{{ STATIC_URL }}routes/indexroute.js"></script>
-		<script src="{{ STATIC_URL }}routes/restrictedroute.js"></script>
-		<script src="{{ STATIC_URL }}routes/userloginroute.js"></script>
-		<script src="{{ STATIC_URL }}routes/userlogoutroute.js"></script>
-		<script src="{{ STATIC_URL }}routes/userwelcomeroute.js"></script>
-		<script src="{{ STATIC_URL }}routes/createclusterindexroute.js"></script>
-		<script src="{{ STATIC_URL }}routes/createclusterconfirmroute.js"></script>
+        <script src="{{ STATIC_URL }}router.js"></script>
+        <script src="{{ STATIC_URL }}routes/index.js"></script>
+        <script src="{{ STATIC_URL }}routes/restricted.js"></script>
+        <script src="{{ STATIC_URL }}routes/user_login.js"></script>        
+        <script src="{{ STATIC_URL }}routes/user_logout.js"></script>        
+        <script src="{{ STATIC_URL }}routes/user_welcome.js"></script>        
+        <script src="{{ STATIC_URL }}routes/cluster_create.js"></script>
+        <script src="{{ STATIC_URL }}routes/cluster_confirm.js"></script>
 
-		<script src="{{ STATIC_URL }}views/userloginview.js"></script>
-		<script src="{{ STATIC_URL }}views/cpuselbutview.js"></script>
-		<script src="{{ STATIC_URL }}views/memselbutview.js"></script>
-		<script src="{{ STATIC_URL }}views/diskselbutview.js"></script>
+        <script src="{{ STATIC_URL }}views/user_login.js"></script>
+        <script src="{{ STATIC_URL }}views/cpu_selection_button.js"></script>
+        <script src="{{ STATIC_URL }}views/mem_selection_button.js"></script>
+        <script src="{{ STATIC_URL }}views/disk_selection_button.js"></script>
 
-		<script src="{{ STATIC_URL }}store.js"></script>
-		<script src="{{ STATIC_URL }}models/user.js"></script>
-		<script src="{{ STATIC_URL }}models/clustercreate.js"></script>
-		<script src="{{ STATIC_URL }}models/clusterchoice.js"></script>
+        <script src="{{ STATIC_URL }}store.js"></script> 
+        <script src="{{ STATIC_URL }}models/user.js"></script>
+        <script src="{{ STATIC_URL }}models/cluster.js"></script>
+        <script src="{{ STATIC_URL }}models/cluster_choice.js"></script>
+		
 	</body>
 </html>
