@@ -31,7 +31,7 @@ class TestButtonDisable(unittest.TestCase):
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
-            self.base_url = parser.get('application', 'url')
+            self.base_url = parser.get('deploy', 'url')
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
@@ -64,7 +64,6 @@ class TestButtonDisable(unittest.TestCase):
         cluster_sizes = driver.find_element_by_id("size_of_cluster").text
         current_cluster_size = int(cluster_sizes.rsplit('\n', 1)[-1])
         Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(cluster_sizes.rsplit('\n', 1)[-1])
- #       driver.find_element_by_id("master").click()
         user_quota = check_quota(self.token)
         kamaki_flavors = get_flavor_id(self.token)
         for role in ["master" , "slaves"]:

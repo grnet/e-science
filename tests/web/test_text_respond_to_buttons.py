@@ -19,7 +19,7 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class TestResponce(unittest.TestCase):
+class TestResponse(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -32,7 +32,7 @@ class TestResponce(unittest.TestCase):
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
-            self.base_url = parser.get('application', 'url')
+            self.base_url = parser.get('deploy', 'url')
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
@@ -40,7 +40,7 @@ class TestResponce(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     
-    def test_responce(self):
+    def test_response(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_css_selector("button[type=\"submit\"]").click()

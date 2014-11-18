@@ -12,7 +12,6 @@ import sys
 import nose
 import string
 import logging
-
 from base64 import b64encode
 from os.path import abspath
 from datetime import datetime
@@ -21,7 +20,7 @@ from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.cyclades import CycladesClient
 from kamaki.clients.cyclades import CycladesNetworkClient
-
+from time import sleep
 
 # Definitions of return value errors
 error_quotas_network = -14
@@ -37,9 +36,117 @@ MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 REPORT = 25  # Define logging level of REPORT
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
-HREF_VALUE_MINUS_PUBLIC_NETWORK_ID = 56  # IpV4 public network id offset
-auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 
+
+def destroy_cluster(cluster_name, token):
+    '''
+    Destroys cluster and deletes network and floating ip. Finds the machines
+    that belong to the cluster that is requested to be destroyed and the
+    floating ip of the master virtual machine and terminates them. Then
+    deletes the network and the floating ip.
+    '''
+    servers_to_delete = []
+    auth = check_credentials(token)
+    endpoints, user_id = endpoints_and_user_id(auth)
+    cyclades = init_cyclades(endpoints['cyclades'], token)
+    nc = init_cyclades_netclient(endpoints['network'], token)
+    try:
+        list_of_servers = cyclades.list_servers(detail=True)
+    except Exception:
+        logging.exception('Could not get list of servers.'
+                          'Cannot delete cluster')
+        sys.exit(error_get_list_servers)
+
+    for server in list_of_servers:  # Find the servers to be deleted
+        if cluster_name == server['name'].rsplit('-', 1)[0]:
+            servers_to_delete.append(server)
+    # If the list of servers to delete is empty then abort
+    if not servers_to_delete:
+        logging.log(REPORT, " Cluster with name [%s] does not exist"
+                    % cluster_name)
+        sys.exit(error_cluster_not_exist)
+
+    number_of_nodes = servers_to_delete.__len__()
+    # Find the floating ip of master virtual machine
+    float_ip_to_delete = ''
+    for attachment in servers_to_delete[0]['attachments']:
+        if attachment['OS-EXT-IPS:type'] == 'floating':
+            float_ip_to_delete = attachment['ipv4']
+
+    if not float_ip_to_delete:
+        logging.error(' Cluster [%s] is corrupted', cluster_name)
+        sys.exit(error_cluster_corrupt)
+    # Find network to be deleted
+    try:
+        list_of_networks = nc.list_networks()
+        for net_work in list_of_networks:
+            if net_work['name'] == \
+                    servers_to_delete[0]['name'].rsplit('-', 1)[0]:
+                network_to_delete_id = net_work['id']
+    except Exception:
+        logging.exception('Error in getting network [%s] to delete' %
+                          net_work['name'])
+        sys.exit(error_delete_network)
+    # Start cluster deleting
+    try:
+        for server in servers_to_delete:
+            cyclades.delete_server(server['id'])
+        logging.log(REPORT, ' There are %d servers to clean up'
+                    % number_of_nodes)
+    # Wait for every server of the cluster to be deleted
+        for server in servers_to_delete:
+            new_status = cyclades.wait_server(server['id'],
+                                              current_status='ACTIVE',
+                                              max_wait=300)
+            logging.log(REPORT, ' Server [%s] is being %s', server['name'],
+                        new_status)
+            if new_status != 'DELETED':
+                logging.error('Error deleting server [%s]' % server['name'])
+                sys.exit(error_delete_server)
+        logging.log(REPORT, ' Cluster [%s] is %s', cluster_name, new_status)
+    # Find the correct network of deleted cluster and delete it
+    except Exception:
+        logging.exception('Error in deleting server')
+        sys.exit(error_delete_server)
+
+    try:
+        nc.delete_network(network_to_delete_id)
+        sleep(10)  # Take some time to ensure it is deleted
+        logging.log(REPORT, ' Network [%s] is deleted' %
+                            net_work['name'])
+    except Exception:
+        logging.exception('Error in deleting network')
+        sys.exit(error_delete_network)
+
+    # Find the correct floating ip id of deleted master machine and delete it
+    try:
+        for float_ip in nc.list_floatingips():
+            if float_ip_to_delete == float_ip['floating_ip_address']:
+                nc.delete_floatingip(float_ip['id'])
+                logging.log(REPORT, ' Floating ip [%s] is deleted'
+                            % float_ip['floating_ip_address'])
+    except Exception:
+        logging.exception('Error in deleting floating ip [%s]',
+                          float_ip_to_delete)
+        sys.exit(error_delete_float_ip)
+
+    logging.log(REPORT, ' Cluster [%s] with %d nodes was deleted',
+                cluster_name, number_of_nodes)
+    
+    
+def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
+                      '/identity/v2.0'):
+    '''Identity,Account/Astakos. Test authentication credentials'''
+    logging.log(REPORT, ' Test the credentials')
+    try:
+        auth = AstakosClient(auth_url, token)
+        auth.authenticate()
+    except ClientError:
+        logging.error('Authentication failed with url %s and token %s' % (
+                      auth_url, token))
+        sys.exit(error_authentication)
+    logging.log(REPORT, ' Authentication verified')
+    return auth
 
 
 def check_quota(token):
@@ -49,7 +156,7 @@ def check_quota(token):
     to transform bytes to gigabytes.
      '''
 
-    auth = check_credentials(token, auth_url)
+    auth = check_credentials(token)
 
     try:
         dict_quotas = auth.get_quotas()
@@ -87,7 +194,7 @@ def check_quota(token):
 
 def get_flavor_id(token):
     '''From kamaki flavor list get all possible flavors '''
-    auth = check_credentials(token, auth_url)
+    auth = check_credentials(token)
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
     try:
@@ -116,21 +223,6 @@ def get_flavor_id(token):
                'disk': disk_list, 'disk_template': disk_template_list}
     logging.info(flavors)
     return flavors
-
-
-def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
-                      '/identity/v2.0'):
-    '''Identity,Account/Astakos. Test authentication credentials'''
-    logging.log(REPORT, ' Test the credentials')
-    try:
-        auth = AstakosClient(auth_url, token)
-        auth.authenticate()
-    except ClientError:
-        logging.error('Authentication failed with url %s and token %s' % (
-                      auth_url, token))
-        sys.exit(error_authentication)
-    logging.log(REPORT, ' Authentication verified')
-    return auth
 
 
 def endpoints_and_user_id(auth):
@@ -213,24 +305,28 @@ class Cluster(object):
         self.flavor_id_master, self.auth = flavor_id_master, auth_cl
         self.flavor_id_slave, self.image_id = flavor_id_slave, image_id
 
-    def get_flo_net_id(self, list_public_networks):
+    def get_flo_net_id(self):
         '''
         Gets an Ipv4 floating network id from the list of public networks Ipv4
         and Ipv6. Takes the href value and removes first 56 characters.
         The number that is left is the public network id
         '''
-        float_net_id = 0
-        for lst in list_public_networks:
+        
+        pub_net_list = self.nc.list_networks()
+        float_net_id = 1
+        i = 1
+        for lst in pub_net_list:
             if(lst['status'] == 'ACTIVE' and
                lst['name'] == 'Public IPv4 Network'):
-                    float_net_id = lst['links'][0]['href']
-                    break
+                float_net_id = lst['id']
+                try:
+                    self.nc.create_floatingip(float_net_id)
+                    return 0
+                except ClientError:
+                    if i < len(pub_net_list):
+                        i = i+1                                             
 
-        try:
-            return float_net_id[HREF_VALUE_MINUS_PUBLIC_NETWORK_ID:]
-        except TypeError:
-            logging.error('Floating Network Id could not be found')
-            raise
+        return error_get_ip
 
     def _personality(self, ssh_keys_path='', pub_keys_path=''):
         '''Personality injects ssh keys to the virtual machines we create'''
@@ -315,18 +411,16 @@ class Cluster(object):
                                                       [count-1]
                                                       ['floating_network_id'])
                         except ClientError:
-                            logging.exception('Cannot create new ip')
-                            sys.exit(error_get_ip)
+                            if self.get_flo_net_id() !=0:
+                                logging.error('Error in creating float ip')
+                                sys.exit(error_get_ip)      
         else:
             # No existing ips,so we create a new one
             # with the floating  network id
-            try:
-                pub_net_list = self.nc.list_networks()
-                float_net_id = self.get_flo_net_id(pub_net_list)
-                self.nc.create_floatingip(float_net_id)
-            except Exception:
-                logging.exception('Error in creating float ip')
+            if self.get_flo_net_id() !=0:
+                logging.error('Error in creating float ip')
                 sys.exit(error_get_ip)
+                
         logging.log(REPORT, ' Wait for %s servers to build', self.size)
 
         # Creation of master server
@@ -336,8 +430,8 @@ class Cluster(object):
                 server_name, self.flavor_id_master, self.image_id,
                 personality=self._personality(ssh_k_path, pub_k_path)))
         except Exception:
-            logging.exception('Error creating master virtual machine'
-                              % server_name)
+            logging.exception('Error creating master virtual machine')
+                             # % server_name)
             sys.exit(error_create_server)
         # Creation of slave servers
         for i in range(2, self.size+1):

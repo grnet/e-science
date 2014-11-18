@@ -32,7 +32,7 @@ class TestButtonDisable(unittest.TestCase):
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
-            self.base_url = parser.get('application', 'url')
+            self.base_url = parser.get('deploy', 'url')
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
