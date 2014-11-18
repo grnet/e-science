@@ -14,7 +14,7 @@ To run the tests you need:
 
 	url = https://accounts.okeanos.grnet.gr/identity/v2.0
 	token = YOUR TOKEN
-
+	project_uuid = the e-science project uuid, needed for the ember_django  application to run
 	[cluster]
 	
 	master_ip = x.x.x.x

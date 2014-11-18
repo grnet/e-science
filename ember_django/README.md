@@ -65,10 +65,27 @@ Optionally, before the runserver command you can create a django superuser for b
 
 To start the app, open a browser and hit 127.0.0.1:8000.
 
+Important!
+---
+
+After the ~okeanos update which added the seperation of resources per project
+the project uuid of e-science is needed for the application to run. Temporarily
+the project uuid will be hardcoded inside the .config.txt file in the .private
+folder in projectroot.
+
+So, the file projectroot/.private/.config.txt must be opened and make sure that the following section exists
+
+    [cloud "~okeanos"]
+    url = okeanos authentication url, needed for the tests
+    token = okeanos token, needed for the tests
+    project_uuid = the e-science project uuid, needed for the ember_django  application to run
+
 
 
 
 	
+
+
 
 
 
