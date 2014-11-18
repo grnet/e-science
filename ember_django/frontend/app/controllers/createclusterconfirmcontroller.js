@@ -1,9 +1,11 @@
 // Createcluster confirm controller
 App.CreateclusterConfirmController = Ember.Controller.extend({
-	// in order to have access to personalize
+	// in order to have access to create cluster controller
 	needs : 'createclusterIndex',
 	message : '',
-	goback : function() {
+	// return to previous screen (create cluster)
+	go_back : function() {
+		// reset some variables
 		this.controllerFor('createclusterIndex').set('master_enabled', false);
 		this.controllerFor('createclusterIndex').set('master_color', "lightblue");
 		this.controllerFor('createclusterIndex').set('slaves_enabled', false);
@@ -11,24 +13,29 @@ App.CreateclusterConfirmController = Ember.Controller.extend({
 		this.controllerFor('createclusterIndex').set('storage_Not_Allow', true);
 	},
 	actions : {
+		// logout functionality
 		logout : function() {
+			// clear variables in create cluster
+			this.controllerFor('createclusterIndex').reset_variables();
 			// redirect to logout
 			this.transitionTo('user.logout');
 		},
 		// when previous button is pressed
-		// gotoflavor action is triggered
-		gotoflavor : function() {
-			// redirect to flavor template
+		// go_to_flavor action is triggered
+		go_to_flavor : function() {
 			this.set('message', '');
-			this.goback();
+			this.go_back();
+			// redirect
 			this.transitionTo('createcluster.index');
 		},
 		// when next button is pressed
-		// gotocreate action is triggered
+		// go_to_create action is triggered
 		// User's cluster creation choices are send to backend for checking
-		gotocreate : function() {
+		go_to_create : function() {
 			var self = this;
+			// PUT request
 			var cluster_selection = this.store.update('clusterchoice', {
+			  // set the clusterchoice model with the user choices
 				'id' : 1,
 				'cluster_name' : this.controllerFor('createclusterIndex').get('cluster_name'),
 				'cluster_size' : this.controllerFor('createclusterIndex').get('cluster_size'),
