@@ -16,7 +16,7 @@ To run the test you need:
 
 	token = YOUR TOKEN
 
-	project_uuid = the e-science project uuid, needed for the ember_django  application to run
+	project_id = the e-science project id, needed for the ember_django  application to run
 
 	[cluster]
 	

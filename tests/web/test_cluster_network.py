@@ -15,7 +15,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 import unittest, time, re
-from okeanos_utils import check_credentials, endpoints_and_user_id, init_cyclades_netclient, get_project_uuid
+from okeanos_utils import check_credentials, endpoints_and_user_id, init_cyclades_netclient, get_project_id
 import logging
 from ClusterTest import ClusterTest
 
@@ -75,10 +75,10 @@ class TestClusterNetwork(ClusterTest):
         endpoints, user_id = endpoints_and_user_id(auth)
         net_client = init_cyclades_netclient(endpoints['network'], self.token)
         dict_quotas = auth.get_quotas()
-	uuid = get_project_uuid()
-        limit_net = dict_quotas[uuid]['cyclades.network.private']['limit']
-        usage_net = dict_quotas[uuid]['cyclades.network.private']['usage']
-        pending_net = dict_quotas[uuid]['cyclades.network.private']['pending']
+	project_id = get_project_id()
+        limit_net = dict_quotas[project_id]['cyclades.network.private']['limit']
+        usage_net = dict_quotas[project_id]['cyclades.network.private']['usage']
+        pending_net = dict_quotas[project_id]['cyclades.network.private']['pending']
         available_networks = limit_net - usage_net - pending_net
         network_ids = []
         if available_networks >= 1:
@@ -88,7 +88,7 @@ class TestClusterNetwork(ClusterTest):
                     new_network = net_client.create_network('MAC_FILTERED',
                                                             'mycluster '
                                                             + str(i),
-                                                            project_id=uuid)
+                                                            project_id=project_id)
                     network_ids.append(new_network['id'])
                 return net_client, network_ids
             except Exception:

@@ -22,6 +22,7 @@ from kamaki.clients.cyclades import CycladesClient
 from kamaki.clients.cyclades import CycladesNetworkClient
 from ConfigParser import RawConfigParser, NoSectionError
 from time import sleep
+import subprocess, StringIO
 
 # Definitions of return value errors
 error_quotas_network = -14
@@ -33,7 +34,7 @@ error_create_server = -31
 error_authentication = -99
 error_cluster_not_exist = -69
 error_cluster_corrupt = -70
-error_proj_uuid = -71
+error_proj_id = -71
 
 # Global constants
 MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
@@ -43,21 +44,22 @@ Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 BASE_DIR = dirname(abspath(__file__))
 
 
-def get_project_uuid():
+def get_project_id(project_name="escience.grnet.gr"):
     '''
-    Return the uuid of the e-science project.
-    The uuid is temporarily been hardcoded in a config file
-    that is not uploaded to remote repositories.
-    '''
+    Return the id of the e-science project.
+    The id is found with [kamaki project list] command 
+    or is read from a config file that is not uploaded to 
+    remote repositories.
+    ''' 
     parser = RawConfigParser()
     config_file = join(BASE_DIR, '.private/.config.txt')
     parser.read(config_file)
     try:
-        project_uuid = parser.get('cloud \"~okeanos\"', 'project_uuid')
-        return project_uuid
+        project_id = parser.get('cloud \"~okeanos\"', 'project_id')
+        return project_id
     except NoSectionError:
-        logging.error('No project_uuid was found in config file')
-        sys.exit(error_proj_uuid)
+        logging.error('No project_id was found for this project_name')
+        sys.exit(error_proj_id)
 
 def destroy_cluster(cluster_name, token):
     '''
@@ -193,25 +195,26 @@ def check_quota(token):
     except Exception:
         logging.exception('Could not get user quota')
         sys.exit(error_user_quota)
-    uuid = get_project_uuid()
-    limit_cd = dict_quotas[uuid]['cyclades.disk']['limit'] / Bytes_to_GB
-    usage_cd = dict_quotas[uuid]['cyclades.disk']['usage'] / Bytes_to_GB
-    pending_cd = dict_quotas[uuid]['cyclades.disk']['pending'] / Bytes_to_GB
+    # Get project_id
+    project_id = get_project_id()
+    limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
+    usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GB
+    pending_cd = dict_quotas[project_id]['cyclades.disk']['pending'] / Bytes_to_GB
     available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd)
 
-    limit_cpu = dict_quotas[uuid]['cyclades.cpu']['limit']
-    usage_cpu = dict_quotas[uuid]['cyclades.cpu']['usage']
-    pending_cpu = dict_quotas[uuid]['cyclades.cpu']['pending']
+    limit_cpu = dict_quotas[project_id]['cyclades.cpu']['limit']
+    usage_cpu = dict_quotas[project_id]['cyclades.cpu']['usage']
+    pending_cpu = dict_quotas[project_id]['cyclades.cpu']['pending']
     available_cpu = limit_cpu - usage_cpu - pending_cpu
 
-    limit_ram = dict_quotas[uuid]['cyclades.ram']['limit'] / Bytes_to_MB
-    usage_ram = dict_quotas[uuid]['cyclades.ram']['usage'] / Bytes_to_MB
-    pending_ram = dict_quotas[uuid]['cyclades.ram']['pending'] / Bytes_to_MB
+    limit_ram = dict_quotas[project_id]['cyclades.ram']['limit'] / Bytes_to_MB
+    usage_ram = dict_quotas[project_id]['cyclades.ram']['usage'] / Bytes_to_MB
+    pending_ram = dict_quotas[project_id]['cyclades.ram']['pending'] / Bytes_to_MB
     available_ram = (limit_ram-usage_ram-pending_ram)
 
-    limit_vm = dict_quotas[uuid]['cyclades.vm']['limit']
-    usage_vm = dict_quotas[uuid]['cyclades.vm']['usage']
-    pending_vm = dict_quotas[uuid]['cyclades.vm']['pending']
+    limit_vm = dict_quotas[project_id]['cyclades.vm']['limit']
+    usage_vm = dict_quotas[project_id]['cyclades.vm']['usage']
+    pending_vm = dict_quotas[project_id]['cyclades.vm']['pending']
     available_vm = limit_vm-usage_vm-pending_vm
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
@@ -335,7 +338,7 @@ class Cluster(object):
         self.prefix, self.size = prefix, int(size)
         self.flavor_id_master, self.auth = flavor_id_master, auth_cl
         self.flavor_id_slave, self.image_id = flavor_id_slave, image_id
-	self.project_id = get_project_uuid()
+	self.project_id = get_project_id()
 
     def get_flo_net_id(self):
         '''

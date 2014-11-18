@@ -67,18 +67,13 @@ To start the app, open a browser and hit 127.0.0.1:8000.
 
 Important!
 ---
+After the ~okeanos v0.16 update which added the seperation of resources per project, the project id of e-science is needed for the application to run. For the time being, it should be added inside the <projectroot>/.private/.config.txt file, in the following section:
 
-After the ~okeanos update which added the seperation of resources per project
-the project uuid of e-science is needed for the application to run. Temporarily
-the project uuid will be hardcoded inside the .config.txt file in the .private
-folder in projectroot.
-
-So, the file projectroot/.private/.config.txt must be opened and make sure that the following section exists
 
     [cloud "~okeanos"]
     url = okeanos authentication url, needed for the tests
     token = okeanos token, needed for the tests
-    project_uuid = the e-science project uuid, needed for the ember_django  application to run
+    project_id = the e-science project id, needed for the ember_django  application to run
 
 
 

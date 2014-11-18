@@ -75,33 +75,34 @@ def check_quotas(auth, req_quotas):
     except Exception:
         logging.exception('Could not get user quota')
         sys.exit(error_user_quota)
-    uuid = get_project_uuid() 
-    limit_cd = dict_quotas[uuid]['cyclades.disk']['limit']
-    usage_cd = dict_quotas[uuid]['cyclades.disk']['usage']
-    pending_cd = dict_quotas[uuid]['cyclades.disk']['pending']
+    # Get project id for Synnefo v0.16
+    project_id = get_project_id() 
+    limit_cd = dict_quotas[project_id]['cyclades.disk']['limit']
+    usage_cd = dict_quotas[project_id]['cyclades.disk']['usage']
+    pending_cd = dict_quotas[project_id]['cyclades.disk']['pending']
     available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd) / Bytes_to_GB
     if available_cyclades_disk_GB < req_quotas['cyclades_disk']:
         logging.error('Cyclades disk out of limit')
         sys.exit(error_quotas_cyclades_disk)
 
-    limit_cpu = dict_quotas[uuid]['cyclades.cpu']['limit']
-    usage_cpu = dict_quotas[uuid]['cyclades.cpu']['usage']
-    pending_cpu = dict_quotas[uuid]['cyclades.cpu']['pending']
+    limit_cpu = dict_quotas[project_id]['cyclades.cpu']['limit']
+    usage_cpu = dict_quotas[project_id]['cyclades.cpu']['usage']
+    pending_cpu = dict_quotas[project_id]['cyclades.cpu']['pending']
     available_cpu = limit_cpu - usage_cpu - pending_cpu
     if available_cpu < req_quotas['cpu']:
         logging.error('Cyclades cpu out of limit')
         sys.exit(error_quotas_cpu)
 
-    limit_ram = dict_quotas[uuid]['cyclades.ram']['limit']
-    usage_ram = dict_quotas[uuid]['cyclades.ram']['usage']
-    pending_ram = dict_quotas[uuid]['cyclades.ram']['pending']
+    limit_ram = dict_quotas[project_id]['cyclades.ram']['limit']
+    usage_ram = dict_quotas[project_id]['cyclades.ram']['usage']
+    pending_ram = dict_quotas[project_id]['cyclades.ram']['pending']
     available_ram = (limit_ram-usage_ram-pending_ram) / Bytes_to_MB
     if available_ram < req_quotas['ram']:
         logging.error('Cyclades ram out of limit')
         sys.exit(error_quotas_ram)
-    limit_vm = dict_quotas[uuid]['cyclades.vm']['limit']
-    usage_vm = dict_quotas[uuid]['cyclades.vm']['usage']
-    pending_vm = dict_quotas[uuid]['cyclades.vm']['pending']
+    limit_vm = dict_quotas[project_id]['cyclades.vm']['limit']
+    usage_vm = dict_quotas[project_id]['cyclades.vm']['usage']
+    pending_vm = dict_quotas[project_id]['cyclades.vm']['pending']
     available_vm = limit_vm-usage_vm-pending_vm
     if available_vm < req_quotas['vms']:
         logging.error('Cyclades vms out of limit')

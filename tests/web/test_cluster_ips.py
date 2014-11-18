@@ -14,7 +14,7 @@ sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from selenium.webdriver.support.ui import Select
 import unittest, time, re, logging
 from kamaki.clients import ClientError
-from okeanos_utils import check_credentials, endpoints_and_user_id, init_cyclades_netclient, get_project_uuid
+from okeanos_utils import check_credentials, endpoints_and_user_id, init_cyclades_netclient, get_project_id
 from ClusterTest import ClusterTest
 
 error_get_ip = -30
@@ -75,16 +75,16 @@ class TestClusterIps(ClusterTest):
 
         dict_quotas = auth.get_quotas()
         # Find and create available public ips
-	uuid = get_project_uuid()
-        limit_ips = dict_quotas[uuid]['cyclades.floating_ip']['limit']
-        usage_ips = dict_quotas[uuid]['cyclades.floating_ip']['usage']
-        pending_ips = dict_quotas[uuid]['cyclades.floating_ip']['pending']
+	project_id = get_project_id()
+        limit_ips = dict_quotas[project_id]['cyclades.floating_ip']['limit']
+        usage_ips = dict_quotas[project_id]['cyclades.floating_ip']['usage']
+        pending_ips = dict_quotas[project_id]['cyclades.floating_ip']['pending']
         available_ips = limit_ips - (usage_ips + pending_ips)
 
         if available_ips > 0:
             for i in range(available_ips):
                 # Create all available public ips
-                status = self.get_flo_net_id(net_client, uuid)
+                status = self.get_flo_net_id(net_client, project_id)
                 if status != 0:
                     logging.error('Error in creating float ip')
                     sys.exit(error_get_ip)
@@ -92,7 +92,7 @@ class TestClusterIps(ClusterTest):
         float_ids, port_ids = self.bind_floating_ip(net_client)
         return float_ids, port_ids, net_client
 
-    def get_flo_net_id(self, net_client, uuid):
+    def get_flo_net_id(self, net_client, project_id):
         '''
         Gets an Ipv4 floating network id from the list of public networks Ipv4
         '''
@@ -104,7 +104,8 @@ class TestClusterIps(ClusterTest):
                lst['name'] == 'Public IPv4 Network'):
                 float_net_id = lst['id']
                 try:
-                    net_client.create_floatingip(float_net_id, project_id=uuid)
+                    net_client.create_floatingip(float_net_id,
+                                                 project_id=project_id)
                     return 0
                 except ClientError:
                     if i < len(pub_net_list):
