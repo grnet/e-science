@@ -1,5 +1,5 @@
-// Createcluster confirm route (/cluster/create/confirm url)
-App.CreateclusterConfirmRoute = App.RestrictedRoute.extend({
+// Cluster/confirm route (/cluster/confirm url)
+App.ClusterConfirmRoute = App.RestrictedRoute.extend({
     model : function() {
 	// Return user record with id 1.
 	// If user record not in store, perform a GET request

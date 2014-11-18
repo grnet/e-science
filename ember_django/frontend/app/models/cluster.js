@@ -1,6 +1,6 @@
 attr = App.attr;
-// Model used for retrieving create cluster information based on user's quota and kamaki flavors
-App.Createcluster = DS.Model.extend({
+// Model used for retrieving cluster creation information based on user's quota and kamaki flavors
+App.Cluster = DS.Model.extend({
 	vms_max : attr('number'),    // maximum (limit) number of VMs
 	vms_av : attr(),             // available VMs
 	cpu_max : attr('number'),    // maximum CPUs

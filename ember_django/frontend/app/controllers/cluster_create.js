@@ -1,16 +1,15 @@
-// Createcluster index controller
-App.CreateclusterIndexController = Ember.Controller.extend({
+// Cluster/create controller
+App.ClusterCreateController = Ember.Controller.extend({
 
 	// Initialization phase
-	master_enabled : false, 	// Variable checking if master button is selected
-	slaves_enabled : false, 	// Variable checking if slaves button is selected	
-	cpu_Not_Allow : true, 		// Disabling all cpu buttons (master or slaves must be selected first for the buttons to be enabled)
-	mem_Not_Allow : true, 		// Disabling all ram buttons (master or slaves must be selected first for the buttons to be enabled)
-	disk_Not_Allow : true, 		// Disabling all disk buttons (master or slaves must be selected first for the buttons to be enabled)
-	storage_Not_Allow : true, 	// Disabling all storage buttons (master or slaves must be selected first for the buttons to be enabled)
+	master_cpus_Not_Allow : false, 		// Disabling all cpu buttons (master or slaves must be selected first for the buttons to be enabled)
+	slaves_cpus_Not_Allow : false, 		// Disabling all cpu buttons (master or slaves must be selected first for the buttons to be enabled)
+	master_mem_Not_Allow : false, 		// Disabling all ram buttons (master or slaves must be selected first for the buttons to be enabled)
+	slaves_mem_Not_Allow : false, 		// Disabling all ram buttons (master or slaves must be selected first for the buttons to be enabled)
+	master_disk_Not_Allow : false, 		// Disabling all disk buttons (master or slaves must be selected first for the buttons to be enabled)
+	slaves_disk_Not_Allow : false, 		// Disabling all disk buttons (master or slaves must be selected first for the buttons to be enabled)
+	storage_Not_Allow : false, 	// Disabling all storage buttons (master or slaves must be selected first for the buttons to be enabled)
 	cluster_size : 2, 		// Initial cluster size
-	master_color : 'lightblue', 	// Initial colour of master button 
-	slaves_color : 'lightblue', 	// Initial colour of slaves button
 	master_cpu_selection : 0, 	// Initial master_cpu_selection, appears in master cpu summary
 	slaves_cpu_selection : 0, 	// Initial slaves_cpu_selection, appears in slaves cpu summary
 	master_mem_selection : 0, 	// Initial master_mem_selection, appears in master ram summary
@@ -21,16 +20,13 @@ App.CreateclusterIndexController = Ember.Controller.extend({
 	operating_system : 'Debian Base', 	// Preselected OS
 	disk_temp : 'ext_vlmc', 		// Initial storage selection, common for master and slaves
 
+	
 	// If cluster size is less than two, disable slaves option
 	slaves_Not_Allow : function() {
 		if (this.get('cluster_size') < 2) {
 			this.set('slaves_mem_selection', 0);
 			this.set('slaves_disk_selection', 0);
 			this.set('slaves_cpu_selection', 0);
-			this.set('master_color', 'lightgreen');
-			this.set('slaves_color', 'lightgrey');
-			this.set('master_enabled', true);
-			this.set('slaves_enabled', false);
 			this.buttons();
 			return true;
 		} else {
@@ -84,9 +80,8 @@ App.CreateclusterIndexController = Ember.Controller.extend({
 	}.property('total_disk_selection'),
 
 	// Computes the maximum vms that can be build with current flavor choices and return this to the drop down menu on index
-	// If a flavor selection of a role(master/slaves) is 0, we assume that the role should be able to have at least the minimum
-	// option of the corresponding flavor Available vms are limited by user quota. First, they are filtered with cpu limits,
-	// then with ram and finally with disk. The result is returned to the drop down menu on index
+	// If a flavor selection of a role(master/slaves) is 0, we assume that the role should be able to have at least the minimum option of the corresponding flavor
+	// Available vms are limited by user quota. First, they are filtered with cpu limits, then with ram and finally with disk. The result is returned to the drop down menu on index
 	max_cluster_size_av : function() {
 		var length = this.get('content._data.vms_av').length;
 		var max_cluster_size_limited_by_current_cpus = [];
@@ -160,47 +155,50 @@ App.CreateclusterIndexController = Ember.Controller.extend({
 	// (if selection is 0 we assume the minimum selection)
 	// If the sum of them exceed the available cpu, then disable the selected role button.
 	cpu_buttons : function() {
-		var elements = document.getElementsByName("cpu_button");
-		var length = elements.length;
-		var cpus = this.get('content._data.cpu_choices');
-		if (this.master_enabled) {
-			for (var i = 0; i < length; i++) {
-				elements[i].style.color = "initial";
-				if (this.get('master_cpu_selection') != 0) {
-					var choice = document.getElementById(this.get('master_cpu_selection'))
-					choice.style.color = "red";
-				}
-				if (this.get('slaves_cpu_selection') == 0) {
-					var slaves_cpu = this.get('content._data.cpu_choices')[0];
-				} else {
-					var slaves_cpu = this.get('slaves_cpu_selection');
-				}
-				if (cpus[i] > (this.get('content._data.cpu_av') - slaves_cpu * (this.get('cluster_size') - 1) )) {
-					elements[i].disabled = true;
-				} else {
-					elements[i].disabled = false;
-				}
-			}
+
+	    var elements = document.getElementsByName("master_cpus_button");
+	    var length = elements.length;
+	    var cpus = this.get('content._data.cpu_choices');
+
+	    for (var i = 0; i < length; i++) {
+		elements[i].style.color = "initial";
+		if (this.get('master_cpu_selection') != 0) {
+		    var choice = document.getElementById("master_cpus_".concat(this.get('master_cpu_selection')));
+		    choice.style.color = "red";
 		}
-		if (this.slaves_enabled) {
-			for (var i = 0; i < length; i++) {
-				elements[i].style.color = "initial";
-				if (this.get('slaves_cpu_selection') != 0) {
-					var choice = document.getElementById(this.get('slaves_cpu_selection'))
-					choice.style.color = "red";
-				}
-				if (this.get('master_cpu_selection') == 0) {
-					var master_cpu = this.get('content._data.cpu_choices')[0];
-				} else {
-					var master_cpu = this.get('master_cpu_selection');
-				}
-				if (cpus[i] * (this.get('cluster_size') - 1) > (this.get('content._data.cpu_av') - master_cpu)) {
-					elements[i].disabled = true;
-				} else {
-					elements[i].disabled = false;
-				}
-			}
+		if (this.get('slaves_cpu_selection') == 0) {
+		    var slaves_cpu = this.get('content._data.cpu_choices')[0];
+		} else {
+		    var slaves_cpu = this.get('slaves_cpu_selection');
 		}
+		if (cpus[i] > (this.get('content._data.cpu_av') - slaves_cpu * (this.get('cluster_size') - 1) )) {
+		    elements[i].disabled = true;
+		} else {
+		    elements[i].disabled = false;
+		}
+	    }
+
+	    var elements = document.getElementsByName("slaves_cpus_button");
+	    var length = elements.length;
+	    var cpus = this.get('content._data.cpu_choices');
+
+	    for (var i = 0; i < length; i++) {
+		elements[i].style.color = "initial";
+		if (this.get('slaves_cpu_selection') != 0) {
+		    var choice = document.getElementById("slaves_cpus_".concat(this.get('slaves_cpu_selection')));
+		    choice.style.color = "red";
+		}
+		if (this.get('master_cpu_selection') == 0) {
+		    var master_cpu = this.get('content._data.cpu_choices')[0];
+		} else {
+		    var master_cpu = this.get('master_cpu_selection');
+		}
+		if (cpus[i] * (this.get('cluster_size') - 1) > (this.get('content._data.cpu_av') - master_cpu)) {
+		    elements[i].disabled = true;
+		} else {
+		    elements[i].disabled = false;
+		}
+	    }
 	},
 
 	// Functionality about coloring of the memory buttons and enable-disable responding to user events
@@ -209,47 +207,50 @@ App.CreateclusterIndexController = Ember.Controller.extend({
 	// (if selection is 0 we assume the minimum selection)
 	// If the sum of them exceed the available memory, then disable the selected role button.
 	memory_buttons : function() {
-		var elements = document.getElementsByName("mem_button");
-		var length = elements.length;
-		var memories = this.get('content._data.mem_choices');
-		if (this.master_enabled) {
-			for (var i = 0; i < length; i++) {
-				elements[i].style.color = "initial";
-				if (this.get('master_mem_selection') != 0) {
-					var choice = document.getElementById(this.get('master_mem_selection'))
-					choice.style.color = "red";
-				}
-				if (this.get('slaves_mem_selection') == 0) {
-					var slaves_mem = this.get('content._data.mem_choices')[0];
-				} else {
-					var slaves_mem = this.get('slaves_mem_selection');
-				}
-				if (memories[i] > (this.get('content._data.mem_av') - slaves_mem * (this.get('cluster_size') - 1) )) {
-					elements[i].disabled = true;
-				} else {
-					elements[i].disabled = false;
-				}
-			}
+	  
+	    var elements = document.getElementsByName("master_mem_button");
+	    var length = elements.length;
+	    var memories = this.get('content._data.mem_choices');
+
+	    for (var i = 0; i < length; i++) {
+		elements[i].style.color = "initial";
+		if (this.get('master_mem_selection') != 0) {
+		    var choice = document.getElementById("master_mem_".concat(this.get('master_mem_selection')));
+		    choice.style.color = "red";
 		}
-		if (this.slaves_enabled) {
-			for (var i = 0; i < length; i++) {
-				elements[i].style.color = "initial";
-				if (this.get('slaves_mem_selection') != 0) {
-					var choice = document.getElementById(this.get('slaves_mem_selection'))
-					choice.style.color = "red";
-				}
-				if (this.get('master_mem_selection') == 0) {
-					var master_mem = this.get('content._data.mem_choices')[0];
-				} else {
-					var master_mem = this.get('master_mem_selection');
-				}
-				if (memories[i] * (this.get('cluster_size') - 1) > (this.get('content._data.mem_av') - master_mem)) {
-					elements[i].disabled = true;
-				} else {
-					elements[i].disabled = false;
-				}
-			}
+		if (this.get('slaves_mem_selection') == 0) {
+		    var slaves_mem = this.get('content._data.mem_choices')[0];
+		} else {
+		    var slaves_mem = this.get('slaves_mem_selection');
 		}
+		if (memories[i] > (this.get('content._data.mem_av') - slaves_mem * (this.get('cluster_size') - 1) )) {
+		    elements[i].disabled = true;
+		} else {
+		    elements[i].disabled = false;
+		}
+	    }
+
+    	    var elements = document.getElementsByName("slaves_mem_button");
+	    var length = elements.length;
+	    var memories = this.get('content._data.mem_choices');
+
+	    for (var i = 0; i < length; i++) {
+		elements[i].style.color = "initial";
+		if (this.get('slaves_mem_selection') != 0) {
+		    var choice = document.getElementById("slaves_mem_".concat(this.get('slaves_mem_selection')));
+		    choice.style.color = "red";
+		}
+		if (this.get('master_mem_selection') == 0) {
+		    var master_mem = this.get('content._data.mem_choices')[0];
+		} else {
+		    var master_mem = this.get('master_mem_selection');
+		}
+		if (memories[i] * (this.get('cluster_size') - 1) > (this.get('content._data.mem_av') - master_mem)) {
+		    elements[i].disabled = true;
+		} else {
+		    elements[i].disabled = false;
+		}
+	    }
 	},
 
 	// Functionality about coloring of the disk size buttons and enable-disable responding to user events
@@ -258,48 +259,49 @@ App.CreateclusterIndexController = Ember.Controller.extend({
 	// (if selection is 0 we assume the minimum selection)
 	// If the sum of them exceed the available disk size, then disable the selected role button.
 	disk_buttons : function() {
-		var elements = document.getElementsByName("disk_button");
-		var length = elements.length;
-		var disks = this.get('content._data.disk_choices');
-		var last = disks.length;
-		if (this.master_enabled) {
-			for (var i = 0; i < length; i++) {
-				elements[i].style.color = "initial";
-				if (this.get('master_disk_selection') != 0) {
-					var choice = document.getElementById(this.get('master_disk_selection'))
-					choice.style.color = "red";
-				}
-				if (this.get('slaves_disk_selection') == 0) {
-					var slaves_disk = this.get('content._data.disk_choices')[0];
-				} else {
-					var slaves_disk = this.get('slaves_disk_selection');
-				}
-				if (disks[i] > (this.get('content._data.disk_av') - slaves_disk * (this.get('cluster_size') - 1) )) {
-					elements[i].disabled = true;
-				} else {
-					elements[i].disabled = false;
-				}
-			}
+	    var elements = document.getElementsByName("master_disk_button");
+	    var length = elements.length;
+	    var disks = this.get('content._data.disk_choices');
+
+	    for (var i = 0; i < length; i++) {
+		elements[i].style.color = "initial";
+		if (this.get('master_disk_selection') != 0) {
+		    var choice = document.getElementById("master_disk_".concat(this.get('master_disk_selection')));
+		    choice.style.color = "red";
 		}
-		if (this.slaves_enabled) {
-			for (var i = 0; i < length; i++) {
-				elements[i].style.color = "initial";
-				if (this.get('slaves_disk_selection') != 0) {
-					var choice = document.getElementById(this.get('slaves_disk_selection'))
-					choice.style.color = "red";
-				}
-				if (this.get('master_disk_selection') == 0) {
-					var master_disk = this.get('content._data.disk_choices')[0];
-				} else {
-					var master_disk = this.get('master_disk_selection');
-				}
-				if (disks[i] * (this.get('cluster_size') - 1) > (this.get('content._data.disk_av') - master_disk)) {
-					elements[i].disabled = true;
-				} else {
-					elements[i].disabled = false;
-				}
-			}
+		if (this.get('slaves_disk_selection') == 0) {
+		    var slaves_disk = this.get('content._data.disk_choices')[0];
+		} else {
+		    var slaves_disk = this.get('slaves_disk_selection');
 		}
+		if (disks[i] > (this.get('content._data.disk_av') - slaves_disk * (this.get('cluster_size') - 1) )) {
+		    elements[i].disabled = true;
+		} else {
+		    elements[i].disabled = false;
+		}
+	    }
+
+    	    var elements = document.getElementsByName("slaves_disk_button");
+	    var length = elements.length;
+	    var disks = this.get('content._data.disk_choices');
+
+	    for (var i = 0; i < length; i++) {
+		elements[i].style.color = "initial";
+		if (this.get('slaves_disk_selection') != 0) {
+		    var choice = document.getElementById("slaves_disk_".concat(this.get('slaves_disk_selection')));
+		    choice.style.color = "red";
+		}
+		if (this.get('master_disk_selection') == 0) {
+		    var master_disk = this.get('content._data.disk_choices')[0];
+		} else {
+		    var master_disk = this.get('master_disk_selection');
+		}
+		if (disks[i] * (this.get('cluster_size') - 1) > (this.get('content._data.disk_av') - master_disk)) {
+		    elements[i].disabled = true;
+		} else {
+		    elements[i].disabled = false;
+		}
+	    }
 	},
 
 	// Functionality about storage buttons being colored when user selects one of them
@@ -309,7 +311,7 @@ App.CreateclusterIndexController = Ember.Controller.extend({
 		var disks = this.get('content._data.disk_template');
 		for (var i = 0; i < length; i++) {
 			elements[i].style.color = "initial";
-			var choice = document.getElementById(this.get('disk_temp'))
+			var choice = document.getElementById(this.get('disk_temp'));
 			choice.style.color = "red";
 		}
 	},
@@ -323,15 +325,14 @@ App.CreateclusterIndexController = Ember.Controller.extend({
 	},
 	// Reset variables after logout
 	reset_variables : function() {
-		this.set('master_enabled', false);
-		this.set('slaves_enabled', false);
-		this.set('cpu_Not_Allow', true);
-		this.set('mem_Not_Allow', true);
-		this.set('disk_Not_Allow', true);
-		this.set('storage_Not_Allow', true);
+		this.set('master_cpus_Not_Allow', false);
+		this.set('slaves_cpus_Not_Allow', false);
+		this.set('master_mem_Not_Allow', false);
+		this.set('slaves_mem_Not_Allow', false);
+		this.set('master_disk_Not_Allow', false);
+		this.set('slaves_disk_Not_Allow', false);	
+		this.set('storage_Not_Allow', false);
 		this.set('cluster_size', 2);
-		this.set('master_color', 'lightblue');
-		this.set('slaves_color', 'lightblue');
 		this.set('master_cpu_selection', 0);
 		this.set('slaves_cpu_selection', 0);
 		this.set('master_mem_selection', 0);
@@ -345,46 +346,45 @@ App.CreateclusterIndexController = Ember.Controller.extend({
 	actions : {
 
 		// When a cpu button is clicked, the selected role's cpu selection takes the corresponding value
-		cpu_selection : function(name) {
-			if (this.master_enabled) {
-				if (name <= (this.get('content._data.cpu_av') - this.get('slaves_cpu_selection') * (this.get('cluster_size') - 1) )) {
-					this.set('master_cpu_selection', name);
-				}
+		cpu_selection : function(value, name) {
+		    if (name == "master_cpus_button") {
+			if (value <= (this.get('content._data.cpu_av') - this.get('slaves_cpu_selection') * (this.get('cluster_size') - 1) )) {
+			    this.set('master_cpu_selection', value);
 			}
-			if (this.slaves_enabled) {
-				if (name * (this.get('cluster_size') - 1) <= (this.get('content._data.cpu_av') - this.get('master_cpu_selection'))) {
-					this.set('slaves_cpu_selection', name);
-				}
+		    }
+		    if (name == "slaves_cpus_button") {
+			if (value * (this.get('cluster_size') - 1) <= (this.get('content._data.cpu_av') - this.get('master_cpu_selection'))) {
+			    this.set('slaves_cpu_selection', value);
 			}
+		    }
 		},
 
 		// When a memory button is clicked, the selected role's memory selection takes the corresponding value
-		mem_selection : function(name) {
-			if (this.master_enabled) {
-				if (name <= (this.get('content._data.mem_av') - this.get('slaves_mem_selection') * (this.get('cluster_size') - 1) )) {
-					this.set('master_mem_selection', name);
-				}
+		mem_selection : function(value, name) {
+		    if (name == "master_mem_button") {
+			if (value <= (this.get('content._data.mem_av') - this.get('slaves_mem_selection') * (this.get('cluster_size') - 1) )) {
+			    this.set('master_mem_selection', value);
 			}
-			if (this.slaves_enabled) {
-
-				if (name * (this.get('cluster_size') - 1) <= (this.get('content._data.mem_av') - this.get('master_mem_selection'))) {
-					this.set('slaves_mem_selection', name);
-				}
+		    }
+		    if (name == "slaves_mem_button") {
+			if (value * (this.get('cluster_size') - 1) <= (this.get('content._data.mem_av') - this.get('master_mem_selection'))) {
+			    this.set('slaves_mem_selection', value);
 			}
+		    }
 		},
 
 		// When a disk button is clicked, the selected role's disk selection takes the corresponding value
-		disk_selection : function(name) {
-			if (this.master_enabled) {
-				if (name <= (this.get('content._data.disk_av') - this.get('slaves_disk_selection') * (this.get('cluster_size') - 1) )) {
-					this.set('master_disk_selection', name);
-				}
+		disk_selection : function(value, name) {
+		    if (name == "master_disk_button") {
+			if (value <= (this.get('content._data.disk_av') - this.get('slaves_disk_selection') * (this.get('cluster_size') - 1) )) {
+			    this.set('master_disk_selection', value);
 			}
-			if (this.slaves_enabled) {
-				if (name * (this.get('cluster_size') - 1) <= (this.get('content._data.disk_av') - this.get('master_disk_selection'))) {
-					this.set('slaves_disk_selection', name);
-				}
+		    }
+		    if (name == "slaves_disk_button") {
+			if (value * (this.get('cluster_size') - 1) <= (this.get('content._data.disk_av') - this.get('master_disk_selection'))) {
+			    this.set('slaves_disk_selection', value);
 			}
+		    }
 		},
 
 		// When a storage button is clicked, the selected role's storage selection takes the corresponding value
@@ -401,27 +401,9 @@ App.CreateclusterIndexController = Ember.Controller.extend({
 			this.transitionTo('user.logout');
 		},
 
-		// When master button is clicked, disables the slave button accordingly and calls button function
-		display_master : function() {
-			this.set('master_color', 'lightgreen');
-			this.set('slaves_color', 'lightgrey');
-			this.set('master_enabled', true);
-			this.set('slaves_enabled', false);
-			this.buttons();
-			this.set('storage_Not_Allow', false);
-		},
 
-		// When slaves button is clicked, disables the master button accordingly and calls button function
-		display_slaves : function() {
-			this.set('master_color', 'lightgrey');
-			this.set('slaves_color', 'lightgreen');
-			this.set('master_enabled', false);
-			this.set('slaves_enabled', true);
-			this.buttons();
-			this.set('storage_Not_Allow', false);
-		},
-    
-		// when next button is pressed, go_to_confirm action is triggered
+		// when next button is pressed
+		// go_to_confirm action is triggered
 		go_to_confirm : function() {
 			// check that all fields are filled
 			if (this.get('master_cpu_selection') == 0) {
@@ -442,21 +424,11 @@ App.CreateclusterIndexController = Ember.Controller.extend({
 				// check if everything is allowed
 				if ((this.get('total_cpu_selection') <= this.get("content._data.cpu_av")) && (this.get('total_mem_selection') <= this.get("content._data.mem_av")) && (this.get('total_disk_selection') <= this.get("content._data.disk_av"))) {
 					// redirect to confirm template
-					this.transitionTo('createcluster.confirm');
+					this.transitionTo('cluster.confirm');
 				} else {
 					alert('Requested resources unavailable!');
 				}
 			}
 		},
-	},
-
-	// Style for master button
-	master_style : function() {
-		return "background-color:" + this.get('master_color');
-	}.property('master_color'),
-
-	// Style for slaves button
-	slaves_style : function() {
-		return "background-color:" + this.get('slaves_color');
-	}.property('slaves_color')
+	}
 });

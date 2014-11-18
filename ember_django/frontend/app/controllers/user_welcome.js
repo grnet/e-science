@@ -2,15 +2,11 @@
 // Redirect to logout route when user press logout in welcome screen 
 App.UserWelcomeController = Ember.Controller.extend({ 
 
-  needs: 'createclusterIndex',
+  needs: 'clusterCreate',
 
   // Function which disables all create cluster buttons so user will have to select a role first (master/slaves) to interact with the buttons
   go_forward: function(){
-    this.controllerFor('createclusterIndex').set('master_enabled', false);
-    this.controllerFor('createclusterIndex').set('master_color', "lightblue");
-    this.controllerFor('createclusterIndex').set('slaves_enabled', false);
-    this.controllerFor('createclusterIndex').set('slaves_color', "lightblue");
-    this.controllerFor('createclusterIndex').set('storage_Not_Allow', true);
+    this.controllerFor('clusterCreate').buttons();
   },
 
   actions:{
@@ -19,10 +15,10 @@ App.UserWelcomeController = Ember.Controller.extend({
       this.transitionToRoute('user.logout');
     },
 
-    // go to create/cluster screen
+    // go to cluster/create screen
     createcluster: function(){
       this.go_forward();
-      this.transitionToRoute('createcluster.index');
+      this.transitionToRoute('cluster.create');
     }    
   }
   

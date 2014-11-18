@@ -93,40 +93,20 @@
             </div>
         </script>
 
-        <script type="text/x-handlebars" data-template-name="createcluster/index">
-		    <div id="header">
-		        User: {{content._data.user_id}}
-		        <h3>Select CPUs, RAM and Disk Size...</h3>
-		    </div>
+        <script type="text/x-handlebars" data-template-name="cluster/create">
+	    <div id="header">
+	        User: {{content._data.user_id}}
+	        <h3>Select CPUs, RAM and Disk Size...</h3>
+	    </div>
             <div id="main-wrap">
-                <div id="sidebar">
+		<div class="row">		
+		    <h3> *** Cluster configuration </h3>
+                    <h4>Cluster Name: {{view Ember.TextField valueBinding="cluster_name" placeholder="cluster_name" classBinding=":textfieldcolor"}}</h4>
                     <p> Cluster size ({{content._data.vms_max}} at maximum):
                 		{{view Ember.Select contentBinding="max_cluster_size_av" valueBinding="cluster_size" prompt="Select size" id = "size_of_cluster"}}          
                     </p>
-                    <p><button id="master" class="btn btn-md" {{bind-attr class="slaves_enabled:btn-default master_enabled:btn-warning :btn-default"}} {{action "display_master"}}> Master </button></p>
-                    <p><button id="slaves" class="btn btn-md" {{bind-attr class="master_enabled:btn-default slaves_enabled:btn-warning :btn-default"}} {{action "display_slaves"}} {{bind-attr disabled=slaves_Not_Allow}}> Slaves </button></p>
                     <p> Operating Systems:
                         {{view Ember.Select contentBinding="content._data.os_choices" valueBinding="operating_system" classNameBindings="btn btn-default btn-xs"}}
-                    </p>
-                </div>
-                <div id="content-wrap">
-            		<h4 id = "cpu_summary">CPUs ({{this.cpu_available}} available): Master ({{this.master_cpu_selection}}) Each Slave ({{this.slaves_cpu_selection}})</h4>    
-                    <p>
-                        {{#each item in content._data.cpu_choices}}
-							{{#view App.CPUSelButView id=item value=item name="cpu_button" disabled=cpu_Not_Allow}}{{item}}x{{/view}}
-                        {{/each}}
-                    </p> 
-                    <h4 id="ram_summary">Memory size ({{this.mem_available}} MB available): Master ({{this.master_mem_selection}}) Each Slave ({{this.slaves_mem_selection}})</h4>
-                    <p>
-                        {{#each item in content._data.mem_choices}}
-							{{#view App.MEMSelButView id=item value=item name="mem_button" disabled=mem_Not_Allow}}{{item}}{{/view}}
-                        {{/each}}
-                    </p>
-                    <h4 id="disk_summary">Disk size ({{this.disk_available}} GB available): Master ({{this.master_disk_selection}}) Each Slave ({{this.slaves_disk_selection}})</h4>
-                    <p>
-                        {{#each item in content._data.disk_choices}}
-							{{#view App.DiskSelButView id=item value=item name="disk_button" disabled=disk_Not_Allow}}{{item}}{{/view}}
-                        {{/each}}
                     </p>
                     <h4>Storage (common all cluster machines): {{this.disk_temp}}</h4>
                     <p>
@@ -134,43 +114,94 @@
                             <button id={{item}} class="btn btn-default btn-md" {{action "disk_template" item}} {{bind-attr disabled = storage_Not_Allow }}> {{item}} </button>
                         {{/each}}
                     </p>
-                    <h4>Cluster Name: {{view Ember.TextField valueBinding="cluster_name" placeholder="cluster_name" classBinding=":textfieldcolor"}}</h4>
+		</div>
+		<div class="row">
+		    <h3> *** Master configuration </h3>		
+		
+		    <h4 id = "cpu_summary">CPUs ({{this.cpu_available}} available): Master ({{this.master_cpu_selection}}) </h4>    
+                    <p>
+                        {{#each item in content._data.cpu_choices}}
+			    {{#view App.CPUSelButView value=item name="master_cpus_button" disabled=master_cpus_Not_Allow}}{{item}}x{{/view}}
+                        {{/each}}                                               
+                    </p>
 
-                </div>
+		    <h4 id="ram_summary">Memory size ({{this.mem_available}} MB available): Master ({{this.master_mem_selection}}) </h4>
+                    <p>
+                        {{#each item in content._data.mem_choices}}
+			    {{#view App.MEMSelButView value=item name="master_mem_button" disabled=master_mem_Not_Allow}}{{item}}{{/view}}
+                        {{/each}}
+                    </p>
+
+                    <h4 id="disk_summary">Disk size ({{this.disk_available}} GB available): Master ({{this.master_disk_selection}}) </h4>
+                    <p>
+                        {{#each item in content._data.disk_choices}}
+			    {{#view App.DiskSelButView value=item name="master_disk_button" disabled=master_disk_Not_Allow}}{{item}}{{/view}}
+                        {{/each}}
+                    </p>
+		</div>
+
+		<div class="row">
+		    <h3> *** Slaves configuration </h3>		
+		
+		    <h4 id = "cpu_summary">CPUs ({{this.cpu_available}} available): Each Slave ({{this.slaves_cpu_selection}})</h4>    
+                    <p>
+                        {{#each item in content._data.cpu_choices}}
+			    {{#view App.CPUSelButView value=item name="slaves_cpus_button" disabled=slaves_cpus_Not_Allow}}{{item}}x{{/view}}
+                        {{/each}}
+                                               
+                    </p>
+                    
+		    <h4 id="ram_summary">Memory size ({{this.mem_available}} MB available): Each Slave ({{this.slaves_mem_selection}})</h4>
+                    <p>
+                        {{#each item in content._data.mem_choices}}
+			    {{#view App.MEMSelButView value=item name="slaves_mem_button" disabled=slaves_mem_Not_Allow}}{{item}}{{/view}}
+                        {{/each}}
+                    </p>
+
+                    <h4 id="disk_summary">Disk size ({{this.disk_available}} GB available): Each Slave ({{this.slaves_disk_selection}})</h4>
+                    <p>
+                        {{#each item in content._data.disk_choices}}
+			    {{#view App.DiskSelButView value=item name="slaves_disk_button" disabled=slaves_disk_Not_Allow}}{{item}}{{/view}}
+                        {{/each}}
+                    </p>
+               
+		</div>
+
+		<button id="next" class="next btn btn-success btn-md" {{action "go_to_confirm"}}> Next </button>
+		<form class="form-horizontal" {{action "logout" on="submit"}}>
+		    <button type="submit" class="btn btn-danger btn-md">Logout</button>
+		</form>		
             </div>
-			<div id="footer">
-		        <button id="next" class="next btn btn-success btn-md" {{action "go_to_confirm"}}> Next </button>
-		        <form class="form-horizontal" {{action "logout" on="submit"}}>
-					<button type="submit" class="btn btn-danger btn-md">Logout</button>
-			    </form>
-		    </div>
         </script>
 
-        <script type="text/x-handlebars" data-template-name="createcluster/confirm">
+
+        <script type="text/x-handlebars" data-template-name="cluster/confirm">
 		    <div id="header">
 		        Summary
 		    </div>
             <div id="main-wrap">
                 <div id="content-wrap">
                     <h4>User: {{content._data.user_id}}</h4>
-                    <h4>Cluster Name: {{controllers.createclusterIndex.cluster_name}}</h4>
+
+                    <h4>Cluster Name: {{controllers.clusterCreate.cluster_name}}</h4>
                     <div id="area1">
                         <h3>Image</h3>
-                        <h4>OS: {{controllers.createclusterIndex.operating_system}}</h4>
-                        <h4>Size: {{controllers.createclusterIndex.cluster_size}}</h4>
-                        <h4>Storage type: {{controllers.createclusterIndex.disk_temp}}</h4>
+                        <h4>OS: {{controllers.clusterCreate.operating_system}}</h4>
+                        <h4>Size: {{controllers.clusterCreate.cluster_size}}</h4>
+                        <h4>Storage type: {{controllers.clusterCreate.disk_temp}}</h4>
                     </div>
                     <div id="area2">
                         <h3>Flavor of Master vm</h3>
-                        <h4>CPUs: {{controllers.createclusterIndex.master_cpu_selection}}</h4>
-                        <h4>Memory: {{controllers.createclusterIndex.master_mem_selection}}</h4>
-                        <h4>Disk: {{controllers.createclusterIndex.master_disk_selection}}</h4>
+                        <h4>CPUs: {{controllers.clusterCreate.master_cpu_selection}}</h4>
+                        <h4>Memory: {{controllers.clusterCreate.master_mem_selection}}</h4>
+                        <h4>Disk: {{controllers.clusterCreate.master_disk_selection}}</h4>
                     </div>
                     <div id="area3">
                         <h3>Flavor of each slave vm</h3>
-                        <h4>CPUs: {{controllers.createclusterIndex.slaves_cpu_selection}}</h4>
-                        <h4>Memory: {{controllers.createclusterIndex.slaves_mem_selection}}</h4>
-                        <h4>Disk: {{controllers.createclusterIndex.slaves_disk_selection}}</h4>
+                        <h4>CPUs: {{controllers.clusterCreate.slaves_cpu_selection}}</h4>
+                        <h4>Memory: {{controllers.clusterCreate.slaves_mem_selection}}</h4>
+                        <h4>Disk: {{controllers.clusterCreate.slaves_disk_selection}}</h4>
+
                     </div>
                 </div>
             </div>
@@ -183,7 +214,7 @@
 		      </form>
 		    </div>
         </script>
-        
+
         {% endverbatim %}
         <script src="{{ STATIC_URL }}libs/jquery-1.11.1.js"></script>
         <script src="{{ STATIC_URL }}libs/package/dist/handlebars.js"></script>
@@ -191,31 +222,32 @@
         <script src="{{ STATIC_URL }}libs/ember-data.js"></script>
         
         <script src="{{ STATIC_URL }}app.js"></script>    
-        
+
         <script src="{{ STATIC_URL }}controllers/application.js"></script>
-        <script src="{{ STATIC_URL }}controllers/userwelcomecontroller.js"></script>
-        <script src="{{ STATIC_URL }}controllers/homepagecontroller.js"></script>
-        <script src="{{ STATIC_URL }}controllers/userlogincontroller.js"></script>
-        <script src="{{ STATIC_URL }}controllers/createclusterindexcontroller.js"></script>
-        <script src="{{ STATIC_URL }}controllers/createclusterconfirmcontroller.js"></script>  
+        <script src="{{ STATIC_URL }}controllers/user_welcome.js"></script>
+        <script src="{{ STATIC_URL }}controllers/homepage.js"></script>
+        <script src="{{ STATIC_URL }}controllers/user_login.js"></script>
+        <script src="{{ STATIC_URL }}controllers/cluster_create.js"></script>
+        <script src="{{ STATIC_URL }}controllers/cluster_confirm.js"></script>  
         
         <script src="{{ STATIC_URL }}router.js"></script>
-        <script src="{{ STATIC_URL }}routes/indexroute.js"></script>
-        <script src="{{ STATIC_URL }}routes/restrictedroute.js"></script>
-        <script src="{{ STATIC_URL }}routes/userloginroute.js"></script>        
-        <script src="{{ STATIC_URL }}routes/userlogoutroute.js"></script>        
-        <script src="{{ STATIC_URL }}routes/userwelcomeroute.js"></script>        
-        <script src="{{ STATIC_URL }}routes/createclusterindexroute.js"></script>
-        <script src="{{ STATIC_URL }}routes/createclusterconfirmroute.js"></script>       
+        <script src="{{ STATIC_URL }}routes/index.js"></script>
+        <script src="{{ STATIC_URL }}routes/restricted.js"></script>
+        <script src="{{ STATIC_URL }}routes/user_login.js"></script>        
+        <script src="{{ STATIC_URL }}routes/user_logout.js"></script>        
+        <script src="{{ STATIC_URL }}routes/user_welcome.js"></script>        
+        <script src="{{ STATIC_URL }}routes/cluster_create.js"></script>
+        <script src="{{ STATIC_URL }}routes/cluster_confirm.js"></script>       
         
-        <script src="{{ STATIC_URL }}views/userloginview.js"></script>
-        <script src="{{ STATIC_URL }}views/cpuselbutview.js"></script>
-        <script src="{{ STATIC_URL }}views/memselbutview.js"></script>
-        <script src="{{ STATIC_URL }}views/diskselbutview.js"></script>
+        <script src="{{ STATIC_URL }}views/user_login.js"></script>
+        <script src="{{ STATIC_URL }}views/cpu_selection_button.js"></script>
+        <script src="{{ STATIC_URL }}views/mem_selection_button.js"></script>
+        <script src="{{ STATIC_URL }}views/disk_selection_button.js"></script>
         
         <script src="{{ STATIC_URL }}store.js"></script> 
         <script src="{{ STATIC_URL }}models/user.js"></script>
-        <script src="{{ STATIC_URL }}models/clustercreate.js"></script>
-        <script src="{{ STATIC_URL }}models/clusterchoice.js"></script>
+        <script src="{{ STATIC_URL }}models/cluster.js"></script>
+        <script src="{{ STATIC_URL }}models/cluster_choice.js"></script>
+
   </body>
 </html>

@@ -37,7 +37,7 @@ class StatusView(APIView):
     '''
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticatedOrIsCreation, )
-    resource_name = 'createcluster'
+    resource_name = 'cluster'
     serializer_class = ClusterCreationParamsSerializer
 
     def get(self, request, *args, **kwargs):

@@ -9,13 +9,11 @@ App.Router.map(function() {
 		// /user/welcome
                 this.route('welcome');
         });
-        this.resource('createcluster', {
-                path : "/cluster/create"
-        }, function() {
-		// /cluster/create/confirm
-                this.route('confirm', {
-                        path : "/confirm"
-                });
+        this.resource('cluster', function() {
+		// /cluster/create
+		this.route('create');
+		// /cluster/confirm
+                this.route('confirm');
         });
         // Route to enforce login policy
 	// other routes that require login extend this
