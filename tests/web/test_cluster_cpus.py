@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Selenium test for the cpu limit error message in summary screen
+Selenium test for the cpu limit error message in cluster/create screen
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -36,40 +36,35 @@ class TestClusterCpu(ClusterTest):
 
         # Give Selenium the values cluster_size, master and slave to use for
         # the cluster_size and cpus buttons of cluster/create screen.
-        driver.find_element_by_id("master").click()
         Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(str(cluster_size))
+        time.sleep(1)
+        driver.find_element_by_id("cluster_name").clear()
+        driver.find_element_by_id("cluster_name").send_keys("mycluster")
         time.sleep(1)
         try:
             master_ip, server = self.bind_okeanos_resources(remaining_cpu, cpu_list)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[1]/button["+ master +"]").click()
+            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[3]/div[2]/div/div/div/button["+ master +"]").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button").click()
+            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[3]/div[2]/div/div[2]/div/button").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[3]/button").click()
+            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[3]/div[2]/div/div[3]/div/button").click()
+            time.sleep(1)           
+            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[4]/div[2]/div/div/div/button["+ slave +"]").click()
             time.sleep(1)
-            driver.find_element_by_id("slaves").click()
+            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[4]/div[2]/div/div[2]/div/button").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[1]/button["+ slave +"]").click()
-            time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button").click()
-            time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[3]/button").click()
-            time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/h4[5]/input").clear()
-            time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/h4[5]/input").send_keys("mycluster")
-            time.sleep(1)
-            driver.find_element_by_id("next").click()
+            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[4]/div[2]/div/div[3]/div/button").click()
+            time.sleep(1)        
             driver.find_element_by_id("next").click()
             for i in range(60):
                 try:
-                    if "Cpu selection exceeded cyclades cpu limit" == driver.find_element_by_css_selector("#footer > h4").text: break
+                    if "Cpu selection exceeded cyclades cpu limit" == driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text: break
                 except: pass
                 time.sleep(1)
             else: self.fail("time out")
             time.sleep(3)
             self.assertEqual("Cpu selection exceeded cyclades cpu limit",
-                             driver.find_element_by_css_selector("#footer > h4").text)
+                             driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text)
         finally:
             cluster_name = server[0]['name'].rsplit('-', 1)[0]
             destroy_cluster(cluster_name, self.token)

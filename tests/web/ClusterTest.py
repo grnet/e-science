@@ -31,6 +31,7 @@ class ClusterTest(unittest.TestCase):
     '''
     def setUp(self):
         self.driver = webdriver.Firefox()
+        self.driver.maximize_window()
         self.driver.implicitly_wait(30)
         self.verificationErrors = []
         self.accept_next_alert = True
@@ -52,24 +53,31 @@ class ClusterTest(unittest.TestCase):
     def login(self):
         '''Method used for login by all test_cluster tests'''
         driver = self.driver
-        driver.get(self.base_url + "#/homepage")
-        driver.find_element_by_css_selector("button[type=\"submit\"]").click()
+        driver.get(self.base_url + "#/homepage")       
+        driver.find_element_by_id("id_login").click()
+        for i in range(60):
+            try:
+                if self.is_element_present(By.ID, "token"): break
+            except: pass
+            time.sleep(1)
+        else: self.fail("time out")
         driver.find_element_by_id("token").clear()
         driver.find_element_by_id("token").send_keys(self.token)
-        driver.find_element_by_css_selector("button[type=\"login\"]").click()
+        driver.find_element_by_xpath("//button[@type='login']").click()
         for i in range(60):
             try:
-                if self.is_element_present(By.ID, "CreateHadoopCluster"): break
+                if "Welcome" == driver.find_element_by_css_selector("h3").text: break
             except: pass
             time.sleep(1)
         else: self.fail("time out")
-        driver.find_element_by_id("CreateHadoopCluster").click()
+        driver.find_element_by_id("id_services_dd").click()
+        driver.find_element_by_id("id_create_cluster").click()     
         for i in range(60):
             try:
-                if self.is_element_present(By.XPATH, "//div[@id='sidebar']/p/select"): break
+                if self.is_element_present(By.ID, "size_of_cluster"): break
             except: pass
             time.sleep(1)
-        else: self.fail("time out")
+        else: self.fail("time out")                 
         return driver
 
     def is_element_present(self, how, what):

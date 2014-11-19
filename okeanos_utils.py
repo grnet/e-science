@@ -47,8 +47,7 @@ BASE_DIR = dirname(abspath(__file__))
 def get_project_id(project_name="escience.grnet.gr"):
     '''
     Return the id of the e-science project.
-    The id is found with [kamaki project list] command 
-    or is read from a config file that is not uploaded to 
+    The id is read from a config file that is not uploaded to 
     remote repositories.
     ''' 
     parser = RawConfigParser()

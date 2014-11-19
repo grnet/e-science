@@ -15,7 +15,6 @@ import sys
 import logging
 sys.path.append(join(dirname(abspath(__file__)), '../..'))
 sys.path.append(join(dirname(abspath(__file__)), '..'))
-#import okeanos_utils
 from okeanos_utils import *
 from kamaki.clients.cyclades import CycladesClient
 from backend.models import ClusterCreationParams

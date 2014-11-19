@@ -19,7 +19,7 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class TestResponse(unittest.TestCase):
+class test_text_respond_to_buttons(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -40,65 +40,65 @@ class TestResponse(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     
-    def test_response(self):
+    def test_text_respond_to_buttons(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
-        driver.find_element_by_css_selector("button[type=\"submit\"]").click()
+        driver.find_element_by_id("id_login").click()
+        for i in range(60):
+            try:
+                if "~Okeanos Token" == driver.find_element_by_css_selector("h2").text: break
+            except: pass
+            time.sleep(1)
+        else: self.fail("time out")
         driver.find_element_by_id("token").clear()
         driver.find_element_by_id("token").send_keys(self.token)
-        driver.find_element_by_css_selector("button[type=\"login\"]").click()
+        driver.find_element_by_xpath("//button[@type='login']").click()
         for i in range(60):
             try:
-                if "Welcome" == driver.find_element_by_css_selector("h2").text: break
+                if "Welcome" == driver.find_element_by_css_selector("h3").text: break
             except: pass
             time.sleep(1)
         else: self.fail("time out")
-        driver.find_element_by_css_selector("button[type=\"submit\"]").click()
-        # ERROR: Caught exception [ERROR: Unsupported command [setTimeout | 100000 | ]]
+        driver.find_element_by_id("id_services_dd").click()
+        driver.find_element_by_id("id_create_cluster").click()
         for i in range(60):
             try:
-                if "Select CPUs, RAM and Disk Size..." == driver.find_element_by_css_selector("h3").text: break
+                if "Cluster Configuration" == driver.find_element_by_css_selector("h3").text: break
             except: pass
             time.sleep(1)
         else: self.fail("time out")
-        driver.find_element_by_id("master").click()
-        driver.find_element_by_id("1").click()
-
         kamaki_flavors = get_flavor_id(self.token)
         user_quota = check_quota(self.token)
-        
+        cluster_sizes = driver.find_element_by_id("size_of_cluster").text
+        try:
+            current_cluster_size = int(cluster_sizes.rsplit('\n', 1)[-1])
+        except:
+            self.assertTrue(False,'Not enought vms to run the test')     
         if ((user_quota['cpus']['available']-2*kamaki_flavors['cpus'][0]) >= 0):          
-            driver.find_element_by_id("master").click()
-            driver.find_element_by_id(str(kamaki_flavors['cpus'][0])).click()       
-            try: self.assertRegexpMatches(driver.find_element_by_id("cpu_summary").text, r"CPUs \([0-9]+ available\): Master \({0}\) Each Slave \([0-9]+\)".format(str(kamaki_flavors['cpus'][0])))
-            except AssertionError as e: self.verificationErrors.append(str(e))
-            driver.find_element_by_id("slaves").click()
-            driver.find_element_by_id(str(kamaki_flavors['cpus'][0])).click()
-            try: self.assertRegexpMatches(driver.find_element_by_id("cpu_summary").text, r"CPUs \([0-9]+ available\): Master \([0-9]+\) Each Slave \({0}\)".format(str(kamaki_flavors['cpus'][0])))
+            driver.find_element_by_id("master_cpus_" + str(kamaki_flavors['cpus'][0])).click()
+            try: self.assertEqual("CPUs: {0}".format(str(kamaki_flavors['cpus'][0])), driver.find_element_by_id("master_cpu_summary").text)
+            except AssertionError as e: self.verificationErrors.append(str(e))       
+
+            driver.find_element_by_id("slaves_cpus_" + str(kamaki_flavors['cpus'][0])).click() 
+            try: self.assertEqual("CPUs each: {0}".format(str(kamaki_flavors['cpus'][0])), driver.find_element_by_id("slaves_cpu_summary").text)
             except AssertionError as e: self.verificationErrors.append(str(e))
         else:
             self.assertTrue(False,'Not enought cpu to run the test')
-
         if ((user_quota['ram']['available']-2*kamaki_flavors['ram'][0]) >= 0):
-            driver.find_element_by_id("master").click()
-            driver.find_element_by_id(str(kamaki_flavors['ram'][0])).click()       
-            try: self.assertRegexpMatches(driver.find_element_by_id("ram_summary").text, r"Memory size \([0-9]+ MB available\): Master \({0}\) Each Slave \([0-9]+\)".format(str(kamaki_flavors['ram'][0])))
+            driver.find_element_by_id("master_ram_" + str(kamaki_flavors['ram'][0])).click()       
+            try: self.assertEqual("RAM: {0}".format(str(kamaki_flavors['ram'][0])), driver.find_element_by_id("master_ram_summary").text)
             except AssertionError as e: self.verificationErrors.append(str(e))
-            driver.find_element_by_id("slaves").click()
-            driver.find_element_by_id(str(kamaki_flavors['ram'][0])).click()
-            try: self.assertRegexpMatches(driver.find_element_by_id("ram_summary").text, r"Memory size \([0-9]+ MB available\): Master \([0-9]+\) Each Slave \({0}\)".format(str(kamaki_flavors['ram'][0])))
+            driver.find_element_by_id("slaves_ram_" + str(kamaki_flavors['ram'][0])).click()
+            try: self.assertEqual("RAM each: {0}".format(str(kamaki_flavors['ram'][0])), driver.find_element_by_id("slaves_ram_summary").text)
             except AssertionError as e: self.verificationErrors.append(str(e))
         else:
             self.assertTrue(False,'Not enought ram to run the test')
-
         if ((user_quota['disk']['available']-2*kamaki_flavors['disk'][0]) >= 0):
-            driver.find_element_by_id("master").click()
-            driver.find_element_by_id(str(kamaki_flavors['disk'][0])).click()       
-            try: self.assertRegexpMatches(driver.find_element_by_id("disk_summary").text, r"Disk size \([0-9]+ GB available\): Master \({0}\) Each Slave \([0-9]+\)".format(str(kamaki_flavors['disk'][0])))
+            driver.find_element_by_id("master_disk_" + str(kamaki_flavors['disk'][0])).click()       
+            try: self.assertEqual("Disk Size: {0}".format(str(kamaki_flavors['disk'][0])), driver.find_element_by_id("master_disk_summary").text)
             except AssertionError as e: self.verificationErrors.append(str(e))
-            driver.find_element_by_id("slaves").click()
-            driver.find_element_by_id(str(kamaki_flavors['disk'][0])).click()
-            try: self.assertRegexpMatches(driver.find_element_by_id("disk_summary").text, r"Disk size \([0-9]+ GB available\): Master \([0-9]+\) Each Slave \({0}\)".format(str(kamaki_flavors['disk'][0])))
+            driver.find_element_by_id("slaves_disk_" + str(kamaki_flavors['disk'][0])).click()   
+            try: self.assertEqual("Disk Size each: {0}".format(str(kamaki_flavors['disk'][0])), driver.find_element_by_id("slaves_disk_summary").text)
             except AssertionError as e: self.verificationErrors.append(str(e))
         else:
             self.assertTrue(False,'Not enought disk to run the test')

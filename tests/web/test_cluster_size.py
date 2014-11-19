@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Selenium test for the cluster_size error message in summary screen
+Selenium test for the cluster_size error message in cluster/create screen
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -29,41 +29,36 @@ class TestClusterSize(ClusterTest):
         # Maximum available clustersize
         max_vms = str(user_quota['cluster_size']['available'])
         # Tell selenium to get the max available clustersize from dropdown
-        driver.find_element_by_id("master").click()
         Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(max_vms)
-        time.sleep(1)
         try:
             master_ip, server = self.bind_okeanos_resources()
-            driver.find_element_by_css_selector("#content-wrap > p > button").click()
+            driver.find_element_by_id("cluster_name").clear()
+            driver.find_element_by_id("cluster_name").send_keys("mycluster")
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button").click()
+            driver.find_element_by_id("master_cpus_2").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[3]/button").click()
+            driver.find_element_by_id("master_ram_1024").click()
             time.sleep(1)
-            driver.find_element_by_id("slaves").click()
+            driver.find_element_by_id("master_disk_20").click()
             time.sleep(1)
-            driver.find_element_by_css_selector("#content-wrap > p > button").click()
+            driver.find_element_by_id("slaves_cpus_2").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button").click()
+            driver.find_element_by_id("slaves_ram_1024").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[3]/button").click()
+            driver.find_element_by_id("slaves_disk_10").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/h4[5]/input").clear()
-            time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/h4[5]/input").send_keys("mycluster")
-            time.sleep(1)
-            driver.find_element_by_id("next").click()
+                     
             driver.find_element_by_id("next").click()
             for i in range(60):
                 try:
-                    if "Selected cluster size exceeded cyclades virtual machines limit" == driver.find_element_by_css_selector("#footer > h4").text: break
+                    if "Selected cluster size exceeded cyclades virtual machines limit" == driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text: break
                 except: pass
                 time.sleep(1)
             else: self.fail("time out")
             time.sleep(3)
             self.assertEqual("Selected cluster size exceeded cyclades"
                              " virtual machines limit",
-                             driver.find_element_by_css_selector("#footer > h4").text)
+                             driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text)
         finally:
             cluster_name = server[0]['name'].rsplit('-', 1)[0]
             destroy_cluster(cluster_name, self.token)
