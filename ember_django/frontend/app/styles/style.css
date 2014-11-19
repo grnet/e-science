@@ -1,48 +1,178 @@
-/* Put your CSS here */
-.ember-application {
-    margin: 20px;
-    background-color: rgb(211,211,211);
+html {
+  height: 100%;
 }
-/* sizes */
-#main-wrap > div { min-height: 300px; }
-
-#header {
-    min-height: 20px;
-    text-align: left;
-    font-size: 20px;   
-    font-style: bold;    
+body {
+	padding-top: 50px;
+    height: 100%;
 }
-#footer {
-    min-height: 40px;
-    text-align: center;
+/*
+Mimic cursor style from native .dropdown-menu > .disabled > a{} styles,
+since `pointer-events: none` kills the cursor state, too.
+*/
+.dropdown-menu > .disabled{
+cursor: not-allowed;
 }
-
-/* layout */
-#main-wrap {
-    /* overflow to handle inner floating block */
-    overflow: hidden;
+/* The real magic ;) */
+.dropdown-menu > .disabled > a{
+pointer-events: none;
 }
-
-#sidebar {
-    float: left;
-    width: 30%;
+/* Wrapper for application page content to push down footer */
+body > .ember-view {
+  /* negative indent for navbar + footer */
+  margin: 0 auto -100px;
+  /* Pad bottom by navbar + footer height */
+  padding: 0 0 100px;
 }
-
-#content-wrap {
-    float: right;
-    width: 70%;
+.ember-view {
+	height: 100%;
 }
-
-#area1 {
-    float: left;
-    width: 30%;
-}   
-#area2 {
-    float: left;
-    width: 30%;
+#wrap {
+  min-height: 100%;
+  height: auto !important;
+  height: 100%;
+  /* Negative indent footer by its height */
+  margin: 0 auto -60px;
+  /* Pad bottom by footer height */
+  padding: 0 0 60px;
 }
-#area3 {
-    float: left;
-    width: 30%;
-} 
-
+#banner {
+	min-height: 250px;
+	border-bottom: none
+}
+.page-header h1 {
+	font-size: 4em
+}
+.bs-docs-section {
+	margin-top: 8em
+}
+.bs-component {
+	position: relative
+}
+.bs-component .modal {
+	position: relative;
+	top: auto;
+	right: auto;
+	left: auto;
+	bottom: auto;
+	z-index: 1;
+	display: block
+}
+.bs-component .modal-dialog {
+	width: 90%
+}
+.bs-component .popover {
+	position: relative;
+	display: inline-block;
+	width: 220px;
+	margin: 20px
+}
+#source-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	z-index: 100;
+	font-weight: bold
+}
+.nav-tabs {
+	margin-bottom: 15px
+}
+.progress {
+	margin-bottom: 10px
+}
+footer {
+	margin: 5em 0;
+    height: 60px;
+}
+footer li {
+	float: left;
+	margin-right: 1.5em;
+	margin-bottom: 1.5em
+}
+footer p {
+	clear: left;
+	margin-bottom: 0
+}
+.splash {
+	padding: 5em 0 2em;
+	background-color: #141d27;
+	color: #fff;
+	text-align: center
+}
+.splash .logo {
+	width: 160px
+}
+.splash h1 {
+	font-size: 3em
+}
+.splash #social {
+	margin: 2em 0
+}
+.splash .alert {
+	margin: 2em 0
+}
+.section-tout {
+	padding: 4em 0 3em;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+	background-color: #eaf1f1
+}
+.section-tout .fa {
+	margin-right: .5em
+}
+.section-tout p {
+	margin-bottom: 3em
+}
+.section-preview {
+	padding: 4em 0 4em
+}
+.section-preview .preview {
+	margin-bottom: 4em;
+	background-color: #eaf1f1
+}
+.section-preview .preview .image {
+	position: relative
+}
+.section-preview .preview .image:before {
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	content: "";
+	pointer-events: none
+}
+.section-preview .preview .options {
+	padding: 1em 2em 2em;
+	border: 1px solid rgba(0, 0, 0, 0.05);
+	border-top: none;
+	text-align: center
+}
+.section-preview .preview .options p {
+	margin-bottom: 2em
+}
+.section-preview .dropdown-menu {
+	text-align: left
+}
+.section-preview .lead {
+	margin-bottom: 2em
+}
+@media (max-width:767px) {
+	.section-preview .image img {
+		width: 100%
+	}
+}
+@media (max-width:767px) {
+	.splash {
+		padding-top: 4em
+	}
+	.splash .logo {
+		width: 100px
+	}
+	.splash h1 {
+		font-size: 2em
+	}
+	#banner {
+		margin-bottom: 2em;
+		text-align: center
+	}
+}

@@ -1,211 +1,446 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>GRNET e-Science</title>
-        <meta charset="utf-8"/>
-		<!-- from ember-cli, to be checked... -->
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="description" content="e-Science Orca the hadoop cluster creator">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <!-- from ember-cli --> 
-        <link rel="stylesheet" href="{{ STATIC_URL }}styles/bootstrap.css"> 
-        <link rel="stylesheet" href="{{ STATIC_URL }}styles/bootstrap-theme.css">
-        <link rel="stylesheet" href="{{ STATIC_URL }}styles/main.css">
-        <!-- <link rel="stylesheet" href="{{ STATIC_URL }}styles/style.css"> -->
-    </head>
-    <body>
-        {% verbatim %}
-        <script type="text/x-handlebars" data-template-name="application">
-        	<div class="container-fluid">
-        		<div class="row">
-        			<div class="col-sm-12">
-        				<div id="header">
-			                <div class="header-logo">
-			                    <a href="/" title="orca"> <img src="/frontend/app/images/orca.png" alt="orca" width="80"/>  </a>
-			                 </div>
-			            </div>
-        			</div>
-        		</div>
-        		<div class="row">
-        			<div class="col-sm-12">{{outlet}}</div>
-        		</div>
-        		<div class="row">
-        			<div class="col-sm-12">
-        				<div id="footer">
-			                <div class="logos">
-			                    <ul>
-			                        <a href="http://europa.eu/" target="_blank" title="European Union"><img src="/frontend/app/images/european_union.png" alt="European Union" width="65"></a>
-			                        <a href="http://www.digitalplan.gov.gr/portal/" target="_blank" title="Digital Greece"><img src="/frontend/app/images/digitalgreece.png" alt="Digital Greece" width="80"></a>
-			                        <a href="http://www.espa.gr/en/Pages/Default.aspx" target="_blank" title="NSRF"><img src="/frontend/app/images/NSRF.png" alt="NSRF" width="35"></a>
-			                    </ul>
-			                </div>
-			                <div id='footer-text'>
-			                    <p>The project is co-financed by Greece and the European Union.</p>
-			                    <p>Copyright 2014 <a title="GRNET S.A." target="_blank" href="http://www.grnet.gr/en/">GRNET S.A.</a> All rights reserved.</p>
-			                    <p style="float:right;width:145px" class="termslink"><a href="https://accounts.okeanos.grnet.gr/ui/approval_terms">Terms of use</a></p>
-			                </div>
-			            </div>
+	<head>
+		<title>GRNET e-Science</title>
+		<meta charset="utf-8"/>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="description" content="e-Science Orca the hadoop cluster creator">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="{{ STATIC_URL }}styles/bootstrap.orca.css">
+		<link rel="stylesheet" href="{{ STATIC_URL }}styles/style.css">
+	</head>
+	<body class="" style="">
+		{% verbatim %}
+		<!-- Wrap all page content here -->
+		<script type="text/x-handlebars" data-template-name="application">
+		<div id="wrap">
+			<div class="navbar navbar-default navbar-fixed-top">
+				<div class="container">
+					<div class="navbar-header">
+						<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+						</button>
+						<a class="navbar-brand" href="/">
+							<img src="/frontend/app/images/orca.png" alt="orca" width="65"/>
+						</a>
 					</div>
-        		</div>
-        	</div>
-        </script>
+					<div class="navbar-collapse collapse navbar-responsive-collapse">
+						<ul class="nav navbar-nav">
+							<li class="dropdown">
+								<a href="#" class="dropdown-toggle" data-toggle="dropdown">Services <b class="caret"></b></a>
+								<ul class="dropdown-menu">
+									<li>
+										<a id="id_create_cluster" href="#/cluster/create"><i class="glyphicon glyphicon-cloud"></i> Create Cluster</a>
+									</li>
+									<li class="divider"></li>
+									<li class="dropdown-header">
+										Not yet implemented
+									</li>
+									<li class="disabled">
+										<a href="#" disabled>Pre-built Images</a>
+									</li>
+								</ul>
+							</li>
+						</ul>
+						<ul class="nav navbar-nav navbar-right">
+							<li>
+								<div class="btn-group navbar-btn">
+									<a id="id_login" class="btn btn-primary" href="#/user/login"><i class="glyphicon glyphicon-log-in"></i> Login </a>
+									<button data-toggle="dropdown" class="btn btn-primary dropdown-toggle">
+										<span class="caret"></span>
+									</button>
+									<ul class="dropdown-menu">
+										<li>
+											{{#link-to 'user.logout' this action logout}}<i class="glyphicon glyphicon-log-out"></i> Logout{{/link-to}}
+										</li>
+										<li class="divider"></li>
+										<li class="dropdown-header">
+											Not yet implemented
+										</li>
+										<li class="disabled">
+											<a href="#" disabled>Dashboard</a>
+										</li>
+									</ul>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
 
-        <script type="text/x-handlebars" data-template-name="homepage">
-            <div id="main-wrap">
-                <div id="content-wrap">
-                    <h2>Home page</h2>
-                    <form class="form-horizontal" {{action "start" on="submit"}}>
-                        <button type="submit" class="btn btn-success btn-md">Start</button>
-                    </form>
-                </div>
-            </div>
-        </script>
+			<!-- Begin page content -->
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-12">
+						{{outlet}}
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="footer">
+			<div class="container">
+				<hr/>
+				<div class="row">
+					<div class="col-lg-12">
+						<ul class="list-inline list-unstyled">
+							<li class="termslink pull-right text-muted">
+								<a href="https://accounts.okeanos.grnet.gr/ui/approval_terms">Terms
+								of
+								use</a>
+							</li>
+							<li>
+								<a href="http://europa.eu/" target="_blank" title="European Union"><img src="/frontend/app/images/european_union.png"
+								alt="European Union"
+								height="30"></a>
+							</li>
+							<li>
+								<a href="http://www.digitalplan.gov.gr/portal/" target="_blank" title="Digital Greece"><img
+								src="/frontend/app/images/digitalgreece.png" alt="Digital Greece" height="30"></a>
+							</li>
+							<li>
+								<a href="http://www.espa.gr/en/Pages/Default.aspx" target="_blank" title="NSRF"><img src="/frontend/app/images/NSRF.png"
+								alt="NSRF"
+								height="30"></a>
+							</li>
+						</ul>
+						<p class="text-muted">
+							The project is co-financed by Greece and the European Union.
+						</p>
 
-        <script type="text/x-handlebars" data-template-name="user/login">
-            <div id="main-wrap">
-                <div id="content-wrap">
-                    <h3>Login page</h3>
-                    <h2>Enter your token: </h2>
-                    <form>
-                        {{view Ember.TextField valueBinding="token" placeholder="token" id="token"}}
-                        <button type="login" class="btn btn-success">Login</button>
-                    </form>
-                    {{#if loginFailed}}
-                        <div class="alert">Wrong Token. Please try again</div>
-                    {{/if}}
-                </div>
-            </div>
-        </script>
+						<p class="text-muted">
+							Copyright 2014 <a title="GRNET S.A." target="_blank" href="http://www.grnet.gr/en/">GRNET
+							S.A.</a> All rights
+							reserved.
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		</script>
+		
+		<script type="text/x-handlebars" data-template-name="homepage">
+			<div class="page-header row">
+				<h2>ORCA</h2>
+				<div class="col-lg-4 col-md-4 col-sm-12 col-xs-12">
+					Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore quod quis molestias corrupti optio quia cumque aut esse sit officiis consectetur consequuntur totam nulla perspiciatis laborum. Iusto possimus laudantium eum. Aspernatur illum sapiente veritatis dolorem nemo iste cum dicta beatae et quos id sint alias sit vel quibusdam officiis rem.
+				</div>
+				<div class="col-lg-8 col-md-8 hidden-sm hidden-xs pull-right">
+					<img src="/frontend/app/images/big_data_logo.png" alt="Hadoop cluster" height="300" width="768">
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-lg-6">
+					<p>
+						WELCOME TO ORCA!
+					</p>
+					<h5>This is GRNET's Hadoop service, for the Greek Research and Academic Community. With ~orca you are one click away from your own Virtual Hadoop environment.</h5>
+				</div>
 
-        <script type="text/x-handlebars" data-template-name="user/welcome">
-            <div id="main-wrap">
-                <div id="content-wrap">
-                    <h2>Welcome</h2>
-                    <h3 id="user">User: {{content._data.user_id}}</h3>
-                    <h3 id="clusters">Clusters: {{content._data.cluster}}</h3>
-                    <form class="form-horizontal" {{action "createcluster" on="submit"}}>
-                        <button id="CreateHadoopCluster" type="submit" class="btn btn-success btn-md">Create Hadoop Cluster</button>
-                    </form>
-                    <form class="form-horizontal" {{action "logout" on="submit"}}>
-                        <button id="Logout" type="submit" class="btn btn-danger btn-md">Logout</button>
-                    </form>
-                </div>
-            </div>
-        </script>
+				<div class="col-lg-6">
+					<p>
+						STATISTICS
+					</p>
+					<p class="col-lg-6">
+						Spawned Clusters
+					</p>
+					<p class="col-lg-6">
+						Active Clusters
+					</p>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-lg-12">
+					<hr/>
+					<div class="col-lg-6">
+						<p>
+							LATEST NEWS
+						</p>
+						<p>
+							5 months, 1 week ago, by okeanos
+						</p>
+						<p>
+							....................
+						</p>
+					</div>
+					<div class="col-lg-6">
 
+					</div>
+				</div>
+			</div>
+		</script>
+
+		<script type="text/x-handlebars" data-template-name="user/login">
+			<div class="row">
+				<div class="col-lg-12 text-center v-center">
+					<br><br>
+					<h2> ~Okeanos Token </h2>
+					<br><br>
+					<form class="col-lg-12">
+						<div class="input-group input-group-lg col-sm-offset-3 col-sm-6">
+							<span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
+							{{view Ember.TextField valueBinding="token" placeholder="enter your ~okeanos token..." class="center-block form-control input-lg" id="token"}}
+							<span class="input-group-btn"><button type="login" class="btn btn-lg btn-primary">Submit</button></span>
+						</div>
+						{{#if loginFailed}}
+						<div id="id_alert_wrongtoken" class="alert alert-dismissable alert-danger col-sm-6 col-sm-offset-3">
+						  <button type="button" class="close" data-dismiss="alert">×</button>
+						  <strong>Wrong Token.</strong> Please <a href="#/user/login">try again.</a> 
+						</div>
+						{{/if}}
+					</form>
+				</div> 
+			</div> <!-- row -->
+		</script>
+		
+		<script type="text/x-handlebars" data-template-name="user/welcome">
+		<div class="row">
+			<div class="col-xs-12 text-center v-center">
+				<h2>Welcome</h2>
+				<h3 id="user">User: {{content._data.user_id}}</h3>
+				<h3 id="clusters">Clusters: {{content._data.cluster}}</h3>
+				<form class="form-horizontal" {{action "createcluster" on="submit"}}>
+					<button id="id_create_cluster" type="submit" class="btn btn-success btn-md">
+						Create Hadoop Cluster
+					</button>
+				</form>
+			</div>
+		</div>
+		</script>
+		
         <script type="text/x-handlebars" data-template-name="cluster/create">
-	    <div id="header">
-	        User: {{content._data.user_id}}
-	        <h3>Select CPUs, RAM and Disk Size...</h3>
-	    </div>
-            <div id="main-wrap">
-		<div class="row">		
-		    <h3> *** Cluster configuration </h3>
-                    <h4>Cluster Name: {{view Ember.TextField valueBinding="cluster_name" placeholder="cluster_name" classBinding=":textfieldcolor"}}</h4>
-                    <p> Cluster size ({{content._data.vms_max}} at maximum):
-                		{{view Ember.Select contentBinding="max_cluster_size_av" valueBinding="cluster_size" prompt="Select Size" id = "size_of_cluster"}}          
-                    </p>
-                    <p> Operating Systems:
-                        {{view Ember.Select contentBinding="content._data.os_choices" valueBinding="operating_system" classNameBindings="btn btn-default btn-xs"}}
-                    </p>
-                    <h4>Storage (common all cluster machines): {{this.disk_temp}}</h4>
-                    <p>
-                        {{#each item in content._data.disk_template}}
-                            <button id={{item}} class="btn btn-default btn-md" {{action "disk_template" item}} {{bind-attr disabled = storage_Not_Allow }}> {{item}} </button>
-                        {{/each}}
-                    </p>
+        
+		<div class="well well-lg text-center v-center">
+			<h3>Cluster Configuration</h3>
+		</div>
+		<div class="panel panel-primary">
+			<div class="panel-heading text-center v-center">
+				<h3 class="panel-title">Common Settings</h3>
+			</div>
+			<div class="panel-body">
+				<div class="col col-sm-6">
+					<div class="form-horizontal">
+						<div class="form-group">
+							<label for="os_systems" class="control-label col-sm-5"> Systems </label>
+							<div class="col col-sm-7">
+								{{view Ember.Select contentBinding="content._data.os_choices" valueBinding="operating_system" id="os_systems" class="btn btn-primary btn-sm"}}
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="size_of_cluster" class="control-label col-sm-5">Cluster size ({{content._data.vms_max}} at maximum)</label>
+							<div class="col col-sm-7">
+								{{view Ember.Select contentBinding="max_cluster_size_av" valueBinding="cluster_size" prompt="Select size" id="size_of_cluster" class="btn btn-primary btn-sm text-left"}}
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col col-sm-6">
+					<div class="form-horizontal">
+						<div class="form-group">
+							<label for="cluster_name" class="control-label col-sm-4">Cluster Name</label>
+							<div class="col col-sm-8">
+								{{view Ember.TextField valueBinding="cluster_name" id="cluster_name" class="input-sm form-control" placeholder="cluster_name"}}
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="control-label col-sm-4">Storage: {{this.disk_temp}}</label>
+							<div class="col col-sm-8">
+								<div class="btn-group">
+									{{#each item in content._data.disk_template}}
+									<button id={{item}} class="btn btn-default btn-sm" {{action "disk_template" item}} {{bind-attr disabled = storage_Not_Allow }}>
+										{{item}}
+									</button>
+									{{/each}}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="panel panel-primary">
+			<div class="panel-heading text-center v-center">
+				<h3 class="panel-title">Master Settings</h3>
+			</div>
+			<div class="panel-body text-center">
+				<div class="row">
+					<div class="col col-sm-4">
+						<h4 id = "cpu_summary">CPUs: {{this.master_cpu_selection}} </h4>
+						<div class="btn-group">
+							{{#each item in content._data.cpu_choices}}
+							{{#view App.CPUSelButView value=item name="master_cpus_button" class="btn btn-primary btn-sm" disabled=master_cpus_Not_Allow}}{{item}}x{{/view}}
+							{{/each}}
+						</div>
+					</div>
+					<div class="col col-sm-4">
+						<h4 id="ram_summary">RAM: {{this.master_mem_selection}} </h4>
+						<div class="btn-group">
+							{{#each item in content._data.mem_choices}}
+							{{#view App.MEMSelButView value=item name="master_mem_button" class="btn btn-primary btn-sm" disabled=master_mem_Not_Allow}}{{item}}{{/view}}
+							{{/each}}
+						</div>
+					</div>
+					<div class="col col-sm-4">
+						<h4 id="disk_summary">Disk Size: {{this.master_disk_selection}} </h4>
+						<div class="btn-group">
+							{{#each item in content._data.disk_choices}}
+							{{#view App.DiskSelButView value=item name="master_disk_button" class="btn btn-primary btn-sm" disabled=master_disk_Not_Allow}}{{item}}{{/view}}
+							{{/each}}
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="panel-footer text-center">
+				<div class="row">
+					<div class="col col-sm-4">
+						CPUs ({{this.cpu_available}} available)
+					</div>
+					<div class="col col-sm-4">
+						Memory size ({{this.mem_available}} MB available)
+					</div>
+					<div class="col col-sm-4">
+						Disk size ({{this.disk_available}} GB available)
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="panel panel-primary">
+			<div class="panel-heading text-center v-center">
+				<h3 class="panel-title">Slaves Settings</h3>
+			</div>
+			<div class="panel-body text-center">
+				<div class="row">
+					<div class="col col-sm-4">
+						<h4 id = "cpu_summary">CPUs each: {{this.slaves_cpu_selection}}</h4>
+						<div class="btn-group">
+							{{#each item in content._data.cpu_choices}}
+							{{#view App.CPUSelButView value=item name="slaves_cpus_button" class="btn btn-primary btn-sm" disabled=slaves_cpus_Not_Allow}}{{item}}x{{/view}}
+							{{/each}}
+						</div>
+					</div>
+					<div class="col col-sm-4">
+						<h4 id="ram_summary">RAM each: ({{this.slaves_mem_selection}})</h4>
+						<div class="btn-group">
+							{{#each item in content._data.mem_choices}}
+							{{#view App.MEMSelButView value=item name="slaves_mem_button" class="btn btn-primary btn-sm" disabled=slaves_mem_Not_Allow}}{{item}}{{/view}}
+							{{/each}}
+						</div>
+					</div>
+					<div class="col col-sm-4">
+						<h4 id="disk_summary">Disk Size each: {{this.slaves_disk_selection}}</h4>
+						<div class="btn-group">
+							{{#each item in content._data.disk_choices}}
+							{{#view App.DiskSelButView value=item name="slaves_disk_button" class="btn btn-primary btn-sm" disabled=slaves_disk_Not_Allow}}{{item}}{{/view}}
+							{{/each}}
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="panel-footer text-center">
+				<div class="row">
+					<div class="col col-sm-4">
+						CPUs ({{this.cpu_available}} available)
+					</div>
+					<div class="col col-sm-4">
+						Memory size ({{this.mem_available}} MB available)
+					</div>
+					<div class="col col-sm-4">
+						Disk size ({{this.disk_available}} GB available)
+					</div>
+				</div>
+			</div>
 		</div>
 		<div class="row">
-		    <h3> *** Master configuration </h3>		
-		
-		    <h4 id = "cpu_summary">CPUs ({{this.cpu_available}} available): Master ({{this.master_cpu_selection}}) </h4>    
-                    <p>
-                        {{#each item in content._data.cpu_choices}}
-			    {{#view App.CPUSelButView value=item name="master_cpus_button" disabled=master_cpus_Not_Allow}}{{item}}x{{/view}}
-                        {{/each}}                                               
-                    </p>
-
-		    <h4 id="ram_summary">Memory size ({{this.mem_available}} MB available): Master ({{this.master_mem_selection}}) </h4>
-                    <p>
-                        {{#each item in content._data.mem_choices}}
-			    {{#view App.MEMSelButView value=item name="master_mem_button" disabled=master_mem_Not_Allow}}{{item}}{{/view}}
-                        {{/each}}
-                    </p>
-
-                    <h4 id="disk_summary">Disk size ({{this.disk_available}} GB available): Master ({{this.master_disk_selection}}) </h4>
-                    <p>
-                        {{#each item in content._data.disk_choices}}
-			    {{#view App.DiskSelButView value=item name="master_disk_button" disabled=master_disk_Not_Allow}}{{item}}{{/view}}
-                        {{/each}}
-                    </p>
+			<div class="col col-sm-3"></div>
+			<div class="col col-sm-6">
+				<button id="next" class="next btn btn-success btn-md btn-block" {{action "go_to_create"}}>
+					Create Cluster
+				</button>
+				<h4>{{message}}</h4>
+			</div>
+			<div class="col col-sm-3"></div>
 		</div>
-
-		<div class="row">
-		    <h3> *** Slaves configuration </h3>		
-		
-		    <h4 id = "cpu_summary">CPUs ({{this.cpu_available}} available): Each Slave ({{this.slaves_cpu_selection}})</h4>    
-                    <p>
-                        {{#each item in content._data.cpu_choices}}
-			    {{#view App.CPUSelButView value=item name="slaves_cpus_button" disabled=slaves_cpus_Not_Allow}}{{item}}x{{/view}}
-                        {{/each}}
-                                               
-                    </p>
-                    
-		    <h4 id="ram_summary">Memory size ({{this.mem_available}} MB available): Each Slave ({{this.slaves_mem_selection}})</h4>
-                    <p>
-                        {{#each item in content._data.mem_choices}}
-			    {{#view App.MEMSelButView value=item name="slaves_mem_button" disabled=slaves_mem_Not_Allow}}{{item}}{{/view}}
-                        {{/each}}
-                    </p>
-
-                    <h4 id="disk_summary">Disk size ({{this.disk_available}} GB available): Each Slave ({{this.slaves_disk_selection}})</h4>
-                    <p>
-                        {{#each item in content._data.disk_choices}}
-			    {{#view App.DiskSelButView value=item name="slaves_disk_button" disabled=slaves_disk_Not_Allow}}{{item}}{{/view}}
-                        {{/each}}
-                    </p>
-               
-		</div>
-
-		<button id="next" class="next btn btn-success btn-md" {{action "go_to_create"}}> Create Cluster! </button>
-		<h4>{{message}}</h4>
-		<form class="form-horizontal" {{action "logout" on="submit"}}>
-		    <button type="submit" class="btn btn-danger btn-md">Logout</button>
-		</form>		
-            </div>
         </script>
 
-        {% endverbatim %}
-        <script src="{{ STATIC_URL }}libs/jquery-1.11.1.js"></script>
-        <script src="{{ STATIC_URL }}libs/package/dist/handlebars.js"></script>
-        <script src="{{ STATIC_URL }}libs/ember-1.7.0.js"></script>
-        <script src="{{ STATIC_URL }}libs/ember-data.js"></script>
-        
-        <script src="{{ STATIC_URL }}app.js"></script>    
+        <script type="text/x-handlebars" data-template-name="cluster/confirm">
+		<div id="header">
+			Summary
+		</div>
+		<div id="main-wrap">
+			<div id="content-wrap">
+				<h4>User: {{content._data.user_id}}</h4>
+                    <h4>Cluster Name: {{controllers.clusterCreate.cluster_name}}</h4>
+				<div id="area1">
+					<h3>Image</h3>
+                        <h4>OS: {{controllers.clusterCreate.operating_system}}</h4>
+                        <h4>Size: {{controllers.clusterCreate.cluster_size}}</h4>
+                        <h4>Storage type: {{controllers.clusterCreate.disk_temp}}</h4>
+				</div>
+				<div id="area2">
+					<h3>Flavor of Master vm</h3>
+                        <h4>CPUs: {{controllers.clusterCreate.master_cpu_selection}}</h4>
+                        <h4>Memory: {{controllers.clusterCreate.master_mem_selection}}</h4>
+                        <h4>Disk: {{controllers.clusterCreate.master_disk_selection}}</h4>
+				</div>
+				<div id="area3">
+					<h3>Flavor of each slave vm</h3>
+                        <h4>CPUs: {{controllers.clusterCreate.slaves_cpu_selection}}</h4>
+                        <h4>Memory: {{controllers.clusterCreate.slaves_mem_selection}}</h4>
+                        <h4>Disk: {{controllers.clusterCreate.slaves_disk_selection}}</h4>
+				</div>
+			</div>
+		</div>
+		<div id="footer">
+			<button id="previous" class="btn btn-warning" {{action "go_to_flavor"}}>
+				Previous
+			</button>
+			<button id="next" class="btn btn-success" {{action "go_to_create"}}>
+				Create Cluster!
+			</button>
+			<h4>{{message}}</h4>
+			<form class="form-horizontal" {{action "logout" on="submit"}}>
+				<button type="submit" class="btn btn-danger">
+					Logout
+				</button>
+			</form>
+		</div>
+		</script>
+		{% endverbatim %}
+		<script src="{{ STATIC_URL }}libs/jquery-1.11.1.js"></script>
+		<script src="{{ STATIC_URL }}libs/package/dist/handlebars.js"></script>
+		<script src="{{ STATIC_URL }}libs/ember-1.7.0.js"></script>
+		<script src="{{ STATIC_URL }}libs/ember-data.js"></script>
+		<script src="{{ STATIC_URL }}styles/bootstrap.js"></script>
+
+		<script src="{{ STATIC_URL }}app.js"></script>
 
         <script src="{{ STATIC_URL }}controllers/application.js"></script>
         <script src="{{ STATIC_URL }}controllers/user_welcome.js"></script>
         <script src="{{ STATIC_URL }}controllers/homepage.js"></script>
         <script src="{{ STATIC_URL }}controllers/user_login.js"></script>
-        <script src="{{ STATIC_URL }}controllers/cluster_create.js"></script> 
-        
+        <script src="{{ STATIC_URL }}controllers/cluster_create.js"></script>
+        <script src="{{ STATIC_URL }}controllers/cluster_confirm.js"></script> 
+
         <script src="{{ STATIC_URL }}router.js"></script>
         <script src="{{ STATIC_URL }}routes/index.js"></script>
         <script src="{{ STATIC_URL }}routes/restricted.js"></script>
         <script src="{{ STATIC_URL }}routes/user_login.js"></script>        
         <script src="{{ STATIC_URL }}routes/user_logout.js"></script>        
         <script src="{{ STATIC_URL }}routes/user_welcome.js"></script>        
-        <script src="{{ STATIC_URL }}routes/cluster_create.js"></script>      
-        
+        <script src="{{ STATIC_URL }}routes/cluster_create.js"></script>
+        <script src="{{ STATIC_URL }}routes/cluster_confirm.js"></script>
+
         <script src="{{ STATIC_URL }}views/user_login.js"></script>
         <script src="{{ STATIC_URL }}views/cpu_selection_button.js"></script>
         <script src="{{ STATIC_URL }}views/mem_selection_button.js"></script>
         <script src="{{ STATIC_URL }}views/disk_selection_button.js"></script>
-        
+
         <script src="{{ STATIC_URL }}store.js"></script> 
         <script src="{{ STATIC_URL }}models/user.js"></script>
         <script src="{{ STATIC_URL }}models/cluster.js"></script>
         <script src="{{ STATIC_URL }}models/cluster_choice.js"></script>
-
-  </body>
+		
+	</body>
 </html>
