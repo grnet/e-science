@@ -2,7 +2,7 @@
 App.CPUSelButView = Ember.View.extend({
     tagName: 'button',
     // class names, :emberbutton for CSS style
-    classNameBindings: [':emberbutton', ':btn', ':btn-primary', ':btn-xs'],
+    classNameBindings: [':emberbutton'],
     // html attributes, custom (e.g. name, value) should be defined here
     attributeBindings: ['disabled', 'name', 'value'],
     // initialization
