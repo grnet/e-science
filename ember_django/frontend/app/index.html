@@ -30,7 +30,7 @@
 					<div class="navbar-collapse collapse navbar-responsive-collapse">
 						<ul class="nav navbar-nav">
 							<li class="dropdown">
-								<a href="#" class="dropdown-toggle" data-toggle="dropdown">Services <b class="caret"></b></a>
+								<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_services_dd">Services <b class="caret"></b></a>
 								<ul class="dropdown-menu">
 									<li>
 										<a id="id_create_cluster" href="#/cluster/create"><i class="glyphicon glyphicon-cloud"></i> Create Cluster</a>
@@ -49,12 +49,12 @@
 							<li>
 								<div class="btn-group navbar-btn">
 									<a id="id_login" class="btn btn-primary" href="#/user/login"><i class="glyphicon glyphicon-log-in"></i> Login </a>
-									<button data-toggle="dropdown" class="btn btn-primary dropdown-toggle">
+									<button data-toggle="dropdown" class="btn btn-primary dropdown-toggle"  id="id_login_dd">
 										<span class="caret"></span>
 									</button>
 									<ul class="dropdown-menu">
 										<li>
-											{{#link-to 'user.logout'}}<i class="glyphicon glyphicon-log-out"></i> Logout{{/link-to}}
+											{{#link-to 'user.logout' id="id_logout"}}<i class="glyphicon glyphicon-log-out"></i> Logout{{/link-to}}
 										</li>
 										<li class="divider"></li>
 										<li class="dropdown-header">
