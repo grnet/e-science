@@ -1,7 +1,9 @@
 // Logout route (Log out user).
 App.UserLogoutRoute = Ember.Route.extend({
+	needs: 'clusterCreate',
 	// redirect accordingly
 	redirect : function() {
+		this.controllerFor('clusterCreate').reset_variables();
 		// Send PUT request for backend logout update.
 		var current_user = this.store.update('user', {
 			'id' : 1
