@@ -447,8 +447,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 			// redirect to logout
 			this.transitionTo('user.logout');
 		},
-
-
+		// Cancel action when in create cluster -> redirect to user's welcome screen
+		cancel : function() {
+			// reset variables();
+			this.reset_variables();
+			// redirect to welcome
+			this.transitionTo('user.welcome');
+		},
 		// when create cluster button is pressed
 		// go_to_create action is triggered
 		go_to_create : function() {
