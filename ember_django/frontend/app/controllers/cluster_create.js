@@ -363,6 +363,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 		// When a cpu button is clicked, the selected role's cpu selection takes the corresponding value
 		cpu_selection : function(value, name) {
 		    if (name == "master_cpus_button") {
+			// remove alert message
+			this.set('alert_mes_master_cpu', '');
 			if (this.get('slaves_cpu_selection') == 0) {
 			    var slaves_cpu = this.get('content._data.cpu_choices')[0];
 			} else {
@@ -373,6 +375,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 		    }
 		    if (name == "slaves_cpus_button") {
+			// remove alert message
+			this.set('alert_mes_slaves_cpu', '');		      
 			if (this.get('master_cpu_selection') == 0) {
 			    var master_cpu = this.get('content._data.cpu_choices')[0];
 			} else {
@@ -398,11 +402,15 @@ App.ClusterCreateController = Ember.Controller.extend({
 		    }		  
 		  		  
 		    if (name == "master_ram_button") {
+      			// remove alert message
+			this.set('alert_mes_master_ram', '');
 			if (value <= (this.get('content._data.mem_av') - slaves_ram * (this.size_of_cluster() - 1) )) {
 			    this.set('master_ram_selection', value);
 			}
 		    }
 		    if (name == "slaves_ram_button") {
+      			// remove alert message
+			this.set('alert_mes_slaves_ram', '');		      
 			if (value * (this.size_of_cluster() - 1) <= (this.get('content._data.mem_av') - master_ram)) {
 			    this.set('slaves_ram_selection', value);
 			}
@@ -424,11 +432,15 @@ App.ClusterCreateController = Ember.Controller.extend({
 		    }
 		  
 		    if (name == "master_disk_button") {
+      			// remove alert message
+			this.set('alert_mes_master_disk', '');		      
 			if (value <= (this.get('content._data.disk_av') - slaves_disk * (this.size_of_cluster() - 1) )) {
 			    this.set('master_disk_selection', value);
 			}
 		    }
 		    if (name == "slaves_disk_button") {
+      			// remove alert message
+			this.set('alert_mes_slaves_disk', '');		      
 			if (value * (this.size_of_cluster() - 1) <= (this.get('content._data.disk_av') - master_disk)) {
 			    this.set('slaves_disk_selection', value);
 			}
