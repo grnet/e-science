@@ -15,7 +15,6 @@ import sys
 import logging
 sys.path.append(join(dirname(abspath(__file__)), '../..'))
 sys.path.append(join(dirname(abspath(__file__)), '..'))
-#import okeanos_utils
 from okeanos_utils import *
 from kamaki.clients.cyclades import CycladesClient
 from backend.models import ClusterCreationParams
@@ -43,10 +42,9 @@ def check_quota(token):
      '''
 
     auth = check_credentials(token, auth_url)
-
+    uuid = get_project_id()
     try:
         dict_quotas = auth.get_quotas()
-	uuid = '10bdefe7-07dd-43ae-a32e-d9b569640717'
     except Exception:
         logging.exception('Could not get user quota')
         sys.exit(error_user_quota)

@@ -8,6 +8,7 @@ Communication happens through Django REST framework.
 
 Requirements:
 --
+
     sudo pip install Django
     django version: 1.7
 
@@ -16,7 +17,6 @@ Requirements:
     sudo pip install rest_framework_ember
 
     sudo pip install djorm-pgarray
-
 
 
 A database backend for Django. PostgreSQL was used for the application, but by default the Django configuration uses SQLite.
@@ -64,6 +64,7 @@ Optionally, before the runserver command you can create a django superuser for b
     python manage.py createsuperuser
 
 To start the app, open a browser and hit 127.0.0.1:8000.
+
 
 
 
