@@ -32,14 +32,23 @@ class TestClusterDiskSize(ClusterTest):
         disk_list = flavors['disk']
         # Avalable user disk size
         available_disk = user_quota['disk']['available']
-        cluster_size, master, slave ,remaining_disk = self.calculate_cluster_resources(disk_list, available_disk)
         # Give Selenium the values cluster_size, master and slave to use for
-        # the cluster_size and disk size buttons of cluster/create screen.
-        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(str(cluster_size))
+        # the cluster_size, master and slave disksize buttons of 
+        # cluster/create screen.
+        cluster_size, master, slave ,remaining_disk = self.calculate_cluster_resources(disk_list, available_disk)
+        
+        try:
+            Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(str(cluster_size))
+            time.sleep(1)
+        except:
+            self.assertTrue(False,'Not enough vms to run the test')
         time.sleep(1)
         driver.find_element_by_id("cluster_name").clear()
         driver.find_element_by_id("cluster_name").send_keys("mycluster")
         try:
+            # Call the bind function that creates ~okeanos vms and 
+            # causes later the server to respond with an error message to
+            # user's create cluster request
             master_ip, server = self.bind_okeanos_resources(remaining_disk, disk_list)
             driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[3]/div[2]/div/div/div/button").click()
             time.sleep(1)

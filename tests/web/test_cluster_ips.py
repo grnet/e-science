@@ -25,8 +25,15 @@ class TestClusterIps(ClusterTest):
     def test_cluster(self):
 
         driver = self.login()
-        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text("2")
         try:
+            Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text("2")
+            time.sleep(1)
+        except:
+            self.assertTrue(False,'Not enough vms to run the test')        
+        try:
+            # Call the bind function that creates and binds ~okeanos ips and 
+            # causes later the server to respond with an error message to
+            # user's create cluster request
             float_ids, port_ids, net_client = self.bind_okeanos_resources()
             driver.find_element_by_id("cluster_name").clear()
             driver.find_element_by_id("cluster_name").send_keys("mycluster")

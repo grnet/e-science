@@ -29,8 +29,15 @@ class TestClusterSize(ClusterTest):
         # Maximum available clustersize
         max_vms = str(user_quota['cluster_size']['available'])
         # Tell selenium to get the max available clustersize from dropdown
-        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(max_vms)
         try:
+            Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(max_vms)
+            time.sleep(1)
+        except:
+            self.assertTrue(False,'Not enough vms to run the test')
+        try:
+            # Call the bind function that creates ~okeanos vms and 
+            # causes later the server to respond with an error message to
+            # user's create cluster request
             master_ip, server = self.bind_okeanos_resources()
             driver.find_element_by_id("cluster_name").clear()
             driver.find_element_by_id("cluster_name").send_keys("mycluster")

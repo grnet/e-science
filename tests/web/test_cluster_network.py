@@ -28,8 +28,16 @@ class TestClusterNetwork(ClusterTest):
     def test_cluster(self):
 
         driver = self.login()
-        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text("2")
         try:
+            Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text("2")
+            time.sleep(1)
+        except:
+            self.assertTrue(False,'Not enough vms to run the test')
+        
+        try:
+            # Call the bind function that creates ~okeanos private networks
+            # and causes later the server to respond with an error message to
+            # user's create cluster request
             net_client, net_ids = self.bind_okeanos_resources()
             driver.find_element_by_id("cluster_name").clear()
             driver.find_element_by_id("cluster_name").send_keys("mycluster")

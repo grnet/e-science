@@ -73,7 +73,7 @@ class test_text_respond_to_buttons(unittest.TestCase):
         try:
             current_cluster_size = int(cluster_sizes.rsplit('\n', 1)[-1])
         except:
-            self.assertTrue(False,'Not enought vms to run the test')     
+            self.assertTrue(False,'Not enough vms to run the test')     
         if ((user_quota['cpus']['available']-2*kamaki_flavors['cpus'][0]) >= 0):          
             driver.find_element_by_id("master_cpus_" + str(kamaki_flavors['cpus'][0])).click()
             try: self.assertEqual("CPUs: {0}".format(str(kamaki_flavors['cpus'][0])), driver.find_element_by_id("master_cpu_summary").text)
