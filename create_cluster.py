@@ -14,7 +14,7 @@ from os.path import dirname, abspath, expanduser, join
 from reroute_ssh import reroute_ssh_prep
 from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
-    init_cyclades, init_cyclades_netclient, init_plankton
+    init_cyclades, init_cyclades_netclient, init_plankton, get_project_id
 
 
 # Definitions of return value errors
@@ -117,7 +117,10 @@ class HadoopCluster(object):
             self.opts = opts
         self.HOSTNAME_MASTER_IP = '127.0.0.1'
         self.server_dict = {}
+        self.project_id = get_project_id()
         self.status = {}
+        self.uuid = get_project_id()
+
         self.auth = check_credentials(self.opts.get('token', _defaults['token']),
                                       self.opts.get('auth_url', _defaults['auth_url']))
         self._DispatchCheckers = {}
@@ -130,9 +133,9 @@ class HadoopCluster(object):
 
     def check_clustersize_quotas(self):
         dict_quotas = self.auth.get_quotas()
-        limit_vm = dict_quotas['system']['cyclades.vm']['limit']
-        usage_vm = dict_quotas['system']['cyclades.vm']['usage']
-        pending_vm = dict_quotas['system']['cyclades.vm']['pending']
+        limit_vm = dict_quotas[self.project_id]['cyclades.vm']['limit']
+        usage_vm = dict_quotas[self.project_id]['cyclades.vm']['usage']
+        pending_vm = dict_quotas[self.project_id]['cyclades.vm']['pending']
         available_vm = limit_vm - usage_vm - pending_vm
         if available_vm < self.opts.get('clustersize', _defaults['clustersize']):
             logging.error('Cyclades vms out of limit')
@@ -142,9 +145,9 @@ class HadoopCluster(object):
 
     def check_network_quotas(self):
         dict_quotas = self.auth.get_quotas()
-        limit_net = dict_quotas['system']['cyclades.network.private']['limit']
-        usage_net = dict_quotas['system']['cyclades.network.private']['usage']
-        pending_net = dict_quotas['system']['cyclades.network.private']['pending']
+        limit_net = dict_quotas[self.project_id]['cyclades.network.private']['limit']
+        usage_net = dict_quotas[self.project_id]['cyclades.network.private']['usage']
+        pending_net = dict_quotas[self.project_id]['cyclades.network.private']['pending']
         available_networks = limit_net - usage_net - pending_net
         if available_networks >= 1:
             logging.log(REPORT, ' Private Network quota is ok')
@@ -158,9 +161,9 @@ class HadoopCluster(object):
         endpoints, user_id = endpoints_and_user_id(self.auth)
         net_client = init_cyclades_netclient(endpoints['network'], self.opts.get('token', _defaults['token']))
         list_float_ips = net_client.list_floatingips()
-        limit_ips = dict_quotas['system']['cyclades.floating_ip']['limit']
-        usage_ips = dict_quotas['system']['cyclades.floating_ip']['usage']
-        pending_ips = dict_quotas['system']['cyclades.floating_ip']['pending']
+        limit_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['limit']
+        usage_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['usage']
+        pending_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['pending']
         available_ips = limit_ips - (usage_ips + pending_ips)
         for d in list_float_ips:
             if d['instance_id'] is None and d['port_id'] is None:
@@ -173,9 +176,9 @@ class HadoopCluster(object):
 
     def check_cpu_valid(self):
         dict_quotas = self.auth.get_quotas()
-        limit_cpu = dict_quotas['system']['cyclades.cpu']['limit']
-        usage_cpu = dict_quotas['system']['cyclades.cpu']['usage']
-        pending_cpu = dict_quotas['system']['cyclades.cpu']['pending']
+        limit_cpu = dict_quotas[self.project_id]['cyclades.cpu']['limit']
+        usage_cpu = dict_quotas[self.project_id]['cyclades.cpu']['usage']
+        pending_cpu = dict_quotas[self.project_id]['cyclades.cpu']['pending']
         available_cpu = limit_cpu - usage_cpu - pending_cpu
         cpu_req = self.opts.get('cpu_master', _defaults['cpu_master']) + \
                   (self.opts.get('cpu_slave', _defaults['cpu_slave']) * (
@@ -188,9 +191,9 @@ class HadoopCluster(object):
 
     def check_ram_valid(self):
         dict_quotas = self.auth.get_quotas()
-        limit_ram = dict_quotas['system']['cyclades.ram']['limit']
-        usage_ram = dict_quotas['system']['cyclades.ram']['usage']
-        pending_ram = dict_quotas['system']['cyclades.ram']['pending']
+        limit_ram = dict_quotas[self.project_id]['cyclades.ram']['limit']
+        usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
+        pending_ram = dict_quotas[self.project_id]['cyclades.ram']['pending']
         available_ram = (limit_ram - usage_ram - pending_ram) / Bytes_to_MB
         ram_req = self.opts.get('ram_master', _defaults['ram_master']) + \
                   (self.opts.get('ram_slave', _defaults['ram_slave']) * (
@@ -203,9 +206,9 @@ class HadoopCluster(object):
 
     def check_disk_valid(self):
         dict_quotas = self.auth.get_quotas()
-        limit_cd = dict_quotas['system']['cyclades.disk']['limit']
-        usage_cd = dict_quotas['system']['cyclades.disk']['usage']
-        pending_cd = dict_quotas['system']['cyclades.disk']['pending']
+        limit_cd = dict_quotas[self.project_id]['cyclades.disk']['limit']
+        usage_cd = dict_quotas[self.project_id]['cyclades.disk']['usage']
+        pending_cd = dict_quotas[self.project_id]['cyclades.disk']['pending']
         cyclades_disk_req = self.opts.get('disk_master', _defaults['disk_master']) + \
                             (self.opts.get('disk_slave', _defaults['disk_slave']) *
                              (self.opts.get('clustersize', _defaults['clustersize']) - 1))
@@ -275,32 +278,32 @@ class HadoopCluster(object):
         except Exception:
             logging.exception('Could not get user quota')
             exit(error_user_quota)
-        limit_cd = dict_quotas['system']['cyclades.disk']['limit']
-        usage_cd = dict_quotas['system']['cyclades.disk']['usage']
-        pending_cd = dict_quotas['system']['cyclades.disk']['pending']
+        limit_cd = dict_quotas[self.project_id]['cyclades.disk']['limit']
+        usage_cd = dict_quotas[self.project_id]['cyclades.disk']['usage']
+        pending_cd = dict_quotas[self.project_id]['cyclades.disk']['pending']
         available_cyclades_disk_GB = (limit_cd - usage_cd - pending_cd) / Bytes_to_GB
         if available_cyclades_disk_GB < req_quotas['cyclades_disk']:
             logging.error('Cyclades disk out of limit')
             exit(error_quotas_cyclades_disk)
 
-        limit_cpu = dict_quotas['system']['cyclades.cpu']['limit']
-        usage_cpu = dict_quotas['system']['cyclades.cpu']['usage']
-        pending_cpu = dict_quotas['system']['cyclades.cpu']['pending']
+        limit_cpu = dict_quotas[self.project_id]['cyclades.cpu']['limit']
+        usage_cpu = dict_quotas[self.project_id]['cyclades.cpu']['usage']
+        pending_cpu = dict_quotas[self.project_id]['cyclades.cpu']['pending']
         available_cpu = limit_cpu - usage_cpu - pending_cpu
         if available_cpu < req_quotas['cpu']:
             logging.error('Cyclades cpu out of limit')
             exit(error_quotas_cpu)
 
-        limit_ram = dict_quotas['system']['cyclades.ram']['limit']
-        usage_ram = dict_quotas['system']['cyclades.ram']['usage']
-        pending_ram = dict_quotas['system']['cyclades.ram']['pending']
+        limit_ram = dict_quotas[self.project_id]['cyclades.ram']['limit']
+        usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
+        pending_ram = dict_quotas[self.project_id]['cyclades.ram']['pending']
         available_ram = (limit_ram - usage_ram - pending_ram) / Bytes_to_MB
         if available_ram < req_quotas['ram']:
             logging.error('Cyclades ram out of limit')
             exit(error_quotas_ram)
-        limit_vm = dict_quotas['system']['cyclades.vm']['limit']
-        usage_vm = dict_quotas['system']['cyclades.vm']['usage']
-        pending_vm = dict_quotas['system']['cyclades.vm']['pending']
+        limit_vm = dict_quotas[self.project_id]['cyclades.vm']['limit']
+        usage_vm = dict_quotas[self.project_id]['cyclades.vm']['usage']
+        pending_vm = dict_quotas[self.project_id]['cyclades.vm']['pending']
         available_vm = limit_vm - usage_vm - pending_vm
         if available_vm < req_quotas['vms']:
             logging.error('Cyclades vms out of limit')

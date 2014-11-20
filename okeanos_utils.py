@@ -12,15 +12,18 @@ import sys
 import nose
 import string
 import logging
+import subprocess,StringIO
 from base64 import b64encode
-from os.path import abspath
+from os.path import abspath, dirname, join
 from datetime import datetime
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.cyclades import CycladesClient
 from kamaki.clients.cyclades import CycladesNetworkClient
+from ConfigParser import RawConfigParser, NoSectionError
 from time import sleep
+import subprocess, StringIO
 
 # Definitions of return value errors
 error_quotas_network = -14
@@ -30,12 +33,32 @@ error_create_network = -29
 error_get_ip = -30
 error_create_server = -31
 error_authentication = -99
+error_cluster_not_exist = -69
+error_cluster_corrupt = -70
+error_proj_id = -71
 
 # Global constants
 MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 REPORT = 25  # Define logging level of REPORT
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
+BASE_DIR = dirname(abspath(__file__))
+
+def get_project_id(project_name="escience.grnet.gr"):
+    '''
+    Return the id of the e-science project.
+    The id is read from a config file that is not uploaded to 
+    remote repositories.
+    ''' 
+    parser = RawConfigParser()
+    config_file = join(BASE_DIR, '.private/.config.txt')
+    parser.read(config_file)
+    try:
+        project_id = parser.get('cloud \"~okeanos\"', 'project_id')
+        return project_id
+    except NoSectionError:
+        logging.error('No project_id was found for this project_name')
+        sys.exit(error_proj_id)
 
 
 def destroy_cluster(cluster_name, token):
@@ -46,6 +69,7 @@ def destroy_cluster(cluster_name, token):
     deletes the network and the floating ip.
     '''
     servers_to_delete = []
+    list_of_errors = []
     auth = check_credentials(token)
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
@@ -53,7 +77,7 @@ def destroy_cluster(cluster_name, token):
     try:
         list_of_servers = cyclades.list_servers(detail=True)
     except Exception:
-        logging.exception('Could not get list of servers.'
+        logging.error('Could not get list of servers.'
                           'Cannot delete cluster')
         sys.exit(error_get_list_servers)
 
@@ -64,7 +88,7 @@ def destroy_cluster(cluster_name, token):
     if not servers_to_delete:
         logging.log(REPORT, " Cluster with name [%s] does not exist"
                     % cluster_name)
-        sys.exit(error_cluster_not_exist)
+        list_of_errors.append(error_cluster_not_exist)
 
     number_of_nodes = servers_to_delete.__len__()
     # Find the floating ip of master virtual machine
@@ -75,7 +99,7 @@ def destroy_cluster(cluster_name, token):
 
     if not float_ip_to_delete:
         logging.error(' Cluster [%s] is corrupted', cluster_name)
-        sys.exit(error_cluster_corrupt)
+        list_of_errors.append(error_cluster_corrupt)
     # Find network to be deleted
     try:
         list_of_networks = nc.list_networks()
@@ -86,7 +110,8 @@ def destroy_cluster(cluster_name, token):
     except Exception:
         logging.exception('Error in getting network [%s] to delete' %
                           net_work['name'])
-        sys.exit(error_delete_network)
+        list_of_errors.append(error_cluster_corrupt)
+
     # Start cluster deleting
     try:
         for server in servers_to_delete:
@@ -102,12 +127,13 @@ def destroy_cluster(cluster_name, token):
                         new_status)
             if new_status != 'DELETED':
                 logging.error('Error deleting server [%s]' % server['name'])
-                sys.exit(error_delete_server)
+                list_of_errors.append(error_cluster_corrupt)
+
         logging.log(REPORT, ' Cluster [%s] is %s', cluster_name, new_status)
     # Find the correct network of deleted cluster and delete it
     except Exception:
         logging.exception('Error in deleting server')
-        sys.exit(error_delete_server)
+        list_of_errors.append(error_cluster_corrupt)
 
     try:
         nc.delete_network(network_to_delete_id)
@@ -116,7 +142,7 @@ def destroy_cluster(cluster_name, token):
                             net_work['name'])
     except Exception:
         logging.exception('Error in deleting network')
-        sys.exit(error_delete_network)
+        list_of_errors.append(error_cluster_corrupt)
 
     # Find the correct floating ip id of deleted master machine and delete it
     try:
@@ -128,10 +154,16 @@ def destroy_cluster(cluster_name, token):
     except Exception:
         logging.exception('Error in deleting floating ip [%s]',
                           float_ip_to_delete)
-        sys.exit(error_delete_float_ip)
+        list_of_errors.append(error_cluster_corrupt)
 
     logging.log(REPORT, ' Cluster [%s] with %d nodes was deleted',
                 cluster_name, number_of_nodes)
+    # Everything deleted as expected
+    if not list_of_errors:
+        return 0
+    # There was one or more errors, return error message
+    else:
+        sys.exit(list_of_errors[0])
     
     
 def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
@@ -155,7 +187,7 @@ def check_quota(token):
     Available = limit minus (used and pending).Also divides with 1024*1024*1024
     to transform bytes to gigabytes.
      '''
-
+    uuid = get_project_id()
     auth = check_credentials(token)
 
     try:
@@ -163,24 +195,27 @@ def check_quota(token):
     except Exception:
         logging.exception('Could not get user quota')
         sys.exit(error_user_quota)
-    limit_cd = dict_quotas['system']['cyclades.disk']['limit'] / Bytes_to_GB
-    usage_cd = dict_quotas['system']['cyclades.disk']['usage'] / Bytes_to_GB
-    pending_cd = dict_quotas['system']['cyclades.disk']['pending'] / Bytes_to_GB
+
+    # Get project_id
+    project_id = get_project_id()
+    limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
+    usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GB
+    pending_cd = dict_quotas[project_id]['cyclades.disk']['pending'] / Bytes_to_GB
     available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd)
 
-    limit_cpu = dict_quotas['system']['cyclades.cpu']['limit']
-    usage_cpu = dict_quotas['system']['cyclades.cpu']['usage']
-    pending_cpu = dict_quotas['system']['cyclades.cpu']['pending']
+    limit_cpu = dict_quotas[project_id]['cyclades.cpu']['limit']
+    usage_cpu = dict_quotas[project_id]['cyclades.cpu']['usage']
+    pending_cpu = dict_quotas[project_id]['cyclades.cpu']['pending']
     available_cpu = limit_cpu - usage_cpu - pending_cpu
 
-    limit_ram = dict_quotas['system']['cyclades.ram']['limit'] / Bytes_to_MB
-    usage_ram = dict_quotas['system']['cyclades.ram']['usage'] / Bytes_to_MB
-    pending_ram = dict_quotas['system']['cyclades.ram']['pending'] / Bytes_to_MB
+    limit_ram = dict_quotas[project_id]['cyclades.ram']['limit'] / Bytes_to_MB
+    usage_ram = dict_quotas[project_id]['cyclades.ram']['usage'] / Bytes_to_MB
+    pending_ram = dict_quotas[project_id]['cyclades.ram']['pending'] / Bytes_to_MB
     available_ram = (limit_ram-usage_ram-pending_ram)
 
-    limit_vm = dict_quotas['system']['cyclades.vm']['limit']
-    usage_vm = dict_quotas['system']['cyclades.vm']['usage']
-    pending_vm = dict_quotas['system']['cyclades.vm']['pending']
+    limit_vm = dict_quotas[project_id]['cyclades.vm']['limit']
+    usage_vm = dict_quotas[project_id]['cyclades.vm']['usage']
+    pending_vm = dict_quotas[project_id]['cyclades.vm']['pending']
     available_vm = limit_vm-usage_vm-pending_vm
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
@@ -304,6 +339,7 @@ class Cluster(object):
         self.prefix, self.size = prefix, int(size)
         self.flavor_id_master, self.auth = flavor_id_master, auth_cl
         self.flavor_id_slave, self.image_id = flavor_id_slave, image_id
+	self.project_id = get_project_id()
 
     def get_flo_net_id(self):
         '''
@@ -320,7 +356,7 @@ class Cluster(object):
                lst['name'] == 'Public IPv4 Network'):
                 float_net_id = lst['id']
                 try:
-                    self.nc.create_floatingip(float_net_id)
+                    self.nc.create_floatingip(float_net_id, project_id=self.project_id)
                     return 0
                 except ClientError:
                     if i < len(pub_net_list):
@@ -350,15 +386,17 @@ class Cluster(object):
         Subtracts the number of networks used and pending from the max allowed
         number of networks
         '''
+        uuid = get_project_id()
         try:
             dict_quotas = self.auth.get_quotas()
         except Exception:
             logging.exception('Error in getting user network quota')
             sys.exit(error_get_network_quota)
-        limit_net = dict_quotas['system']['cyclades.network.private']['limit']
-        usage_net = dict_quotas['system']['cyclades.network.private']['usage']
+
+        limit_net = dict_quotas[self.project_id]['cyclades.network.private']['limit']
+        usage_net = dict_quotas[self.project_id]['cyclades.network.private']['usage']
         pending_net = \
-            dict_quotas['system']['cyclades.network.private']['pending']
+            dict_quotas[self.project_id]['cyclades.network.private']['pending']
         available_networks = limit_net-usage_net-pending_net
         if available_networks >= 1:
             logging.log(REPORT, ' Private Network quota is ok')
@@ -387,7 +425,7 @@ class Cluster(object):
         self.check_network_quota()
         # Creates network
         try:
-            new_network = self.nc.create_network('MAC_FILTERED', net_name)
+            new_network = self.nc.create_network('MAC_FILTERED', net_name, project_id=self.project_id)
         except Exception:
             logging.exception('Error in creating network')
             sys.exit(error_create_network)
@@ -409,7 +447,8 @@ class Cluster(object):
                         try:
                             self.nc.create_floatingip(list_float_ips
                                                       [count-1]
-                                                      ['floating_network_id'])
+                                                      ['floating_network_id'],
+						      project_id=self.project_id)
                         except ClientError:
                             if self.get_flo_net_id() !=0:
                                 logging.error('Error in creating float ip')
@@ -428,7 +467,8 @@ class Cluster(object):
         try:
             servers.append(self.client.create_server(
                 server_name, self.flavor_id_master, self.image_id,
-                personality=self._personality(ssh_k_path, pub_k_path)))
+                personality=self._personality(ssh_k_path, pub_k_path),
+                project_id=self.project_id))
         except Exception:
             logging.exception('Error creating master virtual machine')
                              # % server_name)
@@ -442,7 +482,7 @@ class Cluster(object):
                 servers.append(self.client.create_server(
                     server_name, self.flavor_id_slave, self.image_id,
                     personality=self._personality(ssh_k_path, pub_k_path),
-                    networks=empty_ip_list))
+                    networks=empty_ip_list, project_id=self.project_id))
 
             except Exception:
                 logging.exception('Error creating server %s' % server_name)

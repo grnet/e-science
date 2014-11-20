@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Selenium test for the network limit error message in summary screen
+Selenium test for the network limit error message in cluster/create screen
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -15,7 +15,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 import unittest, time, re
-from okeanos_utils import check_credentials, endpoints_and_user_id, init_cyclades_netclient
+from okeanos_utils import check_credentials, endpoints_and_user_id, init_cyclades_netclient, get_project_id
 import logging
 from ClusterTest import ClusterTest
 
@@ -28,40 +28,42 @@ class TestClusterNetwork(ClusterTest):
     def test_cluster(self):
 
         driver = self.login()
-        driver.find_element_by_id("master").click()
-        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text("3")
-        time.sleep(1)
         try:
+            Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text("2")
+            time.sleep(1)
+        except:
+            self.assertTrue(False,'Not enough vms to run the test')
+        
+        try:
+            # Call the bind function that creates ~okeanos private networks
+            # and causes later the server to respond with an error message to
+            # user's create cluster request
             net_client, net_ids = self.bind_okeanos_resources()
-            driver.find_element_by_css_selector("#content-wrap > p > button").click()
+            driver.find_element_by_id("cluster_name").clear()
+            driver.find_element_by_id("cluster_name").send_keys("mycluster")
+            time.sleep(1)            
+            driver.find_element_by_id("master_cpus_1").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button").click()
+            driver.find_element_by_id("master_ram_512").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[3]/button").click()
+            driver.find_element_by_id("master_disk_5").click()
             time.sleep(1)
-            driver.find_element_by_id("slaves").click()
+            driver.find_element_by_id("slaves_cpus_1").click()
             time.sleep(1)
-            driver.find_element_by_css_selector("#content-wrap > p > button").click()
+            driver.find_element_by_id("slaves_ram_512").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button").click()
-            time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[3]/button").click()
-            time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/h4[5]/input").clear()
-            time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/h4[5]/input").send_keys("mycluster")
-            time.sleep(1)
-            driver.find_element_by_id("next").click()
+            driver.find_element_by_id("slaves_disk_5").click()
+            time.sleep(1)              
             driver.find_element_by_id("next").click()
             for i in range(60):
                 try:
-                    if "Private Network quota exceeded" == driver.find_element_by_css_selector("#footer > h4").text: break
+                    if "Private Network quota exceeded" == driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text: break
                 except: pass
                 time.sleep(1)
             else: self.fail("time out")
             time.sleep(3)
             self.assertEqual("Private Network quota exceeded",
-                             driver.find_element_by_css_selector("#footer > h4").text)
+                             driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text)
         finally:
             for net_id in net_ids:
                 net_client.delete_network(net_id)
@@ -75,9 +77,10 @@ class TestClusterNetwork(ClusterTest):
         endpoints, user_id = endpoints_and_user_id(auth)
         net_client = init_cyclades_netclient(endpoints['network'], self.token)
         dict_quotas = auth.get_quotas()
-        limit_net = dict_quotas['system']['cyclades.network.private']['limit']
-        usage_net = dict_quotas['system']['cyclades.network.private']['usage']
-        pending_net = dict_quotas['system']['cyclades.network.private']['pending']
+	project_id = get_project_id()
+        limit_net = dict_quotas[project_id]['cyclades.network.private']['limit']
+        usage_net = dict_quotas[project_id]['cyclades.network.private']['usage']
+        pending_net = dict_quotas[project_id]['cyclades.network.private']['pending']
         available_networks = limit_net - usage_net - pending_net
         network_ids = []
         if available_networks >= 1:
@@ -86,7 +89,8 @@ class TestClusterNetwork(ClusterTest):
                 for i in range(available_networks):
                     new_network = net_client.create_network('MAC_FILTERED',
                                                             'mycluster '
-                                                            + str(i))
+                                                            + str(i),
+                                                            project_id=project_id)
                     network_ids.append(new_network['id'])
                 return net_client, network_ids
             except Exception:

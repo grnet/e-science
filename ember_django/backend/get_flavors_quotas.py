@@ -15,12 +15,9 @@ import sys
 import logging
 sys.path.append(join(dirname(abspath(__file__)), '../..'))
 sys.path.append(join(dirname(abspath(__file__)), '..'))
-#import okeanos_utils
 from okeanos_utils import *
 from kamaki.clients.cyclades import CycladesClient
 from backend.models import ClusterCreationParams
-
-
 # Definitions of return value errors
 error_flavor_list = -23
 error_user_quota = -22
@@ -43,30 +40,31 @@ def check_quota(token):
      '''
 
     auth = check_credentials(token, auth_url)
-
     try:
         dict_quotas = auth.get_quotas()
     except Exception:
         logging.exception('Could not get user quota')
         sys.exit(error_user_quota)
-    limit_cd = dict_quotas['system']['cyclades.disk']['limit'] / Bytes_to_GB
-    usage_cd = dict_quotas['system']['cyclades.disk']['usage'] / Bytes_to_GB
-    pending_cd = dict_quotas['system']['cyclades.disk']['pending'] / Bytes_to_GB
+    # Get project id for Synnefo v0.16
+    project_id = get_project_id() 
+    limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
+    usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GB
+    pending_cd = dict_quotas[project_id]['cyclades.disk']['pending'] / Bytes_to_GB
     available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd)
 
-    limit_cpu = dict_quotas['system']['cyclades.cpu']['limit']
-    usage_cpu = dict_quotas['system']['cyclades.cpu']['usage']
-    pending_cpu = dict_quotas['system']['cyclades.cpu']['pending']
+    limit_cpu = dict_quotas[project_id]['cyclades.cpu']['limit']
+    usage_cpu = dict_quotas[project_id]['cyclades.cpu']['usage']
+    pending_cpu = dict_quotas[project_id]['cyclades.cpu']['pending']
     available_cpu = limit_cpu - usage_cpu - pending_cpu
 
-    limit_ram = dict_quotas['system']['cyclades.ram']['limit'] / Bytes_to_MB
-    usage_ram = dict_quotas['system']['cyclades.ram']['usage'] / Bytes_to_MB
-    pending_ram = dict_quotas['system']['cyclades.ram']['pending'] / Bytes_to_MB
+    limit_ram = dict_quotas[project_id]['cyclades.ram']['limit'] / Bytes_to_MB
+    usage_ram = dict_quotas[project_id]['cyclades.ram']['usage'] / Bytes_to_MB
+    pending_ram = dict_quotas[project_id]['cyclades.ram']['pending'] / Bytes_to_MB
     available_ram = (limit_ram-usage_ram-pending_ram)
 
-    limit_vm = dict_quotas['system']['cyclades.vm']['limit']
-    usage_vm = dict_quotas['system']['cyclades.vm']['usage']
-    pending_vm = dict_quotas['system']['cyclades.vm']['pending']
+    limit_vm = dict_quotas[project_id]['cyclades.vm']['limit']
+    usage_vm = dict_quotas[project_id]['cyclades.vm']['usage']
+    pending_vm = dict_quotas[project_id]['cyclades.vm']['pending']
     available_vm = limit_vm-usage_vm-pending_vm
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},

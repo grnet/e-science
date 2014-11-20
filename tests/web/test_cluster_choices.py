@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Selenium test for the message in summary screen that user's cluster
+Selenium test for the message in cluster/create screen that user's cluster
 choices are valid
 
 
@@ -27,38 +27,36 @@ class TestClusterChoices(ClusterTest):
     def test_cluster(self):
 
         driver = self.login()
-        driver.find_element_by_id("master").click()
-        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text("3")
+        try:
+            Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text("2")
+            time.sleep(1)
+        except:
+            self.assertTrue(False,'Not enough vms to run the test')        
+        driver.find_element_by_id("cluster_name").clear()
+        driver.find_element_by_id("cluster_name").send_keys("mycluster")
         time.sleep(1)
-        driver.find_element_by_css_selector("#content-wrap > p > button").click()
+        driver.find_element_by_id("master_cpus_1").click()
         time.sleep(1)
-        driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button").click()
+        driver.find_element_by_id("master_ram_512").click()
         time.sleep(1)
-        driver.find_element_by_xpath("//div[@id='content-wrap']/p[3]/button").click()
+        driver.find_element_by_id("master_disk_5").click()
         time.sleep(1)
-        driver.find_element_by_id("slaves").click()
+        driver.find_element_by_id("slaves_cpus_1").click()
         time.sleep(1)
-        driver.find_element_by_css_selector("#content-wrap > p > button").click()
+        driver.find_element_by_id("slaves_ram_512").click()
         time.sleep(1)
-        driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button").click()
-        time.sleep(1)
-        driver.find_element_by_xpath("//div[@id='content-wrap']/p[3]/button").click()
-        time.sleep(1)
-        driver.find_element_by_xpath("//div[@id='content-wrap']/h4[5]/input").clear()
-        time.sleep(1)
-        driver.find_element_by_xpath("//div[@id='content-wrap']/h4[5]/input").send_keys("mycluster")
-        time.sleep(1)
-        driver.find_element_by_id("next").click()
+        driver.find_element_by_id("slaves_disk_5").click()
+        time.sleep(1)              
         driver.find_element_by_id("next").click()
         for i in range(60):
             try:
-                if "Everything is ok with your cluster creation parameters" == driver.find_element_by_css_selector("#footer > h4").text: break
+                if "Everything is ok with your cluster creation parameters" == driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text: break
             except: pass
             time.sleep(1)
         else: self.fail("time out")
         time.sleep(3)
         self.assertEqual("Everything is ok with your cluster creation parameters",
-                         driver.find_element_by_css_selector("#footer > h4").text)
+                        driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text)
 
 
 if __name__ == "__main__":
