@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Selenium test for the public ips limit error message in summary screen
+Selenium test for the public ips limit error message in cluster/create screen
 
 
 @author: Ioannis Stenos, Nick Vrionis
@@ -14,7 +14,7 @@ sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from selenium.webdriver.support.ui import Select
 import unittest, time, re, logging
 from kamaki.clients import ClientError
-from okeanos_utils import check_credentials, endpoints_and_user_id, init_cyclades_netclient
+from okeanos_utils import check_credentials, endpoints_and_user_id, init_cyclades_netclient, get_project_id
 from ClusterTest import ClusterTest
 
 error_get_ip = -30
@@ -25,40 +25,41 @@ class TestClusterIps(ClusterTest):
     def test_cluster(self):
 
         driver = self.login()
-        driver.find_element_by_id("master").click()
-        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text("3")
-        time.sleep(1)
         try:
+            Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text("2")
+            time.sleep(1)
+        except:
+            self.assertTrue(False,'Not enough vms to run the test')        
+        try:
+            # Call the bind function that creates and binds ~okeanos ips and 
+            # causes later the server to respond with an error message to
+            # user's create cluster request
             float_ids, port_ids, net_client = self.bind_okeanos_resources()
-            driver.find_element_by_css_selector("#content-wrap > p > button").click()
+            driver.find_element_by_id("cluster_name").clear()
+            driver.find_element_by_id("cluster_name").send_keys("mycluster")
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button").click()
+            driver.find_element_by_id("master_cpus_2").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[3]/button").click()
+            driver.find_element_by_id("master_ram_1024").click()
             time.sleep(1)
-            driver.find_element_by_id("slaves").click()
+            driver.find_element_by_id("master_disk_10").click()
             time.sleep(1)
-            driver.find_element_by_css_selector("#content-wrap > p > button").click()
+            driver.find_element_by_id("slaves_cpus_2").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button").click()
+            driver.find_element_by_id("slaves_ram_1024").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[3]/button").click()
+            driver.find_element_by_id("slaves_disk_10").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/h4[5]/input").clear()
-            time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/h4[5]/input").send_keys("mycluster")
-            time.sleep(1)
-            driver.find_element_by_id("next").click()
             driver.find_element_by_id("next").click()
             for i in range(60):
                 try:
-                    if "Public ip quota exceeded" == driver.find_element_by_css_selector("#footer > h4").text: break
+                    if "Public ip quota exceeded" == driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text: break
                 except: pass
                 time.sleep(1)
             else: self.fail("time out")
             time.sleep(3)
             self.assertEqual("Public ip quota exceeded",
-                             driver.find_element_by_css_selector("#footer > h4").text)
+                             driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text)
         finally:
             self.release_resources(float_ids, port_ids, net_client)
 
@@ -75,15 +76,16 @@ class TestClusterIps(ClusterTest):
 
         dict_quotas = auth.get_quotas()
         # Find and create available public ips
-        limit_ips = dict_quotas['system']['cyclades.floating_ip']['limit']
-        usage_ips = dict_quotas['system']['cyclades.floating_ip']['usage']
-        pending_ips = dict_quotas['system']['cyclades.floating_ip']['pending']
+	project_id = get_project_id()
+        limit_ips = dict_quotas[project_id]['cyclades.floating_ip']['limit']
+        usage_ips = dict_quotas[project_id]['cyclades.floating_ip']['usage']
+        pending_ips = dict_quotas[project_id]['cyclades.floating_ip']['pending']
         available_ips = limit_ips - (usage_ips + pending_ips)
 
         if available_ips > 0:
             for i in range(available_ips):
                 # Create all available public ips
-                status = self.get_flo_net_id(net_client)
+                status = self.get_flo_net_id(net_client, project_id)
                 if status != 0:
                     logging.error('Error in creating float ip')
                     sys.exit(error_get_ip)
@@ -91,7 +93,7 @@ class TestClusterIps(ClusterTest):
         float_ids, port_ids = self.bind_floating_ip(net_client)
         return float_ids, port_ids, net_client
 
-    def get_flo_net_id(self, net_client):
+    def get_flo_net_id(self, net_client, project_id):
         '''
         Gets an Ipv4 floating network id from the list of public networks Ipv4
         '''
@@ -103,7 +105,8 @@ class TestClusterIps(ClusterTest):
                lst['name'] == 'Public IPv4 Network'):
                 float_net_id = lst['id']
                 try:
-                    net_client.create_floatingip(float_net_id)
+                    net_client.create_floatingip(float_net_id,
+                                                 project_id=project_id)
                     return 0
                 except ClientError:
                     if i < len(pub_net_list):

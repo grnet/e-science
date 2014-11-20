@@ -50,19 +50,23 @@ class LoginTest(unittest.TestCase):
         '''
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
-        driver.find_element_by_css_selector("button[type=\"submit\"]").click()
-        driver.find_element_by_id("token").clear()
-        driver.find_element_by_id("token").send_keys(self.token)
-        driver.find_element_by_css_selector("button[type=\"login\"]").click()
+        driver.find_element_by_id("id_login").click()
         for i in range(60):
             try:
-                if "Welcome" == driver.find_element_by_css_selector("h2").text: break
+                if "~Okeanos Token" == driver.find_element_by_css_selector("h2").text: break
             except: pass
             time.sleep(1)
         else: self.fail("time out")
-        try: self.assertRegexpMatches(driver.find_element_by_id("user").text, r"User: [0-9]+")
-        except AssertionError as e: self.verificationErrors.append(str(e)) 
-        try: self.assertRegexpMatches(driver.find_element_by_id("clusters").text, r"Clusters: [0-9]+")
+        driver.find_element_by_id("token").clear()
+        driver.find_element_by_id("token").send_keys(self.token)
+        driver.find_element_by_xpath("//button[@type='login']").click()
+        for i in range(60):
+            try:
+                if "Welcome" == driver.find_element_by_css_selector("h3").text: break
+            except: pass
+            time.sleep(1)
+        else: self.fail("time out")
+        try: self.assertEqual("Welcome", driver.find_element_by_css_selector("h3").text)
         except AssertionError as e: self.verificationErrors.append(str(e))
     
     def is_element_present(self, how, what):

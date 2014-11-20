@@ -24,7 +24,7 @@
 							<span class="icon-bar"></span>
 						</button>
 						<a class="navbar-brand" href="/">
-							<img src="/frontend/app/images/orca.png" alt="orca" width="65"/>
+							<img class="img-responsive" src="/frontend/app/images/orca.png" alt="orca" width="65"/>
 						</a>
 					</div>
 					<div class="navbar-collapse collapse navbar-responsive-collapse">
@@ -128,7 +128,7 @@
 					Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore quod quis molestias corrupti optio quia cumque aut esse sit officiis consectetur consequuntur totam nulla perspiciatis laborum. Iusto possimus laudantium eum. Aspernatur illum sapiente veritatis dolorem nemo iste cum dicta beatae et quos id sint alias sit vel quibusdam officiis rem.
 				</div>
 				<div class="col-lg-8 col-md-8 hidden-sm hidden-xs pull-right">
-					<img src="/frontend/app/images/big_data_logo.png" alt="Hadoop cluster" height="300" width="768">
+					<img class="img-responsive" src="/frontend/app/images/big_data_logo.png" alt="Hadoop cluster"> <!-- height="300" width="768"-->
 				</div>
 			</div>
 			<div class="row">
@@ -160,9 +160,6 @@
 						</p>
 						<p>
 							5 months, 1 week ago, by okeanos
-						</p>
-						<p>
-							....................
 						</p>
 					</div>
 					<div class="col-lg-6">
@@ -203,7 +200,7 @@
 			<div class="col col-sm-3"></div>
 			<div class="alert alert-dismissable alert-success col-sm-6">
 				<button type="button" class="close" data-dismiss="alert">×</button>
-				Successfully <strong>logged in.</strong>
+				Successfully <strong>logged in.</strong> You can <a href="#/cluster/create">create cluster</a>  from the Services menu.
 			</div>
 			<div class="col col-sm-3"></div>
 			</div>
@@ -225,7 +222,7 @@
 				</ul>
 			</div>
 			<div class="col col-sm-6 pull-right">
-				Lorem ipsum dolor sit amet, consectetur adipisicing elit. Necessitatibus officiis cumque facilis eum laborum deserunt maxime earum iste atque nulla culpa sit error unde dolor in. Dignissimos rem architecto sunt aut doloremque minima perferendis pariatur reprehenderit placeat sit explicabo unde dolore eum illum ullam! Libero dignissimos maxime animi molestiae modi!
+				<p class="lead">Create Cluster options are found at the Services menu.</p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Necessitatibus officiis cumque facilis eum laborum deserunt maxime earum iste atque nulla culpa sit error unde dolor in. Dignissimos rem architecto sunt aut doloremque minima perferendis pariatur reprehenderit placeat sit explicabo unde dolore eum illum ullam! Libero dignissimos maxime animi molestiae modi!
 			</div>
 		</div>
 
@@ -234,7 +231,7 @@
         <script type="text/x-handlebars" data-template-name="cluster/create">
         <p></p>
 		<div class="well well-lg text-center v-center">
-			<h3>Cluster Configuration</h3>
+			<h3>Hadoop Cluster Configuration</h3>
 		</div>
 		<div class="panel panel-primary">
 			<div class="panel-heading text-center v-center">
@@ -244,13 +241,13 @@
 				<div class="col col-sm-6">
 					<div class="form-horizontal">
 						<div class="form-group">
-							<label for="os_systems" class="control-label col-sm-5"> Systems </label>
+							<label for="os_systems" class="control-label col-sm-5"> Operating System </label>
 							<div class="col col-sm-7">
 								{{view Ember.Select contentBinding="content._data.os_choices" valueBinding="operating_system" id="os_systems" class="btn btn-primary btn-sm"}}
 							</div>
 						</div>
 						<div class="form-group">
-							<label for="size_of_cluster" class="control-label col-sm-5">Cluster size ({{content._data.vms_max}} at maximum)</label>
+							<label for="size_of_cluster" class="control-label col-sm-5">Cluster size </label>
 							<div class="col col-sm-7">
 								{{view Ember.Select contentBinding="max_cluster_size_av" valueBinding="cluster_size" prompt="Select size" id="size_of_cluster" class="btn btn-primary btn-sm text-left"}}
 							</div>
@@ -275,13 +272,21 @@
 							<div class="col col-sm-8">
 								<div class="btn-group">
 									{{#each item in content._data.disk_template}}
-									<button id={{item}} class="btn btn-default btn-sm" {{action "disk_template" item}} {{bind-attr disabled = storage_Not_Allow }}>
-										{{item}}
-									</button>
+										{{#view App.StorageSelButView value=item name="storage_button" class="btn btn-primary btn-sm" disabled=storage_Not_Allow}}{{item}}{{/view}}
 									{{/each}}
 								</div>
 							</div>
 						</div>					
+					</div>
+				</div>
+			</div>
+			<div class="panel-footer text-center">
+				<div class="row">
+					<div class="col col-sm-6">
+						~okeanos project maximum cluster size: {{content._data.vms_max}}
+					</div>
+					<div class="col col-sm-6">
+						
 					</div>
 				</div>
 			</div>
@@ -293,7 +298,7 @@
 			<div class="panel-body text-center">
 				<div class="row">
 					<div class="col col-sm-4">
-						<h4 id = "cpu_summary">CPUs: {{this.master_cpu_selection}} </h4>
+						<h4 id = "master_cpu_summary">CPUs: {{this.master_cpu_selection}} </h4>
 						<div class="btn-group">
 							{{#each item in content._data.cpu_choices}}
 							{{#view App.CPUSelButView value=item name="master_cpus_button" class="btn btn-primary btn-sm" disabled=master_cpus_Not_Allow}}{{item}}x{{/view}}
@@ -301,7 +306,7 @@
 						</div>
 					</div>
 					<div class="col col-sm-4">
-						<h4 id="ram_summary">RAM: {{this.master_ram_selection}} </h4>
+						<h4 id="master_ram_summary">RAM: {{this.master_ram_selection}} </h4>
 						<div class="btn-group">
 							{{#each item in content._data.mem_choices}}
 							{{#view App.MEMSelButView value=item name="master_ram_button" class="btn btn-primary btn-sm" disabled=master_ram_Not_Allow}}{{item}}{{/view}}
@@ -309,7 +314,7 @@
 						</div>
 					</div>
 					<div class="col col-sm-4">
-						<h4 id="disk_summary">Disk Size: {{this.master_disk_selection}} </h4>
+						<h4 id="master_disk_summary">Disk Size: {{this.master_disk_selection}} </h4>
 						<div class="btn-group">
 							{{#each item in content._data.disk_choices}}
 							{{#view App.DiskSelButView value=item name="master_disk_button" class="btn btn-primary btn-sm" disabled=master_disk_Not_Allow}}{{item}}{{/view}}
@@ -350,7 +355,7 @@
 			<div class="panel-body text-center">
 				<div class="row">
 					<div class="col col-sm-4">
-						<h4 id = "cpu_summary">CPUs each: {{this.slaves_cpu_selection}}</h4>
+						<h4 id = "slaves_cpu_summary">CPUs each: {{this.slaves_cpu_selection}}</h4>
 						<div class="btn-group">
 							{{#each item in content._data.cpu_choices}}
 							{{#view App.CPUSelButView value=item name="slaves_cpus_button" class="btn btn-primary btn-sm" disabled=slaves_cpus_Not_Allow}}{{item}}x{{/view}}
@@ -358,7 +363,7 @@
 						</div>
 					</div>
 					<div class="col col-sm-4">
-						<h4 id="ram_summary">RAM each: ({{this.slaves_ram_selection}})</h4>
+						<h4 id="slaves_ram_summary">RAM each: {{this.slaves_ram_selection}}</h4>
 						<div class="btn-group">
 							{{#each item in content._data.mem_choices}}
 							{{#view App.MEMSelButView value=item name="slaves_ram_button" class="btn btn-primary btn-sm" disabled=slaves_ram_Not_Allow}}{{item}}{{/view}}
@@ -366,7 +371,7 @@
 						</div>
 					</div>
 					<div class="col col-sm-4">
-						<h4 id="disk_summary">Disk Size each: {{this.slaves_disk_selection}}</h4>
+						<h4 id="slaves_disk_summary">Disk Size each: {{this.slaves_disk_selection}}</h4>
 						<div class="btn-group">
 							{{#each item in content._data.disk_choices}}
 							{{#view App.DiskSelButView value=item name="slaves_disk_button" class="btn btn-primary btn-sm" disabled=slaves_disk_Not_Allow}}{{item}}{{/view}}
@@ -438,7 +443,8 @@
         <script src="{{ STATIC_URL }}views/cpu_selection_button.js"></script>
         <script src="{{ STATIC_URL }}views/mem_selection_button.js"></script>
         <script src="{{ STATIC_URL }}views/disk_selection_button.js"></script>
-
+        <script src="{{ STATIC_URL }}views/storage_selection_button.js"></script>
+        
         <script src="{{ STATIC_URL }}store.js"></script> 
         <script src="{{ STATIC_URL }}models/user.js"></script>
         <script src="{{ STATIC_URL }}models/cluster.js"></script>

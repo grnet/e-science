@@ -20,7 +20,7 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class TestButtonDisable(unittest.TestCase):
+class test_cluster_size_respond_to_buttons_clicks(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -40,41 +40,53 @@ class TestButtonDisable(unittest.TestCase):
             self.base_url = "INVALID_APP_URL"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
-
     
-    def test_button_disable(self):
+    def test_cluster_size_respond_to_buttons_clicks(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
-        driver.find_element_by_css_selector("button[type=\"submit\"]").click()
-        driver.find_element_by_id("token").clear()
-        driver.find_element_by_id("token").send_keys(self.token)
-        driver.find_element_by_css_selector("button[type=\"login\"]").click()
+        driver.find_element_by_id("id_login").click()
         for i in range(60):
             try:
-                if "Welcome" == driver.find_element_by_css_selector("h2").text: break
+                if "~Okeanos Token" == driver.find_element_by_css_selector("h2").text: break
             except: pass
             time.sleep(1)
         else: self.fail("time out")
-        driver.find_element_by_css_selector("button[type=\"submit\"]").click()
+        driver.find_element_by_id("token").clear()
+        driver.find_element_by_id("token").send_keys(self.token)
+        driver.find_element_by_xpath("//button[@type='login']").click()
         for i in range(60):
             try:
-                if "Select CPUs, RAM and Disk Size..." == driver.find_element_by_css_selector("h3").text: break
+                if "Welcome" == driver.find_element_by_css_selector("h3").text: break
+            except: pass
+            time.sleep(1)
+        else: self.fail("time out")
+        driver.find_element_by_id("id_services_dd").click()
+        driver.find_element_by_id("id_create_cluster").click()
+        for i in range(60):
+            try:
+                if "Hadoop Cluster Configuration" == driver.find_element_by_css_selector("h3").text: break
             except: pass
             time.sleep(1)
         else: self.fail("time out")
         user_quota = check_quota(self.token)
         kamaki_flavors = get_flavor_id(self.token)
         flag = False
+        cluster_sizes = driver.find_element_by_id("size_of_cluster").text
+        try:
+            current_cluster_size = int(cluster_sizes.rsplit('\n', 1)[-1])
+        except:
+            flag = True
+            self.assertTrue(False,'Not enought vms to run the test')
         for cluster_size_selection in range(3,user_quota['cluster_size']['available']):
             for flavor in ['cpus' , 'ram' , 'disk']:
                 for master in kamaki_flavors[flavor]:
                     for slaves in reversed(kamaki_flavors[flavor]):
                         if (((user_quota[flavor]['available'] - (master + slaves)) >= 0) and ((user_quota[flavor]['available'] - (master + (cluster_size_selection-1)*slaves)) < 0)):
                             initial_cluster_size = driver.find_element_by_id("size_of_cluster").text
-                            driver.find_element_by_id("master").click()
-                            driver.find_element_by_id(str(master)).click()
-                            driver.find_element_by_id("slaves").click()
-                            driver.find_element_by_id(str(slaves)).click()
+                            button_id = 'master' + '_' + flavor + '_' + str(master)
+                            driver.find_element_by_id(button_id).click()
+                            button_id = 'slaves' + '_' + flavor + '_' + str(master)
+                            driver.find_element_by_id(button_id).click()
                             current_cluster_sizes = driver.find_element_by_id("size_of_cluster").text
                             try: self.assertNotEqual(initial_cluster_size, driver.find_element_by_id("size_of_cluster").text)
                             except AssertionError as e: self.verificationErrors.append(str(e))
@@ -84,7 +96,9 @@ class TestButtonDisable(unittest.TestCase):
                     if flag: break
                 if flag: break
             if flag: break
-    
+        if not flag:
+            self.assertTrue(False,'Not enought vms to see a change in cluster size')
+            
 
     def is_element_present(self, how, what):
         try: self.driver.find_element(by=how, value=what)
