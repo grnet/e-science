@@ -63,7 +63,13 @@ class test_cluster_size_respond_to_buttons_clicks(unittest.TestCase):
             except: pass
             time.sleep(1)
         else: self.fail("time out")
-        
+        driver.find_element_by_id("id_services_dd").click()
+        driver.find_element_by_id("id_create_cluster").click()
+        for i in range(60):
+            try:
+                if "Hadoop Cluster Configuration" == driver.find_element_by_css_selector("h3").text: break
+            except: pass
+            time.sleep(1)        
         user_quota = check_quota(self.token)
         kamaki_flavors = get_flavor_id(self.token)
         flag = False

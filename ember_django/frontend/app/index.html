@@ -406,14 +406,19 @@
 			</div>
 		</div>
 		<div class="row">
-			<div class="col col-sm-3"></div>
+			<div class="col col-sm-2"></div>
+			<div class="col col-sm-2">
+				<button id="cancel" class="next btn btn-default btn-md btn-block" {{action "cancel"}}>
+					Cancel
+				</button>
+			</div>
 			<div class="col col-sm-6">
 				<button id="next" class="next btn btn-success btn-md btn-block" {{action "go_to_create"}}>
 					Create Cluster
 				</button>
 				<h4>{{message}}</h4>
 			</div>
-			<div class="col col-sm-3"></div>
+			<div class="col col-sm-2"></div>
 		</div>
         </script>
 	{% endverbatim %}
