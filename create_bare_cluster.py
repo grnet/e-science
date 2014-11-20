@@ -45,7 +45,6 @@ REPORT = 25  # Define logging level of REPORT
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 
-
 def get_flavor_ids(cpu, ram, disk, disk_template, cycladesclient):
     '''Return the flavor id based on cpu,ram,disk_size and disk template'''
     try:
@@ -70,6 +69,7 @@ def check_quotas(auth, req_quotas):
     higher than what user requests.Also divides with 1024*1024*1024
     to transform bytes to gigabytes.
      '''
+
     try:
         dict_quotas = auth.get_quotas()
     except Exception:

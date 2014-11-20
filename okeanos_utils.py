@@ -12,6 +12,7 @@ import sys
 import nose
 import string
 import logging
+import subprocess,StringIO
 from base64 import b64encode
 from os.path import abspath, dirname, join
 from datetime import datetime
@@ -43,7 +44,6 @@ Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 BASE_DIR = dirname(abspath(__file__))
 
-
 def get_project_id(project_name="escience.grnet.gr"):
     '''
     Return the id of the e-science project.
@@ -59,6 +59,7 @@ def get_project_id(project_name="escience.grnet.gr"):
     except NoSectionError:
         logging.error('No project_id was found for this project_name')
         sys.exit(error_proj_id)
+
 
 def destroy_cluster(cluster_name, token):
     '''
@@ -186,7 +187,7 @@ def check_quota(token):
     Available = limit minus (used and pending).Also divides with 1024*1024*1024
     to transform bytes to gigabytes.
      '''
-
+    uuid = get_project_id()
     auth = check_credentials(token)
 
     try:
@@ -194,6 +195,7 @@ def check_quota(token):
     except Exception:
         logging.exception('Could not get user quota')
         sys.exit(error_user_quota)
+
     # Get project_id
     project_id = get_project_id()
     limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
@@ -384,11 +386,13 @@ class Cluster(object):
         Subtracts the number of networks used and pending from the max allowed
         number of networks
         '''
+        uuid = get_project_id()
         try:
             dict_quotas = self.auth.get_quotas()
         except Exception:
             logging.exception('Error in getting user network quota')
             sys.exit(error_get_network_quota)
+
         limit_net = dict_quotas[self.project_id]['cyclades.network.private']['limit']
         usage_net = dict_quotas[self.project_id]['cyclades.network.private']['usage']
         pending_net = \

@@ -8,6 +8,7 @@ Communication happens through Django REST framework.
 
 Requirements:
 --
+
     sudo pip install Django
     django version: 1.7
 
@@ -16,7 +17,6 @@ Requirements:
     sudo pip install rest_framework_ember
 
     sudo pip install djorm-pgarray
-
 
 
 A database backend for Django. PostgreSQL was used for the application, but by default the Django configuration uses SQLite.
@@ -74,6 +74,7 @@ After the ~okeanos v0.16 update which added the seperation of resources per proj
     url = okeanos authentication url, needed for the tests
     token = okeanos token, needed for the tests
     project_id = the e-science project id, needed for the ember_django  application to run
+
 
 
 

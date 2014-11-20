@@ -119,6 +119,8 @@ class HadoopCluster(object):
         self.server_dict = {}
         self.project_id = get_project_id()
         self.status = {}
+        self.uuid = get_project_id()
+
         self.auth = check_credentials(self.opts.get('token', _defaults['token']),
                                       self.opts.get('auth_url', _defaults['auth_url']))
         self._DispatchCheckers = {}
