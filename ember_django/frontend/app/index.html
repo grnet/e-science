@@ -24,7 +24,7 @@
 							<span class="icon-bar"></span>
 						</button>
 						<a class="navbar-brand" href="/">
-							<img src="/frontend/app/images/orca.png" alt="orca" width="65"/>
+							<img class="img-responsive" src="/frontend/app/images/orca.png" alt="orca" width="65"/>
 						</a>
 					</div>
 					<div class="navbar-collapse collapse navbar-responsive-collapse">
@@ -128,7 +128,7 @@
 					Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore quod quis molestias corrupti optio quia cumque aut esse sit officiis consectetur consequuntur totam nulla perspiciatis laborum. Iusto possimus laudantium eum. Aspernatur illum sapiente veritatis dolorem nemo iste cum dicta beatae et quos id sint alias sit vel quibusdam officiis rem.
 				</div>
 				<div class="col-lg-8 col-md-8 hidden-sm hidden-xs pull-right">
-					<img src="/frontend/app/images/big_data_logo.png" alt="Hadoop cluster" height="300" width="768">
+					<img class="img-responsive" src="/frontend/app/images/big_data_logo.png" alt="Hadoop cluster"> <!-- height="300" width="768"-->
 				</div>
 			</div>
 			<div class="row">
@@ -160,9 +160,6 @@
 						</p>
 						<p>
 							5 months, 1 week ago, by okeanos
-						</p>
-						<p>
-							....................
 						</p>
 					</div>
 					<div class="col-lg-6">
@@ -203,7 +200,7 @@
 			<div class="col col-sm-3"></div>
 			<div class="alert alert-dismissable alert-success col-sm-6">
 				<button type="button" class="close" data-dismiss="alert">×</button>
-				Successfully <strong>logged in.</strong>
+				Successfully <strong>logged in.</strong> You can <a href="#/cluster/create">create cluster</a>  from the Services menu.
 			</div>
 			<div class="col col-sm-3"></div>
 			</div>
@@ -225,7 +222,7 @@
 				</ul>
 			</div>
 			<div class="col col-sm-6 pull-right">
-				Lorem ipsum dolor sit amet, consectetur adipisicing elit. Necessitatibus officiis cumque facilis eum laborum deserunt maxime earum iste atque nulla culpa sit error unde dolor in. Dignissimos rem architecto sunt aut doloremque minima perferendis pariatur reprehenderit placeat sit explicabo unde dolore eum illum ullam! Libero dignissimos maxime animi molestiae modi!
+				<p class="lead">Create Cluster options are found at the Services menu.</p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Necessitatibus officiis cumque facilis eum laborum deserunt maxime earum iste atque nulla culpa sit error unde dolor in. Dignissimos rem architecto sunt aut doloremque minima perferendis pariatur reprehenderit placeat sit explicabo unde dolore eum illum ullam! Libero dignissimos maxime animi molestiae modi!
 			</div>
 		</div>
 
@@ -250,7 +247,7 @@
 							</div>
 						</div>
 						<div class="form-group">
-							<label for="size_of_cluster" class="control-label col-sm-5">Cluster size ({{content._data.vms_max}} at maximum)</label>
+							<label for="size_of_cluster" class="control-label col-sm-5">Cluster size </label>
 							<div class="col col-sm-7">
 								{{view Ember.Select contentBinding="max_cluster_size_av" valueBinding="cluster_size" prompt="Select size" id="size_of_cluster" class="btn btn-primary btn-sm text-left"}}
 							</div>
@@ -282,6 +279,16 @@
 								</div>
 							</div>
 						</div>					
+					</div>
+				</div>
+			</div>
+			<div class="panel-footer text-center">
+				<div class="row">
+					<div class="col col-sm-6">
+						~okeanos project maximum cluster size: {{content._data.vms_max}}
+					</div>
+					<div class="col col-sm-6">
+						
 					</div>
 				</div>
 			</div>
@@ -420,29 +427,29 @@
 
 	<script src="{{ STATIC_URL }}app.js"></script>
 
-        <script src="{{ STATIC_URL }}controllers/application.js"></script>
-        <script src="{{ STATIC_URL }}controllers/user_welcome.js"></script>
-        <script src="{{ STATIC_URL }}controllers/homepage.js"></script>
-        <script src="{{ STATIC_URL }}controllers/user_login.js"></script>
-        <script src="{{ STATIC_URL }}controllers/cluster_create.js"></script>
+    <script src="{{ STATIC_URL }}controllers/application.js"></script>
+    <script src="{{ STATIC_URL }}controllers/user_welcome.js"></script>
+    <script src="{{ STATIC_URL }}controllers/homepage.js"></script>
+    <script src="{{ STATIC_URL }}controllers/user_login.js"></script>
+    <script src="{{ STATIC_URL }}controllers/cluster_create.js"></script>
 
-        <script src="{{ STATIC_URL }}router.js"></script>
-        <script src="{{ STATIC_URL }}routes/index.js"></script>
-        <script src="{{ STATIC_URL }}routes/restricted.js"></script>
-        <script src="{{ STATIC_URL }}routes/user_login.js"></script>        
-        <script src="{{ STATIC_URL }}routes/user_logout.js"></script>        
-        <script src="{{ STATIC_URL }}routes/user_welcome.js"></script>        
-        <script src="{{ STATIC_URL }}routes/cluster_create.js"></script>
+    <script src="{{ STATIC_URL }}router.js"></script>
+    <script src="{{ STATIC_URL }}routes/index.js"></script>
+    <script src="{{ STATIC_URL }}routes/restricted.js"></script>
+    <script src="{{ STATIC_URL }}routes/user_login.js"></script>        
+    <script src="{{ STATIC_URL }}routes/user_logout.js"></script>        
+    <script src="{{ STATIC_URL }}routes/user_welcome.js"></script>        
+    <script src="{{ STATIC_URL }}routes/cluster_create.js"></script>
 
-        <script src="{{ STATIC_URL }}views/user_login.js"></script>
-        <script src="{{ STATIC_URL }}views/cpu_selection_button.js"></script>
-        <script src="{{ STATIC_URL }}views/mem_selection_button.js"></script>
-        <script src="{{ STATIC_URL }}views/disk_selection_button.js"></script>
+    <script src="{{ STATIC_URL }}views/user_login.js"></script>
+    <script src="{{ STATIC_URL }}views/cpu_selection_button.js"></script>
+    <script src="{{ STATIC_URL }}views/mem_selection_button.js"></script>
+    <script src="{{ STATIC_URL }}views/disk_selection_button.js"></script>
 
-        <script src="{{ STATIC_URL }}store.js"></script> 
-        <script src="{{ STATIC_URL }}models/user.js"></script>
-        <script src="{{ STATIC_URL }}models/cluster.js"></script>
-        <script src="{{ STATIC_URL }}models/cluster_choice.js"></script>
+    <script src="{{ STATIC_URL }}store.js"></script> 
+    <script src="{{ STATIC_URL }}models/user.js"></script>
+    <script src="{{ STATIC_URL }}models/cluster.js"></script>
+    <script src="{{ STATIC_URL }}models/cluster_choice.js"></script>
 		
 	</body>
 </html>
