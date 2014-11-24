@@ -8,6 +8,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 import unittest, time, re
@@ -30,12 +32,11 @@ class TestInvalidToken(unittest.TestCase):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_id("id_login").click()
-        for i in range(60):
-            try:
-                if "~Okeanos Token" == driver.find_element_by_css_selector("h2").text: break
-            except: pass
-            time.sleep(1)
-        else: self.fail("time out")
+        try:
+            element = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.ID, "id_title_user_login_route"))
+            ) 
+        except: self.fail("time out")
         driver.find_element_by_id("token").clear()
         driver.find_element_by_id("token").send_keys("invalid token")
         driver.find_element_by_xpath("//button[@type='login']").click()

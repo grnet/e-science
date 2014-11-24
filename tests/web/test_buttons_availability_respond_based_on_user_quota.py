@@ -11,6 +11,8 @@ sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
@@ -44,31 +46,28 @@ class test_buttons_availability_respond_based_on_user_quota(unittest.TestCase):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_id("id_login").click()     
-        for i in range(30):
-            try:
-                if "~Okeanos Token" == driver.find_element_by_css_selector("h2").text: break
-            except: pass
-            time.sleep(1)
-        else: self.fail("time out")
+        try:
+            element = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.ID, "id_title_user_login_route"))
+            ) 
+        except: self.fail("time out")
         driver.find_element_by_id("token").clear()
         driver.find_element_by_id("token").send_keys(self.token)               
         driver.find_element_by_xpath("//button[@type='login']").click()
         if (self.is_element_present(By.XPATH, "//div[@id='id_alert_wrongtoken']/strong") == True):
-            self.assertTrue(False,'Invalid token')
-        for i in range(30):
-            try:
-                if "Welcome" == driver.find_element_by_css_selector("h3").text: break
-            except: pass
-            time.sleep(1)
-        else: self.fail("time out")     
+            self.assertTrue(False,'Invalid token')                       
+        try:
+            element = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.ID, "id_title_user_welcome_route"))
+            ) 
+        except: self.fail("time out")     
         driver.find_element_by_id("id_services_dd").click()
-        driver.find_element_by_id("id_create_cluster").click()
-        for i in range(60):
-            try:
-                if "Hadoop Cluster Configuration" == driver.find_element_by_css_selector("h3").text: break
-            except: pass
-            time.sleep(1)
-        else: self.fail("time out")
+        driver.find_element_by_id("id_create_cluster").click()        
+        try:
+            element = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.ID, "id_title_cluster_create_route"))
+            ) 
+        except: self.fail("time out")     
         user_quota = check_quota(self.token)
         kamaki_flavors = get_flavor_id(self.token)
         for role in ["master" , "slaves"]:
