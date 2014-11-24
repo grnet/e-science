@@ -44,21 +44,25 @@ class test_text_respond_to_buttons(unittest.TestCase):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_id("id_login").click()
-        for i in range(60):
+        
+        for i in range(30):
             try:
                 if "~Okeanos Token" == driver.find_element_by_css_selector("h2").text: break
             except: pass
             time.sleep(1)
         else: self.fail("time out")
         driver.find_element_by_id("token").clear()
-        driver.find_element_by_id("token").send_keys(self.token)
+        driver.find_element_by_id("token").send_keys(self.token)               
         driver.find_element_by_xpath("//button[@type='login']").click()
-        for i in range(60):
+        if (self.is_element_present(By.XPATH, "//div[@id='id_alert_wrongtoken']/strong") == True):
+            self.assertTrue(False,'Invalid token')
+        for i in range(30):
             try:
                 if "Welcome" == driver.find_element_by_css_selector("h3").text: break
             except: pass
             time.sleep(1)
         else: self.fail("time out")
+            
         driver.find_element_by_id("id_services_dd").click()
         driver.find_element_by_id("id_create_cluster").click()
         for i in range(60):
@@ -73,7 +77,7 @@ class test_text_respond_to_buttons(unittest.TestCase):
         try:
             current_cluster_size = int(cluster_sizes.rsplit('\n', 1)[-1])
         except:
-            self.assertTrue(False,'Not enought vms to run the test')     
+            self.assertTrue(False,'Not enough vms to run the test')     
         if ((user_quota['cpus']['available']-2*kamaki_flavors['cpus'][0]) >= 0):          
             driver.find_element_by_id("master_cpus_" + str(kamaki_flavors['cpus'][0])).click()
             try: self.assertEqual("CPUs: {0}".format(str(kamaki_flavors['cpus'][0])), driver.find_element_by_id("master_cpu_summary").text)

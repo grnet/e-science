@@ -54,7 +54,7 @@ class TestClusterMemory(ClusterTest):
             time.sleep(1)
             driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[3]/div[2]/div/div[2]/div/button["+ master +"]").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[3]/div[2]/div/div[3]/div/button[3]").click()
+            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[3]/div[2]/div/div[3]/div/button").click()
             time.sleep(1)
             driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[4]/div[2]/div/div/div/button").click()
             time.sleep(1)
