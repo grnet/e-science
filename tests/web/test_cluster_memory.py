@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Selenium test for the memory limit error message in summary screen
+Selenium test for the memory limit error message in cluster/create screen
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -32,44 +32,46 @@ class TestClusterMemory(ClusterTest):
         ram_list = flavors['ram']
         # Avalable user ram
         available_ram = user_quota['ram']['available']
-        cluster_size, master, slave, remaining_ram = self.calculate_cluster_resources(ram_list, available_ram)
-
         # Give Selenium the values cluster_size, master and slave to use for
-        # the cluster_size and ram buttons of cluster/create screen.
-        driver.find_element_by_id("master").click()
-        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(str(cluster_size))
-        time.sleep(1)
+        # the cluster_size, master and slave ram buttons of
+        # cluster/create screen.
+        cluster_size, master, slave, remaining_ram = self.calculate_cluster_resources(ram_list, available_ram)
         try:
+            Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(str(cluster_size))
+            time.sleep(1)
+        except:
+            self.assertTrue(False,'Not enough vms to run the test')
+        
+        time.sleep(1)
+        driver.find_element_by_id("cluster_name").clear()
+        driver.find_element_by_id("cluster_name").send_keys("mycluster")
+        try:
+            # Call the bind function that creates ~okeanos vms and 
+            # causes later the server to respond with an error message to
+            # user's create cluster request
             master_ip, server = self.bind_okeanos_resources(remaining_ram, ram_list)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[1]/button").click()
+            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[3]/div[2]/div/div/div/button").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button["+ master +"]").click()
+            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[3]/div[2]/div/div[2]/div/button["+ master +"]").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[3]/button").click()
+            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[3]/div[2]/div/div[3]/div/button").click()
             time.sleep(1)
-            driver.find_element_by_id("slaves").click()
+            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[4]/div[2]/div/div/div/button").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[1]/button").click()
+            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[4]/div[2]/div/div[2]/div/button["+ slave +"]").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[2]/button["+ slave +"]").click()
+            driver.find_element_by_xpath("//div[@id='wrap']/div[2]/div/div/div[4]/div[2]/div/div[3]/div/button").click()
             time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/p[3]/button").click()
-            time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/h4[5]/input").clear()
-            time.sleep(1)
-            driver.find_element_by_xpath("//div[@id='content-wrap']/h4[5]/input").send_keys("mycluster")
-            time.sleep(1)
-            driver.find_element_by_id("next").click()
             driver.find_element_by_id("next").click()
             for i in range(60):
                 try:
-                    if "Ram selection exceeded cyclades memory limit" == driver.find_element_by_css_selector("#footer > h4").text: break
+                    if "Ram selection exceeded cyclades memory limit" == driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text: break
                 except: pass
                 time.sleep(1)
             else: self.fail("time out")
             time.sleep(3)
             self.assertEqual("Ram selection exceeded cyclades memory limit",
-                             driver.find_element_by_css_selector("#footer > h4").text)
+                             driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text)
         finally:
             cluster_name = server[0]['name'].rsplit('-', 1)[0]
             destroy_cluster(cluster_name, self.token)

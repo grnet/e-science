@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+    # -*- coding: utf-8 -*-
 '''
 This script is a test generator and checks that the buttons are enabled or disabled based on user quotas
 
@@ -19,7 +19,7 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class TestButtonDisable(unittest.TestCase):
+class test_buttons_availability_respond_based_on_user_quota(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -39,35 +39,48 @@ class TestButtonDisable(unittest.TestCase):
             self.base_url = "INVALID_APP_URL"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
-
     
-    def test_button_disable(self):
+    def test_buttons_availability_respond_based_on_user_quota(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
-        driver.find_element_by_css_selector("button[type=\"submit\"]").click()
-        driver.find_element_by_id("token").clear()
-        driver.find_element_by_id("token").send_keys(self.token)
-        driver.find_element_by_css_selector("button[type=\"login\"]").click()
-        driver.find_element_by_css_selector("button[type=\"submit\"]").click()
-        for i in range(60):
+        driver.find_element_by_id("id_login").click()     
+        for i in range(30):
             try:
-                if "Select CPUs, RAM and Disk Size..." == driver.find_element_by_css_selector("h3").text: break
+                if "~Okeanos Token" == driver.find_element_by_css_selector("h2").text: break
             except: pass
             time.sleep(1)
         else: self.fail("time out")
-        cluster_size = 2
+        driver.find_element_by_id("token").clear()
+        driver.find_element_by_id("token").send_keys(self.token)               
+        driver.find_element_by_xpath("//button[@type='login']").click()
+        if (self.is_element_present(By.XPATH, "//div[@id='id_alert_wrongtoken']/strong") == True):
+            self.assertTrue(False,'Invalid token')
+        for i in range(30):
+            try:
+                if "Welcome" == driver.find_element_by_css_selector("h3").text: break
+            except: pass
+            time.sleep(1)
+        else: self.fail("time out")     
+        driver.find_element_by_id("id_services_dd").click()
+        driver.find_element_by_id("id_create_cluster").click()
+        for i in range(60):
+            try:
+                if "Hadoop Cluster Configuration" == driver.find_element_by_css_selector("h3").text: break
+            except: pass
+            time.sleep(1)
+        else: self.fail("time out")
         user_quota = check_quota(self.token)
         kamaki_flavors = get_flavor_id(self.token)
         for role in ["master" , "slaves"]:
-            driver.find_element_by_id(role).click()
             for flavor in ['cpus' , 'ram' , 'disk']:
                 for item in kamaki_flavors[flavor]:
-                    if ((user_quota[flavor]['available']-(item + (cluster_size-1)*kamaki_flavors[flavor][0])) >= 0):
-                        on = driver.find_element_by_id(str(item))
+                    button_id = role + '_' + flavor + '_' + str(item)
+                    if ((user_quota[flavor]['available']-(item + kamaki_flavors[flavor][0])) >= 0):
+                        on = driver.find_element_by_id(button_id)
                         try: self.assertTrue(on.is_enabled())
                         except AssertionError as e: self.verificationErrors.append(str(e))
                     else:
-                        off = driver.find_element_by_id(str(item))
+                        off = driver.find_element_by_id(button_id)
                         try: self.assertFalse(off.is_enabled())
                         except AssertionError as e: self.verificationErrors.append(str(e))
     

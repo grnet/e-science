@@ -2,13 +2,13 @@
 App.ClusterCreateController = Ember.Controller.extend({
 
 	// Initialization phase
-	master_cpus_Not_Allow : false, 		// Disabling all cpu buttons (master or slaves must be selected first for the buttons to be enabled)
-	slaves_cpus_Not_Allow : false, 		// Disabling all cpu buttons (master or slaves must be selected first for the buttons to be enabled)
-	master_ram_Not_Allow : false, 		// Disabling all ram buttons (master or slaves must be selected first for the buttons to be enabled)
-	slaves_ram_Not_Allow : false, 		// Disabling all ram buttons (master or slaves must be selected first for the buttons to be enabled)
-	master_disk_Not_Allow : false, 		// Disabling all disk buttons (master or slaves must be selected first for the buttons to be enabled)
-	slaves_disk_Not_Allow : false, 		// Disabling all disk buttons (master or slaves must be selected first for the buttons to be enabled)
-	storage_Not_Allow : false, 	// Disabling all storage buttons (master or slaves must be selected first for the buttons to be enabled)
+	master_cpus_Not_Allow : true, 		// Disabling all cpu buttons (master or slaves must be selected first for the buttons to be enabled)
+	slaves_cpus_Not_Allow : true, 		// Disabling all cpu buttons (master or slaves must be selected first for the buttons to be enabled)
+	master_ram_Not_Allow : true, 		// Disabling all ram buttons (master or slaves must be selected first for the buttons to be enabled)
+	slaves_ram_Not_Allow : true, 		// Disabling all ram buttons (master or slaves must be selected first for the buttons to be enabled)
+	master_disk_Not_Allow : true, 		// Disabling all disk buttons (master or slaves must be selected first for the buttons to be enabled)
+	slaves_disk_Not_Allow : true, 		// Disabling all disk buttons (master or slaves must be selected first for the buttons to be enabled)
+	storage_Not_Allow : true, 	// Disabling all storage buttons (master or slaves must be selected first for the buttons to be enabled)
 	cluster_size : 0, 		// Initial cluster size
 	master_cpu_selection : 0, 	// Initial master_cpu_selection, appears in master cpu summary
 	slaves_cpu_selection : 0, 	// Initial slaves_cpu_selection, appears in slaves cpu summary
@@ -140,7 +140,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 		}
 		return max_cluster_size_limited_by_current_disks;
-	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection'),
+	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size'),
 
 	// Functionality about coloring of the cpu buttons and enable-disable responding to user events
 	// First, remove colors from all cpu buttons and then color the role's(master/slaves) selection 
@@ -157,7 +157,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		elements[i].style.color = "initial";
 		if (this.get('master_cpu_selection') != 0) {
 		    var choice = document.getElementById("master_cpus_".concat(this.get('master_cpu_selection')));
-		    choice.style.color = "red";
+		    choice.style.color = "white";
 		}
 		if (this.get('slaves_cpu_selection') == 0) {
 		    var slaves_cpu = this.get('content._data.cpu_choices')[0];
@@ -179,7 +179,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		elements[i].style.color = "initial";
 		if (this.get('slaves_cpu_selection') != 0) {
 		    var choice = document.getElementById("slaves_cpus_".concat(this.get('slaves_cpu_selection')));
-		    choice.style.color = "red";
+		    choice.style.color = "white";
 		}
 		if (this.get('master_cpu_selection') == 0) {
 		    var master_cpu = this.get('content._data.cpu_choices')[0];
@@ -209,7 +209,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		elements[i].style.color = "initial";
 		if (this.get('master_ram_selection') != 0) {
 		    var choice = document.getElementById("master_ram_".concat(this.get('master_ram_selection')));
-		    choice.style.color = "red";
+		    choice.style.color = "white";
 		}
 		if (this.get('slaves_ram_selection') == 0) {
 		    var slaves_ram = this.get('content._data.mem_choices')[0];
@@ -231,7 +231,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		elements[i].style.color = "initial";
 		if (this.get('slaves_ram_selection') != 0) {
 		    var choice = document.getElementById("slaves_ram_".concat(this.get('slaves_ram_selection')));
-		    choice.style.color = "red";
+		    choice.style.color = "white";
 		}
 		if (this.get('master_ram_selection') == 0) {
 		    var master_ram = this.get('content._data.mem_choices')[0];
@@ -260,7 +260,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		elements[i].style.color = "initial";
 		if (this.get('master_disk_selection') != 0) {
 		    var choice = document.getElementById("master_disk_".concat(this.get('master_disk_selection')));
-		    choice.style.color = "red";
+		    choice.style.color = "white";
 		}
 		if (this.get('slaves_disk_selection') == 0) {
 		    var slaves_disk = this.get('content._data.disk_choices')[0];
@@ -282,7 +282,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		elements[i].style.color = "initial";
 		if (this.get('slaves_disk_selection') != 0) {
 		    var choice = document.getElementById("slaves_disk_".concat(this.get('slaves_disk_selection')));
-		    choice.style.color = "red";
+		    choice.style.color = "white";
 		}
 		if (this.get('master_disk_selection') == 0) {
 		    var master_disk = this.get('content._data.disk_choices')[0];
@@ -299,14 +299,20 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 	// Functionality about storage buttons being colored when user selects one of them
 	storage_buttons : function() {
-		var elements = document.getElementsByName("storage_button");
-		var length = elements.length;
-		var disks = this.get('content._data.disk_template');
-		for (var i = 0; i < length; i++) {
-			elements[i].style.color = "initial";
-			var choice = document.getElementById(this.get('disk_temp'));
-			choice.style.color = "red";
-		}
+	    var elements = document.getElementsByName("storage_button");
+	    var length = elements.length;
+	    for (var i = 0; i < length; i++) {
+		elements[i].style.color = "initial";
+		var choice = document.getElementById(this.get('disk_temp'));
+		choice.style.color = "white";
+	    }
+  
+	    var elements = document.getElementsByName("storage_button");
+	    var length = elements.length;
+	    var disks = this.get('content._data.disk_template');
+	    for (var i = 0; i < length; i++) {
+		elements[i].disabled = false;
+	    }
 	},
 
 	// Function which call each button function
@@ -326,13 +332,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 	},
 	// Reset variables after logout
 	reset_variables : function() {
-		this.set('master_cpus_Not_Allow', false);
-		this.set('slaves_cpus_Not_Allow', false);
-		this.set('master_ram_Not_Allow', false);
-		this.set('slaves_ram_Not_Allow', false);
-		this.set('master_disk_Not_Allow', false);
-		this.set('slaves_disk_Not_Allow', false);	
-		this.set('storage_Not_Allow', false);
+		this.set('master_cpus_Not_Allow', true);
+		this.set('slaves_cpus_Not_Allow', true);
+		this.set('master_ram_Not_Allow', true);
+		this.set('slaves_ram_Not_Allow', true);
+		this.set('master_disk_Not_Allow', true);
+		this.set('slaves_disk_Not_Allow', true);	
+		this.set('storage_Not_Allow', true);
 		this.set('cluster_size', 0);
 		this.set('master_cpu_selection', 0);
 		this.set('slaves_cpu_selection', 0);
@@ -357,6 +363,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 		// When a cpu button is clicked, the selected role's cpu selection takes the corresponding value
 		cpu_selection : function(value, name) {
 		    if (name == "master_cpus_button") {
+			// remove alert message
+			this.set('alert_mes_master_cpu', '');
 			if (this.get('slaves_cpu_selection') == 0) {
 			    var slaves_cpu = this.get('content._data.cpu_choices')[0];
 			} else {
@@ -367,6 +375,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 		    }
 		    if (name == "slaves_cpus_button") {
+			// remove alert message
+			this.set('alert_mes_slaves_cpu', '');		      
 			if (this.get('master_cpu_selection') == 0) {
 			    var master_cpu = this.get('content._data.cpu_choices')[0];
 			} else {
@@ -392,11 +402,15 @@ App.ClusterCreateController = Ember.Controller.extend({
 		    }		  
 		  		  
 		    if (name == "master_ram_button") {
+      			// remove alert message
+			this.set('alert_mes_master_ram', '');
 			if (value <= (this.get('content._data.mem_av') - slaves_ram * (this.size_of_cluster() - 1) )) {
 			    this.set('master_ram_selection', value);
 			}
 		    }
 		    if (name == "slaves_ram_button") {
+      			// remove alert message
+			this.set('alert_mes_slaves_ram', '');		      
 			if (value * (this.size_of_cluster() - 1) <= (this.get('content._data.mem_av') - master_ram)) {
 			    this.set('slaves_ram_selection', value);
 			}
@@ -418,11 +432,15 @@ App.ClusterCreateController = Ember.Controller.extend({
 		    }
 		  
 		    if (name == "master_disk_button") {
+      			// remove alert message
+			this.set('alert_mes_master_disk', '');		      
 			if (value <= (this.get('content._data.disk_av') - slaves_disk * (this.size_of_cluster() - 1) )) {
 			    this.set('master_disk_selection', value);
 			}
 		    }
 		    if (name == "slaves_disk_button") {
+      			// remove alert message
+			this.set('alert_mes_slaves_disk', '');		      
 			if (value * (this.size_of_cluster() - 1) <= (this.get('content._data.disk_av') - master_disk)) {
 			    this.set('slaves_disk_selection', value);
 			}
@@ -430,9 +448,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 		},
 
 		// When a storage button is clicked, the selected role's storage selection takes the corresponding value
-		disk_template : function(name) {
-			this.set('disk_temp', name);
-			this.storage_buttons();
+		disk_template_selection : function(value, name) {
+			this.set('disk_temp', value);
 		},
 
 		// When logout is clicked, starts transition to user logout route and home page screen
@@ -442,8 +459,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 			// redirect to logout
 			this.transitionTo('user.logout');
 		},
-
-
+		// Cancel action when in create cluster -> redirect to user's welcome screen
+		cancel : function() {
+			// reset variables();
+			this.reset_variables();
+			// redirect to welcome
+			this.transitionTo('user.welcome');
+		},
 		// when create cluster button is pressed
 		// go_to_create action is triggered
 		go_to_create : function() {

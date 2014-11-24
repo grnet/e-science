@@ -84,8 +84,8 @@ class MockPlankton():
 
     def list_public(self, *args):
         """ :returns static image list with valid keys. """
-        return [{'name': 'ubuntu', 'id': 0}]
 
+        return [{'name': 'ubuntu', 'id': 0}]
 
 def mock_init_plankton(*args):
     """ :return: static image_list with valid keys. """
@@ -157,6 +157,7 @@ class TestCreateCluster(TestCase):
             self.auth_url = "INVALID_AUTH_URL"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
+
 
     # @patch('create_cluster.init_plankton', mock_init_plankton)
     def test_create_bare_cluster(self):
