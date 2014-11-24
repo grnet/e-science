@@ -1,0 +1,17 @@
+--- 
+  - name: format hdfs
+    tags: formathdfs
+    shell: sudo -u hduser ./hadoop namenode -format  chdir=/usr/local/hadoop/bin
+    when: format
+
+  - name: start dfs
+    tags: startdfs
+    shell: sudo -u hduser ./start-dfs.sh chdir=/usr/local/hadoop/sbin
+
+  - name: start history server
+    tags: historyserver
+    shell: sudo -u hduser ./mr-jobhistory-daemon.sh start historyserver chdir=/usr/local/hadoop/sbin
+
+  - name: start yarn
+    tags: startyarn
+    shell: sudo -u hduser ./start-yarn.sh chdir=/usr/local/hadoop/sbin
