@@ -9,10 +9,7 @@ This script initialize okeanos utils.
 
 import os
 import sys
-import nose
-import string
 import logging
-import subprocess,StringIO
 from base64 import b64encode
 from os.path import abspath, dirname, join
 from datetime import datetime
@@ -23,22 +20,19 @@ from kamaki.clients.cyclades import CycladesClient
 from kamaki.clients.cyclades import CycladesNetworkClient
 from ConfigParser import RawConfigParser, NoSectionError
 from time import sleep
-from cluster_errors import *
+from cluster_errors_constants import *
 
 # Global constants
 MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
-REPORT = 25  # Define logging level of REPORT
-Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
-Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 BASE_DIR = dirname(abspath(__file__))
 
 
 def get_project_id(project_name="escience.grnet.gr"):
     """
     Return the id of the e-science project.
-    The id is read from a config file that is not uploaded to 
+    The id is read from a config file that is not uploaded to
     remote repositories.
-    """ 
+    """
     parser = RawConfigParser()
     config_file = join(BASE_DIR, '.private/.config.txt')
     parser.read(config_file)
@@ -105,7 +99,7 @@ def destroy_cluster(server_ids, token):
         for server in servers_to_delete:
             new_status = cyclades.wait_server(server['id'],
                                               current_status='ACTIVE',
-                                              max_wait=300)
+                                              max_wait=MAX_WAIT)
             logging.log(REPORT, ' Server [%s] is being %s', server['name'],
                         new_status)
             if new_status != 'DELETED':
@@ -162,7 +156,6 @@ def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
         logging.error('Authentication failed with url %s and token %s' % (
                       auth_url, token))
         sys.exit(error_authentication)
-    logging.log(REPORT, ' Authentication verified')
     return auth
 
 
@@ -383,7 +376,8 @@ class Cluster(object):
         net_name = date_time + '-' + self.prefix
         # Creates network
         try:
-            new_network = self.nc.create_network('MAC_FILTERED', net_name, project_id=self.project_id)
+            new_network = self.nc.create_network('MAC_FILTERED', net_name,
+                                                 project_id=self.project_id)
         except Exception:
             logging.exception('Error in creating network')
             sys.exit(error_create_network)
@@ -428,7 +422,6 @@ class Cluster(object):
                 project_id=self.project_id))
         except Exception:
             logging.exception('Error creating master virtual machine')
-                             # % server_name)
             sys.exit(error_create_server)
         # Creation of slave servers
         for i in range(2, self.size+1):

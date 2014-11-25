@@ -20,7 +20,7 @@ from get_flavors_quotas import retrieve_ClusterCreationParams
 from backend.models import *
 from backend.serializers import OkeanosTokenSerializer, UserInfoSerializer, ClusterCreationParamsSerializer, ClusterchoicesSerializer
 from django_db_after_login import *
-from create_cluster import HadoopCluster
+from create_cluster import YarnCluster
 
 class MainPageView(generic.TemplateView):
     '''Load the template file'''
@@ -64,7 +64,7 @@ class StatusView(APIView):
         if serializer.is_valid():
             user_token = Token.objects.get(key=request.auth)
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
-            # Dictionary of HadoopCluster arguments
+            # Dictionary of YarnCluster arguments
             choices = {'name': serializer.data['cluster_name'],
                        'clustersize': serializer.data['cluster_size'],
                        'cpu_master': serializer.data['cpu_master'],
@@ -77,10 +77,10 @@ class StatusView(APIView):
                        'os_choice': serializer.data['os_choice'],
                        'token': user.okeanos_token}
 
-            new_hadoop_cluster = HadoopCluster(choices)
+            new_yarn_cluster = YarnCluster(choices)
             # Check user's cluster choices and send message if everything ok.
             # Else send appropriate error message.
-            cluster_check = new_hadoop_cluster.check_all_resources()
+            cluster_check = new_yarn_cluster.check_all_resources()
 
             if cluster_check == 0:
                 return Response({"id": 1, "message": "Everything is ok with "

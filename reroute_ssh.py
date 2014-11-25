@@ -10,34 +10,26 @@ using Ansible.
 
 import sys
 import os
-import nose
 import logging
 import subprocess
-import re
 import paramiko
-import string
 from optparse import OptionParser
 from sys import argv
-from os.path import abspath
-from base64 import b64encode
 from time import sleep
-from create_bare_cluster import *
-
 
 # Definitions of return value errors
-from cluster_errors import error_ready_reroute, error_fatal
+from cluster_errors_constants import error_ready_reroute, error_fatal, REPORT, \
+    SUMMARY, ADD_TO_GET_PORT
 
 
 # Global constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
 CHAN_TIMEOUT = 360  # Paramiko channel timeout
-ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
 CONNECTION_TRIES = 9    # Max number(+1) of connection attempts to a VM
-REPORT = 25  # Define logging level of REPORT
 list_of_hosts = []  # List of dicts wit VM hostnames and their private IPs
 
 
-def reroute_ssh_prep(server,master_ip):
+def reroute_ssh_prep(server, master_ip):
     """
     Creates list of host and ip-tables for reroute ssh to all slaves
     """
@@ -47,6 +39,7 @@ def reroute_ssh_prep(server,master_ip):
     # and private ips temporarily for each machine. It will be appended
     # each time to list_of_hosts. List_of_hosts is the list that has every
     #  fqdn and private ip of the virtual machines.
+    logging.log(SUMMARY, ' Configuring Yarn cluster node communication')
     for s in server:
         if s['name'].split('-')[-1] == '1':  # Master vm
             dict_s = {'fqdn': s['SNF:fqdn'], 'private_ip': '192.168.0.2',
@@ -72,9 +65,10 @@ def reroute_ssh_prep(server,master_ip):
     # Port-forwarding now for every slave machine
     for vm in list_of_hosts:
         call_reroute_for_every_vm(vm)
-        
-    return list_of_hosts 
-                
+
+    return list_of_hosts
+
+
 def get_ready_for_reroute():
     """
     Runs pre-setup commands for port forwarding in master virtual machine.
@@ -93,7 +87,8 @@ def get_ready_for_reroute():
         exec_command(ssh_client, 'iptables --append FORWARD --in-interface '
                                  'eth2 -j ACCEPT')
     finally:
-        ssh_client.close()	
+        ssh_client.close()
+
 
 def exec_command(ssh, command):
     """
@@ -113,6 +108,7 @@ def exec_command(ssh, command):
     ex_status = stdout.channel.recv_exit_status()
     check_command_exit_status(ex_status, command)
 
+
 class mySSHClient(paramiko.SSHClient):
     """Class that inherits paramiko SSHClient"""
     def exec_command(self, command, bufsize=-1, timeout=None, get_pty=False):
@@ -130,7 +126,8 @@ class mySSHClient(paramiko.SSHClient):
         stdout = chan.makefile('r', bufsize)
         stderr = chan.makefile_stderr('r', bufsize)
         return stdin, stdout, stderr
-    
+
+
 def check_command_exit_status(ex_status, command):
     """
     Checks the exit status of every command executed in virtual machines
@@ -148,7 +145,8 @@ def check_command_exit_status(ex_status, command):
     else:
         logging.log(REPORT, ' Command: %s execute with exit status:%d',
                     command, ex_status)
-                
+
+
 def call_reroute_for_every_vm(vm):
     """Calls reroute_ssh_to_slaves function to finish port forwarding """
     if vm['port'] != 22:  # Not Master virtual machine
@@ -158,8 +156,9 @@ def call_reroute_for_every_vm(vm):
             reroute_ssh_to_slaves(vm['port'], vm['private_ip'])
         except Exception, e:
             logging.exception(e.args)
-            os._exit(error_fatal)		
-        
+            os._exit(error_fatal)
+
+
 def reroute_ssh_to_slaves(dport, slave_ip):
     """
     For every slave vm in the cluster this function is called.
@@ -186,7 +185,8 @@ def reroute_ssh_to_slaves(dport, slave_ip):
 
     finally:
         ssh_client.close()
-                
+
+
 def establish_connect(hostname, name, passwd, port):
     """
     Establishes an ssh connection with given hostname, username, password
@@ -252,7 +252,6 @@ if __name__ == '__main__':
     kw['usage'] = '%prog [options]'
     kw['description'] = '%prog deploys a compute cluster on Synnefo w. kamaki'
 
-
     parser = OptionParser(**kw)
     parser.disable_interspersed_args()
     parser.add_option('--server',
@@ -265,6 +264,4 @@ if __name__ == '__main__':
                       help='it is the ipv4 of the master node ')
 
     opts, args = parser.parse_args(argv[1:])
-    
     main(opts)
-    

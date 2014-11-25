@@ -15,13 +15,9 @@ from reroute_ssh import reroute_ssh_prep
 from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
     init_cyclades, init_cyclades_netclient, init_plankton, get_project_id, \
-    destroy_cluster 
-from cluster_errors import *
+    destroy_cluster
+from cluster_errors_constants import *
 
-# Global constants
-REPORT = 25  # Define logging level of REPORT
-Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
-Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 
 _defaults = {
     'name': '_Prefix',
@@ -37,7 +33,7 @@ _defaults = {
     'token': 'PLACEHOLDER',
     'auth_url': 'https://accounts.okeanos.grnet.gr/identity/v2.0',
     'yarn': False,
-    'logging': 'report'
+    'logging': 'summary'
 }
 
 
@@ -52,11 +48,13 @@ class _ArgCheck(object):
             'critical': logging.CRITICAL,
             'error': logging.ERROR,
             'warning': logging.WARNING,
+            'summary': SUMMARY,
             'report': REPORT,
             'info': logging.INFO,
             'debug': logging.DEBUG,
         }
         logging.addLevelName(REPORT, "REPORT")
+        logging.addLevelName(SUMMARY, "SUMMARY")
 
     def unsigned_int(self, val):
         """
@@ -85,7 +83,7 @@ class _ArgCheck(object):
         return ival
 
 
-class HadoopCluster(object):
+class YarnCluster(object):
     """
     Wrapper class for create hadoop cluster functionality
     """
@@ -99,8 +97,16 @@ class HadoopCluster(object):
         self.server_dict = {}
         self.project_id = get_project_id()
         self.status = {}
-        self.auth = check_credentials(self.opts.get('token', _defaults['token']),
-                                      self.opts.get('auth_url', _defaults['auth_url']))
+        self.auth = check_credentials(self.opts['token'],
+                                      self.opts.get('auth_url',
+                                                    _defaults['auth_url']))
+        self.endpoints, self.user_id = endpoints_and_user_id(self.auth)
+        self.cyclades = init_cyclades(self.endpoints['cyclades'],
+                                      self.opts['token'])
+        self.net_client = init_cyclades_netclient(self.endpoints['network'],
+                                                  self.opts['token'])
+        self.plankton = init_plankton(self.endpoints['plankton'],
+                                      self.opts['token'])
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_clustersize_quotas
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_network_quotas
@@ -150,9 +156,7 @@ class HadoopCluster(object):
     def check_ip_quotas(self):
         """Checks user's quota for unattached public ips."""
         dict_quotas = self.auth.get_quotas()
-        endpoints, user_id = endpoints_and_user_id(self.auth)
-        net_client = init_cyclades_netclient(endpoints['network'], self.opts.get('token', _defaults['token']))
-        list_float_ips = net_client.list_floatingips()
+        list_float_ips = self.net_client.list_floatingips()
         limit_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['limit']
         usage_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['usage']
         pending_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['pending']
@@ -198,8 +202,8 @@ class HadoopCluster(object):
         pending_ram = dict_quotas[self.project_id]['cyclades.ram']['pending']
         available_ram = (limit_ram - usage_ram - pending_ram) / Bytes_to_MB
         ram_req = self.opts.get('ram_master', _defaults['ram_master']) + \
-                  (self.opts.get('ram_slave', _defaults['ram_slave']) * (
-                      self.opts.get('clustersize', _defaults['clustersize']) - 1))
+                    (self.opts.get('ram_slave', _defaults['ram_slave']) * (
+                    self.opts.get('clustersize', _defaults['clustersize']) - 1))
         if available_ram < ram_req:
             logging.error('Cyclades ram out of limit')
             return error_quotas_ram
@@ -234,15 +238,16 @@ class HadoopCluster(object):
             # for k, checker in self._DispatchCheckers.iteritems():
             retval = checker()
             if retval != 0:
-                print(checker.__name__ + " failed")
+                logging.error(checker.__name__ + " failed")
                 return retval
-            else:
-                print(checker.__name__ + " passed")
-        print "All checks passed."
+        logging.log(REPORT, "All checks passed.")
         return 0
 
     def get_flavor_id_master(self, cyclades_client):
-        """ Return the flavor id for the master based on cpu,ram,disk_size and disk template """
+        """
+        Return the flavor id for the master based on cpu,ram,disk_size and
+        disk template
+        """
         try:
             flavor_list = cyclades_client.list_flavors(True)
         except Exception:
@@ -259,7 +264,10 @@ class HadoopCluster(object):
         return flavor_id
 
     def get_flavor_id_slave(self, cyclades_client):
-        """ Return the flavor id for the slave based on cpu,ram,disk_size and disk template """
+        """
+        Return the flavor id for the slave based on cpu,ram,disk_size and
+        disk template
+        """
         try:
             flavor_list = cyclades_client.list_flavors(True)
         except Exception:
@@ -275,7 +283,6 @@ class HadoopCluster(object):
 
         return flavor_id
 
-
     def create_bare_cluster(self):
         """
         This method of our class takes the arguments given and calls the
@@ -284,27 +291,24 @@ class HadoopCluster(object):
         image given as argument. Then instantiates the Cluster and creates
         the virtual machine cluster of one master and clustersize-1 slaves.
         """
-        logging.log(REPORT, ' 1.Credentials  and  Endpoints')
         # Finds user public ssh key
         USER_HOME = expanduser('~')
         chosen_image = {}
         pub_keys_path = join(USER_HOME, ".ssh/id_rsa.pub")
-        endpoints, user_id = endpoints_and_user_id(self.auth)
-        cyclades = init_cyclades(endpoints['cyclades'], self.opts['token'])
-        flavor_master = self.get_flavor_id_master(cyclades)
-        flavor_slaves = self.get_flavor_id_slave(cyclades)
+        logging.log(SUMMARY, ' Authentication verified')
+        flavor_master = self.get_flavor_id_master(self.cyclades)
+        flavor_slaves = self.get_flavor_id_slave(self.cyclades)
         if flavor_master == 0 or flavor_slaves == 0:
             logging.error('Combination of cpu, ram, disk and disk_template do'
                           ' not match an existing id')
 
             exit(error_flavor_id)
-        # Total cpu,ram and disk needed for cluster
-        plankton = init_plankton(endpoints['plankton'], self.opts['token'])
-        list_current_images = plankton.list_public(True, 'default')
-        # Find image id of the arg given
+        list_current_images = self.plankton.list_public(True, 'default')
+        # Check availability of resources
         retval = self.check_all_resources()
         if retval != 0:
             exit(retval)
+        # Find image id of the operating system arg given
         for lst in list_current_images:
             if lst['name'] == self.opts['image']:
                 chosen_image = lst
@@ -312,43 +316,41 @@ class HadoopCluster(object):
         if not chosen_image:
             logging.error(self.opts['image']+' is not a valid image')
             exit(error_image_id)
-
-        logging.log(REPORT, ' 2.Create  virtual  cluster')
-        cluster = Cluster(cyclades,
+        logging.log(SUMMARY, ' Creating ~okeanos cluster')
+        cluster = Cluster(self.cyclades,
                           prefix=self.opts['name'],
                           flavor_id_master=flavor_master,
                           flavor_id_slave=flavor_slaves,
                           image_id=chosen_image['id'],
                           size=self.opts['clustersize'],
-                          net_client=init_cyclades_netclient(endpoints['network'],
-                                                             self.opts['token']),
+                          net_client=self.net_client,
                           auth_cl=self.auth)
 
         self.HOSTNAME_MASTER_IP, self.server_dict = cluster.create('', pub_keys_path, '')
         sleep(15)
         # wait for the machines to be pingable
-        logging.log(REPORT, ' Bare cluster has been created.')
+        logging.log(SUMMARY, ' ~okeanos cluster created')
         # Return master node ip and server dict
         return self.HOSTNAME_MASTER_IP, self.server_dict
 
-
-class YarnCluster(HadoopCluster):
-    def __init__(self, opts):
-        super(YarnCluster, self).__init__(opts)
-        self.opts = opts
-        self.c_hadoop_cluster = HadoopCluster(self.opts)
+    def destroy(self):
+        """Destroy cluster object"""
+        destroy_cluster(self.server_dict, self.opts['token'])
 
     def create_yarn_cluster(self):
-        self.HOSTNAME_MASTER_IP, self.server_dict = self.c_hadoop_cluster.create_bare_cluster()
+        """Create e-Science Yarn cluster"""
+        self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
+        logging.log(SUMMARY, ' Creating e-Science Yarn cluster')
         list_of_hosts = reroute_ssh_prep(self.server_dict, self.HOSTNAME_MASTER_IP)
+        logging.log(SUMMARY, ' Installing and configuring Yarn')
         install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP, self.opts['name'])
         return self.HOSTNAME_MASTER_IP, self.server_dict
 
 
 def main(opts):
     """
-    The main function calls create_cluster or resource check methods with the arguments given from
-    command line.
+    The main function calls create_cluster or resource check methods with
+    the arguments given from command line.
     """
     c_yarn_cluster = YarnCluster(opts)
     if opts['yarn']:
@@ -362,34 +364,57 @@ if __name__ == "__main__":
     checker = _ArgCheck()
     parser.add_argument("--name", help='The prefix name of the cluster',
                         dest='name', default='Test')
+
     parser.add_argument("--clustersize", help='Number of virtual cluster nodes to create',
-                        dest='clustersize', type=checker.two_or_bigger, default=_defaults['clustersize'])
+                        dest='clustersize', type=checker.two_or_bigger,
+                        default=_defaults['clustersize'])
+
     parser.add_argument("--cpu_master", help='Number of cpu cores for the master node',
-                        dest='cpu_master', type=int, default=_defaults['cpu_master'])
+                        dest='cpu_master', type=int,
+                        default=_defaults['cpu_master'])
+
     parser.add_argument("--ram_master", help='Size of RAM (MB) for the master node',
-                        dest='ram_master', type=checker.unsigned_int, default=_defaults['ram_master'])
+                        dest='ram_master', type=checker.unsigned_int,
+                        default=_defaults['ram_master'])
+
     parser.add_argument("--disk_master", help='Disk size (GB) for the master node',
-                        dest='disk_master', type=checker.five_or_bigger, default=_defaults['disk_master'])
+                        dest='disk_master', type=checker.five_or_bigger,
+                        default=_defaults['disk_master'])
+
     parser.add_argument("--cpu_slave", help='Number of cpu cores for the slave node(s)',
-                        dest='cpu_slave', type=int, default=_defaults['cpu_slave'])
+                        dest='cpu_slave', type=int,
+                        default=_defaults['cpu_slave'])
+
     parser.add_argument("--ram_slave", help='Size of RAM (MB) for the slave node(s)',
-                        dest='ram_slave', type=int, default=_defaults['ram_slave'])
+                        dest='ram_slave', type=int,
+                        default=_defaults['ram_slave'])
+
     parser.add_argument("--disk_slave", help='Disk size (GB) for the slave node(s)',
-                        dest='disk_slave', type=checker.five_or_bigger, default=_defaults['disk_slave'])
+                        dest='disk_slave', type=checker.five_or_bigger,
+                        default=_defaults['disk_slave'])
+
     parser.add_argument("--disk_template", help='Disk template',
-                        dest='disk_template', default=_defaults['disk_template'], choices=['drbd', 'ext_vlmc'])
+                        dest='disk_template',
+                        default=_defaults['disk_template'],
+                        choices=['drbd', 'ext_vlmc'])
+
     parser.add_argument("--image", help='OS for the virtual machine cluster',
                         dest='image', default=_defaults['image'])
+
     parser.add_argument("--token", help='Synnefo authentication token',
                         dest='token', default=_defaults['token'])
+
     parser.add_argument("--auth_url", nargs='?', dest='auth_url',
                         default=_defaults['auth_url'],
                         help='Synnefo authentication url')
+
     parser.add_argument("--yarn", "-y", dest='yarn', action='store_true',
                         help='Create a Yarn type cluster')
+
     parser.add_argument("--logging", nargs='?', dest='logging',
-                        default=_defaults['logging'], choices=checker.logging_levels,
-                        help='Logging Level. Default: info')
+                        default=_defaults['logging'],
+                        choices=checker.logging_levels,
+                        help='Logging Level. Default: summary')
 
     if len(argv) > 1:
         opts = vars(parser.parse_args(argv[1:]))

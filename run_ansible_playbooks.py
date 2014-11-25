@@ -8,34 +8,28 @@ using Ansible.
 @author: Ioannis Stenos, Nick Vrionis
 '''
 
-import sys
+from sys import exit, argv
 import os
-import nose
 import logging
 import subprocess
-import re
-import string
-import paramiko
 from optparse import OptionParser
-from sys import argv
-from reroute_ssh import *
+from reroute_ssh import reroute_ssh_prep
 
 # Definitions of return value errors
-from cluster_errors import error_ansible_playbook
+from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
 
 # Global constants
-ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
-REPORT = 25  # Define logging level of REPORT
 ANSIBLE_DIR = './ansible/'
 ANSIBLE_HOST_PATH = ANSIBLE_DIR + 'ansible_hosts'
 ANSIBLE_PLAYBOOK_PATH = ANSIBLE_DIR + 'site.yml'
 
-def install_yarn(hosts_list , master_ip, cluster_name):
+
+def install_yarn(hosts_list, master_ip, cluster_name):
     """
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn.
     """
-    global HOSTNAME_MASTER , list_of_hosts
+    global HOSTNAME_MASTER, list_of_hosts
     list_of_hosts = hosts_list
     HOSTNAME_MASTER = master_ip
     # Create ansible_hosts file
@@ -43,11 +37,13 @@ def install_yarn(hosts_list , master_ip, cluster_name):
         file_name = create_ansible_hosts(cluster_name)
         # Run Ansible playbook
         run_ansible(file_name)
-        logging.log(REPORT,' Cluster is active. You can access it through ' + HOSTNAME_MASTER + ':8088/cluster')		
+        logging.log(SUMMARY, ' e-Science Yarn Cluster is active. You can access it through '
+                    + HOSTNAME_MASTER + ':8088/cluster')
     except Exception, e:
         logging.error(' Program is exiting')
-        sys.exit(error_ansible_playbook)
-            
+        exit(error_ansible_playbook)
+
+
 def create_ansible_hosts(cluster_name):
     """
     Function that creates the ansible_hosts file and
@@ -84,7 +80,7 @@ def run_ansible(filename):
     hadoop and everything needed for hadoop to be functional.
     Filename as argument is the name of ansible_hosts file.
     """
-    logging.log(REPORT, ' Ansible starts Hadoop installation on master and '
+    logging.log(REPORT, ' Ansible starts Yarn installation on master and '
                         'slave nodes')
     # First time call of Ansible playbook install.yml executes tasks
     # required for hadoop installation on every virtual machine. Runs with
@@ -92,17 +88,19 @@ def run_ansible(filename):
     # of cluster.
     exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                             'ansible-playbook -i ' + filename + ' ' +
-                            ANSIBLE_PLAYBOOK_PATH + ' -e "choose_role=yarn format=True start_yarn=True"' )
+                            ANSIBLE_PLAYBOOK_PATH +
+                            ' -f 5 -e "choose_role=yarn format=True start_yarn=True" > ansible.log')
     if exit_status != 0:
         logging.error(' Ansible failed')
         raise RuntimeError
+
 
 def main(opts):
     """
     The main function calls reroute_ssh_prep with the arguments given from
     command line.
     """
-    reroute_ssh_prep(opts.hosts_list,opts.master_ip,opts.cluster_name)
+    reroute_ssh_prep(opts.hosts_list, opts.master_ip, opts.cluster_name)
 
 
 if __name__ == '__main__':
@@ -112,8 +110,6 @@ if __name__ == '__main__':
     kw = {}
     kw['usage'] = '%prog [options]'
     kw['description'] = '%prog deploys a compute cluster on Synnefo w. kamaki'
-
-
 
     parser = OptionParser(**kw)
     parser.disable_interspersed_args()
@@ -130,9 +126,6 @@ if __name__ == '__main__':
                       metavar='CLUSTER_NAME',
                       help='the name of the cluster')
 
+    opts, args = parser.parse_args(argv[1:])
 
     main(opts)
-
-
-
-

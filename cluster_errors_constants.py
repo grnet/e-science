@@ -39,3 +39,10 @@ error_cluster_not_exist = -69
 error_cluster_corrupt = -70
 error_proj_id = -71
 error_authentication = -99
+
+# Package constants
+ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
+REPORT = 25  # Define logging level of REPORT
+SUMMARY = 29  # Define logging level of SUMMARY
+Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
+Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
