@@ -14,30 +14,9 @@ from os.path import dirname, abspath, expanduser, join
 from reroute_ssh import reroute_ssh_prep
 from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
-    init_cyclades, init_cyclades_netclient, init_plankton, get_project_id
-
-
-# Definitions of return value errors
-error_syntax_clustersize = -1
-error_syntax_cpu_master = -2
-error_syntax_ram_master = -3
-error_syntax_disk_master = -4
-error_syntax_cpu_slave = -5
-error_syntax_ram_slave = -6
-error_syntax_disk_slave = -7
-error_syntax_logging_level = -8
-error_syntax_disk_template = -9
-error_quotas_cyclades_disk = -10
-error_quotas_cpu = -11
-error_quotas_ram = -12
-error_quotas_clustersize = -13
-error_quotas_network = -14
-error_flavor_id = -15
-error_image_id = -16
-error_user_quota = -22
-error_flavor_list = -23
-error_get_ip = -30
-error_syntax_auth_token = -32
+    init_cyclades, init_cyclades_netclient, init_plankton, get_project_id, \
+    destroy_cluster 
+from cluster_errors import *
 
 # Global constants
 REPORT = 25  # Define logging level of REPORT
@@ -47,11 +26,11 @@ Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 _defaults = {
     'name': '_Prefix',
     'clustersize': 2,
-    'cpu_master': 2,
-    'ram_master': 4096,
+    'cpu_master': 1,
+    'ram_master': 512,
     'disk_master': 5,
-    'cpu_slave': 2,
-    'ram_slave': 2048,
+    'cpu_slave': 1,
+    'ram_slave': 512,
     'disk_slave': 5,
     'disk_template': 'ext_vlmc',
     'image': 'Debian Base',
@@ -64,7 +43,8 @@ _defaults = {
 
 class _ArgCheck(object):
     """
-    Used for type checking arguments supplied for use with type= and choices= argparse attributes
+    Used for type checking arguments supplied for use with type= and
+    choices= argparse attributes
     """
 
     def __init__(self):
@@ -119,8 +99,6 @@ class HadoopCluster(object):
         self.server_dict = {}
         self.project_id = get_project_id()
         self.status = {}
-        self.uuid = get_project_id()
-
         self.auth = check_credentials(self.opts.get('token', _defaults['token']),
                                       self.opts.get('auth_url', _defaults['auth_url']))
         self._DispatchCheckers = {}
@@ -132,6 +110,10 @@ class HadoopCluster(object):
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_disk_valid
 
     def check_clustersize_quotas(self):
+        """
+        Checks if the user quota is enough to create the requested number
+        of vms.
+        """
         dict_quotas = self.auth.get_quotas()
         limit_vm = dict_quotas[self.project_id]['cyclades.vm']['limit']
         usage_vm = dict_quotas[self.project_id]['cyclades.vm']['usage']
@@ -144,7 +126,16 @@ class HadoopCluster(object):
             return 0
 
     def check_network_quotas(self):
-        dict_quotas = self.auth.get_quotas()
+        """
+        Checks if the user quota is enough to create a new private network
+        Subtracts the number of networks used and pending from the max allowed
+        number of networks
+        """
+        try:
+            dict_quotas = self.auth.get_quotas()
+        except Exception:
+            logging.exception('Error in getting user network quota')
+            exit(error_get_network_quota)
         limit_net = dict_quotas[self.project_id]['cyclades.network.private']['limit']
         usage_net = dict_quotas[self.project_id]['cyclades.network.private']['usage']
         pending_net = dict_quotas[self.project_id]['cyclades.network.private']['pending']
@@ -157,6 +148,7 @@ class HadoopCluster(object):
             return error_quotas_network
 
     def check_ip_quotas(self):
+        """Checks user's quota for unattached public ips."""
         dict_quotas = self.auth.get_quotas()
         endpoints, user_id = endpoints_and_user_id(self.auth)
         net_client = init_cyclades_netclient(endpoints['network'], self.opts.get('token', _defaults['token']))
@@ -175,6 +167,11 @@ class HadoopCluster(object):
             return error_get_ip
 
     def check_cpu_valid(self):
+        """
+        Checks if the user quota is enough to bind the requested cpu resources.
+        Subtracts the number of cpus used and pending from the max allowed
+        number of cpus.
+        """
         dict_quotas = self.auth.get_quotas()
         limit_cpu = dict_quotas[self.project_id]['cyclades.cpu']['limit']
         usage_cpu = dict_quotas[self.project_id]['cyclades.cpu']['usage']
@@ -190,6 +187,11 @@ class HadoopCluster(object):
             return 0
 
     def check_ram_valid(self):
+        """
+        Checks if the user quota is enough to bind the requested ram resources.
+        Subtracts the number of ram used and pending from the max allowed
+        number of ram.
+        """
         dict_quotas = self.auth.get_quotas()
         limit_ram = dict_quotas[self.project_id]['cyclades.ram']['limit']
         usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
@@ -205,6 +207,11 @@ class HadoopCluster(object):
             return 0
 
     def check_disk_valid(self):
+        """
+        Checks if the user quota is enough to bind the requested disk resources.
+        Subtracts the number of disk used and pending from the max allowed
+        disk size.
+        """
         dict_quotas = self.auth.get_quotas()
         limit_cd = dict_quotas[self.project_id]['cyclades.disk']['limit']
         usage_cd = dict_quotas[self.project_id]['cyclades.disk']['usage']
@@ -220,7 +227,9 @@ class HadoopCluster(object):
             return 0
 
     def check_all_resources(self):
-        # use a list comprehension if we want to always run checks in specific order
+        """
+        Checks user's quota if every requested resource is available.
+        """
         for checker in [func for (order, func) in sorted(self._DispatchCheckers.items())]:
             # for k, checker in self._DispatchCheckers.iteritems():
             retval = checker()
@@ -266,66 +275,21 @@ class HadoopCluster(object):
 
         return flavor_id
 
-    def check_quota(self, auth, req_quotas):
-        """
-        Checks if user quota are enough for what he needed to create the cluster.
-        If limit minus (used and pending) are lower or
-        higher than what user requests.Also divides with 1024*1024*1024
-        to transform bytes to gigabytes.
-        """
-        try:
-            dict_quotas = auth.get_quotas()
-        except Exception:
-            logging.exception('Could not get user quota')
-            exit(error_user_quota)
-        limit_cd = dict_quotas[self.project_id]['cyclades.disk']['limit']
-        usage_cd = dict_quotas[self.project_id]['cyclades.disk']['usage']
-        pending_cd = dict_quotas[self.project_id]['cyclades.disk']['pending']
-        available_cyclades_disk_GB = (limit_cd - usage_cd - pending_cd) / Bytes_to_GB
-        if available_cyclades_disk_GB < req_quotas['cyclades_disk']:
-            logging.error('Cyclades disk out of limit')
-            exit(error_quotas_cyclades_disk)
-
-        limit_cpu = dict_quotas[self.project_id]['cyclades.cpu']['limit']
-        usage_cpu = dict_quotas[self.project_id]['cyclades.cpu']['usage']
-        pending_cpu = dict_quotas[self.project_id]['cyclades.cpu']['pending']
-        available_cpu = limit_cpu - usage_cpu - pending_cpu
-        if available_cpu < req_quotas['cpu']:
-            logging.error('Cyclades cpu out of limit')
-            exit(error_quotas_cpu)
-
-        limit_ram = dict_quotas[self.project_id]['cyclades.ram']['limit']
-        usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
-        pending_ram = dict_quotas[self.project_id]['cyclades.ram']['pending']
-        available_ram = (limit_ram - usage_ram - pending_ram) / Bytes_to_MB
-        if available_ram < req_quotas['ram']:
-            logging.error('Cyclades ram out of limit')
-            exit(error_quotas_ram)
-        limit_vm = dict_quotas[self.project_id]['cyclades.vm']['limit']
-        usage_vm = dict_quotas[self.project_id]['cyclades.vm']['usage']
-        pending_vm = dict_quotas[self.project_id]['cyclades.vm']['pending']
-        available_vm = limit_vm - usage_vm - pending_vm
-        if available_vm < req_quotas['vms']:
-            logging.error('Cyclades vms out of limit')
-            exit(error_quotas_clustersize)
-        logging.log(REPORT, ' Cyclades Cpu,Disk and Ram quotas are ok.')
-        return
 
     def create_bare_cluster(self):
         """
-        This function of our script takes the arguments given and calls the
-        check_quota function. Also, calls get_flavor_id to find the matching
+        This method of our class takes the arguments given and calls the
+         function. Also, calls get_flavor_id to find the matching
         flavor_ids from the arguments given and finds the image id of the
         image given as argument. Then instantiates the Cluster and creates
         the virtual machine cluster of one master and clustersize-1 slaves.
-        Calls the function to install hadoop to the cluster.
         """
         logging.log(REPORT, ' 1.Credentials  and  Endpoints')
         # Finds user public ssh key
         USER_HOME = expanduser('~')
+        chosen_image = {}
         pub_keys_path = join(USER_HOME, ".ssh/id_rsa.pub")
-        auth = check_credentials(self.opts['token'])
-        endpoints, user_id = endpoints_and_user_id(auth)
+        endpoints, user_id = endpoints_and_user_id(self.auth)
         cyclades = init_cyclades(endpoints['cyclades'], self.opts['token'])
         flavor_master = self.get_flavor_id_master(cyclades)
         flavor_slaves = self.get_flavor_id_slave(cyclades)
@@ -335,23 +299,19 @@ class HadoopCluster(object):
 
             exit(error_flavor_id)
         # Total cpu,ram and disk needed for cluster
-        cpu = self.opts['cpu_master'] + (self.opts['cpu_slave']) * (self.opts['clustersize'] - 1)
-        ram = self.opts['ram_master'] + (self.opts['ram_slave']) * (self.opts['clustersize'] - 1)
-        cyclades_disk = self.opts['disk_master'] + (self.opts['disk_slave']) * (self.opts['clustersize'] - 1)
-        # The resources requested by user in a dictionary
-        req_quotas = {'cpu': cpu, 'ram': ram, 'cyclades_disk': cyclades_disk,
-                      'vms': self.opts['clustersize']}
-        self.check_quota(auth, req_quotas)
         plankton = init_plankton(endpoints['plankton'], self.opts['token'])
         list_current_images = plankton.list_public(True, 'default')
-        # Find image id of the arg given       
+        # Find image id of the arg given
+        retval = self.check_all_resources()
+        if retval != 0:
+            exit(retval)
         for lst in list_current_images:
             if lst['name'] == self.opts['image']:
                 chosen_image = lst
                 break
-            else:
-                logging.error(self.opts['image'] + ' is not a valid image option')
-                exit(error_image_id)
+        if not chosen_image:
+            logging.error(self.opts['image']+' is not a valid image')
+            exit(error_image_id)
 
         logging.log(REPORT, ' 2.Create  virtual  cluster')
         cluster = Cluster(cyclades,
@@ -362,7 +322,7 @@ class HadoopCluster(object):
                           size=self.opts['clustersize'],
                           net_client=init_cyclades_netclient(endpoints['network'],
                                                              self.opts['token']),
-                          auth_cl=auth)
+                          auth_cl=self.auth)
 
         self.HOSTNAME_MASTER_IP, self.server_dict = cluster.create('', pub_keys_path, '')
         sleep(15)
@@ -382,7 +342,6 @@ class YarnCluster(HadoopCluster):
         self.HOSTNAME_MASTER_IP, self.server_dict = self.c_hadoop_cluster.create_bare_cluster()
         list_of_hosts = reroute_ssh_prep(self.server_dict, self.HOSTNAME_MASTER_IP)
         install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP, self.opts['name'])
-        logging.log(REPORT, ' Bare cluster has been created.')
         return self.HOSTNAME_MASTER_IP, self.server_dict
 
 

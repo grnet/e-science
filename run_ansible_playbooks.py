@@ -16,11 +16,12 @@ import subprocess
 import re
 import string
 import paramiko
+from optparse import OptionParser
 from sys import argv
 from reroute_ssh import *
 
 # Definitions of return value errors
-error_ansible_playbook = -34
+from cluster_errors import error_ansible_playbook
 
 # Global constants
 ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
@@ -30,10 +31,10 @@ ANSIBLE_HOST_PATH = ANSIBLE_DIR + 'ansible_hosts'
 ANSIBLE_PLAYBOOK_PATH = ANSIBLE_DIR + 'site.yml'
 
 def install_yarn(hosts_list , master_ip, cluster_name):
-    '''
+    """
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn.
-    '''
+    """
     global HOSTNAME_MASTER , list_of_hosts
     list_of_hosts = hosts_list
     HOSTNAME_MASTER = master_ip
@@ -48,10 +49,10 @@ def install_yarn(hosts_list , master_ip, cluster_name):
         sys.exit(error_ansible_playbook)
             
 def create_ansible_hosts(cluster_name):
-    '''
+    """
     Function that creates the ansible_hosts file and
     returns the name of the file.
-    '''
+    """
     ansible_hosts_prefix = cluster_name.replace(" ", "")
     ansible_hosts_prefix = ansible_hosts_prefix.replace(":", "")
 
@@ -75,13 +76,14 @@ def create_ansible_hosts(cluster_name):
             target.write(' ansible_ssh_port='+str(host['port']))
             target.write(' ansible_ssh_host='+list_of_hosts[0]['fqdn'] + '\n')
     return filename
-                
+
+
 def run_ansible(filename):
-    '''
+    """
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
     Filename as argument is the name of ansible_hosts file.
-    '''
+    """
     logging.log(REPORT, ' Ansible starts Hadoop installation on master and '
                         'slave nodes')
     # First time call of Ansible playbook install.yml executes tasks
@@ -96,10 +98,10 @@ def run_ansible(filename):
         raise RuntimeError
 
 def main(opts):
-    '''
+    """
     The main function calls reroute_ssh_prep with the arguments given from
     command line.
-    '''
+    """
     reroute_ssh_prep(opts.hosts_list,opts.master_ip,opts.cluster_name)
 
 
@@ -118,7 +120,7 @@ if __name__ == '__main__':
     parser.add_option('--server',
                       action='store', type='string', dest='server',
                       metavar="SERVER",
-                      help='it is  a list with informatinos about the cluster(names and fqdn of the nodes)')
+                      help='it is  a list with information about the cluster(names and fqdn of the nodes)')
     parser.add_option('--public_ip',
                       action='store', type='string', dest='public_ip',
                       metavar="PUBLIC_IP",
