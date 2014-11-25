@@ -2,31 +2,28 @@
 App.ClusterCreateController = Ember.Controller.extend({
 
 	// Initialization phase
-	master_cpus_Not_Allow : true, 		// Disabling all cpu buttons (master or slaves must be selected first for the buttons to be enabled)
-	slaves_cpus_Not_Allow : true, 		// Disabling all cpu buttons (master or slaves must be selected first for the buttons to be enabled)
-	master_ram_Not_Allow : true, 		// Disabling all ram buttons (master or slaves must be selected first for the buttons to be enabled)
-	slaves_ram_Not_Allow : true, 		// Disabling all ram buttons (master or slaves must be selected first for the buttons to be enabled)
-	master_disk_Not_Allow : true, 		// Disabling all disk buttons (master or slaves must be selected first for the buttons to be enabled)
-	slaves_disk_Not_Allow : true, 		// Disabling all disk buttons (master or slaves must be selected first for the buttons to be enabled)
-	storage_Not_Allow : true, 	// Disabling all storage buttons (master or slaves must be selected first for the buttons to be enabled)
-	cluster_size : 0, 		// Initial cluster size
-	master_cpu_selection : 0, 	// Initial master_cpu_selection, appears in master cpu summary
-	slaves_cpu_selection : 0, 	// Initial slaves_cpu_selection, appears in slaves cpu summary
-	master_ram_selection : 0, 	// Initial master_mem_selection, appears in master ram summary
-	slaves_ram_selection : 0, 	// Initial slaves_mem_selection, appears in slaves ram summary
-	master_disk_selection : 0, 	// Initial master_disk_selection, appears in master disk summary
-	slaves_disk_selection : 0, 	// Initial slaves_disk_selection, appears in slaves disk summary
-	cluster_name : '', 		// Initial cluster name, null
+	cluster_size : 0, 			// Initial cluster size
+	master_cpu_selection : 0, 		// Initial master_cpu_selection, appears in master cpu summary
+	slaves_cpu_selection : 0, 		// Initial slaves_cpu_selection, appears in slaves cpu summary
+	master_ram_selection : 0, 		// Initial master_ram_selection, appears in master ram summary
+	slaves_ram_selection : 0, 		// Initial slaves_ram_selection, appears in slaves ram summary
+	master_disk_selection : 0, 		// Initial master_disk_selection, appears in master disk summary
+	slaves_disk_selection : 0, 		// Initial slaves_disk_selection, appears in slaves disk summary
+	cluster_name : '', 			// Initial cluster name, null
 	operating_system : 'Debian Base', 	// Preselected OS
 	disk_temp : 'ext_vlmc', 		// Initial storage selection, common for master and slaves
-	message: '',
-	alert_mes_master_cpu: '',
-	alert_mes_master_ram: '',
-	alert_mes_master_disk: '',
-	alert_mes_slaves_cpu: '',
-	alert_mes_slaves_ram: '',
-	alert_mes_slaves_disk: '',
-	alert_mes_cluster_name: '',
+	cluster_size_zero : false,		// for checking the available VMs, cluster size
+	message: '',				// message when user presses the create cluster button
+	alert_mes_master_cpu: '',		// alert message for master cpu buttons (if none selected)
+	alert_mes_master_ram: '',		// alert message for master ram buttons (if none selected)
+	alert_mes_master_disk: '',		// alert message for master disk buttons (if none selected)
+	alert_mes_slaves_cpu: '',		// alert message for slaves cpu buttons (if none selected)
+	alert_mes_slaves_ram: '',		// alert message for slaves ram buttons (if none selected)
+	alert_mes_slaves_disk: '',		// alert message for slaves disk buttons (if none selected)
+	alert_mes_cluster_name: '',		// alert message for cluster name (if none selected)
+	alert_mes_cluster_size: '',		// alert message for cluster size (if none selected) 
+
+	
 	// The total cpus selected for the cluster
 	total_cpu_selection : function() {
 		return (this.get('master_cpu_selection') + this.get('slaves_cpu_selection') * (this.size_of_cluster() - 1));
@@ -76,11 +73,17 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// If a flavor selection of a role(master/slaves) is 0, we assume that the role should be able to have at least the minimum option of the corresponding flavor
 	// Available vms are limited by user quota. First, they are filtered with cpu limits, then with ram and finally with disk. The result is returned to the drop down menu on index
 	max_cluster_size_av : function() {
+		this.set('alert_mes_cluster_size', '');
 		var length = this.get('content._data.vms_av').length;
 		var max_cluster_size_limited_by_current_cpus = [];
 		var max_cluster_size_limited_by_current_mems = [];
 		var max_cluster_size_limited_by_current_disks = [];
 		this.buttons();
+		if (length < 2 ){
+			this.set('alert_mes_cluster_size', 'Your vm quota are not enough to build the minimum cluster');
+			cluster_size_zero = true;
+			return max_cluster_size_limited_by_current_cpus;
+		}
 		for (var i = 1; i < length; i++) {
 			if (this.get('master_cpu_selection') == 0) {
 				var master_cpu = this.get('content._data.cpu_choices')[0];
@@ -101,6 +104,11 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 		}
 		length = max_cluster_size_limited_by_current_cpus.length;
+		if (length == 0 ){
+			this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
+			cluster_size_zero = true;
+			return max_cluster_size_limited_by_current_cpus;
+		}
 		for ( i = 0; i < length; i++) {
 			if (this.get('master_ram_selection') == 0) {
 				var master_ram = this.get('content._data.mem_choices')[0];
@@ -121,6 +129,11 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 		}
 		length = max_cluster_size_limited_by_current_mems.length;
+		if (length == 0 ){
+			this.set('alert_mes_cluster_size', 'Your ram quota are not enough to build the minimum cluster');
+			cluster_size_zero = true;
+			return max_cluster_size_limited_by_current_cpus;
+		}
 		for ( i = 0; i < length; i++) {
 			if (this.get('slaves_disk_selection') == 0) {
 				var slaves_disk = this.get('content._data.disk_choices')[0];
@@ -139,7 +152,11 @@ App.ClusterCreateController = Ember.Controller.extend({
 				max_cluster_size_limited_by_current_disks[j] = max_cluster_size_limited_by_current_mems[j];
 			}
 		}
-		return max_cluster_size_limited_by_current_disks;
+		if (max_cluster_size_limited_by_current_disks.length == 0 ){
+			this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
+			cluster_size_zero = true;
+		}
+		return max_cluster_size_limited_by_current_cpus;
 	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size'),
 
 	// Functionality about coloring of the cpu buttons and enable-disable responding to user events
@@ -148,7 +165,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// (if selection is 0 we assume the minimum selection)
 	// If the sum of them exceed the available cpu, then disable the selected role button.
 	cpu_buttons : function() {
-	    
 	    var elements = document.getElementsByName("master_cpus_button");
 	    var length = elements.length;
 	    var cpus = this.get('content._data.cpu_choices');
@@ -332,13 +348,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 	},
 	// Reset variables after logout
 	reset_variables : function() {
-		this.set('master_cpus_Not_Allow', true);
-		this.set('slaves_cpus_Not_Allow', true);
-		this.set('master_ram_Not_Allow', true);
-		this.set('slaves_ram_Not_Allow', true);
-		this.set('master_disk_Not_Allow', true);
-		this.set('slaves_disk_Not_Allow', true);	
-		this.set('storage_Not_Allow', true);
 		this.set('cluster_size', 0);
 		this.set('master_cpu_selection', 0);
 		this.set('slaves_cpu_selection', 0);
@@ -350,6 +359,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('operating_system', 'Debian Base');
 		this.set('disk_temp', 'ext_vlmc');
 		this.set('message', '');
+		this.init_alerts();
+	},
+	// initialize alert messages
+	init_alerts : function () {
 		this.set('alert_mes_master_cpu', '');
 		this.set('alert_mes_master_ram', '');
 		this.set('alert_mes_master_disk', '');
@@ -357,6 +370,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('alert_mes_slaves_ram', '');
 		this.set('alert_mes_slaves_disk', '');
 		this.set('alert_mes_cluster_name', '');
+		this.set('alert_mes_cluster_size', '');
 	},
 	actions : {
 
@@ -451,14 +465,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 		disk_template_selection : function(value, name) {
 			this.set('disk_temp', value);
 		},
-
-		// When logout is clicked, starts transition to user logout route and home page screen
-		logout : function() {
-			// reset variables();
-			this.reset_variables();
-			// redirect to logout
-			this.transitionTo('user.logout');
-		},
 		// Cancel action when in create cluster -> redirect to user's welcome screen
 		cancel : function() {
 			// reset variables();
@@ -469,15 +475,11 @@ App.ClusterCreateController = Ember.Controller.extend({
 		// when create cluster button is pressed
 		// go_to_create action is triggered
 		go_to_create : function() {
-		  	this.set('alert_mes_master_cpu', '');
-			this.set('alert_mes_master_ram', '');
-			this.set('alert_mes_master_disk', '');
-			this.set('alert_mes_slaves_cpu', '');
-			this.set('alert_mes_slaves_ram', '');
-			this.set('alert_mes_slaves_disk', '');
-			this.set('alert_mes_cluster_name', '');
+			this.init_alerts();
 			// check that all fields are filled
-			if (this.get('master_cpu_selection') == 0) {
+			if (this.get('cluster_size') == null) {
+				this.set('alert_mes_cluster_size', 'Please select cluster size');
+			} else if (this.get('master_cpu_selection') == 0) {
 				this.set('alert_mes_master_cpu', 'Please select master cpu');
 			} else if (this.get('master_ram_selection') == 0) {
 				this.set('alert_mes_master_ram', 'Please select master memory');
@@ -523,6 +525,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 					alert('Requested resources unavailable!');
 				}
 			}
-		},
+		}
 	}
 });
