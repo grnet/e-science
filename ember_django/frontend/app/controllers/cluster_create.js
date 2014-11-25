@@ -82,7 +82,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		if (length < 2 ){
 			this.set('alert_mes_cluster_size', 'Your vm quota are not enough to build the minimum cluster');
 			cluster_size_zero = true;
-			return max_cluster_size_limited_by_current_cpus;
+			return this.get('content._data.vms_av');
 		}
 		for (var i = 1; i < length; i++) {
 			if (this.get('master_cpu_selection') == 0) {
@@ -132,7 +132,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		if (length == 0 ){
 			this.set('alert_mes_cluster_size', 'Your ram quota are not enough to build the minimum cluster');
 			cluster_size_zero = true;
-			return max_cluster_size_limited_by_current_cpus;
+			return max_cluster_size_limited_by_current_mems;
 		}
 		for ( i = 0; i < length; i++) {
 			if (this.get('slaves_disk_selection') == 0) {
@@ -156,7 +156,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
 			cluster_size_zero = true;
 		}
-		return max_cluster_size_limited_by_current_cpus;
+		return max_cluster_size_limited_by_current_disks;
 	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size'),
 
 	// Functionality about coloring of the cpu buttons and enable-disable responding to user events
