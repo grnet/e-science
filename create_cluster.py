@@ -4,7 +4,7 @@
 """
 This script creates a cluster on ~okeanos.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: Ioannis Stenos, Nick Vrionis, George Tzelepis
 """
 import logging
 from argparse import ArgumentParser, ArgumentTypeError
@@ -32,7 +32,7 @@ _defaults = {
     'image': 'Debian Base',
     'token': 'PLACEHOLDER',
     'auth_url': 'https://accounts.okeanos.grnet.gr/identity/v2.0',
-    'yarn': False,
+    'yarn': True,
     'logging': 'summary'
 }
 
@@ -85,7 +85,7 @@ class _ArgCheck(object):
 
 class YarnCluster(object):
     """
-    Wrapper class for create hadoop cluster functionality
+    Class for create hadoop-yarn cluster functionality
     """
 
     def __init__(self, opts):
@@ -118,7 +118,7 @@ class YarnCluster(object):
     def check_clustersize_quotas(self):
         """
         Checks if the user quota is enough to create the requested number
-        of vms.
+        of VMs.
         """
         dict_quotas = self.auth.get_quotas()
         limit_vm = dict_quotas[self.project_id]['cyclades.vm']['limit']
@@ -126,7 +126,7 @@ class YarnCluster(object):
         pending_vm = dict_quotas[self.project_id]['cyclades.vm']['pending']
         available_vm = limit_vm - usage_vm - pending_vm
         if available_vm < self.opts.get('clustersize', _defaults['clustersize']):
-            logging.error('Cyclades vms out of limit')
+            logging.error('Cyclades VMs out of limit')
             return error_quotas_clustersize
         else:
             return 0
@@ -233,14 +233,13 @@ class YarnCluster(object):
     def check_all_resources(self):
         """
         Checks user's quota if every requested resource is available.
+        Returns error value if not available, else return zero.
         """
         for checker in [func for (order, func) in sorted(self._DispatchCheckers.items())]:
             # for k, checker in self._DispatchCheckers.iteritems():
             retval = checker()
             if retval != 0:
-                logging.error(checker.__name__ + " failed")
                 return retval
-        logging.log(REPORT, "All checks passed.")
         return 0
 
     def get_flavor_id_master(self, cyclades_client):
@@ -284,13 +283,7 @@ class YarnCluster(object):
         return flavor_id
 
     def create_bare_cluster(self):
-        """
-        This method of our class takes the arguments given and calls the
-         function. Also, calls get_flavor_id to find the matching
-        flavor_ids from the arguments given and finds the image id of the
-        image given as argument. Then instantiates the Cluster and creates
-        the virtual machine cluster of one master and clustersize-1 slaves.
-        """
+        """Creates a bare ~okeanos cluster."""
         # Finds user public ssh key
         USER_HOME = expanduser('~')
         chosen_image = {}
@@ -326,25 +319,27 @@ class YarnCluster(object):
                           net_client=self.net_client,
                           auth_cl=self.auth)
 
-        self.HOSTNAME_MASTER_IP, self.server_dict = cluster.create('', pub_keys_path, '')
+        self.HOSTNAME_MASTER_IP, self.server_dict = \
+            cluster.create('', pub_keys_path, '')
         sleep(15)
         # wait for the machines to be pingable
         logging.log(SUMMARY, ' ~okeanos cluster created')
         # Return master node ip and server dict
         return self.HOSTNAME_MASTER_IP, self.server_dict
 
-    def destroy(self):
-        """Destroy cluster object"""
-        destroy_cluster(self.server_dict, self.opts['token'])
-
     def create_yarn_cluster(self):
-        """Create e-Science Yarn cluster"""
+        """Create Yarn cluster"""
         self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
-        logging.log(SUMMARY, ' Creating e-Science Yarn cluster')
-        list_of_hosts = reroute_ssh_prep(self.server_dict, self.HOSTNAME_MASTER_IP)
+        logging.log(SUMMARY, ' Creating Yarn cluster')
+        list_of_hosts = reroute_ssh_prep(self.server_dict,
+                                         self.HOSTNAME_MASTER_IP)
         logging.log(SUMMARY, ' Installing and configuring Yarn')
         install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP, self.opts['name'])
         return self.HOSTNAME_MASTER_IP, self.server_dict
+
+    def destroy(self):
+        """Destroy Cluster"""
+        destroy_cluster(self.opts['token'], self.HOSTNAME_MASTER_IP)
 
 
 def main(opts):
@@ -357,7 +352,6 @@ def main(opts):
         c_yarn_cluster.create_yarn_cluster()
     else:
         c_yarn_cluster.create_bare_cluster()
-
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -408,8 +402,9 @@ if __name__ == "__main__":
                         default=_defaults['auth_url'],
                         help='Synnefo authentication url')
 
-    parser.add_argument("--yarn", "-y", dest='yarn', action='store_true',
-                        help='Create a Yarn type cluster')
+    parser.add_argument("--bare", "-b", dest='yarn', action='store_false',
+                        help='Create a bare cluster. Default creates'
+                        ' a Yarn Cluster')
 
     parser.add_argument("--logging", nargs='?', dest='logging',
                         default=_defaults['logging'],
@@ -422,6 +417,8 @@ if __name__ == "__main__":
             log_directory = dirname(abspath(__file__))
             log_file_path = join(log_directory, "create_cluster_debug.log")
             logging.basicConfig(filename=log_file_path, level=logging.DEBUG)
+            print 'Creating Hadoop cluster, logs will' + \
+                  ' be appended in create_cluster_debug.log'
         else:
             logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
                                 level=checker.logging_levels[opts['logging']], datefmt='%H:%M:%S')

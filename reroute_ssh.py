@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-This script creates a virtual cluster on ~okeanos and installs Hadoop
+This script creates a virtual cluster on ~okeanos and installs Hadoop-Yarn
 using Ansible.
 
 @author: Ioannis Stenos, Nick Vrionis
@@ -242,7 +242,7 @@ def main(opts):
     The main function calls reroute_ssh_prep with the arguments given from
     command line.
     """
-    reroute_ssh_prep(opts.server,opts.master_ip)
+    reroute_ssh_prep(opts.server, opts.master_ip)
 
 if __name__ == '__main__':
 

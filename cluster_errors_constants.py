@@ -24,6 +24,7 @@ error_quotas_clustersize = -13
 error_quotas_network = -14
 error_flavor_id = -15
 error_image_id = -16
+error_syntax_token = -17
 error_ready_reroute = -18
 error_fatal = -20
 error_user_quota = -22

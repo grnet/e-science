@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-This script creates a virtual cluster on ~okeanos and installs Hadoop
+This script creates a virtual cluster on ~okeanos and installs Hadoop-Yarn
 using Ansible.
 
 @author: Ioannis Stenos, Nick Vrionis
@@ -37,7 +37,7 @@ def install_yarn(hosts_list, master_ip, cluster_name):
         file_name = create_ansible_hosts(cluster_name)
         # Run Ansible playbook
         run_ansible(file_name)
-        logging.log(SUMMARY, ' e-Science Yarn Cluster is active. You can access it through '
+        logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
                     + HOSTNAME_MASTER + ':8088/cluster')
     except Exception, e:
         logging.error(' Program is exiting')
@@ -84,15 +84,22 @@ def run_ansible(filename):
                         'slave nodes')
     # First time call of Ansible playbook install.yml executes tasks
     # required for hadoop installation on every virtual machine. Runs with
-    # -f flag which is the fork argument of Ansible. Fork number used is size
-    # of cluster.
+    # -f flag which is the fork argument of Ansible.
+    level = logging.getLogger().getEffectiveLevel()
+
+    # ansible_log variable to add if logging level is
+    # different than report or summary
+    ansible_log = ''
+    if level != (REPORT and SUMMARY):
+        ansible_log = " > ansible.log"
+
     exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                             'ansible-playbook -i ' + filename + ' ' +
                             ANSIBLE_PLAYBOOK_PATH +
-                            ' -f 5 -e "choose_role=yarn format=True start_yarn=True" > ansible.log')
+                            ' -f 5 -e "choose_role=yarn format=True start_yarn=True"' + ansible_log)
     if exit_status != 0:
-        logging.error(' Ansible failed')
-        raise RuntimeError
+        logging.error(' Ansible failed with exit status %d' % exit_status)
+        raise RuntimeError(exit_status)
 
 
 def main(opts):

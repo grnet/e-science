@@ -44,58 +44,70 @@ def get_project_id(project_name="escience.grnet.gr"):
         sys.exit(error_proj_id)
 
 
-def destroy_cluster(server_ids, token):
+def destroy_cluster(token, master_ip):
     """
     Destroys cluster and deletes network and floating ip. Finds the machines
-    that belong to the cluster that is requested to be destroyed and the
-    floating ip of the master virtual machine and terminates them. Then
-    deletes the network and the floating ip.
+    that belong to the cluster from the master_ip that is given.
     """
     servers_to_delete = []
+    float_ip_to_delete = master_ip
     list_of_errors = []
+    master_id = None
+    network_to_delete_id = None
+    float_ip_to_delete_id = None
     auth = check_credentials(token)
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
     nc = init_cyclades_netclient(endpoints['network'], token)
+    # Get list of servers and public ips
     try:
         list_of_servers = cyclades.list_servers(detail=True)
+        list_of_ips = nc.list_floatingips()
     except Exception:
-        logging.error('Could not get list of servers.Cannot delete cluster')
+        logging.error('Could not get list of resources.'
+                      'Cannot delete cluster')
         sys.exit(error_get_list_servers)
+    logging.log(SUMMARY, ' Starting deletion of requested cluster')
+    # Get master virtual machine and network from ip
+    for ip in list_of_ips:
+        if ip['floating_ip_address'] == float_ip_to_delete:
+            master_id = ip['instance_id']
+            float_ip_to_delete_id = ip['id']
+            master_server = cyclades.get_server_details(master_id)
+            for attachment in master_server['attachments']:
+                if (attachment['OS-EXT-IPS:type'] == 'fixed' and
+                        not attachment['ipv6']):
+                    network_to_delete_id = attachment['network_id']
+                    break
+            break
+    # Show an error message and exit if not valid ip or network
+    if not master_id:
+        logging.error('[%s] is not the valid public ip of the master'
+                      % float_ip_to_delete)
+        sys.exit(error_get_ip)
 
-    for server in list_of_servers:  # Find the servers to be deleted
-        for server_id in server_ids:
-            if server_id['id'] == server['id']:
+    if not network_to_delete_id:
+        logging.error('A valid network of master and slaves was not found.'
+                      'Deleting the master vm only')
+        cyclades.delete_server(master_id)
+        sys.exit(error_cluster_corrupt)
+
+    # Get the servers of the cluster to be deleted
+    for server in list_of_servers:
+        for attachment in server['attachments']:
+            if attachment['network_id'] == network_to_delete_id:
                 servers_to_delete.append(server)
-                server_ids.remove(server_id)
                 break
-    # If the list of servers to delete is empty then abort
-    if not servers_to_delete:
-        logging.log(REPORT, " Servers with given ids do not exist")
-        list_of_errors.append(error_cluster_not_exist)
 
-    number_of_nodes = servers_to_delete.__len__()
-    # Find the floating ip of master virtual machine and
-    # the network to be deleted
-    float_ip_to_delete = ''
-    for attachment in servers_to_delete[0]['attachments']:
-        if attachment['OS-EXT-IPS:type'] == 'floating':
-            float_ip_to_delete = attachment['ipv4']
-        elif attachment['OS-EXT-IPS:type'] == 'fixed' and \
-                                              not attachment['ipv6']:
-            network_to_delete_id = attachment['network_id']
+    number_of_nodes = len(servers_to_delete)
 
-    if not float_ip_to_delete:
-        logging.error(' Cluster with master node [%s] is corrupted',
-                      servers_to_delete[0]['name'])
-        list_of_errors.append(error_cluster_corrupt)
     # Start cluster deleting
     try:
         for server in servers_to_delete:
             cyclades.delete_server(server['id'])
         logging.log(REPORT, ' There are %d servers to clean up'
                     % number_of_nodes)
-    # Wait for every server of the cluster to be deleted
+        # Wait for every server of the cluster to be deleted
         for server in servers_to_delete:
             new_status = cyclades.wait_server(server['id'],
                                               current_status='ACTIVE',
@@ -108,7 +120,6 @@ def destroy_cluster(server_ids, token):
 
         logging.log(REPORT, ' Cluster with master node [%s] is %s',
                     servers_to_delete[0]['name'], new_status)
-    # Find the correct network of deleted cluster and delete it
     except Exception:
         logging.exception('Error in deleting server')
         list_of_errors.append(error_cluster_corrupt)
@@ -116,25 +127,23 @@ def destroy_cluster(server_ids, token):
     try:
         nc.delete_network(network_to_delete_id)
         sleep(10)  # Take some time to ensure it is deleted
-        logging.log(REPORT, ' Network with id [%s] is deleted'
+        logging.log(SUMMARY, ' Network with id [%s] is deleted'
                     % network_to_delete_id)
     except Exception:
         logging.exception('Error in deleting network')
         list_of_errors.append(error_cluster_corrupt)
 
-    # Find the correct floating ip id of deleted master machine and delete it
+    # Delete the floating ip of deleted cluster
     try:
-        for float_ip in nc.list_floatingips():
-            if float_ip_to_delete == float_ip['floating_ip_address']:
-                nc.delete_floatingip(float_ip['id'])
-                logging.log(REPORT, ' Floating ip [%s] is deleted'
-                            % float_ip['floating_ip_address'])
+        nc.delete_floatingip(float_ip_to_delete_id)
+        logging.log(SUMMARY, ' Floating ip [%s] is deleted'
+                    % float_ip_to_delete)
     except Exception:
-        logging.exception('Error in deleting floating ip [%s]',
+        logging.exception('Error in deleting floating ip [%s]' %
                           float_ip_to_delete)
         list_of_errors.append(error_cluster_corrupt)
 
-    logging.log(REPORT, ' Cluster with master node [%s] and %d slave nodes'
+    logging.log(SUMMARY, ' Cluster with master node [%s] and %d slave nodes'
                 ' was deleted', servers_to_delete[0]['name'],
                 number_of_nodes-1)
     # Everything deleted as expected
@@ -188,7 +197,6 @@ def get_flavor_id(token):
     disk_list = sorted(disk_list)
     flavors = {'cpus': cpu_list, 'ram': ram_list,
                'disk': disk_list, 'disk_template': disk_template_list}
-    logging.info(flavors)
     return flavors
 
 
@@ -232,7 +240,6 @@ def check_quota(token):
               'disk': {'limit': limit_cd,
                        'available': available_cyclades_disk_GB},
               'cluster_size': {'limit': limit_vm, 'available': available_vm}}
-    logging.info(quotas)
     return quotas
 
 
@@ -303,11 +310,11 @@ def init_cyclades(endpoint, token):
 
 class Cluster(object):
     """
-    Cluster class represents an entire cluster.Instantiation of cluster gets
-    the following arguments: A CycladesClient object,a name-prefix for the
-    cluster,the flavors of master and slave machines,the image id of their OS,
-    the size of the cluster,a CycladesNetworkClient object and a AstakosClient
-    object.
+    Cluster class represents an entire ~okeanos cluster.Instantiation of
+    cluster gets the following arguments: A CycladesClient object,a name-prefix
+    for the cluster,the flavors of master and slave machines,the image id of
+    their OS, the size of the cluster,a CycladesNetworkClient object and an
+    AstakosClient object.
     """
     def __init__(self, cyclades, prefix, flavor_id_master, flavor_id_slave,
                  image_id, size, net_client, auth_cl):
@@ -321,8 +328,6 @@ class Cluster(object):
     def get_flo_net_id(self):
         """
         Gets an Ipv4 floating network id from the list of public networks Ipv4
-        and Ipv6. Takes the href value and removes first 56 characters.
-        The number that is left is the public network id
         """
         pub_net_list = self.nc.list_networks()
         float_net_id = 1
@@ -356,12 +361,38 @@ class Cluster(object):
                     owner='root', group='root', mode=0600))
         return personality
 
+    def clean_up(self, servers=None, network=None):
+        """Delete resources after a failed attempt to create a cluster"""
+        if not (network and servers):
+            logging.error('Nothing to delete')
+            return
+        logging.error(' Cleaning up and shutting down')
+        status = ''
+        if servers:
+            for server in servers:
+                status = self.client.get_server_details(server['id'])['status']
+
+                if status == 'BUILD':
+                    status = self.client.wait_server(server['id'],
+                                                         max_wait=MAX_WAIT)
+                self.client.delete_server(server['id'])
+
+                new_status = self.client.wait_server(server['id'],
+                                                     current_status=status,
+                                                     max_wait=MAX_WAIT)
+                logging.log(REPORT, ' Server [%s] is being %s', server['name'],
+                            new_status)
+                if new_status != 'DELETED':
+                    logging.error('Error deleting server [%s]' % server['name'])
+        if network:
+            self.nc.delete_network(network['id'])
+
     def create(self, ssh_k_path='', pub_k_path='', server_log_path=''):
         """
         Creates a cluster of virtual machines using the Create_server method of
         CycladesClient.
         """
-        logging.log(REPORT, ' Create %s servers prefixed as %s',
+        logging.log(REPORT, ' Create %s servers prefixed as [%s]',
                     self.size, self.prefix)
         servers = []
         empty_ip_list = []
@@ -369,6 +400,7 @@ class Cluster(object):
         date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         count = 0
         HOSTNAME_MASTER = ''
+        port_status = ''
         # Names the master machine with a timestamp and a prefix name
         # plus number 1
         server_name = '%s%s%s%s%s' % (date_time, '-', self.prefix, '-', 1)
@@ -386,6 +418,7 @@ class Cluster(object):
             list_float_ips = self.nc.list_floatingips()
         except Exception:
             logging.exception('Error getting list of floating ips')
+            self.clean_up(network=new_network)
             sys.exit(error_get_ip)
         # If there are existing floating ips,we check if there is any free or
         # if all of them are attached to a machine
@@ -403,6 +436,7 @@ class Cluster(object):
                                                       project_id=self.project_id)
                         except ClientError:
                             if self.get_flo_net_id() != 0:
+                                self.clean_up(network=new_network)
                                 logging.error('Error in creating float ip')
                                 sys.exit(error_get_ip)
         else:
@@ -410,6 +444,7 @@ class Cluster(object):
             # with the floating  network id
             if self.get_flo_net_id() != 0:
                 logging.error('Error in creating float ip')
+                self.clean_up(network=new_network)
                 sys.exit(error_get_ip)
         logging.log(REPORT, ' Wait for %s servers to build', self.size)
 
@@ -421,7 +456,9 @@ class Cluster(object):
                 personality=self._personality(ssh_k_path, pub_k_path),
                 project_id=self.project_id))
         except Exception:
-            logging.exception('Error creating master virtual machine')
+            logging.exception('Error creating master virtual machine [%s]'
+                              % servers[0]['name'])
+            self.clean_up(servers=servers, network=new_network)
             sys.exit(error_create_server)
         # Creation of slave servers
         for i in range(2, self.size+1):
@@ -435,7 +472,8 @@ class Cluster(object):
                     networks=empty_ip_list, project_id=self.project_id))
 
             except Exception:
-                logging.exception('Error creating server %s' % server_name)
+                logging.exception('Error creating server [%s]' % server_name)
+                self.clean_up(servers=servers, network=new_network)
                 sys.exit(error_create_server)
         # We put a wait server for the master here,so we can use the
         # server id later and the slave start their building without
@@ -443,12 +481,12 @@ class Cluster(object):
         try:
             new_status = self.client.wait_server(servers[0]['id'],
                                                  max_wait=MAX_WAIT)
-            if not new_status:
-                logging.error(' Status for server %s is %s',
+            if new_status != 'ACTIVE':
+                logging.error(' Status for server [%s] is %s',
                               servers[i]['name'], new_status)
-                logging.error(' Program shutting down')
+                self.clean_up(servers=servers, network=new_network)
                 sys.exit(error_create_server)
-            logging.log(REPORT, ' Status for server %s is %s',
+            logging.log(REPORT, ' Status for server [%s] is %s',
                         servers[0]['name'], new_status)
             # Create a subnet for the virtual network between master
             #  and slaves along with the ports needed
@@ -456,55 +494,54 @@ class Cluster(object):
                                   enable_dhcp=True)
             port_details = self.nc.create_port(new_network['id'],
                                                servers[0]['id'])
-            self.nc.wait_port(port_details['id'], max_wait=MAX_WAIT)
+            port_status = self.nc.wait_port(port_details['id'],
+                                            max_wait=MAX_WAIT)
+            if port_status != 'ACTIVE':
+                logging.error(' Status for port [%s] is %s',
+                              port_details['id'], port_status)
+                self.clean_up(servers=servers, network=new_network)
+                sys.exit(error_create_server)
             # Wait server for the slaves, so we can use their server id
             # in port creation
             for i in range(1, self.size):
                 new_status = self.client.wait_server(servers[i]['id'],
                                                      max_wait=MAX_WAIT)
-                if not new_status:
-                    logging.error(' Status for server %s is %s',
+                if new_status != 'ACTIVE':
+                    logging.error(' Status for server [%s] is %s',
                                   servers[i]['name'], new_status)
-                    logging.error(' Program shutting down')
+                    self.clean_up(servers=servers, network=new_network)
                     sys.exit(error_create_server)
-                logging.log(REPORT, ' Status for server %s is %s',
+                logging.log(REPORT, ' Status for server [%s] is %s',
                             servers[i]['name'], new_status)
                 port_details = self.nc.create_port(new_network['id'],
                                                    servers[i]['id'])
                 list_of_ports.append(port_details)
 
-            for port_details in list_of_ports:
-                if port_details['status'] == 'BUILD':
-                    status = self.nc.wait_port(port_details['id'],
+            for port in list_of_ports:
+                port_status = self.nc.get_port_details(port['id'])['status']
+                if port_status == 'BUILD':
+                    port_status = self.nc.wait_port(port['id'],
                                                max_wait=MAX_WAIT)
-                    if not status:
-                        logging.error(' Status for port %s is %s',
-                                      port_details['id'], status)
-                        logging.error(' Program shutting down')
-                        sys.exit(error_create_server)
+                if port_status != 'ACTIVE':
+                    logging.error(' Status for port [%s] is %s',
+                                  port['id'], port_status)
+                    self.clean_up(servers=servers, network=new_network)
+                    sys.exit(error_create_server)
         except Exception:
             logging.exception('Error in finalizing cluster creation')
+            self.clean_up(servers=servers, network=new_network)
             sys.exit(error_create_server)
 
         if server_log_path:
-            logging.info(' Store passwords in file %s', server_log_path)
+            logging.info(' Store passwords in file [%s]', server_log_path)
             with open(abspath(server_log_path), 'w+') as f:
                 from json import dump
                 dump(servers, f, indent=2)
 
         # HOSTNAME_MASTER is always the public ip of master node
-        try:
-            list_of_servers = self.client.list_servers(detail=True)
-        except Exception:
-            logging.exception('Could not get list of servers.')
-            sys.exit(error_get_list_servers)
-
-        # Find our newly created master server in list of servers
-        # Then get its public ip and assign it to HOSTNAME_MASTER
-        for server in list_of_servers:
-            if servers[0]['name'].rsplit('-', 1)[0] == \
-                    server['name'].rsplit('-', 1)[0]:
-                for attachment in server['attachments']:
-                    if attachment['OS-EXT-IPS:type'] == 'floating':
+        master_details = self.client.get_server_details(servers[0]['id'])
+        for attachment in master_details['attachments']:
+            if attachment['OS-EXT-IPS:type'] == 'floating':
                         HOSTNAME_MASTER = attachment['ipv4']
+
         return HOSTNAME_MASTER, servers
