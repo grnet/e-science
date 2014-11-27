@@ -18,6 +18,7 @@ install:
 - pip install rednose
 - pip install nose-cov
 - sudo apt-get install sshpass
+- sudo npm install -g testem
 before_script:
 - export DISPLAY=:99.0
 - sh -e /etc/init.d/xvfb start
@@ -29,6 +30,7 @@ script:
 #- sshpass -p $hpass ssh hduser@$master_ip "cat /home/hduser/.ssh/id_rsa.new >> /home/hduser/.ssh/authorized_keys"
 - echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 - nosetests -sv tests/test_create_cluster.py
+- testem ci -f ember_django/frontend/testem.json -t ember_django/frontend/tests/index.html
 #- python legacy/run_pi_yarn.py --master_ip=$master_ip 2 100000
 
 
