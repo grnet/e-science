@@ -87,11 +87,11 @@ def run_ansible(filename):
     # -f flag which is the fork argument of Ansible.
     level = logging.getLogger().getEffectiveLevel()
 
-    # ansible_log variable to add if logging level is
+    # ansible_log file to write if logging level is
     # different than report or summary
-    ansible_log = ''
-    if level != (REPORT and SUMMARY):
-        ansible_log = " > ansible.log"
+    ansible_log = " > ansible.log"
+    if level == (REPORT or SUMMARY):
+        ansible_log = ''
 
     exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                             'ansible-playbook -i ' + filename + ' ' +
