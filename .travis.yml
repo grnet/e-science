@@ -18,8 +18,8 @@ install:
 - pip install rednose
 - pip install nose-cov
 - sudo apt-get install sshpass
-- sudo npm install -g testem
 before_script:
+- npm install testem -g
 - export DISPLAY=:99.0
 - sh -e /etc/init.d/xvfb start
 - nohup bash -c "webdriver-manager start 2>&1 &"
