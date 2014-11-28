@@ -1,9 +1,9 @@
 module('Integration Tests - Routes', {
 	setup: function(){
-		
+    	visit('/');
 	},
 	teardown: function() {
-    App.reset();
+    	App.reset();
 	}
 });
 
@@ -17,7 +17,7 @@ test('root_route_redirects_to_homepage', function() {
   });
 });
 
-test('protected_resources_redirects_to_login', function() {
+test('protected_resources_redirect_to_login', function() {
   expect(2);
   visit('/cluster/create');
   andThen(function() {
@@ -26,5 +26,5 @@ test('protected_resources_redirects_to_login', function() {
   visit('/user/welcome');
   andThen(function() {
     equal(currentRouteName(), 'user.login');
-  })
+  });
 });

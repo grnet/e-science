@@ -13,7 +13,7 @@
     <style>
       #ember-testing-container {
         position: absolute;
-        background: white;
+        background: gray;
         bottom: 0;
         right: 0;
         width: 640px;
@@ -77,11 +77,10 @@
     <script src="/testem.js"></script>
     <script src="libs/sinon-1.12.1.js"></script>
     <!--<script src="libs/sinon-qunit-1.0.0.js"></script>-->
-
     <script src="test-helper.js"></script>
-    
-    <script src="../tests/integration/routes.js"></script> 
-    <script src="../tests/unit/routes.js"></script>
+    <script src="integration/routes.js"></script>
+    <script src="unit/controllers.js"></script>
+    <script src="unit/routes.js"></script>
     
   </body>
 </html>
