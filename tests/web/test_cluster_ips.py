@@ -76,7 +76,7 @@ class TestClusterIps(ClusterTest):
 
         dict_quotas = auth.get_quotas()
         # Find and create available public ips
-	project_id = get_project_id()
+        project_id = get_project_id()
         limit_ips = dict_quotas[project_id]['cyclades.floating_ip']['limit']
         usage_ips = dict_quotas[project_id]['cyclades.floating_ip']['usage']
         pending_ips = dict_quotas[project_id]['cyclades.floating_ip']['pending']
