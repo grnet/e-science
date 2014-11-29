@@ -2,114 +2,42 @@
 # -*- coding: utf-8 -*-
 
 '''
-Methods for check and return ~okeanos user quota, return ~okeanos flavor list
+Methods for getting the list of resources of all user projects
 and update the ClusterCreationParams model.
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
 
-import django
-import os
 from os.path import join, dirname, abspath
 import sys
 import logging
 sys.path.append(join(dirname(abspath(__file__)), '../..'))
 sys.path.append(join(dirname(abspath(__file__)), '..'))
 from okeanos_utils import *
-from kamaki.clients.cyclades import CycladesClient
 from backend.models import ClusterCreationParams
-# Definitions of return value errors
-error_flavor_list = -23
-error_user_quota = -22
-error_syntax_logging_level = -24
-error_syntax_auth_token = -25
+from cluster_errors_constants import *
 
 
-# Global constants
-Mbytes_to_GB = 1024  # Global to convert megabytes to gigabytes
-Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
-Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
-auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
-
-
-def check_quota(token):
-    '''
-    Checks if user available quota .
-    Available = limit minus (used and pending).Also divides with 1024*1024*1024
-    to transform bytes to gigabytes.
-     '''
-
-    auth = check_credentials(token, auth_url)
+def project_list_flavor_quota(user):
+    """Creates the list of resources for every project a user has quota"""
+    okeanos_token = user.okeanos_token
+    list_of_resources = []
+    flavors = get_flavor_id(okeanos_token)
+    auth = check_credentials(okeanos_token)
     try:
-        dict_quotas = auth.get_quotas()
+        list_of_projects = auth.get_projects()
     except Exception:
-        logging.exception('Could not get user quota')
-        sys.exit(error_user_quota)
-    # Get project id for Synnefo v0.16
-    project_id = get_project_id() 
-    limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
-    usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GB
-    pending_cd = dict_quotas[project_id]['cyclades.disk']['pending'] / Bytes_to_GB
-    available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd)
+        logging.error('Could not get list of projects')
+        sys.exit(error_get_list_projects)
 
-    limit_cpu = dict_quotas[project_id]['cyclades.cpu']['limit']
-    usage_cpu = dict_quotas[project_id]['cyclades.cpu']['usage']
-    pending_cpu = dict_quotas[project_id]['cyclades.cpu']['pending']
-    available_cpu = limit_cpu - usage_cpu - pending_cpu
+    for project in list_of_projects:
+        quotas = check_quota(okeanos_token, project['id'])
+        list_of_resources.append(retrieve_ClusterCreationParams(flavors, quotas, project['name'], user))
 
-    limit_ram = dict_quotas[project_id]['cyclades.ram']['limit'] / Bytes_to_MB
-    usage_ram = dict_quotas[project_id]['cyclades.ram']['usage'] / Bytes_to_MB
-    pending_ram = dict_quotas[project_id]['cyclades.ram']['pending'] / Bytes_to_MB
-    available_ram = (limit_ram-usage_ram-pending_ram)
-
-    limit_vm = dict_quotas[project_id]['cyclades.vm']['limit']
-    usage_vm = dict_quotas[project_id]['cyclades.vm']['usage']
-    pending_vm = dict_quotas[project_id]['cyclades.vm']['pending']
-    available_vm = limit_vm-usage_vm-pending_vm
-
-    quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
-              'ram': {'limit': limit_ram, 'available': available_ram},
-              'disk': {'limit': limit_cd,
-                       'available': available_cyclades_disk_GB},
-              'cluster_size': {'limit': limit_vm, 'available': available_vm}}
-    logging.info(quotas)
-    return quotas
+    return list_of_resources
 
 
-def get_flavor_id(token):
-    '''From kamaki flavor list get all possible flavors '''
-    auth = check_credentials(token, auth_url)
-    endpoints, user_id = endpoints_and_user_id(auth)
-    cyclades = init_cyclades(endpoints['cyclades'], token)
-    try:
-        flavor_list = cyclades.list_flavors(True)
-    except Exception:
-        logging.exception('Could not get list of flavors')
-        sys.exit(error_flavor_list)
-    cpu_list = []
-    ram_list = []
-    disk_list = []
-    disk_template_list = []
-
-    for flavor in flavor_list:
-        if flavor['vcpus'] not in cpu_list:
-            cpu_list.append(flavor['vcpus'])
-        if flavor['ram'] not in ram_list:
-            ram_list.append(flavor['ram'])
-        if flavor['disk'] not in disk_list:
-            disk_list.append(flavor['disk'])
-        if flavor['SNF:disk_template'] not in disk_template_list:
-            disk_template_list.append(flavor['SNF:disk_template'])
-    cpu_list = sorted(cpu_list)
-    ram_list = sorted(ram_list)
-    disk_list = sorted(disk_list)
-    flavors = {'cpus': cpu_list, 'ram': ram_list,
-               'disk': disk_list, 'disk_template': disk_template_list}
-    logging.info(flavors)
-    return flavors
-
-
-def retrieve_ClusterCreationParams(user):
+def retrieve_ClusterCreationParams(flavors, quotas, project_name, user):
     '''
     Retrieves user quotas and flavor list from kamaki
     using get_flavor_id and check_quota methods and returns the updated
@@ -118,10 +46,6 @@ def retrieve_ClusterCreationParams(user):
     i = 0
     j = 1
     vms_av = []
-    okeanos_token = user.okeanos_token
-    flavors = get_flavor_id(okeanos_token)
-    quotas = check_quota(okeanos_token)
-
     vms_max = quotas['cluster_size']['limit']
     vms_available = quotas['cluster_size']['available']
     for i in range(vms_available):
@@ -142,6 +66,7 @@ def retrieve_ClusterCreationParams(user):
     # Create a ClusterCreationParams object with the parameters returned from
     # get_flavor_id and check_quota.
     cluster_creation_params = ClusterCreationParams(user_id=user,
+                                                    project_name=project_name,
                                                     vms_max=vms_max,
                                                     vms_av=vms_av,
                                                     cpu_max=cpu_max,

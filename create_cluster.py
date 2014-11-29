@@ -33,7 +33,8 @@ _defaults = {
     'token': 'PLACEHOLDER',
     'auth_url': 'https://accounts.okeanos.grnet.gr/identity/v2.0',
     'yarn': True,
-    'logging': 'summary'
+    'logging': 'summary',
+    'project_name': 'PLACEHOLDER'
 }
 
 
@@ -95,7 +96,8 @@ class YarnCluster(object):
             self.opts = opts
         self.HOSTNAME_MASTER_IP = '127.0.0.1'
         self.server_dict = {}
-        self.project_id = get_project_id()
+        self.project_id = get_project_id(self.opts['token'],
+                                         project_name=self.opts['project_name'])
         self.status = {}
         self.auth = check_credentials(self.opts['token'],
                                       self.opts.get('auth_url',
@@ -310,14 +312,10 @@ class YarnCluster(object):
             logging.error(self.opts['image']+' is not a valid image')
             exit(error_image_id)
         logging.log(SUMMARY, ' Creating ~okeanos cluster')
-        cluster = Cluster(self.cyclades,
-                          prefix=self.opts['name'],
-                          flavor_id_master=flavor_master,
-                          flavor_id_slave=flavor_slaves,
-                          image_id=chosen_image['id'],
-                          size=self.opts['clustersize'],
-                          net_client=self.net_client,
-                          auth_cl=self.auth)
+        cluster = Cluster(self.cyclades,self.opts['name'],
+                          flavor_master, flavor_slaves,
+                          chosen_image['id'], self.opts['clustersize'],
+                          self.net_client, self.auth, self.project_id)
 
         self.HOSTNAME_MASTER_IP, self.server_dict = \
             cluster.create('', pub_keys_path, '')
@@ -411,6 +409,9 @@ if __name__ == "__main__":
                         choices=checker.logging_levels,
                         help='Logging Level. Default: summary')
 
+    parser.add_argument("--project_name", help='name of the ~okeanos project'
+                        ' from which resources will be requested',
+                        dest='project_name', default=_defaults['project_name'])
     if len(argv) > 1:
         opts = vars(parser.parse_args(argv[1:]))
         if opts['logging'] == 'debug':

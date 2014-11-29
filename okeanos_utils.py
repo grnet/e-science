@@ -18,7 +18,6 @@ from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.cyclades import CycladesClient
 from kamaki.clients.cyclades import CycladesNetworkClient
-from ConfigParser import RawConfigParser, NoSectionError
 from time import sleep
 from cluster_errors_constants import *
 
@@ -27,21 +26,21 @@ MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 BASE_DIR = dirname(abspath(__file__))
 
 
-def get_project_id(project_name="escience.grnet.gr"):
+def get_project_id(token, project_name="escience.grnet.gr"):
     """
-    Return the id of the e-science project.
-    The id is read from a config file that is not uploaded to
-    remote repositories.
+    Return the id of an ~okeanos project.
     """
-    parser = RawConfigParser()
-    config_file = join(BASE_DIR, '.private/.config.txt')
-    parser.read(config_file)
+    auth = check_credentials(token)
     try:
-        project_id = parser.get('cloud \"~okeanos\"', 'project_id')
-        return project_id
-    except NoSectionError:
-        logging.error('No project_id was found for this project_name')
-        sys.exit(error_proj_id)
+        list_of_projects = auth.get_projects()
+    except Exception:
+        logging.error('Could not get list of projects')
+        sys.exit(error_get_list_projects)
+    for project in list_of_projects:
+        if project['name'] == project_name:
+            return project['id']
+    logging.error('No project_id was found for this project_name')
+    sys.exit(error_proj_id)
 
 
 def destroy_cluster(token, master_ip):
@@ -200,7 +199,7 @@ def get_flavor_id(token):
     return flavors
 
 
-def check_quota(token):
+def check_quota(token, project_id):
     '''
     Checks if user available quota .
     Available = limit minus (used and pending).Also divides with 1024*1024*1024
@@ -213,8 +212,6 @@ def check_quota(token):
         logging.exception('Could not get user quota')
         sys.exit(error_user_quota)
 
-    # Get project_id
-    project_id = get_project_id()
     limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
     usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GB
     pending_cd = dict_quotas[project_id]['cyclades.disk']['pending'] / Bytes_to_GB
@@ -313,17 +310,17 @@ class Cluster(object):
     Cluster class represents an entire ~okeanos cluster.Instantiation of
     cluster gets the following arguments: A CycladesClient object,a name-prefix
     for the cluster,the flavors of master and slave machines,the image id of
-    their OS, the size of the cluster,a CycladesNetworkClient object and an
-    AstakosClient object.
+    their OS, the size of the cluster,a CycladesNetworkClient object, an
+    AstakosClient object and the project_id.
     """
     def __init__(self, cyclades, prefix, flavor_id_master, flavor_id_slave,
-                 image_id, size, net_client, auth_cl):
+                 image_id, size, net_client, auth_cl, project_id):
         self.client = cyclades
         self.nc = net_client
         self.prefix, self.size = prefix, int(size)
         self.flavor_id_master, self.auth = flavor_id_master, auth_cl
         self.flavor_id_slave, self.image_id = flavor_id_slave, image_id
-        self.project_id = get_project_id()
+        self.project_id = project_id
 
     def get_flo_net_id(self):
         """

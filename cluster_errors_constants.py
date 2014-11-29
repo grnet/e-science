@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-This module contains the definitions of returned errors.
+This module contains the definitions of returned errors and package constants.
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -30,6 +30,7 @@ error_fatal = -20
 error_user_quota = -22
 error_flavor_list = -23
 error_get_list_servers = -24
+error_get_list_projects = -25
 error_get_network_quota = -28
 error_create_network = -29
 error_get_ip = -30
@@ -39,11 +40,14 @@ error_ansible_playbook = -34
 error_cluster_not_exist = -69
 error_cluster_corrupt = -70
 error_proj_id = -71
+error_multiple_entries = -72
 error_authentication = -99
 
 # Package constants
 ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
 REPORT = 25  # Define logging level of REPORT
 SUMMARY = 29  # Define logging level of SUMMARY
+Mbytes_to_GB = 1024  # Global to convert megabytes to gigabytes
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
+auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
