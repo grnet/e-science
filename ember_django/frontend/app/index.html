@@ -252,6 +252,11 @@
 								{{view Ember.Select contentBinding="max_cluster_size_av" valueBinding="cluster_size" prompt="Select size" id="size_of_cluster" class="btn btn-primary btn-sm text-left"}}
 							</div>
 						</div>
+						<div class="row text-center text-danger">
+							<div class="col col-sm-6">
+								{{alert_mes_cluster_size}}
+							</div>    
+						</div>
 					</div>
 				</div>
 				<div class="col col-sm-6">
