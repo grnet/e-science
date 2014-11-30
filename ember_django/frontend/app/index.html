@@ -233,6 +233,35 @@
 		<div class="well well-lg text-center v-center">
 			<h3>Hadoop Cluster Configuration</h3>
 		</div>
+		
+		<div class="panel panel-primary">
+			<div class="panel-heading text-center v-center">
+				<h3 class="panel-title">Project Selection</h3>
+			</div>
+			<div class="panel-body">
+				<div class="col col-sm-6">
+					<div class="form-horizontal">
+						<div class="form-group">
+							<label for="projects" class="control-label col-sm-5">Projects</label>
+							<div class="col col-sm-7">
+ 								{{view Ember.Select contentBinding="projects_av" valueBinding="project_name" prompt="Select project" id="project_id" class="btn btn-primary btn-sm text-left"}}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="panel-footer text-center">
+				<div class="row">
+					<div class="col col-sm-6">
+						***Select your project first
+					</div>
+					<div class="col col-sm-6">
+						
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<div class="panel panel-primary">
 			<div class="panel-heading text-center v-center">
 				<h3 class="panel-title">Common Settings</h3>
@@ -243,13 +272,17 @@
 						<div class="form-group">
 							<label for="os_systems" class="control-label col-sm-5"> Operating System </label>
 							<div class="col col-sm-7">
-								{{view Ember.Select contentBinding="content._data.os_choices" valueBinding="operating_system" id="os_systems" class="btn btn-primary btn-sm"}}
+								{{view Ember.Select contentBinding="project_current.os_choices" 
+								valueBinding="operating_system" id="os_systems" 
+								class="btn btn-primary btn-sm"}} 
 							</div>
 						</div>
 						<div class="form-group">
 							<label for="size_of_cluster" class="control-label col-sm-5">Cluster size </label>
 							<div class="col col-sm-7">
-								{{view Ember.Select contentBinding="max_cluster_size_av" valueBinding="cluster_size" prompt="Select size" id="size_of_cluster" class="btn btn-primary btn-sm text-left"}}
+								{{view Ember.Select contentBinding="max_cluster_size_av" 
+								valueBinding="cluster_size" prompt="Select size" id="size_of_cluster" 
+								class="btn btn-primary btn-sm text-left"}}
 							</div>
 						</div>
 						<div class="row text-center text-danger">
@@ -257,14 +290,16 @@
 								{{alert_mes_cluster_size}}
 							</div>    
 						</div>
-					</div>
+					</div>					
 				</div>
 				<div class="col col-sm-6">
 					<div class="form-horizontal">
 						<div class="form-group">
 							<label for="cluster_name" class="control-label col-sm-4">Cluster Name</label>
 							<div class="col col-sm-8">
-								{{view Ember.TextField valueBinding="cluster_name" id="cluster_name" class="input-sm form-control" placeholder="cluster_name"}}
+								{{view Ember.TextField valueBinding="cluster_name" 
+								id="cluster_name" class="input-sm form-control" 
+								placeholder="cluster_name"}}
 							</div>
 						</div>
 						<div class="row text-center text-danger">
@@ -276,8 +311,10 @@
 							<label class="control-label col-sm-4">Storage: {{this.disk_temp}}</label>
 							<div class="col col-sm-8">
 								<div class="btn-group">
-									{{#each item in content._data.disk_template}}
-										{{#view App.StorageSelButView value=item name="storage_button" class="btn btn-primary btn-sm" disabled=storage_Not_Allow}}{{item}}{{/view}}
+									{{#each item in project_current.disk_template}}
+										{{#view App.StorageSelButView value=item 
+										name="storage_button" class="btn btn-primary btn-sm" 
+										disabled=storage_Not_Allow}}{{item}}{{/view}}
 									{{/each}}
 								</div>
 							</div>
@@ -288,14 +325,25 @@
 			<div class="panel-footer text-center">
 				<div class="row">
 					<div class="col col-sm-6">
-						~okeanos project maximum cluster size: {{content._data.vms_max}}
+						~okeanos project maximum cluster size: 
+						{{project_current.vms_max}}
 					</div>
 					<div class="col col-sm-6">
 						
 					</div>
 				</div>
-			</div>
+			</div>	
+			
+			
+			
+			
+			
+			
 		</div>
+		
+		
+		
+		
 		<div class="panel panel-primary">
 			<div class="panel-heading text-center v-center">
 				<h3 class="panel-title">Master Settings</h3>
@@ -305,24 +353,30 @@
 					<div class="col col-sm-4">
 						<h4 id = "master_cpu_summary">CPUs: {{this.master_cpu_selection}} </h4>
 						<div class="btn-group">
-							{{#each item in content._data.cpu_choices}}
-							{{#view App.CPUSelButView value=item name="master_cpus_button" class="btn btn-primary btn-sm" disabled=master_cpus_Not_Allow}}{{item}}x{{/view}}
+							{{#each item in project_current.cpu_choices}}
+								{{#view App.CPUSelButView value=item name="master_cpus_button" 
+								class="btn btn-primary btn-sm" disabled=master_cpus_Not_Allow}}
+								{{item}}x{{/view}}
 							{{/each}}
 						</div>
 					</div>
 					<div class="col col-sm-4">
 						<h4 id="master_ram_summary">RAM: {{this.master_ram_selection}} </h4>
 						<div class="btn-group">
-							{{#each item in content._data.mem_choices}}
-							{{#view App.MEMSelButView value=item name="master_ram_button" class="btn btn-primary btn-sm" disabled=master_ram_Not_Allow}}{{item}}{{/view}}
+							{{#each item in project_current.mem_choices}}
+								{{#view App.MEMSelButView value=item name="master_ram_button" 
+								class="btn btn-primary btn-sm" disabled=master_ram_Not_Allow}}
+								{{item}}{{/view}}
 							{{/each}}
 						</div>
 					</div>
 					<div class="col col-sm-4">
 						<h4 id="master_disk_summary">Disk Size: {{this.master_disk_selection}} </h4>
 						<div class="btn-group">
-							{{#each item in content._data.disk_choices}}
-							{{#view App.DiskSelButView value=item name="master_disk_button" class="btn btn-primary btn-sm" disabled=master_disk_Not_Allow}}{{item}}{{/view}}
+							{{#each item in project_current.disk_choices}}
+								{{#view App.DiskSelButView value=item name="master_disk_button" 
+								class="btn btn-primary btn-sm" disabled=master_disk_Not_Allow}}
+								{{item}}{{/view}}
 							{{/each}}
 						</div>
 					</div>
@@ -353,6 +407,7 @@
 				</div>
 			</div>
 		</div>
+		
 		<div class="panel panel-primary">
 			<div class="panel-heading text-center v-center">
 				<h3 class="panel-title">Slaves Settings</h3>
@@ -362,15 +417,17 @@
 					<div class="col col-sm-4">
 						<h4 id = "slaves_cpu_summary">CPUs each: {{this.slaves_cpu_selection}}</h4>
 						<div class="btn-group">
-							{{#each item in content._data.cpu_choices}}
-							{{#view App.CPUSelButView value=item name="slaves_cpus_button" class="btn btn-primary btn-sm" disabled=slaves_cpus_Not_Allow}}{{item}}x{{/view}}
+							{{#each item in project_current.cpu_choices}}
+								{{#view App.CPUSelButView value=item name="slaves_cpus_button" 
+								class="btn btn-primary btn-sm" disabled=slaves_cpus_Not_Allow}}
+								{{item}}x{{/view}}
 							{{/each}}
 						</div>
 					</div>
 					<div class="col col-sm-4">
 						<h4 id="slaves_ram_summary">RAM each: {{this.slaves_ram_selection}}</h4>
 						<div class="btn-group">
-							{{#each item in content._data.mem_choices}}
+							{{#each item in project_current.mem_choices}}
 							{{#view App.MEMSelButView value=item name="slaves_ram_button" class="btn btn-primary btn-sm" disabled=slaves_ram_Not_Allow}}{{item}}{{/view}}
 							{{/each}}
 						</div>
@@ -378,8 +435,10 @@
 					<div class="col col-sm-4">
 						<h4 id="slaves_disk_summary">Disk Size each: {{this.slaves_disk_selection}}</h4>
 						<div class="btn-group">
-							{{#each item in content._data.disk_choices}}
-							{{#view App.DiskSelButView value=item name="slaves_disk_button" class="btn btn-primary btn-sm" disabled=slaves_disk_Not_Allow}}{{item}}{{/view}}
+							{{#each item in project_current.disk_choices}}
+								{{#view App.DiskSelButView value=item name="slaves_disk_button" 
+								class="btn btn-primary btn-sm" disabled=slaves_disk_Not_Allow}}
+								{{item}}{{/view}}
 							{{/each}}
 						</div>
 					</div>
@@ -424,7 +483,9 @@
 				<h4>{{message}}</h4>
 			</div>
 			<div class="col col-sm-2"></div>
-		</div>
+		</div>		
+		
+		
         </script>
 	{% endverbatim %}
 	<script src="{{ STATIC_URL }}libs/jquery-1.11.1.js"></script>
@@ -460,5 +521,7 @@
         <script src="{{ STATIC_URL }}models/cluster.js"></script>
         <script src="{{ STATIC_URL }}models/cluster_choice.js"></script>
 		
+	<script src="{{ STATIC_URL }}helpers/helpers.js"></script>	
+	
 	</body>
 </html>

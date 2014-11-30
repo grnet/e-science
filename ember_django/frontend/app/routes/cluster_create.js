@@ -3,7 +3,7 @@ App.ClusterCreateRoute = App.RestrictedRoute.extend({
     needs: 'clusterCreate',
     // model for create cluster choices (input form)
     model : function() {
-	return this.store.find('cluster', 1);
+	return this.store.find('cluster');
     },
     afterModel : function() {
 	// resets variables every time you go to the create cluster
