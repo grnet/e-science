@@ -8,7 +8,7 @@ env:
 install:
 - pip install kamaki==0.13rc3
 - pip install paramiko
-- pip install ansible
+- pip install ansible==1.7.2
 - pip install django
 - pip install selenium
 - pip install mock
