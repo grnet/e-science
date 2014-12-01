@@ -4,6 +4,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// Initialization phase
 	project_index : 0,			// index (position in the array) of the project
 	project_current: '',			// current project
+	project_name: '', 			// name of the project
 	cluster_size : 0, 			// Initial cluster size
 	master_cpu_selection : 0, 		// Initial master_cpu_selection, appears in master cpu summary
 	slaves_cpu_selection : 0, 		// Initial slaves_cpu_selection, appears in slaves cpu summary
@@ -27,7 +28,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 	// for projects
 	projects_av : function() {
-		
+		this.set('cluster_name', '');
 		var projects = [];
 		var length = this.get('content.length');
 
@@ -43,15 +44,14 @@ App.ClusterCreateController = Ember.Controller.extend({
 			this.set('project_index', i);
 		    }
 		}
-//		alert(this.get('project_index'));
-
+		
 		return projects;
 	}.property('project_name'),
       
 	// The total cpus selected for the cluster
 	total_cpu_selection : function() {
 		return (this.get('master_cpu_selection') + this.get('slaves_cpu_selection') * (this.size_of_cluster() - 1));
-	}.property('master_cpu_selection', 'slaves_cpu_selection', 'cluster_size'),
+	}.property('master_cpu_selection', 'slaves_cpu_selection', 'cluster_size', 'project_name'),
 
 	// Computes the available cpu each time total_cpu_selection changes
 	cpu_available : function() {
@@ -61,12 +61,12 @@ App.ClusterCreateController = Ember.Controller.extend({
 		} else {
 			return cpu_avail;
 		}
-	}.property('total_cpu_selection'),
+	}.property('total_cpu_selection', 'project_name'),
 	
 	// The total memory selected for the cluster
 	total_ram_selection : function() {
 		return (this.get('master_ram_selection') + this.get('slaves_ram_selection') * (this.size_of_cluster() - 1));
-	}.property('master_ram_selection', 'slaves_ram_selection', 'cluster_size'),
+	}.property('master_ram_selection', 'slaves_ram_selection', 'cluster_size', 'project_name'),
 
 	// Computes the available memory each time total_mem_selection changes
 	ram_available : function() {
@@ -76,12 +76,12 @@ App.ClusterCreateController = Ember.Controller.extend({
 		} else {
 			return ram_avail;
 		}
-	}.property('total_ram_selection'),
+	}.property('total_ram_selection', 'project_name'),
 	
 	// The total disk selected for the cluster
 	total_disk_selection : function() {
 		return (this.get('master_disk_selection') + this.get('slaves_disk_selection') * (this.size_of_cluster() - 1));
-	}.property('master_disk_selection', 'slaves_disk_selection', 'cluster_size'),
+	}.property('master_disk_selection', 'slaves_disk_selection', 'cluster_size', 'project_name'),
 
 	// Computes the available disk each time total_disk_selection changes
 	disk_available : function() {
@@ -91,7 +91,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		} else {
 			return disk_avail;
 		}
-	}.property('total_disk_selection'),
+	}.property('total_disk_selection', 'project_name'),
 
 	// Computes the maximum vms that can be build with current flavor choices and return this to the drop down menu on index
 	// If a flavor selection of a role(master/slaves) is 0, we assume that the role should be able to have at least the minimum option of the corresponding flavor
@@ -103,7 +103,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		var max_cluster_size_limited_by_current_mems = [];
 		var max_cluster_size_limited_by_current_disks = [];
 		this.buttons();
-		if (length < 2 ){
+		if (length < 2){
 			this.set('alert_mes_cluster_size', 'Your vm quota are not enough to build the minimum cluster');
 			cluster_size_zero = true;
 			return this.get('content').objectAt(this.get('project_index')).get('vms_av');
@@ -130,7 +130,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 		}
 		length = max_cluster_size_limited_by_current_cpus.length;
-		if (length == 0 ){
+		if (length == 0){
 			this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
 			cluster_size_zero = true;
 			return max_cluster_size_limited_by_current_cpus;
@@ -156,7 +156,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 		}
 		length = max_cluster_size_limited_by_current_mems.length;
-		if (length == 0 ){
+		if (length == 0){
 			this.set('alert_mes_cluster_size', 'Your ram quota are not enough to build the minimum cluster');
 			cluster_size_zero = true;
 			return max_cluster_size_limited_by_current_mems;
@@ -185,7 +185,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			cluster_size_zero = true;
 		}
 		return max_cluster_size_limited_by_current_disks;
-	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size'),
+	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size','project_name'),
 
 	// Functionality about coloring of the cpu buttons and enable-disable responding to user events
 	// First, remove colors from all cpu buttons and then color the role's(master/slaves) selection 
@@ -372,15 +372,19 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.storage_buttons();
 	},
 	size_of_cluster: function(){
-	    if ((this.get('cluster_size')=== null) || (this.get('cluster_size')=== undefined)){
-	      return 2;
-	    }
-	    else{
-		return this.get('cluster_size');
-	    }
+		if ((this.get('cluster_size')=== null) || (this.get('cluster_size')=== undefined) || (this.get('cluster_size')=== 0)){
+			this.set('cluster_size', 2);
+			return this.get('cluster_size');
+		}
+		else{
+			return this.get('cluster_size');
+		}
 	},
 	// Reset variables after logout
 	reset_variables : function() {
+		this.set('project_index', 0);
+		this.set('project_current', '');
+		this.set('project_name', '');
 		this.set('cluster_size', 0);
 		this.set('master_cpu_selection', 0);
 		this.set('slaves_cpu_selection', 0);
@@ -506,6 +510,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 		},
 		// Cancel action when in create cluster -> redirect to user's welcome screen
 		cancel : function() {
+			// clear data store cache for 'cluster'
+			this.store.unloadAll('cluster');
 			// reset variables();
 			this.reset_variables();
 			// redirect to welcome
@@ -543,6 +549,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 					var cluster_selection = this.store.update('clusterchoice', {
 					// set the clusterchoice model with the user choices
 					    'id' : 1,
+					    'project_name' : self.get('project_name'),
 					    'cluster_name' : self.get('cluster_name'),
 					    'cluster_size' : self.get('cluster_size'),
 					    'cpu_master' : self.get('master_cpu_selection'),
