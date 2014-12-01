@@ -16,7 +16,7 @@ App.DiskSelButView = Ember.View.extend({
 	if (this.get('name') == "slaves_disk_button") {
 	    this.set('elementId', "slaves_disk_" + this.get('value'));
 	    this.get('controller').reset_variables();
-	    return this._super();
+	    return this._super();  
 	}
     },     
     // on click

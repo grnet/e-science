@@ -380,11 +380,14 @@ App.ClusterCreateController = Ember.Controller.extend({
 			return this.get('cluster_size');
 		}
 	},
-	// Reset variables after logout
-	reset_variables : function() {
+	// reset project variables
+	reset_project : function() {
 		this.set('project_index', 0);
 		this.set('project_current', '');
 		this.set('project_name', '');
+	},
+	// Reset variables after logout
+	reset_variables : function() {
 		this.set('cluster_size', 0);
 		this.set('master_cpu_selection', 0);
 		this.set('slaves_cpu_selection', 0);
@@ -514,6 +517,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			this.store.unloadAll('cluster');
 			// reset variables();
 			this.reset_variables();
+			this.reset_project();
 			// redirect to welcome
 			this.transitionTo('user.welcome');
 		},
