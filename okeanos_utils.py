@@ -26,20 +26,20 @@ MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 BASE_DIR = dirname(abspath(__file__))
 
 
-def get_project_id(token, project_name="escience.grnet.gr"):
+def get_project_id(token, project_name):
     """
-    Return the id of an ~okeanos project.
+    Return the id of an active ~okeanos project.
     """
     auth = check_credentials(token)
     try:
-        list_of_projects = auth.get_projects()
+        list_of_projects = auth.get_projects(state='active')
     except Exception:
-        logging.error('Could not get list of projects')
+        logging.error(' Could not get list of active projects')
         sys.exit(error_get_list_projects)
     for project in list_of_projects:
         if project['name'] == project_name:
             return project['id']
-    logging.error('No project_id was found for this project_name')
+    logging.error(' No project id was found for %s', project_name)
     sys.exit(error_proj_id)
 
 
@@ -63,7 +63,7 @@ def destroy_cluster(token, master_ip):
         list_of_servers = cyclades.list_servers(detail=True)
         list_of_ips = nc.list_floatingips()
     except Exception:
-        logging.error('Could not get list of resources.'
+        logging.error( 'Could not get list of resources.'
                       'Cannot delete cluster')
         sys.exit(error_get_list_servers)
     logging.log(SUMMARY, ' Starting deletion of requested cluster')
@@ -81,13 +81,13 @@ def destroy_cluster(token, master_ip):
             break
     # Show an error message and exit if not valid ip or network
     if not master_id:
-        logging.error('[%s] is not the valid public ip of the master'
+        logging.error(' [%s] is not the valid public ip of the master'
                       % float_ip_to_delete)
         sys.exit(error_get_ip)
 
     if not network_to_delete_id:
-        logging.error('A valid network of master and slaves was not found.'
-                      'Deleting the master vm only')
+        logging.error(' A valid network of master and slaves was not found.'
+                      'Deleting the master VM only')
         cyclades.delete_server(master_id)
         sys.exit(error_cluster_corrupt)
 
@@ -114,13 +114,13 @@ def destroy_cluster(token, master_ip):
             logging.log(REPORT, ' Server [%s] is being %s', server['name'],
                         new_status)
             if new_status != 'DELETED':
-                logging.error('Error deleting server [%s]' % server['name'])
+                logging.error(' Error deleting server [%s]' % server['name'])
                 list_of_errors.append(error_cluster_corrupt)
 
         logging.log(REPORT, ' Cluster with master node [%s] is %s',
                     servers_to_delete[0]['name'], new_status)
     except Exception:
-        logging.exception('Error in deleting server')
+        logging.exception(' Error in deleting server')
         list_of_errors.append(error_cluster_corrupt)
 
     try:
@@ -129,7 +129,7 @@ def destroy_cluster(token, master_ip):
         logging.log(SUMMARY, ' Network with id [%s] is deleted'
                     % network_to_delete_id)
     except Exception:
-        logging.exception('Error in deleting network')
+        logging.exception(' Error in deleting network')
         list_of_errors.append(error_cluster_corrupt)
 
     # Delete the floating ip of deleted cluster
@@ -138,7 +138,7 @@ def destroy_cluster(token, master_ip):
         logging.log(SUMMARY, ' Floating ip [%s] is deleted'
                     % float_ip_to_delete)
     except Exception:
-        logging.exception('Error in deleting floating ip [%s]' %
+        logging.exception(' Error in deleting floating ip [%s]' %
                           float_ip_to_delete)
         list_of_errors.append(error_cluster_corrupt)
 
@@ -161,7 +161,7 @@ def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
         auth = AstakosClient(auth_url, token)
         auth.authenticate()
     except ClientError:
-        logging.error('Authentication failed with url %s and token %s' % (
+        logging.error(' Authentication failed with url %s and token %s' % (
                       auth_url, token))
         sys.exit(error_authentication)
     return auth
@@ -175,7 +175,7 @@ def get_flavor_id(token):
     try:
         flavor_list = cyclades.list_flavors(True)
     except Exception:
-        logging.exception('Could not get list of flavors')
+        logging.exception(' Could not get list of flavors')
         sys.exit(error_flavor_list)
     cpu_list = []
     ram_list = []
@@ -209,7 +209,7 @@ def check_quota(token, project_id):
         auth = check_credentials(token)
         dict_quotas = auth.get_quotas()
     except Exception:
-        logging.exception('Could not get user quota')
+        logging.exception(' Could not get user quota')
         sys.exit(error_user_quota)
 
     limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
@@ -260,7 +260,7 @@ def endpoints_and_user_id(auth):
             )
         user_id = auth.user_info['id']
     except ClientError:
-        logging.error('Failed to get endpoints & user_id from identity server')
+        logging.error(' Failed to get endpoints & user_id from identity server')
         raise
     return endpoints, user_id
 
@@ -275,7 +275,7 @@ def init_cyclades_netclient(endpoint, token):
     try:
         return CycladesNetworkClient(endpoint, token)
     except ClientError:
-        logging.error('Failed to initialize cyclades network client')
+        logging.error(' Failed to initialize cyclades network client')
         raise
 
 
@@ -288,7 +288,7 @@ def init_plankton(endpoint, token):
     try:
         return ImageClient(endpoint, token)
     except ClientError:
-        logging.error('Failed to initialize the Image client')
+        logging.error(' Failed to initialize the Image client')
         raise
 
 
@@ -301,7 +301,7 @@ def init_cyclades(endpoint, token):
     try:
         return CycladesClient(endpoint, token)
     except ClientError:
-        logging.error('Failed to initialize cyclades client')
+        logging.error(' Failed to initialize cyclades client')
         raise
 
 
@@ -361,7 +361,7 @@ class Cluster(object):
     def clean_up(self, servers=None, network=None):
         """Delete resources after a failed attempt to create a cluster"""
         if not (network and servers):
-            logging.error('Nothing to delete')
+            logging.error(' Nothing to delete')
             return
         logging.error(' Cleaning up and shutting down')
         status = ''
@@ -380,7 +380,7 @@ class Cluster(object):
                 logging.log(REPORT, ' Server [%s] is being %s', server['name'],
                             new_status)
                 if new_status != 'DELETED':
-                    logging.error('Error deleting server [%s]' % server['name'])
+                    logging.error(' Error deleting server [%s]' % server['name'])
         if network:
             self.nc.delete_network(network['id'])
 
@@ -408,13 +408,13 @@ class Cluster(object):
             new_network = self.nc.create_network('MAC_FILTERED', net_name,
                                                  project_id=self.project_id)
         except Exception:
-            logging.exception('Error in creating network')
+            logging.exception(' Error in creating network')
             sys.exit(error_create_network)
         # Gets list of floating ips
         try:
             list_float_ips = self.nc.list_floatingips()
         except Exception:
-            logging.exception('Error getting list of floating ips')
+            logging.exception(' Error getting list of floating ips')
             self.clean_up(network=new_network)
             sys.exit(error_get_ip)
         # If there are existing floating ips,we check if there is any free or
@@ -434,13 +434,13 @@ class Cluster(object):
                         except ClientError:
                             if self.get_flo_net_id() != 0:
                                 self.clean_up(network=new_network)
-                                logging.error('Error in creating float ip')
+                                logging.error(' Error in creating float ip')
                                 sys.exit(error_get_ip)
         else:
             # No existing ips,so we create a new one
             # with the floating  network id
             if self.get_flo_net_id() != 0:
-                logging.error('Error in creating float ip')
+                logging.error(' Error in creating float ip')
                 self.clean_up(network=new_network)
                 sys.exit(error_get_ip)
         logging.log(REPORT, ' Wait for %s servers to build', self.size)
@@ -453,8 +453,7 @@ class Cluster(object):
                 personality=self._personality(ssh_k_path, pub_k_path),
                 project_id=self.project_id))
         except Exception:
-            logging.exception('Error creating master virtual machine [%s]'
-                              % servers[0]['name'])
+            logging.exception(' Error creating master VM [%s]' % server_name)
             self.clean_up(servers=servers, network=new_network)
             sys.exit(error_create_server)
         # Creation of slave servers
@@ -469,7 +468,7 @@ class Cluster(object):
                     networks=empty_ip_list, project_id=self.project_id))
 
             except Exception:
-                logging.exception('Error creating server [%s]' % server_name)
+                logging.exception(' Error creating server [%s]' % server_name)
                 self.clean_up(servers=servers, network=new_network)
                 sys.exit(error_create_server)
         # We put a wait server for the master here,so we can use the
@@ -525,7 +524,7 @@ class Cluster(object):
                     self.clean_up(servers=servers, network=new_network)
                     sys.exit(error_create_server)
         except Exception:
-            logging.exception('Error in finalizing cluster creation')
+            logging.exception(' Error in finalizing cluster creation')
             self.clean_up(servers=servers, network=new_network)
             sys.exit(error_create_server)
 

@@ -48,7 +48,7 @@ class ClusterCreationParams(models.Model):
     parameters from okeanos. Imported djorm_pgarray package
     is needed for custom Arrayfields.
     '''
-    user_id = models.ForeignKey(UserInfo, null=False, # maybe one to one is needed
+    user_id = models.ForeignKey(UserInfo, null=False,
                                    help_text="User ID")
     # Project name
     project_name = models.CharField("Project Name", max_length=255,
