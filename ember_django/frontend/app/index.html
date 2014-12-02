@@ -245,7 +245,7 @@
 							<label for="projects" class="control-label col-sm-5">Projects</label>
 							<div class="col col-sm-7">
  								{{view Ember.Select contentBinding="projects_av" 
- 								valueBinding="project_name" id="project_id" 
+ 								valueBinding="project_name" id="project_id" prompt="Select project" 
  								class="btn btn-primary btn-sm text-left"}}
 							</div>
 						</div>
@@ -310,7 +310,7 @@
 							</div>    
 						</div>
 						<div class="form-group">
-							<label class="control-label col-sm-4">Storage: {{this.disk_temp}}</label>
+							<label class="control-label col-sm-4">Storage: </label>
 							<div class="col col-sm-8">
 								<div class="btn-group">
 									{{#each item in project_current.disk_template}}

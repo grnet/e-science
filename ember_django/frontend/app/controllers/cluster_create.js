@@ -104,7 +104,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 		var max_cluster_size_limited_by_current_disks = [];
 		this.buttons();
 		if (length < 2){
-			this.set('alert_mes_cluster_size', 'Your vm quota are not enough to build the minimum cluster');
+			if(this.get('project_name') == undefined) { this.set('alert_mes_cluster_size', ''); }
+			else { this.set('alert_mes_cluster_size', 'Your vm quota are not enough to build the minimum cluster');	}
+			
 			cluster_size_zero = true;
 			return this.get('content').objectAt(this.get('project_index')).get('vms_av');
 		}
@@ -131,7 +133,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 		}
 		length = max_cluster_size_limited_by_current_cpus.length;
 		if (length == 0){
-			this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
+			if(this.get('project_name') != '')
+			{
+			  this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
+			}
 			cluster_size_zero = true;
 			return max_cluster_size_limited_by_current_cpus;
 		}
@@ -157,7 +162,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 		}
 		length = max_cluster_size_limited_by_current_mems.length;
 		if (length == 0){
-			this.set('alert_mes_cluster_size', 'Your ram quota are not enough to build the minimum cluster');
+ 			if(this.get('project_name') != '')
+			{
+			  this.set('alert_mes_cluster_size', 'Your ram quota are not enough to build the minimum cluster');
+			}
 			cluster_size_zero = true;
 			return max_cluster_size_limited_by_current_mems;
 		}
