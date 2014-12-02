@@ -18,25 +18,11 @@ from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
     destroy_cluster
 from cluster_errors_constants import *
 
-# Default values for YarnCluster creation. Only token and project_name
-# are not given valid default values, obviously because they are
-# sensitive arguments and unique to each account and project.
+# Default values for YarnCluster creation.
 _defaults = {
-    'name': '_Prefix',
-    'clustersize': 2,
-    'cpu_master': 1,
-    'ram_master': 512,
-    'disk_master': 5,
-    'cpu_slave': 1,
-    'ram_slave': 512,
-    'disk_slave': 5,
-    'disk_template': 'ext_vlmc',
-    'image': 'Debian Base',
-    'token': 'PLACEHOLDER',
     'auth_url': 'https://accounts.okeanos.grnet.gr/identity/v2.0',
-    'yarn': True,
-    'logging': 'summary',
-    'project_name': 'PLACEHOLDER'
+    'image': 'Debian Base',
+    'logging': 'summary'
 }
 
 
@@ -65,7 +51,7 @@ class _ArgCheck(object):
         :return: val if val > 0 or raise exception
         """
         ival = int(val)
-        if ival < 0:
+        if ival <= 0:
             raise ArgumentTypeError(" %s must be a positive number." % val)
         return ival
 
@@ -93,10 +79,7 @@ class YarnCluster(object):
 
     def __init__(self, opts):
         """Initialization of YarnCluster data attributes"""
-        if not opts or len(opts) == 0:
-            self.opts = _defaults.copy()
-        else:
-            self.opts = opts
+        self.opts = opts
         # Master VM ip, placeholder value
         self.HOSTNAME_MASTER_IP = '127.0.0.1'
         # master VM root password file, placeholder value
@@ -147,7 +130,7 @@ class YarnCluster(object):
         usage_vm = dict_quotas[self.project_id]['cyclades.vm']['usage']
         pending_vm = dict_quotas[self.project_id]['cyclades.vm']['pending']
         available_vm = limit_vm - usage_vm - pending_vm
-        if available_vm < self.opts.get('clustersize', _defaults['clustersize']):
+        if available_vm < self.opts['clustersize']:
             logging.error(' Cyclades VMs out of limit')
             return error_quotas_clustersize
         else:
@@ -203,9 +186,8 @@ class YarnCluster(object):
         usage_cpu = dict_quotas[self.project_id]['cyclades.cpu']['usage']
         pending_cpu = dict_quotas[self.project_id]['cyclades.cpu']['pending']
         available_cpu = limit_cpu - usage_cpu - pending_cpu
-        cpu_req = self.opts.get('cpu_master', _defaults['cpu_master']) + \
-                  (self.opts.get('cpu_slave', _defaults['cpu_slave']) * (
-                      self.opts.get('clustersize', _defaults['clustersize']) - 1))
+        cpu_req = self.opts['cpu_master'] + self.opts['cpu_slave'] * (
+                      self.opts['clustersize'] - 1)
         if available_cpu < cpu_req:
             logging.error(' Cyclades cpu out of limit')
             return error_quotas_cpu
@@ -223,9 +205,8 @@ class YarnCluster(object):
         usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
         pending_ram = dict_quotas[self.project_id]['cyclades.ram']['pending']
         available_ram = (limit_ram - usage_ram - pending_ram) / Bytes_to_MB
-        ram_req = self.opts.get('ram_master', _defaults['ram_master']) + \
-                    (self.opts.get('ram_slave', _defaults['ram_slave']) * (
-                    self.opts.get('clustersize', _defaults['clustersize']) - 1))
+        ram_req = self.opts['ram_master'] + self.opts['ram_slave'] * (
+                    self.opts['clustersize'] - 1)
         if available_ram < ram_req:
             logging.error(' Cyclades ram out of limit')
             return error_quotas_ram
@@ -242,9 +223,8 @@ class YarnCluster(object):
         limit_cd = dict_quotas[self.project_id]['cyclades.disk']['limit']
         usage_cd = dict_quotas[self.project_id]['cyclades.disk']['usage']
         pending_cd = dict_quotas[self.project_id]['cyclades.disk']['pending']
-        cyclades_disk_req = self.opts.get('disk_master', _defaults['disk_master']) + \
-                            (self.opts.get('disk_slave', _defaults['disk_slave']) *
-                             (self.opts.get('clustersize', _defaults['clustersize']) - 1))
+        cyclades_disk_req = self.opts['disk_master'] + self.opts['disk_slave'] * (
+                             self.opts['clustersize'] - 1)
         available_cyclades_disk_GB = (limit_cd - usage_cd - pending_cd) / Bytes_to_GB
         if available_cyclades_disk_GB < cyclades_disk_req:
             logging.error(' Cyclades disk out of limit')
@@ -310,7 +290,7 @@ class YarnCluster(object):
         containing the root password of the master virtual machine of
         the cluster.
         """
-        self.pass_file = join(expanduser('~'), master_name)
+        self.pass_file = join('./', master_name + '_root_password')
         with open(self.pass_file, 'w') as f:
             f.write(master_root_pass)
 
@@ -363,14 +343,14 @@ class YarnCluster(object):
     def create_yarn_cluster(self):
         """Create Yarn cluster"""
         self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
-        logging.log(SUMMARY, ' The root password of master VM [%s] '
-                    'is on file %s', self.server_dict[0]['name'],
-                    self.pass_file)
         logging.log(SUMMARY, ' Creating Yarn cluster')
         list_of_hosts = reroute_ssh_prep(self.server_dict,
                                          self.HOSTNAME_MASTER_IP)
         logging.log(SUMMARY, ' Installing and configuring Yarn')
         install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP, self.opts['name'])
+        logging.log(SUMMARY, ' The root password of master VM [%s] '
+                    'is on file %s', self.server_dict[0]['name'],
+                    self.pass_file)
         return self.HOSTNAME_MASTER_IP, self.server_dict
 
     def destroy(self):
@@ -384,72 +364,68 @@ def main(opts):
     the arguments given from command line.
     """
     c_yarn_cluster = YarnCluster(opts)
-    if opts['yarn']:
-        c_yarn_cluster.create_yarn_cluster()
-    else:
-        c_yarn_cluster.create_bare_cluster()
+    c_yarn_cluster.create_yarn_cluster()
+
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     checker = _ArgCheck()
-    parser.add_argument("--name", help='The prefix name of the cluster.',
-                        dest='name', default='Test')
+    parser.add_argument("--name", help='The specified name of the cluster.'
+                        ' Will be prefixed by a timestamp',
+                        dest='name', required=True)
 
-    parser.add_argument("--clustersize", help='Number of virtual cluster nodes to create',
+    parser.add_argument("--clustersize", help='Total number of cluster nodes',
                         dest='clustersize', type=checker.two_or_bigger,
-                        default=_defaults['clustersize'])
+                        required=True)
 
     parser.add_argument("--cpu_master", help='Number of cpu cores for the master node',
-                        dest='cpu_master', type=int,
-                        default=_defaults['cpu_master'])
+                        dest='cpu_master', type=checker.unsigned_int,
+                        required=True)
 
     parser.add_argument("--ram_master", help='Size of RAM (MB) for the master node',
                         dest='ram_master', type=checker.unsigned_int,
-                        default=_defaults['ram_master'])
+                        required=True)
 
     parser.add_argument("--disk_master", help='Disk size (GB) for the master node',
                         dest='disk_master', type=checker.five_or_bigger,
-                        default=_defaults['disk_master'])
+                        required=True)
 
     parser.add_argument("--cpu_slave", help='Number of cpu cores for the slave node(s)',
-                        dest='cpu_slave', type=int,
-                        default=_defaults['cpu_slave'])
+                        dest='cpu_slave', type=checker.unsigned_int,
+                        required=True)
 
     parser.add_argument("--ram_slave", help='Size of RAM (MB) for the slave node(s)',
-                        dest='ram_slave', type=int,
-                        default=_defaults['ram_slave'])
+                        dest='ram_slave', type=checker.unsigned_int,
+                        required=True)
 
     parser.add_argument("--disk_slave", help='Disk size (GB) for the slave node(s)',
                         dest='disk_slave', type=checker.five_or_bigger,
-                        default=_defaults['disk_slave'])
+                        required=True)
 
     parser.add_argument("--disk_template", help='Disk template',
                         dest='disk_template',
-                        default=_defaults['disk_template'],
-                        choices=['drbd', 'ext_vlmc'])
+                        choices=['drbd', 'ext_vlmc'], required=True)
 
-    parser.add_argument("--image", help='OS for the virtual machine cluster',
-                        dest='image', default=_defaults['image'])
+    parser.add_argument("--image", help='OS for the cluster.'
+                        ' Default is Debian Base', dest='image',
+                        default=_defaults['image'])
 
     parser.add_argument("--token", help='Synnefo authentication token',
-                        dest='token', default=_defaults['token'])
+                        dest='token', required=True)
 
     parser.add_argument("--auth_url", nargs='?', dest='auth_url',
                         default=_defaults['auth_url'],
-                        help='Synnefo authentication url')
+                        help='Synnefo authentication url. Default is '
+                        'https://accounts.okeanos.grnet.gr/identity/v2.0')
 
-    parser.add_argument("--bare", "-b", dest='yarn', action='store_false',
-                        help='Create a bare cluster. Default creates'
-                        ' a Yarn Cluster')
-
-    parser.add_argument("--logging", nargs='?', dest='logging',
+    parser.add_argument("--logging", dest='logging',
                         default=_defaults['logging'],
-                        choices=checker.logging_levels,
+                        choices=checker.logging_levels.keys(),
                         help='Logging Level. Default: summary')
 
-    parser.add_argument("--project_name", help='name of the ~okeanos project'
-                        ' from which resources will be requested',
-                        dest='project_name', default=_defaults['project_name'])
+    parser.add_argument("--project_name", help='~okeanos project name'
+                        ' to request resources from ',
+                        dest='project_name', required=True)
     if len(argv) > 1:
         opts = vars(parser.parse_args(argv[1:]))
         if opts['logging'] == 'debug':
@@ -465,5 +441,5 @@ if __name__ == "__main__":
                                 level=checker.logging_levels[opts['logging']], datefmt='%H:%M:%S')
         main(opts)
     else:
-        parser.parse_args('-h'.split())
+        logging.error('No arguments were given')
         exit()
