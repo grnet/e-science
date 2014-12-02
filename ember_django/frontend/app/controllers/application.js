@@ -1,4 +1,5 @@
 App.ApplicationController = Ember.Controller.extend({
+	loggedIn: false,
 	homeURL : function() {
 		if (this.get('loggedIn')){
 			return "#/user/welcome";

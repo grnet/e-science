@@ -32,14 +32,15 @@
 				<ul class="nav navbar-nav navbar-right">
 					<li>
 						<div class="btn-group navbar-btn">
-							<a id="id_login" class="btn btn-primary" href="#/user/login"><i class="glyphicon glyphicon-log-in"></i> Login </a>
+							{{#if loggedIn}}
+							{{#link-to 'user.logout' id="id_logout" class="btn btn-primary"}}<i class="glyphicon glyphicon-user"></i> Logout </a>{{/link-to}}
+							{{else}}
+							{{#link-to 'user.login' id="id_login" class="btn btn-primary"}}<i class="glyphicon glyphicon-log-in"></i> Login </a>{{/link-to}}	
+							{{/if}}
 							<button data-toggle="dropdown" class="btn btn-primary dropdown-toggle"  id="id_login_dd">
 								<span class="caret"></span>
 							</button>
 							<ul class="dropdown-menu">
-								<li>
-									{{#link-to 'user.logout' id="id_logout"}}<i class="glyphicon glyphicon-log-out"></i> Logout{{/link-to}}
-								</li>
 								<li class="divider"></li>
 								<li class="dropdown-header">
 									Not yet implemented
@@ -47,7 +48,7 @@
 								<li class="disabled">
 									<a href="#" disabled>Dashboard</a>
 								</li>
-							</ul>
+							</ul>							
 						</div>
 					</li>
 				</ul>
