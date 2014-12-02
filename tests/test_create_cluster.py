@@ -15,9 +15,8 @@ sys.path.append(join(dirname(__file__), '..'))
 
 # import objects we aim to test
 # from create_bare_cluster import create_cluster
-from create_cluster import YarnCluster, HadoopCluster, \
-    error_quotas_clustersize, error_quotas_network, error_get_ip, \
-    error_quotas_cpu, error_quotas_ram, error_quotas_cyclades_disk
+from create_cluster import YarnCluster
+from cluster_errors_constants import *
 
 # Globals
 project_id = "INVALID_PROJECT_ID"
