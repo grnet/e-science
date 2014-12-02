@@ -291,6 +291,7 @@ class YarnCluster(object):
         the cluster.
         """
         self.pass_file = join('./', master_name + '_root_password')
+        self.pass_file = self.pass_file.replace(" ", "")
         with open(self.pass_file, 'w') as f:
             f.write(master_root_pass)
 
@@ -360,7 +361,7 @@ class YarnCluster(object):
 
 def main(opts):
     """
-    The main function calls create_cluster or resource check methods with
+    The main function calls create_yar_cluster with
     the arguments given from command line.
     """
     c_yarn_cluster = YarnCluster(opts)
@@ -438,7 +439,8 @@ if __name__ == "__main__":
                   ' be appended in create_cluster_debug.log'
         else:
             logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-                                level=checker.logging_levels[opts['logging']], datefmt='%H:%M:%S')
+                                level=checker.logging_levels[opts['logging']],
+                                datefmt='%H:%M:%S')
         main(opts)
     else:
         logging.error('No arguments were given')
