@@ -236,7 +236,7 @@
 		
 		<div class="panel panel-primary">
 			<div class="panel-heading text-center v-center">
-				<h3 class="panel-title">Project Selection</h3>
+				<h3 class="panel-title">Okeanos Project Selection</h3>
 			</div>
 			<div class="panel-body">
 				<div class="col col-sm-6">
@@ -265,7 +265,7 @@
 		</div>
 
 		<div class="panel panel-primary">
-			<div class="panel-heading text-center v-center">
+			<div id = "common_settings" class="panel-heading text-center v-center">
 				<h3 class="panel-title">Common Settings</h3>
 			</div>
 			<div class="panel-body">
@@ -305,7 +305,7 @@
 							</div>
 						</div>
 						<div class="row text-center text-danger">
-							<div class="col col-sm-6">
+							<div id = "alert_mes_cluster_name" class="col col-sm-6">
 								{{alert_mes_cluster_name}}
 							</div>    
 						</div>
@@ -347,7 +347,7 @@
 		
 		
 		<div class="panel panel-primary">
-			<div class="panel-heading text-center v-center">
+			<div id = "master_settings" class="panel-heading text-center v-center">
 				<h3 class="panel-title">Master Settings</h3>
 			</div>
 			<div class="panel-body text-center">
@@ -384,13 +384,13 @@
 					</div>
 				</div>
 				<div class="row text-center text-danger">
-				    <div class="col col-sm-4">
+				    <div id = "alert_mes_master_cpu" class="col col-sm-4">
 					{{alert_mes_master_cpu}}
 				    </div>
-				    <div class="col col-sm-4">
+				    <div id = "alert_mes_master_ram" class="col col-sm-4">
 					{{alert_mes_master_ram}}
 				    </div>				    
-				    <div class="col col-sm-4">
+				    <div id = "alert_mes_master_disk" class="col col-sm-4">
 					{{alert_mes_master_disk}}
 				    </div>				    
 				</div>
@@ -411,7 +411,7 @@
 		</div>
 		
 		<div class="panel panel-primary">
-			<div class="panel-heading text-center v-center">
+			<div id = "slaves_settings" class="panel-heading text-center v-center">
 				<h3 class="panel-title">Slaves Settings</h3>
 			</div>
 			<div class="panel-body text-center">
@@ -446,13 +446,13 @@
 					</div>
 				</div>
 				<div class="row text-center text-danger">
-				    <div class="col col-sm-4">
+				    <div id = "alert_mes_slaves_cpu" class="col col-sm-4">
 					{{alert_mes_slaves_cpu}}
 				    </div>
-				    <div class="col col-sm-4">
+				    <div id = "alert_mes_slaves_ram" class="col col-sm-4">
 					{{alert_mes_slaves_ram}}
 				    </div>				    
-				    <div class="col col-sm-4">
+				    <div id = "alert_mes_slaves_disk" class="col col-sm-4">
 					{{alert_mes_slaves_disk}}
 				    </div>				    
 				</div>
@@ -479,9 +479,10 @@
 				</button>
 			</div>
 			<div class="col col-sm-6">
-				<button id="next" class="next btn btn-success btn-md btn-block" {{action "go_to_create"}}>
-					Create Cluster
-				</button>
+				{{#view App.CreateClusterButView id="next" 
+				class="next btn btn-success btn-md btn-block" disabled=create_cluster_disabled}}
+				Create Cluster
+				{{/view}}
 				<h4>{{message}}</h4>
 			</div>
 			<div class="col col-sm-2"></div>
@@ -517,6 +518,7 @@
         <script src="{{ STATIC_URL }}views/mem_selection_button.js"></script>
         <script src="{{ STATIC_URL }}views/disk_selection_button.js"></script>
         <script src="{{ STATIC_URL }}views/storage_selection_button.js"></script>
+        <script src="{{ STATIC_URL }}views/create_cluster_button.js"></script>
         
         <script src="{{ STATIC_URL }}store.js"></script> 
         <script src="{{ STATIC_URL }}models/user.js"></script>

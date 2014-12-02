@@ -16,6 +16,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	operating_system : 'Debian Base', 	// Preselected OS
 	disk_temp : 'ext_vlmc', 		// Initial storage selection, common for master and slaves
 	cluster_size_zero : false,		// for checking the available VMs, cluster size
+	create_cluster_disabled : true,		// flag to disable create cluster button when project is not selected
 	message: '',				// message when user presses the create cluster button
 	alert_mes_master_cpu: '',		// alert message for master cpu buttons (if none selected)
 	alert_mes_master_ram: '',		// alert message for master ram buttons (if none selected)
@@ -28,8 +29,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 	// for projects
 	projects_av : function() {
+
 		this.set('cluster_name', '');
 		var projects = [];
+
 		var length = this.get('content.length');
 
 		for (var i = 0; i < length; i++) {
@@ -40,12 +43,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 		    
 		    if(this.get('content').objectAt(i).get('project_name') === this.get('project_name'))
 		    {
+			this.set('create_cluster_disabled', false);
 			this.set('project_current', this.get('content').objectAt(i));
 			this.set('project_index', i);
 		    }
 		}
 		
-		return projects;
+		return projects.sort();
 	}.property('project_name'),
       
 	// The total cpus selected for the cluster
@@ -93,9 +97,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 		}
 	}.property('total_disk_selection', 'project_name'),
 
-	// Computes the maximum vms that can be build with current flavor choices and return this to the drop down menu on index
+	// Computes the maximum VMs that can be build with current flavor choices and return this to the drop down menu on index
 	// If a flavor selection of a role(master/slaves) is 0, we assume that the role should be able to have at least the minimum option of the corresponding flavor
-	// Available vms are limited by user quota. First, they are filtered with cpu limits, then with ram and finally with disk. The result is returned to the drop down menu on index
+	// Available VMs are limited by user quota. First, they are filtered with cpu limits, then with ram and finally with disk. The result is returned to the drop down menu on index
 	max_cluster_size_av : function() {
 		this.set('alert_mes_cluster_size', '');
 		var length = this.get('content').objectAt(this.get('project_index')).get('vms_av').length;
@@ -105,7 +109,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.buttons();
 		if (length < 2){
 			if(this.get('project_name') == undefined) { this.set('alert_mes_cluster_size', ''); }
-			else { this.set('alert_mes_cluster_size', 'Your vm quota are not enough to build the minimum cluster');	}
+			else { this.set('alert_mes_cluster_size', 'Your VM quota are not enough to build the minimum cluster');	}
 			
 			cluster_size_zero = true;
 			return this.get('content').objectAt(this.get('project_index')).get('vms_av');
@@ -521,6 +525,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		},
 		// Cancel action when in create cluster -> redirect to user's welcome screen
 		cancel : function() {
+	  		this.set('create_cluster_disabled', true);
 			// clear data store cache for 'cluster'
 			this.store.unloadAll('cluster');
 			// reset variables();
@@ -538,18 +543,39 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('alert_mes_cluster_size', 'Please select cluster size');
 			} else if (this.get('master_cpu_selection') == 0) {
 				this.set('alert_mes_master_cpu', 'Please select master cpu');
+				// scroll to message
+				var elem = document.getElementById("master_settings");
+				window.scrollTo(elem.offsetLeft,elem.offsetTop);
 			} else if (this.get('master_ram_selection') == 0) {
 				this.set('alert_mes_master_ram', 'Please select master memory');
+				// scroll to message
+				var elem = document.getElementById("master_settings");
+				window.scrollTo(elem.offsetLeft,elem.offsetTop);
 			} else if (this.get('master_disk_selection') == 0) {
 				this.set('alert_mes_master_disk', 'Please select master disk');
+				// scroll to message
+				var elem = document.getElementById("master_settings");
+				window.scrollTo(elem.offsetLeft,elem.offsetTop);
 			} else if (this.get('slaves_cpu_selection') == 0) {
 				this.set('alert_mes_slaves_cpu', 'Please select slaves cpu');  
+				// scroll to message
+				var elem = document.getElementById("slaves_settings");
+				window.scrollTo(elem.offsetLeft,elem.offsetTop);
 			} else if (this.get('slaves_ram_selection') == 0) {
-				this.set('alert_mes_slaves_ram', 'Please select slaves memory');  
+				this.set('alert_mes_slaves_ram', 'Please select slaves memory');
+				// scroll to message
+				var elem = document.getElementById("slaves_settings");
+				window.scrollTo(elem.offsetLeft,elem.offsetTop);
 			} else if (this.get('slaves_disk_selection') == 0) {
 				this.set('alert_mes_slaves_disk', 'Please select slaves disk');
+				// scroll to message
+				var elem = document.getElementById("slaves_settings");
+				window.scrollTo(elem.offsetLeft,elem.offsetTop);
 			} else if (this.get('cluster_name') == '') {
-				this.set('alert_mes_cluster_name', 'Please input cluster name'); 
+				this.set('alert_mes_cluster_name', 'Please input cluster name');
+				// scroll to message
+				var elem = document.getElementById("common_settings");
+				window.scrollTo(elem.offsetLeft,elem.offsetTop);
 			} else {
 				// check if everything is allowed
 				if ((this.get('total_cpu_selection') <= this.get('content').objectAt(this.get('project_index')).get('cpu_av'))
