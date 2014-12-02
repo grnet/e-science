@@ -207,17 +207,16 @@ def establish_connect(hostname, name, passwd, port):
         response = os.system("ping -c1 -w4 " + hostname + " > /dev/null 2>&1")
         if response == 0:
             try:
-                logging.log(REPORT, ' Pinged %s machine,trying to ssh connect'
-                            ' at port %s', hostname, port)
+                logging.log(REPORT, ' Ping %s:%s', hostname, port)
                 ssh.connect(hostname, username=name, password=passwd,
                             port=port)
-                logging.log(REPORT, " Success in ssh connect as %s to %s"
-                            " at port %s", name, hostname, str(port))
+                logging.log(REPORT, " ssh as %s to %s:%s",
+                            name, hostname, str(port))
                 return ssh
             except Exception, e:
                 logging.warning(e.args)
-                logging.warning(" Cannot ssh connect as %s to %s at port"
-                                " %s trying again", name, hostname, str(port))
+                logging.warning(" Cannot ssh as %s to %s:%s, trying again",
+                                name, hostname, str(port))
                 if i > CONNECTION_TRIES:
                     break
                 i = i+1
@@ -225,15 +224,15 @@ def establish_connect(hostname, name, passwd, port):
         else:
             if i > CONNECTION_TRIES:
                 break
-            logging.warning(' Cannot ping %s machine at port %s, trying again',
+            logging.warning(' Cannot ping %s:%s, trying again',
                             hostname, str(port))
             i = i+1
             sleep(1)
     ssh.close()
-    logging.error(" Failed connecting as %s to %s at port %s",
+    logging.error(" Failed connecting as %s to %s:%s",
                   name, hostname, str(port))
     logging.error("Program is shutting down")
-    msg = ' Failed connecting to %s virtual machine' % hostname
+    msg = ' Failed connecting to %s IP' % hostname
     raise RuntimeError(msg)
 
 

@@ -88,7 +88,7 @@ class YarnCluster(object):
         self.server_dict = {}
         # project id of project name given as argument
         self.project_id = get_project_id(self.opts['token'],
-                                         project_name=self.opts['project_name'])
+					 self.opts['project_name'])
         self.status = {}
         # Instance of an AstakosClient object
         self.auth = check_credentials(self.opts['token'],
@@ -416,8 +416,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--auth_url", nargs='?', dest='auth_url',
                         default=_defaults['auth_url'],
-                        help='Synnefo authentication url. Default is '
-                        'https://accounts.okeanos.grnet.gr/identity/v2.0')
+                        help='Synnefo authentication url. Default is ' +
+                        auth_url)
 
     parser.add_argument("--logging", dest='logging',
                         default=_defaults['logging'],
@@ -444,4 +444,4 @@ if __name__ == "__main__":
         main(opts)
     else:
         logging.error('No arguments were given')
-        exit()
+        exit(error_no_arguments)
