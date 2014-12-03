@@ -16,7 +16,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 import unittest, time, re
 from okeanos_utils import check_quota, get_flavor_id, destroy_cluster
-from create_bare_cluster import create_cluster
+from create_cluster import YarnCluster
 from ClusterTest import ClusterTest
 
 
@@ -26,7 +26,7 @@ class TestClusterCpu(ClusterTest):
 
         driver = self.login()
         # Get user quota from kamaki
-        user_quota = check_quota(self.token)
+        user_quota = check_quota(self.token, self.project_id)
         flavors = get_flavor_id(self.token)
         # List of cpu choices
         cpu_list = flavors['cpus']
@@ -72,8 +72,7 @@ class TestClusterCpu(ClusterTest):
             self.assertEqual("Cpu selection exceeded cyclades cpu limit",
                              driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text)
         finally:
-            cluster_name = server[0]['name'].rsplit('-', 1)[0]
-            destroy_cluster(cluster_name, self.token)
+            destroy_cluster(self.token, master_ip)
 
     def bind_okeanos_resources(self, remaining_cpu, cpu_list):
         '''
@@ -81,23 +80,27 @@ class TestClusterCpu(ClusterTest):
         on remaining_cpu argument.
         '''
         if remaining_cpu == 0:
-            return create_cluster(name=self.name,
-                                  clustersize=2,
-                                  cpu_master=1, ram_master=1024, disk_master=5,
-                                  disk_template='ext_vlmc', cpu_slave=1,
-                                  ram_slave=1024, disk_slave=5,
-                                  token=self.token, image='Debian Base')
+            opts = {"name": self.name,
+                              "clustersize": 2,
+                              "cpu_master": 1, "ram_master": 1024, "disk_master": 5,
+                              "disk_template":'ext_vlmc', "cpu_slave": 1,
+                              "ram_slave": 1024, "disk_slave": 5, "token": self.token,
+                              "image": 'Debian Base', "project_name": self.project_name}
+	    c_yarn_cluster = YarnCluster(opts)
+            return c_yarn_cluster.create_bare_cluster()
+
         else:
             for cpu in cpu_list:
                 if cpu >= remaining_cpu:
                     remaining_cpu = cpu
-                    return create_cluster(name=self.name,
-                                          clustersize=2,
-                                          cpu_master=remaining_cpu, ram_master=1024,
-                                          disk_master=5, disk_template='ext_vlmc',
-                                          cpu_slave=remaining_cpu, ram_slave=1024,
-                                          disk_slave=5, token=self.token,
-                                          image='Debian Base')
-
+                    opts = {"name": self.name,
+                              "clustersize": 2,
+                              "cpu_master": remaining_cpu, "ram_master": 1024, "disk_master": 5,
+                              "disk_template":'ext_vlmc', "cpu_slave": remaining_cpu,
+                              "ram_slave": 1024, "disk_slave": 5, "token": self.token,
+                              "image": 'Debian Base', "project_name": self.project_name}
+	            c_yarn_cluster = YarnCluster(opts)
+                    return c_yarn_cluster.create_bare_cluster()
+      
 if __name__ == "__main__":
     unittest.main()

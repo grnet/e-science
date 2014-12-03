@@ -16,7 +16,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 import unittest, time, re
 from okeanos_utils import check_quota, get_flavor_id, destroy_cluster
-from create_bare_cluster import create_cluster
+from create_cluster import YarnCluster
 from ClusterTest import ClusterTest
 
 
@@ -26,7 +26,7 @@ class TestClusterDiskSize(ClusterTest):
 
         driver = self.login()
         # Get user quota from kamaki
-        user_quota = check_quota(self.token)
+        user_quota = check_quota(self.token, self.project_id)
         flavors = get_flavor_id(self.token)
         # List of disk size choices
         disk_list = flavors['disk']
@@ -73,8 +73,7 @@ class TestClusterDiskSize(ClusterTest):
             self.assertEqual("Disk size selection exceeded cyclades disk size limit",
                              driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text)
         finally:
-            cluster_name = server[0]['name'].rsplit('-', 1)[0]
-            destroy_cluster(cluster_name, self.token)
+            destroy_cluster(self.token, master_ip)
 
     def bind_okeanos_resources(self, remaining_disk, disk_list):
         '''
@@ -82,25 +81,27 @@ class TestClusterDiskSize(ClusterTest):
         on remaining_disk argument.
         '''
         if remaining_disk == 0:
-            return create_cluster(name=self.name,
-                                  clustersize=2,
-                                  cpu_master=1, ram_master=1024, disk_master=5,
-                                  disk_template='ext_vlmc', cpu_slave=1,
-                                  ram_slave=1024, disk_slave=5,
-                                  token=self.token, image='Debian Base')
+	    opts = {"name": self.name,
+                              "clustersize": 2,
+                              "cpu_master": 1, "ram_master": 1024, "disk_master": 5,
+                              "disk_template":'ext_vlmc', "cpu_slave": 1,
+                              "ram_slave": 1024, "disk_slave": 5, "token": self.token,
+                              "image": 'Debian Base', "project_name": self.project_name}
+	    c_yarn_cluster = YarnCluster(opts)
+            return c_yarn_cluster.create_bare_cluster()
+  
         else:
             for disk in disk_list:
                 if disk >= remaining_disk:
                     remaining_disk = disk
-                    return create_cluster(name=self.name,
-                                          clustersize=2,
-                                          cpu_master=1, ram_master=1024,
-                                          disk_master=remaining_disk,
-                                          disk_template='ext_vlmc',
-                                          cpu_slave=1, ram_slave=1024,
-                                          disk_slave=remaining_disk,
-                                          token=self.token,
-                                          image='Debian Base')
+                    opts = {"name": self.name,
+                              "clustersize": 2,
+                              "cpu_master": 1, "ram_master": 1024, "disk_master": remaining_disk,
+                              "disk_template":'ext_vlmc', "cpu_slave": 1,
+                              "ram_slave": 1024, "disk_slave": remaining_disk, "token": self.token,
+                              "image": 'Debian Base', "project_name": self.project_name}
+	            c_yarn_cluster = YarnCluster(opts)
+                    return c_yarn_cluster.create_bare_cluster()
 
 if __name__ == "__main__":
     unittest.main()

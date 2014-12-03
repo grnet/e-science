@@ -76,16 +76,15 @@ class TestClusterIps(ClusterTest):
 
         dict_quotas = auth.get_quotas()
         # Find and create available public ips
-        project_id = get_project_id()
-        limit_ips = dict_quotas[project_id]['cyclades.floating_ip']['limit']
-        usage_ips = dict_quotas[project_id]['cyclades.floating_ip']['usage']
-        pending_ips = dict_quotas[project_id]['cyclades.floating_ip']['pending']
+        limit_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['limit']
+        usage_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['usage']
+        pending_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['pending']
         available_ips = limit_ips - (usage_ips + pending_ips)
 
         if available_ips > 0:
             for i in range(available_ips):
                 # Create all available public ips
-                status = self.get_flo_net_id(net_client, project_id)
+                status = self.get_flo_net_id(net_client)
                 if status != 0:
                     logging.error('Error in creating float ip')
                     sys.exit(error_get_ip)
@@ -93,7 +92,7 @@ class TestClusterIps(ClusterTest):
         float_ids, port_ids = self.bind_floating_ip(net_client)
         return float_ids, port_ids, net_client
 
-    def get_flo_net_id(self, net_client, project_id):
+    def get_flo_net_id(self, net_client):
         '''
         Gets an Ipv4 floating network id from the list of public networks Ipv4
         '''
@@ -106,7 +105,7 @@ class TestClusterIps(ClusterTest):
                 float_net_id = lst['id']
                 try:
                     net_client.create_floatingip(float_net_id,
-                                                 project_id=project_id)
+                                                 project_id=self.project_id)
                     return 0
                 except ClientError:
                     if i < len(pub_net_list):

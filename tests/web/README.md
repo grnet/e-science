@@ -25,5 +25,9 @@ To run the tests you need:
 	[deploy]
 
 	url = your base url (eg for localhost http://127.0.0.1:8000/)
+	
+	[project]
+	
+	name = the name of the project you want to run
 
 Run the selenium tests either with `nosetests`, or separately with `python test_*`
