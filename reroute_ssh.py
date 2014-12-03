@@ -136,10 +136,10 @@ def check_command_exit_status(ex_status, command):
     message.
     """
     if ex_status != 0:
-            logging.error('Command %s failed to execute with exit status: %d',
+            logging.error(' Command %s failed to execute with exit status: %d',
                           command, ex_status)
             logging.error('Program shutting down')
-            msg = 'Command %s failed with exit status: %d'\
+            msg = ' Command %s failed with exit status: %d'\
                   % (command, ex_status)
             raise RuntimeError(msg)
     else:
@@ -200,7 +200,7 @@ def establish_connect(hostname, name, passwd, port):
         ssh = mySSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     except:
-        logging.error("Failed creating ssh.client")
+        logging.error(" Failed creating ssh.client")
         raise
     i = 0
     while True:
@@ -216,7 +216,7 @@ def establish_connect(hostname, name, passwd, port):
                 return ssh
             except Exception, e:
                 logging.warning(e.args)
-                logging.warning("Problem in ssh connection as %s to %s at port"
+                logging.warning(" Cannot ssh connect as %s to %s at port"
                                 " %s trying again", name, hostname, str(port))
                 if i > CONNECTION_TRIES:
                     break
@@ -225,15 +225,15 @@ def establish_connect(hostname, name, passwd, port):
         else:
             if i > CONNECTION_TRIES:
                 break
-            logging.warning('Cannot ping %s machine at port %s, trying again',
+            logging.warning(' Cannot ping %s machine at port %s, trying again',
                             hostname, str(port))
             i = i+1
             sleep(1)
     ssh.close()
-    logging.error("Failed connecting as %s to %s at port %s",
+    logging.error(" Failed connecting as %s to %s at port %s",
                   name, hostname, str(port))
     logging.error("Program is shutting down")
-    msg = 'Failed connecting to %s virtual machine' % hostname
+    msg = ' Failed connecting to %s virtual machine' % hostname
     raise RuntimeError(msg)
 
 
@@ -257,7 +257,7 @@ if __name__ == '__main__':
     parser.add_option('--server',
                       action='store', type='string', dest='server',
                       metavar="SERVER",
-                      help='it is  a list with informatinos about the cluster(names and fqdn of the nodes)')
+                      help='a list with information about the cluster(names and fqdn of the nodes)')
     parser.add_option('--master_ip',
                       action='store', type='string', dest='master_ip',
                       metavar="MASTER_IP",

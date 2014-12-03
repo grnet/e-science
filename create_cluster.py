@@ -18,7 +18,9 @@ from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
     destroy_cluster
 from cluster_errors_constants import *
 
-
+# Default values for YarnCluster creation. Only token and project_name
+# are not given valid default values, obviously because they are
+# sensitive arguments and unique to each account and project.
 _defaults = {
     'name': '_Prefix',
     'clustersize': 2,
@@ -64,7 +66,7 @@ class _ArgCheck(object):
         """
         ival = int(val)
         if ival < 0:
-            raise ArgumentTypeError("%s must be a positive number." % val)
+            raise ArgumentTypeError(" %s must be a positive number." % val)
         return ival
 
     def two_or_bigger(self, val):
@@ -74,13 +76,13 @@ class _ArgCheck(object):
         """
         ival = int(val)
         if ival < 2:
-            raise ArgumentTypeError("%s must be at least 2." % val)
+            raise ArgumentTypeError(" %s must be at least 2." % val)
         return ival
 
     def five_or_bigger(self, val):
         ival = int(val)
         if ival < 5:
-            raise ArgumentTypeError("%s must be at least 5." % val)
+            raise ArgumentTypeError(" %s must be at least 5." % val)
         return ival
 
 
@@ -90,32 +92,50 @@ class YarnCluster(object):
     """
 
     def __init__(self, opts):
+        """Initialization of YarnCluster data attributes"""
         if not opts or len(opts) == 0:
             self.opts = _defaults.copy()
         else:
             self.opts = opts
+        # Master VM ip, placeholder value
         self.HOSTNAME_MASTER_IP = '127.0.0.1'
+        # master VM root password file, placeholder value
+        self.pass_file = 'PLACEHOLDER'
+        # List of cluster VMs
         self.server_dict = {}
+        # project id of project name given as argument
         self.project_id = get_project_id(self.opts['token'],
                                          project_name=self.opts['project_name'])
         self.status = {}
+        # Instance of an AstakosClient object
         self.auth = check_credentials(self.opts['token'],
                                       self.opts.get('auth_url',
                                                     _defaults['auth_url']))
+        # ~okeanos endpoints and user id
         self.endpoints, self.user_id = endpoints_and_user_id(self.auth)
+
+        # Instance of CycladesClient
         self.cyclades = init_cyclades(self.endpoints['cyclades'],
                                       self.opts['token'])
+        # Instance of CycladesNetworkClient
         self.net_client = init_cyclades_netclient(self.endpoints['network'],
                                                   self.opts['token'])
+        # Instance of Plankton/ImageClient
         self.plankton = init_plankton(self.endpoints['plankton'],
                                       self.opts['token'])
         self._DispatchCheckers = {}
-        self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_clustersize_quotas
-        self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_network_quotas
-        self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_ip_quotas
-        self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_cpu_valid
-        self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_ram_valid
-        self._DispatchCheckers[len(self._DispatchCheckers) + 1] = self.check_disk_valid
+        self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
+            self.check_clustersize_quotas
+        self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
+            self.check_network_quotas
+        self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
+            self.check_ip_quotas
+        self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
+            self.check_cpu_valid
+        self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
+            self.check_ram_valid
+        self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
+            self.check_disk_valid
 
     def check_clustersize_quotas(self):
         """
@@ -128,7 +148,7 @@ class YarnCluster(object):
         pending_vm = dict_quotas[self.project_id]['cyclades.vm']['pending']
         available_vm = limit_vm - usage_vm - pending_vm
         if available_vm < self.opts.get('clustersize', _defaults['clustersize']):
-            logging.error('Cyclades VMs out of limit')
+            logging.error(' Cyclades VMs out of limit')
             return error_quotas_clustersize
         else:
             return 0
@@ -152,7 +172,7 @@ class YarnCluster(object):
             logging.log(REPORT, ' Private Network quota is ok')
             return 0
         else:
-            logging.error('Private Network quota exceeded')
+            logging.error(' Private Network quota exceeded')
             return error_quotas_network
 
     def check_ip_quotas(self):
@@ -169,7 +189,7 @@ class YarnCluster(object):
         if available_ips > 0:
             return 0
         else:
-            logging.error('Floating IP not available')
+            logging.error(' Floating IP not available')
             return error_get_ip
 
     def check_cpu_valid(self):
@@ -187,7 +207,7 @@ class YarnCluster(object):
                   (self.opts.get('cpu_slave', _defaults['cpu_slave']) * (
                       self.opts.get('clustersize', _defaults['clustersize']) - 1))
         if available_cpu < cpu_req:
-            logging.error('Cyclades cpu out of limit')
+            logging.error(' Cyclades cpu out of limit')
             return error_quotas_cpu
         else:
             return 0
@@ -207,7 +227,7 @@ class YarnCluster(object):
                     (self.opts.get('ram_slave', _defaults['ram_slave']) * (
                     self.opts.get('clustersize', _defaults['clustersize']) - 1))
         if available_ram < ram_req:
-            logging.error('Cyclades ram out of limit')
+            logging.error(' Cyclades ram out of limit')
             return error_quotas_ram
         else:
             return 0
@@ -227,7 +247,7 @@ class YarnCluster(object):
                              (self.opts.get('clustersize', _defaults['clustersize']) - 1))
         available_cyclades_disk_GB = (limit_cd - usage_cd - pending_cd) / Bytes_to_GB
         if available_cyclades_disk_GB < cyclades_disk_req:
-            logging.error('Cyclades disk out of limit')
+            logging.error(' Cyclades disk out of limit')
             return error_quotas_cyclades_disk
         else:
             return 0
@@ -252,7 +272,7 @@ class YarnCluster(object):
         try:
             flavor_list = cyclades_client.list_flavors(True)
         except Exception:
-            logging.exception('Could not get list of flavors')
+            logging.exception(' Could not get list of flavors')
             exit(error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
@@ -272,7 +292,7 @@ class YarnCluster(object):
         try:
             flavor_list = cyclades_client.list_flavors(True)
         except Exception:
-            logging.exception('Could not get list of flavors')
+            logging.exception(' Could not get list of flavors')
             exit(error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
@@ -284,6 +304,16 @@ class YarnCluster(object):
 
         return flavor_id
 
+    def create_password_file(self, master_root_pass, master_name):
+        """
+        Creates a file named after the timestamped name of master node
+        containing the root password of the master virtual machine of
+        the cluster.
+        """
+        self.pass_file = join(expanduser('~'), master_name)
+        with open(self.pass_file, 'w') as f:
+            f.write(master_root_pass)
+
     def create_bare_cluster(self):
         """Creates a bare ~okeanos cluster."""
         # Finds user public ssh key
@@ -294,7 +324,7 @@ class YarnCluster(object):
         flavor_master = self.get_flavor_id_master(self.cyclades)
         flavor_slaves = self.get_flavor_id_slave(self.cyclades)
         if flavor_master == 0 or flavor_slaves == 0:
-            logging.error('Combination of cpu, ram, disk and disk_template do'
+            logging.error(' Combination of cpu, ram, disk and disk_template do'
                           ' not match an existing id')
 
             exit(error_flavor_id)
@@ -312,7 +342,7 @@ class YarnCluster(object):
             logging.error(self.opts['image']+' is not a valid image')
             exit(error_image_id)
         logging.log(SUMMARY, ' Creating ~okeanos cluster')
-        cluster = Cluster(self.cyclades,self.opts['name'],
+        cluster = Cluster(self.cyclades, self.opts['name'],
                           flavor_master, flavor_slaves,
                           chosen_image['id'], self.opts['clustersize'],
                           self.net_client, self.auth, self.project_id)
@@ -322,12 +352,21 @@ class YarnCluster(object):
         sleep(15)
         # wait for the machines to be pingable
         logging.log(SUMMARY, ' ~okeanos cluster created')
+
+        # Get master VM root password
+        master_root_pass = self.server_dict[0]['adminPass']
+        master_name = self.server_dict[0]['name']
+        # Write master VM root password to a file with same name as master VM
+        self.create_password_file(master_root_pass, master_name)
         # Return master node ip and server dict
         return self.HOSTNAME_MASTER_IP, self.server_dict
 
     def create_yarn_cluster(self):
         """Create Yarn cluster"""
         self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
+        logging.log(SUMMARY, ' The root password of master VM [%s] '
+                    'is on file %s', self.server_dict[0]['name'],
+                    self.pass_file)
         logging.log(SUMMARY, ' Creating Yarn cluster')
         list_of_hosts = reroute_ssh_prep(self.server_dict,
                                          self.HOSTNAME_MASTER_IP)
@@ -354,7 +393,7 @@ def main(opts):
 if __name__ == "__main__":
     parser = ArgumentParser()
     checker = _ArgCheck()
-    parser.add_argument("--name", help='The prefix name of the cluster',
+    parser.add_argument("--name", help='The prefix name of the cluster.',
                         dest='name', default='Test')
 
     parser.add_argument("--clustersize", help='Number of virtual cluster nodes to create',
@@ -417,8 +456,11 @@ if __name__ == "__main__":
         if opts['logging'] == 'debug':
             log_directory = dirname(abspath(__file__))
             log_file_path = join(log_directory, "create_cluster_debug.log")
-            logging.basicConfig(filename=log_file_path, level=logging.DEBUG)
-            print 'Creating Hadoop cluster, logs will' + \
+
+            logging.basicConfig(format='%(asctime)s:%(message)s',
+                                filename=log_file_path,
+                                level=logging.DEBUG, datefmt='%H:%M:%S')
+            print ' Creating Hadoop cluster, logs will' + \
                   ' be appended in create_cluster_debug.log'
         else:
             logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',

@@ -25,9 +25,15 @@ def project_list_flavor_quota(user):
     flavors = get_flavor_id(okeanos_token)
     auth = check_credentials(okeanos_token)
     try:
-        list_of_projects = auth.get_projects()
+        list_of_projects = auth.get_projects(state='active')
+        if list_of_projects[0]['name'] != 'system:' + list_of_projects[0]['id']:
+            for project in list_of_projects:
+                if project['name'] == 'system:' + project['id']:
+                    list_of_projects.remove(project)
+                    list_of_projects.insert(0, project)
+                    break
     except Exception:
-        logging.error('Could not get list of projects')
+        logging.error(' Could not get list of projects')
         sys.exit(error_get_list_projects)
 
     for project in list_of_projects:

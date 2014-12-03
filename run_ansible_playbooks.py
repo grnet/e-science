@@ -86,13 +86,11 @@ def run_ansible(filename):
     # required for hadoop installation on every virtual machine. Runs with
     # -f flag which is the fork argument of Ansible.
     level = logging.getLogger().getEffectiveLevel()
-
     # ansible_log file to write if logging level is
     # different than report or summary
     ansible_log = " > ansible.log"
-    if level == (REPORT or SUMMARY):
-        ansible_log = ''
-
+    if level == REPORT or level == SUMMARY:
+        ansible_log = ""
     exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                             'ansible-playbook -i ' + filename + ' ' +
                             ANSIBLE_PLAYBOOK_PATH +
@@ -123,7 +121,7 @@ if __name__ == '__main__':
     parser.add_option('--server',
                       action='store', type='string', dest='server',
                       metavar="SERVER",
-                      help='it is  a list with information about the cluster(names and fqdn of the nodes)')
+                      help='a list with information about the cluster(names and fqdn of the nodes)')
     parser.add_option('--public_ip',
                       action='store', type='string', dest='public_ip',
                       metavar="PUBLIC_IP",
