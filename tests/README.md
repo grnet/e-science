@@ -20,7 +20,15 @@ To run the test you need:
 
 	[cluster]
 	
-	master_ip = x.x.x.x
+	master_ip = x.x.x.x not needed for test_create_cluster
+
+	[deploy]
+
+	url = your base url (eg for localhost http://127.0.0.1:8000/) not needed for test_create_cluster
+	
+	[project]
+	
+	name = the name of the project you want to run
 
 
 Run mock test with either with `nosetests`, or  with `python test_create_bare_cluster.py`

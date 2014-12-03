@@ -143,7 +143,7 @@ class TestCreateCluster(TestCase):
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
-	    self.project_name = parser.get('cloud \"~okeanos\"', 'project_name')
+	    self.project_name = parser.get('project', 'name')
             self.opts = {'name': 'Test', 'clustersize': 2, 'cpu_master': 2,
                 'ram_master': 4096, 'disk_master': 5, 'cpu_slave': 2,
                 'ram_slave': 2048, 'disk_slave': 5, 'token': self.token,

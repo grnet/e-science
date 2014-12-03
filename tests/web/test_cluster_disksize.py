@@ -9,6 +9,7 @@ Selenium test for the disk_size limit error message in cluster/create screen
 
 from selenium import webdriver
 import sys
+import os
 from os.path import join, dirname, abspath
 sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from selenium.webdriver.common.by import By
@@ -73,6 +74,7 @@ class TestClusterDiskSize(ClusterTest):
             self.assertEqual("Disk size selection exceeded cyclades disk size limit",
                              driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text)
         finally:
+            os.system('rm *_root_password')
             destroy_cluster(self.token, master_ip)
 
     def bind_okeanos_resources(self, remaining_disk, disk_list):

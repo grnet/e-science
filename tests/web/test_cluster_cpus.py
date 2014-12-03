@@ -9,6 +9,7 @@ Selenium test for the cpu limit error message in cluster/create screen
 
 from selenium import webdriver
 import sys
+import os
 from os.path import join, dirname, abspath
 sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from selenium.webdriver.common.by import By
@@ -72,6 +73,7 @@ class TestClusterCpu(ClusterTest):
             self.assertEqual("Cpu selection exceeded cyclades cpu limit",
                              driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text)
         finally:
+            os.system('rm *_root_password')
             destroy_cluster(self.token, master_ip)
 
     def bind_okeanos_resources(self, remaining_cpu, cpu_list):

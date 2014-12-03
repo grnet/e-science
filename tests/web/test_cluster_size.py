@@ -8,6 +8,7 @@ Selenium test for the cluster_size error message in cluster/create screen
 '''
 
 import sys
+import os
 from os.path import join, dirname, abspath
 sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from selenium.webdriver.common.by import By
@@ -67,6 +68,7 @@ class TestClusterSize(ClusterTest):
                              " virtual machines limit",
                              driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text)
         finally:
+            os.system('rm *_root_password')
             destroy_cluster(self.token, master_ip)
 
     def bind_okeanos_resources(self):
