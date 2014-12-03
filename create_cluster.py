@@ -333,6 +333,7 @@ class YarnCluster(object):
         sleep(15)
         # wait for the machines to be pingable
         logging.log(SUMMARY, ' ~okeanos cluster created')
+
         # Get master VM root password
         master_root_pass = self.server_dict[0]['adminPass']
         master_name = self.server_dict[0]['name']
@@ -344,6 +345,9 @@ class YarnCluster(object):
     def create_yarn_cluster(self):
         """Create Yarn cluster"""
         self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
+        logging.log(SUMMARY, ' The root password of master VM [%s] '
+                    'is on file %s', self.server_dict[0]['name'],
+                    self.pass_file)
         logging.log(SUMMARY, ' Creating Yarn cluster')
         list_of_hosts = reroute_ssh_prep(self.server_dict,
                                          self.HOSTNAME_MASTER_IP)
@@ -432,6 +436,7 @@ if __name__ == "__main__":
         if opts['logging'] == 'debug':
             log_directory = dirname(abspath(__file__))
             log_file_path = join(log_directory, "create_cluster_debug.log")
+
             logging.basicConfig(format='%(asctime)s:%(message)s',
                                 filename=log_file_path,
                                 level=logging.DEBUG, datefmt='%H:%M:%S')
