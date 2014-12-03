@@ -16,7 +16,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
-from okeanos_utils import check_quota, get_flavor_id
+from okeanos_utils import check_quota, get_flavor_id, check_credentials
 import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
@@ -67,21 +67,28 @@ class test_buttons_availability_respond_based_on_user_quota(unittest.TestCase):
             element = WebDriverWait(driver, 30).until(
                 EC.presence_of_element_located((By.ID, "id_title_cluster_create_route"))
             ) 
-        except: self.fail("time out")     
-        user_quota = check_quota(self.token)
+        except: self.fail("time out")             
+        auth = check_credentials(self.token)
+        try:
+            list_of_projects = auth.get_projects(state='active')
+        except Exception:
+            logging.error(' Could not get list of projects')
         kamaki_flavors = get_flavor_id(self.token)
-        for role in ["master" , "slaves"]:
-            for flavor in ['cpus' , 'ram' , 'disk']:
-                for item in kamaki_flavors[flavor]:
-                    button_id = role + '_' + flavor + '_' + str(item)
-                    if ((user_quota[flavor]['available']-(item + kamaki_flavors[flavor][0])) >= 0):
-                        on = driver.find_element_by_id(button_id)
-                        try: self.assertTrue(on.is_enabled())
-                        except AssertionError as e: self.verificationErrors.append(str(e))
-                    else:
-                        off = driver.find_element_by_id(button_id)
-                        try: self.assertFalse(off.is_enabled())
-                        except AssertionError as e: self.verificationErrors.append(str(e))
+        for project in list_of_projects:
+            user_quota = check_quota(self.token, project['id'])
+            Select(driver.find_element_by_id("project_id")).select_by_visible_text(project['name'])       
+            for role in ["master" , "slaves"]:
+                for flavor in ['cpus' , 'ram' , 'disk']:
+                    for item in kamaki_flavors[flavor]:
+                        button_id = role + '_' + flavor + '_' + str(item)
+                        if ((user_quota[flavor]['available']-(item + kamaki_flavors[flavor][0])) >= 0):
+                            on = driver.find_element_by_id(button_id)
+                            try: self.assertTrue(on.is_enabled())
+                            except AssertionError as e: self.verificationErrors.append(str(e))
+                        else:
+                            off = driver.find_element_by_id(button_id)
+                            try: self.assertFalse(off.is_enabled())
+                            except AssertionError as e: self.verificationErrors.append(str(e))
     
 
     def is_element_present(self, how, what):

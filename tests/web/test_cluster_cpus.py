@@ -26,7 +26,7 @@ class TestClusterCpu(ClusterTest):
 
         driver = self.login()
         # Get user quota from kamaki
-        user_quota = check_quota(self.token)
+        user_quota = check_quota(self.token, self.project_id)
         flavors = get_flavor_id(self.token)
         # List of cpu choices
         cpu_list = flavors['cpus']

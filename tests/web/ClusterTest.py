@@ -20,7 +20,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
-from okeanos_utils import check_quota, get_flavor_id
+from okeanos_utils import check_quota, check_credentials
 import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
@@ -46,10 +46,20 @@ class ClusterTest(unittest.TestCase):
             self.token = parser.get('cloud \"~okeanos\"', 'token')
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
             self.base_url = parser.get('deploy', 'url')
+            self.project_name = parser.get('project', 'name')
+            auth = check_credentials(self.token)
+            try:
+                list_of_projects = auth.get_projects(state='active')
+            except Exception:
+                self.assertTrue(False,'Could not get list of projects')
+            for project in list_of_projects:
+                if project['name'] == self.project_name:
+                    self.project_id = project['id']
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
             self.base_url = "INVALID_APP_URL"
+            self.project_name = "INVALID_PROJECT_NAME"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
 
@@ -83,6 +93,7 @@ class ClusterTest(unittest.TestCase):
                 EC.presence_of_element_located((By.ID, "id_title_cluster_create_route"))
             ) 
         except: self.fail("time out")                 
+        Select(driver.find_element_by_id("project_id")).select_by_visible_text(self.project_name)
         return driver
 
     def is_element_present(self, how, what):

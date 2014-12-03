@@ -25,7 +25,7 @@ class TestClusterSize(ClusterTest):
 
         driver = self.login()
         # Get user quota from kamaki
-        user_quota = check_quota(self.token)
+        user_quota = check_quota(self.token, self.project_id)
         # Maximum available clustersize
         max_vms = str(user_quota['cluster_size']['available'])
         # Tell selenium to get the max available clustersize from dropdown

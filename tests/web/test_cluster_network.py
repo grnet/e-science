@@ -77,7 +77,7 @@ class TestClusterNetwork(ClusterTest):
         endpoints, user_id = endpoints_and_user_id(auth)
         net_client = init_cyclades_netclient(endpoints['network'], self.token)
         dict_quotas = auth.get_quotas()
-        project_id = get_project_id()
+	project_id = get_project_id()
         limit_net = dict_quotas[project_id]['cyclades.network.private']['limit']
         usage_net = dict_quotas[project_id]['cyclades.network.private']['usage']
         pending_net = dict_quotas[project_id]['cyclades.network.private']['pending']
