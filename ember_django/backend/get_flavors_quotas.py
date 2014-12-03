@@ -39,7 +39,6 @@ def project_list_flavor_quota(user):
     for project in list_of_projects:
         quotas = check_quota(okeanos_token, project['id'])
         list_of_resources.append(retrieve_ClusterCreationParams(flavors, quotas, project['name'], user))
-
     return list_of_resources
 
 

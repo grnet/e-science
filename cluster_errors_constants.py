@@ -26,6 +26,7 @@ error_flavor_id = -15
 error_image_id = -16
 error_syntax_token = -17
 error_ready_reroute = -18
+error_no_arguments = -19
 error_fatal = -20
 error_user_quota = -22
 error_flavor_list = -23
