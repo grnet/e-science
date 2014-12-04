@@ -7,7 +7,7 @@
 			<div class="input-group input-group-lg col-sm-offset-3 col-sm-6">
 				<span class="input-group-addon"><i class="glyphicon glyphicon-lock"></i></span>
 				{{view Ember.TextField valueBinding="token" placeholder="enter your ~okeanos token..." type="password" class="center-block form-control input-lg" id="token"}}
-				<span class="input-group-btn"><button type="login" class="btn btn-lg btn-primary">Submit</button></span>
+				<span class="input-group-btn"><button type="login" id="id_login_submit_button" class="btn btn-lg btn-primary">Submit</button></span>
 			</div>
 			{{#if loginFailed}}
 			<div id="id_alert_wrongtoken" class="alert alert-dismissable alert-danger col-sm-6 col-sm-offset-3">
