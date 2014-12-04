@@ -29,3 +29,14 @@ test('protected_resources_redirect_to_login', function() {
     equal(currentRouteName(), 'user.login');
   });
 });
+
+// this test errors (clicking submit causes it to restart)
+test('login_successfully_redirects_to_welcome', function() {
+	expect(1);
+	visit('/user/login');
+	andThen(function() {
+		fillIn('#token', 'PLACEHOLDER'); // needs an active access token if not faked
+		click('#id_login_submit_button');
+		equal(currentRouteName(), 'user.welcome');
+	});
+});
