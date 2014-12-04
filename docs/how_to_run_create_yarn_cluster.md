@@ -18,9 +18,10 @@ python script_name.py "arguments"
       --image="operating System (Default Value)", 
       --token="token", 
       --auth_url="authentication url (Default Value)"
-      --logging_level="6 logging levels:critical, error, warning, report, info, debug"
+      --logging="7 logging levels:critical, error, warning, summary, report, info, debug"
+      --project_name="name of a ~okeanos project"
 
 example
 
-    python script_name.py --name=Yarn_Test --clustersize=3 --cpu_master=4 --ram_master=2048 --disk_master=5 --cpu_slave=2 --ram_slave=1024 --disk_slave=5 --disk_template=ext_vlmc --image='Debian Base' --token=token number --auth_url=https://accounts.okeanos.grnet.gr/identity/v2.0 --logging_level=report
+    python script_name.py --name=Yarn_Test --clustersize=3 --cpu_master=4 --ram_master=2048 --disk_master=5 --cpu_slave=2 --ram_slave=1024 --disk_slave=5 --disk_template=ext_vlmc --image='Debian Base' --token=token number --auth_url=https://accounts.okeanos.grnet.gr/identity/v2.0 --logging=report --project_name=~okeanos_project_name
 

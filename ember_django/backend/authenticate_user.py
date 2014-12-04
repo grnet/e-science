@@ -15,9 +15,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import BasePermission
 from backend.models import Token
 from rest_framework import exceptions
-
-# Definitions of return value errors
-error_authentication = -1
+from cluster_errors_constants import *
 
 # Constants
 AUTHENTICATED = 1
