@@ -15,10 +15,10 @@ python script_name.py "arguments"
       --ram_slave= "slaves's node memory in MB",
       --disk_slave= "slave's node hard drive in GB", 
       --disk_template= "drbd or ext_vlmc" 
-      --image="operating System (Default Value)", 
+      --image="operating System (Default Value Debian Base)", 
       --token="token", 
       --auth_url="authentication url (Default Value)"
-      --logging="7 logging levels:critical, error, warning, summary, report, info, debug"
+      --logging="7 logging levels:critical, error, warning, summary, report, info, debug (Default Value summary)"
       --project_name="name of a ~okeanos project"
 
 example
