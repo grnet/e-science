@@ -93,7 +93,18 @@
     tags: bashhadoop
     lineinfile: "dest={{item.dest}} state={{item.state}} insertafter={{item.insertafter}} line={{item.line}}"
     with_items:
-      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'{{ lookup('file', 'conf_bashrc') }}'"}
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_HOME=/usr/local/hadoop'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export JAVA_HOME=/usr/lib/jvm/java-7-oracle'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_INSTALL=/usr/local/hadoop'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_PREFIX=/usr/local/hadoop'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$HADOOP_INSTALL/bin'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$HADOOP_INSTALL/sbin'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_MAPRED_HOME=$HADOOP_INSTALL'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_COMMON_HOME=$HADOOP_INSTALL'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_HDFS_HOME=$HADOOP_INSTALL'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export YARN_HOME=$HADOOP_INSTALL'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export export HADOOP_CONF_DIR=$HADOOP_INSTALL/etc/hadoop'" }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-7-oracle"' }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export HADOOP_PREFIX=/usr/local/hadoop"' }
 

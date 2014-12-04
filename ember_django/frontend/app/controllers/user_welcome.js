@@ -6,7 +6,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 
   // Function which disables all create cluster buttons so user will have to select a role first (master/slaves) to interact with the buttons
   go_forward: function(){
-    this.controllerFor('clusterCreate').buttons();
+     this.controllerFor('clusterCreate').buttons();
   },
 
   actions:{

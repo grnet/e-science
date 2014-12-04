@@ -3,20 +3,17 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Emberproject Tests</title>
+    <title>GRNET e-Science Tests</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    {{content-for 'head'}}
-    {{content-for 'test-head'}}
-
-    <link rel="stylesheet" href="assets/vendor.css">
-    <link rel="stylesheet" href="assets/emberproject.css">
-    <link rel="stylesheet" href="assets/test-support.css">
+    <link rel="stylesheet" href="../app/styles/bootstrap.orca.css">
+    <link rel="stylesheet" href="../app/styles/style.css">
+    <link rel="stylesheet" href="libs/qunit-1.15.0.css">
     <style>
       #ember-testing-container {
         position: absolute;
-        background: white;
+        background: gray;
         bottom: 0;
         right: 0;
         width: 640px;
@@ -31,15 +28,59 @@
     </style>
   </head>
   <body>
-    <div id="qunit"></div>
-    <div id="qunit-fixture"></div>
+    <div id="qunit" class="container"></div>
+    <div id="qunit-fixture" class="container"></div>
+    <div id="ember-testing-container" class="container">
+      <div id="ember-testing" class="container"></div>
+    </div>
 
-    {{content-for 'body'}}
-    {{content-for 'test-body'}}
-    <script src="assets/vendor.js"></script>
-    <script src="assets/test-support.js"></script>
-    <script src="assets/emberproject.js"></script>
-    <script src="testem.js"></script>
-    <script src="assets/test-loader.js"></script>
+    <script src="../app/libs/jquery-1.11.1.js"></script>
+    <script src="../app/libs/package/dist/handlebars.js"></script>
+    <script src="../app/libs/ember-1.7.0.js"></script>
+    <script src="../app/libs/ember-data.js"></script>
+    <script src="libs/ember-handlebars-loader-0.0.1.js"></script>
+    <script src="../app/styles/bootstrap.js"></script>
+  
+    <script src="../app/app.js"></script>
+  
+    <script src="../app/controllers/application.js"></script>
+    <script src="../app/controllers/user_welcome.js"></script>
+    <script src="../app/controllers/homepage.js"></script>
+    <script src="../app/controllers/user_login.js"></script>
+    <script src="../app/controllers/cluster_create.js"></script>
+
+    <script src="../app/router.js"></script>
+    <script src="../app/routes/index.js"></script>
+    <script src="../app/routes/restricted.js"></script>
+    <script src="../app/routes/user_login.js"></script>        
+    <script src="../app/routes/user_logout.js"></script>        
+    <script src="../app/routes/user_welcome.js"></script>        
+    <script src="../app/routes/cluster_create.js"></script>
+
+    <script src="../app/views/user_login.js"></script>
+    <script src="../app/views/cpu_selection_button.js"></script>
+    <script src="../app/views/mem_selection_button.js"></script>
+    <script src="../app/views/disk_selection_button.js"></script>
+    <script src="../app/views/storage_selection_button.js"></script>
+    
+    <script src="../app/store.js"></script> 
+    <script src="../app/models/user.js"></script>
+    <script src="../app/models/cluster.js"></script>
+    <script src="../app/models/cluster_choice.js"></script>
+    
+    <script>EmberHandlebarsLoader.loadTemplates([
+      'application', 'homepage', 'user/login', 'user/welcome', 'cluster/create'
+    ])</script>
+
+    <script src="libs/qunit-1.15.0.js"></script>
+    <script src="libs/ember-qunit.js"></script>
+    <script src="/testem.js"></script>
+    <script src="libs/sinon-1.12.1.js"></script>
+    <!--<script src="libs/sinon-qunit-1.0.0.js"></script>-->
+    <script src="test-helper.js"></script>
+    <script src="integration/routes.js"></script>
+    <script src="unit/controllers.js"></script>
+    <script src="unit/routes.js"></script>
+    
   </body>
 </html>

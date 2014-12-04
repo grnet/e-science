@@ -16,11 +16,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from authenticate_user import *
 from django.views import generic
-from get_flavors_quotas import retrieve_ClusterCreationParams
+from get_flavors_quotas import project_list_flavor_quota
 from backend.models import *
-from backend.serializers import OkeanosTokenSerializer, UserInfoSerializer, ClusterCreationParamsSerializer, ClusterchoicesSerializer
+from backend.serializers import OkeanosTokenSerializer, UserInfoSerializer, \
+    ClusterCreationParamsSerializer, ClusterchoicesSerializer
 from django_db_after_login import *
-from create_cluster import HadoopCluster
+from create_cluster import YarnCluster
+from cluster_errors_constants import *
+
 
 class MainPageView(generic.TemplateView):
     '''Load the template file'''
@@ -48,8 +51,8 @@ class StatusView(APIView):
         '''
         user_token = Token.objects.get(key=request.auth)
         self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
-        retrieved_cluster_info = retrieve_ClusterCreationParams(self.user)
-        serializer = self.serializer_class(retrieved_cluster_info)
+        retrieved_cluster_info = project_list_flavor_quota(self.user)
+        serializer = self.serializer_class(retrieved_cluster_info, many=True)
         return Response(serializer.data)
 
     def put(self, request, *args, **kwargs):
@@ -64,7 +67,7 @@ class StatusView(APIView):
         if serializer.is_valid():
             user_token = Token.objects.get(key=request.auth)
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
-            # Dictionary of HadoopCluster arguments
+            # Dictionary of YarnCluster arguments
             choices = {'name': serializer.data['cluster_name'],
                        'clustersize': serializer.data['cluster_size'],
                        'cpu_master': serializer.data['cpu_master'],
@@ -74,13 +77,14 @@ class StatusView(APIView):
                        'ram_slave': serializer.data['mem_slaves'],
                        'disk_slave': serializer.data['disk_slaves'],
                        'disk_template': serializer.data['disk_template'],
-                       'os_choice': serializer.data['os_choice'],
-                       'token': user.okeanos_token}
+                       'image': serializer.data['os_choice'],
+                       'token': user.okeanos_token,
+                       'project_name': serializer.data['project_name']}
 
-            new_hadoop_cluster = HadoopCluster(choices)
+            new_yarn_cluster = YarnCluster(choices)
             # Check user's cluster choices and send message if everything ok.
             # Else send appropriate error message.
-            cluster_check = new_hadoop_cluster.check_all_resources()
+            cluster_check = new_yarn_cluster.check_all_resources()
 
             if cluster_check == 0:
                 return Response({"id": 1, "message": "Everything is ok with "
@@ -105,7 +109,7 @@ class StatusView(APIView):
                                  " exceeded cyclades disk size limit"})
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
-        return Response({"Something is not valid"})
+        return Response(serializer.errors)
 
 
 class SessionView(APIView):

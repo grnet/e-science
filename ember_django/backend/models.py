@@ -48,8 +48,12 @@ class ClusterCreationParams(models.Model):
     parameters from okeanos. Imported djorm_pgarray package
     is needed for custom Arrayfields.
     '''
-    user_id = models.OneToOneField(UserInfo, null=False,
+    user_id = models.ForeignKey(UserInfo, null=False,
                                    help_text="User ID")
+    # Project name
+    project_name = models.CharField("Project Name", max_length=255,
+                                    null=True, help_text="Project name from"
+                                    " which resources will be requested")
     # Maximum allowed vms
     vms_max = models.IntegerField("Max Vms", null=True,
                                   help_text="Maximum Allowed Virtual"

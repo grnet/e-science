@@ -1,6 +1,7 @@
 attr = App.attr;
 // Model used for sending user's choices regarding create cluster information
 App.Clusterchoice = DS.Model.extend({
+	project_name : attr('string'),		// name of the project
 	cluster_name : attr('string'),		// name of the cluster
 	cluster_size : attr('number'),		// size of cluster (master+slaves)
 	cpu_master : attr('number'),		// cpus for master

@@ -3,8 +3,14 @@
 // Django backend communicating with Ember through Django REST framework.
 
 window.App = Ember.Application.create({
+	VERSION: '0.1',
     // Basic logging
-    LOG_TRANSITIONS : true
+    LOG_TRANSITIONS: true,
+    LOG_ACTIVE_GENERATION: true,
+    rootElement: 'body',
+  	ready: function() {
+    
+  }
 });
 
 App.attr = DS.attr;

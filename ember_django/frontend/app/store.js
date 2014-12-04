@@ -15,3 +15,6 @@ App.ApplicationAdapter = DS.ActiveModelAdapter.extend({
 		};
 	}.property("App.escience_token")
 }); 
+
+// For fixtures
+//App.ApplicationAdapter = DS.FixtureAdapter;
