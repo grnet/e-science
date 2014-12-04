@@ -7,7 +7,7 @@ env:
   - secure: X6F9qYcVNhPYHSHF15WnTmOgR3GToC0DISFhCyTD0Lb3qsoxu4PuNWA3X6LazQ57U5we/7keZuwVJAhJzy3JiVUYPOIM6AnYmG/qqdmvuTwyzqqXR9E0ULBWPTtA4HKaz/3P3RjkAyQ3WjcD2dHbRaGA+cFvXoTRAzsUmWYBTx8=
 before_install:
 - openssl aes-256-cbc -K $encrypted_b254a382580f_key -iv $encrypted_b254a382580f_iv
-  -in -out .private/.config.txt.enc -out .private/.config.txt -d
+  -in .private/.config.txt.enc -out .private/.config.txt -d
 install:
 - pip install kamaki==0.13rc3
 - pip install paramiko
