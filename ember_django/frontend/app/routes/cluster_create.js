@@ -8,5 +8,6 @@ App.ClusterCreateRoute = App.RestrictedRoute.extend({
     afterModel : function() {
 	// resets variables every time you go to the create cluster
 	this.controllerFor('clusterCreate').reset_variables();
+	this.controllerFor('clusterCreate').reset_project();
     },
 });

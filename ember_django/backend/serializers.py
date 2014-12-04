@@ -38,7 +38,7 @@ class ClusterCreationParamsSerializer(serializers.ModelSerializer):
     disk_choices = PGArrayField(required=False)
     disk_template = PGArrayField(required=False)
     os_choices = PGArrayField(required=False)
-    id = serializers.SerializerMethodField('get_ember_id')
+#     id = serializers.SerializerMethodField('get_ember_id')
 
     class Meta:
         model = ClusterCreationParams
@@ -47,9 +47,9 @@ class ClusterCreationParamsSerializer(serializers.ModelSerializer):
                   'disk_av', 'cpu_choices', 'mem_choices', 'disk_choices',
                   'disk_template', 'os_choices')
 
-    def get_ember_id(self, obj):
-        '''Always returns id 1 for ember.js'''
-        return random.randrange(1, 1000, 1)
+#     def get_ember_id(self, obj):
+#         '''Always returns id 1 for ember.js'''
+#         return random.randrange(1, 1000, 1)
 
 
 class OkeanosTokenSerializer(serializers.Serializer):

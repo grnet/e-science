@@ -26,23 +26,18 @@ def project_list_flavor_quota(user):
     auth = check_credentials(okeanos_token)
     try:
         list_of_projects = auth.get_projects(state='active')
-        if list_of_projects[0]['name'] != 'system:' + list_of_projects[0]['id']:
-            for project in list_of_projects:
-                if project['name'] == 'system:' + project['id']:
-                    list_of_projects.remove(project)
-                    list_of_projects.insert(0, project)
-                    break
     except Exception:
         logging.error(' Could not get list of projects')
         sys.exit(error_get_list_projects)
-
+    i = 1
     for project in list_of_projects:
         quotas = check_quota(okeanos_token, project['id'])
-        list_of_resources.append(retrieve_ClusterCreationParams(flavors, quotas, project['name'], user))
+        list_of_resources.append(retrieve_ClusterCreationParams(flavors, quotas, project['name'], user, i))
+        i = i + 1
     return list_of_resources
 
 
-def retrieve_ClusterCreationParams(flavors, quotas, project_name, user):
+def retrieve_ClusterCreationParams(flavors, quotas, project_name, user, id):
     '''
     Retrieves user quotas and flavor list from kamaki
     using get_flavor_id and check_quota methods and returns the updated
@@ -70,7 +65,8 @@ def retrieve_ClusterCreationParams(flavors, quotas, project_name, user):
 
     # Create a ClusterCreationParams object with the parameters returned from
     # get_flavor_id and check_quota.
-    cluster_creation_params = ClusterCreationParams(user_id=user,
+    cluster_creation_params = ClusterCreationParams(id=id, 
+                                                    user_id=user,
                                                     project_name=project_name,
                                                     vms_max=vms_max,
                                                     vms_av=vms_av,
