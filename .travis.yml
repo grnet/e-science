@@ -25,4 +25,4 @@ before_script:
 - nohup bash -c "webdriver-manager start 2>&1 &"
 script:
 - nosetests -sv tests/test_create_cluster.py
-- testem ci -f ember_django/frontend/testem.json -t ember_django/frontend/tests/index.html
+#- testem ci -f ember_django/frontend/testem.json -t ember_django/frontend/tests/index.html
