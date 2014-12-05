@@ -1,11 +1,14 @@
 // Login controller
 App.UserLoginController = Ember.Controller.extend({
+	needs: 'application',
 	token : '',
 	isLoggedIn : function() {
 		// Check local storage auth token for user login status.
 		if (window.localStorage.escience_auth_token != 'null' && !Ember.isEmpty(window.localStorage.escience_auth_token) && window.localStorage.escience_auth_token !== 'undefined') {
+			this.set('controllers.application.loggedIn', true);
 			return true;
 		} else {
+			this.set('controllers.application.loggedIn', false);
 			return false;
 		}
 	},
@@ -33,16 +36,17 @@ App.UserLoginController = Ember.Controller.extend({
 					});
 					// Set the text in login screen to blank and redirect to welcome screen
 					self.set('loginFailed', false);
+					self.set('controllers.application.loggedIn', true);
 					self.set('token', '');
 					self.transitionToRoute('user.welcome');
 				}, function() {
 					// Failed login.
 					self.set('loginFailed', true);
+					self.set('controllers.application.loggedIn', false);
 					self.set('token', '');
 				});
 
 			}
 		}
 	}
-
 }); 

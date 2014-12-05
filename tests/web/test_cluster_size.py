@@ -8,6 +8,7 @@ Selenium test for the cluster_size error message in cluster/create screen
 '''
 
 import sys
+import os
 from os.path import join, dirname, abspath
 sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from selenium.webdriver.common.by import By
@@ -15,7 +16,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 import unittest, time, re
 from okeanos_utils import check_quota, get_flavor_id, destroy_cluster
-from create_bare_cluster import create_cluster
+from create_cluster import YarnCluster
 from ClusterTest import ClusterTest
 
 
@@ -25,7 +26,7 @@ class TestClusterSize(ClusterTest):
 
         driver = self.login()
         # Get user quota from kamaki
-        user_quota = check_quota(self.token)
+        user_quota = check_quota(self.token, self.project_id)
         # Maximum available clustersize
         max_vms = str(user_quota['cluster_size']['available'])
         # Tell selenium to get the max available clustersize from dropdown
@@ -67,20 +68,23 @@ class TestClusterSize(ClusterTest):
                              " virtual machines limit",
                              driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text)
         finally:
-            cluster_name = server[0]['name'].rsplit('-', 1)[0]
-            destroy_cluster(cluster_name, self.token)
+            os.system('rm *_root_password')
+            destroy_cluster(self.token, master_ip)
 
     def bind_okeanos_resources(self):
         '''
         Create a bare cluster with two vms, so we can bind the
         resources in ~okeanos
         '''
-        return create_cluster(name=self.name,
-                              clustersize=2,
-                              cpu_master=1, ram_master=1024, disk_master=5,
-                              disk_template='ext_vlmc', cpu_slave=1,
-                              ram_slave=1024, disk_slave=5, token=self.token,
-                              image='Debian Base')
+	opts = {"name": self.name,
+                              "clustersize": 2,
+                              "cpu_master": 1, "ram_master": 1024, "disk_master": 5,
+                              "disk_template":'ext_vlmc', "cpu_slave": 1,
+                              "ram_slave": 1024, "disk_slave": 5, "token": self.token,
+                              "image": 'Debian Base', "project_name": self.project_name}
+	c_yarn_cluster = YarnCluster(opts)
+        return c_yarn_cluster.create_bare_cluster()
+         
 
 if __name__ == "__main__":
     unittest.main()

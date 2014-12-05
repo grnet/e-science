@@ -5,28 +5,32 @@ env:
   global:
   - secure: K+JlJYjqHmO/5bRvkKSJoh6YfZGYf9/kyqM/j3HNUG0o5gvTa6zTcI2kjxpnnYvEpz64n58YcinusNTimUM4Y1eIaoxcKlCW0MyWkQcBAg8jB8mxttH3Igw0dSblo8XZcxLBMFr7mm6I9Z0cbRRyrDr+ebp6t/+m7xf/3hMozh4=
   - secure: X6F9qYcVNhPYHSHF15WnTmOgR3GToC0DISFhCyTD0Lb3qsoxu4PuNWA3X6LazQ57U5we/7keZuwVJAhJzy3JiVUYPOIM6AnYmG/qqdmvuTwyzqqXR9E0ULBWPTtA4HKaz/3P3RjkAyQ3WjcD2dHbRaGA+cFvXoTRAzsUmWYBTx8=
+before_install:
+- openssl aes-256-cbc -K $encrypted_b254a382580f_key -iv $encrypted_b254a382580f_iv
+  -in .private/.config.txt.enc -out .private/.config.txt -d
 install:
 - pip install kamaki==0.13rc3
 - pip install paramiko
-- pip install ansible
+- pip install ansible==1.7.2
 - pip install django
 - pip install selenium
 - pip install mock
 - pip install rednose
 - pip install nose-cov
 - sudo apt-get install sshpass
-script:
-- ssh-keygen -q -t rsa -P "" -f ~/.ssh/id_rsa
-- cp ~/.ssh/id_rsa.pub ~/.ssh/id_rsa.new
-- sshpass -p $hpass scp -o StrictHostKeyChecking=no -q ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
-- sshpass -p $hpass ssh hduser@$master_ip "cat /home/hduser/.ssh/id_rsa.new >> /home/hduser/.ssh/authorized_keys"
-- echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-- nosetests -sv tests/test_create_cluster.py
-- python legacy/run_pi_yarn.py --master_ip=$master_ip 2 100000
-before_install:
-- openssl aes-256-cbc -K $encrypted_8f68f3e32372_key -iv $encrypted_8f68f3e32372_iv
-  -in .private/.config.txt.enc -out .private/.config.txt -d
 before_script:
+- npm install testem -g
 - export DISPLAY=:99.0
 - sh -e /etc/init.d/xvfb start
 - nohup bash -c "webdriver-manager start 2>&1 &"
+script:
+- ssh-keygen -q -t rsa -P "" -f ~/.ssh/id_rsa
+- cp ~/.ssh/id_rsa.pub ~/.ssh/id_rsa.new
+#- sshpass -p $hpass scp -o StrictHostKeyChecking=no -q ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
+#- sshpass -p $hpass ssh hduser@$master_ip "cat /home/hduser/.ssh/id_rsa.new >> /home/hduser/.ssh/authorized_keys"
+- echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+- nosetests -sv tests/test_create_cluster.py
+
+- testem ci -f ember_django/frontend/testem.json -t ember_django/frontend/tests/index.html
+#- python legacy/run_pi_yarn.py --master_ip=$master_ip 2 100000
+

@@ -9,6 +9,7 @@ Serializers file for django rest framework.
 
 from rest_framework import serializers
 from backend.models import UserInfo, ClusterInfo, ClusterCreationParams
+import random
 
 
 class PGArrayField(serializers.WritableField):
@@ -41,13 +42,14 @@ class ClusterCreationParamsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClusterCreationParams
-        fields = ('id', 'user_id', 'vms_max', 'vms_av', 'cpu_max', 'cpu_av',
-                  'mem_max', 'mem_av', 'disk_max', 'disk_av', 'cpu_choices',
-                  'mem_choices', 'disk_choices', 'disk_template', 'os_choices')
+        fields = ('id', 'user_id', 'project_name', 'vms_max', 'vms_av', #id
+                  'cpu_max', 'cpu_av', 'mem_max', 'mem_av', 'disk_max',
+                  'disk_av', 'cpu_choices', 'mem_choices', 'disk_choices',
+                  'disk_template', 'os_choices')
 
     def get_ember_id(self, obj):
         '''Always returns id 1 for ember.js'''
-        return 1
+        return random.randrange(1, 1000, 1)
 
 
 class OkeanosTokenSerializer(serializers.Serializer):
@@ -79,6 +81,8 @@ class ClusterchoicesSerializer(serializers.Serializer):
     disk_template = serializers.CharField()
 
     os_choice = serializers.CharField()
+
+    project_name = serializers.CharField()
 
 
 class UserInfoSerializer(serializers.ModelSerializer):
