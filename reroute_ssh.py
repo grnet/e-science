@@ -18,7 +18,7 @@ from sys import argv
 from time import sleep
 
 # Definitions of return value errors
-from cluster_errors_constants import error_ready_reroute, error_fatal, REPORT, \
+from cluster_errors_constants import error_ready_reroute, error_ssh_client, REPORT, \
     SUMMARY, ADD_TO_GET_PORT
 
 
@@ -57,11 +57,8 @@ def reroute_ssh_prep(server, master_ip):
                       'port': port}
             list_of_hosts.append(dict_s)
     # Pre-setup the port forwarding that will happen later
-    try:
-        get_ready_for_reroute()
-    except Exception, e:
-        logging.exception(e.args)
-        sys.exit(error_ready_reroute)
+    get_ready_for_reroute()
+
     # Port-forwarding now for every slave machine
     for vm in list_of_hosts:
         call_reroute_for_every_vm(vm)
@@ -136,12 +133,9 @@ def check_command_exit_status(ex_status, command):
     message.
     """
     if ex_status != 0:
-            logging.error(' Command %s failed to execute with exit status: %d',
-                          command, ex_status)
-            logging.error('Program shutting down')
             msg = ' Command %s failed with exit status: %d'\
                   % (command, ex_status)
-            raise RuntimeError(msg)
+            raise RuntimeError(msg, ex_status)
     else:
         logging.log(REPORT, ' Command: %s execute with exit status:%d',
                     command, ex_status)
@@ -152,11 +146,7 @@ def call_reroute_for_every_vm(vm):
     if vm['port'] != 22:  # Not Master virtual machine
         # Slave virtual machines
         # Forwarding Ports are 10000,10001, etc for every slave vm
-        try:
-            reroute_ssh_to_slaves(vm['port'], vm['private_ip'])
-        except Exception, e:
-            logging.exception(e.args)
-            os._exit(error_fatal)
+        reroute_ssh_to_slaves(vm['port'], vm['private_ip'])
 
 
 def reroute_ssh_to_slaves(dport, slave_ip):
@@ -200,8 +190,8 @@ def establish_connect(hostname, name, passwd, port):
         ssh = mySSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     except:
-        logging.error(" Failed creating ssh.client")
-        raise
+        msg = " Failed creating ssh.client for paramiko"
+        raise RuntimeError(msg, error_ssh_client)
     i = 0
     while True:
         response = os.system("ping -c1 -w4 " + hostname + " > /dev/null 2>&1")
@@ -229,11 +219,9 @@ def establish_connect(hostname, name, passwd, port):
             i = i+1
             sleep(1)
     ssh.close()
-    logging.error(" Failed connecting as %s to %s:%s",
-                  name, hostname, str(port))
-    logging.error("Program is shutting down")
-    msg = ' Failed connecting to %s IP' % hostname
-    raise RuntimeError(msg)
+    msg = " Failed connecting as %s to %s:%s" % \
+        (name, hostname, str(port))
+    raise RuntimeError(msg, error_ssh_client)
 
 
 def main(opts):

@@ -33,14 +33,14 @@ def get_project_id(token, project_name):
     auth = check_credentials(token)
     try:
         list_of_projects = auth.get_projects(state='active')
-    except Exception:
-        logging.error(' Could not get list of active projects')
-        sys.exit(error_get_list_projects)
+    except ClientError:
+        msg = ' Could not get list of active projects'
+        raise ClientError(msg, error_get_list_projects)
     for project in list_of_projects:
         if project['name'] == project_name:
             return project['id']
-    logging.error(' No project id was found for %s', project_name)
-    sys.exit(error_proj_id)
+    msg = ' No project id was found for ' + project_name
+    raise ClientError(msg, error_proj_id)
 
 
 def destroy_cluster(token, master_ip):
@@ -62,10 +62,10 @@ def destroy_cluster(token, master_ip):
     try:
         list_of_servers = cyclades.list_servers(detail=True)
         list_of_ips = nc.list_floatingips()
-    except Exception:
-        logging.error( 'Could not get list of resources.'
-                      'Cannot delete cluster')
-        sys.exit(error_get_list_servers)
+    except ClientError:
+        msg = 'Could not get list of resources.'\
+            'Cannot delete cluster'
+        raise ClientError(msg, error_get_list_servers)
     logging.log(SUMMARY, ' Starting deletion of requested cluster')
     # Get master virtual machine and network from ip
     for ip in list_of_ips:
@@ -81,15 +81,15 @@ def destroy_cluster(token, master_ip):
             break
     # Show an error message and exit if not valid ip or network
     if not master_id:
-        logging.error(' [%s] is not the valid public ip of the master'
-                      % float_ip_to_delete)
-        sys.exit(error_get_ip)
+        msg = ' [%s] is not the valid public ip of the master' + \
+            float_ip_to_delete
+        raise ClientError(msg, error_get_ip)
 
     if not network_to_delete_id:
-        logging.error(' A valid network of master and slaves was not found.'
-                      'Deleting the master VM only')
         cyclades.delete_server(master_id)
-        sys.exit(error_cluster_corrupt)
+        msg = ' A valid network of master and slaves was not found.'\
+            'Deleting the master VM only'
+        raise ClientError(msg, error_cluster_corrupt)
 
     # Get the servers of the cluster to be deleted
     for server in list_of_servers:
@@ -119,7 +119,7 @@ def destroy_cluster(token, master_ip):
 
         logging.log(REPORT, ' Cluster with master node [%s] is %s',
                     servers_to_delete[0]['name'], new_status)
-    except Exception:
+    except ClientError:
         logging.exception(' Error in deleting server')
         list_of_errors.append(error_cluster_corrupt)
 
@@ -128,7 +128,7 @@ def destroy_cluster(token, master_ip):
         sleep(10)  # Take some time to ensure it is deleted
         logging.log(SUMMARY, ' Network with id [%s] is deleted'
                     % network_to_delete_id)
-    except Exception:
+    except ClientError:
         logging.exception(' Error in deleting network')
         list_of_errors.append(error_cluster_corrupt)
 
@@ -137,7 +137,7 @@ def destroy_cluster(token, master_ip):
         nc.delete_floatingip(float_ip_to_delete_id)
         logging.log(SUMMARY, ' Floating ip [%s] is deleted'
                     % float_ip_to_delete)
-    except Exception:
+    except ClientError:
         logging.exception(' Error in deleting floating ip [%s]' %
                           float_ip_to_delete)
         list_of_errors.append(error_cluster_corrupt)
@@ -150,20 +150,20 @@ def destroy_cluster(token, master_ip):
         return 0
     # There was one or more errors, return error message
     else:
-        sys.exit(list_of_errors[0])
+        msg = ' Error while deleting cluster'
+        raise ClientError(msg, list_of_errors[0])
 
 
-def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
-                      '/identity/v2.0'):
+def check_credentials(token, auth_url=auth_url):
     """Identity,Account/Astakos. Test authentication credentials"""
     logging.log(REPORT, ' Test the credentials')
     try:
         auth = AstakosClient(auth_url, token)
         auth.authenticate()
     except ClientError:
-        logging.error(' Authentication failed with url %s and token %s' % (
-                      auth_url, token))
-        sys.exit(error_authentication)
+        msg = ' Authentication failed with url %s and token %s'\
+            % (auth_url, token)
+        raise ClientError(msg, error_authentication)
     return auth
 
 
@@ -174,9 +174,9 @@ def get_flavor_id(token):
     cyclades = init_cyclades(endpoints['cyclades'], token)
     try:
         flavor_list = cyclades.list_flavors(True)
-    except Exception:
-        logging.exception(' Could not get list of flavors')
-        sys.exit(error_flavor_list)
+    except ClientError:
+        msg = ' Could not get list of flavors'
+        raise ClientError(msg, error_flavor_list)
     cpu_list = []
     ram_list = []
     disk_list = []
@@ -199,19 +199,23 @@ def get_flavor_id(token):
     return flavors
 
 
+def get_user_quota(auth):
+    """Return user quota"""
+    try:
+        return auth.get_quotas()
+    except ClientError:
+        msg = ' Could not get user quota'
+        raise ClientError(msg, error_user_quota)
+
+
 def check_quota(token, project_id):
     '''
     Checks if user available quota .
     Available = limit minus (used and pending).Also divides with 1024*1024*1024
     to transform bytes to gigabytes.
      '''
-    try:
-        auth = check_credentials(token)
-        dict_quotas = auth.get_quotas()
-    except Exception:
-        logging.exception(' Could not get user quota')
-        sys.exit(error_user_quota)
-
+    auth = check_credentials(token)
+    dict_quotas = get_user_quota(auth)
     limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
     usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GB
     pending_cd = dict_quotas[project_id]['cyclades.disk']['pending'] / Bytes_to_GB
@@ -260,8 +264,8 @@ def endpoints_and_user_id(auth):
             )
         user_id = auth.user_info['id']
     except ClientError:
-        logging.error(' Failed to get endpoints & user_id from identity server')
-        raise
+        msg = ' Failed to get endpoints & user_id from identity server'
+        raise ClientError(msg)
     return endpoints, user_id
 
 
@@ -275,8 +279,8 @@ def init_cyclades_netclient(endpoint, token):
     try:
         return CycladesNetworkClient(endpoint, token)
     except ClientError:
-        logging.error(' Failed to initialize cyclades network client')
-        raise
+        msg = ' Failed to initialize cyclades network client'
+        raise ClientError(msg)
 
 
 def init_plankton(endpoint, token):
@@ -288,8 +292,8 @@ def init_plankton(endpoint, token):
     try:
         return ImageClient(endpoint, token)
     except ClientError:
-        logging.error(' Failed to initialize the Image client')
-        raise
+        msg = ' Failed to initialize the Image client'
+        raise ClientError(msg)
 
 
 def init_cyclades(endpoint, token):
@@ -301,8 +305,8 @@ def init_cyclades(endpoint, token):
     try:
         return CycladesClient(endpoint, token)
     except ClientError:
-        logging.error(' Failed to initialize cyclades client')
-        raise
+        msg = ' Failed to initialize cyclades client'
+        raise ClientError(msg)
 
 
 class Cluster(object):
@@ -363,7 +367,8 @@ class Cluster(object):
         if not (network and servers):
             logging.error(' Nothing to delete')
             return
-        logging.error(' Cleaning up and shutting down')
+        logging.error(' An unrecoverable error occured.'
+                      'Cleaning up and shutting down')
         status = ''
         if servers:
             for server in servers:
@@ -407,16 +412,17 @@ class Cluster(object):
         try:
             new_network = self.nc.create_network('MAC_FILTERED', net_name,
                                                  project_id=self.project_id)
-        except Exception:
-            logging.exception(' Error in creating network')
-            sys.exit(error_create_network)
+        except ClientError:
+            msg = ' Error in creating network'
+            raise ClientError(msg, error_create_network)
+
         # Gets list of floating ips
         try:
             list_float_ips = self.nc.list_floatingips()
-        except Exception:
-            logging.exception(' Error getting list of floating ips')
+        except ClientError:
             self.clean_up(network=new_network)
-            sys.exit(error_get_ip)
+            msg = ' Error getting list of floating ips'
+            raise ClientError(msg, error_get_ip)
         # If there are existing floating ips,we check if there is any free or
         # if all of them are attached to a machine
         if len(list_float_ips) != 0:
@@ -434,15 +440,15 @@ class Cluster(object):
                         except ClientError:
                             if self.get_flo_net_id() != 0:
                                 self.clean_up(network=new_network)
-                                logging.error(' Error in creating float ip')
-                                sys.exit(error_get_ip)
+                                msg = ' Error in creating float ip'
+                                raise ClientError(msg, error_get_ip)
         else:
             # No existing ips,so we create a new one
             # with the floating  network id
             if self.get_flo_net_id() != 0:
-                logging.error(' Error in creating float ip')
                 self.clean_up(network=new_network)
-                sys.exit(error_get_ip)
+                msg = ' Error in creating float ip'
+                raise ClientError(msg, error_get_ip)
         logging.log(REPORT, ' Wait for %s servers to build', self.size)
 
         # Creation of master server
@@ -452,10 +458,10 @@ class Cluster(object):
                 server_name, self.flavor_id_master, self.image_id,
                 personality=self._personality(ssh_k_path, pub_k_path),
                 project_id=self.project_id))
-        except Exception:
-            logging.exception(' Error creating master VM [%s]' % server_name)
+        except ClientError:
             self.clean_up(servers=servers, network=new_network)
-            sys.exit(error_create_server)
+            msg = ' Error creating master VM [%s]' % server_name
+            raise ClientError(msg, error_create_server)
         # Creation of slave servers
         for i in range(2, self.size+1):
             try:
@@ -467,10 +473,10 @@ class Cluster(object):
                     personality=self._personality(ssh_k_path, pub_k_path),
                     networks=empty_ip_list, project_id=self.project_id))
 
-            except Exception:
-                logging.exception(' Error creating server [%s]' % server_name)
+            except ClientError:
                 self.clean_up(servers=servers, network=new_network)
-                sys.exit(error_create_server)
+                msg = ' Error creating server [%s]' % server_name
+                raise ClientError(msg, error_create_server)
         # We put a wait server for the master here,so we can use the
         # server id later and the slave start their building without
         # waiting for the master to finish building
@@ -478,10 +484,10 @@ class Cluster(object):
             new_status = self.client.wait_server(servers[0]['id'],
                                                  max_wait=MAX_WAIT)
             if new_status != 'ACTIVE':
-                logging.error(' Status for server [%s] is %s',
-                              servers[i]['name'], new_status)
                 self.clean_up(servers=servers, network=new_network)
-                sys.exit(error_create_server)
+                msg = ' Status for server [%s] is %s' % \
+                    (servers[i]['name'], new_status)
+                raise ClientError(msg, error_create_server)
             logging.log(REPORT, ' Status for server [%s] is %s',
                         servers[0]['name'], new_status)
             # Create a subnet for the virtual network between master
@@ -493,20 +499,20 @@ class Cluster(object):
             port_status = self.nc.wait_port(port_details['id'],
                                             max_wait=MAX_WAIT)
             if port_status != 'ACTIVE':
-                logging.error(' Status for port [%s] is %s',
-                              port_details['id'], port_status)
                 self.clean_up(servers=servers, network=new_network)
-                sys.exit(error_create_server)
+                msg = ' Status for port [%s] is %s' % \
+                    (port_details['id'], port_status)
+                raise ClientError(msg, error_create_server)
             # Wait server for the slaves, so we can use their server id
             # in port creation
             for i in range(1, self.size):
                 new_status = self.client.wait_server(servers[i]['id'],
                                                      max_wait=MAX_WAIT)
                 if new_status != 'ACTIVE':
-                    logging.error(' Status for server [%s] is %s',
-                                  servers[i]['name'], new_status)
                     self.clean_up(servers=servers, network=new_network)
-                    sys.exit(error_create_server)
+                    msg = ' Status for server [%s] is %s' % \
+                        (servers[i]['name'], new_status)
+                    raise ClientError(msg, error_create_server)
                 logging.log(REPORT, ' Status for server [%s] is %s',
                             servers[i]['name'], new_status)
                 port_details = self.nc.create_port(new_network['id'],
@@ -517,16 +523,16 @@ class Cluster(object):
                 port_status = self.nc.get_port_details(port['id'])['status']
                 if port_status == 'BUILD':
                     port_status = self.nc.wait_port(port['id'],
-                                               max_wait=MAX_WAIT)
+                                                    max_wait=MAX_WAIT)
                 if port_status != 'ACTIVE':
-                    logging.error(' Status for port [%s] is %s',
-                                  port['id'], port_status)
                     self.clean_up(servers=servers, network=new_network)
-                    sys.exit(error_create_server)
-        except Exception:
-            logging.exception(' Error in finalizing cluster creation')
+                    msg = ' Status for port [%s] is %s' % \
+                        (port['id'], port_status)
+                    raise ClientError(msg, error_create_server)
+        except ClientError:
             self.clean_up(servers=servers, network=new_network)
-            sys.exit(error_create_server)
+            msg = ' Error in finalizing cluster creation'
+            raise ClientError(msg, error_create_server)
 
         if server_log_path:
             logging.info(' Store passwords in file [%s]', server_log_path)

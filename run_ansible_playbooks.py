@@ -35,13 +35,13 @@ def install_yarn(hosts_list, master_ip, cluster_name):
     # Create ansible_hosts file
     try:
         file_name = create_ansible_hosts(cluster_name)
-        # Run Ansible playbook
-        run_ansible(file_name)
-        logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
-                    + HOSTNAME_MASTER + ':8088/cluster')
-    except Exception, e:
-        logging.error(' Program is exiting')
-        exit(error_ansible_playbook)
+    except Exception:
+        msg = 'Error while creating ansible hosts file'
+        raise RuntimeError(msg, error_ansible_playbook)
+    # Run Ansible playbook
+    run_ansible(file_name)
+    logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
+                + HOSTNAME_MASTER + ':8088/cluster')
 
 
 def create_ansible_hosts(cluster_name):
@@ -80,6 +80,8 @@ def run_ansible(filename):
     hadoop and everything needed for hadoop to be functional.
     Filename as argument is the name of ansible_hosts file.
     """
+    cluster_size = len(list_of_hosts)
+    print cluster_size
     logging.log(REPORT, ' Ansible starts Yarn installation on master and '
                         'slave nodes')
     # First time call of Ansible playbook install.yml executes tasks
@@ -94,10 +96,12 @@ def run_ansible(filename):
     exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                             'ansible-playbook -i ' + filename + ' ' +
                             ANSIBLE_PLAYBOOK_PATH +
-                            ' -f 5 -e "choose_role=yarn format=True start_yarn=True"' + ansible_log)
+                            ' -f ' + str(cluster_size) +
+                            ' -e "choose_role=yarn format=True start_yarn=True"'
+                            + ansible_log)
     if exit_status != 0:
-        logging.error(' Ansible failed with exit status %d' % exit_status)
-        raise RuntimeError(exit_status)
+        msg = ' Ansible failed with exit status %d' % exit_status
+        raise RuntimeError(msg, exit_status)
 
 
 def main(opts):
