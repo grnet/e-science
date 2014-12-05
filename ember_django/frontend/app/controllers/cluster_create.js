@@ -6,6 +6,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	project_current : '', // current project
 	project_name : '', // name of the project
 	cluster_size : 0, // Initial cluster size
+	cluster_size_var : 0, // Initial cluster size keeper variable
 	master_cpu_selection : 0, // Initial master_cpu_selection, appears in master cpu summary
 	slaves_cpu_selection : 0, // Initial slaves_cpu_selection, appears in slaves cpu summary
 	master_ram_selection : 0, // Initial master_ram_selection, appears in master ram summary
@@ -48,7 +49,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// The total cpus selected for the cluster
 	total_cpu_selection : function() {
 		return (this.get('master_cpu_selection') + this.get('slaves_cpu_selection') * (this.size_of_cluster() - 1));
-	}.property('master_cpu_selection', 'slaves_cpu_selection', 'cluster_size', 'project_name'),
+	}.property('master_cpu_selection', 'slaves_cpu_selection', 'project_name', 'cluster_size_var'),
 
 	// Computes the available cpu each time total_cpu_selection changes
 	cpu_available : function() {
@@ -63,7 +64,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// The total memory selected for the cluster
 	total_ram_selection : function() {
 		return (this.get('master_ram_selection') + this.get('slaves_ram_selection') * (this.size_of_cluster() - 1));
-	}.property('master_ram_selection', 'slaves_ram_selection', 'cluster_size', 'project_name'),
+	}.property('master_ram_selection', 'slaves_ram_selection', 'project_name', 'cluster_size_var'),
 
 	// Computes the available memory each time total_mem_selection changes
 	ram_available : function() {
@@ -78,7 +79,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// The total disk selected for the cluster
 	total_disk_selection : function() {
 		return (this.get('master_disk_selection') + this.get('slaves_disk_selection') * (this.size_of_cluster() - 1));
-	}.property('master_disk_selection', 'slaves_disk_selection', 'cluster_size', 'project_name'),
+	}.property('master_disk_selection', 'slaves_disk_selection', 'project_name', 'cluster_size_var'),
 
 	// Computes the available disk each time total_disk_selection changes
 	disk_available : function() {
@@ -187,7 +188,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			cluster_size_zero = true;
 		}
 		return max_cluster_size_limited_by_current_disks;
-	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size', 'project_name'),
+	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'project_name', 'cluster_size_var'),
 
 	// Functionality about coloring of the cpu buttons and enable-disable responding to user events
 	// First, remove colors from all cpu buttons and then color the role's(master/slaves) selection
@@ -369,10 +370,11 @@ App.ClusterCreateController = Ember.Controller.extend({
 	},
 	size_of_cluster : function() {
 		if ((this.get('cluster_size') === null) || (this.get('cluster_size') === undefined) || (this.get('cluster_size') === 0)) {
-			this.set('cluster_size', 2);
-			return this.get('cluster_size');
+			this.set('cluster_size_var', 2);
+			return this.get('cluster_size_var');
 		} else {
-			return this.get('cluster_size');
+			this.set('cluster_size_var',this.get('cluster_size'));
+			return this.get('cluster_size_var');
 		}
 	},
 	// reset project variables
@@ -384,6 +386,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// Reset variables after logout
 	reset_variables : function() {
 		this.set('cluster_size', 0);
+		this.set('cluster_size_var', 0);
 		this.set('master_cpu_selection', 0);
 		this.set('slaves_cpu_selection', 0);
 		this.set('master_ram_selection', 0);
@@ -514,7 +517,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		go_to_create : function() {
 			this.init_alerts();
 			// check that all fields are filled
-			if (this.get('cluster_size') == null) {
+			if ((this.get('cluster_size') === null) || (this.get('cluster_size') === undefined) || (this.get('cluster_size') === 0)) {
 				this.set('alert_mes_cluster_size', 'Please select cluster size');
 			} else if (this.get('master_cpu_selection') == 0) {
 				this.set('alert_mes_master_cpu', 'Please select master cpu');
