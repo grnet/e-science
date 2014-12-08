@@ -1,0 +1,27 @@
+<!-- Grid header : [Name], [Status], [Size], [URL Address]
+Each cluster occupies a row with [Name], [Status], [Size], [IP:Port <= clickable to a new browser tab]
+Grid should be sort-able by status & size --> 
+<div class="row">
+	<div class="col col-sm-12">
+		<div class="table-responsive">
+			<table class="table table-striped table-hover table-border">
+				<thead class="h4 text-left">
+					<tr>
+						<td><a href="#" {{action 'sortBy' 'cluster_name'}}>Name</a></td>
+						<!-- <td><a href="#" {{action 'sortBy' 'status'}}>Status</a></td> -->
+						<td><a href="#" {{action 'sortBy' 'cluster_size'}}>Size</a></td>
+						<!-- <td><a href="#" {{action 'sortBy' 'url'}}>Address</a></td> -->
+					</tr>
+				</thead>
+				<tbody class="text-left">
+					<tr>
+						<td>Name #1</td>
+						<!-- <td>Completed</td> -->
+						<td>9</td>
+						<!-- <td><a href="http://localhost" target="_blank">127.0.0.1:80</a></td> -->
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</div>

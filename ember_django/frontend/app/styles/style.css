@@ -1,9 +1,47 @@
+@charset "utf-8";
 html {
   height: 100%;
 }
 body {
 	padding-top: 50px;
     height: 100%;
+}
+/*
+css for the jquery spinner plugin
+ */
+.loading { margin: auto; }
+
+.loading span {
+  line-height: 32px;
+  margin-left: 12px;
+  font-size: 16px;
+  vertical-align: middle;
+}
+
+.loading img { vertical-align: middle; }
+
+.loading_wrp {
+  background-color: #FFF;
+  display: block;
+  height: 100%;
+  left: 0;
+  opacity: 0.5;
+  filter: alpha(opacity=50);
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: 1020;
+}
+
+.loading_wrp .x16 span {
+  line-height: 16px;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.loading_wrp .x32 img {
+  width: 32px;
+  height: 32px;
 }
 /*
 Mimic cursor style from native .dropdown-menu > .disabled > a{} styles,
