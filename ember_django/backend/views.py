@@ -88,7 +88,8 @@ class StatusView(APIView):
 
             if cluster_check == 0:
                 return Response({"id": 1, "message": "Everything is ok with "
-                                 "your cluster creation parameters"})
+                                 "your cluster creation parameters."
+                                 " Cluster is being created."})
             elif cluster_check == -13:
                 return Response({"id": 1, "message": "Selected cluster size "
                                  "exceeded cyclades virtual machines limit"})
