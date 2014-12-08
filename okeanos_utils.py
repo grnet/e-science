@@ -484,7 +484,6 @@ class Cluster(object):
             new_status = self.client.wait_server(servers[0]['id'],
                                                  max_wait=MAX_WAIT)
             if new_status != 'ACTIVE':
-                self.clean_up(servers=servers, network=new_network)
                 msg = ' Status for server [%s] is %s' % \
                     (servers[i]['name'], new_status)
                 raise ClientError(msg, error_create_server)
@@ -499,7 +498,6 @@ class Cluster(object):
             port_status = self.nc.wait_port(port_details['id'],
                                             max_wait=MAX_WAIT)
             if port_status != 'ACTIVE':
-                self.clean_up(servers=servers, network=new_network)
                 msg = ' Status for port [%s] is %s' % \
                     (port_details['id'], port_status)
                 raise ClientError(msg, error_create_server)
@@ -509,7 +507,6 @@ class Cluster(object):
                 new_status = self.client.wait_server(servers[i]['id'],
                                                      max_wait=MAX_WAIT)
                 if new_status != 'ACTIVE':
-                    self.clean_up(servers=servers, network=new_network)
                     msg = ' Status for server [%s] is %s' % \
                         (servers[i]['name'], new_status)
                     raise ClientError(msg, error_create_server)
@@ -525,14 +522,12 @@ class Cluster(object):
                     port_status = self.nc.wait_port(port['id'],
                                                     max_wait=MAX_WAIT)
                 if port_status != 'ACTIVE':
-                    self.clean_up(servers=servers, network=new_network)
                     msg = ' Status for port [%s] is %s' % \
                         (port['id'], port_status)
                     raise ClientError(msg, error_create_server)
         except ClientError:
             self.clean_up(servers=servers, network=new_network)
-            msg = ' Error in finalizing cluster creation'
-            raise ClientError(msg, error_create_server)
+            raise
 
         if server_log_path:
             logging.info(' Store passwords in file [%s]', server_log_path)

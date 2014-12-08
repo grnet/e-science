@@ -19,9 +19,9 @@ from reroute_ssh import reroute_ssh_prep
 from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
 
 # Global constants
-ANSIBLE_DIR = './ansible/'
-ANSIBLE_HOST_PATH = ANSIBLE_DIR + 'ansible_hosts'
-ANSIBLE_PLAYBOOK_PATH = ANSIBLE_DIR + 'site.yml'
+ANSIBLE_DIR = 'ansible'
+ANSIBLE_HOST_PATH = ANSIBLE_DIR + '/ansible_hosts_'
+ANSIBLE_PLAYBOOK_PATH = ANSIBLE_DIR + '/site.yml'
 
 
 def install_yarn(hosts_list, master_ip, cluster_name):
@@ -29,22 +29,23 @@ def install_yarn(hosts_list, master_ip, cluster_name):
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn.
     """
-    global HOSTNAME_MASTER, list_of_hosts
     list_of_hosts = hosts_list
     HOSTNAME_MASTER = master_ip
+    cluster_size = len(list_of_hosts)
     # Create ansible_hosts file
     try:
-        file_name = create_ansible_hosts(cluster_name)
+        file_name = create_ansible_hosts(cluster_name, list_of_hosts,
+                                         HOSTNAME_MASTER)
     except Exception:
         msg = 'Error while creating ansible hosts file'
         raise RuntimeError(msg, error_ansible_playbook)
     # Run Ansible playbook
-    run_ansible(file_name)
+    run_ansible(file_name, cluster_size)
     logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
                 + HOSTNAME_MASTER + ':8088/cluster')
 
 
-def create_ansible_hosts(cluster_name):
+def create_ansible_hosts(cluster_name, list_of_hosts, HOSTNAME_MASTER):
     """
     Function that creates the ansible_hosts file and
     returns the name of the file.
@@ -55,8 +56,10 @@ def create_ansible_hosts(cluster_name):
     # Removes spaces and ':' from cluster name and appends it to ansible_hosts
     # The ansible_hosts file will now have a timestamped name to seperate it
     # from ansible_hosts files of different clusters.
-    filename = ANSIBLE_HOST_PATH + ansible_hosts_prefix
+    if 'ember_django' in os.getcwd():
+        os.chdir('..')
 
+    filename = ANSIBLE_HOST_PATH + ansible_hosts_prefix
     # Create ansible_hosts file and write all information that is
     # required from Ansible playbook.
     with open(filename, 'w+') as target:
@@ -74,14 +77,12 @@ def create_ansible_hosts(cluster_name):
     return filename
 
 
-def run_ansible(filename):
+def run_ansible(filename, cluster_size):
     """
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
     Filename as argument is the name of ansible_hosts file.
     """
-    cluster_size = len(list_of_hosts)
-    print cluster_size
     logging.log(REPORT, ' Ansible starts Yarn installation on master and '
                         'slave nodes')
     # First time call of Ansible playbook install.yml executes tasks

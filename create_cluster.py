@@ -350,9 +350,6 @@ class YarnCluster(object):
     def create_yarn_cluster(self):
         """Create Yarn cluster"""
         self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
-        logging.log(SUMMARY, ' The root password of master VM [%s] '
-                    'is on file %s', self.server_dict[0]['name'],
-                    self.pass_file)
         logging.log(SUMMARY, ' Creating Yarn cluster')
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
@@ -360,7 +357,7 @@ class YarnCluster(object):
 
             logging.log(SUMMARY, ' Installing and configuring Yarn')
             install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
-                         self.opts['name'])
+                         self.server_dict[0]['name'])
             logging.log(SUMMARY, ' The root password of master VM [%s] '
                         'is on file %s', self.server_dict[0]['name'],
                         self.pass_file)
