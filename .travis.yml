@@ -3,12 +3,17 @@ python:
 - '2.7'
 env:
   global:
-  - secure: YELLNiIaLsnIch5DFHgKk9ZFlWasujveMGc8qkIFrct1bis///wa0oa1BB8KGgPv4KWy8KUaBNZEv8L+DTRjHr2km1T5zf/G3OERQlrFrTqyunBaYazllDQTmqB7P+oDx3b4lTrHuD1vmdns9fJHqQaEnshA4VKSs5biox3avww=
-  - secure: YDlXPTeVg3s8/TzbQ8YPyo5Rv9XGqgFPMJyWNJb6Vn6JdncMwiV5VJ9hbiTQC2VQ16CFDqPx174RX5WNYzEr/IvALSDO1KVzODlduQ9tL2xUwR/yGMDeCKgfPAPSf2WzzGY9Szh/nmTetpApp/jJnrzF7wQajOuHpAW86Op9PY4=
+  - secure: YELLNiIaLsnIch5DFHgKk9ZFlWasujveMGc8qkIFrct1bis///wa0oa1BB8KGgPv4KWy8KUaBNZEv8L+DTRjHr2km1T5zf/G3OERQlrFrTqyu
+nBaYazllDQTmqB7P+oDx3b4lTrHuD1vmdns9fJHqQaEnshA4VKSs5biox3avww=
+  - secure: YDlXPTeVg3s8/TzbQ8YPyo5Rv9XGqgFPMJyWNJb6Vn6JdncMwiV5VJ9hbiTQC2VQ16CFDqPx174RX5WNYzEr/IvALSDO1KVzODlduQ9tL2xUw
+R/yGMDeCKgfPAPSf2WzzGY9Szh/nmTetpApp/jJnrzF7wQajOuHpAW86Op9PY4=
+before_install:
+- openssl aes-256-cbc -K $encrypted_b4362692ecb3_key -iv $encrypted_b4362692ecb3_iv
+  -in .private/.config.txt.enc -out .private/.config.txt -d
 install:
 - pip install kamaki==0.13rc3
 - pip install paramiko
-- pip install ansible
+- pip install ansible==1.7.2
 - pip install django
 - pip install selenium
 - pip install mock
@@ -16,17 +21,21 @@ install:
 - pip install nose-cov
 - sudo apt-get install sshpass
 script: 
-- ssh-keygen -q -t rsa -P "" -f ~/.ssh/id_rsa
-- cp ~/.ssh/id_rsa.pub ~/.ssh/id_rsa.new
-- sshpass -p $hpass scp -o StrictHostKeyChecking=no -q ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
-- sshpass -p $hpass ssh hduser@$master_ip "cat /home/hduser/.ssh/id_rsa.new >> /home/hduser/.ssh/authorized_keys"
-- echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
-- nosetests -sv tests/test_create_bare_cluster.py
-- python legacy/run_pi_yarn.py --master_ip=$master_ip 2 100000
+#- ssh-keygen -q -t rsa -P "" -f ~/.ssh/id_rsa
+#- cp ~/.ssh/id_rsa.pub ~/.ssh/id_rsa.new
+#- sshpass -p $hpass scp -o StrictHostKeyChecking=no -q ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
+#- sshpass -p $hpass ssh hduser@$master_ip "cat /home/hduser/.ssh/id_rsa.new >> /home/hduser/.ssh/authorized_keys"
+#- echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+#- nosetests -sv tests/test_create_bare_cluster.py
+#- python legacy/run_pi_yarn.py --master_ip=$master_ip 2 100000
 before_install:
 - openssl aes-256-cbc -K $encrypted_908d3e898427_key -iv $encrypted_908d3e898427_iv
   -in .private/.config.txt.enc -out .private/.config.txt -d
 before_script:
+- npm install testem -g
 - export DISPLAY=:99.0
 - sh -e /etc/init.d/xvfb start
 - nohup bash -c "webdriver-manager start 2>&1 &"
+script:
+- nosetests -sv tests/test_create_cluster.py
+#- testem ci -f ember_django/frontend/testem.json -t ember_django/frontend/tests/index.html

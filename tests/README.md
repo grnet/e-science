@@ -4,20 +4,24 @@ To run the test you need:
 
 1. `pip install mock`
 
-2. The script needs the auth_url and token from okeanos those are located in a file inside         `<project>/.private/.conficg.txt `the file has the following format:
+2. Test scripts needs some additional information inside a file          `<project>/.private/.config.txt` with the following format:
 
-    [global]
+        [global]
+        default_cloud = ~okeanos
 
-	default_cloud = ~okeanos
+        [cloud "~okeanos"]
+        url = https://accounts.okeanos.grnet.gr/identity/v2.0
+        token = <YOUR TOKEN>
+        project_id = the e-science project id, needed for the ember_django application to run
 
-	[cloud "~okeanos"]
+        [cluster]
+        master_ip = x.x.x.x  (to be used in run_pi_yarn on an existing cluster)
 
-	url = https://accounts.okeanos.grnet.gr/identity/v2.0
-	token = YOUR TOKEN
+        [deploy]
+        url = your web server base url (eg for localhost http://127.0.0.1:8000/, not necessary for testing) 
 
-	[cluster]
-	
-	master_ip = x.x.x.x
+        [project]
+        name = the name of the ~okeanos project you want to run your tests into
 
 
-Run mock test with either with `nosetests`, or  with `python test_create_bare_cluster.py`
+Run mock test with either with `nosetests`, or  with `python test_create_cluster.py`

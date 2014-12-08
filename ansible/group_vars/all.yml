@@ -14,4 +14,4 @@
   filename: /home/hduser/.ssh/id_rsa
   etchosts_filename: /etc/hosts_2 
   yarn_common_url: http://archive.apache.org/dist/hadoop/common
-  yarn_version: hadoop-2.5.1
+  yarn_version: hadoop-2.5.2

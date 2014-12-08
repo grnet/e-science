@@ -18,14 +18,11 @@ from backend.models import *
 from django.core.exceptions import *
 from authenticate_user import *
 from django.utils import timezone
+from cluster_errors_constants import *
 django.setup()
 
 # Constants
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
-
-# Definitions of return value errors
-error_multiple_entries = -1
-
 
 def get_user_id(token):
     '''Check kamaki and returns user uuid from matching ~okeanos token'''
@@ -54,6 +51,7 @@ def db_after_login(given_uuid, given_token):
         db_login_entry(existing_user)
         if existing_user.okeanos_token != given_token:
             existing_user.okeanos_token = given_token
+            existing_user.save()
         return existing_user
 
     except ObjectDoesNotExist:

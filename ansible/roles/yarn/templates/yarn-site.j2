@@ -59,6 +59,10 @@
     <description>Shuffle service that needs to be set for Map Reduce to run </description>
   </property>
   <property>
+    <name>yarn.nodemanager.aux-services.mapreduce.shuffle.class</name>
+    <value>org.apache.hadoop.mapred.ShuffleHandler</value>
+  </property> 
+  <property>
     <name>yarn.resourcemanager.webapp.address</name>
     <value>{{ ansible_ssh_host}}:8088</value>
     <description>The http address of the RM web application </description>

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 '''
 This script tests logout from web form using selenium
 
@@ -7,6 +6,9 @@ This script tests logout from web form using selenium
 '''
 
 from selenium import webdriver
+import sys
+from os.path import join, dirname, abspath
+sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
@@ -16,22 +18,25 @@ from os.path import join, dirname
 from ConfigParser import RawConfigParser, NoSectionError
 import unittest, time, re, sys
 
+BASE_DIR = join(dirname(abspath(__file__)), "../..")
+
 class TestLogout(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
-        self.base_url = "http://83.212.123.218:8000/"
         self.verificationErrors = []
         self.accept_next_alert = True
         parser = RawConfigParser()
-        config_file = join(dirname(dirname(dirname(__file__))), '.private/.config.txt')
+        config_file = join(BASE_DIR, '.private/.config.txt')
         parser.read(config_file)
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
+            self.base_url = parser.get('deploy', 'url')
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
+            self.base_url = "INVALID_APP_URL"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     
@@ -40,22 +45,39 @@ class TestLogout(unittest.TestCase):
         LogoutTest
         Opens homepage then enters login screen 
         and place a valid okeanos token
-        and logout check f returns back in homepage 
+        and then logs out back in homepage 
         '''
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
-        driver.find_element_by_css_selector("button[type=\"submit\"]").click()
-        driver.find_element_by_id("token").clear()
-        driver.find_element_by_id("token").send_keys(self.token)
-        driver.find_element_by_css_selector("button[type=\"login\"]").click()
-        for i in range(60):
+        driver.find_element_by_id("id_login").click()
+        
+        for i in range(30):
             try:
-                if "Welcome" == driver.find_element_by_css_selector("h2").text: break
+                if "~Okeanos Token" == driver.find_element_by_css_selector("h2").text: break
             except: pass
             time.sleep(1)
         else: self.fail("time out")
-        driver.find_element_by_xpath("(//button[@type='submit'])[2]").click()
-        try: self.assertEqual("Home page", driver.find_element_by_css_selector("h2").text)
+        driver.find_element_by_id("token").clear()
+        driver.find_element_by_id("token").send_keys(self.token)               
+        driver.find_element_by_xpath("//button[@type='login']").click()
+        if (self.is_element_present(By.XPATH, "//div[@id='id_alert_wrongtoken']/strong") == True):
+            self.assertTrue(False,'Invalid token')
+        for i in range(30):
+            try:
+                if "Welcome" == driver.find_element_by_css_selector("h3").text: break
+            except: pass
+            time.sleep(1)
+        else: self.fail("time out")
+        
+        driver.find_element_by_id("id_login_dd").click()
+        driver.find_element_by_id("id_logout").click()
+        for i in range(60):
+            try:
+                if "ORCA" == driver.find_element_by_css_selector("h2").text: break
+            except: pass
+            time.sleep(1)
+        else: self.fail("time out")
+        try: self.assertEqual("WELCOME TO ORCA!", driver.find_element_by_css_selector("p").text)
         except AssertionError as e: self.verificationErrors.append(str(e))
     
     def is_element_present(self, how, what):

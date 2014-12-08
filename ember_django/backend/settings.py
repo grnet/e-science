@@ -108,14 +108,14 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
-STATIC_PATH = os.path.join(BASE_DIR, 'app')
+STATIC_PATH = os.path.join(BASE_DIR, 'frontend/app')
 
-STATIC_URL = '/app/'
+STATIC_URL = '/frontend/app/'
 
 STATICFILES_DIRS = (
     STATIC_PATH,
 )
 
 TEMPLATE_DIRS = (
-    os.path.join(BASE_DIR, 'app'),
+    os.path.join(BASE_DIR, 'frontend/app'),
 )

@@ -15,9 +15,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import BasePermission
 from backend.models import Token
 from rest_framework import exceptions
-
-# Definitions of return value errors
-error_authentication = -1
+from cluster_errors_constants import *
 
 # Constants
 AUTHENTICATED = 1
@@ -58,7 +56,7 @@ class IsAuthenticatedOrIsCreation(BasePermission):
             )
 
 
-def check_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
+def check_user_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
                       '/identity/v2.0'):
     '''Identity,Account/Astakos. Test ~okeanos authentication credentials'''
     logging.info(' Test the credentials')

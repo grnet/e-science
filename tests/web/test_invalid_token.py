@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-
 '''
-This script tests invalid token input using selenium
+This script test invalid token case during login 
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -13,38 +12,34 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 import unittest, time, re
 
-# Constants
-num_of_attempts = 60 # delay until token is acknowledge as wrong
-token = "invalid" # a invalid okeanos token
-
-class InvalidTokenTest(unittest.TestCase):
+class TestInvalidToken(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
-        self.base_url = "http://83.212.123.218:8000/"
+        self.base_url = "http://127.0.0.1:8000/"
         self.verificationErrors = []
         self.accept_next_alert = True
     
     def test_invalid_token(self):
         '''
-        InvalidTokenTest
+        InvalidToken
         Opens homepage then enters login screen 
         and place an invalid okeanos token
-        checks if alert message appears 
+        checks if worng token message appears
         '''
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
-        driver.find_element_by_css_selector("button[type=\"submit\"]").click()
-        driver.find_element_by_id("token").clear()
-        driver.find_element_by_id("token").send_keys(token)
-        driver.find_element_by_css_selector("button[type=\"login\"]").click()
-        for i in range(num_of_attempts):
+        driver.find_element_by_id("id_login").click()
+        for i in range(60):
             try:
-                if "Wrong Token. Please try again" == driver.find_element_by_css_selector("div.alert").text: break
+                if "~Okeanos Token" == driver.find_element_by_css_selector("h2").text: break
             except: pass
             time.sleep(1)
         else: self.fail("time out")
-        try: self.assertEqual("Wrong Token. Please try again", driver.find_element_by_css_selector("div.alert").text)
+        driver.find_element_by_id("token").clear()
+        driver.find_element_by_id("token").send_keys("invalid token")
+        driver.find_element_by_xpath("//button[@type='login']").click()
+        try: self.assertEqual("Wrong Token.", driver.find_element_by_xpath("//div[@id='id_alert_wrongtoken']/strong").text)
         except AssertionError as e: self.verificationErrors.append(str(e))
     
     def is_element_present(self, how, what):

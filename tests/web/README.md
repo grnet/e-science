@@ -4,7 +4,7 @@ To run the tests you need:
 
 1. `pip install -U selenium` or `pip install selenium`
 
-2. For the login and logout tests you will need an ~okeanos token which will be located in .config.txt file in <projectroot>/.private/ this is the format of the file:
+2. For the tests you will need an ~okeanos token which is located in .config.txt file in <projectroot>/.private/ folder. This is the format of the file:
 
 	[global]
 
@@ -13,12 +13,21 @@ To run the tests you need:
 	[cloud "~okeanos"]
 
 	url = https://accounts.okeanos.grnet.gr/identity/v2.0
+
 	token = YOUR TOKEN
+
+	project_id = the e-science project id, needed for the ember_django  application to run
 
 	[cluster]
 	
 	master_ip = x.x.x.x
 
-3. Also (for the moment) you need to have a running server in your [localhost:8000](localhost:8000) where Selenium expects to reach the Ember/Django app.
+	[deploy]
+
+	url = your base url (eg for localhost http://127.0.0.1:8000/)
+	
+	[project]
+	
+	name = the name of the project you want to run
 
 Run the selenium tests either with `nosetests`, or separately with `python test_*`

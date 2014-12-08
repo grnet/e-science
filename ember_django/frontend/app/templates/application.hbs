@@ -1,0 +1,106 @@
+<div id="wrap">
+	<div class="navbar navbar-default navbar-fixed-top">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+				</button>
+				<a {{bind-attr href='homeURL'}} class="navbar-brand">
+					<img class="img-responsive" src="/frontend/app/images/orca.png" alt="orca" width="65"/>
+				</a>
+			</div>
+			<div class="navbar-collapse collapse navbar-responsive-collapse">
+				<ul class="nav navbar-nav">
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_services_dd">Services <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							<li>
+								<a id="id_create_cluster" href="#/cluster/create"><i class="glyphicon glyphicon-cloud"></i> Create Cluster</a>
+							</li>
+							<li class="divider"></li>
+							<li class="dropdown-header">
+								Not yet implemented
+							</li>
+							<li class="disabled">
+								<a href="#" disabled>Pre-built Images</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<ul class="nav navbar-nav navbar-right">
+					<li>
+						<div class="btn-group navbar-btn">
+							{{#if loggedIn}}
+							{{#link-to 'user.logout' id="id_logout" class="btn btn-primary"}}<i class="glyphicon glyphicon-user"></i> Logout </a>{{/link-to}}
+							{{else}}
+							{{#link-to 'user.login' id="id_login" class="btn btn-primary"}}<i class="glyphicon glyphicon-log-in"></i> Login </a>{{/link-to}}	
+							{{/if}}
+							<button data-toggle="dropdown" class="btn btn-primary dropdown-toggle"  id="id_login_dd">
+								<span class="caret"></span>
+							</button>
+							<ul class="dropdown-menu">
+								<li class="divider"></li>
+								<li class="dropdown-header">
+									Not yet implemented
+								</li>
+								<li class="disabled">
+									<a href="#" disabled>Dashboard</a>
+								</li>
+							</ul>							
+						</div>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	<!-- Begin page content -->
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-12">
+				{{outlet}}
+			</div>
+		</div>
+	</div>
+</div>
+<div id="footer">
+	<div class="container">
+		<hr/>
+		<div class="row">
+			<div class="col-lg-12">
+				<ul class="list-inline list-unstyled">
+					<li class="termslink pull-right text-muted">
+						<a href="https://accounts.okeanos.grnet.gr/ui/approval_terms">Terms
+						of
+						use</a>
+					</li>
+					<li>
+						<a href="http://europa.eu/" target="_blank" title="European Union"><img src="/frontend/app/images/european_union.png"
+						alt="European Union"
+						height="30"></a>
+					</li>
+					<li>
+						<a href="http://www.digitalplan.gov.gr/portal/" target="_blank" title="Digital Greece"><img
+						src="/frontend/app/images/digitalgreece.png" alt="Digital Greece" height="30"></a>
+					</li>
+					<li>
+						<a href="http://www.espa.gr/en/Pages/Default.aspx" target="_blank" title="NSRF"><img src="/frontend/app/images/NSRF.png"
+						alt="NSRF"
+						height="30"></a>
+					</li>
+				</ul>
+				<p class="text-muted">
+					The project is co-financed by Greece and the European Union.
+				</p>
+
+				<p class="text-muted">
+					Copyright 2014 <a title="GRNET S.A." target="_blank" href="http://www.grnet.gr/en/">GRNET
+					S.A.</a> All rights
+					reserved.
+				</p>
+			</div>
+		</div>
+	</div>
+</div>
