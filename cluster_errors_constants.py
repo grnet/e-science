@@ -42,6 +42,7 @@ error_cluster_not_exist = -69
 error_cluster_corrupt = -70
 error_proj_id = -71
 error_multiple_entries = -72
+error_project_quota = -73
 error_authentication = -99
 
 # Package constants

@@ -24,6 +24,7 @@ def project_list_flavor_quota(user):
     list_of_resources = []
     flavors = get_flavor_id(okeanos_token)
     auth = check_credentials(okeanos_token)
+    dict_quotas = auth.get_quotas()
     try:
         list_of_projects = auth.get_projects(state='active')
         if list_of_projects[0]['name'] != 'system:' + list_of_projects[0]['id']:
@@ -37,8 +38,9 @@ def project_list_flavor_quota(user):
         sys.exit(error_get_list_projects)
 
     for project in list_of_projects:
-        quotas = check_quota(okeanos_token, project['id'])
-        list_of_resources.append(retrieve_ClusterCreationParams(flavors, quotas, project['name'], user))
+        if project['id'] in dict_quotas:
+            quotas = check_quota(okeanos_token, project['id'])
+            list_of_resources.append(retrieve_ClusterCreationParams(flavors, quotas, project['name'], user))
     return list_of_resources
 
 

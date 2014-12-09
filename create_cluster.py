@@ -88,12 +88,17 @@ class YarnCluster(object):
         self.server_dict = {}
         # project id of project name given as argument
         self.project_id = get_project_id(self.opts['token'],
-					 self.opts['project_name'])
+                                         self.opts['project_name'])
         self.status = {}
         # Instance of an AstakosClient object
         self.auth = check_credentials(self.opts['token'],
                                       self.opts.get('auth_url',
                                                     _defaults['auth_url']))
+        # Check if project has actual quota
+        if self.check_project_quota() != 0:
+            logging.error('Project %s exists but you have no quota to request',
+                          self.opts['project_name'])
+            exit(error_project_quota)
         # ~okeanos endpoints and user id
         self.endpoints, self.user_id = endpoints_and_user_id(self.auth)
 
@@ -294,6 +299,13 @@ class YarnCluster(object):
         self.pass_file = self.pass_file.replace(" ", "")
         with open(self.pass_file, 'w') as f:
             f.write(master_root_pass)
+
+    def check_project_quota(self):
+        """Checks that for a given project actual quota exist"""
+        dict_quota = self.auth.get_quotas()
+        if self.project_id in dict_quota:
+            return 0
+        return error_project_quota
 
     def create_bare_cluster(self):
         """Creates a bare ~okeanos cluster."""
