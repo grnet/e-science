@@ -5,7 +5,7 @@ App.User = DS.Model.extend({
 	user_id : attr('number'), // user_id in backend database
 	clusters : DS.hasMany('userCluster', {
 		async : true,
-		embedded: true
+		embedded : true
 	}), // user cluster records
 	cluster : function() {
 		return this.get('clusters.length');
@@ -15,7 +15,8 @@ App.User = DS.Model.extend({
 App.UserCluster = DS.Model.extend({
 	cluster_name : attr('string'), // name of the cluster
 	cluster_size : attr('number'), // size of cluster (master+slaves)
-	user : DS.belongsTo('user')	// user that created the cluster
+	cluster_status : attr('string'), // status of cluster
+	user : DS.belongsTo('user'), // user that created the cluster
 });
 
 App.User.reopenClass({
@@ -29,19 +30,22 @@ App.User.reopenClass({
 
 App.UserCluster.reopenClass({
 	FIXTURES : [{
-		id: 1,
+		id : 1,
 		cluster_name : "acluster",
 		cluster_size : 5,
+		cluster_status : "PENDING",
 		user : 1
 	}, {
-		id: 2,
+		id : 2,
 		cluster_name : "fcluster",
 		cluster_size : 3,
+		cluster_status : "ACTIVE",
 		user : 1
 	}, {
-		id: 3,
+		id : 3,
 		cluster_name : "ecluster",
 		cluster_size : 12,
+		cluster_status : "DESTROYED",
 		user : 1
 	}]
 });
