@@ -19,32 +19,19 @@ $(function () {
 					</tr>
 				</thead>
 				<tbody class="text-left">
+					{{#each usercluster in content.clusters}}
 					<tr>
-						<td>Name #1</td>
+						<td>{{usercluster.cluster_name}}</td>
 						<td><a data-toggle="tooltip" data-placement="right" title="" data-original-title="Active cluster"> <i class="glyphicon glyphicon-ok text-success"></i> </a></td>
-						<td>9</td>
+						<td>{{usercluster.cluster_size}}</td>
 						<td><a href="http://localhost" target="_blank">127.0.0.1:80</a></td>
 					</tr>
-					<tr>
-						<td>Name #2</td>
-						<td><a data-toggle="tooltip" data-placement="right" title="" data-original-title="Failed or Destroyed cluster"> <i class="glyphicon glyphicon-remove text-danger"></i> </a></td>
-						<td>12</td>
-						<td><a href="http://localhost" target="_blank">127.0.0.1:80</a></td>
-					</tr>
-					<tr>
-						<td>Name #3</td>
-						<td><a data-toggle="tooltip" data-placement="right" title="" data-original-title="Cluster pending..."> <i class="glyphicon glyphicon-time text-warning"></i> </a></td>
-						<td>3</td>
-						<td><a href="http://localhost" target="_blank">127.0.0.1:80</a></td>
-					</tr>
+					{{else}}
+					<p class="text-center text-info">No user clusters found</p>
+					{{/each}}
 				</tbody>
 			</table>
 		</div>
 	</div>
 </div>
-{{#each content._data.clusters}}
-<p>{{cluster_name}}</p>
-{{else}}
-<p>no clusters created</p>
-{{/each}}
 
