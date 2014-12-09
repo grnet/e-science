@@ -7,6 +7,8 @@ window.App = Ember.Application.create({
     // Basic logging
     LOG_TRANSITIONS: true,
     LOG_ACTIVE_GENERATION: true,
+    LOG_VIEW_LOOKUPS: true,
+    // LOG_RESOLVER: true,
     rootElement: 'body',
   	ready: function() {
     
