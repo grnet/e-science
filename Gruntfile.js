@@ -4,13 +4,15 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     uglify: {
-      options: {
-        banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
-      },
-      build: {
-        src: 'ember_django/frontend/app/app.js',
-        dest: 'ember_django/frontend/app/app.min.js'
-      }
+        all: {
+            files: [{
+                expand: true,
+                cwd: 'ember_django/frontend/app/',
+                src: ['**/*.js', '!**/*.min.js', '!libs/**/*'],
+                dest: 'ember_django/frontend/app/',
+                ext: '.js'
+            }]
+        }
     }
   });
 
