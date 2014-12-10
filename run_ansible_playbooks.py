@@ -19,9 +19,9 @@ from reroute_ssh import reroute_ssh_prep
 from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
 
 # Global constants
-ANSIBLE_DIR = './ansible/'
-ANSIBLE_HOST_PATH = ANSIBLE_DIR + 'ansible_hosts'
-ANSIBLE_PLAYBOOK_PATH = ANSIBLE_DIR + 'site.yml'
+ANSIBLE_DIR = 'ansible'
+ANSIBLE_HOST_PATH = ANSIBLE_DIR + '/ansible_hosts_'
+ANSIBLE_PLAYBOOK_PATH = ANSIBLE_DIR + '/site.yml'
 
 
 def install_yarn(hosts_list, master_ip, cluster_name):
@@ -29,22 +29,23 @@ def install_yarn(hosts_list, master_ip, cluster_name):
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn.
     """
-    global HOSTNAME_MASTER, list_of_hosts
     list_of_hosts = hosts_list
     HOSTNAME_MASTER = master_ip
+    cluster_size = len(list_of_hosts)
     # Create ansible_hosts file
     try:
-        file_name = create_ansible_hosts(cluster_name)
-        # Run Ansible playbook
-        run_ansible(file_name)
-        logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
-                    + HOSTNAME_MASTER + ':8088/cluster')
-    except Exception, e:
-        logging.error(' Program is exiting')
-        exit(error_ansible_playbook)
+        file_name = create_ansible_hosts(cluster_name, list_of_hosts,
+                                         HOSTNAME_MASTER)
+    except Exception:
+        msg = 'Error while creating ansible hosts file'
+        raise RuntimeError(msg, error_ansible_playbook)
+    # Run Ansible playbook
+    run_ansible(file_name, cluster_size)
+    logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
+                + HOSTNAME_MASTER + ':8088/cluster')
 
 
-def create_ansible_hosts(cluster_name):
+def create_ansible_hosts(cluster_name, list_of_hosts, HOSTNAME_MASTER):
     """
     Function that creates the ansible_hosts file and
     returns the name of the file.
@@ -55,8 +56,10 @@ def create_ansible_hosts(cluster_name):
     # Removes spaces and ':' from cluster name and appends it to ansible_hosts
     # The ansible_hosts file will now have a timestamped name to seperate it
     # from ansible_hosts files of different clusters.
-    filename = ANSIBLE_HOST_PATH + ansible_hosts_prefix
+    if 'ember_django' in os.getcwd():
+        os.chdir('..')
 
+    filename = ANSIBLE_HOST_PATH + ansible_hosts_prefix
     # Create ansible_hosts file and write all information that is
     # required from Ansible playbook.
     with open(filename, 'w+') as target:
@@ -74,7 +77,7 @@ def create_ansible_hosts(cluster_name):
     return filename
 
 
-def run_ansible(filename):
+def run_ansible(filename, cluster_size):
     """
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
@@ -94,10 +97,12 @@ def run_ansible(filename):
     exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                             'ansible-playbook -i ' + filename + ' ' +
                             ANSIBLE_PLAYBOOK_PATH +
-                            ' -f 5 -e "choose_role=yarn format=True start_yarn=True"' + ansible_log)
+                            ' -f ' + str(cluster_size) +
+                            ' -e "choose_role=yarn format=True start_yarn=True"'
+                            + ansible_log)
     if exit_status != 0:
-        logging.error(' Ansible failed with exit status %d' % exit_status)
-        raise RuntimeError(exit_status)
+        msg = ' Ansible failed with exit status %d' % exit_status
+        raise RuntimeError(msg, exit_status)
 
 
 def main(opts):

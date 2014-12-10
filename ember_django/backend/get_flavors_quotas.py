@@ -24,16 +24,21 @@ def project_list_flavor_quota(user):
     list_of_resources = []
     flavors = get_flavor_id(okeanos_token)
     auth = check_credentials(okeanos_token)
+    dict_quotas = auth.get_quotas()
     try:
         list_of_projects = auth.get_projects(state='active')
     except Exception:
         logging.error(' Could not get list of projects')
         sys.exit(error_get_list_projects)
-    i = 1
+    id = 1
     for project in list_of_projects:
-        quotas = check_quota(okeanos_token, project['id'])
-        list_of_resources.append(retrieve_ClusterCreationParams(flavors, quotas, project['name'], user, i))
-        i = i + 1
+        if project['id'] in dict_quotas:
+            quotas = check_quota(okeanos_token, project['id'])
+            list_of_resources.append(retrieve_ClusterCreationParams(flavors,
+                                                                    quotas,
+                                                                    project['name'],
+                                                                    user, id))
+            id = id + 1
     return list_of_resources
 
 
@@ -65,7 +70,7 @@ def retrieve_ClusterCreationParams(flavors, quotas, project_name, user, id):
 
     # Create a ClusterCreationParams object with the parameters returned from
     # get_flavor_id and check_quota.
-    cluster_creation_params = ClusterCreationParams(id=id, 
+    cluster_creation_params = ClusterCreationParams(id=id,
                                                     user_id=user,
                                                     project_name=project_name,
                                                     vms_max=vms_max,

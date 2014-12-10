@@ -38,10 +38,12 @@ error_get_ip = -30
 error_create_server = -31
 error_syntax_auth_token = -32
 error_ansible_playbook = -34
+error_ssh_client = -35
 error_cluster_not_exist = -69
 error_cluster_corrupt = -70
 error_proj_id = -71
 error_multiple_entries = -72
+error_project_quota = -73
 error_authentication = -99
 
 # Package constants

@@ -48,8 +48,8 @@ class ClusterCreationParams(models.Model):
     parameters from okeanos. Imported djorm_pgarray package
     is needed for custom Arrayfields.
     '''
-    id = models.IntegerField("Max ID", null=False, primary_key=True,
-                                  help_text="Maximum ID")
+    id = models.IntegerField("Id", primary_key=True, null=False,
+                                       help_text="Id needed by ember.js store")
     user_id = models.ForeignKey(UserInfo, null=False,
                                    help_text="User ID")
     # Project name
