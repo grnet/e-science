@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 '''
-Django script to update the database after a new login or logout action
+Django script to update the database after a new login, logout,
+create, or destroy cluster action.
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -117,7 +118,9 @@ def db_cluster_update(token, status, cluster_name, master_ip=None):
 
 
 def db_cluster_destroy(token, master_ip):
-    """Update database when cluster is destroyed"""
+    """
+    Update database when cluster is destroyed, used with CLI destroy_cluster
+    """
     uuid = get_user_id(token)
     user = UserInfo.objects.get(uuid=uuid)
     try:
