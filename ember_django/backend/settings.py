@@ -65,6 +65,8 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 
 
+
+
 # rest_framework settings for the rest_framework_ember
 # https://github.com/ngenworks/rest_framework_ember
 

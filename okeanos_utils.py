@@ -12,13 +12,15 @@ import sys
 import logging
 from base64 import b64encode
 from os.path import abspath, dirname, join
-from datetime import datetime
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.cyclades import CycladesClient
 from kamaki.clients.cyclades import CycladesNetworkClient
 from time import sleep
+sys.path.append(join(dirname(__file__), 'ember_django/backend'))
+from django_db_after_login import *
+from get_flavors_quotas import *
 from cluster_errors_constants import *
 
 # Global constants
@@ -81,7 +83,7 @@ def destroy_cluster(token, master_ip):
             break
     # Show an error message and exit if not valid ip or network
     if not master_id:
-        msg = ' [%s] is not the valid public ip of the master' + \
+        msg = ' [%s] is not the valid public ip of the master' % \
             float_ip_to_delete
         raise ClientError(msg, error_get_ip)
 
@@ -145,6 +147,7 @@ def destroy_cluster(token, master_ip):
     logging.log(SUMMARY, ' Cluster with master node [%s] and %d slave nodes'
                 ' was deleted', servers_to_delete[0]['name'],
                 number_of_nodes-1)
+    db_cluster_destroy(token, master_ip)
     # Everything deleted as expected
     if not list_of_errors:
         return 0
@@ -216,24 +219,26 @@ def check_quota(token, project_id):
      '''
     auth = check_credentials(token)
     dict_quotas = get_user_quota(auth)
+    project_name = auth.get_project(project_id)['name']
+    pending_quota = retrieve_pending_clusters(token, project_name)
     limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
     usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GB
-    pending_cd = dict_quotas[project_id]['cyclades.disk']['pending'] / Bytes_to_GB
+    pending_cd = pending_quota['Disk']
     available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd)
 
     limit_cpu = dict_quotas[project_id]['cyclades.cpu']['limit']
     usage_cpu = dict_quotas[project_id]['cyclades.cpu']['usage']
-    pending_cpu = dict_quotas[project_id]['cyclades.cpu']['pending']
+    pending_cpu = pending_quota['Cpus']
     available_cpu = limit_cpu - usage_cpu - pending_cpu
 
     limit_ram = dict_quotas[project_id]['cyclades.ram']['limit'] / Bytes_to_MB
     usage_ram = dict_quotas[project_id]['cyclades.ram']['usage'] / Bytes_to_MB
-    pending_ram = dict_quotas[project_id]['cyclades.ram']['pending'] / Bytes_to_MB
+    pending_ram = pending_quota['Ram']
     available_ram = (limit_ram-usage_ram-pending_ram)
 
     limit_vm = dict_quotas[project_id]['cyclades.vm']['limit']
     usage_vm = dict_quotas[project_id]['cyclades.vm']['usage']
-    pending_vm = dict_quotas[project_id]['cyclades.vm']['pending']
+    pending_vm = pending_quota['VMs']
     available_vm = limit_vm-usage_vm-pending_vm
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
@@ -399,15 +404,14 @@ class Cluster(object):
         servers = []
         empty_ip_list = []
         list_of_ports = []
-        date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         count = 0
         HOSTNAME_MASTER = ''
         port_status = ''
         # Names the master machine with a timestamp and a prefix name
         # plus number 1
-        server_name = '%s%s%s%s%s' % (date_time, '-', self.prefix, '-', 1)
+        server_name = '%s%s%s' % (self.prefix, '-', 1)
         # Name of the network we will request to create
-        net_name = date_time + '-' + self.prefix
+        net_name = self.prefix
         # Creates network
         try:
             new_network = self.nc.create_network('MAC_FILTERED', net_name,
@@ -466,8 +470,7 @@ class Cluster(object):
         for i in range(2, self.size+1):
             try:
 
-                server_name = '%s%s%s%s%s' % (date_time,
-                                              '-', self.prefix, '-', i)
+                server_name = '%s%s%s' % (self.prefix, '-', i)
                 servers.append(self.client.create_server(
                     server_name, self.flavor_id_slave, self.image_id,
                     personality=self._personality(ssh_k_path, pub_k_path),

@@ -14,7 +14,8 @@ import logging
 sys.path.append(join(dirname(abspath(__file__)), '../..'))
 sys.path.append(join(dirname(abspath(__file__)), '..'))
 from okeanos_utils import *
-from backend.models import ClusterCreationParams
+from django_db_after_login import *
+from backend.models import ClusterCreationParams, ClusterInfo, UserInfo
 from cluster_errors_constants import *
 
 
@@ -41,6 +42,29 @@ def project_list_flavor_quota(user):
             id = id + 1
     return list_of_resources
 
+
+def retrieve_pending_clusters(token, project_name):
+    """Retrieve pending cluster info"""
+    uuid = get_user_id(token)
+    pending_quota = {"VMs": 0, "Cpus": 0, "Ram": 0, "Disk": 0, "Ip": 0,
+                     "Network": 0}
+    user = UserInfo.objects.get(uuid=uuid)
+    pending_clusters = ClusterInfo.objects.filter(user_id=user,
+                                                  project_name=project_name,
+                                                  cluster_status="2")
+    if pending_clusters:
+        vm_sum, vm_cpu, vm_ram, vm_disk = 0, 0, 0, 0
+        for cluster in pending_clusters:
+            vm_sum = vm_sum + cluster.cluster_size
+            vm_cpu = vm_cpu + cluster.cpu_master + cluster.cpu_slaves*(cluster.cluster_size - 1)
+            vm_ram = vm_ram + cluster.mem_master + cluster.mem_slaves*(cluster.cluster_size - 1)
+            vm_disk = vm_disk + cluster.disk_master + cluster.disk_slaves*(cluster.cluster_size - 1)
+
+        pending_quota = {"VMs": vm_sum, "Cpus": vm_cpu, "Ram": vm_ram,
+                         "Disk": vm_disk, "Ip": 0,
+                         "Network": 0}
+
+    return pending_quota
 
 def retrieve_ClusterCreationParams(flavors, quotas, project_name, user, id):
     '''

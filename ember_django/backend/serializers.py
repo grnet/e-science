@@ -9,7 +9,6 @@ Serializers file for django rest framework.
 
 from rest_framework import serializers
 from backend.models import UserInfo, ClusterInfo, ClusterCreationParams
-import random
 
 
 class PGArrayField(serializers.WritableField):
@@ -80,6 +79,18 @@ class ClusterchoicesSerializer(serializers.Serializer):
     project_name = serializers.CharField()
 
 
+class ClusterInfoSerializer(serializers.ModelSerializer):
+    '''
+    Serializer for ember request with user's
+    choices for cluster creation and created clusters.
+    '''
+    class Meta:
+        model = ClusterInfo
+        fields = ('id', 'cluster_name', 'cluster_status', 'cluster_size', 'cpu_master',
+                  'mem_master', 'disk_master', 'cpu_slaves', 'mem_slaves',
+                  'disk_slaves', 'disk_template', 'os_image', 'project_name')
+
+
 class UserInfoSerializer(serializers.ModelSerializer):
     '''
     Serializer for UserInfo object with cluster and escience_token
@@ -88,10 +99,11 @@ class UserInfoSerializer(serializers.ModelSerializer):
     cluster = serializers.SerializerMethodField('number_of_clusters')
     escience_token = serializers.RelatedField()
     id = serializers.SerializerMethodField('get_ember_id')
+    clusters = ClusterInfoSerializer(many=True)
 
     class Meta:
         model = UserInfo
-        fields = ('id', 'user_id', 'cluster', 'escience_token')
+        fields = ('id', 'user_id', 'cluster', 'escience_token', 'clusters')
 
     def number_of_clusters(self, obj):
         '''
