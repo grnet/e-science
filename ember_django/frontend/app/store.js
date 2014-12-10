@@ -14,7 +14,13 @@ App.ApplicationAdapter = DS.ActiveModelAdapter.extend({
 			"Authorization" : App.escience_token
 		};
 	}.property("App.escience_token")
-}); 
+});
+
+App.UserSerializer = DS.RESTSerializer.extend(DS.EmbeddedRecordsMixin, {
+  attrs: {
+    clusters: {embedded: 'always'}
+  }
+});
 
 // For fixtures
 // App.ApplicationAdapter = DS.FixtureAdapter;

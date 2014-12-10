@@ -88,7 +88,7 @@ class ClusterInfoSerializer(serializers.ModelSerializer):
         model = ClusterInfo
         fields = ('id', 'cluster_name', 'cluster_status', 'cluster_size', 'cpu_master',
                   'mem_master', 'disk_master', 'cpu_slaves', 'mem_slaves',
-                  'disk_slaves', 'disk_template', 'os_image', 'project_name')
+                  'disk_slaves', 'disk_template', 'os_image', 'master_IP', 'project_name')
 
 
 class UserInfoSerializer(serializers.ModelSerializer):

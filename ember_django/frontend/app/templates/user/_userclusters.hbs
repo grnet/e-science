@@ -12,32 +12,22 @@ $(function () {
 			<table class="table table-striped table-hover table-border">
 				<thead class="h4 text-left">
 					<tr>
-						<td><a href="#" {{action 'sortBy' 'cluster_name'}}>Name</a>{{#if sortdir}}<i class="glyphicon glyphicon-arrow-up small"></i>{{else}}<i class="glyphicon glyphicon-arrow-down small"></i>{{/if}}</td>
-						<td><a href="#" {{action 'sortBy' 'status'}}>Status</a>{{#if sortdir}}<i class="glyphicon glyphicon-arrow-up small"></i>{{else}}<i class="glyphicon glyphicon-arrow-down small"></i>{{/if}}</td>
-						<td><a href="#" {{action 'sortBy' 'cluster_size'}}>Size</a>{{#if sortdir}}<i class="glyphicon glyphicon-arrow-up small"></i>{{else}}<i class="glyphicon glyphicon-arrow-down small"></i>{{/if}}</td>
-						<td><a href="#" {{action 'sortBy' 'url'}}>Address</a>{{#if sortdir}}<i class="glyphicon glyphicon-arrow-up small"></i>{{else}}<i class="glyphicon glyphicon-arrow-down small"></i>{{/if}}</td>
+						<td><a href="#" {{action 'sortBy' content.clusters 'cluster_name'}}>Name</a>{{#if sortdir}}<i class="glyphicon glyphicon-arrow-up small"></i>{{else}}<i class="glyphicon glyphicon-arrow-down small"></i>{{/if}}</td>
+						<td><a href="#" {{action 'sortBy' content.clusters 'cluster_status'}}>Status</a>{{#if sortdir}}<i class="glyphicon glyphicon-arrow-up small"></i>{{else}}<i class="glyphicon glyphicon-arrow-down small"></i>{{/if}}</td>
+						<td><a href="#" {{action 'sortBy' content.clusters 'cluster_size'}}>Size</a>{{#if sortdir}}<i class="glyphicon glyphicon-arrow-up small"></i>{{else}}<i class="glyphicon glyphicon-arrow-down small"></i>{{/if}}</td>
+						<td><a href="#" {{action 'sortBy' content.clusters 'master_IP'}}>Address</a>{{#if sortdir}}<i class="glyphicon glyphicon-arrow-up small"></i>{{else}}<i class="glyphicon glyphicon-arrow-down small"></i>{{/if}}</td>
 					</tr>
 				</thead>
 				<tbody class="text-left">
 					{{#each usercluster in content.clusters}}
 					<tr>
 						<td>{{usercluster.cluster_name}}</td>
-						<td><a data-toggle="tooltip" data-placement="right" title="" data-original-title="ACTIVE"> <i class="glyphicon glyphicon-ok text-success"></i> </a></td>
+						<td><a data-toggle="tooltip" data-placement="right" {{bind-attr title='usercluster.cluster_status_verbose'}}> 
+							<i {{bind-attr class='usercluster.cluster_status_class'}}></i> </a>
+						</td>
 						<td>{{usercluster.cluster_size}}</td>
-						<td><a href="http://localhost" target="_blank">127.0.0.1:80</a></td>
+						<td><a {{bind-attr href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
 					</tr>
-					<!-- <tr>
-						<td>Name #2</td>
-						<td><a data-toggle="tooltip" data-placement="right" title="" data-original-title="Failed or Destroyed cluster"> <i class="glyphicon glyphicon-remove text-danger"></i> </a></td>
-						<td>12</td>
-						<td><a href="http://localhost" target="_blank">127.0.0.1:80</a></td>
-					</tr>
-					<tr>
-						<td>Name #3</td>
-						<td><a data-toggle="tooltip" data-placement="right" title="" data-original-title="Cluster pending..."> <i class="glyphicon glyphicon-time text-warning"></i> </a></td>
-						<td>3</td>
-						<td><a href="http://localhost" target="_blank">127.0.0.1:80</a></td>
-					</tr> -->
 					{{else}}
 					<tr><td colspan="4" class="text-center text-info">No user clusters found</td></tr>
 					{{/each}}
@@ -47,3 +37,7 @@ $(function () {
 	</div>
 </div>
 
+<!-- <i class="glyphicon glyphicon-ok text-success"></i>
+<i class="glyphicon glyphicon-time text-warning"></i>
+<i class="glyphicon glyphicon-remove text-danger"></i>
+<i class="glyphicon glyphicon glyphicon-question-sign text-muted"></i> -->
