@@ -5,7 +5,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 	needs: 'userWelcome',
 	model : function() {
 		$.loader.close(true);
-		if (this.controllerFor('userWelcome').get('create_cluster_start') == true) {
+		if (this.controllerFor('userWelcome').get('create_cluster_start') == true && this.controllerFor('userWelcome').get('output_message') == '') {
 			// If transition to welcome is from create cluster button then start a loading gif until create cluster is terminated
 			$options = {
 				title : 'Creating cluster...',
