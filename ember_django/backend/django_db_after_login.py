@@ -12,6 +12,7 @@ import os
 import sys
 import logging
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.dirname(__file__))
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients import ClientError
 from backend.models import *
@@ -21,8 +22,6 @@ from django.utils import timezone
 from cluster_errors_constants import *
 django.setup()
 
-# Constants
-auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 
 def get_user_id(token):
     '''Check kamaki and returns user uuid from matching ~okeanos token'''
@@ -30,44 +29,104 @@ def get_user_id(token):
     try:
         logging.info(' Get the uuid')
         uuid = auth.user_info['id']
-        return db_after_login(uuid, token)
+        return uuid
     except ClientError:
-        logging.error('Failed to get uuid from identity server')
-        raise
+        msg = 'Failed to get uuid from identity server'
+        raise ClientError(msg)
 
 
-def db_after_login(given_uuid, given_token):
+def db_after_login(token, login=True):
     '''
     Check if a user already exists in DB or make a new entry in UserInfo
     if it is a new user. Each user must have one entry in the UserInfo.
     If there are multiple entries, then raise an error.
     Also checks if okeanos token has changed and updates it in db.
     '''
+    given_uuid = get_user_id(token)
     try:
         existing_user = UserInfo.objects.get(uuid=given_uuid)
         logging.info(' The id of the user %s is %d', existing_user.uuid,
                      existing_user.user_id)
         # user already in db
-        db_login_entry(existing_user)
-        if existing_user.okeanos_token != given_token:
-            existing_user.okeanos_token = given_token
+        if login:
+            db_login_entry(existing_user)
+        if existing_user.okeanos_token != token:
+            existing_user.okeanos_token = token
             existing_user.save()
         return existing_user
 
     except ObjectDoesNotExist:
         # new user database entry
-        new_entry = UserInfo(uuid=given_uuid, okeanos_token=given_token)
+        new_entry = UserInfo(uuid=given_uuid, okeanos_token=token)
         new_entry.save()
         new_token = Token(user=new_entry)
         new_token.save()
         new_user = UserInfo.objects.get(uuid=given_uuid)
         logging.info(' The id of the new user is ', new_user.user_id)
-        db_login_entry(new_user)
+        if login:
+            db_login_entry(new_user)
         return new_user
     except MultipleObjectsReturned:
         # Problem with database table
-        logging.error(' Table has multiple entries for the same uuid')
-        sys.exit(error_multiple_entries)
+        msg = ' Table has multiple entries for the same uuid'
+        raise MultipleObjectsReturned(msg, error_multiple_entries)
+
+
+def db_cluster_create(token, choices):
+    """Updates DB after user request for cluster creation"""
+    uuid = get_user_id(token)
+    user = UserInfo.objects.get(uuid=uuid)
+    ClusterInfo(cluster_name=choices['name'], action_date=timezone.now(),
+                cluster_status="2", cluster_size=choices['cluster_size'],
+                cpu_master=choices['cpu_master'],
+                mem_master=choices['ram_master'],
+                disk_master=choices['disk_master'],
+                cpu_slaves=choices['cpu_slave'],
+                mem_slaves=choices['ram_slave'],
+                disk_slaves=choices['disk_slave'],
+                disk_template=choices['disk_template'],
+                os_image=choices['image'], user_id=user,
+                project_name=choices['project_name']).save()
+
+
+def db_cluster_update(token, status, cluster_name, master_ip=None):
+    """Updates DB when cluster is created or deleted from pending state"""
+    uuid = get_user_id(token)
+    user = UserInfo.objects.get(uuid=uuid)
+    try:
+        cluster = ClusterInfo.objects.get(user_id=user, cluster_status="2",
+                                          cluster_name=cluster_name)
+    except ObjectDoesNotExist:
+        msg = 'Cluster with given name does not exist in pending state'
+        raise ObjectDoesNotExist(msg)
+
+    if status == "Active":
+        status = "1"
+
+    elif status == "Destroyed":
+        status = "0"
+
+    else:
+        msg = "Not a valid cluster state given"
+        raise ValueError(msg)
+
+    cluster.cluster_status = status
+    if master_ip:
+        cluster.master_IP = master_ip
+    cluster.save()
+
+
+def db_cluster_destroy(token, master_ip):
+    """Update database when cluster is destroyed"""
+    uuid = get_user_id(token)
+    user = UserInfo.objects.get(uuid=uuid)
+    try:
+        cluster = ClusterInfo.objects.get(user_id=user, master_IP=master_ip)
+    except ObjectDoesNotExist:
+        msg = 'Cluster with given master VM ip does not exist'
+        raise ObjectDoesNotExist(msg)
+    cluster.cluster_status = "0"
+    cluster.save()
 
 
 def db_login_entry(user):
