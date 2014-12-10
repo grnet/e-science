@@ -350,7 +350,6 @@ class YarnCluster(object):
     def create_yarn_cluster(self):
         """Create Yarn cluster"""
         self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
-        return
         logging.log(SUMMARY, ' Creating Yarn cluster')
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
