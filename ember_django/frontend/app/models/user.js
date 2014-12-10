@@ -5,7 +5,7 @@ App.User = DS.Model.extend({
 	user_id : attr('number'), // user_id in backend database
 	clusters : DS.hasMany('userCluster', {
 		async : true,
-		embedded : true
+		// embedded : true
 	}), // user cluster records
 	cluster : function() {
 		return this.get('clusters.length');
@@ -15,8 +15,8 @@ App.User = DS.Model.extend({
 App.UserCluster = DS.Model.extend({
 	cluster_name : attr('string'), 		// name of the cluster
 	cluster_size : attr('number'), 		// size of cluster (master+slaves)
-	cluster_status : attr('string'), 	// status of cluster
-	master_IP : attr('string'),			// master ip
+	cluster_status : attr(), 			// status of cluster
+//	master_IP : attr('string'),			// master ip
 	user : DS.belongsTo('user'), 		// user that created the cluster
 });
 
