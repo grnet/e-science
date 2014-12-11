@@ -1,7 +1,6 @@
 ---
 - hosts: gruntserver
-  user: developer
-  sudo: yes
+  user: root
   vars:
     project_path: path
       
@@ -16,27 +15,27 @@
 
   - name: NMV Commands in Terminal
     tags: nvm_commands
-    shell: bash -lc "source ~/.profile" 
+    shell: cd;bash -lc "source ~/.profile" 
 
   - name: Install NVM
     tags: nvm_install
-    shell: bash -lc "nvm install v0.11.13"
+    shell: cd;bash -lc "nvm install v0.11.13"
 
   - name: NVM default version
     tags: nvm_default
-    shell: bash -lc "nvm alias default v0.11.13"
+    shell: cd;bash -lc "nvm alias default v0.11.13"
 
   - name: Install grunt-cli
     tags: grunt-cli_install
-    shell: bash -lc "npm install -g grunt-cli"
-
+    shell: cd;bash -lc "npm install -g grunt-cli"
+   
   - name: Install and add Grunt
     tags: grunt_install_add
-    shell: bash -lc "npm install grunt --save-dev"
-
+    shell: cd;bash -lc "npm install grunt --save-dev"
+    
   - name: Install and add uglify
     tags: uglify_install_add
-    shell: bash -lc "npm install grunt-contrib-uglify --save-dev"
+    shell: cd;bash -lc "npm install grunt-contrib-uglify --save-dev"
     
   - name: Run grunt tasks (uglify)
     tags: grunt_tasks_run
