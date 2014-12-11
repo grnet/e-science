@@ -420,6 +420,7 @@ class Cluster(object):
         except ClientError:
             msg = ' Error in creating network'
             raise ClientError(msg, error_create_network)
+
         # Gets list of floating ips
         try:
             list_float_ips = self.nc.list_floatingips()

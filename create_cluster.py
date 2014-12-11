@@ -145,7 +145,6 @@ class YarnCluster(object):
         dict_quotas = get_user_quota(self.auth)
         pending_vm = retrieve_pending_clusters(self.opts['token'],
                                                self.opts['project_name'])['VMs']
-
         limit_vm = dict_quotas[self.project_id]['cyclades.vm']['limit']
         usage_vm = dict_quotas[self.project_id]['cyclades.vm']['usage']
         available_vm = limit_vm - usage_vm - pending_vm
@@ -201,7 +200,6 @@ class YarnCluster(object):
         dict_quotas = get_user_quota(self.auth)
         pending_cpu = retrieve_pending_clusters(self.opts['token'],
                                                self.opts['project_name'])['Cpus']
- 
         limit_cpu = dict_quotas[self.project_id]['cyclades.cpu']['limit']
         usage_cpu = dict_quotas[self.project_id]['cyclades.cpu']['usage']
         available_cpu = limit_cpu - usage_cpu - pending_cpu
@@ -222,7 +220,6 @@ class YarnCluster(object):
         dict_quotas = get_user_quota(self.auth)
         pending_ram = retrieve_pending_clusters(self.opts['token'],
                                                self.opts['project_name'])['Ram']
-
         limit_ram = dict_quotas[self.project_id]['cyclades.ram']['limit']
         usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
         available_ram = (limit_ram - usage_ram) / Bytes_to_MB - pending_ram
@@ -243,7 +240,6 @@ class YarnCluster(object):
         dict_quotas = get_user_quota(self.auth)
         pending_cd = retrieve_pending_clusters(self.opts['token'],
                                                self.opts['project_name'])['Disk']
-
         limit_cd = dict_quotas[self.project_id]['cyclades.disk']['limit']
         usage_cd = dict_quotas[self.project_id]['cyclades.disk']['usage']
         cyclades_disk_req = self.opts['disk_master'] + \
