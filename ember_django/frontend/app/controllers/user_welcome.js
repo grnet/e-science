@@ -7,11 +7,11 @@ App.UserWelcomeController = Ember.Controller.extend({
 	sortdir : false,
 	actions : {
 		sortBy : function(clusters, column) {
-			console.log(clusters);
-			console.log(column);
+			// console.log(clusters);
+			// console.log(column);
 			clusters.set('sortProperties', [column]);
 			this.set('sortdir', !this.get('sortdir'));
 			clusters.set('sortAscending', this.get('sortdir'));
 		},
-	}
+	},
 });
