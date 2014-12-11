@@ -32,10 +32,14 @@
   - name: Install and add Grunt
     tags: grunt_install_add
     shell: cd;bash -lc "npm install grunt --save-dev"
+
+  - name: Link npm
+    tags: npm_link
+    shell: cd {{project_path}};bash -lc "npm link"
     
   - name: Install and add uglify
     tags: uglify_install_add
-    shell: cd;bash -lc "npm install grunt-contrib-uglify --save-dev"
+    shell: cd {{project_path}};bash -lc "npm install grunt-contrib-uglify --save-dev"
     
   - name: Run grunt tasks (uglify)
     tags: grunt_tasks_run
