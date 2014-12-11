@@ -145,7 +145,6 @@ class YarnCluster(object):
         dict_quotas = get_user_quota(self.auth)
         pending_vm = retrieve_pending_clusters(self.opts['token'],
                                                self.opts['project_name'])['VMs']
-
         limit_vm = dict_quotas[self.project_id]['cyclades.vm']['limit']
         usage_vm = dict_quotas[self.project_id]['cyclades.vm']['usage']
         available_vm = limit_vm - usage_vm - pending_vm
@@ -201,7 +200,6 @@ class YarnCluster(object):
         dict_quotas = get_user_quota(self.auth)
         pending_cpu = retrieve_pending_clusters(self.opts['token'],
                                                self.opts['project_name'])['Cpus']
- 
         limit_cpu = dict_quotas[self.project_id]['cyclades.cpu']['limit']
         usage_cpu = dict_quotas[self.project_id]['cyclades.cpu']['usage']
         available_cpu = limit_cpu - usage_cpu - pending_cpu
@@ -222,7 +220,6 @@ class YarnCluster(object):
         dict_quotas = get_user_quota(self.auth)
         pending_ram = retrieve_pending_clusters(self.opts['token'],
                                                self.opts['project_name'])['Ram']
-
         limit_ram = dict_quotas[self.project_id]['cyclades.ram']['limit']
         usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
         available_ram = (limit_ram - usage_ram) / Bytes_to_MB - pending_ram
@@ -243,7 +240,6 @@ class YarnCluster(object):
         dict_quotas = get_user_quota(self.auth)
         pending_cd = retrieve_pending_clusters(self.opts['token'],
                                                self.opts['project_name'])['Disk']
-
         limit_cd = dict_quotas[self.project_id]['cyclades.disk']['limit']
         usage_cd = dict_quotas[self.project_id]['cyclades.disk']['usage']
         cyclades_disk_req = self.opts['disk_master'] + \
@@ -349,22 +345,28 @@ class YarnCluster(object):
             raise ClientError(msg, error_image_id)
         logging.log(SUMMARY, ' Creating ~okeanos cluster')
 
+        # Create timestamped name of the cluster
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cluster_name = '%s%s%s' % (date_time, '-', self.opts['name'])
         self.opts['name'] = cluster_name
 
+        # Update db with cluster status as pending
         db_cluster_create(self.opts['token'], self.opts)
-        cluster = Cluster(self.cyclades, self.opts['name'],
-                          flavor_master, flavor_slaves,
-                          chosen_image['id'], self.opts['cluster_size'],
-                          self.net_client, self.auth, self.project_id)
+        try:
+            cluster = Cluster(self.cyclades, self.opts['name'],
+                              flavor_master, flavor_slaves,
+                              chosen_image['id'], self.opts['cluster_size'],
+                              self.net_client, self.auth, self.project_id)
 
-        self.HOSTNAME_MASTER_IP, self.server_dict = \
-            cluster.create('', pub_keys_path, '')
-        sleep(15)
+            self.HOSTNAME_MASTER_IP, self.server_dict = \
+                cluster.create('', pub_keys_path, '')
+            sleep(15)
+        except Exception:
+            # If error in bare cluster, update cluster status as destroyed
+            db_cluster_update(self.opts['token'], "Destroyed", self.opts['name'])
+            raise
         # wait for the machines to be pingable
         logging.log(SUMMARY, ' ~okeanos cluster created')
-
         # Get master VM root password
         master_root_pass = self.server_dict[0]['adminPass']
         master_name = self.server_dict[0]['name']
@@ -387,12 +389,14 @@ class YarnCluster(object):
             logging.log(SUMMARY, ' The root password of master VM [%s] '
                         'is on file %s', self.server_dict[0]['name'],
                         self.pass_file)
+            # If Yarn cluster is build, update cluster status as active
             db_cluster_update(self.opts['token'], "Active", self.opts['name'],
                               self.HOSTNAME_MASTER_IP)
             return self.HOSTNAME_MASTER_IP, self.server_dict
         except Exception:
             logging.error(' An unrecoverable error occured. Created cluster'
                           ' and resources will be deleted')
+            # If error in Yarn cluster, update cluster status as destroyed
             db_cluster_update(self.opts['token'], "Destroyed", self.opts['name'])
             self.destroy()
             raise
@@ -412,10 +416,10 @@ def main(opts):
         c_yarn_cluster.create_yarn_cluster()
     except ClientError, e:
         logging.error(' Fatal error:' + e.message)
-        exit()
+        exit(error_fatal)
     except Exception, e:
         logging.error(' Fatal error:' + str(e.args[0]))
-        exit()
+        exit(error_fatal)
 
 
 if __name__ == "__main__":

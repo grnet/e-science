@@ -89,6 +89,7 @@ def destroy_cluster(token, master_ip):
 
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
+        db_cluster_destroy(token, master_ip)
         msg = ' A valid network of master and slaves was not found.'\
             'Deleting the master VM only'
         raise ClientError(msg, error_cluster_corrupt)
@@ -214,9 +215,9 @@ def get_user_quota(auth):
 def check_quota(token, project_id):
     '''
     Checks if user available quota .
-    Available = limit minus (used and pending).Also divides with 1024*1024*1024
-    to transform bytes to gigabytes.
-     '''
+    Available = limit minus (~ okeanos used and escience pending).
+    Also divides with 1024*1024*1024 to transform bytes to gigabytes.
+    '''
     auth = check_credentials(token)
     dict_quotas = get_user_quota(auth)
     project_name = auth.get_project(project_id)['name']
