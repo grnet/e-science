@@ -8,7 +8,7 @@ administrator backend of Django.
 
 
 from django.contrib import admin
-from backend.models import *
+from models import *
 
 
 admin.site.register(UserInfo)

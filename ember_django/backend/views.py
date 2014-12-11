@@ -20,8 +20,8 @@ from authenticate_user import *
 from django.views import generic
 from get_flavors_quotas import project_list_flavor_quota
 from backend.models import *
-from backend.serializers import OkeanosTokenSerializer, UserInfoSerializer, \
-    ClusterCreationParamsSerializer, ClusterchoicesSerializer
+from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
+    ClusterCreationParamsSerializer, ClusterInfoSerializer, ClusterchoicesSerializer
 from django_db_after_login import *
 from create_cluster import YarnCluster
 from cluster_errors_constants import *
@@ -78,7 +78,7 @@ class StatusView(APIView):
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
             # Dictionary of YarnCluster arguments
             choices = {'name': serializer.data['cluster_name'],
-                       'clustersize': serializer.data['cluster_size'],
+                       'cluster_size': serializer.data['cluster_size'],
                        'cpu_master': serializer.data['cpu_master'],
                        'ram_master': serializer.data['mem_master'],
                        'disk_master': serializer.data['disk_master'],
@@ -134,7 +134,7 @@ class SessionView(APIView):
         if serializer.is_valid():
             token = serializer.data['token']
             if check_user_credentials(token) == AUTHENTICATED:
-                self.user = get_user_id(token)
+                self.user = db_after_login(token)
                 self.serializer_class = UserInfoSerializer(self.user)
                 return Response(self.serializer_class.data)
             else:
