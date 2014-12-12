@@ -100,8 +100,12 @@
   - name: Install and add uglify
     tags: uglify_install_add
     shell: cd {{project_path}};bash -lc "npm install grunt-contrib-uglify --save-dev"
+
+  - name: Install and add removelogging
+    tags: removelogging_install_add
+    shell: cd {{project_path}};bash -lc "npm install grunt-remove-logging"
     
-  - name: Run grunt tasks (uglify)
+  - name: Run grunt tasks (uglify, removelogging)
     tags: grunt_tasks_run
     shell: cd {{project_path}}; bash -lc "grunt default"
 
