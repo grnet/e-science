@@ -1,3 +1,8 @@
 *.pyc
 *.py~
 *~
+.idea
+*.log
+*_root_password
+bower_components/
+node_modules/

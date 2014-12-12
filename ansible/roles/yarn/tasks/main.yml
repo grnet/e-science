@@ -1,20 +1,21 @@
 ---
-  - name: Setup Java Installation
-    shell: "{{item}}"
-    tags: javasetupinst
-    with_items:
-       - echo deb http://ppa.launchpad.net/webupd8team/java/ubuntu precise main | tee -a /etc/apt/sources.list
-       - echo deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu precise main | tee -a /etc/apt/sources.list
-       - apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EEA14886
-       - apt-get update
-       - echo oracle-java7-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
+  - name: Install WebUpd8 apt key
+    apt_key: id=EEA14886 keyserver='keyserver.ubuntu.com' state=present
 
-  - name: Install Java
-    shell: "{{item}}"
-    tags: javainstall
+  - name: Install WebUpd8 Team Java PPA (for Oracle Java)
+    apt_repository: repo='deb http://ppa.launchpad.net/webupd8team/java/ubuntu precise main' state=present
+
+  - name: Install WebUpd8 Team Java PPA2 (for Oracle Java)
+    apt_repository: repo='deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu precise main' state=present
+    
+  - name: Accept Oracle License
+    debconf: name=oracle-java7-installer question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+
+  - name: Install Java packages
+    apt: pkg={{ item }} state=latest update_cache=yes
     with_items:
-       - apt-get install -y oracle-java7-installer
-       - apt-get install -y oracle-java7-set-default
+       - oracle-java7-installer
+       - oracle-java7-set-default
 
   - name: Disable ipv6
     sysctl: "name={{item.name}} value={{item.value}} state={{item.state}}"
@@ -93,7 +94,18 @@
     tags: bashhadoop
     lineinfile: "dest={{item.dest}} state={{item.state}} insertafter={{item.insertafter}} line={{item.line}}"
     with_items:
-      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'{{ lookup('file', 'conf_bashrc') }}'"}
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_HOME=/usr/local/hadoop'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export JAVA_HOME=/usr/lib/jvm/java-7-oracle'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_INSTALL=/usr/local/hadoop'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_PREFIX=/usr/local/hadoop'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$HADOOP_INSTALL/bin'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$HADOOP_INSTALL/sbin'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_MAPRED_HOME=$HADOOP_INSTALL'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_COMMON_HOME=$HADOOP_INSTALL'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_HDFS_HOME=$HADOOP_INSTALL'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export YARN_HOME=$HADOOP_INSTALL'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export export HADOOP_CONF_DIR=$HADOOP_INSTALL/etc/hadoop'" }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-7-oracle"' }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export HADOOP_PREFIX=/usr/local/hadoop"' }
 
