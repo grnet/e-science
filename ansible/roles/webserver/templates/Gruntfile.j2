@@ -19,9 +19,8 @@ module.exports = function(grunt) {
             files: [{
                 expand: true,
                 cwd: "{{ path_to_folder_to_minify }}",
-                src: ['**/*.js', '!**/*.min.js', '!libs/**/*'],
+                src: ['**/*.js', '!**/*.min.js', '!package/**.*'],
                 dest: "{{ path_to_folder_to_minify }}",
-                ext: '.js'
             }]
         }
     }

@@ -107,7 +107,7 @@
     
   - name: Run grunt tasks (uglify, removelogging)
     tags: grunt_tasks_run
-    shell: cd {{project_path}}; bash -lc "grunt default"
+    shell: cd {{project_path}}; bash -lc "grunt default --force"
 
   - name: Edit pg_hba.conf
     lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
