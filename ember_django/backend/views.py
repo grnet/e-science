@@ -86,7 +86,7 @@ class StatusView(APIView):
                        'ram_slave': serializer.data['mem_slaves'],
                        'disk_slave': serializer.data['disk_slaves'],
                        'disk_template': serializer.data['disk_template'],
-                       'image': serializer.data['os_image'],
+                       'image': serializer.data['os_choice'],
                        'token': user.okeanos_token,
                        'project_name': serializer.data['project_name']}
 
