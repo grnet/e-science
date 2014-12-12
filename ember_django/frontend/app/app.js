@@ -12,7 +12,7 @@ window.App = Ember.Application.create({
     // LOG_RESOLVER: true,
     rootElement: 'body',
   	ready: function() {
-    
+  		
   }
 });
 

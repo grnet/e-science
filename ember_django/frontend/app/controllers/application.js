@@ -6,6 +6,6 @@ App.ApplicationController = Ember.Controller.extend({
 		}else {
 			return "#/";
 		}
-	}.property('loggedIn')
-	
+	}.property('loggedIn'),
+	STATIC_URL : '/frontend/app/',
 });
