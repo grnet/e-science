@@ -21,7 +21,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 			this.set('sortedclusters', clusters);
 			this.set('column', column);
 			this.set('sortdir', !this.get('sortdir'));
-			console.log(String(this.get(sortdir)));
+			console.log(String(this.get('sortdir')));
 		}
 	},
 });
