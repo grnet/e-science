@@ -8,20 +8,40 @@ App.UserWelcomeController = Ember.Controller.extend({
 
 	sortedclusters : [],
 	column : '',
-	sortdir : false,
-	sortedCollection: function() {
+	sortdir : null,
+	sortbyname : false,
+	sortbystatus : false,
+	sortbysize : false,
+	sortbyurl : false,
+	sortedCollection : function() {
 		return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, {
-			content: this.get('sortedclusters'),
-			sortProperties: [this.get('column')],
-			sortAscending: this.get('sortdir')
+			content : this.get('sortedclusters'),
+			sortProperties : [this.get('column')],
+			sortAscending : this.get('sortdir')
 		});
-	}.property('sortdir'),
+	}.property('sortdir', 'sortbyname', 'sortbystatus', 'sortbysize', 'sortbyurl'),
 	actions : {
 		sortBy : function(clusters, column) {
+			switch (column) {
+			case 'cluster_name':
+				this.set('sortbyname', !this.get('sortbyname'));
+				this.set('sortdir', this.get('sortbyname'));
+				break;
+			case 'cluster_status':
+				this.set('sortbystatus', !this.get('sortbystatus'));
+				this.set('sortdir', this.get('sortbystatus'));
+				break;
+			case 'cluster_size':
+				this.set('sortbysize', !this.get('sortbysize'));
+				this.set('sortdir', this.get('sortbysize'));
+				break;
+			case 'master_IP':
+				this.set('sortbyurl', !this.get('sortbyurl'));
+				this.set('sortdir', this.get('sortbyurl'));
+				break;
+			}
 			this.set('sortedclusters', clusters);
 			this.set('column', column);
-			this.set('sortdir', !this.get('sortdir'));
-			console.log(String(this.get('sortdir')));
 		}
 	},
 });

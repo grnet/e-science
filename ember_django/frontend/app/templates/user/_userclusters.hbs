@@ -13,12 +13,16 @@ $(function () {
 				<thead class="h4 text-left">
 					<tr>
 						<td><a href="#" {{action 'sortBy' content.clusters 'cluster_name'}}>Name</a>
+							<i class="glyphicon small" {{bind-attr class="sortbyname:glyphicon-arrow-up:glyphicon-arrow-down"}}></i>
 						</td>
 						<td><a href="#" {{action 'sortBy' content.clusters 'cluster_status'}}>Status</a>
+							<i class="glyphicon small" {{bind-attr class="sortbystatus:glyphicon-arrow-up:glyphicon-arrow-down"}}></i>
 						</td>
 						<td><a href="#" {{action 'sortBy' content.clusters 'cluster_size'}}>Size</a>
+							<i class="glyphicon small" {{bind-attr class="sortbysize:glyphicon-arrow-up:glyphicon-arrow-down"}}></i>
 						</td>
 						<td><a href="#" {{action 'sortBy' content.clusters 'master_IP'}}>URL Address</a>
+							<i class="glyphicon small" {{bind-attr class="sortbyurl:glyphicon-arrow-up:glyphicon-arrow-down"}}></i>
 						</td>
 					</tr>
 				</thead>
