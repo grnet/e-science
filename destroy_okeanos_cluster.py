@@ -8,6 +8,10 @@ This script destroys a virtual cluster in synnefo.
 '''
 from sys import argv, exit
 import logging
+import os, sys
+from os.path import join, dirname
+sys.path.append(join(dirname(__file__), 'ember_django/backend'))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from optparse import OptionParser
 from okeanos_utils import *
 from cluster_errors_constants import *

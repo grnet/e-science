@@ -3,6 +3,9 @@
 App.UserWelcomeRoute = App.RestrictedRoute.extend({
 	//"user" model for the welcome route
 	needs: 'userWelcome',
+	beforemodel: function (){
+		this.store.find('user', 1);
+	},
 	model : function() {
 		$.loader.close(true);
 		if (this.controllerFor('userWelcome').get('create_cluster_start') == true && this.controllerFor('userWelcome').get('output_message') == '') {
