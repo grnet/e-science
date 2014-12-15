@@ -4,7 +4,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 	//"user" model for the welcome route
 	needs: 'userWelcome',
 	beforemodel: function (){
-		this.store.find('user', 1);
+		this.store.fetch('user', 1);
 	},
 	model : function() {
 		$.loader.close(true);
@@ -31,6 +31,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		// Return user record with id 1.
 		// If user record not in store, perform a GET request
 		// and get user record from server.
-		return this.store.find('user', 1);
+		return this.store.fetch('user', 1);
 	}
 });
