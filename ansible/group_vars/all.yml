@@ -1,9 +1,9 @@
 ---
   choose_role: yarn
   
-  # setup_djuser variables
-  djuser_password: $1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20
-  create_djuser: False
+  # setup_orca_admin variables
+  orca_admin_password: $1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20
+  create_orca_admin: False
   
   # Hadoop-yarn variables
   start_yarn: False
