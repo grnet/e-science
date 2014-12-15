@@ -4,7 +4,7 @@ upstream django {
 
 server {
     listen 80;
-    server_name {{ hostvars[groups['webserver'][0]]}};
+    server_name {{ inventory_hostname }};
     root /home/orca_admin/projects/e-science/ember_django;
     access_log /home/orca_admin/logs/access.log;
     error_log /home/orca_admin/logs/error.log;
