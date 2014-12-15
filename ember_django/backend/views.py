@@ -19,7 +19,7 @@ from kamaki.clients import ClientError
 from authenticate_user import *
 from django.views import generic
 from get_flavors_quotas import project_list_flavor_quota
-from backend.models import *
+from ember_django.backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterInfoSerializer, ClusterchoicesSerializer
 from django_db_after_login import *
@@ -30,7 +30,7 @@ logging.addLevelName(REPORT, "REPORT")
 logging.addLevelName(SUMMARY, "SUMMARY")
 logger = logging.getLogger("report")
 
-logging_level = REPORT
+logging_level = logging.INFO
 logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
                    level=logging_level, datefmt='%H:%M:%S')
 

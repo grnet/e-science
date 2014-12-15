@@ -8,7 +8,7 @@ Serializers file for django rest framework.
 """
 
 from rest_framework import serializers
-from backend.models import UserInfo, ClusterInfo, ClusterCreationParams
+from ember_django.backend.models import UserInfo, ClusterInfo, ClusterCreationParams
 
 
 class PGArrayField(serializers.WritableField):

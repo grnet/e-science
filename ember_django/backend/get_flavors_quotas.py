@@ -16,7 +16,7 @@ sys.path.append(join(dirname(abspath(__file__)), '../..'))
 sys.path.append(join(dirname(abspath(__file__)), '..'))
 from okeanos_utils import *
 from django_db_after_login import *
-from backend.models import ClusterCreationParams, ClusterInfo, UserInfo
+from ember_django.backend.models import ClusterCreationParams, ClusterInfo, UserInfo
 from cluster_errors_constants import *
 
 

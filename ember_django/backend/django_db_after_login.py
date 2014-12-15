@@ -16,7 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients import ClientError
-from backend.models import *
+from ember_django.backend.models import *
 from django.core.exceptions import *
 from authenticate_user import *
 from django.utils import timezone
