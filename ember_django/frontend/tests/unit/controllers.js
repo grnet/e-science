@@ -4,6 +4,8 @@ moduleFor('controller:application', 'Unit Tests - Controllers', {
 	},
 	teardown: function(){
 		App.reset();
+	// phantomjs seems to keep localstorage cache between tests, leads to false positives
+     		localStorage.clear();
 	}
 });
 
@@ -14,5 +16,5 @@ test('home_controller_starts_in_logged_out_state', function() {
   var ctrl = this.subject();
 
   // check the properties before the action is triggered
-  equal(ctrl.get('loggedIn'), undefined);
+  equal(ctrl.get('loggedIn'), false);
 });
