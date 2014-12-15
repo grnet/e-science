@@ -19,7 +19,7 @@ from kamaki.clients import ClientError
 from authenticate_user import *
 from django.views import generic
 from get_flavors_quotas import project_list_flavor_quota
-from ember_django.backend.models import *
+from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterInfoSerializer, ClusterchoicesSerializer
 from django_db_after_login import *
