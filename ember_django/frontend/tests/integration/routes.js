@@ -4,6 +4,8 @@ module('Integration Tests - Routes', {
 	},
 	teardown: function() {
     	App.reset();
+	// phantomjs seems to keep localstorage cache between tests, leads to false positives
+     	localStorage.clear();
 	}
 });
 

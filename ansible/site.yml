@@ -20,15 +20,15 @@
   tasks:
      - { include: start_yarn.yml, when: start_yarn == 'True'}
 
-- name: Setup django user in Django server
+- name: Setup orca_admin user in Django server
   hosts: webserver
   user: root
   tasks:
-     - { include: setup_djuser.yml, when: create_djuser == 'True' and choose_role == 'webserver'}
+     - { include: setup_orca_admin.yml, when: create_orca_admin == 'True' and choose_role == 'webserver'}
 
 - name: Installing and configuring Django server
   hosts: webserver
-  user: djuser
+  user: orca_admin
   sudo: yes
   roles:
      - {role: webserver, when: choose_role == 'webserver'}
