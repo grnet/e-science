@@ -14,13 +14,13 @@ install:
 - pip install ansible==1.7.2
 - pip install django
 - pip install djorm-pgarray
+- pip install psycopg2
 - pip install djangorestframework
 - pip install rest_framework_ember
 - pip install selenium
 - pip install mock
 - pip install rednose
 - pip install nose-cov
-- sudo apt-get -y install python-psycopg2
 - sudo apt-get install sshpass
 before_script:
 - npm install testem -g
