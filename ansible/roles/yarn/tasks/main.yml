@@ -9,13 +9,13 @@
     apt_repository: repo='deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu precise main' state=present
     
   - name: Accept Oracle License
-    debconf: name=oracle-java7-installer question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+    debconf: name=oracle-java8-installer question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
 
   - name: Install Java packages
     apt: pkg={{ item }} state=latest update_cache=yes
     with_items:
-       - oracle-java7-installer
-       - oracle-java7-set-default
+       - oracle-java8-installer
+       - oracle-java8-set-default
 
   - name: Disable ipv6
     sysctl: "name={{item.name}} value={{item.value}} state={{item.state}}"
@@ -66,12 +66,14 @@
 
   - name: copy master public ssh key to local box
     tags: copymasterssh
-    local_action: command  scp -v -o StrictHostKeyChecking=no root@{{ hostvars[groups['master'][0]].inventory_hostname }}:/home/hduser/.ssh/id_rsa.pub ./roles/yarn/files/master_id_rsa_pub
+    local_action: command  scp -v -o StrictHostKeyChecking=no root@{{ hostvars[groups['master'][0]].inventory_hostname }}:/home/hduser/.ssh/id_rsa.pub ./roles/yarn/files/{{master_key}}
     when: is_master
 
   - name: copy local box master ssh key to hduser
     tags: slavessh
-    authorized_key: user=hduser key="{{ lookup('file', 'master_id_rsa_pub') }}"
+    authorized_key: user=hduser key="{{ item }}"
+    with_file:
+      - ./roles/yarn/files/{{master_key}}
     when: is_slave
 
   - name: download hadoop-yarn src
@@ -95,7 +97,7 @@
     lineinfile: "dest={{item.dest}} state={{item.state}} insertafter={{item.insertafter}} line={{item.line}}"
     with_items:
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_HOME=/usr/local/hadoop'" }
-      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export JAVA_HOME=/usr/lib/jvm/java-7-oracle'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export JAVA_HOME=/usr/lib/jvm/java-8-oracle'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_INSTALL=/usr/local/hadoop'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_PREFIX=/usr/local/hadoop'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$HADOOP_INSTALL/bin'" }
@@ -106,7 +108,7 @@
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export YARN_HOME=$HADOOP_INSTALL'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export export HADOOP_CONF_DIR=$HADOOP_INSTALL/etc/hadoop'" }
-      - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-7-oracle"' }
+      - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle"' }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export HADOOP_PREFIX=/usr/local/hadoop"' }
 
 
