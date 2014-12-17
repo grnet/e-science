@@ -18,9 +18,9 @@ from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.cyclades import CycladesClient
 from kamaki.clients.cyclades import CycladesNetworkClient
 from time import sleep
-sys.path.append(join(dirname(__file__), 'ember_django/backend'))
-from django_db_after_login import *
-from get_flavors_quotas import *
+sys.path.append(join(dirname(abspath(__file__)), 'ember_django/backend'))
+from ember_django.backend.django_db_after_login import *
+from ember_django.backend.get_flavors_quotas import *
 from cluster_errors_constants import *
 
 # Global constants

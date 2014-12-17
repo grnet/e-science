@@ -8,7 +8,7 @@
 					<span class="icon-bar"></span>
 				</button>
 				<a {{bind-attr href='homeURL'}} class="navbar-brand">
-					<img class="img-responsive" src="/frontend/app/images/orca.png" alt="orca" width="65"/>
+					<img class="img-responsive" src="{{unbound STATIC_URL}}images/orca.png" alt="orca" width="65"/>
 				</a>
 			</div>
 			<div class="navbar-collapse collapse navbar-responsive-collapse">
@@ -33,9 +33,9 @@
 					<li>
 						<div class="btn-group navbar-btn">
 							{{#if loggedIn}}
-							{{#link-to 'user.logout' id="id_logout" class="btn btn-primary"}}<i class="glyphicon glyphicon-user"></i> Logout </a>{{/link-to}}
+							{{#link-to 'user.logout' id="id_logout" class="btn btn-primary"}}<i class="glyphicon glyphicon-user"></i> Logout{{/link-to}}
 							{{else}}
-							{{#link-to 'user.login' id="id_login" class="btn btn-primary"}}<i class="glyphicon glyphicon-log-in"></i> Login </a>{{/link-to}}	
+							{{#link-to 'user.login' id="id_login" class="btn btn-primary"}}<i class="glyphicon glyphicon-log-in"></i> Login{{/link-to}}	
 							{{/if}}
 							<button data-toggle="dropdown" class="btn btn-primary dropdown-toggle"  id="id_login_dd">
 								<span class="caret"></span>
@@ -77,16 +77,16 @@
 						use</a>
 					</li>
 					<li>
-						<a href="http://europa.eu/" target="_blank" title="European Union"><img src="/frontend/app/images/european_union.png"
+						<a href="http://europa.eu/" target="_blank" title="European Union"><img src="{{unbound STATIC_URL}}images/european_union.png"
 						alt="European Union"
 						height="30"></a>
 					</li>
 					<li>
 						<a href="http://www.digitalplan.gov.gr/portal/" target="_blank" title="Digital Greece"><img
-						src="/frontend/app/images/digitalgreece.png" alt="Digital Greece" height="30"></a>
+						src="{{unbound STATIC_URL}}images/digitalgreece.png" alt="Digital Greece" height="30"></a>
 					</li>
 					<li>
-						<a href="http://www.espa.gr/en/Pages/Default.aspx" target="_blank" title="NSRF"><img src="/frontend/app/images/NSRF.png"
+						<a href="http://www.espa.gr/en/Pages/Default.aspx" target="_blank" title="NSRF"><img src="{{unbound STATIC_URL}}images/NSRF.png"
 						alt="NSRF"
 						height="30"></a>
 					</li>

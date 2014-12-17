@@ -1,4 +1,12 @@
---- 
+---
+  - name: Update
+    tags: update
+    shell: apt-get update
+
+  - name: Upgrade
+    tags: upgrade
+    shell: apt-get -y dist-upgrade
+
   - name: Install RabbitMQ broker, PostgreSQL and needed dependencies
     tags: installall
     shell: apt-get -y install "{{item}}"
@@ -11,6 +19,8 @@
       - curl
       - python-dev
       - git
+      - python-flup
+      - nginx
 
   - name: Install Celery, Django and Django rest framework
     tags: celerydjangoinstall
@@ -28,6 +38,8 @@
       - { name: 'paramiko' }
       - { name: 'kamaki==0.13rc3'}
       - { name: 'ansible==1.7.2' }
+      - { name: 'uwsgi' }
+      - { name: 'south' }
 
   - name: Copy script celeryd for daemonic workers
     tags: celerydcopy
@@ -56,6 +68,18 @@
   - name: Git clone e-science project in the git directory
     tags: gitcloneproject
     command: git clone -b develop {{escience_repo}} {{myprojectname}} chdir={{myprojectdir}}
+
+  - name: Copy needed frontend files for nginx1
+    tags: frontendcopy1
+    copy: src=application.js dest={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}/frontend/app/controllers
+
+  - name: Copy needed frontend files for nginx2
+    tags: frontendcopy2
+    copy: src=homepage.js dest={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}/frontend/app/controllers
+
+  - name: Copy needed frontend files for nginx3
+    tags: frontendcopy3
+    copy: src=ember-handlebars-loader-0.0.1.js dest={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}/frontend/app/libs
 
   - name: Copy package.json to webserver
     tags: cppackagejson
@@ -112,6 +136,21 @@
   - name: Edit pg_hba.conf
     lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
     tags: pghbaconf_to_trust
+
+  - name: create directories for configuration and logs
+    tags: nginxconflogs
+    command: mkdir "{{item}}"
+    with_items: 
+      - conf
+      - logs
+
+  - name: Change owner of conf and logs
+    command: chown -R orca_admin:orcagroup ./conf ./logs
+    tags: chownconf
+
+  - name: Start Nginx service
+    service: name=nginx state=started
+    tags: nginxstart
  
   - name: Restart PostgreSql service
     service: name=postgresql state=restarted
@@ -125,17 +164,9 @@
     postgresql_db: name={{db_name}} owner={{db_user}}
     tags: createpostgresdb
 
-  - name: copy Django settings.py template
-    template: src=settings.j2 dest=/etc/
-    tags: djangosettingscopy
-    
-  - name: Edit Django project settings.py
-    shell: sed -i '/# Database/,$d' settings.py chdir={{settings_path}}
-    tags: editsettings
-
-  - name: Append settings template
-    shell: cat /etc/settings.j2 >> {{settings_path}}/settings.py
-    tags: appendsettings
+  - name: Copy settings.py file
+    tags: settingspycopy
+    copy: src=settings.py dest={{settings_path}} owner=orca_admin mode=0744
 
   - name: Django project migrate
     shell: python manage.py migrate chdir={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}
@@ -152,11 +183,47 @@
   - name: Create Django superuser
     shell: echo "from django.contrib.auth.models import User; User.objects.create_superuser('{{django_admin_name}}', '{{django_admin_email}}', '{{django_admin_password}}')" | python manage.py shell chdir={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}
     tags: djangosuperuser
-    
+   
+  - name: Copy uwsgi.ini file
+    tags: uwsgiconfcopy
+    copy: src=uwsgi.ini dest=./conf owner=orca_admin mode=0744
+
+  - name: Copy nginx.conf file
+    tags: nginxconfcopy
+    template: src=nginx.j2 dest=./conf owner=orca_admin
+
+  - name: Rename nginx.j2 template to nginx.conf
+    tags: renamenginxconf
+    command: mv nginx.j2 nginx.conf chdir=./conf
+  
+  - name: Edit ngnix.conf in /etc/nginx
+    lineinfile: line="include /home/orca_admin/conf/nginx.conf;" insertafter="http {" dest="/etc/nginx/nginx.conf"
+    tags: editetcnginx
+
+  - name: Restart Nginx service
+    service: name=nginx state=restarted
+    tags: nginxrestart
+
+  - name: Install uwsgi-plugin-python
+    apt: name=uwsgi-plugin-python state=present
+    tags: installuwsgi
+
+  - name: create directory static
+    tags: createstaticdir
+    command: mkdir {{project_path}}/{{ember_django_dir}}/static creates={{project_path}}/{{ember_django_dir}}/static
+
+  - name: Start uWSGI service
+    tags: startuwsgi
+    command: uwsgi --ini /home/orca_admin/conf/uwsgi.ini --pidfile /tmp/uwsgi.pid
+    args:
+      chdir: "{{project_path}}/{{ember_django_dir}}"
+
+  - name: Run collectstatic command
+    tags: collectstatic
+    command: python manage.py collectstatic --noinput
+    args:
+      chdir: "{{project_path}}/{{ember_django_dir}}"
+
   - name: Change owner of projects
     command: chown -R orca_admin:orcagroup {{myprojectdir}}
     tags: chownorca
-
-  - name: Django runserver
-    command: python manage.py runserver 0.0.0.0:{{django_port}} chdir={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}
-    tags: runserver

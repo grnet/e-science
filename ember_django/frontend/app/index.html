@@ -12,13 +12,13 @@
 	</head>
 	<body class="" style="">
 		{% verbatim %}
-
+		<noscript><div><h2>This site requires Javascript to function</h2></div></noscript>
 		{% endverbatim %}
 	    <script src="{{ STATIC_URL }}libs/jquery-1.11.1.js"></script>
 	    <script src="{{ STATIC_URL }}libs/jquery-loader.js"></script>
 	    <script src="{{ STATIC_URL }}libs/package/dist/handlebars.js"></script>
 	    <script src="{{ STATIC_URL }}libs/ember-1.7.0.js"></script>
-	    <script src="{{ STATIC_URL }}libs/ember-data.js"></script>
+	    <script src="{{ STATIC_URL }}libs/ember-data-1.0.0-beta.12.js"></script>
 	    <script src="{{ STATIC_URL }}libs/ember-handlebars-loader-0.0.1.js"></script>
 	    <script src="{{ STATIC_URL }}styles/bootstrap.js"></script>
 	
@@ -51,9 +51,8 @@
 	    <script src="{{ STATIC_URL }}models/cluster_choice.js"></script>
 		
 	    <script>EmberHandlebarsLoader.loadTemplates([
-		'application', 'homepage', 'user/login', 'user/welcome', 'cluster/create'
-	    ])</script>
-
+			'application', 'homepage', 'user/login', 'user/welcome', 'cluster/create', 'user/_userclusters'
+	    ]);</script>
 	
 	</body>
 </html>

@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 '''
-This script is a test generator and checks that the summary of each flavors responds when the coresponding buttons are pressed
+This script is a test for cluster creation via GUI end to end
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
 from selenium import webdriver
-import sys
+import sys, os
 from os.path import join, dirname, abspath
 sys.path.append(join(dirname(abspath(__file__)), '../..'))
+sys.path.append(join(dirname(__file__), '../../ember_django/backend'))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
@@ -95,7 +97,8 @@ class test_text_respond_to_buttons(unittest.TestCase):
                 driver.find_element_by_id(button_id).click()
         driver.find_element_by_id("next").click()
         print 'Creating cluster...'
-        for i in range(1800):
+        for i in range(1800): 
+            # wait for cluster create to finish
             try:
                 if "" != driver.find_element_by_id('id_output_message').text: break
             except: pass
@@ -105,6 +108,7 @@ class test_text_respond_to_buttons(unittest.TestCase):
             cluster_url = message.rsplit(' ', 1)[-1]
             driver.get(cluster_url)
             print message
+            #check that cluster url is up and page is running
             try: self.assertEqual("All Applications", driver.find_element_by_css_selector("h1").text)
             except AssertionError as e: self.verificationErrors.append(str(e))
         else:

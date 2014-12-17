@@ -61,7 +61,7 @@ It is easier though to change the default values in the ansible/group_vars/all.y
 Also, the variables [myprojectdir] [myprojectname] are the directory name where django projects will be created and a django project name and can be changed from their default values.
 
 Other useful variables are :
- - [escience_repo], which is the github repo from where webserver role will clone the django project. Default is mine.
+- [escience_repo], which is the github repo from where webserver role will clone the django project. Default is gtzelepis.
 
 - [path_to_folder_to_minify], which is the path of the app folder to minify/uglify the .js files.
 

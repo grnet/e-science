@@ -12,8 +12,8 @@ import django
 import os
 import sys
 import logging
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(os.path.dirname(__file__))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients import ClientError
 from backend.models import *
