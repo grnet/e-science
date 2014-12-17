@@ -608,12 +608,14 @@ App.ClusterCreateController = Ember.Controller.extend({
 						self.set('message', data._data.message);
 						self.set('controllers.userWelcome.output_message', data._data.message);
 						self.set('controllers.userWelcome.create_cluster_start', false);
+						self.store.fetch('user', 1);
 					}, function() {
 						// Set the response to user's create cluster click when put fails.
 						$.loader.close(true);
 						self.set('message', 'A problem occured during your request. Please check your cluster parameters and try again');
 						self.set('controllers.userWelcome.output_message', 'A problem occured during your request. Please check your cluster parameters and try again');
 						self.set('controllers.userWelcome.create_cluster_start', false);
+						self.store.fetch('user', 1);
 					});
 					if (this.get('message') == "") {
 						// after ten seconds goes to welcome route
