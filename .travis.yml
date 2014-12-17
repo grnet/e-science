@@ -13,6 +13,10 @@ install:
 - pip install paramiko
 - pip install ansible==1.7.2
 - pip install django
+- pip install djorm-pgarray
+- pip install psycopg2
+- pip install djangorestframework
+- pip install rest_framework_ember
 - pip install selenium
 - pip install mock
 - pip install rednose
@@ -24,13 +28,4 @@ before_script:
 - sh -e /etc/init.d/xvfb start
 - nohup bash -c "webdriver-manager start 2>&1 &"
 script:
-- ssh-keygen -q -t rsa -P "" -f ~/.ssh/id_rsa
-- cp ~/.ssh/id_rsa.pub ~/.ssh/id_rsa.new
-#- sshpass -p $hpass scp -o StrictHostKeyChecking=no -q ~/.ssh/id_rsa.new hduser@$master_ip:/home/hduser/.ssh/
-#- sshpass -p $hpass ssh hduser@$master_ip "cat /home/hduser/.ssh/id_rsa.new >> /home/hduser/.ssh/authorized_keys"
-- echo -e "Host $master_ip\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 - nosetests -sv tests/test_create_cluster.py
-
-- testem ci -f ember_django/frontend/testem.json -t ember_django/frontend/tests/index.html
-#- python legacy/run_pi_yarn.py --master_ip=$master_ip 2 100000
-

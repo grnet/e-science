@@ -520,7 +520,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		// go_to_create action is triggered
 		go_to_create : function() {
 			$options = {
-				title : 'Redirect to welcome route and start building cluster...',
+				title : 'Redirect to welcome page and start building cluster...',
 				fontColor : false,
 				bgColor : 'transparent',
 				size : 32,
