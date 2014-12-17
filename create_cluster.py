@@ -16,10 +16,10 @@ from time import sleep
 from kamaki.clients import ClientError
 from os.path import join, expanduser, dirname, abspath
 import os
-sys.path.append(join(dirname(__file__), 'ember_django/backend'))
+sys.path.append(join(dirname(abspath(__file__)), 'ember_django/backend'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
-from django_db_after_login import *
-from get_flavors_quotas import *
+from ember_django.backend.django_db_after_login import *
+from ember_django.backend.get_flavors_quotas import *
 from reroute_ssh import reroute_ssh_prep
 from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \

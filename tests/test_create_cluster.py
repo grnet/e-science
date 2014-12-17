@@ -11,12 +11,12 @@ from ConfigParser import RawConfigParser, NoSectionError
 import sys
 from os.path import join, dirname, abspath
 
-sys.path.append(join(dirname(__file__), '..'))
+sys.path.append(join(dirname(abspath(__file__)), '..'))
 
 # import objects we aim to test
 # from create_bare_cluster import create_cluster
-from create_cluster import YarnCluster
-from cluster_errors_constants import error_quotas_clustersize, error_quotas_network, \
+from create_cluster import YarnCluster, ClientError
+from cluster_errors_constants import error_quotas_cluster_size, error_quotas_network, \
     error_get_ip, error_quotas_cpu, error_quotas_ram, error_quotas_cyclades_disk
 
 def mock_createcluster(*args):
@@ -27,7 +27,7 @@ def mock_createcluster(*args):
     return fake_master_ip, fake_vm_dict
 
 def mock_createpassfile(*args):
-	print 'create PLACEHOLDER password file'
+    print 'create PLACEHOLDER password file'
 
 def mock_sleep(*args):
     """ Noop time.sleep(). Returns immediately. """
@@ -38,7 +38,23 @@ class MockAstakos():
     """ support class for faking AstakosClient.get_quotas """
 
     def get_quotas(self, *args):
-        return { u'some_project_id': {u'cyclades.disk': {u'project_limit': 1288490188800, u'project_pending': 0, u'project_usage': 64424509440, u'usage': 0, u'limit': 322122547200, u'pending': 0}, u'cyclades.vm': {u'project_limit': 60, u'project_pending': 0, u'project_usage': 2, u'usage': 0, u'limit': 15, u'pending': 0}, u'pithos.diskspace': {u'project_limit': 429496729600, u'project_pending': 0, u'project_usage': 0, u'usage': 0, u'limit': 107374182400, u'pending': 0}, u'cyclades.ram': {u'project_limit': 128849018880, u'project_pending': 0, u'project_usage': 12884901888, u'usage': 0, u'limit': 32212254720, u'pending': 0}, u'cyclades.cpu': {u'project_limit': 120, u'project_pending': 0, u'project_usage': 12, u'usage': 0, u'limit': 30, u'pending': 0}, u'cyclades.floating_ip': {u'project_limit': 16, u'project_pending': 0, u'project_usage': 6, u'usage': 3, u'limit': 4, u'pending': 0}, u'cyclades.network.private': {u'project_limit': 16, u'project_pending': 0, u'project_usage': 0, u'usage': 0, u'limit': 4, u'pending': 0}, u'astakos.pending_app': {u'project_limit': 0, u'project_pending': 0, u'project_usage': 0, u'usage': 0, u'limit': 0, u'pending': 0}} }
+        return { 'some_project_id':
+                     {'cyclades.disk':
+                          {'project_limit': 1288490188800, 'project_pending': 0, 'project_usage': 64424509440, 'usage': 0, 'limit': 322122547200, 'pending': 0},
+                      'cyclades.vm':
+                          {'project_limit': 60, 'project_pending': 0, 'project_usage': 2, 'usage': 0, 'limit': 15, 'pending': 0},
+                      'pithos.diskspace':
+                          {'project_limit': 429496729600, 'project_pending': 0, 'project_usage': 0, 'usage': 0, 'limit': 107374182400, 'pending': 0},
+                      'cyclades.ram':
+                          {'project_limit': 128849018880, 'project_pending': 0, 'project_usage': 12884901888, 'usage': 0, 'limit': 32212254720, 'pending': 0},
+                      'cyclades.cpu':
+                          {'project_limit': 120, 'project_pending': 0, 'project_usage': 12, 'usage': 0, 'limit': 30, 'pending': 0},
+                      'cyclades.floating_ip':
+                          {'project_limit': 16, 'project_pending': 0, 'project_usage': 6, 'usage': 3, 'limit': 4, 'pending': 0},
+                      'cyclades.network.private':
+                          {'project_limit': 16, 'project_pending': 0, 'project_usage': 0, 'usage': 0, 'limit': 4, 'pending': 0},
+                      'astakos.pending_app':
+                          {'project_limit': 0, 'project_pending': 0, 'project_usage': 0, 'usage': 0, 'limit': 0, 'pending': 0}} }
 
 
 def mock_checkcredentials(*args):
@@ -143,8 +159,8 @@ class TestCreateCluster(TestCase):
         try:
             self.token = parser.get('cloud \"~okeanos\"', 'token')
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
-	    self.project_name = parser.get('project', 'name')
-            self.opts = {'name': 'Test', 'clustersize': 2, 'cpu_master': 2,
+            self.project_name = parser.get('project', 'name')
+            self.opts = {'name': 'Test', 'cluster_size': 2, 'cpu_master': 2,
                 'ram_master': 4096, 'disk_master': 5, 'cpu_slave': 2,
                 'ram_slave': 2048, 'disk_slave': 5, 'token': self.token,
                 'disk_template': 'ext_vlmc', 'image': 'ubuntu',
@@ -173,13 +189,13 @@ class TestCreateCluster(TestCase):
     @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_clustersize_quotas_sufficient(self):
         # arrange
-        prev_clustersize = self.opts['clustersize']
-        self.opts['clustersize'] = 2
+        prev_clustersize = self.opts['cluster_size']
+        self.opts['cluster_size'] = 2
         c_yarn_cluster = YarnCluster(self.opts)
         expected = 0  # usage: 4, limit: 6 (2 remaining), requested: 2, expected result success
         # act
-        returned = c_yarn_cluster.check_clustersize_quotas()
-        self.opts['clustersize'] = prev_clustersize
+        returned = c_yarn_cluster.check_cluster_size_quotas()
+        self.opts['cluster_size'] = prev_clustersize
         # assert
         self.assertEqual(expected, returned)
 
@@ -188,15 +204,17 @@ class TestCreateCluster(TestCase):
     @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_clustersize_quotas_exceeded(self):
         # arrange
-        prev_clustersize = self.opts['clustersize']
-        self.opts['clustersize'] = 30
+        prev_clustersize = self.opts['cluster_size']
+        self.opts['cluster_size'] = 30
         c_yarn_cluster = YarnCluster(self.opts)
-        expected = error_quotas_clustersize
+        expected = error_quotas_cluster_size
         # act
-        returned = c_yarn_cluster.check_clustersize_quotas()
-        self.opts['clustersize'] = prev_clustersize
+        with self.assertRaises(ClientError) as context:
+            c_yarn_cluster.check_cluster_size_quotas()
+        self.opts['cluster_size'] = prev_clustersize
         # assert
-        self.assertEqual(expected, returned)
+        the_exception = context.exception
+        self.assertEqual(expected, the_exception.status)
 
     @patch('create_cluster.check_credentials', mock_checkcredentials)
     @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
@@ -233,13 +251,13 @@ class TestCreateCluster(TestCase):
     @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_cpu_valid_sufficient(self):
         # arrange
-        prev_clustersize = self.opts['clustersize']
-        self.opts['clustersize'] = 2
+        prev_clustersize = self.opts['cluster_size']
+        self.opts['cluster_size'] = 2
         c_yarn_cluster = YarnCluster(self.opts)
         expected = 0  # usage: 5, limit: 9 (4 remaining), requested: 4, expected result success
         # act
         returned = c_yarn_cluster.check_cpu_valid()
-        self.opts['clustersize'] = prev_clustersize
+        self.opts['cluster_size'] = prev_clustersize
         # assert
         self.assertEqual(expected, returned)
 
@@ -247,15 +265,17 @@ class TestCreateCluster(TestCase):
     @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_cpu_valid_exceeded(self):
         # arrange
-        prev_clustersize = self.opts['clustersize']
-        self.opts['clustersize'] = 30
+        prev_clustersize = self.opts['cluster_size']
+        self.opts['cluster_size'] = 30
         c_yarn_cluster = YarnCluster(self.opts)
         expected = error_quotas_cpu
         # act
-        returned = c_yarn_cluster.check_cpu_valid()
-        self.opts['clustersize'] = prev_clustersize
+        with self.assertRaises(ClientError) as context:
+            c_yarn_cluster.check_cpu_valid()
+        self.opts['cluster_size'] = prev_clustersize
         # assert
-        self.assertEqual(expected, returned)
+        the_exception = context.exception
+        self.assertEqual(expected, the_exception.status)
 
     @patch('create_cluster.check_credentials', mock_checkcredentials)
     def test_check_ram_valid_sufficient(self):

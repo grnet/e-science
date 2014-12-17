@@ -11,5 +11,5 @@ App.Clusterchoice = DS.Model.extend({
 	mem_slaves : attr('number'),		// memory for slaves
 	disk_slaves : attr('number'),		// disk for slaves
 	disk_template : attr('string'),		// disk template
-	os_choice : attr('string')		// operating system
+	os_choice : attr('string'),			// operating system
 });

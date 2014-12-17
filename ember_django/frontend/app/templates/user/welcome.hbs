@@ -1,5 +1,5 @@
 <p></p>
-<div class="well well-md text-center">
+<div class="well well-sm text-center">
 	<div class="row">
 	<h3 id = 'id_title_user_welcome_route'> Welcome </h3>
 	<div class="col col-sm-3"></div>
@@ -14,23 +14,28 @@
 	<div class="col col-sm-6">
 		<ul class="list-group list-unstyled">
 			 <li class="list-group-item text-center">
-			 	<h4 class="list-group-item-heading">Status</h4>
+			 	<h4 class="list-group-item-heading">User info</h4>
 			 </li>
-		  <li class="list-group-item text-lg">
+		  <li class="list-group-item text-md">
 		    <span class="badge">{{content._data.user_id}}</span>
 		    <h4>User ID:</h4>
 		  </li>
-		  <li class="list-group-item">
+		  <li class="list-group-item text-md">
 		    <span class="badge">{{content._data.cluster}}</span>
 		    <h4>Clusters: </h4>
 		  </li>
-		  <li class="list-group-item">
-            <span class="badge">{{content._data.cluster}}</span>
-            <h4 id = 'id_output_message'>{{output_message}}</h4>
-          </li>
 		</ul>
 	</div>
 	<div class="col col-sm-6 pull-right">
-		<p class="lead">Create Cluster options are found at the Services menu.</p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Necessitatibus officiis cumque facilis eum laborum deserunt maxime earum iste atque nulla culpa sit error unde dolor in. Dignissimos rem architecto sunt aut doloremque minima perferendis pariatur reprehenderit placeat sit explicabo unde dolore eum illum ullam! Libero dignissimos maxime animi molestiae modi!
+		<p class="lead">Cluster creation command at the Services menu.</p>
+		<p></p>
+		{{#if output_message}}
+		<div class="alert alert-dismissable alert-warning text-center">
+			<button type="button" class="close" data-dismiss="alert">×</button>
+			<span id='id_output_message'>{{output_message}}</span>
+		</div>
+		{{/if}}
 	</div>
 </div>
+<hr>
+{{partial 'user/userclusters'}}
