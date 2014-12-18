@@ -4,5 +4,6 @@ App.HomepageController = Ember.Controller.extend({
 		start : function() {
 			this.transitionToRoute('user.login');
 		}
-	}     
+	},
+	STATIC_URL : '/frontend/app/',
 });

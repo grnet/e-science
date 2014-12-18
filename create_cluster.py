@@ -7,16 +7,27 @@ This script creates a cluster on ~okeanos.
 @author: Ioannis Stenos, Nick Vrionis, George Tzelepis
 """
 import logging
+import sys
+import django
+import datetime
 from argparse import ArgumentParser, ArgumentTypeError
 from sys import argv, exit
 from time import sleep
-from os.path import dirname, abspath, expanduser, join
+from kamaki.clients import ClientError
+from os.path import join, expanduser, dirname, abspath
+import os
+sys.path.append(join(dirname(abspath(__file__)), 'ember_django/backend'))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
+from ember_django.backend.django_db_after_login import *
+from ember_django.backend.get_flavors_quotas import *
 from reroute_ssh import reroute_ssh_prep
 from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
     init_cyclades, init_cyclades_netclient, init_plankton, get_project_id, \
-    destroy_cluster
+    destroy_cluster, get_user_quota
 from cluster_errors_constants import *
+
+
 
 # Default values for YarnCluster creation.
 _defaults = {
@@ -90,15 +101,16 @@ class YarnCluster(object):
         self.project_id = get_project_id(self.opts['token'],
                                          self.opts['project_name'])
         self.status = {}
+        self.user = db_after_login(self.opts['token'], login=False)
         # Instance of an AstakosClient object
         self.auth = check_credentials(self.opts['token'],
                                       self.opts.get('auth_url',
                                                     _defaults['auth_url']))
         # Check if project has actual quota
         if self.check_project_quota() != 0:
-            logging.error('Project %s exists but you have no quota to request',
-                          self.opts['project_name'])
-            exit(error_project_quota)
+            msg = 'Project %s exists but you have no quota to request' % \
+                self.opts['project_name']
+            raise ClientError(msg, error_project_quota)
         # ~okeanos endpoints and user id
         self.endpoints, self.user_id = endpoints_and_user_id(self.auth)
 
@@ -113,7 +125,7 @@ class YarnCluster(object):
                                       self.opts['token'])
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
-            self.check_clustersize_quotas
+            self.check_cluster_size_quotas
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_network_quotas
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
@@ -125,19 +137,20 @@ class YarnCluster(object):
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_disk_valid
 
-    def check_clustersize_quotas(self):
+    def check_cluster_size_quotas(self):
         """
         Checks if the user quota is enough to create the requested number
         of VMs.
         """
-        dict_quotas = self.auth.get_quotas()
+        dict_quotas = get_user_quota(self.auth)
+        pending_vm = retrieve_pending_clusters(self.opts['token'],
+                                               self.opts['project_name'])['VMs']
         limit_vm = dict_quotas[self.project_id]['cyclades.vm']['limit']
         usage_vm = dict_quotas[self.project_id]['cyclades.vm']['usage']
-        pending_vm = dict_quotas[self.project_id]['cyclades.vm']['pending']
         available_vm = limit_vm - usage_vm - pending_vm
-        if available_vm < self.opts['clustersize']:
-            logging.error(' Cyclades VMs out of limit')
-            return error_quotas_clustersize
+        if available_vm < self.opts['cluster_size']:
+            msg = ' Cyclades VMs out of limit'
+            raise ClientError(msg, error_quotas_cluster_size)
         else:
             return 0
 
@@ -147,38 +160,36 @@ class YarnCluster(object):
         Subtracts the number of networks used and pending from the max allowed
         number of networks
         """
-        try:
-            dict_quotas = self.auth.get_quotas()
-        except Exception:
-            logging.exception('Error in getting user network quota')
-            exit(error_get_network_quota)
+        dict_quotas = get_user_quota(self.auth)
+        pending_net = retrieve_pending_clusters(self.opts['token'],
+                                               self.opts['project_name'])['Network']
         limit_net = dict_quotas[self.project_id]['cyclades.network.private']['limit']
         usage_net = dict_quotas[self.project_id]['cyclades.network.private']['usage']
-        pending_net = dict_quotas[self.project_id]['cyclades.network.private']['pending']
         available_networks = limit_net - usage_net - pending_net
         if available_networks >= 1:
             logging.log(REPORT, ' Private Network quota is ok')
             return 0
         else:
-            logging.error(' Private Network quota exceeded')
-            return error_quotas_network
+            msg = ' Private Network quota exceeded'
+            raise ClientError(msg, error_quotas_network)
 
     def check_ip_quotas(self):
         """Checks user's quota for unattached public ips."""
-        dict_quotas = self.auth.get_quotas()
+        dict_quotas = get_user_quota(self.auth)
         list_float_ips = self.net_client.list_floatingips()
+        pending_ips = retrieve_pending_clusters(self.opts['token'],
+                                               self.opts['project_name'])['Ip']
         limit_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['limit']
         usage_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['usage']
-        pending_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['pending']
-        available_ips = limit_ips - (usage_ips + pending_ips)
+        available_ips = limit_ips - usage_ips - pending_ips
         for d in list_float_ips:
             if d['instance_id'] is None and d['port_id'] is None:
                 available_ips += 1
         if available_ips > 0:
             return 0
         else:
-            logging.error(' Floating IP not available')
-            return error_get_ip
+            msg = ' Floating IP not available'
+            raise ClientError(msg, error_get_ip)
 
     def check_cpu_valid(self):
         """
@@ -186,16 +197,17 @@ class YarnCluster(object):
         Subtracts the number of cpus used and pending from the max allowed
         number of cpus.
         """
-        dict_quotas = self.auth.get_quotas()
+        dict_quotas = get_user_quota(self.auth)
+        pending_cpu = retrieve_pending_clusters(self.opts['token'],
+                                               self.opts['project_name'])['Cpus']
         limit_cpu = dict_quotas[self.project_id]['cyclades.cpu']['limit']
         usage_cpu = dict_quotas[self.project_id]['cyclades.cpu']['usage']
-        pending_cpu = dict_quotas[self.project_id]['cyclades.cpu']['pending']
         available_cpu = limit_cpu - usage_cpu - pending_cpu
-        cpu_req = self.opts['cpu_master'] + self.opts['cpu_slave'] * (
-                      self.opts['clustersize'] - 1)
+        cpu_req = self.opts['cpu_master'] + \
+            self.opts['cpu_slave'] * (self.opts['cluster_size'] - 1)
         if available_cpu < cpu_req:
-            logging.error(' Cyclades cpu out of limit')
-            return error_quotas_cpu
+            msg = ' Cyclades cpu out of limit'
+            raise ClientError(msg, error_quotas_cpu)
         else:
             return 0
 
@@ -205,48 +217,48 @@ class YarnCluster(object):
         Subtracts the number of ram used and pending from the max allowed
         number of ram.
         """
-        dict_quotas = self.auth.get_quotas()
+        dict_quotas = get_user_quota(self.auth)
+        pending_ram = retrieve_pending_clusters(self.opts['token'],
+                                               self.opts['project_name'])['Ram']
         limit_ram = dict_quotas[self.project_id]['cyclades.ram']['limit']
         usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
-        pending_ram = dict_quotas[self.project_id]['cyclades.ram']['pending']
-        available_ram = (limit_ram - usage_ram - pending_ram) / Bytes_to_MB
-        ram_req = self.opts['ram_master'] + self.opts['ram_slave'] * (
-                    self.opts['clustersize'] - 1)
+        available_ram = (limit_ram - usage_ram) / Bytes_to_MB - pending_ram
+        ram_req = self.opts['ram_master'] + \
+            self.opts['ram_slave'] * (self.opts['cluster_size'] - 1)
         if available_ram < ram_req:
-            logging.error(' Cyclades ram out of limit')
-            return error_quotas_ram
+            msg = ' Cyclades ram out of limit'
+            raise ClientError(msg, error_quotas_ram)
         else:
             return 0
 
     def check_disk_valid(self):
         """
-        Checks if the user quota is enough to bind the requested disk resources.
+        Checks if the requested disk resources are available for the user.
         Subtracts the number of disk used and pending from the max allowed
         disk size.
         """
-        dict_quotas = self.auth.get_quotas()
+        dict_quotas = get_user_quota(self.auth)
+        pending_cd = retrieve_pending_clusters(self.opts['token'],
+                                               self.opts['project_name'])['Disk']
         limit_cd = dict_quotas[self.project_id]['cyclades.disk']['limit']
         usage_cd = dict_quotas[self.project_id]['cyclades.disk']['usage']
-        pending_cd = dict_quotas[self.project_id]['cyclades.disk']['pending']
-        cyclades_disk_req = self.opts['disk_master'] + self.opts['disk_slave'] * (
-                             self.opts['clustersize'] - 1)
-        available_cyclades_disk_GB = (limit_cd - usage_cd - pending_cd) / Bytes_to_GB
+        cyclades_disk_req = self.opts['disk_master'] + \
+            self.opts['disk_slave'] * (self.opts['cluster_size'] - 1)
+        available_cyclades_disk_GB = (limit_cd - usage_cd) / Bytes_to_GB - pending_cd
         if available_cyclades_disk_GB < cyclades_disk_req:
-            logging.error(' Cyclades disk out of limit')
-            return error_quotas_cyclades_disk
+            msg = ' Cyclades disk out of limit'
+            raise ClientError(msg, error_quotas_cyclades_disk)
         else:
             return 0
 
     def check_all_resources(self):
         """
         Checks user's quota if every requested resource is available.
-        Returns error value if not available, else return zero.
+        Returns zero if everything available.
         """
         for checker in [func for (order, func) in sorted(self._DispatchCheckers.items())]:
             # for k, checker in self._DispatchCheckers.iteritems():
             retval = checker()
-            if retval != 0:
-                return retval
         return 0
 
     def get_flavor_id_master(self, cyclades_client):
@@ -256,9 +268,9 @@ class YarnCluster(object):
         """
         try:
             flavor_list = cyclades_client.list_flavors(True)
-        except Exception:
-            logging.exception(' Could not get list of flavors')
-            exit(error_flavor_list)
+        except ClientError:
+            msg = ' Could not get list of flavors'
+            raise ClientError(msg, error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
             if flavor['ram'] == self.opts['ram_master'] and \
@@ -276,9 +288,9 @@ class YarnCluster(object):
         """
         try:
             flavor_list = cyclades_client.list_flavors(True)
-        except Exception:
-            logging.exception(' Could not get list of flavors')
-            exit(error_flavor_list)
+        except ClientError:
+            msg = ' Could not get list of flavors'
+            raise ClientError(msg, error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
             if flavor['ram'] == self.opts['ram_slave'] and \
@@ -302,8 +314,8 @@ class YarnCluster(object):
 
     def check_project_quota(self):
         """Checks that for a given project actual quota exist"""
-        dict_quota = self.auth.get_quotas()
-        if self.project_id in dict_quota:
+        dict_quotas = get_user_quota(self.auth)
+        if self.project_id in dict_quotas:
             return 0
         return error_project_quota
 
@@ -317,35 +329,44 @@ class YarnCluster(object):
         flavor_master = self.get_flavor_id_master(self.cyclades)
         flavor_slaves = self.get_flavor_id_slave(self.cyclades)
         if flavor_master == 0 or flavor_slaves == 0:
-            logging.error(' Combination of cpu, ram, disk and disk_template do'
-                          ' not match an existing id')
-
-            exit(error_flavor_id)
+            msg = ' Combination of cpu, ram, disk and disk_template do' \
+                ' not match an existing id'
+            raise ClientError(msg, error_flavor_id)
         list_current_images = self.plankton.list_public(True, 'default')
         # Check availability of resources
         retval = self.check_all_resources()
-        if retval != 0:
-            exit(retval)
         # Find image id of the operating system arg given
         for lst in list_current_images:
             if lst['name'] == self.opts['image']:
                 chosen_image = lst
                 break
         if not chosen_image:
-            logging.error(self.opts['image']+' is not a valid image')
-            exit(error_image_id)
+            msg = self.opts['image']+' is not a valid image'
+            raise ClientError(msg, error_image_id)
         logging.log(SUMMARY, ' Creating ~okeanos cluster')
-        cluster = Cluster(self.cyclades, self.opts['name'],
-                          flavor_master, flavor_slaves,
-                          chosen_image['id'], self.opts['clustersize'],
-                          self.net_client, self.auth, self.project_id)
 
-        self.HOSTNAME_MASTER_IP, self.server_dict = \
-            cluster.create('', pub_keys_path, '')
-        sleep(15)
+        # Create timestamped name of the cluster
+        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cluster_name = '%s%s%s' % (date_time, '-', self.opts['name'])
+        self.opts['name'] = cluster_name
+
+        # Update db with cluster status as pending
+        db_cluster_create(self.opts['token'], self.opts)
+        try:
+            cluster = Cluster(self.cyclades, self.opts['name'],
+                              flavor_master, flavor_slaves,
+                              chosen_image['id'], self.opts['cluster_size'],
+                              self.net_client, self.auth, self.project_id)
+
+            self.HOSTNAME_MASTER_IP, self.server_dict = \
+                cluster.create('', pub_keys_path, '')
+            sleep(15)
+        except Exception:
+            # If error in bare cluster, update cluster status as destroyed
+            db_cluster_update(self.opts['token'], "Destroyed", self.opts['name'])
+            raise
         # wait for the machines to be pingable
         logging.log(SUMMARY, ' ~okeanos cluster created')
-
         # Get master VM root password
         master_root_pass = self.server_dict[0]['adminPass']
         master_name = self.server_dict[0]['name']
@@ -357,18 +378,28 @@ class YarnCluster(object):
     def create_yarn_cluster(self):
         """Create Yarn cluster"""
         self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
-        logging.log(SUMMARY, ' The root password of master VM [%s] '
-                    'is on file %s', self.server_dict[0]['name'],
-                    self.pass_file)
         logging.log(SUMMARY, ' Creating Yarn cluster')
-        list_of_hosts = reroute_ssh_prep(self.server_dict,
-                                         self.HOSTNAME_MASTER_IP)
-        logging.log(SUMMARY, ' Installing and configuring Yarn')
-        install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP, self.opts['name'])
-        logging.log(SUMMARY, ' The root password of master VM [%s] '
-                    'is on file %s', self.server_dict[0]['name'],
-                    self.pass_file)
-        return self.HOSTNAME_MASTER_IP, self.server_dict
+        try:
+            list_of_hosts = reroute_ssh_prep(self.server_dict,
+                                             self.HOSTNAME_MASTER_IP)
+
+            logging.log(SUMMARY, ' Installing and configuring Yarn')
+            install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
+                         self.server_dict[0]['name'])
+            logging.log(SUMMARY, ' The root password of master VM [%s] '
+                        'is on file %s', self.server_dict[0]['name'],
+                        self.pass_file)
+            # If Yarn cluster is build, update cluster status as active
+            db_cluster_update(self.opts['token'], "Active", self.opts['name'],
+                              self.HOSTNAME_MASTER_IP)
+            return self.HOSTNAME_MASTER_IP, self.server_dict
+        except Exception:
+            logging.error(' An unrecoverable error occured. Created cluster'
+                          ' and resources will be deleted')
+            # If error in Yarn cluster, update cluster status as destroyed
+            db_cluster_update(self.opts['token'], "Destroyed", self.opts['name'])
+            self.destroy()
+            raise
 
     def destroy(self):
         """Destroy Cluster"""
@@ -377,11 +408,18 @@ class YarnCluster(object):
 
 def main(opts):
     """
-    The main function calls create_yar_cluster with
+    The main function calls create_yarn_cluster with
     the arguments given from command line.
     """
-    c_yarn_cluster = YarnCluster(opts)
-    c_yarn_cluster.create_yarn_cluster()
+    try:
+        c_yarn_cluster = YarnCluster(opts)
+        c_yarn_cluster.create_yarn_cluster()
+    except ClientError, e:
+        logging.error(' Fatal error:' + e.message)
+        exit(error_fatal)
+    except Exception, e:
+        logging.error(' Fatal error:' + str(e.args[0]))
+        exit(error_fatal)
 
 
 if __name__ == "__main__":
@@ -391,8 +429,8 @@ if __name__ == "__main__":
                         ' Will be prefixed by a timestamp',
                         dest='name', required=True)
 
-    parser.add_argument("--clustersize", help='Total number of cluster nodes',
-                        dest='clustersize', type=checker.two_or_bigger,
+    parser.add_argument("--cluster_size", help='Total number of cluster nodes',
+                        dest='cluster_size', type=checker.two_or_bigger,
                         required=True)
 
     parser.add_argument("--cpu_master", help='Number of cpu cores for the master node',

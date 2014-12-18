@@ -1,6 +1,8 @@
 // Cluster/create controller
 App.ClusterCreateController = Ember.Controller.extend({
 
+	needs : 'userWelcome',
+
 	// Initialization phase
 	project_index : 0, // index (position in the array) of the project
 	project_current : '', // current project
@@ -134,6 +136,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 		if (length == 0) {
 			if (this.get('project_name') != '') {
 				this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
+				alert(String(this));
+				alert(String(this.get('project_name')));
 			}
 			cluster_size_zero = true;
 			return max_cluster_size_limited_by_current_cpus;
@@ -373,7 +377,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			this.set('cluster_size_var', 2);
 			return this.get('cluster_size_var');
 		} else {
-			this.set('cluster_size_var',this.get('cluster_size'));
+			this.set('cluster_size_var', this.get('cluster_size'));
 			return this.get('cluster_size_var');
 		}
 	},
@@ -516,7 +520,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		// go_to_create action is triggered
 		go_to_create : function() {
 			$options = {
-				title : 'Checking quotas...',
+				title : 'Redirect to welcome page and start building cluster...',
 				fontColor : false,
 				bgColor : 'transparent',
 				size : 32,
@@ -525,7 +529,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				imgUrl : "/frontend/app/images/loading[size].gif",
 				onShow : function() {
 					$.loader.shown = true;
-					$('.loading_wrp').find('span').addClass('text-warning strong');
+					$('.loading_wrp').find('span').addClass('text-info strong');
 				},
 				onClose : function() {
 					$.loader.shown = false;
@@ -576,7 +580,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 				var elem = document.getElementById("common_settings");
 				window.scrollTo(elem.offsetLeft, elem.offsetTop);
 			} else {
-				$.loader.open($options); //body
+				$.loader.open($options);
+				//body
 				// check if everything is allowed
 				if ((this.get('total_cpu_selection') <= this.get('content').objectAt(this.get('project_index')).get('cpu_av')) && (this.get('total_ram_selection') <= this.get('content').objectAt(this.get('project_index')).get('mem_av')) && (this.get('total_disk_selection') <= this.get('content').objectAt(this.get('project_index')).get('disk_av'))) {
 					var self = this;
@@ -596,38 +601,31 @@ App.ClusterCreateController = Ember.Controller.extend({
 						'disk_template' : self.get('disk_temp'),
 						'os_choice' : self.get('operating_system')
 					}).save();
+
 					cluster_selection.then(function(data) {
 						// Set the response to user's create cluster click when put succeeds.
-						self.set('message', data._data.message);
 						$.loader.close(true);
-						if (self.get('message') == "Everything is ok with your cluster creation parameters. Cluster is being created.") {
-							$options = {
-								title : 'Cluster is being created...',
-								fontColor : false,
-								bgColor : 'transparent',
-								size : 32,
-								isOnly : true,
-								bgOpacity : 1.0,
-								imgUrl : "/frontend/app/images/loading[size].gif",
-								onShow : function() {
-									$.loader.shown = true;
-									$('.loading_wrp').find('span').addClass('text-info strong');
-								},
-								onClose : function() {
-									$.loader.shown = false;
-								}
-							}; 
-							$.loader.open($options);			
-							setTimeout(function() {
-							//	$.loader.close(true);
-								self.transitionToRoute('user.welcome');
-							}, 10000);
-						}
+						self.set('message', data._data.message);
+						self.set('controllers.userWelcome.output_message', data._data.message);
+						self.set('controllers.userWelcome.create_cluster_start', false);
 					}, function() {
 						// Set the response to user's create cluster click when put fails.
+						$.loader.close(true);
 						self.set('message', 'A problem occured during your request. Please check your cluster parameters and try again');
+						self.set('controllers.userWelcome.output_message', 'A problem occured during your request. Please check your cluster parameters and try again');
+						self.set('controllers.userWelcome.create_cluster_start', false);
 					});
-
+					if (this.get('message') == "") {
+						// after ten seconds goes to welcome route
+						setTimeout(function() {
+							self.set('controllers.userWelcome.create_cluster_start', true);
+							self.transitionToRoute('user.welcome');						
+						}, 10000);
+					}
+					else {
+						self.set('controllers.userWelcome.create_cluster_start', true);
+						this.transitionToRoute('user.welcome');
+					}
 				} else {
 					alert('Requested resources unavailable!');
 					$.loader.close(true);

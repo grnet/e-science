@@ -31,6 +31,7 @@ class UserInfo(models.Model):
 
     class Meta:
         verbose_name = "User"
+        app_label = 'backend'
 
     def __unicode__(self):
         return str(self.user_id)
@@ -48,8 +49,8 @@ class ClusterCreationParams(models.Model):
     parameters from okeanos. Imported djorm_pgarray package
     is needed for custom Arrayfields.
     '''
-    id = models.IntegerField("Max ID", null=False, primary_key=True,
-                                  help_text="Maximum ID")
+    id = models.IntegerField("Id", primary_key=True, null=False,
+                                       help_text="Id needed by ember.js store")
     user_id = models.ForeignKey(UserInfo, null=False,
                                    help_text="User ID")
     # Project name
@@ -91,6 +92,13 @@ class ClusterCreationParams(models.Model):
     # Operating system choices
     os_choices = TextArrayField()  # ArrayField
 
+    pending_status = models.NullBooleanField(default=False)
+
+
+    class Meta:
+        verbose_name = "Cluster"
+        app_label = 'backend'
+
 
 class Token(models.Model):
     '''Definition of a e-science Token Authentication model.'''
@@ -107,6 +115,10 @@ class Token(models.Model):
 
     def __unicode__(self):
         return self.key
+
+    class Meta:
+        verbose_name = "Token"
+        app_label = 'backend'
 
 
 class UserLogin(models.Model):
@@ -128,6 +140,7 @@ class UserLogin(models.Model):
 
     class Meta:
         verbose_name = "Login"
+        app_label = 'backend'
 
     def __unicode__(self):
         return ("%s, %s") % (self.user_id.user_id, self.login_status)
@@ -135,12 +148,12 @@ class UserLogin(models.Model):
 CLUSTER_STATUS_CHOICES = (
     ("0", "Destroyed"),
     ("1", "Active"),
+    ("2", "Pending"),
 )
-
 
 class ClusterInfo(models.Model):
     '''Definition of a Hadoop Cluster object model.'''
-    cluster_id = models.AutoField("Cluster ID", primary_key=True, null=False,
+    id = models.AutoField("Cluster ID", primary_key=True, null=False,
                                   help_text="Auto-increment cluster id")
     cluster_name = models.CharField("Cluster Name", max_length=255, null=False,
                                     help_text="Name of the cluster")
@@ -149,27 +162,47 @@ class ClusterInfo(models.Model):
                                        " the creation of this entry")
     cluster_status = models.CharField("Cluster Status", max_length=1,
                                       choices=CLUSTER_STATUS_CHOICES,
-                                      null=False, help_text="Destroyed/Active"
+                                      null=False, help_text="Destroyed/Active/Pending"
                                       " status of the cluster")
     cluster_size = models.IntegerField("Cluster Size", null=True,
                                        help_text="Total VMs, including master"
                                        " and slave nodes")
-    master_flavor_id = models.IntegerField("Master Flavor ID", null=False,
-                                           help_text="Master Flavor ID based"
-                                           " on KAMAKI API")
-    slave_flavor_id = models.IntegerField("Slave Flavor ID", null=False,
-                                          help_text="Slave Flavor ID based"
-                                          " on KAMAKI API")
+    cpu_master = models.IntegerField("Master Cpu", null=False,
+                                     help_text="Cpu number of master VM")
+
+    mem_master = models.IntegerField("Master Ram", null=False,
+                                     help_text="Ram of master VM")
+
+    disk_master = models.IntegerField("Master Disksize", null=False,
+                                      help_text="Disksize of master VM")
+
+    cpu_slaves = models.IntegerField("Slaves Cpu", null=False,
+                                     help_text="Cpu number of Slave VMs")
+
+    mem_slaves = models.IntegerField("Slaves Ram", null=False,
+                                     help_text="Ram of slave VMs")
+
+    disk_slaves = models.IntegerField("Slaves Disksize", null=False,
+                                      help_text="Disksize of slave VMs")
+
+    disk_template = models.CharField("Disk Template", max_length=255, null=False,
+                                     help_text="Disk Template of the cluster")
+
     os_image = models.CharField("OS Image", max_length=255, null=False,
                                 help_text="Operating system of the cluster")
-    master_IP = models.CharField("Master IP", max_length=255, null=False,
+    master_IP = models.CharField("Master IP", max_length=255, null=True,
                                  help_text="IP address of Master's node")
-    user_id = models.ForeignKey(UserInfo, null=False,
+    user_id = models.ForeignKey(UserInfo, null=False, related_name='clusters',
                                 help_text="User ID "
                                 "(user ID who owns the cluster)")
 
+    project_name = models.CharField("Project Name", max_length=255, null=False,
+                                    help_text="Project Name where"
+                                    " Cluster was created")
+
     class Meta:
         verbose_name = "Cluster"
+        app_label = 'backend'
 
     def __unicode__(self):
         return ("%s, %d, %s") % (self.cluster_name, self.cluster_size,

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-This script is a test generator and checks that the buttons are enabled or disabled upon cluster_size change
+This script is a test for cluster creation via GUI end to end
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -23,7 +23,7 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class test_buttons_availability_respond_to_cluster_size_change(unittest.TestCase):
+class test_text_respond_to_buttons(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -37,14 +37,24 @@ class test_buttons_availability_respond_to_cluster_size_change(unittest.TestCase
             self.token = parser.get('cloud \"~okeanos\"', 'token')
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
             self.base_url = parser.get('deploy', 'url')
+            self.project_name = parser.get('project', 'name')
+            auth = check_credentials(self.token)
+            try:
+                list_of_projects = auth.get_projects(state='active')
+            except Exception:
+                self.assertTrue(False,'Could not get list of projects')
+            for project in list_of_projects:
+                if project['name'] == self.project_name:
+                    self.project_id = project['id']
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
             self.base_url = "INVALID_APP_URL"
+            self.project_name = "INVALID_PROJECT_NAME"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     
-    def test_buttons_availability_respond_to_cluster_size_change(self):
+    def test_text_respond_to_buttons(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_id("id_login").click()     
@@ -69,48 +79,43 @@ class test_buttons_availability_respond_to_cluster_size_change(unittest.TestCase
             element = WebDriverWait(driver, 30).until(
                 EC.presence_of_element_located((By.ID, "id_title_cluster_create_route"))
             ) 
-        except: self.fail("time out") 
+        except: self.fail("time out")
         auth = check_credentials(self.token)
         try:
             list_of_projects = auth.get_projects(state='active')
         except Exception:
             self.assertTrue(False,'Could not get list of projects')
         kamaki_flavors = get_flavor_id(self.token)
-        for project in list_of_projects:
-            Select(driver.find_element_by_id("project_id")).select_by_visible_text(project['name'])
-            user_quota = check_quota(self.token, project['id'])
-            current_cluster_size = 2
-            cluster_sizes = driver.find_element_by_id("size_of_cluster").text
+        Select(driver.find_element_by_id("project_id")).select_by_visible_text(self.project_name)
+        user_quota = check_quota(self.token, self.project_id)             
+        driver.find_element_by_id("cluster_name").clear()
+        driver.find_element_by_id("cluster_name").send_keys("mycluster")
+        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text('2')
+        for role in ['master' , 'slaves']:
+            for flavor in ['cpus' , 'ram' , 'disk']:
+                button_id = role + '_' + flavor + '_' + str(kamaki_flavors[flavor][0])
+                driver.find_element_by_id(button_id).click()
+        driver.find_element_by_id("next").click()
+        print 'Creating cluster...'
+        for i in range(1800): 
+            # wait for cluster create to finish
             try:
-                current_cluster_size = int(cluster_sizes.rsplit('\n', 1)[-1])
-                print ('Project '+ project['name'] +' has enough vms to run the test')
-                Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(cluster_sizes.rsplit('\n', 1)[-1])
-                for flavor in ['cpus' , 'ram' , 'disk']:
-                    for item in kamaki_flavors[flavor]:
-                        button_id = 'master' + '_' + flavor + '_' + str(item)
-                        if ((user_quota[flavor]['available']-(item + (current_cluster_size-1)*kamaki_flavors[flavor][0])) >= 0):
-                            on = driver.find_element_by_id(button_id)
-                            try: self.assertTrue(on.is_enabled())
-                            except AssertionError as e: self.verificationErrors.append(str(e))
-                        else:
-                            off = driver.find_element_by_id(button_id)
-                            try: self.assertFalse(off.is_enabled())
-                            except AssertionError as e: self.verificationErrors.append(str(e))
-                for flavor in ['cpus' , 'ram' , 'disk']:
-                    for item in kamaki_flavors[flavor]:
-                        button_id = 'slaves' + '_' + flavor + '_' + str(item)
-                        if ((user_quota[flavor]['available']-(kamaki_flavors[flavor][0] + (current_cluster_size-1)*item)) >= 0):
-                            on = driver.find_element_by_id(button_id)
-                            try: self.assertTrue(on.is_enabled())
-                            except AssertionError as e: self.verificationErrors.append(str(e))
-                        else:
-                            off = driver.find_element_by_id(button_id)
-                            try: self.assertFalse(off.is_enabled())
-                            except AssertionError as e: self.verificationErrors.append(str(e))
-            except:
-             #   self.assertTrue(False,'Not enought vms to run the test')
-                print ('Project '+ project['name'] +' has not enough vms to run the test')
+                if "" != driver.find_element_by_id('id_output_message').text: break
+            except: pass
+            time.sleep(1)
+        message =  driver.find_element_by_id('id_output_message').text
+        if message.rsplit(':', 1)[-1] == '8088/cluster':         
+            cluster_url = message.rsplit(' ', 1)[-1]
+            driver.get(cluster_url)
+            print message
+            #check that cluster url is up and page is running
+            try: self.assertEqual("All Applications", driver.find_element_by_css_selector("h1").text)
+            except AssertionError as e: self.verificationErrors.append(str(e))
+        else:
+            self.assertTrue(False, message)
 
+
+    
     def is_element_present(self, how, what):
         try: self.driver.find_element(by=how, value=what)
         except NoSuchElementException, e: return False
@@ -134,6 +139,8 @@ class test_buttons_availability_respond_to_cluster_size_change(unittest.TestCase
     
     def tearDown(self):
         self.driver.quit()
+        self.assertEqual([], self.verificationErrors)
 
 if __name__ == "__main__":
     unittest.main()
+
