@@ -7,19 +7,19 @@
         <h3 class="panel-title">~Okeanos Project Selection</h3>
     </div>
     <div class="panel-body">
-        <div class="col col-lg-6">
+        <div class="col col-lg-8">
             <div class="form-horizontal">
                 <div class="form-group">
-                    <label for="project_id" class="control-label col col-sm-5">Projects</label>
-                    <div class="col col-sm-7">
+                    <label for="project_id" class="control-label col col-sm-4">Projects</label>
+                    <div class="col col-sm-8">
                         {{view Ember.Select contentBinding="projects_av"
-                        valueBinding="project_name" id="project_id" prompt="*Select project*"
+                        valueBinding="project_details" id="project_id" prompt="*Select project*"
                         class="btn btn-primary btn-sm text-left"}}
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col col-lg-6 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">
+        <div class="col col-lg-4 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">
             <div class="text-left">
                 ***Select your project first
             </div>
