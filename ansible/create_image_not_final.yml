@@ -1,0 +1,40 @@
+--- 
+  hosts: all
+  user: root
+  tasks:
+    - name: Configure locales problem
+      tags: setupimage
+      locale_gen: name=en_GB.UTF-8 state=present
+    
+    - name: Install Sudo
+      tags: setupimage
+      apt: name=sudo force=yes
+
+    - name: Install official packages found in GRNET development repository
+      apt_repository: repo='deb http://apt.dev.grnet.gr wheezy/' state=present
+      tags: setupimage
+
+    - name: Install all neccessary dependencies
+      apt: pkg={{ item }} state=latest update_cache=yes
+      tags: setupimage
+      with_items:
+        - curl
+        - python-pip
+
+    - name: Install kamaki
+      tags: setupimage
+      pip: "name={{item.name}}"
+      with_items:
+        - { name: 'kamaki==0.13.1' }
+	
+    - name: Add the apt-dev GPG key to the list of trusted keys
+      shell: curl https://dev.grnet.gr/files/apt-grnetdev.pub | apt-key add -
+
+    - name: Install snf-image-creator
+      apt: pkg=snf-image-creator state=latest update_cache=yes
+
+    - name: Update guestfs appliance 
+      shell: update-guestfs-appliance
+
+
+   snf-mkimage --public --print-syspreps -f -u hadoop_image -t token -a https://accounts.okeanos.grnet.gr/identity/v2.0 /

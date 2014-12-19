@@ -65,9 +65,4 @@ Other useful variables are :
 
 - [path_to_folder_to_minify], which is the path of the app folder to minify/uglify the .js files.
 
-- [path_to_folder_to_removelogging], which is the path of the app folder to removelogging the .js files
-
-
-
-
-
+- [path_to_folder_to_removelogging], which is the path of the app folder to removelogging the .js files	
