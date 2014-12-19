@@ -7,7 +7,7 @@ python script_name.py "arguments"
 
     arguments: 
       --name="name of the cluster" 
-      --clustersize="total VMs,including master node" 
+      --cluster_size="total VMs,including master node" 
       --cpu_master="master's node number of cores" 
       --ram_master= "master's node memory in MB",
       --disk_master= "master's node hard drive in GB",
@@ -23,5 +23,5 @@ python script_name.py "arguments"
 
 example
 
-    python script_name.py --name=Yarn_Test --clustersize=3 --cpu_master=4 --ram_master=2048 --disk_master=5 --cpu_slave=2 --ram_slave=1024 --disk_slave=5 --disk_template=ext_vlmc --image='Debian Base' --token=token number --auth_url=https://accounts.okeanos.grnet.gr/identity/v2.0 --logging=report --project_name=~okeanos_project_name
+    python script_name.py --name=Yarn_Test --cluster_size=3 --cpu_master=4 --ram_master=2048 --disk_master=5 --cpu_slave=2 --ram_slave=1024 --disk_slave=5 --disk_template=ext_vlmc --image='Debian Base' --token=token number --auth_url=https://accounts.okeanos.grnet.gr/identity/v2.0 --logging=report --project_name=~okeanos_project_name
 
