@@ -86,8 +86,9 @@ class test_text_respond_to_buttons(unittest.TestCase):
         except Exception:
             self.assertTrue(False,'Could not get list of projects')
         kamaki_flavors = get_flavor_id(self.token)
-        Select(driver.find_element_by_id("project_id")).select_by_visible_text(self.project_name)
-        user_quota = check_quota(self.token, self.project_id)             
+        user_quota = check_quota(self.token, self.project_id)
+        project_details = self.project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'Cpus:' + str(user_quota['cpus']['available']) + '  ' + 'Ram:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
+        Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)                           
         driver.find_element_by_id("cluster_name").clear()
         driver.find_element_by_id("cluster_name").send_keys("mycluster")
         Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text('2')
