@@ -10,20 +10,29 @@ Views for django rest framework .
 import os
 from os.path import join, dirname, abspath
 import sys
+import logging
 sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from kamaki.clients import ClientError
 from authenticate_user import *
 from django.views import generic
 from get_flavors_quotas import project_list_flavor_quota
 from backend.models import *
-from backend.serializers import OkeanosTokenSerializer, UserInfoSerializer, \
-    ClusterCreationParamsSerializer, ClusterchoicesSerializer
+from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
+    ClusterCreationParamsSerializer, ClusterInfoSerializer, ClusterchoicesSerializer
 from django_db_after_login import *
 from create_cluster import YarnCluster
 from cluster_errors_constants import *
 
+logging.addLevelName(REPORT, "REPORT")
+logging.addLevelName(SUMMARY, "SUMMARY")
+logger = logging.getLogger("report")
+
+logging_level = logging.INFO
+logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
+                   level=logging_level, datefmt='%H:%M:%S')
 
 class MainPageView(generic.TemplateView):
     '''Load the template file'''
@@ -69,7 +78,7 @@ class StatusView(APIView):
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
             # Dictionary of YarnCluster arguments
             choices = {'name': serializer.data['cluster_name'],
-                       'clustersize': serializer.data['cluster_size'],
+                       'cluster_size': serializer.data['cluster_size'],
                        'cpu_master': serializer.data['cpu_master'],
                        'ram_master': serializer.data['mem_master'],
                        'disk_master': serializer.data['disk_master'],
@@ -81,32 +90,16 @@ class StatusView(APIView):
                        'token': user.okeanos_token,
                        'project_name': serializer.data['project_name']}
 
-            new_yarn_cluster = YarnCluster(choices)
-            # Check user's cluster choices and send message if everything ok.
-            # Else send appropriate error message.
-            cluster_check = new_yarn_cluster.check_all_resources()
-
-            if cluster_check == 0:
-                return Response({"id": 1, "message": "Everything is ok with "
-                                 "your cluster creation parameters"})
-            elif cluster_check == -13:
-                return Response({"id": 1, "message": "Selected cluster size "
-                                 "exceeded cyclades virtual machines limit"})
-            elif cluster_check == -14:
-                return Response({"id": 1, "message": "Private Network quota"
-                                 " exceeded"})
-            elif cluster_check == -30:
-                return Response({"id": 1, "message": "Public ip quota "
-                                 "exceeded"})
-            elif cluster_check == -11:
-                return Response({"id": 1, "message": "Cpu selection exceeded"
-                                 " cyclades cpu limit"})
-            elif cluster_check == -12:
-                return Response({"id": 1, "message": "Ram selection exceeded"
-                                 " cyclades memory limit"})
-            elif cluster_check == -10:
-                return Response({"id": 1, "message": "Disk size selection"
-                                 " exceeded cyclades disk size limit"})
+            try:
+                new_yarn_cluster = YarnCluster(choices)
+                MASTER_IP, servers = new_yarn_cluster.create_yarn_cluster()
+                return Response({"id": 1, "message": " Yarn Cluster is active."
+                                 "You can access it through " +
+                                 MASTER_IP + ":8088/cluster"})
+            except ClientError, e:
+                return Response({"id": 1, "message": e.message})
+            except Exception, e:
+                return Response({"id": 1, "message": e.args[0]})
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)
@@ -141,7 +134,7 @@ class SessionView(APIView):
         if serializer.is_valid():
             token = serializer.data['token']
             if check_user_credentials(token) == AUTHENTICATED:
-                self.user = get_user_id(token)
+                self.user = db_after_login(token)
                 self.serializer_class = UserInfoSerializer(self.user)
                 return Response(self.serializer_class.data)
             else:

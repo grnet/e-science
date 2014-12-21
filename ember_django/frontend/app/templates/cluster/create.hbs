@@ -1,260 +1,245 @@
-        <p></p>
-		<div class="well well-lg text-center v-center">
-			<h3 id = 'id_title_cluster_create_route'>Hadoop Cluster Configuration</h3>
-		</div>
-		
-		<div class="panel panel-primary">
-			<div class="panel-heading text-center v-center">
-				<h3 class="panel-title">Okeanos Project Selection</h3>
-			</div>
-			<div class="panel-body">
-				<div class="col col-sm-6">
-					<div class="form-horizontal">
-						<div class="form-group">
-							<label for="projects" class="control-label col-sm-5">Projects</label>
-							<div class="col col-sm-7">
- 								{{view Ember.Select contentBinding="projects_av" 
- 								valueBinding="project_name" id="project_id" prompt="Select project" 
- 								class="btn btn-primary btn-sm text-left"}}
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="panel-footer text-center">
-				<div class="row">
-					<div class="col col-sm-6">
-						***Select your project first
-					</div>
-					<div class="col col-sm-6">
-						
-					</div>
-				</div>
-			</div>
-		</div>
+<p></p>
+<div class="well well-lg text-center v-center">
+    <h3 id = 'id_title_cluster_create_route'>Hadoop Cluster Configuration</h3>
+</div>
+<div class="panel panel-primary">
+    <div class="panel-heading text-center v-center">
+        <h3 class="panel-title">~Okeanos Project Selection</h3>
+    </div>
+    <div class="panel-body">
+        <div class="col col-lg-6">
+            <div class="form-horizontal">
+                <div class="form-group">
+                    <label for="project_id" class="control-label col col-sm-5">Projects</label>
+                    <div class="col col-sm-7">
+                        {{view Ember.Select contentBinding="projects_av"
+                        valueBinding="project_name" id="project_id" prompt="*Select project*"
+                        class="btn btn-primary btn-sm text-left"}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col col-lg-6 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">
+            <div class="text-left">
+                ***Select your project first
+            </div>
+        </div>
+    </div>
+</div>
 
-		<div class="panel panel-primary">
-			<div id = "common_settings" class="panel-heading text-center v-center">
-				<h3 class="panel-title">Common Settings</h3>
-			</div>
-			<div class="panel-body">
-				<div class="col col-sm-6">
-					<div class="form-horizontal">
-						<div class="form-group">
-							<label for="os_systems" class="control-label col-sm-5"> Operating System </label>
-							<div class="col col-sm-7">
-								{{view Ember.Select contentBinding="project_current.os_choices" 
-								valueBinding="operating_system" id="os_systems" 
-								class="btn btn-primary btn-sm"}} 
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="size_of_cluster" class="control-label col-sm-5">Cluster size </label>
-							<div class="col col-sm-7">
-								{{view Ember.Select contentBinding="max_cluster_size_av" 
-								valueBinding="cluster_size" prompt="Select size" id="size_of_cluster" 
-								class="btn btn-primary btn-sm text-left"}}
-							</div>
-						</div>
-						<div class="row text-center text-danger">
-							<div class="col col-sm-6">
-								{{alert_mes_cluster_size}}
-							</div>    
-						</div>
-					</div>					
-				</div>
-				<div class="col col-sm-6">
-					<div class="form-horizontal">
-						<div class="form-group">
-							<label for="cluster_name" class="control-label col-sm-4">Cluster Name</label>
-							<div class="col col-sm-8">
-								{{view Ember.TextField valueBinding="cluster_name" 
-								id="cluster_name" class="input-sm form-control" 
-								placeholder="cluster_name"}}
-							</div>
-						</div>
-						<div class="row text-center text-danger">
-							<div id = "alert_mes_cluster_name" class="col col-sm-6">
-								{{alert_mes_cluster_name}}
-							</div>    
-						</div>
-						<div class="form-group">
-							<label class="control-label col-sm-4">Storage: </label>
-							<div class="col col-sm-8">
-								<div class="btn-group">
-									{{#each item in project_current.disk_template}}
-										{{#view App.StorageSelButView value=item 
-										name="storage_button" class="btn btn-primary btn-sm" 
-										disabled=storage_Not_Allow}}{{item}}{{/view}}
-									{{/each}}
-								</div>
-							</div>
-						</div>					
-					</div>
-				</div>
-			</div>
-			<div class="panel-footer text-center">
-				<div class="row">
-					<div class="col col-sm-6">
-						~okeanos project maximum cluster size: 
-						{{project_current.vms_max}}
-					</div>
-					<div class="col col-sm-6">
-						
-					</div>
-				</div>
-			</div>	
-			
-			
-			
-			
-			
-			
-		</div>
-		
-		
-		
-		
-		<div class="panel panel-primary">
-			<div id = "master_settings" class="panel-heading text-center v-center">
-				<h3 class="panel-title">Master Settings</h3>
-			</div>
-			<div class="panel-body text-center">
-				<div class="row">
-					<div class="col col-sm-4">
-						<h4 id = "master_cpu_summary">CPUs: {{this.master_cpu_selection}} </h4>
-						<div class="btn-group">
-							{{#each item in project_current.cpu_choices}}
-								{{#view App.CPUSelButView value=item name="master_cpus_button" 
-								class="btn btn-primary btn-sm" disabled=master_cpus_Not_Allow}}
-								{{item}}x{{/view}}
-							{{/each}}
-						</div>
-					</div>
-					<div class="col col-sm-4">
-						<h4 id="master_ram_summary">RAM: {{this.master_ram_selection}} </h4>
-						<div class="btn-group">
-							{{#each item in project_current.mem_choices}}
-								{{#view App.MEMSelButView value=item name="master_ram_button" 
-								class="btn btn-primary btn-sm" disabled=master_ram_Not_Allow}}
-								{{item}}{{/view}}
-							{{/each}}
-						</div>
-					</div>
-					<div class="col col-sm-4">
-						<h4 id="master_disk_summary">Disk Size: {{this.master_disk_selection}} </h4>
-						<div class="btn-group">
-							{{#each item in project_current.disk_choices}}
-								{{#view App.DiskSelButView value=item name="master_disk_button" 
-								class="btn btn-primary btn-sm" disabled=master_disk_Not_Allow}}
-								{{item}}{{/view}}
-							{{/each}}
-						</div>
-					</div>
-				</div>
-				<div class="row text-center text-danger">
-				    <div id = "alert_mes_master_cpu" class="col col-sm-4">
-					{{alert_mes_master_cpu}}
-				    </div>
-				    <div id = "alert_mes_master_ram" class="col col-sm-4">
-					{{alert_mes_master_ram}}
-				    </div>				    
-				    <div id = "alert_mes_master_disk" class="col col-sm-4">
-					{{alert_mes_master_disk}}
-				    </div>				    
-				</div>
-			</div>
-			<div class="panel-footer text-center">
-				<div class="row">
-					<div class="col col-sm-4">
-						CPUs ({{this.cpu_available}} available)
-					</div>
-					<div class="col col-sm-4">
-						Memory size ({{this.ram_available}} MB available)
-					</div>
-					<div class="col col-sm-4">
-						Disk size ({{this.disk_available}} GB available)
-					</div>
-				</div>
-			</div>
-		</div>
-		
-		<div class="panel panel-primary">
-			<div id = "slaves_settings" class="panel-heading text-center v-center">
-				<h3 class="panel-title">Slaves Settings</h3>
-			</div>
-			<div class="panel-body text-center">
-				<div class="row">
-					<div class="col col-sm-4">
-						<h4 id = "slaves_cpu_summary">CPUs each: {{this.slaves_cpu_selection}}</h4>
-						<div class="btn-group">
-							{{#each item in project_current.cpu_choices}}
-								{{#view App.CPUSelButView value=item name="slaves_cpus_button" 
-								class="btn btn-primary btn-sm" disabled=slaves_cpus_Not_Allow}}
-								{{item}}x{{/view}}
-							{{/each}}
-						</div>
-					</div>
-					<div class="col col-sm-4">
-						<h4 id="slaves_ram_summary">RAM each: {{this.slaves_ram_selection}}</h4>
-						<div class="btn-group">
-							{{#each item in project_current.mem_choices}}
-							{{#view App.MEMSelButView value=item name="slaves_ram_button" class="btn btn-primary btn-sm" disabled=slaves_ram_Not_Allow}}{{item}}{{/view}}
-							{{/each}}
-						</div>
-					</div>
-					<div class="col col-sm-4">
-						<h4 id="slaves_disk_summary">Disk Size each: {{this.slaves_disk_selection}}</h4>
-						<div class="btn-group">
-							{{#each item in project_current.disk_choices}}
-								{{#view App.DiskSelButView value=item name="slaves_disk_button" 
-								class="btn btn-primary btn-sm" disabled=slaves_disk_Not_Allow}}
-								{{item}}{{/view}}
-							{{/each}}
-						</div>
-					</div>
-				</div>
-				<div class="row text-center text-danger">
-				    <div id = "alert_mes_slaves_cpu" class="col col-sm-4">
-					{{alert_mes_slaves_cpu}}
-				    </div>
-				    <div id = "alert_mes_slaves_ram" class="col col-sm-4">
-					{{alert_mes_slaves_ram}}
-				    </div>				    
-				    <div id = "alert_mes_slaves_disk" class="col col-sm-4">
-					{{alert_mes_slaves_disk}}
-				    </div>				    
-				</div>
-			</div>
-			<div class="panel-footer text-center">
-				<div class="row">
-					<div class="col col-sm-4">
-						CPUs ({{this.cpu_available}} available)
-					</div>
-					<div class="col col-sm-4">
-						Memory size ({{this.ram_available}} MB available)
-					</div>
-					<div class="col col-sm-4">
-						Disk size ({{this.disk_available}} GB available)
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col col-sm-2"></div>
-			<div class="col col-sm-2">
-				<button id="cancel" class="next btn btn-default btn-md btn-block" {{action "cancel"}}>
-					Cancel
-				</button>
-			</div>
-			<div class="col col-sm-6">
-				{{#view App.CreateClusterButView id="next" 
-				class="next btn btn-success btn-md btn-block" disabled=create_cluster_disabled}}
-				Create Cluster
-				{{/view}}
-				<h4>{{message}}</h4>
-			</div>
-			<div class="col col-sm-2"></div>
-		</div>		
-		
-		
+<div class="panel panel-primary">
+    <div id = "common_settings" class="panel-heading text-center v-center">
+        <h3 class="panel-title">Common Settings</h3>
+    </div>
+    <div class="panel-body">
+        <div class="col col-sm-6">
+            <div class="form-horizontal">
+                <div class="form-group">
+                    <label for="os_systems" class="control-label col-sm-5"> Operating System </label>
+                    <div class="col col-sm-7">
+                        {{view Ember.Select contentBinding="project_current.os_choices"
+                        valueBinding="operating_system" id="os_systems"
+                        class="btn btn-primary btn-sm"}}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="size_of_cluster" class="control-label col-sm-5">Cluster size </label>
+                    <div class="col col-sm-7">
+                        {{view Ember.Select contentBinding="max_cluster_size_av"
+                        valueBinding="cluster_size" prompt="Select size" id="size_of_cluster"
+                        class="btn btn-primary btn-sm text-left"}}
+                    </div>
+                </div>
+                <div class="row text-center text-danger">
+                    <div class="col col-sm-6">
+                        {{alert_mes_cluster_size}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col col-sm-6">
+            <div class="form-horizontal">
+                <div class="form-group">
+                    <label for="cluster_name" class="control-label col-sm-4">Cluster Name</label>
+                    <div class="col col-sm-8">
+                        {{view Ember.TextField valueBinding="cluster_name"
+                        id="cluster_name" class="input-sm form-control"
+                        placeholder="cluster_name"}}
+                    </div>
+                </div>
+                <div class="row text-center text-danger">
+                    <div id = "alert_mes_cluster_name" class="col col-sm-6">
+                        {{alert_mes_cluster_name}}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-sm-4">Storage: </label>
+                    <div class="col col-sm-8">
+                        <div class="btn-group">
+                            {{#each item in project_current.disk_template}}
+                            {{#view App.StorageSelButView value=item
+                            name="storage_button" class="btn btn-primary btn-sm"
+                            disabled=storage_Not_Allow}}{{item}}{{/view}}
+                            {{/each}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="panel-footer text-center">
+        <div class="row">
+            <div class="col col-sm-6">
+                ~okeanos project maximum cluster size:
+                {{project_current.vms_max}}
+            </div>
+            <div class="col col-sm-6">
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="panel panel-primary">
+    <div id = "master_settings" class="panel-heading text-center v-center">
+        <h3 class="panel-title">Master Settings</h3>
+    </div>
+    <div class="panel-body text-center">
+        <div class="row">
+            <div class="col col-sm-4">
+                <h4 id = "master_cpu_summary">CPUs: {{this.master_cpu_selection}} </h4>
+                <div class="btn-group">
+                    {{#each item in project_current.cpu_choices}}
+                    {{#view App.CPUSelButView value=item name="master_cpus_button"
+                    class="btn btn-primary btn-sm" disabled=master_cpus_Not_Allow}}
+                    {{item}}x{{/view}}
+                    {{/each}}
+                </div>
+            </div>
+            <div class="col col-sm-4">
+                <h4 id="master_ram_summary">RAM: {{this.master_ram_selection}} </h4>
+                <div class="btn-group">
+                    {{#each item in project_current.mem_choices}}
+                    {{#view App.MEMSelButView value=item name="master_ram_button"
+                    class="btn btn-primary btn-sm" disabled=master_ram_Not_Allow}}
+                    {{item}}{{/view}}
+                    {{/each}}
+                </div>
+            </div>
+            <div class="col col-sm-4">
+                <h4 id="master_disk_summary">Disk Size: {{this.master_disk_selection}} </h4>
+                <div class="btn-group">
+                    {{#each item in project_current.disk_choices}}
+                    {{#view App.DiskSelButView value=item name="master_disk_button"
+                    class="btn btn-primary btn-sm" disabled=master_disk_Not_Allow}}
+                    {{item}}{{/view}}
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+        <div class="row text-center text-danger">
+            <div id = "alert_mes_master_cpu" class="col col-sm-4">
+                {{alert_mes_master_cpu}}
+            </div>
+            <div id = "alert_mes_master_ram" class="col col-sm-4">
+                {{alert_mes_master_ram}}
+            </div>
+            <div id = "alert_mes_master_disk" class="col col-sm-4">
+                {{alert_mes_master_disk}}
+            </div>
+        </div>
+    </div>
+    <div class="panel-footer text-center">
+        <div class="row">
+            <div class="col col-sm-4">
+                CPUs ({{this.cpu_available}} available)
+            </div>
+            <div class="col col-sm-4">
+                Memory size ({{this.ram_available}} MB available)
+            </div>
+            <div class="col col-sm-4">
+                Disk size ({{this.disk_available}} GB available)
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-primary">
+    <div id = "slaves_settings" class="panel-heading text-center v-center">
+        <h3 class="panel-title">Slaves Settings</h3>
+    </div>
+    <div class="panel-body text-center">
+        <div class="row">
+            <div class="col col-sm-4">
+                <h4 id = "slaves_cpu_summary">CPUs each: {{this.slaves_cpu_selection}}</h4>
+                <div class="btn-group">
+                    {{#each item in project_current.cpu_choices}}
+                    {{#view App.CPUSelButView value=item name="slaves_cpus_button"
+                    class="btn btn-primary btn-sm" disabled=slaves_cpus_Not_Allow}}
+                    {{item}}x{{/view}}
+                    {{/each}}
+                </div>
+            </div>
+            <div class="col col-sm-4">
+                <h4 id="slaves_ram_summary">RAM each: {{this.slaves_ram_selection}}</h4>
+                <div class="btn-group">
+                    {{#each item in project_current.mem_choices}}
+                    {{#view App.MEMSelButView value=item name="slaves_ram_button" class="btn btn-primary btn-sm" disabled=slaves_ram_Not_Allow}}{{item}}{{/view}}
+                    {{/each}}
+                </div>
+            </div>
+            <div class="col col-sm-4">
+                <h4 id="slaves_disk_summary">Disk Size each: {{this.slaves_disk_selection}}</h4>
+                <div class="btn-group">
+                    {{#each item in project_current.disk_choices}}
+                    {{#view App.DiskSelButView value=item name="slaves_disk_button"
+                    class="btn btn-primary btn-sm" disabled=slaves_disk_Not_Allow}}
+                    {{item}}{{/view}}
+                    {{/each}}
+                </div>
+            </div>
+        </div>
+        <div class="row text-center text-danger">
+            <div id = "alert_mes_slaves_cpu" class="col col-sm-4">
+                {{alert_mes_slaves_cpu}}
+            </div>
+            <div id = "alert_mes_slaves_ram" class="col col-sm-4">
+                {{alert_mes_slaves_ram}}
+            </div>
+            <div id = "alert_mes_slaves_disk" class="col col-sm-4">
+                {{alert_mes_slaves_disk}}
+            </div>
+        </div>
+    </div>
+    <div class="panel-footer text-center">
+        <div class="row">
+            <div class="col col-sm-4">
+                CPUs ({{this.cpu_available}} available)
+            </div>
+            <div class="col col-sm-4">
+                Memory size ({{this.ram_available}} MB available)
+            </div>
+            <div class="col col-sm-4">
+                Disk size ({{this.disk_available}} GB available)
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col col-sm-2"></div>
+    <div class="col col-sm-2">
+        <button id="cancel" class="next btn btn-default btn-md btn-block" {{action "cancel"}}>
+            Cancel
+        </button>
+    </div>
+    <div class="col col-sm-6">
+        {{#view App.CreateClusterButView id="next"
+        class="next btn btn-success btn-md btn-block" disabled=create_cluster_disabled}}
+        Create Cluster
+        {{/view}}
+        <h4>{{message}}</h4>
+    </div>
+    <div class="col col-sm-2"></div>
+</div>
+

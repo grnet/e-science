@@ -5,9 +5,11 @@ This script is a test generator and checks that the cluster size responds when f
 @author: Ioannis Stenos, Nick Vrionis
 '''
 from selenium import webdriver
-import sys
+import sys, os
 from os.path import join, dirname, abspath
 sys.path.append(join(dirname(abspath(__file__)), '../..'))
+sys.path.append(join(dirname(__file__), '../../ember_django/backend'))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
