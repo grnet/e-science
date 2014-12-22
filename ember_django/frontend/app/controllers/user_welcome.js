@@ -25,7 +25,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 			switch (column) {
 			case 'cluster_name':
 				this.set('sortbyname', !this.get('sortbyname'));
-				this.set('sortdir', this.get('sortbyname'));
+				//this.set('sortdir', this.get('sortbyname'));
 				break;
 			case 'cluster_status':
 				this.set('sortbystatus', !this.get('sortbystatus'));
