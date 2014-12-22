@@ -76,13 +76,18 @@ class test_text_respond_to_buttons(unittest.TestCase):
         except Exception:
             self.assertTrue(False,'Could not get list of projects')
         kamaki_flavors = get_flavor_id(self.token)
-        for project in list_of_projects:
-            Select(driver.find_element_by_id("project_id")).select_by_visible_text(project['name'])
-            user_quota = check_quota(self.token, project['id'])             
+        for project in list_of_projects:            
+            user_quota = check_quota(self.token, project['id']) 
+            if project['name'] == 'system:' + project['id']:
+                project_name = 'system'
+            else:
+                project_name = project['name']               
+            project_details = project_name + '        ' + 'VMs:' + user_quota['vms']['available'][-1] + '  ' + 'Cpus:' + user_quota['cpus']['available'] + '  ' + 'Ram:' + user_quota['ram']['available'] + 'MB' + '  ' + 'Disk:' + user_quota['disk']['available'] + 'GB'                            
+            Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)
             cluster_sizes = driver.find_element_by_id("size_of_cluster").text
             try:
                 current_cluster_size = int(cluster_sizes.rsplit('\n', 1)[-1])
-                print ('Project '+ project['name'] +' has enough vms to run the test')
+                print ('Project '+ project_name +' has enough vms to run the test')
                 if ((user_quota['cpus']['available']-2*kamaki_flavors['cpus'][0]) >= 0):          
                     driver.find_element_by_id("master_cpus_" + str(kamaki_flavors['cpus'][0])).click()
                     try: self.assertEqual("CPUs: {0}".format(str(kamaki_flavors['cpus'][0])), driver.find_element_by_id("master_cpu_summary").text)
@@ -113,7 +118,7 @@ class test_text_respond_to_buttons(unittest.TestCase):
                     self.assertTrue(False,'Not enought disk to run the test')
             except:
                 #   self.assertTrue(False,'Not enought vms to run the test')
-                print ('Project '+ project['name'] +' has not enough vms to run the test') 
+                print ('Project '+ project_name +' has not enough vms to run the test') 
 
 
 
