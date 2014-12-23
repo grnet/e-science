@@ -16,7 +16,7 @@
 			position : [0, 0, 0, 0],
 			title : '',
 			isOnly : true,
-			imgUrl : 'images/loading[size].gif',
+			imgUrl : '/frontend/app/images/loading[size].gif',
 			onShow : function() {
 			},
 			onClose : function() {

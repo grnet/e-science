@@ -29,24 +29,48 @@ App.ClusterCreateController = Ember.Controller.extend({
 	alert_mes_slaves_disk : '', // alert message for slaves disk buttons (if none selected)
 	alert_mes_cluster_name : '', // alert message for cluster name (if none selected)
 	alert_mes_cluster_size : '', // alert message for cluster size (if none selected)
+	project_details : '', // project details: name and quota(Vms cpus ram disk)
+	name_of_project : '', // variable to set name of project as part of project details string helps parsing sytem project name
 
 	// for projects
 	projects_av : function() {
-		this.set('cluster_name', '');
+		this.reset_variables();
+		this.set('project_current', '');
+		this.set('project_name', '');
 		var projects = [];
 		var length = this.get('content.length');
+		var regular_exp_project_id = /system:[a-z,0-9]{8}(-[a-z,0-9]{4}){3}-[a-z,0-9]{12}/;
 		for (var i = 0; i < length; i++) {
-			projects[i] = this.get('content').objectAt(i).get('project_name');
+			if (regular_exp_project_id.test(this.get('content').objectAt(i).get('project_name'))) {
+				this.set('name_of_project', 'system');
+			} else {
+				this.set('name_of_project', this.get('content').objectAt(i).get('project_name'));
+			}
+			projects[i] = this.get('name_of_project') + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
+			String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
+			'VMs:' + this.get('content').objectAt(i).get('vms_av').length + String.fromCharCode(160) + String.fromCharCode(160) + 
+			'Cpus:' + this.get('content').objectAt(i).get('cpu_av') + String.fromCharCode(160) + String.fromCharCode(160) + 
+			'Ram:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + String.fromCharCode(160) + String.fromCharCode(160) + 
+			'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB';
 		}
+		this.set('name_of_project', '');
 		for (var i = 0; i < length; i++) {
-			if (this.get('content').objectAt(i).get('project_name') === this.get('project_name')) {
+			if (regular_exp_project_id.test(this.get('content').objectAt(i).get('project_name'))) {
+				this.set('name_of_project', 'system');
+			} else {
+				this.set('name_of_project', this.get('content').objectAt(i).get('project_name'));
+			}
+			if ((this.get('name_of_project') + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 'VMs:' + this.get('content').objectAt(i).get('vms_av').length + String.fromCharCode(160) + String.fromCharCode(160) + 'Cpus:' + this.get('content').objectAt(i).get('cpu_av') + String.fromCharCode(160) + String.fromCharCode(160) + 'Ram:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + String.fromCharCode(160) + String.fromCharCode(160) + 'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) {
 				this.set('create_cluster_disabled', false);
+				console.log(true);
 				this.set('project_current', this.get('content').objectAt(i));
+				this.set('project_name', this.get('content').objectAt(i).get('project_name'));
 				this.set('project_index', i);
+				break;
 			}
 		}
 		return projects.sort();
-	}.property('project_name'),
+	}.property('project_details'),
 
 	// The total cpus selected for the cluster
 	total_cpu_selection : function() {
@@ -61,7 +85,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		} else {
 			return cpu_avail;
 		}
-	}.property('total_cpu_selection', 'project_name'),
+	}.property('total_cpu_selection'),
 
 	// The total memory selected for the cluster
 	total_ram_selection : function() {
@@ -76,7 +100,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		} else {
 			return ram_avail;
 		}
-	}.property('total_ram_selection', 'project_name'),
+	}.property('total_ram_selection'),
 
 	// The total disk selected for the cluster
 	total_disk_selection : function() {
@@ -91,7 +115,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		} else {
 			return disk_avail;
 		}
-	}.property('total_disk_selection', 'project_name'),
+	}.property('total_disk_selection'),
 
 	// Computes the maximum VMs that can be build with current flavor choices and return this to the drop down menu on index
 	// If a flavor selection of a role(master/slaves) is 0, we assume that the role should be able to have at least the minimum option of the corresponding flavor
@@ -103,6 +127,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 		var max_cluster_size_limited_by_current_mems = [];
 		var max_cluster_size_limited_by_current_disks = [];
 		this.buttons();
+		if ((this.get('project_name') === null) || (this.get('project_name') === undefined) || (this.get('project_name') === '')) {
+			return [];
+		}
 		if (length < 2) {
 			if (this.get('project_name') == undefined) {
 				this.set('alert_mes_cluster_size', '');
@@ -192,7 +219,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			cluster_size_zero = true;
 		}
 		return max_cluster_size_limited_by_current_disks;
-	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'project_name', 'cluster_size_var', 'cluster_size'),
+	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size_var', 'cluster_size', 'project_details'),
 
 	// Functionality about coloring of the cpu buttons and enable-disable responding to user events
 	// First, remove colors from all cpu buttons and then color the role's(master/slaves) selection
@@ -386,6 +413,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('project_index', 0);
 		this.set('project_current', '');
 		this.set('project_name', '');
+		this.set('project_details', '');
+		
 	},
 	// Reset variables after logout
 	reset_variables : function() {
@@ -608,21 +637,22 @@ App.ClusterCreateController = Ember.Controller.extend({
 						self.set('message', data._data.message);
 						self.set('controllers.userWelcome.output_message', data._data.message);
 						self.set('controllers.userWelcome.create_cluster_start', false);
+						self.store.fetch('user', 1);
 					}, function() {
 						// Set the response to user's create cluster click when put fails.
 						$.loader.close(true);
 						self.set('message', 'A problem occured during your request. Please check your cluster parameters and try again');
 						self.set('controllers.userWelcome.output_message', 'A problem occured during your request. Please check your cluster parameters and try again');
 						self.set('controllers.userWelcome.create_cluster_start', false);
+						self.store.fetch('user', 1);
 					});
 					if (this.get('message') == "") {
 						// after ten seconds goes to welcome route
 						setTimeout(function() {
 							self.set('controllers.userWelcome.create_cluster_start', true);
-							self.transitionToRoute('user.welcome');						
+							self.transitionToRoute('user.welcome');
 						}, 10000);
-					}
-					else {
+					} else {
 						self.set('controllers.userWelcome.create_cluster_start', true);
 						this.transitionToRoute('user.welcome');
 					}

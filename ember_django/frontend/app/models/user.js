@@ -7,6 +7,7 @@ App.User = DS.Model.extend({
 		async : true,
 	}), 									// user cluster records
 	cluster : attr(),
+	escience_token : attr(),
 	// cluster : function() {
 	// return this.get('clusters.length');
 	// }.property('clusters.length'),
@@ -53,6 +54,7 @@ App.UserCluster = DS.Model.extend({
 			return "glyphicon glyphicon-ok text-success";
 		case "2":
 			return "glyphicon glyphicon-time text-warning";
+
 		default:
 			return "glyphicon glyphicon glyphicon-question-sign text-muted";
 		}
