@@ -54,3 +54,7 @@ Mbytes_to_GB = 1024  # Global to convert megabytes to gigabytes
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
+default_image='Debian Base'
+default_logging='report'
+url_database= 'http://127.0.0.1:8000/api/orka'
+url_login = 'http://127.0.0.1:8000/api/users'

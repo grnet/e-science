@@ -51,6 +51,31 @@ class OkeanosTokenSerializer(serializers.Serializer):
     token = serializers.CharField()
 
 
+class PendingQuotaSerializer(serializers.Serializer):
+    """Serializer for pending quota returned from escience database """
+    VMs = serializers.IntegerField()
+    Cpus = serializers.IntegerField()
+    Ram = serializers.IntegerField()
+    Disk = serializers.IntegerField()
+    Ip = serializers.IntegerField()
+    Network = serializers.IntegerField()
+
+
+class ProjectNameSerializer(serializers.Serializer):
+    """ Serializer for project name"""
+    project_name = serializers.CharField()
+
+
+class MasterIpSerializer(serializers.Serializer):
+    """ Serializer for master vm ip """
+    master_ip = serializers.CharField()
+
+class UpdateDatabaseSerializer(serializers.Serializer):
+
+    status = serializers.CharField()
+    cluster_name = serializers.CharField()
+    master_ip = serializers.CharField()
+
 class ClusterchoicesSerializer(serializers.Serializer):
     """
     Serializer for ember request with user's

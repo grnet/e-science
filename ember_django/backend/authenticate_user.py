@@ -15,7 +15,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import BasePermission
 from backend.models import Token
 from rest_framework import exceptions
-from cluster_errors_constants import *
+from orka.cluster_errors_constants import *
 
 # Constants
 AUTHENTICATED = 1
@@ -51,6 +51,19 @@ class IsAuthenticatedOrIsCreation(BasePermission):
     def has_permission(self, request, view):
         return (
             request.method in SAFE_METHODS or
+            request.user and
+            request.user.is_authenticated()
+            )
+
+
+class IsAuthenticated(BasePermission):
+    '''
+    Class for permissions for database view. Every method will have to add
+    as a request header the escience authentication token.
+    '''
+
+    def has_permission(self, request, view):
+        return (
             request.user and
             request.user.is_authenticated()
             )
