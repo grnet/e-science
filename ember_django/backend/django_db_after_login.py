@@ -63,7 +63,7 @@ def db_after_login(token, login=True):
         new_token = Token(user=new_entry)
         new_token.save()
         new_user = UserInfo.objects.get(uuid=given_uuid)
-        logging.info(' The id of the new user is ', str(new_user.user_id))
+        logging.info(' The id of the new user is '+ str(new_user.user_id))
         if login:
             db_login_entry(new_user)
         return new_user
