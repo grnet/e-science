@@ -28,9 +28,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			};
 			// The first option: the loader that gets all the page
 			//$.loader.open($options);
-			
-			// Second option: the loader presented inthe place of the alert messages 			
-			//$('#clusterCreationProgress').loader($options);
 
 			// The loader is presented in the table with the User Clusters
 			setTimeout(function() {
@@ -43,13 +40,4 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		return this.store.fetch('user', 1);
 	}
 });
-
-// if_equal_component.js script
-App.IfEqualComponent = Ember.Component.extend({
-  isEqual: function() {
-    return this.get('param1') === this.get('param2');
-  }.property('param1', 'param2')
-});
-
-App.ElseEqualComponent = App.IfEqualComponent.extend();
 

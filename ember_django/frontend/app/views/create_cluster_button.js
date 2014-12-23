@@ -10,5 +10,4 @@ App.CreateClusterButView = Ember.View.extend({
 	// for this controller, trigger the go_to_create action
         this.get('controller').send('go_to_create');
     }
-
 });

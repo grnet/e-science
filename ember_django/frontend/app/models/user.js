@@ -15,7 +15,7 @@ App.User = DS.Model.extend({
 App.UserCluster = DS.Model.extend({
 	cluster_name : attr('string'), 				// name of the cluster
 	cluster_size : attr('number'), 				// size of cluster (master+slaves)
-	cluster_status : attr(), 			// status of cluster
+	cluster_status : attr('string'), 			// status of cluster
 	master_IP : attr('string'), 				// master ip
 	cpu_master : attr(),
 	mem_master : attr(),
