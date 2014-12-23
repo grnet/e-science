@@ -59,6 +59,14 @@ App.UserCluster = DS.Model.extend({
 			return "glyphicon glyphicon glyphicon-question-sign text-muted";
 		}
 	}.property('cluster_status'),
+	cluster_status_pending : function(){
+		var status = this.get('cluster_status');
+		if (status == '2'){
+			return 'Pending...';
+		}else{
+			return '';
+		}
+	}.property('cluster_status'),
 });
 
 // App.User.reopenClass({
