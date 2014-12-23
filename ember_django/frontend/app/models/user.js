@@ -7,6 +7,7 @@ App.User = DS.Model.extend({
 		async : true,
 	}), 									// user cluster records
 	cluster : attr(),
+	escience_token : attr(),
 	// cluster : function() {
 	// return this.get('clusters.length');
 	// }.property('clusters.length'),

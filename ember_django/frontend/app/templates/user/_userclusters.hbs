@@ -17,7 +17,7 @@ $(function () {
 							<td><a href="#" {{action 'sortBy' content.clusters 'cluster_name'}}>Name</a>
 								<i class="glyphicon small" {{bind-attr class="sortbyname:glyphicon-arrow-up:glyphicon-arrow-down"}}></i>
 							</td>
-							<td><a href="#" {{action 'sortBy' content.clusters 'cluster_status'}}>Status</a>
+							<td id="id_label_status"><a href="#" {{action 'sortBy' content.clusters 'cluster_status'}}>Status</a>
 								<i class="glyphicon small" {{bind-attr class="sortbystatus:glyphicon-arrow-up:glyphicon-arrow-down"}}></i>
 							</td>
 							<td><a href="#" {{action 'sortBy' content.clusters 'cluster_size'}}>Size</a>
