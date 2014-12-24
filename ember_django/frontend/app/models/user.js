@@ -7,6 +7,7 @@ App.User = DS.Model.extend({
 		async : true,
 	}), 									// user cluster records
 	cluster : attr(),
+	escience_token : attr(),
 	// cluster : function() {
 	// return this.get('clusters.length');
 	// }.property('clusters.length'),
@@ -53,8 +54,17 @@ App.UserCluster = DS.Model.extend({
 			return "glyphicon glyphicon-ok text-success";
 		case "2":
 			return "glyphicon glyphicon-time text-warning";
+
 		default:
 			return "glyphicon glyphicon glyphicon-question-sign text-muted";
+		}
+	}.property('cluster_status'),
+	cluster_status_pending : function(){
+		var status = this.get('cluster_status');
+		if (status == '2'){
+			return 'Pending...';
+		}else{
+			return '';
 		}
 	}.property('cluster_status'),
 });

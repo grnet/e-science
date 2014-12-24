@@ -5,6 +5,8 @@
 from unittest import TestCase, main
 from mock import patch
 from ConfigParser import RawConfigParser, NoSectionError
+# from kamaki.clients.utils import https
+# https.patch_ignore_ssl()
 
 # get relative path references so imports will work,
 # even if __init__.py is missing (/tests is a simple directory not a module)
