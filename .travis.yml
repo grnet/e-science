@@ -1,6 +1,6 @@
 language: python
 python:
-- '2.7'
+- '2.7.3'
 env:
   global:
   - secure: YELLNiIaLsnIch5DFHgKk9ZFlWasujveMGc8qkIFrct1bis///wa0oa1BB8KGgPv4KWy8KUaBNZEv8L+DTRjHr2km1T5zf/G3OERQlrFrTqyunBaYazllDQTmqB7P+oDx3b4lTrHuD1vmdns9fJHqQaEnshA4VKSs5biox3avww=
@@ -25,6 +25,7 @@ install:
 script:
 - nosetests -sv tests/test_create_cluster.py
 before_script:
+- python -V
 - npm install testem -g
 - export DISPLAY=:99.0
 - sh -e /etc/init.d/xvfb start
