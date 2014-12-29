@@ -1,0 +1,3 @@
+[console_scripts]
+orka = orka.orka:main
+
