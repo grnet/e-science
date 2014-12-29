@@ -8,6 +8,7 @@ This script initialize okeanos utils.
 """
 import logging
 from base64 import b64encode
+import os
 from os.path import abspath, dirname, join
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
@@ -22,14 +23,16 @@ import yaml
 
 # Global constants
 MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
-BASE_DIR = join(dirname(abspath(__file__)),'../..')
 
 
 def get_api_urls(login=False,database=False):
     """ Return api urls from config file"""
     parser = RawConfigParser()
-    print BASE_DIR
-    config_file = join(BASE_DIR, 'config.txt')
+
+    # if 'ember_django' in os.getcwd():
+    os.chdir('..')
+
+    config_file = 'config.txt'
     parser.read(config_file)
     try:
         if login:
@@ -59,35 +62,35 @@ class OrkaRequest(object):
         self.headers = {'content-type': 'application/json',
                         'Authorization': 'Token ' + self.escience_token}
 
-        def create_cluster_db(self):
-            """
-            Request to orka database that cluster creation is
-            starting (pending status update)
-            """
-            requests.post(self.url_database, data=json.dumps(self.payload),
-                            headers=self.headers)
+    def create_cluster_db(self):
+        """
+        Request to orka database that cluster creation is
+        starting (pending status update)
+        """
+        requests.post(self.url_database, data=json.dumps(self.payload),
+                      headers=self.headers)
 
-        def delete_cluster_db(self):
-            """
-            Request to orka database for cluster deleting from CLI
-            (Destroyed status update)"""
-            requests.delete(self.url_database, data=json.dumps(self.payload),
-                            headers=self.headers)
+    def delete_cluster_db(self):
+        """
+        Request to orka database for cluster deleting from CLI
+        (Destroyed status update)"""
+        requests.delete(self.url_database, data=json.dumps(self.payload),
+                        headers=self.headers)
 
-        def update_cluster_db(self):
-            """
-            Request to orka database for Active or Destroyed
-            cluster status update
-            """
-            requests.put(self.url_database, data=json.dumps(self.payload),
-                            headers=self.headers)
+    def update_cluster_db(self):
+        """
+        Request to orka database for Active or Destroyed
+        cluster status update
+        """
+        requests.put(self.url_database, data=json.dumps(self.payload),
+                     headers=self.headers)
 
-        def retrieve_quota(self):
-            """Request to orka database to get pending clusters."""
-            r = requests.get(self.url_database, data=json.dumps(self.payload),
-                            headers=self.headers)
-            response = yaml.load(r.text)
-            return response
+    def retrieve_quota(self):
+        """Request to orka database to get pending clusters."""
+        r = requests.get(self.url_database, data=json.dumps(self.payload),
+                         headers=self.headers)
+        response = yaml.load(r.text)
+        return response
 
 
 

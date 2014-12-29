@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Views for django rest framework .
 
 @author: Ioannis Stenos, Nick Vrionis
-'''
+"""
 import logging
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -24,13 +24,13 @@ from django_db_after_login import *
 from orka.create_cluster import YarnCluster
 from orka.cluster_errors_constants import *
 
-'''logging.addLevelName(REPORT, "REPORT")
+logging.addLevelName(REPORT, "REPORT")
 logging.addLevelName(SUMMARY, "SUMMARY")
 logger = logging.getLogger("report")
 
-logging_level = logging.DEBUG
+logging_level = REPORT
 logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-                   level=logging_level, datefmt='%H:%M:%S')'''
+                   level=logging_level, datefmt='%H:%M:%S')
 
 class MainPageView(generic.TemplateView):
     '''Load the template file'''
@@ -50,7 +50,7 @@ class DatabaseView(APIView):
     serializer_class = UpdateDatabaseSerializer
 
     def get(self, request, *args, **kwargs):
-
+        """Return pending cluster quota from database."""
         self.serializer_class = ProjectNameSerializer
         serializer = self.serializer_class(data=request.DATA)
         user_token = Token.objects.get(key=request.auth)
@@ -65,7 +65,7 @@ class DatabaseView(APIView):
 
 
     def post(self, request, *args, **kwargs):
-
+        """Update database that a cluster is being created"""
         self.serializer_class = ClusterchoicesSerializer
         serializer = self.serializer_class(data=request.DATA)
         user_token = Token.objects.get(key=request.auth)
@@ -82,7 +82,10 @@ class DatabaseView(APIView):
         return Response(serializer.errors)
 
     def put(self, request, *args, **kwargs):
-
+        """
+        Update database that a cluster is created or is destroyed
+        after fatal error.
+        """
         serializer = self.serializer_class(data=request.DATA)
         user_token = Token.objects.get(key=request.auth)
         user = UserInfo.objects.get(user_id=user_token.user.user_id)
@@ -100,7 +103,7 @@ class DatabaseView(APIView):
 
     def delete(self, request, *args, **kwargs):
         """
-        Handles the user request for cluster deleting.
+        Update database that a cluster is deleted from orka-cli.
         """
         self.serializer_class = MasterIpSerializer
         serializer = self.serializer_class(data=request.DATA)

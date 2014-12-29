@@ -1,4 +1,0 @@
-[Database]
-url = 'http://127.0.0.1:8000/api/orka'
-[Login]
-url = 'http://127.0.0.1:8000/api/users'

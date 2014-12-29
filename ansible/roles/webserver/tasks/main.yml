@@ -70,9 +70,9 @@
     tags: gitcloneproject
     command: git clone -b develop {{escience_repo}} {{myprojectname}} chdir={{myprojectdir}}
 
-  - name: Install orca as oython package
+  - name: Install orca as a python package
     tags: orcapackageinstall
-    command: python setup.py install chdir={{project_path}}
+    command: python setup.py install chdir={{project_path}}/{{orka_version}}
 
   - name: Copy needed frontend files for nginx1
     tags: frontendcopy1

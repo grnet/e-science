@@ -302,8 +302,8 @@ class YarnCluster(object):
                             "os_choice": self.opts['image'],
                             "project_name": self.opts['project_name']}}
 
-        orka_request = OrkaRequest(self.escience_token, payload)
-        orka_request.create_cluster_db()
+        orka_req = OrkaRequest(self.escience_token, payload)
+        orka_req.create_cluster_db()
         try:
             cluster = Cluster(self.cyclades, self.opts['name'],
                               flavor_master, flavor_slaves,
@@ -316,8 +316,8 @@ class YarnCluster(object):
         except Exception:
             # If error in bare cluster, update cluster status as destroyed
             payload = {"orka": {"status": "Destroyed", "cluster_name": self.opts['name'], "master_ip": "placeholder"}}
-            orka_request = OrkaRequest(self.escience_token, payload)
-            orka_request.update_cluster_db()
+            orka_req_error = OrkaRequest(self.escience_token, payload)
+            orka_req_error.update_cluster_db()
             raise
         # wait for the machines to be pingable
         logging.log(SUMMARY, ' ~okeanos cluster created')
@@ -345,16 +345,16 @@ class YarnCluster(object):
                         self.pass_file)
             # If Yarn cluster is build, update cluster status as active
             payload = {"orka": {"status": "Active", "cluster_name":self.opts['name'], "master_ip": self.HOSTNAME_MASTER_IP}}
-            orka_request = OrkaRequest(self.escience_token, payload)
-            orka_request.update_cluster_db()
+            orka_req = OrkaRequest(self.escience_token, payload)
+            orka_req.update_cluster_db()
             return self.HOSTNAME_MASTER_IP, self.server_dict
         except Exception:
             logging.error(' An unrecoverable error occured. Created cluster'
                           ' and resources will be deleted')
             # If error in Yarn cluster, update cluster status as destroyed
             payload = {"orka": {"status": "Destroyed", "cluster_name": self.opts['name'], "master_ip": "placeholder"}}
-            orka_request = OrkaRequest(self.escience_token, payload)
-            orka_request.update_cluster_db()
+            orka_req_error = OrkaRequest(self.escience_token, payload)
+            orka_req_error.update_cluster_db()
             self.destroy()
             raise
 
