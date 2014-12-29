@@ -29,8 +29,8 @@ def get_api_urls(login=False,database=False):
     """ Return api urls from config file"""
     parser = RawConfigParser()
 
-    # if 'ember_django' in os.getcwd():
-    os.chdir('..')
+    if 'ember_django' in os.getcwd():
+        os.chdir('..')
 
     config_file = 'config.txt'
     parser.read(config_file)

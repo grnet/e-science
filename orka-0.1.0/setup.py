@@ -17,7 +17,7 @@ version = re.search(
     re.M
     ).group(1)
 
-requires = ['kamaki==0.13rc3','paramiko','requests','PyYAML','ansible==1.7.2']
+requires = ['kamaki==0.13rc3','paramiko','requests','PyYAML']
 
 setup(
     name = "orka",

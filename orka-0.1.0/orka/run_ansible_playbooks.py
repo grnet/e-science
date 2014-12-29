@@ -56,8 +56,8 @@ def create_ansible_hosts(cluster_name, list_of_hosts, HOSTNAME_MASTER):
     # The ansible_hosts file will now have a timestamped name to seperate it
     # from ansible_hosts files of different clusters.
 
-    # if 'ember_django' in os.getcwd():
-    os.chdir('..')
+    if 'ember_django' in os.getcwd():
+        os.chdir('..')
     filename = ANSIBLE_HOST_PATH + ansible_hosts_prefix
     # Create ansible_hosts file and write all information that is
     # required from Ansible playbook.
