@@ -27,7 +27,8 @@ setup(
         },
     package_data = {
         # If any package contains *.txt or *.rst files, include them:
-        '': ['*.txt','ansible/**/*/*/*', 'ansible/group_vars/*']
+        '': ['*.txt', 'ansible/roles/*/*/*', 'ansible/group_vars/*',
+             'ansible/*.yml', 'ansible/*.cfg']
     },
     include_package_data=True,
     version = version,
