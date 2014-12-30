@@ -2,4 +2,3 @@ kamaki==0.13rc3
 paramiko
 requests
 PyYAML
-ansible==1.7.2

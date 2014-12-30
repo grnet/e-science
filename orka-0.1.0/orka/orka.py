@@ -99,10 +99,10 @@ def main():
     appropriate messages for success or error.
     """
     parser = ArgumentParser(description='Create or Destroy a Hadoop-Yarn'
-                                        'cluster in ~okeanos')
+                                        ' cluster in ~okeanos')
     checker = _ArgCheck()
     subparsers = parser.add_subparsers(help='Choose Hadoop cluster action'
-                                            'create or destroy')
+                                            ' create or destroy')
     parser_c = subparsers.add_parser('create',
                                      help='Create a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
