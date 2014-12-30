@@ -25,6 +25,11 @@ setup(
     entry_points = {
         "console_scripts": ['orka = orka.orka:main']
         },
+    package_data = {
+        # If any package contains *.txt or *.rst files, include them:
+        '': ['*.txt','ansible/**/*/*/*', 'ansible/group_vars/*']
+    },
+    include_package_data=True,
     version = version,
     description = "Python command line application for creating and deleting Hadoop clusters in ~okeanos.",
     install_requires = requires

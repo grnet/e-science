@@ -31,9 +31,8 @@ Following commands are common for installation in virtual environment or not:
     git clone <escience git repo> <project_name> [-b develop] (use -b develop if not cloning from grnet/e-science)
     cd to <project_name>/orka-0.1.0
     [sudo if not using virtualenv] python setup.py install
-    cd to <project_name>/
  
-  Now orka commands are usable from folder  project_name/ .
+  Now orka commands are usable from anywhere .
 
 
 
@@ -54,7 +53,8 @@ How to run orka commands
 ------------------------
 orka -h [command] -h "arguments"
 
-    arguments for create command: 
+arguments for create command:
+     
       --name="name of the cluster" 
       --cluster_size="total VMs,including master node" 
       --cpu_master="master's node number of cores" 
@@ -93,6 +93,6 @@ helpful text about the orka CLI is depicted.
 
 Miscellaneous info
 ----------------
-- After cluster creation, the root password of the master virtual machine will be inside a file named [master_vm name]_root_password in the [project_name] folder.
+- After cluster creation, the root password of the master virtual machine will be inside a file named [master_vm name]_root_password in the current working directory.
 - In the config.txt file of the project is the public ip of the nginx server in ~okeanos.It is required for updating the orka database.
 - For the time being, a user who wants to create a cluster with orka must have a public ssh key in ~/.ssh/ .It can be created with ssh-keygen command.

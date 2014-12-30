@@ -28,11 +28,8 @@ MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 def get_api_urls(login=False,database=False):
     """ Return api urls from config file"""
     parser = RawConfigParser()
-
-    if 'ember_django' in os.getcwd():
-        os.chdir('..')
-
-    config_file = 'config.txt'
+    BASE_DIR = dirname(abspath(__file__))
+    config_file = join(BASE_DIR, 'config.txt')
     parser.read(config_file)
     try:
         if login:
@@ -105,7 +102,7 @@ def authenticate_escience(token):
     r = requests.post(url_login, data=json.dumps(payload), headers=headers)
     response = yaml.load(r.text)
     escience_token = response['user']['escience_token']
-    logging.log(SUMMARY, 'Authenticated with escience database')
+    logging.log(REPORT, 'Authenticated with escience database')
     return escience_token
 
         

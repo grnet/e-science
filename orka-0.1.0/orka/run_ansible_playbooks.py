@@ -10,17 +10,13 @@ using Ansible.
 
 from sys import exit, argv
 import os
+from os.path import dirname, abspath, join
 import logging
 from optparse import OptionParser
 from reroute_ssh import reroute_ssh_prep
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
-
-# Global constants
-ANSIBLE_DIR = 'ansible'
-ANSIBLE_HOST_PATH = ANSIBLE_DIR + '/ansible_hosts_'
-ANSIBLE_PLAYBOOK_PATH = ANSIBLE_DIR + '/site.yml'
 
 
 def install_yarn(hosts_list, master_ip, cluster_name):
@@ -29,6 +25,7 @@ def install_yarn(hosts_list, master_ip, cluster_name):
     required dependencies. Also  formats and starts yarn.
     """
     list_of_hosts = hosts_list
+    master_hostname = list_of_hosts[0]['fqdn'].split('.', 1)[0]
     HOSTNAME_MASTER = master_ip
     cluster_size = len(list_of_hosts)
     # Create ansible_hosts file
@@ -42,6 +39,7 @@ def install_yarn(hosts_list, master_ip, cluster_name):
     run_ansible(file_name, cluster_size)
     logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
                 + HOSTNAME_MASTER + ':8088/cluster')
+    os.system('rm /tmp/master_' + master_hostname + '_pub_key')
 
 
 def create_ansible_hosts(cluster_name, list_of_hosts, HOSTNAME_MASTER):
@@ -53,12 +51,9 @@ def create_ansible_hosts(cluster_name, list_of_hosts, HOSTNAME_MASTER):
     ansible_hosts_prefix = ansible_hosts_prefix.replace(":", "")
 
     # Removes spaces and ':' from cluster name and appends it to ansible_hosts
-    # The ansible_hosts file will now have a timestamped name to seperate it
-    # from ansible_hosts files of different clusters.
+    # The ansible_hosts file will now have a timestamped name
 
-    if 'ember_django' in os.getcwd():
-        os.chdir('..')
-    filename = ANSIBLE_HOST_PATH + ansible_hosts_prefix
+    filename = os.getcwd() + '/ansible_hosts_' + ansible_hosts_prefix
     # Create ansible_hosts file and write all information that is
     # required from Ansible playbook.
     with open(filename, 'w+') as target:
@@ -93,6 +88,8 @@ def run_ansible(filename, cluster_size):
     ansible_log = " > ansible.log"
     if level == REPORT or level == SUMMARY:
         ansible_log = ""
+    BASE_DIR = dirname(abspath(__file__))
+    ANSIBLE_PLAYBOOK_PATH = BASE_DIR + '/ansible/site.yml'
     exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                             'ansible-playbook -i ' + filename + ' ' +
                             ANSIBLE_PLAYBOOK_PATH +
