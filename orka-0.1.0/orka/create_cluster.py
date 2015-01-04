@@ -6,81 +6,17 @@ This script creates a cluster on ~okeanos.
 
 @author: Ioannis Stenos, Nick Vrionis, George Tzelepis
 """
-import logging
-import sys
-import django
 import datetime
-from argparse import ArgumentParser, ArgumentTypeError
-from sys import argv, exit
 from time import sleep
-from kamaki.clients import ClientError
-from os.path import join, expanduser, dirname, abspath
-import os
-sys.path.append(join(dirname(abspath(__file__)), 'ember_django/backend'))
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
-from ember_django.backend.django_db_after_login import *
-from ember_django.backend.get_flavors_quotas import *
+import logging
+from os.path import join, expanduser
 from reroute_ssh import reroute_ssh_prep
+from kamaki.clients import ClientError
 from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
     init_cyclades, init_cyclades_netclient, init_plankton, get_project_id, \
-    destroy_cluster, get_user_quota
+    destroy_cluster, get_user_quota, authenticate_escience, OrkaRequest
 from cluster_errors_constants import *
-
-
-
-# Default values for YarnCluster creation.
-_defaults = {
-    'auth_url': 'https://accounts.okeanos.grnet.gr/identity/v2.0',
-    'image': 'Debian Base',
-    'logging': 'summary'
-}
-
-
-class _ArgCheck(object):
-    """
-    Used for type checking arguments supplied for use with type= and
-    choices= argparse attributes
-    """
-
-    def __init__(self):
-        self.logging_levels = {
-            'critical': logging.CRITICAL,
-            'error': logging.ERROR,
-            'warning': logging.WARNING,
-            'summary': SUMMARY,
-            'report': REPORT,
-            'info': logging.INFO,
-            'debug': logging.DEBUG,
-        }
-        logging.addLevelName(REPORT, "REPORT")
-        logging.addLevelName(SUMMARY, "SUMMARY")
-
-    def unsigned_int(self, val):
-        """
-        :param val: int
-        :return: val if val > 0 or raise exception
-        """
-        ival = int(val)
-        if ival <= 0:
-            raise ArgumentTypeError(" %s must be a positive number." % val)
-        return ival
-
-    def two_or_bigger(self, val):
-        """
-        :param val: int
-        :return: val if > 2 or raise exception
-        """
-        ival = int(val)
-        if ival < 2:
-            raise ArgumentTypeError(" %s must be at least 2." % val)
-        return ival
-
-    def five_or_bigger(self, val):
-        ival = int(val)
-        if ival < 5:
-            raise ArgumentTypeError(" %s must be at least 5." % val)
-        return ival
 
 
 class YarnCluster(object):
@@ -101,11 +37,13 @@ class YarnCluster(object):
         self.project_id = get_project_id(self.opts['token'],
                                          self.opts['project_name'])
         self.status = {}
-        self.user = db_after_login(self.opts['token'], login=False)
+        self.escience_token = authenticate_escience(self.opts['token'])
+        self.orka_request = OrkaRequest(self.escience_token,
+                                   {"orka":{"project_name":self.opts['project_name']}})
         # Instance of an AstakosClient object
         self.auth = check_credentials(self.opts['token'],
                                       self.opts.get('auth_url',
-                                                    _defaults['auth_url']))
+                                                    auth_url))
         # Check if project has actual quota
         if self.check_project_quota() != 0:
             msg = 'Project %s exists but you have no quota to request' % \
@@ -143,8 +81,8 @@ class YarnCluster(object):
         of VMs.
         """
         dict_quotas = get_user_quota(self.auth)
-        pending_vm = retrieve_pending_clusters(self.opts['token'],
-                                               self.opts['project_name'])['VMs']
+        pending_quota = self.orka_request.retrieve_quota()
+        pending_vm = pending_quota['orka']['VMs']
         limit_vm = dict_quotas[self.project_id]['cyclades.vm']['limit']
         usage_vm = dict_quotas[self.project_id]['cyclades.vm']['usage']
         available_vm = limit_vm - usage_vm - pending_vm
@@ -161,8 +99,8 @@ class YarnCluster(object):
         number of networks
         """
         dict_quotas = get_user_quota(self.auth)
-        pending_net = retrieve_pending_clusters(self.opts['token'],
-                                               self.opts['project_name'])['Network']
+        pending_quota = self.orka_request.retrieve_quota()
+        pending_net = pending_quota['orka']['Network']
         limit_net = dict_quotas[self.project_id]['cyclades.network.private']['limit']
         usage_net = dict_quotas[self.project_id]['cyclades.network.private']['usage']
         available_networks = limit_net - usage_net - pending_net
@@ -177,8 +115,8 @@ class YarnCluster(object):
         """Checks user's quota for unattached public ips."""
         dict_quotas = get_user_quota(self.auth)
         list_float_ips = self.net_client.list_floatingips()
-        pending_ips = retrieve_pending_clusters(self.opts['token'],
-                                               self.opts['project_name'])['Ip']
+        pending_quota = self.orka_request.retrieve_quota()
+        pending_ips = pending_quota['orka']['Ip']
         limit_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['limit']
         usage_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['usage']
         available_ips = limit_ips - usage_ips - pending_ips
@@ -198,8 +136,8 @@ class YarnCluster(object):
         number of cpus.
         """
         dict_quotas = get_user_quota(self.auth)
-        pending_cpu = retrieve_pending_clusters(self.opts['token'],
-                                               self.opts['project_name'])['Cpus']
+        pending_quota = self.orka_request.retrieve_quota()
+        pending_cpu = pending_quota['orka']['Cpus']
         limit_cpu = dict_quotas[self.project_id]['cyclades.cpu']['limit']
         usage_cpu = dict_quotas[self.project_id]['cyclades.cpu']['usage']
         available_cpu = limit_cpu - usage_cpu - pending_cpu
@@ -218,8 +156,8 @@ class YarnCluster(object):
         number of ram.
         """
         dict_quotas = get_user_quota(self.auth)
-        pending_ram = retrieve_pending_clusters(self.opts['token'],
-                                               self.opts['project_name'])['Ram']
+        pending_quota = self.orka_request.retrieve_quota()
+        pending_ram = pending_quota['orka']['Ram']
         limit_ram = dict_quotas[self.project_id]['cyclades.ram']['limit']
         usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
         available_ram = (limit_ram - usage_ram) / Bytes_to_MB - pending_ram
@@ -238,8 +176,8 @@ class YarnCluster(object):
         disk size.
         """
         dict_quotas = get_user_quota(self.auth)
-        pending_cd = retrieve_pending_clusters(self.opts['token'],
-                                               self.opts['project_name'])['Disk']
+        pending_quota = self.orka_request.retrieve_quota()
+        pending_cd = pending_quota['orka']['Disk']
         limit_cd = dict_quotas[self.project_id]['cyclades.disk']['limit']
         usage_cd = dict_quotas[self.project_id]['cyclades.disk']['usage']
         cyclades_disk_req = self.opts['disk_master'] + \
@@ -351,7 +289,21 @@ class YarnCluster(object):
         self.opts['name'] = cluster_name
 
         # Update db with cluster status as pending
-        db_cluster_create(self.opts['token'], self.opts)
+
+        payload = {"orka": {"cluster_name": self.opts['name'],
+                            "cluster_size": self.opts['cluster_size'],
+                            "cpu_master": self.opts['cpu_master'],
+                            "mem_master": self.opts['ram_master'],
+                            "disk_master": self.opts['disk_master'],
+                            "cpu_slaves": self.opts['cpu_slave'],
+                            "mem_slaves": self.opts['ram_slave'],
+                            "disk_slaves": self.opts['disk_slave'],
+                            "disk_template": self.opts['disk_template'],
+                            "os_choice": self.opts['image'],
+                            "project_name": self.opts['project_name']}}
+
+        orka_req = OrkaRequest(self.escience_token, payload)
+        orka_req.create_cluster_db()
         try:
             cluster = Cluster(self.cyclades, self.opts['name'],
                               flavor_master, flavor_slaves,
@@ -363,7 +315,9 @@ class YarnCluster(object):
             sleep(15)
         except Exception:
             # If error in bare cluster, update cluster status as destroyed
-            db_cluster_update(self.opts['token'], "Destroyed", self.opts['name'])
+            payload = {"orka": {"status": "Destroyed", "cluster_name": self.opts['name'], "master_ip": "placeholder"}}
+            orka_req_error = OrkaRequest(self.escience_token, payload)
+            orka_req_error.update_cluster_db()
             raise
         # wait for the machines to be pingable
         logging.log(SUMMARY, ' ~okeanos cluster created')
@@ -390,113 +344,20 @@ class YarnCluster(object):
                         'is on file %s', self.server_dict[0]['name'],
                         self.pass_file)
             # If Yarn cluster is build, update cluster status as active
-            db_cluster_update(self.opts['token'], "Active", self.opts['name'],
-                              self.HOSTNAME_MASTER_IP)
+            payload = {"orka": {"status": "Active", "cluster_name":self.opts['name'], "master_ip": self.HOSTNAME_MASTER_IP}}
+            orka_req = OrkaRequest(self.escience_token, payload)
+            orka_req.update_cluster_db()
             return self.HOSTNAME_MASTER_IP, self.server_dict
         except Exception:
             logging.error(' An unrecoverable error occured. Created cluster'
                           ' and resources will be deleted')
             # If error in Yarn cluster, update cluster status as destroyed
-            db_cluster_update(self.opts['token'], "Destroyed", self.opts['name'])
+            payload = {"orka": {"status": "Destroyed", "cluster_name": self.opts['name'], "master_ip": "placeholder"}}
+            orka_req_error = OrkaRequest(self.escience_token, payload)
+            orka_req_error.update_cluster_db()
             self.destroy()
             raise
 
     def destroy(self):
         """Destroy Cluster"""
         destroy_cluster(self.opts['token'], self.HOSTNAME_MASTER_IP)
-
-
-def main(opts):
-    """
-    The main function calls create_yarn_cluster with
-    the arguments given from command line.
-    """
-    try:
-        c_yarn_cluster = YarnCluster(opts)
-        c_yarn_cluster.create_yarn_cluster()
-    except ClientError, e:
-        logging.error(' Fatal error:' + e.message)
-        exit(error_fatal)
-    except Exception, e:
-        logging.error(' Fatal error:' + str(e.args[0]))
-        exit(error_fatal)
-
-
-if __name__ == "__main__":
-    parser = ArgumentParser()
-    checker = _ArgCheck()
-    parser.add_argument("--name", help='The specified name of the cluster.'
-                        ' Will be prefixed by a timestamp',
-                        dest='name', required=True)
-
-    parser.add_argument("--cluster_size", help='Total number of cluster nodes',
-                        dest='cluster_size', type=checker.two_or_bigger,
-                        required=True)
-
-    parser.add_argument("--cpu_master", help='Number of cpu cores for the master node',
-                        dest='cpu_master', type=checker.unsigned_int,
-                        required=True)
-
-    parser.add_argument("--ram_master", help='Size of RAM (MB) for the master node',
-                        dest='ram_master', type=checker.unsigned_int,
-                        required=True)
-
-    parser.add_argument("--disk_master", help='Disk size (GB) for the master node',
-                        dest='disk_master', type=checker.five_or_bigger,
-                        required=True)
-
-    parser.add_argument("--cpu_slave", help='Number of cpu cores for the slave node(s)',
-                        dest='cpu_slave', type=checker.unsigned_int,
-                        required=True)
-
-    parser.add_argument("--ram_slave", help='Size of RAM (MB) for the slave node(s)',
-                        dest='ram_slave', type=checker.unsigned_int,
-                        required=True)
-
-    parser.add_argument("--disk_slave", help='Disk size (GB) for the slave node(s)',
-                        dest='disk_slave', type=checker.five_or_bigger,
-                        required=True)
-
-    parser.add_argument("--disk_template", help='Disk template',
-                        dest='disk_template',
-                        choices=['drbd', 'ext_vlmc'], required=True)
-
-    parser.add_argument("--image", help='OS for the cluster.'
-                        ' Default is Debian Base', dest='image',
-                        default=_defaults['image'])
-
-    parser.add_argument("--token", help='Synnefo authentication token',
-                        dest='token', required=True)
-
-    parser.add_argument("--auth_url", nargs='?', dest='auth_url',
-                        default=_defaults['auth_url'],
-                        help='Synnefo authentication url. Default is ' +
-                        auth_url)
-
-    parser.add_argument("--logging", dest='logging',
-                        default=_defaults['logging'],
-                        choices=checker.logging_levels.keys(),
-                        help='Logging Level. Default: summary')
-
-    parser.add_argument("--project_name", help='~okeanos project name'
-                        ' to request resources from ',
-                        dest='project_name', required=True)
-    if len(argv) > 1:
-        opts = vars(parser.parse_args(argv[1:]))
-        if opts['logging'] == 'debug':
-            log_directory = dirname(abspath(__file__))
-            log_file_path = join(log_directory, "create_cluster_debug.log")
-
-            logging.basicConfig(format='%(asctime)s:%(message)s',
-                                filename=log_file_path,
-                                level=logging.DEBUG, datefmt='%H:%M:%S')
-            print ' Creating Hadoop cluster, logs will' + \
-                  ' be appended in create_cluster_debug.log'
-        else:
-            logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-                                level=checker.logging_levels[opts['logging']],
-                                datefmt='%H:%M:%S')
-        main(opts)
-    else:
-        logging.error('No arguments were given')
-        exit(error_no_arguments)

@@ -66,14 +66,14 @@
 
   - name: copy master public ssh key to local box
     tags: copymasterssh
-    local_action: command  scp -v -o StrictHostKeyChecking=no root@{{ hostvars[groups['master'][0]].inventory_hostname }}:/home/hduser/.ssh/id_rsa.pub ./roles/yarn/files/{{master_key}}
+    local_action: command  scp -v -o StrictHostKeyChecking=no root@{{ hostvars[groups['master'][0]].inventory_hostname }}:/home/hduser/.ssh/id_rsa.pub /tmp/{{master_key}}
     when: is_master
 
   - name: copy local box master ssh key to hduser
     tags: slavessh
     authorized_key: user=hduser key="{{ item }}"
     with_file:
-      - ./roles/yarn/files/{{master_key}}
+      - /tmp/{{master_key}}
     when: is_slave
 
   - name: download hadoop-yarn src

@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 This script creates a virtual cluster on ~okeanos and installs Hadoop-Yarn
 using Ansible.
 
 @author: Ioannis Stenos, Nick Vrionis
-'''
-
-import sys
+"""
 import os
 import logging
-import subprocess
 import paramiko
 from optparse import OptionParser
 from sys import argv
