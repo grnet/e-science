@@ -13,10 +13,9 @@ from ConfigParser import RawConfigParser, NoSectionError
 import sys
 from os.path import join, dirname, abspath
 
-sys.path.append(join(dirname(abspath(__file__)), '../orka-0.1.0/'))
+sys.path.append(join(dirname(abspath(__file__)), '../orka-0.1.0'))
 
 # import objects we aim to test
-# from create_bare_cluster import create_cluster
 from orka.create_cluster import YarnCluster, ClientError
 from orka.cluster_errors_constants import error_quotas_cluster_size, error_quotas_network, \
     error_get_ip, error_quotas_cpu, error_quotas_ram, error_quotas_cyclades_disk
@@ -139,18 +138,18 @@ def mock_get_project_id(*args):
     return 'some_project_id'
 
 # replace unmanaged calls with fakes
-@patch('create_cluster.Cluster.create', mock_createcluster)
-@patch('create_cluster.check_credentials', mock_checkcredentials)
-@patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
-@patch('create_cluster.init_cyclades', mock_init_cyclades)
-@patch('create_cluster.YarnCluster.get_flavor_id_master', mock_get_flavorid)
-@patch('create_cluster.YarnCluster.get_flavor_id_slave', mock_get_flavorid)
-@patch('create_cluster.get_project_id', mock_get_project_id)
-@patch('create_cluster.init_plankton', mock_init_plankton)
-@patch('create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
-@patch('create_cluster.reroute_ssh_prep', mock_reroute_ssh_prep)
-@patch('create_cluster.install_yarn', mock_install_yarn)
-@patch('create_cluster.sleep', mock_sleep)
+@patch('orka.create_cluster.Cluster.create', mock_createcluster)
+@patch('orka.create_cluster.check_credentials', mock_checkcredentials)
+@patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+@patch('orka.create_cluster.init_cyclades', mock_init_cyclades)
+@patch('orka.create_cluster.YarnCluster.get_flavor_id_master', mock_get_flavorid)
+@patch('orka.create_cluster.YarnCluster.get_flavor_id_slave', mock_get_flavorid)
+@patch('orka.create_cluster.get_project_id', mock_get_project_id)
+@patch('orka.create_cluster.init_plankton', mock_init_plankton)
+@patch('orka.create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
+@patch('orka.create_cluster.reroute_ssh_prep', mock_reroute_ssh_prep)
+@patch('orka.create_cluster.install_yarn', mock_install_yarn)
+@patch('orka.create_cluster.sleep', mock_sleep)
 class TestCreateCluster(TestCase):
     """ Test cases with separate un-managed resources mocked. """
     # initialize objects common to all tests in this test case
@@ -174,8 +173,8 @@ class TestCreateCluster(TestCase):
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
 
     # @patch('create_cluster.init_plankton', mock_init_plankton)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)  
-    @patch('create_cluster.YarnCluster.create_password_file', mock_createpassfile)
+    @patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)  
+    @patch('orka.create_cluster.YarnCluster.create_password_file', mock_createpassfile)
     def test_create_yarn_cluster(self):
         # arrange
         expected_masterip = '127.0.0.1'
@@ -187,8 +186,8 @@ class TestCreateCluster(TestCase):
         # assert
         self.assertTupleEqual((expected_masterip, expected_vm_dict), (returned_masterip, returned_vm_dict))
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_clustersize_quotas_sufficient(self):
         # arrange
         prev_clustersize = self.opts['cluster_size']
@@ -202,8 +201,8 @@ class TestCreateCluster(TestCase):
         self.assertEqual(expected, returned)
 
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_clustersize_quotas_exceeded(self):
         # arrange
         prev_clustersize = self.opts['cluster_size']
@@ -218,8 +217,8 @@ class TestCreateCluster(TestCase):
         the_exception = context.exception
         self.assertEqual(expected, the_exception.status)
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_network_quotas_sufficient(self):
         # arrange
         c_yarn_cluster = YarnCluster(self.opts)
@@ -229,9 +228,9 @@ class TestCreateCluster(TestCase):
         # assert
         self.assertEqual(expected, returned)
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('orka.create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
+    @patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_ip_quotas_sufficient(self):
         # arrange
         pass
@@ -239,9 +238,9 @@ class TestCreateCluster(TestCase):
 
         # assert
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('orka.create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
+    @patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_ip_quotas_exceeded(self):
         # arrange
         pass
@@ -249,8 +248,8 @@ class TestCreateCluster(TestCase):
 
         # assert
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_cpu_valid_sufficient(self):
         # arrange
         prev_clustersize = self.opts['cluster_size']
@@ -263,8 +262,8 @@ class TestCreateCluster(TestCase):
         # assert
         self.assertEqual(expected, returned)
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_cpu_valid_exceeded(self):
         # arrange
         prev_clustersize = self.opts['cluster_size']
@@ -279,7 +278,7 @@ class TestCreateCluster(TestCase):
         the_exception = context.exception
         self.assertEqual(expected, the_exception.status)
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
+    @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
     def test_check_ram_valid_sufficient(self):
         # arrange
         pass
@@ -287,7 +286,7 @@ class TestCreateCluster(TestCase):
 
         # assert
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
+    @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
     def test_check_ram_valid_exceeded(self):
         # arrange
         pass
@@ -295,7 +294,7 @@ class TestCreateCluster(TestCase):
 
         # assert
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
+    @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
     def test_check_disk_valid_sufficient(self):
         # arrange
         pass
@@ -303,7 +302,7 @@ class TestCreateCluster(TestCase):
 
         # assert
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
+    @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
     def test_check_disk_valid_exceeded(self):
         # arrange
         pass
@@ -311,9 +310,9 @@ class TestCreateCluster(TestCase):
 
         # assert
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('orka.create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
+    @patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_all_resources(self):
         # arrange
         c_yarn_cluster = YarnCluster(self.opts)
