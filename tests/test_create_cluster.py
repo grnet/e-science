@@ -13,12 +13,12 @@ from ConfigParser import RawConfigParser, NoSectionError
 import sys
 from os.path import join, dirname, abspath
 
-sys.path.append(join(dirname(abspath(__file__)), '..'))
+sys.path.append(join(dirname(abspath(__file__)), '../orka-0.1.0/'))
 
 # import objects we aim to test
 # from create_bare_cluster import create_cluster
-from create_cluster import YarnCluster, ClientError
-from cluster_errors_constants import error_quotas_cluster_size, error_quotas_network, \
+from orka.create_cluster import YarnCluster, ClientError
+from orka.cluster_errors_constants import error_quotas_cluster_size, error_quotas_network, \
     error_get_ip, error_quotas_cpu, error_quotas_ram, error_quotas_cyclades_disk
 
 def mock_createcluster(*args):
