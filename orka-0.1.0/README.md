@@ -72,7 +72,7 @@ arguments for create command:
 
 example for create cluster:
 
-    orka create --name=Yarn_Test --clustersize=3 --cpu_master=4 --ram_master=2048 --disk_master=5 --cpu_slave=2 --ram_slave=1024 --disk_slave=5 --disk_template=ext_vlmc --image='Debian Base' --token=an_~okeanos_token --auth_url=https://accounts.okeanos.grnet.gr/identity/v2.0 --logging=report --project_name=~okeanos_project_name
+    orka create --name=Yarn_Test --cluster_size=3 --cpu_master=4 --ram_master=2048 --disk_master=5 --cpu_slave=2 --ram_slave=1024 --disk_slave=5 --disk_template=ext_vlmc --image='Debian Base' --token=an_~okeanos_token --auth_url=https://accounts.okeanos.grnet.gr/identity/v2.0 --logging=report --project_name=~okeanos_project_name
 
 arguments for destroy command :
 
