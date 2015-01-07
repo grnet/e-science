@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 This module contains the definitions of returned errors and package constants.
 
 @author: Ioannis Stenos, Nick Vrionis
-'''
+"""
 
 # Definitions of return value errors
 error_syntax_clustersize = -1
@@ -54,3 +54,6 @@ Mbytes_to_GB = 1024  # Global to convert megabytes to gigabytes
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
+default_image='Debian Base'
+default_logging='report'
+

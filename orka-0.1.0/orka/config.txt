@@ -1,0 +1,4 @@
+[Database]
+url = http://83.212.120.185/api/orka
+[Login]
+url = http://83.212.120.185/api/users

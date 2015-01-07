@@ -1,33 +1,111 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 This script initialize okeanos utils.
 
 @author: Ioannis Stenos, Nick Vrionis
-'''
-
-import os
-import sys
+"""
 import logging
 from base64 import b64encode
+import os
 from os.path import abspath, dirname, join
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
-from kamaki.clients.cyclades import CycladesClient
-from kamaki.clients.cyclades import CycladesNetworkClient
+from kamaki.clients.cyclades import CycladesClient, CycladesNetworkClient
 from time import sleep
-sys.path.append(join(dirname(abspath(__file__)), 'ember_django/backend'))
-from ember_django.backend.django_db_after_login import *
-from ember_django.backend.get_flavors_quotas import *
 from cluster_errors_constants import *
+from ConfigParser import RawConfigParser, NoSectionError
+import requests
+import json
+import yaml
 
 # Global constants
 MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
-BASE_DIR = dirname(abspath(__file__))
 
 
+def get_api_urls(login=False,database=False):
+    """ Return api urls from config file"""
+    parser = RawConfigParser()
+    BASE_DIR = dirname(abspath(__file__))
+    config_file = join(BASE_DIR, 'config.txt')
+    parser.read(config_file)
+    try:
+        if login:
+            url_login = parser.get('Login', 'url')
+            return url_login
+        if database:
+            url_database = parser.get('Database', 'url')
+            return url_database
+        else:
+            logging.log(SUMMARY,' Url to be returned from config file not specified')
+            return 0
+    except NoSectionError:
+        msg = 'Not a valid api url in config file'
+        raise NoSectionError(msg)
+
+
+class OrkaRequest(object):
+    """Class for REST requests in orka database."""
+    def __init__(self, escience_token, payload):
+        """
+        Initialize escience token used for token authentication, payload
+        and appropriate headers for the request.
+        """
+        self.escience_token = escience_token
+        self.payload = payload
+        self.url_database = get_api_urls(database=True)
+        self.headers = {'content-type': 'application/json',
+                        'Authorization': 'Token ' + self.escience_token}
+
+    def create_cluster_db(self):
+        """
+        Request to orka database that cluster creation is
+        starting (pending status update)
+        """
+        requests.post(self.url_database, data=json.dumps(self.payload),
+                      headers=self.headers)
+
+    def delete_cluster_db(self):
+        """
+        Request to orka database for cluster deleting from CLI
+        (Destroyed status update)"""
+        requests.delete(self.url_database, data=json.dumps(self.payload),
+                        headers=self.headers)
+
+    def update_cluster_db(self):
+        """
+        Request to orka database for Active or Destroyed
+        cluster status update
+        """
+        requests.put(self.url_database, data=json.dumps(self.payload),
+                     headers=self.headers)
+
+    def retrieve_quota(self):
+        """Request to orka database to get pending clusters."""
+        r = requests.get(self.url_database, data=json.dumps(self.payload),
+                         headers=self.headers)
+        response = yaml.load(r.text)
+        return response
+
+
+
+def authenticate_escience(token):
+    """
+    Authenticate with escience database and retrieve escience token
+    for Token Authentication
+    """
+    payload =  {"user":{"token":token}}
+    headers = {'content-type': 'application/json'}
+    url_login = get_api_urls(login=True)
+    r = requests.post(url_login, data=json.dumps(payload), headers=headers)
+    response = yaml.load(r.text)
+    escience_token = response['user']['escience_token']
+    logging.log(REPORT, 'Authenticated with escience database')
+    return escience_token
+
+        
 def get_project_id(token, project_name):
     """
     Return the id of an active ~okeanos project.
@@ -60,6 +138,7 @@ def destroy_cluster(token, master_ip):
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
     nc = init_cyclades_netclient(endpoints['network'], token)
+    escience_token = authenticate_escience(token)
     # Get list of servers and public ips
     try:
         list_of_servers = cyclades.list_servers(detail=True)
@@ -87,9 +166,11 @@ def destroy_cluster(token, master_ip):
             float_ip_to_delete
         raise ClientError(msg, error_get_ip)
 
+    payload =  {"orka":{"master_ip":master_ip}}
+    orka_request = OrkaRequest(escience_token, payload)
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
-        db_cluster_destroy(token, master_ip)
+        orka_request.delete_cluster_db()
         msg = ' A valid network of master and slaves was not found.'\
             'Deleting the master VM only'
         raise ClientError(msg, error_cluster_corrupt)
@@ -148,7 +229,8 @@ def destroy_cluster(token, master_ip):
     logging.log(SUMMARY, ' Cluster with master node [%s] and %d slave nodes'
                 ' was deleted', servers_to_delete[0]['name'],
                 number_of_nodes-1)
-    db_cluster_destroy(token, master_ip)
+
+    orka_request.delete_cluster_db()
     # Everything deleted as expected
     if not list_of_errors:
         return 0
@@ -213,33 +295,39 @@ def get_user_quota(auth):
 
 
 def check_quota(token, project_id):
-    '''
+    """
     Checks if user available quota .
     Available = limit minus (~ okeanos used and escience pending).
     Also divides with 1024*1024*1024 to transform bytes to gigabytes.
-    '''
+    """
     auth = check_credentials(token)
     dict_quotas = get_user_quota(auth)
     project_name = auth.get_project(project_id)['name']
-    pending_quota = retrieve_pending_clusters(token, project_name)
+    # Create request for orka database to
+    # get pending quota for given project id
+    payload = {"orka":{"project_name":project_name}}
+    escience_token = authenticate_escience(token)
+    orka_request = OrkaRequest(escience_token, payload)
+    pending_quota = orka_request.retrieve_quota()
+
     limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
     usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GB
-    pending_cd = pending_quota['Disk']
+    pending_cd = pending_quota['orka']['Disk']
     available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd)
 
     limit_cpu = dict_quotas[project_id]['cyclades.cpu']['limit']
     usage_cpu = dict_quotas[project_id]['cyclades.cpu']['usage']
-    pending_cpu = pending_quota['Cpus']
+    pending_cpu = pending_quota['orka']['Cpus']
     available_cpu = limit_cpu - usage_cpu - pending_cpu
 
     limit_ram = dict_quotas[project_id]['cyclades.ram']['limit'] / Bytes_to_MB
     usage_ram = dict_quotas[project_id]['cyclades.ram']['usage'] / Bytes_to_MB
-    pending_ram = pending_quota['Ram']
+    pending_ram = pending_quota['orka']['Ram']
     available_ram = (limit_ram-usage_ram-pending_ram)
 
     limit_vm = dict_quotas[project_id]['cyclades.vm']['limit']
     usage_vm = dict_quotas[project_id]['cyclades.vm']['usage']
-    pending_vm = pending_quota['VMs']
+    pending_vm = pending_quota['orka']['VMs']
     available_vm = limit_vm-usage_vm-pending_vm
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},

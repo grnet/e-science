@@ -1,35 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 This script creates a virtual cluster on ~okeanos and installs Hadoop-Yarn
 using Ansible.
 
 @author: Ioannis Stenos, Nick Vrionis
-'''
+"""
 
 from sys import exit, argv
 import os
+from os.path import dirname, abspath, join
 import logging
-import subprocess
 from optparse import OptionParser
 from reroute_ssh import reroute_ssh_prep
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
 
-# Global constants
-ANSIBLE_DIR = 'ansible'
-ANSIBLE_HOST_PATH = ANSIBLE_DIR + '/ansible_hosts_'
-ANSIBLE_PLAYBOOK_PATH = ANSIBLE_DIR + '/site.yml'
 
-
-def install_yarn(hosts_list, master_ip, cluster_name):
+def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image):
     """
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn.
     """
     list_of_hosts = hosts_list
+    master_hostname = list_of_hosts[0]['fqdn'].split('.', 1)[0]
     HOSTNAME_MASTER = master_ip
     cluster_size = len(list_of_hosts)
     # Create ansible_hosts file
@@ -40,9 +36,10 @@ def install_yarn(hosts_list, master_ip, cluster_name):
         msg = 'Error while creating ansible hosts file'
         raise RuntimeError(msg, error_ansible_playbook)
     # Run Ansible playbook
-    run_ansible(file_name, cluster_size)
+    run_ansible(file_name, cluster_size, hadoop_image)
     logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
                 + HOSTNAME_MASTER + ':8088/cluster')
+    os.system('rm /tmp/master_' + master_hostname + '_pub_key')
 
 
 def create_ansible_hosts(cluster_name, list_of_hosts, HOSTNAME_MASTER):
@@ -54,12 +51,9 @@ def create_ansible_hosts(cluster_name, list_of_hosts, HOSTNAME_MASTER):
     ansible_hosts_prefix = ansible_hosts_prefix.replace(":", "")
 
     # Removes spaces and ':' from cluster name and appends it to ansible_hosts
-    # The ansible_hosts file will now have a timestamped name to seperate it
-    # from ansible_hosts files of different clusters.
-    if 'ember_django' in os.getcwd():
-        os.chdir('..')
+    # The ansible_hosts file will now have a timestamped name
 
-    filename = ANSIBLE_HOST_PATH + ansible_hosts_prefix
+    filename = os.getcwd() + '/ansible_hosts_' + ansible_hosts_prefix
     # Create ansible_hosts file and write all information that is
     # required from Ansible playbook.
     with open(filename, 'w+') as target:
@@ -77,7 +71,7 @@ def create_ansible_hosts(cluster_name, list_of_hosts, HOSTNAME_MASTER):
     return filename
 
 
-def run_ansible(filename, cluster_size):
+def run_ansible(filename, cluster_size, hadoop_image):
     """
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
@@ -94,12 +88,23 @@ def run_ansible(filename, cluster_size):
     ansible_log = " > ansible.log"
     if level == REPORT or level == SUMMARY:
         ansible_log = ""
-    exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
+    BASE_DIR = dirname(abspath(__file__))
+    ANSIBLE_PLAYBOOK_PATH = BASE_DIR + '/ansible/site.yml'
+
+    if hadoop_image:
+        exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                             'ansible-playbook -i ' + filename + ' ' +
                             ANSIBLE_PLAYBOOK_PATH +
                             ' -f ' + str(cluster_size) +
-                            ' -e "choose_role=yarn format=True start_yarn=True"'
+                            ' -e "choose_role=yarn format=True start_yarn=True" -t postconfig'
                             + ansible_log)
+    else:
+        exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
+                                'ansible-playbook -i ' + filename + ' ' +
+                                ANSIBLE_PLAYBOOK_PATH +
+                                ' -f ' + str(cluster_size) +
+                                ' -e "choose_role=yarn format=True start_yarn=True"'
+                                + ansible_log)
     if exit_status != 0:
         msg = ' Ansible failed with exit status %d' % exit_status
         raise RuntimeError(msg, exit_status)
