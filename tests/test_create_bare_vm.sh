@@ -7,5 +7,5 @@ HOST="root@"$vm
 echo "Wait for Vm to be build..."
 sleep 120
 echo "Conect to VM"
-echo $apass
+echo "pass is:"$apass
 ssh -o StrictHostKeyChecking=no $HOST 
