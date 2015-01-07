@@ -16,7 +16,7 @@
 			position : [0, 0, 0, 0],
 			title : '',
 			isOnly : true,
-			imgUrl : '/frontend/app/images/loading[size].gif',
+			imgUrl : DJANGO_STATIC_URL + 'images/loading[size].gif',
 			onShow : function() {
 			},
 			onClose : function() {
