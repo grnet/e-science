@@ -67,7 +67,7 @@ DATABASES = {
         'NAME': 'escience',
         'USER': 'developer',
         'PASSWORD': 'escience',
-        'HOST': 'localhost',
+        'HOST': '83.212.120.196',
         'PORT': '5432',
     }
 }
