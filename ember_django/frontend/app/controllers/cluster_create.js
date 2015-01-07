@@ -554,7 +554,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				size : 32,
 				isOnly : true,
 				bgOpacity : 1.0,
-				imgUrl : "/frontend/app/images/loading[size].gif",
+				imgUrl : DJANGO_STATIC_URL + "images/loading[size].gif",
 				onShow : function() {
 					$.loader.shown = true;
 					$('.loading_wrp').find('span').addClass('text-info strong');

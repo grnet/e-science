@@ -11,11 +11,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.7/ref/settings/
 '''
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = True
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-BASE_DIR = os.path.join(os.path.dirname(__file__), '..')
-
-
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
@@ -23,10 +24,7 @@ BASE_DIR = os.path.join(os.path.dirname(__file__), '..')
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'some_key'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-TEMPLATE_DEBUG = True
+TEMPLATE_DEBUG = DEBUG
 
 ALLOWED_HOSTS = ['*', ]
 
@@ -70,7 +68,7 @@ DATABASES = {
         'NAME': 'escience',
         'USER': 'developer',
         'PASSWORD': '',
-        'HOST': '127.0.0.1',
+        'HOST': 'localhost',
         'PORT': '5432',
     }
 }
@@ -118,14 +116,24 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
-STATIC_PATH = os.path.join(BASE_DIR, 'frontend/app')
-
-STATIC_URL = '/frontend/app/'
-
-STATICFILES_DIRS = (
-    STATIC_PATH,
-)
-
-TEMPLATE_DIRS = (
-    os.path.join(BASE_DIR, 'frontend/app'),
-)
+if DEBUG:
+    STATIC_PATH = os.path.join(BASE_DIR, 'frontend/app')
+    STATIC_URL = '/frontend/app/'
+    STATICFILES_DIRS = (
+        STATIC_PATH,
+    )
+    TEMPLATE_DIRS = (
+        os.path.join(BASE_DIR, 'frontend/app'),
+    )
+else:
+    PROJECT_DEFAULT_STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../frontend/app')
+    STATIC_PATH = os.path.join(BASE_DIR, 'static')
+    STATIC_URL = '/static/'
+    STATICFILES_DIRS = (
+        PROJECT_DEFAULT_STATIC_DIR,
+    )
+    TEMPLATE_DIRS = (
+        os.path.join(BASE_DIR, 'static'),
+    )
+    # EXTRA FOR NGINX
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
