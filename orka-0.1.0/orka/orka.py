@@ -210,7 +210,7 @@ def main():
 
     else:
         logging.error('No arguments were given')
-	    parser.parse_args(' -h'.split())
+        parser.parse_args(' -h'.split())
         exit(error_no_arguments)
     c_hadoopcluster = HadoopCluster(opts)
     if argv[1] == 'create':
