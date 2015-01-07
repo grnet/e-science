@@ -9,7 +9,7 @@
 
   - name: Install RabbitMQ broker, PostgreSQL and needed dependencies
     tags: installall
-    shell: apt-get -y install "{{item}}"
+    shell: apt-get install -y "{{item}}"
     with_items:
       - rabbitmq-server
       - postgresql
@@ -28,18 +28,19 @@
     with_items:
       - { name: 'celery' }
       - { name: 'Django' }
+      - { name: 'rest_framework_ember' }
       - { name: 'djangorestframework==2.4.3' }
       - { name: 'markdown' }
       - { name: 'django-filter' }
       - { name: 'nose' }
       - { name: 'mock' }
-      - { name: 'rest_framework_ember' }
       - { name: 'djorm-pgarray' }
       - { name: 'paramiko' }
       - { name: 'kamaki==0.13rc3'}
       - { name: 'ansible==1.7.2' }
       - { name: 'uwsgi' }
       - { name: 'south' }
+      - { name: 'requests' }
 
   - name: Copy script celeryd for daemonic workers
     tags: celerydcopy
@@ -68,6 +69,10 @@
   - name: Git clone e-science project in the git directory
     tags: gitcloneproject
     command: git clone -b develop {{escience_repo}} {{myprojectname}} chdir={{myprojectdir}}
+
+  - name: Install orca as a python package
+    tags: orcapackageinstall
+    command: python setup.py install chdir={{project_path}}/{{orka_version}}
 
   - name: Copy needed frontend files for nginx1
     tags: frontendcopy1

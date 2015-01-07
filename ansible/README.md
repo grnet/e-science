@@ -10,6 +10,10 @@ and one common for all hosts:
 
 How to run yarn role
 --
+Before running an Ansible playbook for a bare vm in ~okeanos, following commands must be executed in the bare vm:
+
+    apt-get update
+    apt-get install -y python
 Choice of role must be given as argument from command line or else playbook wont run. For example
 
     ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "choose_role=yarn"
@@ -65,9 +69,4 @@ Other useful variables are :
 
 - [path_to_folder_to_minify], which is the path of the app folder to minify/uglify the .js files.
 
-- [path_to_folder_to_removelogging], which is the path of the app folder to removelogging the .js files
-
-
-
-
-
+- [path_to_folder_to_removelogging], which is the path of the app folder to removelogging the .js files	
