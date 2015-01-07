@@ -62,7 +62,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 			if ((this.get('name_of_project') + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 'VMs:' + this.get('content').objectAt(i).get('vms_av').length + String.fromCharCode(160) + String.fromCharCode(160) + 'Cpus:' + this.get('content').objectAt(i).get('cpu_av') + String.fromCharCode(160) + String.fromCharCode(160) + 'Ram:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + String.fromCharCode(160) + String.fromCharCode(160) + 'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) {
 				this.set('create_cluster_disabled', false);
-				console.log(true);
 				this.set('project_current', this.get('content').objectAt(i));
 				this.set('project_name', this.get('content').objectAt(i).get('project_name'));
 				this.set('project_index', i);
@@ -555,7 +554,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				size : 32,
 				isOnly : true,
 				bgOpacity : 1.0,
-				imgUrl : "/frontend/app/images/loading[size].gif",
+				imgUrl : DJANGO_STATIC_URL + "images/loading[size].gif",
 				onShow : function() {
 					$.loader.shown = true;
 					$('.loading_wrp').find('span').addClass('text-info strong');

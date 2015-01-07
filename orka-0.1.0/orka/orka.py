@@ -154,7 +154,7 @@ def main():
         
         parser_c.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
                               ' Default is HadoopImage (overrides image selection)',
-                              nargs='?', dest='use_hadoop_image', default=None, const='HadoopImage2')
+                              nargs='?', dest='use_hadoop_image', default=None, const='HadoopBase')
 
         parser_c.add_argument("--token", help='Synnefo authentication token',
                               dest='token', required=True)
@@ -210,6 +210,7 @@ def main():
 
     else:
         logging.error('No arguments were given')
+        parser.parse_args(' -h'.split())
         exit(error_no_arguments)
     c_hadoopcluster = HadoopCluster(opts)
     if argv[1] == 'create':
