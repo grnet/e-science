@@ -62,8 +62,9 @@ class YarnCluster(object):
         # Instance of Plankton/ImageClient
         self.plankton = init_plankton(self.endpoints['plankton'],
                                       self.opts['token'])
-        if self.opts['use_hadoop_image']:
-            self.hadoop_image = True
+        if 'use_hadoop_image' in self.opts:
+            if self.opts['use_hadoop_image']:
+                self.hadoop_image = True
 
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\

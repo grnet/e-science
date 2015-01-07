@@ -74,18 +74,6 @@
     tags: orcapackageinstall
     command: python setup.py install chdir={{project_path}}/{{orka_version}}
 
-  - name: Copy needed frontend files for nginx1
-    tags: frontendcopy1
-    copy: src=application.js dest={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}/frontend/app/controllers
-
-  - name: Copy needed frontend files for nginx2
-    tags: frontendcopy2
-    copy: src=homepage.js dest={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}/frontend/app/controllers
-
-  - name: Copy needed frontend files for nginx3
-    tags: frontendcopy3
-    copy: src=ember-handlebars-loader-0.0.1.js dest={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}/frontend/app/libs
-
   - name: Copy package.json to webserver
     tags: cppackagejson
     copy: src=package.json dest={{myprojectdir}}/{{myprojectname}} owner=orca_admin mode=0644
