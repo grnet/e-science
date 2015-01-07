@@ -31,6 +31,7 @@ class YarnCluster(object):
         self.HOSTNAME_MASTER_IP = '127.0.0.1'
         # master VM root password file, placeholder value
         self.pass_file = 'PLACEHOLDER'
+        self.hadoop_image = False
         # List of cluster VMs
         self.server_dict = {}
         # project id of project name given as argument
@@ -61,6 +62,9 @@ class YarnCluster(object):
         # Instance of Plankton/ImageClient
         self.plankton = init_plankton(self.endpoints['plankton'],
                                       self.opts['token'])
+        if self.opts['use_hadoop_image']:
+            self.hadoop_image = True
+
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_cluster_size_quotas
@@ -339,7 +343,7 @@ class YarnCluster(object):
 
             logging.log(SUMMARY, ' Installing and configuring Yarn')
             install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
-                         self.server_dict[0]['name'])
+                         self.server_dict[0]['name'], self.hadoop_image)
             logging.log(SUMMARY, ' The root password of master VM [%s] '
                         'is on file %s', self.server_dict[0]['name'],
                         self.pass_file)

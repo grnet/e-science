@@ -14,6 +14,26 @@ App.UserWelcomeController = Ember.Controller.extend({
 	sortbysize : false,
 	sortbyurl : false,
 	sortedCollection : function() {
+		// $options = {
+			// title : 'Creating...',
+			// fontColor : false,
+			// bgColor : 'white',
+			// size : 32,
+			// isOnly : true,
+			// bgOpacity : 0.5,
+			// imgUrl : "/frontend/app/images/loading[size].gif",
+			// onShow : function() {
+				// $.loader.shown = true;
+				// $('.loading_wrp').find('span').addClass('text-info');
+			// },
+			// onClose : function() {
+				// $.loader.shown = false;
+			// }
+		// };
+		// $.loader.close(true);
+		// setTimeout(function() {
+			// $('.glyphicon-time').closest('td').loader($options);
+		// }, 100);
 		return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, {
 			content : this.get('sortedclusters'),
 			sortProperties : [this.get('column')],

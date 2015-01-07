@@ -30,6 +30,10 @@ def project_list_flavor_quota(user):
     # Id for ember-data, will use it for store.push the different projects
     ember_project_id = 1
     for project in list_of_projects:
+        if project['name'] == 'system:'+str(project['id']):
+            list_of_projects.remove(project)
+    list_of_projects.insert(0,project) 
+    for project in list_of_projects:   
         if project['id'] in dict_quotas:
             quotas = check_quota(okeanos_token, project['id'])
             list_of_resources.append(retrieve_ClusterCreationParams(flavors,

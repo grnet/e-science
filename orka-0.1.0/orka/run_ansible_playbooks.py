@@ -19,7 +19,7 @@ from reroute_ssh import reroute_ssh_prep
 from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
 
 
-def install_yarn(hosts_list, master_ip, cluster_name):
+def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image):
     """
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn.
@@ -36,7 +36,7 @@ def install_yarn(hosts_list, master_ip, cluster_name):
         msg = 'Error while creating ansible hosts file'
         raise RuntimeError(msg, error_ansible_playbook)
     # Run Ansible playbook
-    run_ansible(file_name, cluster_size)
+    run_ansible(file_name, cluster_size, hadoop_image)
     logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
                 + HOSTNAME_MASTER + ':8088/cluster')
     os.system('rm /tmp/master_' + master_hostname + '_pub_key')
@@ -71,7 +71,7 @@ def create_ansible_hosts(cluster_name, list_of_hosts, HOSTNAME_MASTER):
     return filename
 
 
-def run_ansible(filename, cluster_size):
+def run_ansible(filename, cluster_size, hadoop_image):
     """
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
@@ -90,12 +90,21 @@ def run_ansible(filename, cluster_size):
         ansible_log = ""
     BASE_DIR = dirname(abspath(__file__))
     ANSIBLE_PLAYBOOK_PATH = BASE_DIR + '/ansible/site.yml'
-    exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
+
+    if hadoop_image:
+        exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                             'ansible-playbook -i ' + filename + ' ' +
                             ANSIBLE_PLAYBOOK_PATH +
                             ' -f ' + str(cluster_size) +
-                            ' -e "choose_role=yarn format=True start_yarn=True"'
+                            ' -e "choose_role=yarn format=True start_yarn=True" -t postconfig'
                             + ansible_log)
+    else:
+        exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
+                                'ansible-playbook -i ' + filename + ' ' +
+                                ANSIBLE_PLAYBOOK_PATH +
+                                ' -f ' + str(cluster_size) +
+                                ' -e "choose_role=yarn format=True start_yarn=True"'
+                                + ansible_log)
     if exit_status != 0:
         msg = ' Ansible failed with exit status %d' % exit_status
         raise RuntimeError(msg, exit_status)

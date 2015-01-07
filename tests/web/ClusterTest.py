@@ -95,7 +95,9 @@ class ClusterTest(unittest.TestCase):
                 EC.presence_of_element_located((By.ID, "id_title_cluster_create_route"))
             ) 
         except: self.fail("time out")                 
-        Select(driver.find_element_by_id("project_id")).select_by_visible_text(self.project_name)
+        user_quota = check_quota(self.token, self.project_id)
+        project_details = self.project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'Cpus:' + str(user_quota['cpus']['available']) + '  ' + 'Ram:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
+        Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)
         return driver
 
     def is_element_present(self, how, what):

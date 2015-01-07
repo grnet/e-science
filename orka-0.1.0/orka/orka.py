@@ -151,6 +151,10 @@ def main():
         parser_c.add_argument("--image", help='OS for the cluster.'
                               ' Default is Debian Base', dest='image',
                               default=default_image)
+        
+        parser_c.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
+                              ' Default is HadoopImage (overrides image selection)',
+                              nargs='?', dest='use_hadoop_image', default=None, const='HadoopImage2')
 
         parser_c.add_argument("--token", help='Synnefo authentication token',
                               dest='token', required=True)
@@ -186,6 +190,10 @@ def main():
                               help='Logging Level. Default: summary')
 
         opts = vars(parser.parse_args(argv[1:]))
+        if argv[1] == 'create':
+            if opts['use_hadoop_image']:
+                opts['image'] = opts['use_hadoop_image']
+            
         if opts['logging'] == 'debug':
             log_directory = dirname(abspath(__file__))
             log_file_path = join(log_directory, "create_cluster_debug.log")
@@ -200,8 +208,6 @@ def main():
                                 level=checker.logging_levels[opts['logging']],
                                 datefmt='%H:%M:%S')
 
-
-
     else:
         logging.error('No arguments were given')
         exit(error_no_arguments)
@@ -212,6 +218,5 @@ def main():
     elif argv[1] == 'destroy':
         c_hadoopcluster.destroy()
 
-
-if __name__ == "main":
+if __name__ == "__main__":
     main()
