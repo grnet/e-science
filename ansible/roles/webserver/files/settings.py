@@ -11,11 +11,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.7/ref/settings/
 '''
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = False
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
-
-PROJECT_DEFAULT_STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../frontend/app')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
@@ -23,12 +24,9 @@ PROJECT_DEFAULT_STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'some_key'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+TEMPLATE_DEBUG = DEBUG
 
-TEMPLATE_DEBUG = False
-
-ALLOWED_HOSTS = ['*',]
+ALLOWED_HOSTS = ['*', ]
 
 # Application definition
 # rest_framework_ember adapter is added for ember-django communication
@@ -63,20 +61,16 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'escience',
-         'USER': 'developer',
-         'PASSWORD': 'escience',
-          'HOST': 'localhost',
-           'PORT': '',
+        'USER': 'developer',
+        'PASSWORD': 'escience',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
-
-# rest_framework settings for the rest_framework_ember
-# https://github.com/ngenworks/rest_framework_ember
 
 # rest_framework settings for the rest_framework_ember
 # https://github.com/ngenworks/rest_framework_ember
@@ -88,11 +82,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_SERIALIZER_CLASS':
         'rest_framework_ember.pagination.EmberPaginationSerializer',
     'DEFAULT_PARSER_CLASSES': (
-        'rest_framework_ember.parsers.EmberJSONParser',
-        'rest_framework.parsers.FormParser',
-        'rest_framework.parsers.MultiPartParser'
-    ),
-        'DEFAULT_PARSER_CLASSES': (
         'rest_framework_ember.parsers.EmberJSONParser',
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser'
@@ -126,20 +115,28 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
-STATIC_PATH = os.path.join(BASE_DIR, 'static')
+if DEBUG:
+    STATIC_PATH = os.path.join(BASE_DIR, 'frontend/app')
+    STATIC_URL = '/frontend/app/'
+    STATICFILES_DIRS = (
+        STATIC_PATH,
+    )
+    TEMPLATE_DIRS = (
+        os.path.join(BASE_DIR, 'frontend/app'),
+    )
+else:
+    PROJECT_DEFAULT_STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../frontend/app')
+    STATIC_PATH = os.path.join(BASE_DIR, 'static')
+    STATIC_URL = '/static/'
+    STATICFILES_DIRS = (
+        PROJECT_DEFAULT_STATIC_DIR,
+    )
+    TEMPLATE_DIRS = (
+        os.path.join(BASE_DIR, 'static'),
+    )
+    # EXTRA FOR NGINX
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-STATIC_URL = '/static/'
-
-STATICFILES_DIRS = (
-    PROJECT_DEFAULT_STATIC_DIR,
-)
-
-TEMPLATE_DIRS = (
-    os.path.join(BASE_DIR, 'static'),
-)
-
-# EXTRA FOR NGINX
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 
 	

@@ -10,12 +10,13 @@ import re
 from os.path import dirname, abspath, join
 from setuptools import setup
 BASE_DIR = join(dirname(abspath(__file__)), 'orka/orka.py')
+import orka
 
-version = re.search(
+'''version = re.search(
     '^__version__\s*=\s*"(.*)"',
     open(BASE_DIR).read(),
     re.M
-    ).group(1)
+    ).group(1)'''
 
 requires = ['kamaki==0.13rc3','paramiko','requests','PyYAML']
 
@@ -31,7 +32,7 @@ setup(
              'ansible/*.yml', 'ansible/*.cfg']
     },
     include_package_data=True,
-    version = version,
+    version = orka.__version__,
     description = "Python command line application for creating and deleting Hadoop clusters in ~okeanos.",
     install_requires = requires
     )

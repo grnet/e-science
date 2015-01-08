@@ -82,7 +82,7 @@ class test_text_respond_to_buttons(unittest.TestCase):
                 project_name = 'system'
             else:
                 project_name = project['name']               
-            project_details = project_name + '        ' + 'VMs:' + user_quota['vms']['available'][-1] + '  ' + 'Cpus:' + user_quota['cpus']['available'] + '  ' + 'Ram:' + user_quota['ram']['available'] + 'MB' + '  ' + 'Disk:' + user_quota['disk']['available'] + 'GB'                            
+            project_details = project_name + '        ' + 'VMs:' + user_quota['vms']['available'][-1] + '  ' + 'CPUs:' + user_quota['cpus']['available'] + '  ' + 'RAM:' + user_quota['ram']['available'] + 'MB' + '  ' + 'Disk:' + user_quota['disk']['available'] + 'GB'                            
             Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)
             cluster_sizes = driver.find_element_by_id("size_of_cluster").text
             try:

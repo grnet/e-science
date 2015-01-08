@@ -49,8 +49,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 			projects[i] = this.get('name_of_project') + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
 			String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
 			'VMs:' + this.get('content').objectAt(i).get('vms_av').length + String.fromCharCode(160) + String.fromCharCode(160) + 
-			'Cpus:' + this.get('content').objectAt(i).get('cpu_av') + String.fromCharCode(160) + String.fromCharCode(160) + 
-			'Ram:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + String.fromCharCode(160) + String.fromCharCode(160) + 
+			'CPUs:' + this.get('content').objectAt(i).get('cpu_av') + String.fromCharCode(160) + String.fromCharCode(160) + 
+			'RAM:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + String.fromCharCode(160) + String.fromCharCode(160) + 
 			'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB';
 		}
 		this.set('name_of_project', '');
@@ -60,7 +60,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				this.set('name_of_project', this.get('content').objectAt(i).get('project_name'));
 			}
-			if ((this.get('name_of_project') + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 'VMs:' + this.get('content').objectAt(i).get('vms_av').length + String.fromCharCode(160) + String.fromCharCode(160) + 'Cpus:' + this.get('content').objectAt(i).get('cpu_av') + String.fromCharCode(160) + String.fromCharCode(160) + 'Ram:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + String.fromCharCode(160) + String.fromCharCode(160) + 'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) {
+			if ((this.get('name_of_project') + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 'VMs:' + this.get('content').objectAt(i).get('vms_av').length + String.fromCharCode(160) + String.fromCharCode(160) + 'CPUss:' + this.get('content').objectAt(i).get('cpu_av') + String.fromCharCode(160) + String.fromCharCode(160) + 'RAM:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + String.fromCharCode(160) + String.fromCharCode(160) + 'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) {
 				this.set('create_cluster_disabled', false);
 				this.set('project_current', this.get('content').objectAt(i));
 				this.set('project_name', this.get('content').objectAt(i).get('project_name'));

@@ -3,10 +3,6 @@
 
 
 """orka.orka: provides entry point main()."""
-
-
-__version__ = "0.1.0"
-
 import logging
 from sys import argv
 from os.path import join, dirname, abspath
@@ -15,7 +11,7 @@ from cluster_errors_constants import *
 from create_cluster import YarnCluster
 from okeanos_utils import destroy_cluster
 from argparse import ArgumentParser, ArgumentTypeError
-
+from version import __version__
 
 class _ArgCheck(object):
     """
@@ -73,11 +69,7 @@ class HadoopCluster(object):
             c_yarn_cluster = YarnCluster(self.opts)
             c_yarn_cluster.create_yarn_cluster()
 
-        except ClientError, e:
-            logging.error(' Fatal error:' + e.message)
-            exit(error_fatal)
-        except Exception, e:
-            logging.error(' Fatal error:' + str(e.args[0]))
+        except Exception:
             exit(error_fatal)
 
 
@@ -103,12 +95,17 @@ def main():
     checker = _ArgCheck()
     subparsers = parser.add_subparsers(help='Choose Hadoop cluster action'
                                             ' create or destroy')
+    parser.add_argument("-V", "--version", help="Show current version")
     parser_c = subparsers.add_parser('create',
                                      help='Create a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
     parser_d = subparsers.add_parser('destroy',
                                      help='Destroy a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
+
+    if "-V" in argv or "--version" in argv:
+        print('orka %s' % __version__)
+        return 0
 
     if len(argv) > 1:
 
