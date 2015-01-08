@@ -92,7 +92,7 @@ class YarnCluster(object):
         usage_vm = dict_quotas[self.project_id]['cyclades.vm']['usage']
         available_vm = limit_vm - usage_vm - pending_vm
         if available_vm < self.opts['cluster_size']:
-            msg = ' Cyclades VMs out of limit'
+            msg = 'Cyclades VMs out of limit'
             raise ClientError(msg, error_quotas_cluster_size)
         else:
             return 0
@@ -113,7 +113,7 @@ class YarnCluster(object):
             logging.log(REPORT, ' Private Network quota is ok')
             return 0
         else:
-            msg = ' Private Network quota exceeded'
+            msg = 'Private Network quota exceeded'
             raise ClientError(msg, error_quotas_network)
 
     def check_ip_quotas(self):
@@ -131,7 +131,7 @@ class YarnCluster(object):
         if available_ips > 0:
             return 0
         else:
-            msg = ' Floating IP not available'
+            msg = 'Floating IP not available'
             raise ClientError(msg, error_get_ip)
 
     def check_cpu_valid(self):
@@ -149,7 +149,7 @@ class YarnCluster(object):
         cpu_req = self.opts['cpu_master'] + \
             self.opts['cpu_slave'] * (self.opts['cluster_size'] - 1)
         if available_cpu < cpu_req:
-            msg = ' Cyclades cpu out of limit'
+            msg = 'Cyclades cpu out of limit'
             raise ClientError(msg, error_quotas_cpu)
         else:
             return 0
@@ -169,7 +169,7 @@ class YarnCluster(object):
         ram_req = self.opts['ram_master'] + \
             self.opts['ram_slave'] * (self.opts['cluster_size'] - 1)
         if available_ram < ram_req:
-            msg = ' Cyclades ram out of limit'
+            msg = 'Cyclades ram out of limit'
             raise ClientError(msg, error_quotas_ram)
         else:
             return 0
@@ -189,7 +189,7 @@ class YarnCluster(object):
             self.opts['disk_slave'] * (self.opts['cluster_size'] - 1)
         available_cyclades_disk_GB = (limit_cd - usage_cd) / Bytes_to_GB - pending_cd
         if available_cyclades_disk_GB < cyclades_disk_req:
-            msg = ' Cyclades disk out of limit'
+            msg = 'Cyclades disk out of limit'
             raise ClientError(msg, error_quotas_cyclades_disk)
         else:
             return 0
@@ -212,7 +212,7 @@ class YarnCluster(object):
         try:
             flavor_list = cyclades_client.list_flavors(True)
         except ClientError:
-            msg = ' Could not get list of flavors'
+            msg = 'Could not get list of flavors'
             raise ClientError(msg, error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
@@ -232,7 +232,7 @@ class YarnCluster(object):
         try:
             flavor_list = cyclades_client.list_flavors(True)
         except ClientError:
-            msg = ' Could not get list of flavors'
+            msg = 'Could not get list of flavors'
             raise ClientError(msg, error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
@@ -272,7 +272,7 @@ class YarnCluster(object):
         flavor_master = self.get_flavor_id_master(self.cyclades)
         flavor_slaves = self.get_flavor_id_slave(self.cyclades)
         if flavor_master == 0 or flavor_slaves == 0:
-            msg = ' Combination of cpu, ram, disk and disk_template do' \
+            msg = 'Combination of cpu, ram, disk and disk_template do' \
                 ' not match an existing id'
             raise ClientError(msg, error_flavor_id)
         list_current_images = self.plankton.list_public(True, 'default')
@@ -339,7 +339,7 @@ class YarnCluster(object):
         try:
             self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
         except Exception, e:
-            logging.error(' Fatal error:' + str(e.args[0]))
+            logging.error(' Fatal error: ' + str(e.args[0]))
             raise
         logging.log(SUMMARY, ' Creating Yarn cluster')
         try:

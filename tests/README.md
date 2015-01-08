@@ -26,10 +26,11 @@ To run the test you need:
 
 Run mock test with either with `nosetests`, or  with `python test_create_cluster.py`
 
-3. Test to check orka wraper are test_create_bare_vm.sh and test_in_bare_vm_orkaenv first is to create and enter a new bare vm 
+orka wrapper tests
+------------------
+Tests to check orka wrapper are test_create_bare_vm.sh and test_in_bare_vm_orkaenv. The first creates and connects to a bare vm in~okeanos 
+and the second needs to be run with bash inside the new vm to setup virtual environment orkaenv. After the second test orkaenv must be activated with
 
-	and second needs to be run with bash inside the new vm to setup orkaenv after second test orkaenv must be activated with 
-	
-	. ~/.virtualenvs/orkaenv/bin/activate 
-	
-	and then orka commands can be run like orca -h  for bash test to run need to add the project in which the vm will be created and the repo which will be cloned
+    . ~/.virtualenvs/orkaenv/bin/activate
+
+and then orka commands can be run, e.g. orca -h.  The bash scripts require manually adding the project id in which the vm will be created and the github repo which will be cloned. 

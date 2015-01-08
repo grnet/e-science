@@ -51,7 +51,7 @@ Following commands must be executed before anything else:
 
 How to run orka commands
 ------------------------
-orka -h [command] -h "arguments"
+orka [command] "arguments"
 
 arguments for create command:
      
@@ -69,10 +69,21 @@ arguments for create command:
       --auth_url="authentication url (Default Value)"
       --logging="7 logging levels:critical, error, warning, summary, report, info, debug (Default Value summary)"
       --project_name="name of a ~okeanos project"
+      --use_hadoop_image="name of a hadoop image. Overrides image value" (Default value HadoopImage)
 
-example for create cluster:
+###Using the --use_hadoop_image argument creates faster the Hadoop cluster.
+
+example for create cluster with Debian Base image:
 
     orka create --name=Yarn_Test --cluster_size=3 --cpu_master=4 --ram_master=2048 --disk_master=5 --cpu_slave=2 --ram_slave=1024 --disk_slave=5 --disk_template=ext_vlmc --image='Debian Base' --token=an_~okeanos_token --auth_url=https://accounts.okeanos.grnet.gr/identity/v2.0 --logging=report --project_name=~okeanos_project_name
+
+example for create cluster with default hadoop image(Hadoop-2.5.2 and Oracle Java 8):
+
+    orka create --name=Yarn_Test --cluster_size=3 --cpu_master=4 --ram_master=2048 --disk_master=5 --cpu_slave=2 --ram_slave=1024 --disk_slave=5 --disk_template=ext_vlmc --token=an_~okeanos_token --auth_url=https://accounts.okeanos.grnet.gr/identity/v2.0 --logging=report --project_name=~okeanos_project_name --use_hadoop_image
+
+example for create cluster with a different hadoop image:
+
+    orka create --name=Yarn_Test --cluster_size=3 --cpu_master=4 --ram_master=2048 --disk_master=5 --cpu_slave=2 --ram_slave=1024 --disk_slave=5 --disk_template=ext_vlmc --token=an_~okeanos_token --auth_url=https://accounts.okeanos.grnet.gr/identity/v2.0 --logging=report --project_name=~okeanos_project_name --use_hadoop_image=a_hadoop_image
 
 arguments for destroy command :
 
@@ -89,7 +100,13 @@ Also, with
     orka -h
     orka create -h
     orka destroy -h
-helpful text about the orka CLI is depicted.
+    
+helpful information about the orka CLI is depicted and
+
+    orka -V
+    orka --version
+    
+prints current version.
 
 Miscellaneous info
 ----------------
