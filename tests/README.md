@@ -32,4 +32,4 @@ Run mock test with either with `nosetests`, or  with `python test_create_cluster
 	
 	. ~/.virtualenvs/orkaenv/bin/activate 
 	
-	and then orka commands can be run like orca -h 
+	and then orka commands can be run like orca -h  for bash test to run need to add the project in which the vm will be created and the repo which will be cloned

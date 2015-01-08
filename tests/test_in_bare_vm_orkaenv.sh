@@ -9,6 +9,6 @@ virtualenv --system-site-packages orkaenv
 . ~/.virtualenvs/orkaenv/bin/activate
 pip install ansible==1.7.2
 cd
-git clone https://github.com/ioannisstenos/e-science.git escience -b develop
+git clone <git repo to clone from> -b develop
 cd escience/orka-0.1.0
 python setup.py install
