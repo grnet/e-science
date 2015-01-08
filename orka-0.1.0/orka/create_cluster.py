@@ -336,7 +336,11 @@ class YarnCluster(object):
 
     def create_yarn_cluster(self):
         """Create Yarn cluster"""
-        self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
+        try:
+            self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
+        except Exception, e:
+            logging.error(' Fatal error:' + str(e.args[0]))
+            raise
         logging.log(SUMMARY, ' Creating Yarn cluster')
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
@@ -353,9 +357,9 @@ class YarnCluster(object):
             orka_req = OrkaRequest(self.escience_token, payload)
             orka_req.update_cluster_db()
             return self.HOSTNAME_MASTER_IP, self.server_dict
-        except Exception:
-            logging.error(' An unrecoverable error occured. Created cluster'
-                          ' and resources will be deleted')
+        except Exception, e:
+            logging.error(' Fatal error:' + str(e.args[0]))
+            logging.error(' Created cluster and resources will be deleted')
             # If error in Yarn cluster, update cluster status as destroyed
             payload = {"orka": {"status": "Destroyed", "cluster_name": self.opts['name'], "master_ip": "placeholder"}}
             orka_req_error = OrkaRequest(self.escience_token, payload)

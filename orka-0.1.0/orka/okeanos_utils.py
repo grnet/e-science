@@ -102,7 +102,7 @@ def authenticate_escience(token):
     r = requests.post(url_login, data=json.dumps(payload), headers=headers)
     response = yaml.load(r.text)
     escience_token = response['user']['escience_token']
-    logging.log(REPORT, 'Authenticated with escience database')
+    logging.log(REPORT, ' Authenticated with escience database')
     return escience_token
 
         
@@ -444,11 +444,15 @@ class Cluster(object):
         """Personality injects ssh keys to the virtual machines we create"""
         personality = []
         if pub_keys_path:
-            with open(abspath(pub_keys_path)) as f:
-                personality.append(dict(
-                    contents=b64encode(f.read()),
-                    path='/root/.ssh/authorized_keys',
-                    owner='root', group='root', mode=0600))
+            try:
+                with open(abspath(pub_keys_path)) as f:
+                    personality.append(dict(
+                        contents=b64encode(f.read()),
+                        path='/root/.ssh/authorized_keys',
+                        owner='root', group='root', mode=0600))
+            except IOError:
+                msg = " No valid public ssh key(id_rsa.pub) in " + (abspath(pub_keys_path))
+                raise IOError(msg)
         if ssh_keys_path or pub_keys_path:
                 personality.append(dict(
                     contents=b64encode('StrictHostKeyChecking no'),
@@ -461,7 +465,7 @@ class Cluster(object):
         if not (network and servers):
             logging.error(' Nothing to delete')
             return
-        logging.error(' An unrecoverable error occured.'
+        logging.error(' An unrecoverable error occured in ~okeanos.'
                       'Cleaning up and shutting down')
         status = ''
         if servers:
@@ -617,7 +621,7 @@ class Cluster(object):
                     msg = ' Status for port [%s] is %s' % \
                         (port['id'], port_status)
                     raise ClientError(msg, error_create_server)
-        except ClientError:
+        except Exception:
             self.clean_up(servers=servers, network=new_network)
             raise
 
