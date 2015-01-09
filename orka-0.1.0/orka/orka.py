@@ -13,6 +13,7 @@ from okeanos_utils import destroy_cluster
 from argparse import ArgumentParser, ArgumentTypeError
 from version import __version__
 
+
 class _ArgCheck(object):
     """
     Used for type checking arguments supplied for use with type= and
@@ -58,6 +59,7 @@ class _ArgCheck(object):
             raise ArgumentTypeError(" %s must be at least 5." % val)
         return ival
 
+
 class HadoopCluster(object):
     """Wrapper class for YarnCluster."""
     def __init__(self, opts):
@@ -71,7 +73,6 @@ class HadoopCluster(object):
 
         except Exception:
             exit(error_fatal)
-
 
     def destroy(self):
         """ Method for deleting Hadoop clusters in~okeanos."""
@@ -95,94 +96,71 @@ def main():
     checker = _ArgCheck()
     subparsers = parser.add_subparsers(help='Choose Hadoop cluster action'
                                             ' create or destroy')
-    parser.add_argument("-V", "--version", help="Show current version")
+    parser.add_argument("-V", "--version", action='version',
+                        version=('orka %s' % __version__))
     parser_c = subparsers.add_parser('create',
                                      help='Create a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
     parser_d = subparsers.add_parser('destroy',
                                      help='Destroy a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
-
-    if "-V" in argv or "--version" in argv:
-        print('orka %s' % __version__)
-        return 0
-
     if len(argv) > 1:
 
-        parser_c.add_argument("--name", help='The specified name of the cluster.'
-                              ' Will be prefixed by a timestamp',
-                              dest='name', required=True)
+        parser_c.add_argument("name", help='The specified name of the cluster.'
+                              ' Will be prefixed by a timestamp')
 
-        parser_c.add_argument("--cluster_size", help='Total number of cluster nodes',
-                              dest='cluster_size', type=checker.two_or_bigger,
-                              required=True)
+        parser_c.add_argument("cluster_size", help='Total number of cluster nodes',
+                              type=checker.two_or_bigger)
 
-        parser_c.add_argument("--cpu_master", help='Number of cpu cores for the master node',
-                              dest='cpu_master', type=checker.unsigned_int,
-                              required=True)
+        parser_c.add_argument("cpu_master", help='Number of cpu cores for the master node',
+                              type=checker.unsigned_int)
 
-        parser_c.add_argument("--ram_master", help='Size of RAM (MB) for the master node',
-                              dest='ram_master', type=checker.unsigned_int,
-                              required=True)
+        parser_c.add_argument("ram_master", help='Size of RAM (MB) for the master node',
+                              type=checker.unsigned_int)
 
-        parser_c.add_argument("--disk_master", help='Disk size (GB) for the master node',
-                              dest='disk_master', type=checker.five_or_bigger,
-                              required=True)
+        parser_c.add_argument("disk_master", help='Disk size (GB) for the master node',
+                              type=checker.five_or_bigger)
 
-        parser_c.add_argument("--cpu_slave", help='Number of cpu cores for the slave node(s)',
-                              dest='cpu_slave', type=checker.unsigned_int,
-                              required=True)
+        parser_c.add_argument("cpu_slave", help='Number of cpu cores for the slave node(s)',
+                              type=checker.unsigned_int)
 
-        parser_c.add_argument("--ram_slave", help='Size of RAM (MB) for the slave node(s)',
-                              dest='ram_slave', type=checker.unsigned_int,
-                              required=True)
+        parser_c.add_argument("ram_slave", help='Size of RAM (MB) for the slave node(s)',
+                              type=checker.unsigned_int)
 
-        parser_c.add_argument("--disk_slave", help='Disk size (GB) for the slave node(s)',
-                              dest='disk_slave', type=checker.five_or_bigger,
-                              required=True)
+        parser_c.add_argument("disk_slave", help='Disk size (GB) for the slave node(s)',
+                              type=checker.five_or_bigger)
 
-        parser_c.add_argument("--disk_template", help='Disk template',
-                              dest='disk_template',
-                              choices=['drbd', 'ext_vlmc'], required=True)
+        parser_c.add_argument("disk_template", help='Disk template',
+                              metavar='disk_template', choices=['drbd', 'ext_vlmc'])
+
+        parser_c.add_argument("token", help='Synnefo authentication token')
+
+        parser_c.add_argument("project_name", help='~okeanos project name'
+                              ' to request resources from ')
 
         parser_c.add_argument("--image", help='OS for the cluster.'
-                              ' Default is Debian Base', dest='image',
+                              ' Default is Debian Base', metavar='image',
                               default=default_image)
-        
+
         parser_c.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
                               ' Default is HadoopImage (overrides image selection)',
-                              nargs='?', dest='use_hadoop_image', default=None, const='HadoopBase')
+                              nargs='?', metavar='hadoop_image_name', default=None,
+                              const='HadoopBase')
 
-        parser_c.add_argument("--token", help='Synnefo authentication token',
-                              dest='token', required=True)
-
-        parser_c.add_argument("--auth_url", nargs='?', dest='auth_url',
-                              default=auth_url,
+        parser_c.add_argument("--auth_url", metavar='auth_url', default=auth_url,
                               help='Synnefo authentication url. Default is ' +
                               auth_url)
 
-        parser_c.add_argument("--logging", dest='logging',
-                              default=default_logging,
+        parser_c.add_argument("--logging", default=default_logging,
                               choices=checker.logging_levels.keys(),
                               help='Logging Level. Default: summary')
 
-        parser_c.add_argument("--project_name", help='~okeanos project name'
-                              ' to request resources from ',
-                              dest='project_name', required=True)
+        parser_d.add_argument('master_ip',
+                              help='The public ip of the master vm of the cluster')
+        parser_d.add_argument('token',
+                              help='Synnefo authentication token')
 
-        parser_d.add_argument('--master_ip',
-                              action='store', dest='master_ip',
-                              metavar="MASTER_IP",
-                              help='The public ip of the master vm of the cluster',
-                              required=True)
-        parser_d.add_argument('--token',
-                              action='store', dest='token',
-                              metavar='AUTH TOKEN',
-                              help='Synnefo authentication token',
-                              required=True)
-
-        parser_d.add_argument("--logging", dest='logging',
-                              default=default_logging,
+        parser_d.add_argument("--logging", default=default_logging,
                               choices=checker.logging_levels.keys(),
                               help='Logging Level. Default: summary')
 

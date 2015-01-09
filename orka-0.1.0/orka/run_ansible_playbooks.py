@@ -2,18 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-This script creates a virtual cluster on ~okeanos and installs Hadoop-Yarn
-using Ansible.
+This script installs and configures a Hadoop-Yarn cluster using Ansible.
 
 @author: Ioannis Stenos, Nick Vrionis
 """
-
-from sys import exit, argv
 import os
-from os.path import dirname, abspath, join
+from os.path import dirname, abspath
 import logging
-from optparse import OptionParser
-from reroute_ssh import reroute_ssh_prep
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
@@ -26,23 +21,23 @@ def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image):
     """
     list_of_hosts = hosts_list
     master_hostname = list_of_hosts[0]['fqdn'].split('.', 1)[0]
-    HOSTNAME_MASTER = master_ip
+    hostname_master = master_ip
     cluster_size = len(list_of_hosts)
     # Create ansible_hosts file
     try:
         file_name = create_ansible_hosts(cluster_name, list_of_hosts,
-                                         HOSTNAME_MASTER)
+                                         hostname_master)
     except Exception:
         msg = 'Error while creating ansible hosts file'
         raise RuntimeError(msg, error_ansible_playbook)
     # Run Ansible playbook
     run_ansible(file_name, cluster_size, hadoop_image)
     logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
-                + HOSTNAME_MASTER + ':8088/cluster')
+                + hostname_master + ':8088/cluster')
     os.system('rm /tmp/master_' + master_hostname + '_pub_key')
 
 
-def create_ansible_hosts(cluster_name, list_of_hosts, HOSTNAME_MASTER):
+def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
     """
     Function that creates the ansible_hosts file and
     returns the name of the file.
@@ -60,7 +55,7 @@ def create_ansible_hosts(cluster_name, list_of_hosts, HOSTNAME_MASTER):
         target.write('[master]' + '\n')
         target.write(list_of_hosts[0]['fqdn'])
         target.write(' private_ip='+list_of_hosts[0]['private_ip'])
-        target.write(' ansible_ssh_host=' + HOSTNAME_MASTER + '\n' + '\n')
+        target.write(' ansible_ssh_host=' + hostname_master + '\n' + '\n')
         target.write('[slaves]'+'\n')
 
         for host in list_of_hosts[1:]:
@@ -76,6 +71,9 @@ def run_ansible(filename, cluster_size, hadoop_image):
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
     Filename as argument is the name of ansible_hosts file.
+    If a hadoop image was used in the VMs creation, ansible
+    playbook will not install Hadoop-Yarn and will only perform
+    the appropriate configuration.
     """
     logging.log(REPORT, ' Ansible starts Yarn installation on master and '
                         'slave nodes')
@@ -88,59 +86,23 @@ def run_ansible(filename, cluster_size, hadoop_image):
     ansible_log = " > ansible.log"
     if level == REPORT or level == SUMMARY:
         ansible_log = ""
-    BASE_DIR = dirname(abspath(__file__))
-    ANSIBLE_PLAYBOOK_PATH = BASE_DIR + '/ansible/site.yml'
+    orka_dir = dirname(abspath(__file__))
+    ansible_path = orka_dir + '/ansible/site.yml'
 
     if hadoop_image:
         exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
-                            'ansible-playbook -i ' + filename + ' ' +
-                            ANSIBLE_PLAYBOOK_PATH +
-                            ' -f ' + str(cluster_size) +
-                            ' -e "choose_role=yarn format=True start_yarn=True" -t postconfig'
-                            + ansible_log)
+                                'ansible-playbook -i ' + filename + ' ' +
+                                ansible_path +
+                                ' -f ' + str(cluster_size) +
+                                ' -e "choose_role=yarn format=True start_yarn=True" -t postconfig'
+                                + ansible_log)
     else:
         exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                                 'ansible-playbook -i ' + filename + ' ' +
-                                ANSIBLE_PLAYBOOK_PATH +
+                                ansible_path +
                                 ' -f ' + str(cluster_size) +
                                 ' -e "choose_role=yarn format=True start_yarn=True"'
                                 + ansible_log)
     if exit_status != 0:
         msg = ' Ansible failed with exit status %d' % exit_status
         raise RuntimeError(msg, exit_status)
-
-
-def main(opts):
-    """
-    The main function calls reroute_ssh_prep with the arguments given from
-    command line.
-    """
-    reroute_ssh_prep(opts.hosts_list, opts.master_ip, opts.cluster_name)
-
-
-if __name__ == '__main__':
-
-    #  Add some interaction candy
-
-    kw = {}
-    kw['usage'] = '%prog [options]'
-    kw['description'] = '%prog deploys a compute cluster on Synnefo w. kamaki'
-
-    parser = OptionParser(**kw)
-    parser.disable_interspersed_args()
-    parser.add_option('--server',
-                      action='store', type='string', dest='server',
-                      metavar="SERVER",
-                      help='a list with information about the cluster(names and fqdn of the nodes)')
-    parser.add_option('--public_ip',
-                      action='store', type='string', dest='public_ip',
-                      metavar="PUBLIC_IP",
-                      help='it is the ipv4 of the master node ')
-    parser.add_option('--cluster_name',
-                      action='store', type='string', dest='cluster_name',
-                      metavar='CLUSTER_NAME',
-                      help='the name of the cluster')
-
-    opts, args = parser.parse_args(argv[1:])
-
-    main(opts)

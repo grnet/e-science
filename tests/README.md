@@ -26,11 +26,26 @@ To run the test you need:
 
 Run mock test with either with `nosetests`, or  with `python test_create_cluster.py`
 
-orka wrapper tests
-------------------
-Tests to check orka wrapper are test_create_bare_vm.sh and test_in_bare_vm_orkaenv. The first creates and connects to a bare vm in~okeanos 
-and the second needs to be run with bash inside the new vm to setup virtual environment orkaenv. After the second test orkaenv must be activated with
+orka wrapper test in bare VM
+----------------------------
+The test for checking orka wrapper is the bash script test_orka_bare_VM.sh. It creates and connects to a bare VM in ~okeanos 
+and then it installs and setup all required software for orka wrapper to be functional. Afterwards, the user can ssh connect to the VM, run
 
     . ~/.virtualenvs/orkaenv/bin/activate
+    
+ 
+and then orka commands can be executed, e.g. orka -h, orka create 'arguments'.  The bash script requires two arguments, the id of the project from which resources will be pulled for the VM creation, and the github repository to be cloned and used for the orka CLI.
 
-and then orka commands can be run, e.g. orca -h.  The bash scripts require manually adding the project id in which the vm will be created and the github repo which will be cloned. 
+
+A user, assuming they have installed and configured kamaki, can check their existing projects and the respective ids with: 
+
+    kamaki project list
+    
+and run the bash script, after changing directory to [name_of_project_cloned_from_git]/tests/, with:
+        
+        . test_orka_bare_VM.sh  <project_id>  <git repo uri>
+        
+
+If kamaki is not installed or configured, check [kamaki documentation] [kamaki_link]
+
+[kamaki_link]: https://www.synnefo.org/docs/kamaki/latest/

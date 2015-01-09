@@ -213,10 +213,6 @@
     apt: name=uwsgi-plugin-python state=present
     tags: installuwsgi
 
-  - name: create directory static
-    tags: createstaticdir
-    command: mkdir {{project_path}}/{{ember_django_dir}}/static creates={{project_path}}/{{ember_django_dir}}/static
-
   - name: Start uWSGI service
     tags: startuwsgi
     command: uwsgi --ini /home/orca_admin/conf/uwsgi.ini --pidfile /tmp/uwsgi.pid

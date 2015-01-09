@@ -2,13 +2,12 @@
 # -*- coding: utf-8 -*-
 
 """
-This script initialize okeanos utils.
+This script contains useful classes and fuctions for orka package.
 
 @author: Ioannis Stenos, Nick Vrionis
 """
 import logging
 from base64 import b64encode
-import os
 from os.path import abspath, dirname, join
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
@@ -25,11 +24,11 @@ import yaml
 MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 
 
-def get_api_urls(login=False,database=False):
+def get_api_urls(login=False, database=False):
     """ Return api urls from config file"""
     parser = RawConfigParser()
-    BASE_DIR = dirname(abspath(__file__))
-    config_file = join(BASE_DIR, 'config.txt')
+    orka_dir = dirname(abspath(__file__))
+    config_file = join(orka_dir, 'config.txt')
     parser.read(config_file)
     try:
         if login:
@@ -39,7 +38,7 @@ def get_api_urls(login=False,database=False):
             url_database = parser.get('Database', 'url')
             return url_database
         else:
-            logging.log(SUMMARY,' Url to be returned from config file not specified')
+            logging.log(SUMMARY, ' Url to be returned from config file not specified')
             return 0
     except NoSectionError:
         msg = 'Not a valid api url in config file'
@@ -90,13 +89,12 @@ class OrkaRequest(object):
         return response
 
 
-
 def authenticate_escience(token):
     """
     Authenticate with escience database and retrieve escience token
     for Token Authentication
     """
-    payload =  {"user":{"token":token}}
+    payload = {"user": {"token": token}}
     headers = {'content-type': 'application/json'}
     url_login = get_api_urls(login=True)
     r = requests.post(url_login, data=json.dumps(payload), headers=headers)
@@ -134,6 +132,7 @@ def destroy_cluster(token, master_ip):
     master_id = None
     network_to_delete_id = None
     float_ip_to_delete_id = None
+    new_status = 'placeholder'
     auth = check_credentials(token)
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
@@ -166,7 +165,7 @@ def destroy_cluster(token, master_ip):
             float_ip_to_delete
         raise ClientError(msg, error_get_ip)
 
-    payload =  {"orka":{"master_ip":master_ip}}
+    payload = {"orka": {"master_ip": master_ip}}
     orka_request = OrkaRequest(escience_token, payload)
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
@@ -305,7 +304,7 @@ def check_quota(token, project_id):
     project_name = auth.get_project(project_id)['name']
     # Create request for orka database to
     # get pending quota for given project id
-    payload = {"orka":{"project_name":project_name}}
+    payload = {"orka": {"project_name": project_name}}
     escience_token = authenticate_escience(token)
     orka_request = OrkaRequest(escience_token, payload)
     pending_quota = orka_request.retrieve_quota()
@@ -474,7 +473,7 @@ class Cluster(object):
 
                 if status == 'BUILD':
                     status = self.client.wait_server(server['id'],
-                                                         max_wait=MAX_WAIT)
+                                                     max_wait=MAX_WAIT)
                 self.client.delete_server(server['id'])
 
                 new_status = self.client.wait_server(server['id'],
@@ -498,7 +497,8 @@ class Cluster(object):
         empty_ip_list = []
         list_of_ports = []
         count = 0
-        HOSTNAME_MASTER = ''
+        hostname_master = ''
+        i = 0
         port_status = ''
         # Names the master machine with a timestamp and a prefix name
         # plus number 1
@@ -631,10 +631,10 @@ class Cluster(object):
                 from json import dump
                 dump(servers, f, indent=2)
 
-        # HOSTNAME_MASTER is always the public ip of master node
+        # hostname_master is always the public ip of master node
         master_details = self.client.get_server_details(servers[0]['id'])
         for attachment in master_details['attachments']:
             if attachment['OS-EXT-IPS:type'] == 'floating':
-                        HOSTNAME_MASTER = attachment['ipv4']
+                        hostname_master = attachment['ipv4']
 
-        return HOSTNAME_MASTER, servers
+        return hostname_master, servers

@@ -1,0 +1,2 @@
+do not remove: placeholder file so we can keep /static under source control
+collectstatic doesn't create the folder needed to gather assets into.

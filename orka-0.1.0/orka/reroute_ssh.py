@@ -2,22 +2,19 @@
 # -*- coding: utf-8 -*-
 
 """
-This script creates a virtual cluster on ~okeanos and installs Hadoop-Yarn
-using Ansible.
+This script configures the communication between VMs in a ~okeanos
+ cluster and installs python in every VM.
 
 @author: Ioannis Stenos, Nick Vrionis
 """
 import os
 import logging
 import paramiko
-from optparse import OptionParser
-from sys import argv
 from time import sleep
 
 # Definitions of return value errors
-from cluster_errors_constants import error_ready_reroute, error_ssh_client, REPORT, \
+from cluster_errors_constants import error_ssh_client, REPORT, \
     SUMMARY, ADD_TO_GET_PORT
-
 
 # Global constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
@@ -29,7 +26,7 @@ def reroute_ssh_prep(server, master_ip):
     """
     Creates list of host and ip-tables for reroute ssh to all slaves
     """
-    HOSTNAME_MASTER = master_ip
+    hostname_master = master_ip
     list_of_hosts = []  # List of dicts with VM hostnames and their private IPs
     dict_s = {}  # Dictionary that will contain fully qualified domain names
     # and private ips temporarily for each machine. It will be appended
@@ -51,21 +48,21 @@ def reroute_ssh_prep(server, master_ip):
                       'port': port}
             list_of_hosts.append(dict_s)
     # Pre-setup the port forwarding that will happen later
-    get_ready_for_reroute(HOSTNAME_MASTER)
+    get_ready_for_reroute(hostname_master)
 
     # Port-forwarding now for every slave machine
     for vm in list_of_hosts[1:]:
-        reroute_ssh_to_slaves(vm['port'], vm['private_ip'], HOSTNAME_MASTER)
+        reroute_ssh_to_slaves(vm['port'], vm['private_ip'], hostname_master)
 
     return list_of_hosts
 
 
-def get_ready_for_reroute(HOSTNAME_MASTER):
+def get_ready_for_reroute(hostname_master):
     """
     Runs pre-setup commands for port forwarding in master virtual machine.
     These commands are executed only.
     """
-    ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '',
+    ssh_client = establish_connect(hostname_master, 'root', '',
                                    MASTER_SSH_PORT)
     try:
         exec_command(ssh_client, 'apt-get update')
@@ -135,14 +132,14 @@ def check_command_exit_status(ex_status, command):
                     command, ex_status)
 
 
-def reroute_ssh_to_slaves(dport, slave_ip, HOSTNAME_MASTER):
+def reroute_ssh_to_slaves(dport, slave_ip, hostname_master):
     """
     For every slave vm in the cluster this function is called.
     Finishes the port forwarding and installs python for ansible
     in every machine. Arguments are the port and the private ip of
     the slave vm.
     """
-    ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '',
+    ssh_client = establish_connect(hostname_master, 'root', '',
                                    MASTER_SSH_PORT)
     try:
         exec_command(ssh_client, 'iptables -A PREROUTING -t nat -i eth1 -p tcp'
@@ -153,7 +150,7 @@ def reroute_ssh_to_slaves(dport, slave_ip, HOSTNAME_MASTER):
     finally:
         ssh_client.close()
 
-    ssh_client = establish_connect(HOSTNAME_MASTER, 'root', '', dport)
+    ssh_client = establish_connect(hostname_master, 'root', '', dport)
     try:
         exec_command(ssh_client, 'route add default gw 192.168.0.2')
         exec_command(ssh_client, 'apt-get update')
@@ -208,33 +205,3 @@ def establish_connect(hostname, name, passwd, port):
     msg = " Failed connecting as %s to %s:%s" % \
         (name, hostname, str(port))
     raise RuntimeError(msg, error_ssh_client)
-
-
-def main(opts):
-    """
-    The main function calls reroute_ssh_prep with the arguments given from
-    command line.
-    """
-    reroute_ssh_prep(opts.server, opts.master_ip)
-
-if __name__ == '__main__':
-
-    #  Add some interaction candy
-
-    kw = {}
-    kw['usage'] = '%prog [options]'
-    kw['description'] = '%prog deploys a compute cluster on Synnefo w. kamaki'
-
-    parser = OptionParser(**kw)
-    parser.disable_interspersed_args()
-    parser.add_option('--server',
-                      action='store', type='string', dest='server',
-                      metavar="SERVER",
-                      help='a list with information about the cluster(names and fqdn of the nodes)')
-    parser.add_option('--master_ip',
-                      action='store', type='string', dest='master_ip',
-                      metavar="MASTER_IP",
-                      help='it is the ipv4 of the master node ')
-
-    opts, args = parser.parse_args(argv[1:])
-    main(opts)
