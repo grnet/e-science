@@ -70,7 +70,7 @@ Optional arguments for create command:
     --use_hadoop_image="name of a hadoop image. Overrides image value" (Default value=HadoopImage)
 
 
-###Using the --use_hadoop_image argument creates faster the Hadoop cluster. This happens because the image it will use for the VMs is a specially created ~okeanos VM image with Java and YARN installed.
+**Using the --use_hadoop_image argument creates faster the Hadoop cluster.This happens because the image it will use for the VMs is a specially created ~okeanos VM image with Java and YARN installed.**
 
 example for create cluster with default optionals (not hadoop_image):
 
