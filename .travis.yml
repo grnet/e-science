@@ -8,7 +8,7 @@ env:
 addons:
 - postgresql: "9.1"
 before_install:
-- openssl aes-256-cbc -K $encrypted_12a68b5a0a46_key -iv $encrypted_12a68b5a0a46_iv
+- openssl aes-256-cbc -K $encrypted_cd7022551877_key -iv $encrypted_cd7022551877_iv
   -in .private/.config.txt.enc -out .private/.config.txt -d
 install:
 - pip install kamaki==0.13rc3
