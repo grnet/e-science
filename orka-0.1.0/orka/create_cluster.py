@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This script creates a cluster on ~okeanos.
+This script creates a HadoopYarn cluster on ~okeanos.
 
 @author: Ioannis Stenos, Nick Vrionis, George Tzelepis
 """
@@ -40,7 +40,7 @@ class YarnCluster(object):
         self.status = {}
         self.escience_token = authenticate_escience(self.opts['token'])
         self.orka_request = OrkaRequest(self.escience_token,
-                                   {"orka":{"project_name":self.opts['project_name']}})
+                                        {"orka": {"project_name": self.opts['project_name']}})
         # Instance of an AstakosClient object
         self.auth = check_credentials(self.opts['token'],
                                       self.opts.get('auth_url',
@@ -217,10 +217,10 @@ class YarnCluster(object):
         flavor_id = 0
         for flavor in flavor_list:
             if flavor['ram'] == self.opts['ram_master'] and \
-                            flavor['SNF:disk_template'] == self.opts['disk_template'] and \
-                            flavor['vcpus'] == self.opts['cpu_master'] and \
-                            flavor['disk'] == self.opts['disk_master']:
-                flavor_id = flavor['id']
+                                flavor['SNF:disk_template'] == self.opts['disk_template'] and \
+                                flavor['vcpus'] == self.opts['cpu_master'] and \
+                                flavor['disk'] == self.opts['disk_master']:
+                    flavor_id = flavor['id']
 
         return flavor_id
 
@@ -237,10 +237,10 @@ class YarnCluster(object):
         flavor_id = 0
         for flavor in flavor_list:
             if flavor['ram'] == self.opts['ram_slave'] and \
-                            flavor['SNF:disk_template'] == self.opts['disk_template'] and \
-                            flavor['vcpus'] == self.opts['cpu_slave'] and \
-                            flavor['disk'] == self.opts['disk_slave']:
-                flavor_id = flavor['id']
+                                flavor['SNF:disk_template'] == self.opts['disk_template'] and \
+                                flavor['vcpus'] == self.opts['cpu_slave'] and \
+                                flavor['disk'] == self.opts['disk_slave']:
+                    flavor_id = flavor['id']
 
         return flavor_id
 
@@ -265,9 +265,9 @@ class YarnCluster(object):
     def create_bare_cluster(self):
         """Creates a bare ~okeanos cluster."""
         # Finds user public ssh key
-        USER_HOME = expanduser('~')
+        user_home = expanduser('~')
         chosen_image = {}
-        pub_keys_path = join(USER_HOME, ".ssh/id_rsa.pub")
+        pub_keys_path = join(user_home, ".ssh/id_rsa.pub")
         logging.log(SUMMARY, ' Authentication verified')
         flavor_master = self.get_flavor_id_master(self.cyclades)
         flavor_slaves = self.get_flavor_id_slave(self.cyclades)
@@ -353,7 +353,8 @@ class YarnCluster(object):
                         'is on file %s', self.server_dict[0]['name'],
                         self.pass_file)
             # If Yarn cluster is build, update cluster status as active
-            payload = {"orka": {"status": "Active", "cluster_name":self.opts['name'], "master_ip": self.HOSTNAME_MASTER_IP}}
+            payload = {"orka": {"status": "Active", "cluster_name": self.opts['name'],
+                                "master_ip": self.HOSTNAME_MASTER_IP}}
             orka_req = OrkaRequest(self.escience_token, payload)
             orka_req.update_cluster_db()
             return self.HOSTNAME_MASTER_IP, self.server_dict

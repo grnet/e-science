@@ -2,7 +2,10 @@
 *.py~
 *~
 .idea
+.project
+.pydevproject
 *.log
 *_root_password
+.settings/
 bower_components/
 node_modules/
