@@ -40,41 +40,60 @@ App.ClusterCreateController = Ember.Controller.extend({
 		var projects = [];
 		var length = this.get('content.length');
 		var regular_exp_project_id = /system:[a-z,0-9]{8}(-[a-z,0-9]{4}){3}-[a-z,0-9]{12}/;
+		var space_separate_project_name_and_quota = String.fromCharCode(160);
+		var space_between_quota = String.fromCharCode(160);
+		var max_space_length = 100;
 		for (var i = 0; i < length; i++) {
+			space_separate_project_name_and_quota = String.fromCharCode(160);
 			if (regular_exp_project_id.test(this.get('content').objectAt(i).get('project_name'))) {
 				this.set('name_of_project', 'system');
 			} else {
 				this.set('name_of_project', this.get('content').objectAt(i).get('project_name'));
 			}
-			projects[i] = this.get('name_of_project') + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
-			String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
-			'VMs:' + this.get('content').objectAt(i).get('vms_av').length + String.fromCharCode(160) + String.fromCharCode(160) + 
-			'CPUs:' + this.get('content').objectAt(i).get('cpu_av') + String.fromCharCode(160) + String.fromCharCode(160) + 
-			'RAM:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + String.fromCharCode(160) + String.fromCharCode(160) + 
+			
+			var quotas_string = 'VMs:' + this.get('content').objectAt(i).get('vms_av').length + space_between_quota + 
+			'CPUs:' + this.get('content').objectAt(i).get('cpu_av') + space_between_quota + 
+			'RAM:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + space_between_quota + 
 			'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB';
+			
+			var space_length = max_space_length - this.get('name_of_project').length;
+			
+			for (var j = 0; j < space_length; j++){
+				space_separate_project_name_and_quota = space_separate_project_name_and_quota + String.fromCharCode(160);
+			}
+			
+			projects[i] = this.get('name_of_project') + space_separate_project_name_and_quota + quotas_string;
 		}
-		this.set('name_of_project', '');
+/*		this.set('name_of_project', '');
 		for (var i = 0; i < length; i++) {
 			if (regular_exp_project_id.test(this.get('content').objectAt(i).get('project_name'))) {
 				this.set('name_of_project', 'system');
 			} else {
 				this.set('name_of_project', this.get('content').objectAt(i).get('project_name'));
 			}
-			if ((this.get('name_of_project') + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 'VMs:' + this.get('content').objectAt(i).get('vms_av').length + String.fromCharCode(160) + String.fromCharCode(160) + 'CPUss:' + this.get('content').objectAt(i).get('cpu_av') + String.fromCharCode(160) + String.fromCharCode(160) + 'RAM:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + String.fromCharCode(160) + String.fromCharCode(160) + 'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) {
+			// var space_length = max_space_length - this.get('name_of_project').length;
+			// for (var j = 0; i < space_length; j++){
+				// space_separate_project_name_and_quota = space_separate_project_name_and_quota + String.fromCharCode(160);
+			// }
+			if ((this.get('name_of_project') + space_separate_project_name_and_quota + 
+				'VMs:' + this.get('content').objectAt(i).get('vms_av').length + space_between_quota + 
+				'CPUs:' + this.get('content').objectAt(i).get('cpu_av') + space_between_quota + 
+				'RAM:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + space_between_quota + 
+				'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') == this.get('project_details')) {
 				this.set('create_cluster_disabled', false);
 				this.set('project_current', this.get('content').objectAt(i));
 				this.set('project_name', this.get('content').objectAt(i).get('project_name'));
 				this.set('project_index', i);
 				break;
 			}
-		}
+		}*/
 		return projects.sort();
 	}.property('project_details'),
 
 	// The total cpus selected for the cluster
 	total_cpu_selection : function() {
 		return (this.get('master_cpu_selection') + this.get('slaves_cpu_selection') * (this.size_of_cluster() - 1));
-	}.property('master_cpu_selection', 'slaves_cpu_selection', 'project_name', 'cluster_size_var'),
+	}.property('master_cpu_selection', 'slaves_cpu_selection', 'project_details', 'cluster_size_var'),
 
 	// Computes the available cpu each time total_cpu_selection changes
 	cpu_available : function() {
@@ -89,7 +108,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// The total memory selected for the cluster
 	total_ram_selection : function() {
 		return (this.get('master_ram_selection') + this.get('slaves_ram_selection') * (this.size_of_cluster() - 1));
-	}.property('master_ram_selection', 'slaves_ram_selection', 'project_name', 'cluster_size_var'),
+	}.property('master_ram_selection', 'slaves_ram_selection', 'project_details', 'cluster_size_var'),
 
 	// Computes the available memory each time total_mem_selection changes
 	ram_available : function() {
@@ -104,7 +123,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// The total disk selected for the cluster
 	total_disk_selection : function() {
 		return (this.get('master_disk_selection') + this.get('slaves_disk_selection') * (this.size_of_cluster() - 1));
-	}.property('master_disk_selection', 'slaves_disk_selection', 'project_name', 'cluster_size_var'),
+	}.property('master_disk_selection', 'slaves_disk_selection', 'project_details', 'cluster_size_var'),
 
 	// Computes the available disk each time total_disk_selection changes
 	disk_available : function() {
