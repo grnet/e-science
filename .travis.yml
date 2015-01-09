@@ -29,7 +29,9 @@ before_script:
 - psql -c 'create user developer with createdb;' -U postgres
 - psql -c 'create database escience with owner developer;' -U postgres
 - python ember_django/manage.py migrate --noinput
-- python orka-0.1.0/setup.py install 
+- cd orka-0.1.0
+- python setup.py install
+- cd ..
 - npm install testem -g
 - export DISPLAY=:99.0
 - sh -e /etc/init.d/xvfb start
