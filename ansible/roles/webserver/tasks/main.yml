@@ -207,7 +207,7 @@
 
   - name: Start uWSGI service
     tags: startuwsgi
-    command: uwsgi --ini /home/orca_admin/conf/uwsgi.ini --pidfile /tmp/uwsgi.pid
+    command: uwsgi --ini /home/orca_admin/conf/uwsgi.ini
     args:
       chdir: "{{project_path}}/{{ember_django_dir}}"
 

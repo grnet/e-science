@@ -26,7 +26,7 @@ SECRET_KEY = 'some_key'
 
 TEMPLATE_DEBUG = DEBUG
 
-ALLOWED_HOSTS = ['*', ]
+ALLOWED_HOSTS = ['*',]
 
 
 # Application definition
@@ -137,3 +137,21 @@ else:
     )
     # EXTRA FOR NGINX
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'file': {
+                'level': 'DEBUG',
+                'class': 'logging.FileHandler',
+                'filename': '/home/developer/logs/debug.log',
+            },
+        },
+        'loggers': {
+            'django.request': {
+                'handlers': ['file'],
+                'level': 'DEBUG',
+                'propagate': True,
+            },
+        },
+    }
