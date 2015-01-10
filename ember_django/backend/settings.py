@@ -67,8 +67,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'escience',
         'USER': 'developer',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
+        'PASSWORD': 'escience',
+        'HOST': 'localhost',
         'PORT': '5432',
     }
 }

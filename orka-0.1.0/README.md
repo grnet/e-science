@@ -38,61 +38,79 @@ Following commands are common for installation in virtual environment or not:
 
 
 
-For testing in a minimum Debian Base virtual machine in ~okeanos:
----------------------------------------------------------------------------
-Following commands must be executed before anything else:
+######If no public ssh key exists in default directory (~/.ssh/), the user, before running orka, must create a key with:
+
+    ssh-keygen -f id_rsa -t rsa -N ''
     
-    apt-get update
-    apt-get install sudo
-    adduser newuser
-    adduser newuser sudo
-    su - newuser
-    ssh-keygen
+
 
 How to run orka commands
 ------------------------
-orka -h [command] -h "arguments"
+orka [command] "arguments"
 
-arguments for create command:
-     
-      --name="name of the cluster" 
-      --cluster_size="total VMs,including master node" 
-      --cpu_master="master's node number of cores" 
-      --ram_master= "master's node memory in MB",
-      --disk_master= "master's node hard drive in GB",
-      --cpu_slave= "slave's node number of cores",
-      --ram_slave= "slaves's node memory in MB",
-      --disk_slave= "slave's node hard drive in GB", 
-      --disk_template= "drbd or ext_vlmc" 
-      --image="operating System (Default Value Debian Base)", 
-      --token="an ~okeanos token", 
-      --auth_url="authentication url (Default Value)"
-      --logging="7 logging levels:critical, error, warning, summary, report, info, debug (Default Value summary)"
-      --project_name="name of a ~okeanos project"
+Required arguments for create command:
+         
+    name="name of the cluster" 
+    cluster_size="total VMs, including master node" 
+    cpu_master="master node: number of CPU cores" 
+    ram_master="master node: memory in MB",
+    disk_master="master node: hard drive in GB",
+    cpu_slave="each slave node: number of CPU cores",
+    ram_slave="each slave node: memory in MB",
+    disk_slave="each slave node: hard drive in GB", 
+    disk_template= "drbd or ext_vlmc"
+    token="an ~okeanos token",
+    project_name="name of a ~okeanos project, to pull resources from"
+    
+Optional arguments for create command:
 
-example for create cluster:
+    --image="Operating System (Default Value=Debian Base)",
+    --auth_url="authentication url (Default Value=https://accounts.okeanos.grnet.gr/identity/v2.0)"
+    --logging="critical, error, warning, summary, report, info, debug (Default Value=summary)"
+    --use_hadoop_image="name of a hadoop image. Overrides image value" (Default value=HadoopImage)
 
-    orka create --name=Yarn_Test --clustersize=3 --cpu_master=4 --ram_master=2048 --disk_master=5 --cpu_slave=2 --ram_slave=1024 --disk_slave=5 --disk_template=ext_vlmc --image='Debian Base' --token=an_~okeanos_token --auth_url=https://accounts.okeanos.grnet.gr/identity/v2.0 --logging=report --project_name=~okeanos_project_name
 
-arguments for destroy command :
+**Using the --use_hadoop_image argument creates faster the Hadoop cluster.This happens because the image it will use for the VMs is a specially created ~okeanos VM image with Java and YARN installed.**
 
-    --master_ip="Public ip of the master vm of the Hadoop cluster"
-    --token="an ~okeanos token"
+example for create cluster with default optionals (not hadoop_image):
+
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc ~okeanos_token project_name
+    
+example for create cluster with default optionals (with default hadoop image):
+
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc ~okeanos_token project_name --use_hadoop_image
+
+example for create cluster with a different hadoop image and logging level:
+
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc ~okeanos_token project_name --use_hadoop_image=hadoop_image_name --logging=report
+
+Required arguments for destroy command :
+
+    master_ip="Public ip of the master vm of the Hadoop cluster"
+    token="an ~okeanos token"
+
+Optional argument for destroy command:
+
     --logging="7 logging levels:critical, error, warning, summary, report, info, debug (Default Value summary)"
 
 example for destroy cluster:
 
-    orka destroy --master_ip=83.83.83.83 --token=an_~okeanos_token
+    orka destroy 83.83.83.83 ~okeanos_token --logging=report
 
 Also, with
 
     orka -h
     orka create -h
     orka destroy -h
-helpful text about the orka CLI is depicted.
+    
+helpful information about the orka CLI is depicted and
+
+    orka -V
+    orka --version
+    
+prints current version.
 
 Miscellaneous info
 ----------------
 - After cluster creation, the root password of the master virtual machine will be inside a file named [master_vm name]_root_password in the current working directory.
 - In the config.txt file of the project is the public ip of the nginx server in ~okeanos.It is required for updating the orka database.
-- For the time being, a user who wants to create a cluster with orka must have a public ssh key in ~/.ssh/ .It can be created with ssh-keygen command.

@@ -7,7 +7,7 @@ This script is a test for cluster creation via GUI end to end
 from selenium import webdriver
 import sys, os
 from os.path import join, dirname, abspath
-sys.path.append(join(dirname(abspath(__file__)), '../..'))
+sys.path.append(join(dirname(abspath(__file__)), '../../orka-0.1.0/orka'))
 sys.path.append(join(dirname(__file__), '../../ember_django/backend'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from selenium.webdriver.common.by import By
@@ -87,7 +87,7 @@ class test_text_respond_to_buttons(unittest.TestCase):
             self.assertTrue(False,'Could not get list of projects')
         kamaki_flavors = get_flavor_id(self.token)
         user_quota = check_quota(self.token, self.project_id)
-        project_details = self.project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'Cpus:' + str(user_quota['cpus']['available']) + '  ' + 'Ram:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
+        project_details = self.project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'CPUs:' + str(user_quota['cpus']['available']) + '  ' + 'RAM:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
         Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)                           
         driver.find_element_by_id("cluster_name").clear()
         driver.find_element_by_id("cluster_name").send_keys("mycluster")

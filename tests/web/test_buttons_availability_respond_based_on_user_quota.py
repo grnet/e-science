@@ -7,7 +7,7 @@ This script is a test generator and checks that the buttons are enabled or disab
 from selenium import webdriver
 import sys, os
 from os.path import join, dirname, abspath
-sys.path.append(join(dirname(abspath(__file__)), '../..'))
+sys.path.append(join(dirname(abspath(__file__)), '../../orka-0.1.0/orka'))
 sys.path.append(join(dirname(__file__), '../../ember_django/backend'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from selenium.webdriver.common.by import By
@@ -82,7 +82,7 @@ class test_buttons_availability_respond_based_on_user_quota(unittest.TestCase):
                 project_name = 'system'
             else:
                 project_name = project['name'] 
-            project_details = project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'Cpus:' + str(user_quota['cpus']['available']) + '  ' + 'Ram:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
+            project_details = project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'CPUs:' + str(user_quota['cpus']['available']) + '  ' + 'RAM:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
             Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)       
             for role in ["master" , "slaves"]:
                 for flavor in ['cpus' , 'ram' , 'disk']:

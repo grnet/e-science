@@ -40,17 +40,21 @@ App.ClusterCreateController = Ember.Controller.extend({
 		var projects = [];
 		var length = this.get('content.length');
 		var regular_exp_project_id = /system:[a-z,0-9]{8}(-[a-z,0-9]{4}){3}-[a-z,0-9]{12}/;
+		var max_space = 30;
+		var space_separate_project_name_and_quota = String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
+			String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160);
+		var space_between_quota = String.fromCharCode(160) + String.fromCharCode(160);
 		for (var i = 0; i < length; i++) {
+			var current_space = '';
 			if (regular_exp_project_id.test(this.get('content').objectAt(i).get('project_name'))) {
 				this.set('name_of_project', 'system');
 			} else {
 				this.set('name_of_project', this.get('content').objectAt(i).get('project_name'));
 			}
-			projects[i] = this.get('name_of_project') + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
-			String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
-			'VMs:' + this.get('content').objectAt(i).get('vms_av').length + String.fromCharCode(160) + String.fromCharCode(160) + 
-			'Cpus:' + this.get('content').objectAt(i).get('cpu_av') + String.fromCharCode(160) + String.fromCharCode(160) + 
-			'Ram:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + String.fromCharCode(160) + String.fromCharCode(160) + 
+			projects[i] = this.get('name_of_project') + space_separate_project_name_and_quota + 
+			'VMs:' + this.get('content').objectAt(i).get('vms_av').length + space_between_quota + 
+			'CPUs:' + this.get('content').objectAt(i).get('cpu_av') + space_between_quota + 
+			'RAM:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + space_between_quota + 
 			'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB';
 		}
 		this.set('name_of_project', '');
@@ -60,7 +64,11 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				this.set('name_of_project', this.get('content').objectAt(i).get('project_name'));
 			}
-			if ((this.get('name_of_project') + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 'VMs:' + this.get('content').objectAt(i).get('vms_av').length + String.fromCharCode(160) + String.fromCharCode(160) + 'Cpus:' + this.get('content').objectAt(i).get('cpu_av') + String.fromCharCode(160) + String.fromCharCode(160) + 'Ram:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + String.fromCharCode(160) + String.fromCharCode(160) + 'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) {
+			if ((projects[i] = this.get('name_of_project') + space_separate_project_name_and_quota + 
+				'VMs:' + this.get('content').objectAt(i).get('vms_av').length + space_between_quota + 
+				'CPUs:' + this.get('content').objectAt(i).get('cpu_av') + space_between_quota + 
+				'RAM:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + space_between_quota + 
+				'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) {
 				this.set('create_cluster_disabled', false);
 				this.set('project_current', this.get('content').objectAt(i));
 				this.set('project_name', this.get('content').objectAt(i).get('project_name'));
