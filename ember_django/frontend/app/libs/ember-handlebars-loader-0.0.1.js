@@ -7,7 +7,6 @@ var EmberHandlebarsLoader = {
 			}).done(function(template) {
 				var compiledTemplate = Ember.Handlebars.precompile(template);
 				Ember.TEMPLATES[name] = Ember.Handlebars.template(compiledTemplate);
-				alert(template);
 			});
 		});
 	}
