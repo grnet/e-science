@@ -12,7 +12,13 @@
 	</head>
 	<body class="" style="">
 		{% verbatim %}
-		<noscript><div style="margin:0px auto"><h2>This site requires Javascript to function</h2></div></noscript>
+		<noscript>
+			<div style="display: table; margin: 0 auto; text-align: center;">
+				<h3>This site requires Javascript to function!</h3>
+				<br><a href="http://www.enable-javascript.com/" target="_blank">How to enable Javascript.</a>
+				<br><a href=".">Done! Reload for the full page.</a>
+			</div>
+		</noscript>
 		{% endverbatim %}
 		<script type="text/javascript">var DJANGO_STATIC_URL="{{ STATIC_URL }}";</script>
 	    <script src="{{ STATIC_URL }}libs/jquery-1.11.2.js"></script>
