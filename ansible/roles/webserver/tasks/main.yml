@@ -141,8 +141,8 @@
     tags: nginxstart
  
   - name: Copy settings.j2 file
-    tags: settingscopy
-    copy: src=settings.j2 owner=orca_admin mode=0744 dest={{settings_path}}/settings.py
+    tags: djangomigrate
+    template: src=settings.j2 owner=orca_admin mode=0744 dest={{settings_path}}/settings.py
 
   - name: Django project migrate
     shell: python manage.py migrate chdir={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}
@@ -150,44 +150,44 @@
    
   - name: Create Django superuser
     shell: echo "from django.contrib.auth.models import User; User.objects.create_superuser('{{django_admin_name}}', '{{django_admin_email}}', '{{django_admin_password}}')" | python manage.py shell chdir={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}
-    tags: djangosuperuser
+    tags: djangomigrate
    
   - name: Copy uwsgi.ini file
-    tags: uwsgiconfcopy
+    tags: djangomigrate
     copy: src=uwsgi.ini dest=./conf owner=orca_admin mode=0744
 
   - name: Copy nginx.conf file
-    tags: nginxconfcopy
+    tags: djangomigrate
     template: src=nginx.j2 dest=./conf owner=orca_admin
 
   - name: Rename nginx.j2 template to nginx.conf
-    tags: renamenginxconf
+    tags: djangomigrate
     command: mv nginx.j2 nginx.conf chdir=./conf
   
   - name: Edit ngnix.conf in /etc/nginx
     lineinfile: line="include /home/orca_admin/conf/nginx.conf;" insertafter="http {" dest="/etc/nginx/nginx.conf"
-    tags: editetcnginx
+    tags: djangomigrate
 
   - name: Restart Nginx service
     service: name=nginx state=restarted
-    tags: nginxrestart
+    tags: djangomigrate
 
   - name: Install uwsgi-plugin-python
     apt: name=uwsgi-plugin-python state=present
-    tags: installuwsgi
+    tags: djangomigrate
 
   - name: Start uWSGI service
-    tags: startuwsgi
+    tags: djangomigrate
     command: uwsgi --ini /home/orca_admin/conf/uwsgi.ini
     args:
       chdir: "{{project_path}}/{{ember_django_dir}}"
 
   - name: Run collectstatic command
-    tags: collectstatic
+    tags: djangomigrate
     command: python manage.py collectstatic --noinput
     args:
       chdir: "{{project_path}}/{{ember_django_dir}}"
 
   - name: Change owner of projects
     command: chown -R orca_admin:orcagroup {{myprojectdir}}
-    tags: chownorca
+    tags: djangomigrate
