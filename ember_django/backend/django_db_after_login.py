@@ -9,18 +9,14 @@ create, or destroy cluster action.
 '''
 
 import django
-import os
-import sys
 import logging
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients import ClientError
 from backend.models import *
 from django.core.exceptions import *
 from authenticate_user import *
 from django.utils import timezone
-from cluster_errors_constants import *
+from orka.cluster_errors_constants import *
 django.setup()
 
 
@@ -63,7 +59,7 @@ def db_after_login(token, login=True):
         new_token = Token(user=new_entry)
         new_token.save()
         new_user = UserInfo.objects.get(uuid=given_uuid)
-        logging.info(' The id of the new user is ', new_user.user_id)
+        logging.info(' The id of the new user is '+ str(new_user.user_id))
         if login:
             db_login_entry(new_user)
         return new_user
@@ -73,27 +69,23 @@ def db_after_login(token, login=True):
         raise MultipleObjectsReturned(msg, error_multiple_entries)
 
 
-def db_cluster_create(token, choices):
+def db_cluster_create(user, choices):
     """Updates DB after user request for cluster creation"""
-    uuid = get_user_id(token)
-    user = UserInfo.objects.get(uuid=uuid)
-    ClusterInfo(cluster_name=choices['name'], action_date=timezone.now(),
+    ClusterInfo(cluster_name=choices['cluster_name'], action_date=timezone.now(),
                 cluster_status="2", cluster_size=choices['cluster_size'],
                 cpu_master=choices['cpu_master'],
-                mem_master=choices['ram_master'],
+                mem_master=choices['mem_master'],
                 disk_master=choices['disk_master'],
-                cpu_slaves=choices['cpu_slave'],
-                mem_slaves=choices['ram_slave'],
-                disk_slaves=choices['disk_slave'],
+                cpu_slaves=choices['cpu_slaves'],
+                mem_slaves=choices['mem_slaves'],
+                disk_slaves=choices['disk_slaves'],
                 disk_template=choices['disk_template'],
-                os_image=choices['image'], user_id=user,
+                os_image=choices['os_choice'], user_id=user,
                 project_name=choices['project_name']).save()
 
 
-def db_cluster_update(token, status, cluster_name, master_ip=None):
+def db_cluster_update(user, status, cluster_name, master_ip=None):
     """Updates DB when cluster is created or deleted from pending state"""
-    uuid = get_user_id(token)
-    user = UserInfo.objects.get(uuid=uuid)
     try:
         cluster = ClusterInfo.objects.get(user_id=user, cluster_status="2",
                                           cluster_name=cluster_name)
@@ -112,17 +104,15 @@ def db_cluster_update(token, status, cluster_name, master_ip=None):
         raise ValueError(msg)
 
     cluster.cluster_status = status
-    if master_ip:
+    if master_ip != 'placeholder':
         cluster.master_IP = master_ip
     cluster.save()
 
 
-def db_cluster_destroy(token, master_ip):
+def db_cluster_destroy(user, master_ip):
     """
     Update database when cluster is destroyed, used with CLI destroy_cluster
     """
-    uuid = get_user_id(token)
-    user = UserInfo.objects.get(uuid=uuid)
     try:
         cluster = ClusterInfo.objects.get(user_id=user, master_IP=master_ip)
     except ObjectDoesNotExist:

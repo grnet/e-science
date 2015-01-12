@@ -1,36 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Views for django rest framework .
 
 @author: Ioannis Stenos, Nick Vrionis
-'''
-
-import os
-from os.path import join, dirname, abspath
-import sys
+"""
 import logging
-sys.path.append(join(dirname(abspath(__file__)), '../..'))
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from kamaki.clients import ClientError
 from authenticate_user import *
 from django.views import generic
-from get_flavors_quotas import project_list_flavor_quota
-from backend.models import *
+from get_flavors_quotas import project_list_flavor_quota, \
+    retrieve_pending_clusters
+from models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
-    ClusterCreationParamsSerializer, ClusterInfoSerializer, ClusterchoicesSerializer
+    ClusterCreationParamsSerializer, ClusterInfoSerializer, \
+    ClusterchoicesSerializer, PendingQuotaSerializer, ProjectNameSerializer, \
+    MasterIpSerializer, UpdateDatabaseSerializer
 from django_db_after_login import *
-from create_cluster import YarnCluster
-from cluster_errors_constants import *
+from orka.create_cluster import YarnCluster
+from orka.cluster_errors_constants import *
 
 logging.addLevelName(REPORT, "REPORT")
 logging.addLevelName(SUMMARY, "SUMMARY")
 logger = logging.getLogger("report")
 
-logging_level = logging.INFO
+logging_level = REPORT
 logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
                    level=logging_level, datefmt='%H:%M:%S')
 
@@ -39,6 +37,91 @@ class MainPageView(generic.TemplateView):
     template_name = 'index.html'
 
 main_page = MainPageView.as_view()
+
+
+
+class DatabaseView(APIView):
+    """
+    View to handle database updating and retrieving cluster quota
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (IsAuthenticated, )
+    resource_name = 'orka'
+    serializer_class = UpdateDatabaseSerializer
+
+    def get(self, request, *args, **kwargs):
+        """Return pending cluster quota from database."""
+        self.serializer_class = ProjectNameSerializer
+        serializer = self.serializer_class(data=request.DATA)
+        user_token = Token.objects.get(key=request.auth)
+        user = UserInfo.objects.get(user_id=user_token.user.user_id)
+        if serializer.is_valid():
+            quota = retrieve_pending_clusters(user.okeanos_token,
+                                              serializer.data['project_name'])
+            serializer = PendingQuotaSerializer(quota)
+            return Response(serializer.data)
+
+        return Response(serializer.errors)
+
+
+    def post(self, request, *args, **kwargs):
+        """Update database that a cluster is being created"""
+        self.serializer_class = ClusterchoicesSerializer
+        serializer = self.serializer_class(data=request.DATA)
+        user_token = Token.objects.get(key=request.auth)
+        user = UserInfo.objects.get(user_id=user_token.user.user_id)
+        if serializer.is_valid():
+            try:
+                db_cluster_create(user, serializer.data)
+                return Response({"id": 1, "message": "Requested cluster created in db"})
+            except ClientError, e:
+                return Response({"id": 1, "message": e.message})
+            except Exception, e:
+                return Response({"id": 1, "message": e.args[0]})
+
+        return Response(serializer.errors)
+
+    def put(self, request, *args, **kwargs):
+        """
+        Update database that a cluster is created or is destroyed
+        after fatal error.
+        """
+        serializer = self.serializer_class(data=request.DATA)
+        user_token = Token.objects.get(key=request.auth)
+        user = UserInfo.objects.get(user_id=user_token.user.user_id)
+        if serializer.is_valid():
+            try:
+                db_cluster_update(user, serializer.data['status'],
+                                  serializer.data['cluster_name'],
+                                  master_ip=serializer.data['master_ip'])
+                return Response({"id": 1, "message": "Requested cluster updated"})
+            except ClientError, e:
+                return Response({"id": 1, "message": e.message})
+            except Exception, e:
+                return Response({"id": 1, "message": e.args[0]})
+        return Response(serializer.errors)
+
+    def delete(self, request, *args, **kwargs):
+        """
+        Update database that a cluster is deleted from orka-cli.
+        """
+        self.serializer_class = MasterIpSerializer
+        serializer = self.serializer_class(data=request.DATA)
+        if serializer.is_valid():
+            user_token = Token.objects.get(key=request.auth)
+            user = UserInfo.objects.get(user_id=user_token.user.user_id)
+            try:
+                print serializer.data
+                db_cluster_destroy(user,
+                                   serializer.data['master_ip'])
+                return Response({"id": 1, "message": "Requested cluster was deleted from db"})
+            except ClientError, e:
+                return Response({"id": 1, "message": e.message})
+            except Exception, e:
+                return Response({"id": 1, "message": e.args[0]})
+        # This will be send if user's delete cluster parameters are not de-serialized
+        # correctly.
+        return Response(serializer.errors)
 
 
 class StatusView(APIView):
@@ -63,6 +146,7 @@ class StatusView(APIView):
         retrieved_cluster_info = project_list_flavor_quota(self.user)
         serializer = self.serializer_class(retrieved_cluster_info, many=True)
         return Response(serializer.data)
+
 
     def put(self, request, *args, **kwargs):
         '''

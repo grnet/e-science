@@ -7,5 +7,5 @@ App.ApplicationController = Ember.Controller.extend({
 			return "#/";
 		}
 	}.property('loggedIn'),
-	STATIC_URL : '/frontend/app/',
+	STATIC_URL : DJANGO_STATIC_URL,
 });

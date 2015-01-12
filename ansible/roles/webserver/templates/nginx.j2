@@ -1,5 +1,5 @@
 upstream django {
-    server 127.0.0.1:8889;
+    server 127.0.0.1:8080;
 }
 
 server {
@@ -19,8 +19,13 @@ server {
         expires 30d;
     }
 
+    location /favicon.ico {
+        alias /home/orca_admin/projects/e-science/ember_django/static/favicon.ico;
+    }
+
     location / {
-        include uwsgi_params;
-        uwsgi_pass 127.0.0.1:8889;
+        include /etc/nginx/uwsgi_params;
+        uwsgi_read_timeout 3000;
+        uwsgi_pass 127.0.0.1:8080;
     }
 }

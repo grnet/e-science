@@ -7,7 +7,7 @@ This script is a test generator and checks that the buttons are enabled or disab
 from selenium import webdriver
 import sys, os
 from os.path import join, dirname, abspath
-sys.path.append(join(dirname(abspath(__file__)), '../..'))
+sys.path.append(join(dirname(abspath(__file__)), '../../orka-0.1.0/orka'))
 sys.path.append(join(dirname(__file__), '../../ember_django/backend'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from selenium.webdriver.common.by import By
@@ -77,13 +77,18 @@ class test_buttons_availability_respond_to_cluster_size_change(unittest.TestCase
             self.assertTrue(False,'Could not get list of projects')
         kamaki_flavors = get_flavor_id(self.token)
         for project in list_of_projects:
-            Select(driver.find_element_by_id("project_id")).select_by_visible_text(project['name'])
-            user_quota = check_quota(self.token, project['id'])
+            user_quota = check_quota(self.token, project['id']) 
+            if project['name'] == 'system:' + project['id']:
+                project_name = 'system'
+            else:
+                project_name = project['name'] 
+            project_details = project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'CPUs:' + str(user_quota['cpus']['available']) + '  ' + 'RAM:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
+            Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)
             current_cluster_size = 2
             cluster_sizes = driver.find_element_by_id("size_of_cluster").text
             try:
                 current_cluster_size = int(cluster_sizes.rsplit('\n', 1)[-1])
-                print ('Project '+ project['name'] +' has enough vms to run the test')
+                print ('Project '+ project_name +' has enough vms to run the test')
                 Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text(cluster_sizes.rsplit('\n', 1)[-1])
                 for flavor in ['cpus' , 'ram' , 'disk']:
                     for item in kamaki_flavors[flavor]:
@@ -109,7 +114,7 @@ class test_buttons_availability_respond_to_cluster_size_change(unittest.TestCase
                             except AssertionError as e: self.verificationErrors.append(str(e))
             except:
              #   self.assertTrue(False,'Not enought vms to run the test')
-                print ('Project '+ project['name'] +' has not enough vms to run the test')
+                print ('Project '+ project_name +' has not enough vms to run the test')
 
     def is_element_present(self, how, what):
         try: self.driver.find_element(by=how, value=what)

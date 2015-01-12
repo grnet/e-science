@@ -12,13 +12,20 @@
 	</head>
 	<body class="" style="">
 		{% verbatim %}
-		<noscript><div><h2>This site requires Javascript to function</h2></div></noscript>
+		<noscript>
+			<div style="display: table; margin: 0 auto; text-align: center;">
+				<h3>This site requires Javascript to function!</h3>
+				<br><a href="http://www.enable-javascript.com/" target="_blank">How to enable Javascript.</a>
+				<br><a href=".">Done! Reload for the full page.</a>
+			</div>
+		</noscript>
 		{% endverbatim %}
-	    <script src="{{ STATIC_URL }}libs/jquery-1.11.1.js"></script>
+		<script type="text/javascript">var DJANGO_STATIC_URL="{{ STATIC_URL }}";</script>
+	    <script src="{{ STATIC_URL }}libs/jquery-1.11.2.js"></script>
 	    <script src="{{ STATIC_URL }}libs/jquery-loader.js"></script>
-	    <script src="{{ STATIC_URL }}libs/package/dist/handlebars.js"></script>
-	    <script src="{{ STATIC_URL }}libs/ember-1.7.0.js"></script>
-	    <script src="{{ STATIC_URL }}libs/ember-data-1.0.0-beta.12.js"></script>
+	    <script src="{{ STATIC_URL }}libs/handlebars-v2.0.0.js"></script>
+	    <script src="{{ STATIC_URL }}libs/ember-1.9.1.js"></script>
+	    <script src="{{ STATIC_URL }}libs/ember-data-1.0.0-beta.14.1.js"></script>
 	    <script src="{{ STATIC_URL }}libs/ember-handlebars-loader-0.0.1.js"></script>
 	    <script src="{{ STATIC_URL }}styles/bootstrap.js"></script>
 	
