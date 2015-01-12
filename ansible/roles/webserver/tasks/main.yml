@@ -12,7 +12,6 @@
     shell: apt-get install -y "{{item}}"
     with_items:
       - rabbitmq-server
-      - postgresql
       - postgresql-client
       - python-psycopg2
       - libpq-dev
@@ -126,10 +125,6 @@
     tags: grunt_tasks_run
     shell: cd {{project_path}}; bash -lc "grunt default --force"
 
-  - name: Edit pg_hba.conf
-    lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
-    tags: pghbaconf_to_trust
-
   - name: create directories for configuration and logs
     tags: nginxconflogs
     command: mkdir "{{item}}"
@@ -145,74 +140,54 @@
     service: name=nginx state=started
     tags: nginxstart
  
-  - name: Restart PostgreSql service
-    service: name=postgresql state=restarted
-    tags: postgresrestart
-
-  - name: Create PostgreSql user
-    postgresql_user: name={{db_user}} password={{db_password}} role_attr_flags=CREATEDB,NOSUPERUSER,NOCREATEROLE
-    tags: createpostgresuser
-
-  - name: Create PostgreSql database
-    postgresql_db: name={{db_name}} owner={{db_user}}
-    tags: createpostgresdb
-
-  - name: Copy settings.py file
-    tags: settingspycopy
-    copy: src=settings.py dest={{settings_path}} owner=orca_admin mode=0744
+  - name: Copy settings.j2 file
+    tags: djangomigrate
+    template: src=settings.j2 owner=orca_admin mode=0744 dest={{settings_path}}/settings.py
 
   - name: Django project migrate
     shell: python manage.py migrate chdir={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}
     tags: djangomigrate
-
-  - name: Revert pg_hba.conf to default
-    lineinfile: line="local\tall\t\tpostgres\t\t\t\tpeer" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=trust)" backrefs=yes
-    tags: pghbaconf_to_peer
- 
-  - name: Restart PostgreSql service
-    service: name=postgresql state=restarted
-    tags: postgresrestart
    
   - name: Create Django superuser
     shell: echo "from django.contrib.auth.models import User; User.objects.create_superuser('{{django_admin_name}}', '{{django_admin_email}}', '{{django_admin_password}}')" | python manage.py shell chdir={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}
-    tags: djangosuperuser
+    tags: djangomigrate
    
   - name: Copy uwsgi.ini file
-    tags: uwsgiconfcopy
+    tags: djangomigrate
     copy: src=uwsgi.ini dest=./conf owner=orca_admin mode=0744
 
   - name: Copy nginx.conf file
-    tags: nginxconfcopy
+    tags: djangomigrate
     template: src=nginx.j2 dest=./conf owner=orca_admin
 
   - name: Rename nginx.j2 template to nginx.conf
-    tags: renamenginxconf
+    tags: djangomigrate
     command: mv nginx.j2 nginx.conf chdir=./conf
   
   - name: Edit ngnix.conf in /etc/nginx
     lineinfile: line="include /home/orca_admin/conf/nginx.conf;" insertafter="http {" dest="/etc/nginx/nginx.conf"
-    tags: editetcnginx
+    tags: djangomigrate
 
   - name: Restart Nginx service
     service: name=nginx state=restarted
-    tags: nginxrestart
+    tags: djangomigrate
 
   - name: Install uwsgi-plugin-python
     apt: name=uwsgi-plugin-python state=present
-    tags: installuwsgi
+    tags: djangomigrate
 
   - name: Start uWSGI service
-    tags: startuwsgi
-    command: uwsgi --ini /home/orca_admin/conf/uwsgi.ini --pidfile /tmp/uwsgi.pid
+    tags: djangomigrate
+    command: uwsgi --ini /home/orca_admin/conf/uwsgi.ini
     args:
       chdir: "{{project_path}}/{{ember_django_dir}}"
 
   - name: Run collectstatic command
-    tags: collectstatic
+    tags: djangomigrate
     command: python manage.py collectstatic --noinput
     args:
       chdir: "{{project_path}}/{{ember_django_dir}}"
 
   - name: Change owner of projects
     command: chown -R orca_admin:orcagroup {{myprojectdir}}
-    tags: chownorca
+    tags: djangomigrate

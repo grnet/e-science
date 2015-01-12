@@ -3,6 +3,7 @@
  db_user: developer
  db_password: escience
  db_name: escience
+ db_host: 127.0.0.1
 
  # Django admin variables
  django_admin_name: orca_admin
