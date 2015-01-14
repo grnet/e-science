@@ -1,4 +1,0 @@
-kamaki==0.13rc3
-paramiko
-requests
-PyYAML
