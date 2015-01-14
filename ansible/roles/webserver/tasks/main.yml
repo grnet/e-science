@@ -69,17 +69,17 @@
     tags: gitcloneproject
     command: git clone -b develop {{escience_repo}} {{myprojectname}} chdir={{myprojectdir}}
 
-  - name: Install orca as a python package
-    tags: orcapackageinstall
+  - name: Install orka as a python package
+    tags: orkapackageinstall
     command: python setup.py install chdir={{project_path}}/{{orka_version}}
 
   - name: Copy package.json to webserver
     tags: cppackagejson
-    copy: src=package.json dest={{myprojectdir}}/{{myprojectname}} owner=orca_admin mode=0644
+    copy: src=package.json dest={{myprojectdir}}/{{myprojectname}} owner=orka_admin mode=0644
 
   - name: Copy Gruntfile.j2 template to webserver
     tags: cpgruntfile
-    template: src=Gruntfile.j2 dest={{myprojectdir}}/{{myprojectname}} owner=orca_admin mode=0644
+    template: src=Gruntfile.j2 dest={{myprojectdir}}/{{myprojectname}} owner=orka_admin mode=0644
 
   - name: Rename Gruntfile.j2 template to Gruntfile.js
     tags: renamegruntfile
@@ -133,7 +133,7 @@
       - logs
 
   - name: Change owner of conf and logs
-    command: chown -R orca_admin:orcagroup ./conf ./logs
+    command: chown -R orka_admin:orkagroup ./conf ./logs
     tags: chownconf
 
   - name: Start Nginx service
@@ -142,7 +142,7 @@
  
   - name: Copy settings.j2 file
     tags: djangomigrate
-    template: src=settings.j2 owner=orca_admin mode=0744 dest={{settings_path}}/settings.py
+    template: src=settings.j2 owner=orka_admin mode=0744 dest={{settings_path}}/settings.py
 
   - name: Django project migrate
     shell: python manage.py migrate chdir={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}
@@ -154,18 +154,18 @@
    
   - name: Copy uwsgi.ini file
     tags: djangomigrate
-    copy: src=uwsgi.ini dest=./conf owner=orca_admin mode=0744
+    copy: src=uwsgi.ini dest=./conf owner=orka_admin mode=0744
 
   - name: Copy nginx.conf file
     tags: djangomigrate
-    template: src=nginx.j2 dest=./conf owner=orca_admin
+    template: src=nginx.j2 dest=./conf owner=orka_admin
 
   - name: Rename nginx.j2 template to nginx.conf
     tags: djangomigrate
     command: mv nginx.j2 nginx.conf chdir=./conf
   
   - name: Edit ngnix.conf in /etc/nginx
-    lineinfile: line="include /home/orca_admin/conf/nginx.conf;" insertafter="http {" dest="/etc/nginx/nginx.conf"
+    lineinfile: line="include /home/orka_admin/conf/nginx.conf;" insertafter="http {" dest="/etc/nginx/nginx.conf"
     tags: djangomigrate
 
   - name: Restart Nginx service
@@ -178,7 +178,7 @@
 
   - name: Start uWSGI service
     tags: djangomigrate
-    command: uwsgi --ini /home/orca_admin/conf/uwsgi.ini
+    command: uwsgi --ini /home/orka_admin/conf/uwsgi.ini
     args:
       chdir: "{{project_path}}/{{ember_django_dir}}"
 
@@ -189,5 +189,5 @@
       chdir: "{{project_path}}/{{ember_django_dir}}"
 
   - name: Change owner of projects
-    command: chown -R orca_admin:orcagroup {{myprojectdir}}
+    command: chown -R orka_admin:orkagroup {{myprojectdir}}
     tags: djangomigrate

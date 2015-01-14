@@ -1,7 +1,7 @@
 --- 
   - name: format hdfs
     tags: postconfig
-    shell: sudo -u hduser ./hadoop namenode -format  chdir=/usr/local/hadoop/bin
+    shell: sudo -u hduser ./hadoop namenode -format   -force chdir=/usr/local/hadoop/bin
     when: format
 
   - name: start dfs

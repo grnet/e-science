@@ -5,8 +5,8 @@
  db_name: escience
 
  # Django admin variables
- django_admin_name: orca_admin
- django_admin_email: orca@example.com
+ django_admin_name: orka_admin
+ django_admin_email: orka@example.com
  django_admin_password: lalakia
  ansible_sudo_pass: lalakia
  

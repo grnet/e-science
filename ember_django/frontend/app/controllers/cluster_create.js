@@ -41,8 +41,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 		var length = this.get('content.length');
 		var regular_exp_project_id = /system:[a-z,0-9]{8}(-[a-z,0-9]{4}){3}-[a-z,0-9]{12}/;
 		var max_space = 30;
-		var space_separate_project_name_and_quota = String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
-			String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160);
+		var space_separate_project_name_and_quota = String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
+		String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160);
 		var space_between_quota = String.fromCharCode(160) + String.fromCharCode(160);
 		for (var i = 0; i < length; i++) {
 			var current_space = '';
@@ -54,7 +54,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			projects[i] = this.get('name_of_project') + space_separate_project_name_and_quota + 
 			'VMs:' + this.get('content').objectAt(i).get('vms_av').length + space_between_quota + 
 			'CPUs:' + this.get('content').objectAt(i).get('cpu_av') + space_between_quota + 
-			'RAM:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + space_between_quota + 
+			'RAM:' + this.get('content').objectAt(i).get('mem_av') + 'MB' + space_between_quota + 
 			'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB';
 		}
 		this.set('name_of_project', '');
@@ -65,10 +65,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('name_of_project', this.get('content').objectAt(i).get('project_name'));
 			}
 			if ((projects[i] = this.get('name_of_project') + space_separate_project_name_and_quota + 
-				'VMs:' + this.get('content').objectAt(i).get('vms_av').length + space_between_quota + 
-				'CPUs:' + this.get('content').objectAt(i).get('cpu_av') + space_between_quota + 
-				'RAM:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + space_between_quota + 
-				'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) {
+			'VMs:' + this.get('content').objectAt(i).get('vms_av').length + space_between_quota + 
+			'CPUs:' + this.get('content').objectAt(i).get('cpu_av') + space_between_quota + 
+			'RAM:' + this.get('content').objectAt(i).get('mem_av') + 'MB' + space_between_quota + 
+			'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) {
 				this.set('create_cluster_disabled', false);
 				this.set('project_current', this.get('content').objectAt(i));
 				this.set('project_name', this.get('content').objectAt(i).get('project_name'));
@@ -87,11 +87,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// Computes the available cpu each time total_cpu_selection changes
 	cpu_available : function() {
 		var cpu_avail = this.get('content').objectAt(this.get('project_index')).get('cpu_av') - this.get('total_cpu_selection');
-		if (cpu_avail < 0) {
-			alert('The cluster size you selected with the current cpu choices exceed the cpu quota. You should lower the clustersize, change cpu values and select the clustersize again');
-		} else {
-			return cpu_avail;
-		}
+		return cpu_avail;
+
 	}.property('total_cpu_selection'),
 
 	// The total memory selected for the cluster
@@ -102,11 +99,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// Computes the available memory each time total_mem_selection changes
 	ram_available : function() {
 		ram_avail = this.get('content').objectAt(this.get('project_index')).get('mem_av') - this.get('total_ram_selection');
-		if (ram_avail < 0) {
-			alert('The cluster size you selected with the current ram choices exceed the ram quota. You should lower the clustersize, change ram values and select the clustersize again');
-		} else {
-			return ram_avail;
-		}
+		return ram_avail;
 	}.property('total_ram_selection'),
 
 	// The total disk selected for the cluster
@@ -117,11 +110,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// Computes the available disk each time total_disk_selection changes
 	disk_available : function() {
 		disk_avail = this.get('content').objectAt(this.get('project_index')).get('disk_av') - this.get('total_disk_selection');
-		if (disk_avail < 0) {
-			alert('The cluster size you selected with the current disk choices exceed the disk quota. You should lower the clustersize, change disk values and select the clustersize again');
-		} else {
-			return disk_avail;
-		}
+		return disk_avail;
 	}.property('total_disk_selection'),
 
 	// Computes the maximum VMs that can be build with current flavor choices and return this to the drop down menu on index
@@ -170,8 +159,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 		if (length == 0) {
 			if (this.get('project_name') != '') {
 				this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
-				alert(String(this));
-				alert(String(this.get('project_name')));
 			}
 			cluster_size_zero = true;
 			return max_cluster_size_limited_by_current_cpus;
@@ -421,7 +408,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('project_current', '');
 		this.set('project_name', '');
 		this.set('project_details', '');
-		
+
 	},
 	// Reset variables after logout
 	reset_variables : function() {
