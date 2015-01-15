@@ -29,7 +29,7 @@ $(function () {
 						</tr>
 					</thead>
 					<tbody class="text-left">
-					    {{#if sortedclusters}}
+					  {{#if sortedclusters}}
 						{{#each usercluster in sortedCollection}}
 						<tr>
 							<td>{{usercluster.cluster_name}}</td>
@@ -42,8 +42,8 @@ $(function () {
 						{{else}}
 						<tr><td colspan="4" class="text-center text-info">No user clusters found</td></tr>
 						{{/each}}  
-					    {{else}}
-						{{#each usercluster in content.clusters}}
+					  {{else}}
+						{{#each usercluster in model.clusters}}
 						<tr>
 							<td>{{usercluster.cluster_name}}</td>
 							<td><a data-toggle="tooltip" data-placement="right" {{bind-attr title='usercluster.cluster_status_verbose'}}> 
@@ -55,7 +55,7 @@ $(function () {
 						{{else}}
 						<tr><td colspan="4" class="text-center text-info">No user clusters found</td></tr>
 						{{/each}}
-					    {{/if}}
+					  {{/if}}
 					</tbody>
 				</table>
 			</div>			
