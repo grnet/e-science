@@ -20,46 +20,56 @@
 			</div>
 		</noscript>
 		{% endverbatim %}
+		<!--Set static url variable-->
 		<script type="text/javascript">var DJANGO_STATIC_URL="{{ STATIC_URL }}";</script>
-	    <script src="{{ STATIC_URL }}libs/jquery-1.11.2.js"></script>
-	    <script src="{{ STATIC_URL }}libs/jquery-loader.js"></script>
-	    <script src="{{ STATIC_URL }}libs/handlebars-v2.0.0.js"></script>
-	    <script src="{{ STATIC_URL }}libs/ember-1.9.1.js"></script>
-	    <script src="{{ STATIC_URL }}libs/ember-data-1.0.0-beta.14.1.js"></script>
-	    <script src="{{ STATIC_URL }}libs/ember-handlebars-loader-0.0.1.js"></script>
-	    <script src="{{ STATIC_URL }}styles/bootstrap.js"></script>
+		<!--main libraries-->
+		<script src="{{ STATIC_URL }}libs/jquery-1.11.2.js"></script>
+		<script src="{{ STATIC_URL }}libs/jquery-loader.js"></script>
+		<script src="{{ STATIC_URL }}libs/handlebars-v2.0.0.js"></script>
+		<script src="{{ STATIC_URL }}libs/ember-1.9.1.js"></script>
+		<script src="{{ STATIC_URL }}libs/ember-data-1.0.0-beta.14.1.js"></script>
+		<script src="{{ STATIC_URL }}libs/ember-handlebars-loader-0.0.1.js"></script>
+		<script src="{{ STATIC_URL }}styles/bootstrap.js"></script>
 	
-	    <script src="{{ STATIC_URL }}app.js"></script>
-	
-	    <script src="{{ STATIC_URL }}controllers/application.js"></script>
-	    <script src="{{ STATIC_URL }}controllers/user_welcome.js"></script>
-	    <script src="{{ STATIC_URL }}controllers/homepage.js"></script>
-	    <script src="{{ STATIC_URL }}controllers/user_login.js"></script>
-	    <script src="{{ STATIC_URL }}controllers/cluster_create.js"></script>
-	
-	    <script src="{{ STATIC_URL }}router.js"></script>
-	    <script src="{{ STATIC_URL }}routes/index.js"></script>
-	    <script src="{{ STATIC_URL }}routes/restricted.js"></script>
-	    <script src="{{ STATIC_URL }}routes/user_login.js"></script>        
-	    <script src="{{ STATIC_URL }}routes/user_logout.js"></script>        
-	    <script src="{{ STATIC_URL }}routes/user_welcome.js"></script>        
-	    <script src="{{ STATIC_URL }}routes/cluster_create.js"></script>
-	
-	    <script src="{{ STATIC_URL }}views/user_login.js"></script>
-	    <script src="{{ STATIC_URL }}views/cpu_selection_button.js"></script>
-	    <script src="{{ STATIC_URL }}views/mem_selection_button.js"></script>
-	    <script src="{{ STATIC_URL }}views/disk_selection_button.js"></script>
-	    <script src="{{ STATIC_URL }}views/storage_selection_button.js"></script>
-	    <script src="{{ STATIC_URL }}views/create_cluster_button.js"></script>
-	    
-	    <script src="{{ STATIC_URL }}store.js"></script> 
-	    <script src="{{ STATIC_URL }}models/user.js"></script>
-	    <script src="{{ STATIC_URL }}models/cluster.js"></script>
-	    <script src="{{ STATIC_URL }}models/cluster_choice.js"></script>
+		<!--main app-->
+		<script src="{{ STATIC_URL }}app.js"></script>
+
+		<!--controllers-->
+		<script src="{{ STATIC_URL }}controllers/application.js"></script>
+		<script src="{{ STATIC_URL }}controllers/user_welcome.js"></script>
+		<script src="{{ STATIC_URL }}controllers/homepage.js"></script>
+		<script src="{{ STATIC_URL }}controllers/user_login.js"></script>
+		<script src="{{ STATIC_URL }}controllers/cluster_create.js"></script>
+
+		<!--routers-->
+		<script src="{{ STATIC_URL }}router.js"></script>
+		<script src="{{ STATIC_URL }}routes/index.js"></script>
+		<script src="{{ STATIC_URL }}routes/restricted.js"></script>
+		<script src="{{ STATIC_URL }}routes/user_login.js"></script>        
+		<script src="{{ STATIC_URL }}routes/user_logout.js"></script>        
+		<script src="{{ STATIC_URL }}routes/user_welcome.js"></script>        
+		<script src="{{ STATIC_URL }}routes/cluster_create.js"></script>
+
+		<!--views-->
+		<script src="{{ STATIC_URL }}views/user_login.js"></script>
+		<script src="{{ STATIC_URL }}views/cpu_selection_button.js"></script>
+		<script src="{{ STATIC_URL }}views/mem_selection_button.js"></script>
+		<script src="{{ STATIC_URL }}views/disk_selection_button.js"></script>
+		<script src="{{ STATIC_URL }}views/storage_selection_button.js"></script>
+		<script src="{{ STATIC_URL }}views/create_cluster_button.js"></script>
+
+		<!--store for ember-->
+		<script src="{{ STATIC_URL }}store.js"></script> 
+
+		<!--models-->
+		<script src="{{ STATIC_URL }}models/user.js"></script>
+		<script src="{{ STATIC_URL }}models/cluster.js"></script>
+		<script src="{{ STATIC_URL }}models/cluster_choice.js"></script>
 		
-	    <script>EmberHandlebarsLoader.loadTemplates([
+		<!--load templates-->
+		<script>EmberHandlebarsLoader.loadTemplates([
 			'application', 'homepage', 'user/login', 'user/welcome', 'cluster/create', 'user/_userclusters'
-	    ]);</script>
+		]);</script>
 	
 	</body>
 </html>

@@ -1,3 +1,5 @@
+// Main application controller
+// loggedIn, homeURL, STATIC_URL
 App.ApplicationController = Ember.Controller.extend({
 	loggedIn: false,
 	homeURL : function() {

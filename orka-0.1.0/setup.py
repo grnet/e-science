@@ -11,11 +11,14 @@ from setuptools import setup
 BASE_DIR = join(dirname(abspath(__file__)), 'orka/orka.py')
 import orka
 
+# to be setup if not found
 requires = ['kamaki==0.13rc3','paramiko','requests','PyYAML']
 
+# setup
 setup(
     name = "orka",
     packages = ["orka"],
+    # starts from this main
     entry_points = {
         "console_scripts": ['orka = orka.orka:main']
         },

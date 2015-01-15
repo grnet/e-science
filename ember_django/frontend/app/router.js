@@ -1,4 +1,4 @@
-// Application routes
+// Main application routes
 App.Router.map(function() {
         this.route('homepage');
         this.resource('user', function() {

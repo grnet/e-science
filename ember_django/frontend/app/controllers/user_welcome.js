@@ -1,10 +1,11 @@
-// Welcome route controller
-// Redirect to logout route when user press logout in welcome screen
+// User Welcome controller
 App.UserWelcomeController = Ember.Controller.extend({
 
 	needs : 'clusterCreate',
-	output_message : '', // output message of create cluster script
-	create_cluster_start : false, // flag to see if the transition is from create cluster button
+	// output message of create cluster script
+	output_message : '',
+	// flag to see if the transition is from create cluster button
+	create_cluster_start : false,
 
 	sortedclusters : [],
 	column : '',
@@ -35,6 +36,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 			// $('.glyphicon-time').closest('td').loader($options);
 		// }, 100);
 
+		// sorts content (clusters) based on properties
 		return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, {
 			content : this.get('sortedclusters'),
 			sortProperties : [this.get('column')],
@@ -42,6 +44,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 		});
 	}.property('sortdir', 'sortbyname', 'sortbystatus', 'sortbysize', 'sortbyurl'),
 	actions : {
+		// sorts clusters based on selected column (name, status, size, IP)
 		sortBy : function(clusters, column) {
 			switch (column) {
 			case 'cluster_name':
