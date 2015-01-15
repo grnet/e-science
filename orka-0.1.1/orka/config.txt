@@ -1,10 +1,10 @@
-[~Database]
-url = http://83.212.120.241/api/orka
-[~Login]
-url = http://83.212.120.241/api/users
 [Database]
-url = http://127.0.0.1:8000/api/orka
+url = http://83.212.120.241/api/orka
 [Login]
+url = http://83.212.120.241/api/users
+[~Database]
+url = http://127.0.0.1:8000/api/orka
+[~Login]
 url = http://127.0.0.1:8000/api/users
 [~~Database]
 url = http://127.0.0.1/api/orka
