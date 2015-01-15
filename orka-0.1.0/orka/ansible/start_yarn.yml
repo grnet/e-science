@@ -1,17 +1,17 @@
 ---
   - name: format hdfs
     tags: postconfig
-    shell: ./hdfs namenode -format -force chdir=/usr/local/hadoop/bin
+    command: ./hdfs namenode -format -force chdir={{hadoop_home}}/bin
     when: format
 
   - name: start dfs
     tags: postconfig
-    shell: ./start-dfs.sh chdir=/usr/local/hadoop/sbin
+    command: ./start-dfs.sh chdir={{hadoop_home}}/sbin
 
   - name: start history server
     tags: postconfig
-    shell: ./mr-jobhistory-daemon.sh start historyserver chdir=/usr/local/hadoop/sbin
+    command: ./mr-jobhistory-daemon.sh start historyserver chdir={{hadoop_home}}/sbin
 
   - name: start yarn
     tags: postconfig
-    shell: ./start-yarn.sh chdir=/usr/local/hadoop/sbin
+    command: ./start-yarn.sh chdir={{hadoop_home}}/sbin
