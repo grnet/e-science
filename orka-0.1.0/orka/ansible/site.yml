@@ -1,12 +1,12 @@
 ---
 - name: Setting up common tasks for every host 
   hosts: all
-  user: root
+  remote_user: root
   roles:
      - commons
 
 - name: Installing and configuring Hadoop-yarn cluster
-  user: root
+  remote_user: root
   hosts: 
     - master
     - slaves
@@ -15,20 +15,19 @@
     - {role: yarn, is_slave: True, when: "ansible_hostname != '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and choose_role == 'yarn'"}
 
 - name: Format cluster (if needed) and start the Hadoop-yarn daemons
-  user: hduser
+  remote_user: hduser
   hosts: master
   tasks:
      - { include: start_yarn.yml, when: start_yarn == 'True'}
 
 - name: Setup orca_admin user in Django server
   hosts: webserver
-  user: root
+  remote_user: root
   tasks:
-     - { include: setup_orca_admin.yml, when: create_orca_admin == 'True' and choose_role == 'webserver'}
+     - { include: setup_orka_admin.yml, when: create_orka_admin == 'True' and choose_role == 'webserver'}
 
 - name: Installing and configuring Django server
   hosts: webserver
-  user: orca_admin
-  sudo: yes
+  remote_user: orka_admin
   roles:
      - {role: webserver, when: choose_role == 'webserver'}

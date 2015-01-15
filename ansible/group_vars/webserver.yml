@@ -1,18 +1,20 @@
 ---
  # PostgreSql variables
- db_user: developer
- db_password: escience
- db_name: escience
- db_host: 127.0.0.1
+ db_user: orcadbuser
+ db_password: 0rc@p@$$+
+ db_name: orcadb
+ db_host: 83.212.120.11
+
 
  # Django admin variables
- django_admin_name: orca_admin
- django_admin_email: orca@example.com
+ django_admin_name: orka_admin
+ django_admin_email: orka@example.com
  django_admin_password: lalakia
  ansible_sudo_pass: lalakia
  
  # Django project variables
- myprojectdir: projects
+ user_home: /home/orka_admin
+ myprojectdir: "{{user_home}}/projects"
  myprojectname: e-science
  ember_django_dir: ember_django
  settings_path: "{{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}/backend/"
