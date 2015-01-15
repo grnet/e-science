@@ -155,11 +155,6 @@
       - conf
       - logs
 
-  - name: Start Nginx service
-    sudo: yes
-    service: name=nginx state=started
-    tags: nginxsetup
- 
   - name: Copy settings.j2 file
     tags: djangosetup
     template: src=settings.j2 owner=orka_admin mode=0744 dest={{settings_path}}/settings.py
