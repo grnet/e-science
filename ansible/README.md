@@ -36,33 +36,33 @@ How to run webserver role
 
 This role can be executed as:
 
-    ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "choose_role=webserver create_orca_admin=True"
+    ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "choose_role=webserver create_orka_admin=True"
 
-The [create_orca_admin=True] is needed the first time we run webserver role because it creates the orca_admin user that is needed in
+The [create_orka_admin=True] is needed the first time we run webserver role because it creates the orka_admin user that is needed in
 install and setup of the Django webserver.
 
 Giving values to other webserver variables is optional but necessary. Especially the following Webserver role variables 
 
-    [db_password, db_user, db_name, django_admin_name, django_admin_password, orca_admin_password, ansible_sudo_pass] 
+    [db_password, db_user, db_name, django_admin_name, django_admin_password, orka_admin_password, ansible_sudo_pass] 
     
 should always be given from command line or in the all.yml and webserver.yml files in group_vars folder. 
 
 If not given, the playbook will run with the default settings which is not recommended.
-The [orca_admin_password] encrypted value is created by the user with 
+The [orka_admin_password] encrypted value is created by the user with 
 
     [python -c 'import crypt; print crypt.crypt("mypassword", "$1$SomeSalt$")'] 
 
-and the ansible_sudo_pass is the unecrypted [orca_admin_password] value.
+and the ansible_sudo_pass is the unecrypted [orka_admin_password] value.
 
 So, the optimal execution of webserver role for the first time from the command line would be:
 
-    ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "db_password=xxxxx db_user=xxxxx db_name=xxxxx django_admin_name=xxxxx django_admin_password=xxxxx choose_role=webserver create_orca_admin=True orca_admin_password=encrypted(orca_admin_password) ansible_sudo_pass=orca_admin_password"
+    ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "db_password=xxxxx db_user=xxxxx db_name=xxxxx django_admin_name=xxxxx django_admin_password=xxxxx choose_role=webserver create_orka_admin=True orka_admin_password=encrypted(orka_admin_password) ansible_sudo_pass=orka_admin_password"
 
 It is easier though to change the default values in the ansible/group_vars/all.yml and ansible/group_vars/webserver.yml and run 
 
-    ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "choose_role=webserver create_orca_admin=True"
+    ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "choose_role=webserver create_orka_admin=True"
 
-Also, the variables [myprojectdir] [myprojectname] are the directory name where django projects will be created and a django project name and can be changed from their default values.
+Also, the variables [my_project_dir] [my_project_name] are the directory name where django projects will be created and a django project name and can be changed from their default values.
 
 Other useful variables are :
 - [escience_repo], which is the github repo from where webserver role will clone the django project. Default is gtzelepis.
