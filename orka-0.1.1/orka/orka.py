@@ -131,7 +131,7 @@ def main():
         parser_c.add_argument("disk_slave", help='Disk size (GB) for the slave node(s)',
                               type=checker.five_or_bigger)
 
-        parser_c.add_argument("disk_template", help='Disk template',
+        parser_c.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
                               metavar='disk_template', choices=['drbd', 'ext_vlmc'])
 
         parser_c.add_argument("token", help='Synnefo authentication token')
