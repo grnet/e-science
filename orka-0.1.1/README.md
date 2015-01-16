@@ -48,7 +48,7 @@ How to run orka commands
 ------------------------
 orka [command] "arguments"
 
-Required arguments for create command:
+Required positional arguments for create command:
          
     name="name of the cluster" 
     cluster_size="total VMs, including master node" 

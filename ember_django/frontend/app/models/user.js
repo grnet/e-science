@@ -1,11 +1,12 @@
 attr = App.attr;
-// User model used in our app (welcome screen)
+// Information about user (welcome screen)
 App.User = DS.Model.extend({
-	token : attr('string'), 				// okeanos token
-	user_id : attr('number'), 				// user_id in backend database
+	token : attr('string'), 			// okeanos token
+	user_id : attr('number'), 			// user_id in backend database
+	// may have more than one clusters
 	clusters : DS.hasMany('userCluster', {
 		async : true,
-	}), 									// user cluster records
+	}), 						// user cluster records
 	cluster : attr(),
 	escience_token : attr(),
 	// cluster : function() {
@@ -13,11 +14,12 @@ App.User = DS.Model.extend({
 	// }.property('clusters.length'),
 });
 
+// Information about user's clusters
 App.UserCluster = DS.Model.extend({
-	cluster_name : attr('string'), 				// name of the cluster
-	cluster_size : attr('number'), 				// size of cluster (master+slaves)
-	cluster_status : attr('string'), 			// status of cluster
-	master_IP : attr('string'), 				// master ip
+	cluster_name : attr('string'),
+	cluster_size : attr('number'),
+	cluster_status : attr('string'),
+	master_IP : attr('string'),
 	cpu_master : attr(),
 	mem_master : attr(),
 	disk_master : attr(),
@@ -27,7 +29,8 @@ App.UserCluster = DS.Model.extend({
 	disk_template : attr(),
 	os_image : attr(),
 	project_name : attr(),
-	user : DS.belongsTo('user'), // user that created the cluster
+	// user that created the cluster
+	user : DS.belongsTo('user'),
 	cluster_url : function() {
 		return 'http://' + this.get('master_IP') + ':8088/cluster';
 	}.property('master_IP'),

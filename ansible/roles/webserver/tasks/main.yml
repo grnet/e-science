@@ -1,28 +1,46 @@
 ---
-  - name: Update
-    tags: update
-    shell: apt-get update
+  - name: Install curl
+    apt: name=curl
+    sudo: yes
+    tags: installations
 
-  - name: Upgrade
-    tags: upgrade
-    shell: apt-get -y dist-upgrade
+  - name: nginx apt key
+    sudo: yes
+    shell: curl http://nginx.org/keys/nginx_signing.key | sudo apt-key add -
+    tags: installations
+
+  - name: Adding repos
+    apt_repository: repo='{{item}}' state=present update_cache=yes
+    sudo: yes
+    with_items:
+      - deb http://ftp.gr.debian.org/debian testing main contrib
+      - deb http://ftp.debian.org/debian/ jessie-updates main contrib
+      - deb http://nginx.org/packages/debian/ wheezy nginx
+      - deb-src http://nginx.org/packages/debian/ wheezy nginx
+    tags: installations
+
+  - name: Copy my_preferences file
+    sudo: yes
+    copy: src=my_preferences dest=/etc/apt/preferences.d/
+    tags: installations1
 
   - name: Install RabbitMQ broker, PostgreSQL and needed dependencies
-    tags: installall
-    shell: apt-get install -y "{{item}}"
+    tags: installations
+    sudo: yes
+    apt: "name={{item}}"
     with_items:
       - rabbitmq-server
       - postgresql-client
       - python-psycopg2
       - libpq-dev
-      - curl
       - python-dev
       - git
       - python-flup
       - nginx
 
   - name: Install Celery, Django and Django rest framework
-    tags: celerydjangoinstall
+    tags: installations
+    sudo: yes
     pip: "name={{item.name}}"
     with_items:
       - { name: 'celery' }
@@ -42,56 +60,61 @@
       - { name: 'requests' }
 
   - name: Copy script celeryd for daemonic workers
-    tags: celerydcopy
+    tags: celery
+    sudo: yes
     copy: src=celeryd dest=/etc/init.d/celeryd owner=root mode=0744
     when: is_daemon
 
   - name: Copy celeryd configuration
-    tags: celerydconfcopy
+    tags: celery
+    sudo: yes
     template: src=celeryd_conf.j2 dest=/etc/default/celeryd owner=root
     when: is_daemon
 
   - name: Copy script celerybeat for daemonic periodic tasks
-    tags: celerybeatcopy
+    tags: celery
+    sudo: yes
     copy: src=celerybeat dest=/etc/init.d/celerybeat owner=root mode=0744
     when: is_periodic_task
 
   - name: Copy celerybeat configuration
-    tags: celerybeatconfcopy
+    tags: celery
+    sudo: yes
     template: src=celerybeat_conf.j2 dest=/etc/default/celerybeat owner=root
     when: is_periodic_task
 
   - name: create directory for projects
-    tags: createprojectdirectory
-    command: mkdir {{myprojectdir}} creates={{myprojectdir}}
+    tags: setupproject
+    file: path={{myprojectdir}} state=directory
 
   - name: Git clone e-science project in the git directory
-    tags: gitcloneproject
-    command: git clone -b develop {{escience_repo}} {{myprojectname}} chdir={{myprojectdir}}
+    tags: setupproject
+    git: repo={{escience_repo}} dest={{myprojectdir}}/{{myprojectname}}
 
-  - name: Install orca as a python package
-    tags: orcapackageinstall
-    command: python setup.py install chdir={{project_path}}/{{orka_version}}
+  - name: Install orka as a python package
+    tags: setupproject
+    sudo: yes
+    pip: name={{project_path}}/{{orka_version}} chdir={{project_path}}
 
   - name: Copy package.json to webserver
-    tags: cppackagejson
-    copy: src=package.json dest={{myprojectdir}}/{{myprojectname}} owner=orca_admin mode=0644
+    tags: setupproject
+    copy: src=package.json dest={{project_path}} owner=orka_admin mode=0644
 
   - name: Copy Gruntfile.j2 template to webserver
     tags: cpgruntfile
-    template: src=Gruntfile.j2 dest={{myprojectdir}}/{{myprojectname}} owner=orca_admin mode=0644
+    template: src=Gruntfile.j2 dest={{project_path}} owner=orka_admin mode=0644
 
   - name: Rename Gruntfile.j2 template to Gruntfile.js
     tags: renamegruntfile
-    command: mv Gruntfile.j2 Gruntfile.js chdir={{myprojectdir}}/{{myprojectname}}
-    
+    command: mv Gruntfile.j2 Gruntfile.js chdir={{project_path}}
+
   - name: Download NVM
     tags: download_nvm
     shell: curl https://raw.githubusercontent.com/creationix/nvm/v0.12.1/install.sh | bash
 
   - name: NMV Commands in Terminal
     tags: nvm_commands
-    shell: cd;bash -lc "source ~/.profile" 
+    shell: cd;bash -lc "source ~/.profile"
 
   - name: Install NVM
     tags: nvm_install
@@ -104,7 +127,7 @@
   - name: Install grunt-cli
     tags: grunt-cli_install
     shell: cd;bash -lc "npm install -g grunt-cli"
-   
+
   - name: Install and add Grunt
     tags: grunt_install_add
     shell: cd;bash -lc "npm install grunt --save-dev"
@@ -125,69 +148,58 @@
     tags: grunt_tasks_run
     shell: cd {{project_path}}; bash -lc "grunt default --force"
 
-  - name: create directories for configuration and logs
-    tags: nginxconflogs
-    command: mkdir "{{item}}"
-    with_items: 
+  - name: Change owner of conf and logs
+    file: path={{user_home}}/{{item}} recurse=yes state=directory
+    tags: nginxsetup
+    with_items:
       - conf
       - logs
 
-  - name: Change owner of conf and logs
-    command: chown -R orca_admin:orcagroup ./conf ./logs
-    tags: chownconf
-
-  - name: Start Nginx service
-    service: name=nginx state=started
-    tags: nginxstart
- 
   - name: Copy settings.j2 file
-    tags: djangomigrate
-    template: src=settings.j2 owner=orca_admin mode=0744 dest={{settings_path}}/settings.py
+    tags: djangosetup
+    template: src=settings.j2 owner=orka_admin mode=0744 dest={{settings_path}}/settings.py
 
   - name: Django project migrate
-    shell: python manage.py migrate chdir={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}
-    tags: djangomigrate
+    django_manage: command=migrate app_path={{project_path}}/{{ember_django_dir}}
+    tags: djangosetup
    
   - name: Create Django superuser
     shell: echo "from django.contrib.auth.models import User; User.objects.create_superuser('{{django_admin_name}}', '{{django_admin_email}}', '{{django_admin_password}}')" | python manage.py shell chdir={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}
-    tags: djangomigrate
+    tags: djangosetup
    
   - name: Copy uwsgi.ini file
-    tags: djangomigrate
-    copy: src=uwsgi.ini dest=./conf owner=orca_admin mode=0744
+    tags: nginxsetup
+    copy: src=uwsgi.ini dest=./conf owner=orka_admin mode=0744
 
   - name: Copy nginx.conf file
-    tags: djangomigrate
-    template: src=nginx.j2 dest=./conf owner=orca_admin
+    tags: nginxsetup
+    template: src=nginx.j2 dest=./conf owner=orka_admin
 
   - name: Rename nginx.j2 template to nginx.conf
-    tags: djangomigrate
+    tags: nginxsetup
     command: mv nginx.j2 nginx.conf chdir=./conf
   
   - name: Edit ngnix.conf in /etc/nginx
-    lineinfile: line="include /home/orca_admin/conf/nginx.conf;" insertafter="http {" dest="/etc/nginx/nginx.conf"
-    tags: djangomigrate
+    sudo: yes
+    lineinfile: line="include {{user_home}}/conf/nginx.conf;" insertafter="http {" dest="/etc/nginx/nginx.conf"
+    tags: nginxsetup
 
   - name: Restart Nginx service
+    sudo: yes
     service: name=nginx state=restarted
-    tags: djangomigrate
+    tags: nginxsetup
 
   - name: Install uwsgi-plugin-python
     apt: name=uwsgi-plugin-python state=present
-    tags: djangomigrate
+    sudo: yes
+    tags: nginxsetup
 
   - name: Start uWSGI service
-    tags: djangomigrate
-    command: uwsgi --ini /home/orca_admin/conf/uwsgi.ini
+    tags: nginxsetup
+    command: uwsgi --ini {{user_home}}/conf/uwsgi.ini
     args:
       chdir: "{{project_path}}/{{ember_django_dir}}"
 
   - name: Run collectstatic command
-    tags: djangomigrate
-    command: python manage.py collectstatic --noinput
-    args:
-      chdir: "{{project_path}}/{{ember_django_dir}}"
-
-  - name: Change owner of projects
-    command: chown -R orca_admin:orcagroup {{myprojectdir}}
-    tags: djangomigrate
+    tags: nginxsetup
+    django_manage: command=collectstatic app_path={{project_path}}/{{ember_django_dir}}

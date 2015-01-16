@@ -5,19 +5,21 @@
  db_name: escience
  db_host: 127.0.0.1
 
+
  # Django admin variables
- django_admin_name: orca_admin
- django_admin_email: orca@example.com
+ django_admin_name: orka_admin
+ django_admin_email: orka@example.com
  django_admin_password: lalakia
  ansible_sudo_pass: lalakia
  
  # Django project variables
- myprojectdir: projects
+ user_home: /home/orka_admin
+ myprojectdir: "{{user_home}}/projects"
  myprojectname: e-science
  ember_django_dir: ember_django
  settings_path: "{{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}/backend/"
  django_port: 8000
- orka_version: orka-0.1.0
+ orka_version: orka-0.1.1
  
  # Celery variables
  is_daemon: False

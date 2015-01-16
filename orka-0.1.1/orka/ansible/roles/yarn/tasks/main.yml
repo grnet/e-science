@@ -4,11 +4,11 @@
     tags: preconfig
 
   - name: Install WebUpd8 Team Java PPA (for Oracle Java)
-    apt_repository: repo='deb http://ppa.launchpad.net/webupd8team/java/ubuntu precise main' state=present
-    tags: preconfig
-
-  - name: Install WebUpd8 Team Java PPA2 (for Oracle Java)
-    apt_repository: repo='deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu precise main' state=present
+    apt_repository: repo='{{item}}' state=present update_cache=yes
+    sudo: yes
+    with_items:
+      - deb http://ppa.launchpad.net/webupd8team/java/ubuntu precise main
+      - deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu precise main
     tags: preconfig
     
   - name: Accept Oracle License
@@ -32,17 +32,23 @@
 
   - name: Change ssh_config to ssh from master with no StrictHostKeyCheck,command1
     lineinfile: dest=/etc/ssh/ssh_config regexp='ask' line='StrictHostKeyChecking no' state=present
-    tags: postconfig
-    when: is_master
+    tags: preconfig
 
   - name: Change ssh_config to ssh from master with no StrictHostKeyCheck,command2
     lineinfile: dest=/etc/ssh/ssh_config line='UserKnownHostsFile=/dev/null' insertafter='EOF' state=present
-    tags: postconfig
-    when: is_master
+    tags: preconfig
 
   - name: Remove second line of /etc/hosts
     lineinfile: dest=/etc/hosts regexp='^127\.0\.1\.1' state=absent
-    tags: postconfig
+    tags: preconfig
+
+  - name: download hadoop-yarn src
+    tags: preconfig
+    get_url: dest={{path_to_hadoop}} url={{yarn_common_url}}/{{ yarn_version }}/{{ yarn_version }}.tar.gz
+
+  - name: unzip hadoop-yarn src
+    tags: preconfig
+    unarchive: src={{path_to_hadoop}}/{{ yarn_version }}.tar.gz dest=/usr/local copy=no owner=root group=root
 
   - name: Add virtual machine private ips in /etc/hosts
     template: src=hosts.j2 dest={{etchosts_filename}}
@@ -66,12 +72,12 @@
  
   - name: prepare ssh 
     tags: postconfig
-    shell: sudo -u hduser cat /home/hduser/.ssh/id_rsa.pub >> /home/hduser/.ssh/authorized_keys
+    shell: sudo -u hduser cat {{hadoopuser_path}}/.ssh/id_rsa.pub >> {{hadoopuser_path}}/.ssh/authorized_keys
     when: is_master
 
   - name: copy master public ssh key to local box
     tags: postconfig
-    local_action: command  scp -v -o StrictHostKeyChecking=no root@{{ hostvars[groups['master'][0]].inventory_hostname }}:/home/hduser/.ssh/id_rsa.pub /tmp/{{master_key}}
+    fetch: src={{hadoopuser_path}}/.ssh/id_rsa.pub dest=/tmp/{{master_key}} flat=yes
     when: is_master
 
   - name: copy local box master ssh key to hduser
@@ -81,22 +87,14 @@
       - /tmp/{{master_key}}
     when: is_slave
 
-  - name: download hadoop-yarn src
-    tags: preconfig
-    get_url: dest=/usr/local url={{yarn_common_url}}/{{ yarn_version }}/{{ yarn_version }}.tar.gz
-
-  - name: unzip hadoop-yarn src
-    tags: preconfig
-    action: command tar -xzf {{ yarn_version }}.tar.gz chdir=/usr/local
-
   - name: chown hadoop-src from root to hadoop group
     tags: postconfig
-    action: |
-      command /bin/sh -c '
-      cd /usr/local
-      mv {{ yarn_version }} hadoop
-      chown -R hduser:hadoop hadoop'
-  
+    file: path={{path_to_hadoop}}/{{yarn_version}} state=directory owner=hduser group=hadoop recurse=yes
+
+  - name: Rename hadoop directory
+    tags: postconfig
+    command: mv {{path_to_hadoop}}/{{yarn_version}} {{hadoop_home}}
+
   - name: update ~/.bashrc and hadoop-env.sh files
     tags: postconfig
     lineinfile: "dest={{item.dest}} state={{item.state}} insertafter={{item.insertafter}} line={{item.line}}"
@@ -119,11 +117,11 @@
 
   - name: create app/hadoop/tmp to store HDFS
     tags: postconfig
-    action: |
-      command /bin/sh -c '
-      mkdir -p /app/hadoop/tmp
-      chown hduser:hadoop /app/hadoop/tmp
-      chmod 750 /app/hadoop/tmp'
+    action: command {{item}}
+    with_items:
+      - mkdir -p /app/hadoop/tmp
+      - chown hduser:hadoop /app/hadoop/tmp
+      - chmod 750 /app/hadoop/tmp
 
   - name: copy yarn configuration xml files in every node
     tags: postconfig
