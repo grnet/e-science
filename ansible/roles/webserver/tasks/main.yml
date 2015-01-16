@@ -63,11 +63,11 @@
 
   - name: create directory for projects
     tags: createprojectdirectory
-    command: mkdir {{myprojectdir}} creates={{myprojectdir}}
+    command: mkdir {{my_project_dir}} creates={{my_project_dir}}
 
   - name: Git clone e-science project in the git directory
     tags: gitcloneproject
-    command: git clone -b develop {{escience_repo}} {{myprojectname}} chdir={{myprojectdir}}
+    command: git clone -b develop {{escience_repo}} {{my_project_name}} chdir={{my_project_dir}}
 
   - name: Install orka as a python package
     tags: orkapackageinstall
@@ -75,15 +75,15 @@
 
   - name: Copy package.json to webserver
     tags: cppackagejson
-    copy: src=package.json dest={{myprojectdir}}/{{myprojectname}} owner=orka_admin mode=0644
+    copy: src=package.json dest={{my_project_dir}}/{{my_project_name}} owner=orka_admin mode=0644
 
   - name: Copy Gruntfile.j2 template to webserver
     tags: cpgruntfile
-    template: src=Gruntfile.j2 dest={{myprojectdir}}/{{myprojectname}} owner=orka_admin mode=0644
+    template: src=Gruntfile.j2 dest={{my_project_dir}}/{{my_project_name}} owner=orka_admin mode=0644
 
   - name: Rename Gruntfile.j2 template to Gruntfile.js
     tags: renamegruntfile
-    command: mv Gruntfile.j2 Gruntfile.js chdir={{myprojectdir}}/{{myprojectname}}
+    command: mv Gruntfile.j2 Gruntfile.js chdir={{my_project_dir}}/{{my_project_name}}
     
   - name: Download NVM
     tags: download_nvm
@@ -145,11 +145,11 @@
     template: src=settings.j2 owner=orka_admin mode=0744 dest={{settings_path}}/settings.py
 
   - name: Django project migrate
-    shell: python manage.py migrate chdir={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}
+    shell: python manage.py migrate chdir={{my_project_dir}}/{{my_project_name}}/{{ember_django_dir}}
     tags: djangomigrate
    
   - name: Create Django superuser
-    shell: echo "from django.contrib.auth.models import User; User.objects.create_superuser('{{django_admin_name}}', '{{django_admin_email}}', '{{django_admin_password}}')" | python manage.py shell chdir={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}
+    shell: echo "from django.contrib.auth.models import User; User.objects.create_superuser('{{django_admin_name}}', '{{django_admin_email}}', '{{django_admin_password}}')" | python manage.py shell chdir={{my_project_dir}}/{{my_project_name}}/{{ember_django_dir}}
     tags: djangomigrate
    
   - name: Copy uwsgi.ini file
@@ -189,5 +189,5 @@
       chdir: "{{project_path}}/{{ember_django_dir}}"
 
   - name: Change owner of projects
-    command: chown -R orka_admin:orkagroup {{myprojectdir}}
+    command: chown -R orka_admin:orkagroup {{my_project_dir}}
     tags: djangomigrate

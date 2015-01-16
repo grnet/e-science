@@ -62,7 +62,7 @@ It is easier though to change the default values in the ansible/group_vars/all.y
 
     ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "choose_role=webserver create_orka_admin=True"
 
-Also, the variables [myprojectdir] [myprojectname] are the directory name where django projects will be created and a django project name and can be changed from their default values.
+Also, the variables [my_project_dir] [my_project_name] are the directory name where django projects will be created and a django project name and can be changed from their default values.
 
 Other useful variables are :
 - [escience_repo], which is the github repo from where webserver role will clone the django project. Default is gtzelepis.
