@@ -1,5 +1,5 @@
 // Welcome user route.
-// Show user id and number of clusters.
+// Show user id, number of clusters and table of clusters.
 App.UserWelcomeRoute = App.RestrictedRoute.extend({
 	//"user" model for the welcome route
 	needs: 'userWelcome',

@@ -1,6 +1,6 @@
-// Index route (e.g localhost:port/) redirects to homepage
+// Index route (e.g localhost:port/)
 App.IndexRoute = Ember.Route.extend({
-	// redirect
+	// redirects to homepage
 	redirect : function() {
 		this.transitionTo('homepage');
 	}

@@ -14,6 +14,7 @@ App.UserLoginController = Ember.Controller.extend({
 	},
 	loginFailed : false,
 	actions : {
+		// action login, reads input text
 		login : function(text) {
 			var self = this;
 			if (text) {
