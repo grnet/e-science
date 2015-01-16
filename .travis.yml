@@ -14,7 +14,7 @@ before_install:
   -in .private/.config.txt.enc -out .private/.config.txt -d
 
 install:
-- pip install kamaki==0.13rc3
+- pip install kamaki==0.13.1
 - pip install paramiko
 - pip install ansible==1.7.2
 - pip install django
@@ -32,7 +32,7 @@ before_script:
 - psql -c 'create user developer with createdb;' -U postgres
 - psql -c 'create database escience with owner developer;' -U postgres
 - python ember_django/manage.py migrate --noinput
-- cd orka-0.1.0
+- cd orka-0.1.1
 - python setup.py install
 - cd ..
 - npm install testem -g

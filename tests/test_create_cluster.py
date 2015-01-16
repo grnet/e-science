@@ -13,7 +13,7 @@ from ConfigParser import RawConfigParser, NoSectionError
 import sys
 from os.path import join, dirname, abspath
 
-sys.path.append(join(dirname(abspath(__file__)), '../orka-0.1.0'))
+sys.path.append(join(dirname(abspath(__file__)), '../orka-0.1.1'))
 
 # import objects we aim to test
 from orka.create_cluster import YarnCluster, ClientError

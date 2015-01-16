@@ -11,7 +11,7 @@ from setuptools import setup
 BASE_DIR = join(dirname(abspath(__file__)), 'orka/orka.py')
 import orka
 
-requires = ['kamaki==0.13rc3','paramiko','requests','PyYAML']
+requires = ['kamaki==0.13.1','paramiko','requests','PyYAML']
 
 setup(
     name = "orka",
