@@ -83,23 +83,30 @@ def run_ansible(filename, cluster_size, hadoop_image):
     level = logging.getLogger().getEffectiveLevel()
     # ansible_log file to write if logging level is
     # different than report or summary
+    ansible_verbosity = ""
     ansible_log = " > ansible.log"
-    if level == REPORT or level == SUMMARY:
+    if level == REPORT or level == SUMMARY or level == logging.INFO:
         ansible_log = ""
+    elif level == logging.DEBUG:
+        ansible_verbosity = " -vv"
+        log_file_path = os.path.join(os.getcwd(), "create_cluster_debug.log")
+        ansible_log = " >> " + log_file_path
+    if level == logging.INFO:
+        ansible_verbosity = " -v"
     orka_dir = dirname(abspath(__file__))
     ansible_path = orka_dir + '/ansible/site.yml'
 
     if hadoop_image:
         exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                                 'ansible-playbook -i ' + filename + ' ' +
-                                ansible_path +
+                                ansible_path + ansible_verbosity +
                                 ' -f ' + str(cluster_size) +
                                 ' -e "choose_role=yarn format=True start_yarn=True" -t postconfig'
                                 + ansible_log)
     else:
         exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                                 'ansible-playbook -i ' + filename + ' ' +
-                                ansible_path +
+                                ansible_path + ansible_verbosity +
                                 ' -f ' + str(cluster_size) +
                                 ' -e "choose_role=yarn format=True start_yarn=True"'
                                 + ansible_log)

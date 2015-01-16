@@ -53,7 +53,7 @@
       - { name: 'mock' }
       - { name: 'djorm-pgarray' }
       - { name: 'paramiko' }
-      - { name: 'kamaki==0.13rc3'}
+      - { name: 'kamaki==0.13.1'}
       - { name: 'ansible==1.7.2' }
       - { name: 'uwsgi' }
       - { name: 'south' }
