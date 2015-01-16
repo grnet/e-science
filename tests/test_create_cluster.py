@@ -5,7 +5,7 @@
 from unittest import TestCase, main
 from mock import patch
 from ConfigParser import RawConfigParser, NoSectionError
-from kamaki.clients.utils import https
+from orka import https
 https.patch_ignore_ssl()
 
 # get relative path references so imports will work,
@@ -16,7 +16,7 @@ from os.path import join, dirname, abspath
 sys.path.append(join(dirname(abspath(__file__)), '../orka-0.1.0'))
 
 # import objects we aim to test
-from orka.create_cluster import YarnCluster, ClientError
+from orka.create_cluster import YarnCluster, ClientError, OrkaRequest
 from orka.cluster_errors_constants import error_quotas_cluster_size, error_quotas_network, \
     error_get_ip, error_quotas_cpu, error_quotas_ram, error_quotas_cyclades_disk
 
@@ -26,6 +26,10 @@ def mock_createcluster(*args):
     fake_master_ip = '127.0.0.1'
     fake_vm_dict = [{'name': 'f_vm', 'adminPass': 'blabla'}, {'name': 'f_2 vm', 'adminPass': 'blabla2'}]
     return fake_master_ip, fake_vm_dict
+
+def mock_createclusterdb(*args):
+    """ no implementation needed """
+    print 'in mock create cluster db'
 
 def mock_createpassfile(*args):
     print 'create PLACEHOLDER password file'
@@ -78,8 +82,6 @@ def mock_init_cyclades(*args):
     print 'in mock cyclades' 
     return 'https://cyclades.okeanos.grnet.gr/compute/v2.0'
 
- 
-
 
 def mock_get_flavorid(*args):
     """ :return valid static flavor id. Arguments ignored. """
@@ -113,9 +115,6 @@ class MockCycladesNetClient():
     def list_floatingips(self):
         return [{'instance_id': '604863', 'port_id': '1743733'}, {'instance_id': None, 'port_id': None},
                 {'instance_id': '615302', 'port_id': '1773954'}]
-        # [{'floating_network_id': '6783', 'user_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'deleted': False, 'tenant_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'instance_id': '604863', 'fixed_ip_address': None, 'floating_ip_address': '83.212.123.218', 'port_id': '1743733', 'id': '527909'},
-        # {'floating_network_id': '6783', 'user_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'deleted': False, 'tenant_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'instance_id': None, 'fixed_ip_address': None, 'floating_ip_address': '83.212.123.253', 'port_id': None, 'id': '570931'},
-        # {'floating_network_id': '2216', 'user_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'deleted': False, 'tenant_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'instance_id': '615302', 'fixed_ip_address': None, 'floating_ip_address': '83.212.118.250', 'port_id': '1773954', 'id': '572851'}]
 
 
 def mock_init_cyclades_netclient(*args):
@@ -135,10 +134,12 @@ def mock_install_yarn(*args):
     print 'in mock install yarn'
 
 def mock_get_project_id(*args):
+    print 'in mock get project id'
     return 'some_project_id'
 
 # replace unmanaged calls with fakes
 @patch('orka.create_cluster.Cluster.create', mock_createcluster)
+@patch('orka.create_cluster.OrkaRequest.create_cluster_db', mock_createclusterdb)
 @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
 @patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
 @patch('orka.create_cluster.init_cyclades', mock_init_cyclades)
@@ -233,20 +234,22 @@ class TestCreateCluster(TestCase):
     @patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_ip_quotas_sufficient(self):
         # arrange
-        pass
+        
         # act
 
         # assert
+        pass
 
     @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
     @patch('orka.create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
     @patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_ip_quotas_exceeded(self):
         # arrange
-        pass
+        
         # act
 
         # assert
+        pass
 
     @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
     @patch('orka.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
@@ -281,34 +284,52 @@ class TestCreateCluster(TestCase):
     @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
     def test_check_ram_valid_sufficient(self):
         # arrange
-        pass
+        c_yarn_cluster = YarnCluster(self.opts)
+        expected = 0
         # act
-
+        returned = c_yarn_cluster.check_ram_valid()
         # assert
+        self.assertEqual(expected, returned)
 
     @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
     def test_check_ram_valid_exceeded(self):
         # arrange
-        pass
+        prev_clustersize = self.opts['cluster_size']
+        self.opts['cluster_size'] = 30
+        c_yarn_cluster = YarnCluster(self.opts)
+        expected = error_quotas_ram
         # act
-
+        with self.assertRaises(ClientError) as context:
+            c_yarn_cluster.check_ram_valid()
+        self.opts['cluster_size'] = prev_clustersize
         # assert
+        the_exception = context.exception
+        self.assertEqual(expected, the_exception.status)
 
     @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
     def test_check_disk_valid_sufficient(self):
         # arrange
-        pass
+        c_yarn_cluster = YarnCluster(self.opts)
+        expected = 0
         # act
-
+        returned = c_yarn_cluster.check_disk_valid()
         # assert
+        self.assertEqual(expected, returned)
 
     @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
     def test_check_disk_valid_exceeded(self):
         # arrange
-        pass
+        prev_clustersize = self.opts['cluster_size']
+        self.opts['cluster_size'] = 100
+        c_yarn_cluster = YarnCluster(self.opts)
+        expected = error_quotas_cyclades_disk
         # act
-
+        with self.assertRaises(ClientError) as context:
+            c_yarn_cluster.check_disk_valid()
+        self.opts['cluster_size'] = prev_clustersize
         # assert
+        the_exception = context.exception
+        self.assertEqual(expected, the_exception.status)
 
     @patch('orka.create_cluster.check_credentials', mock_checkcredentials)
     @patch('orka.create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
