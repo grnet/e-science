@@ -1,7 +1,7 @@
 ---
   choose_role: yarn
   
-  # setup_orca_admin variables
+  # setup_orka_admin variables
   orka_admin_password: $1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20
   create_orka_admin: False
   

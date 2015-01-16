@@ -171,8 +171,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 		if (length == 0) {
 			if (this.get('project_name') != '') {
 				this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
-				alert(String(this));
-				alert(String(this.get('project_name')));
 			}
 			cluster_size_zero = true;
 			return max_cluster_size_limited_by_current_cpus;
