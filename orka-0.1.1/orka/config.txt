@@ -1,4 +1,4 @@
 [Database]
-url = http://83.212.120.241/api/orka
+url = http://83.212.120.5/api/orka
 [Login]
-url = http://83.212.120.241/api/users
+url = http://83.212.120.5/api/users
