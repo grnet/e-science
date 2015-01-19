@@ -20,7 +20,7 @@
   tasks:
      - { include: start_yarn.yml, when: start_yarn == 'True'}
 
-- name: Setup orca_admin user in Django server
+- name: Setup orka_admin user in Django server
   hosts: webserver
   remote_user: root
   tasks:

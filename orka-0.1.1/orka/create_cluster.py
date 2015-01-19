@@ -331,6 +331,9 @@ class YarnCluster(object):
         master_name = self.server_dict[0]['name']
         # Write master VM root password to a file with same name as master VM
         self.create_password_file(master_root_pass, master_name)
+        logging.log(SUMMARY, ' The root password of master VM [%s] '
+                        'is on file %s', self.server_dict[0]['name'],
+                        self.pass_file)
         # Return master node ip and server dict
         return self.HOSTNAME_MASTER_IP, self.server_dict
 
@@ -349,9 +352,6 @@ class YarnCluster(object):
             logging.log(SUMMARY, ' Installing and configuring Yarn')
             install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.server_dict[0]['name'], self.hadoop_image)
-            logging.log(SUMMARY, ' The root password of master VM [%s] '
-                        'is on file %s', self.server_dict[0]['name'],
-                        self.pass_file)
             # If Yarn cluster is build, update cluster status as active
             payload = {"orka": {"status": "Active", "cluster_name": self.opts['name'],
                                 "master_ip": self.HOSTNAME_MASTER_IP}}

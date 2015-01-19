@@ -85,11 +85,11 @@
 
   - name: create directory for projects
     tags: setupproject
-    file: path={{myprojectdir}} state=directory
+    file: path={{my_project_dir}} state=directory
 
   - name: Git clone e-science project in the git directory
     tags: setupproject
-    git: repo={{escience_repo}} dest={{myprojectdir}}/{{myprojectname}}
+    git: repo={{escience_repo}} dest={{my_project_dir}}/{{my_project_name}}
 
   - name: Install orka as a python package
     tags: setupproject
@@ -164,7 +164,7 @@
     tags: djangosetup
    
   - name: Create Django superuser
-    shell: echo "from django.contrib.auth.models import User; User.objects.create_superuser('{{django_admin_name}}', '{{django_admin_email}}', '{{django_admin_password}}')" | python manage.py shell chdir={{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}
+    shell: echo "from django.contrib.auth.models import User; User.objects.create_superuser('{{django_admin_name}}', '{{django_admin_email}}', '{{django_admin_password}}')" | python manage.py shell chdir={{my_project_dir}}/{{my_project_name}}/{{ember_django_dir}}
     tags: djangosetup
    
   - name: Copy uwsgi.ini file

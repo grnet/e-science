@@ -1,10 +1,9 @@
 ---
  # PostgreSql variables
- db_user: orcadbuser
- db_password: 0rc@p@$$+
- db_name: orcadb
- db_host: 83.212.120.11
-
+ db_user: developer
+ db_password: escience
+ db_name: escience
+ db_host: 127.0.0.1
 
  # Django admin variables
  django_admin_name: orka_admin
@@ -14,10 +13,10 @@
  
  # Django project variables
  user_home: /home/orka_admin
- myprojectdir: "{{user_home}}/projects"
- myprojectname: e-science
+ my_project_dir: "{{user_home}}/projects"
+ my_project_name: e-science
  ember_django_dir: ember_django
- settings_path: "{{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}/backend/"
+ settings_path: "{{my_project_dir}}/{{my_project_name}}/{{ember_django_dir}}/backend/"
  django_port: 8000
  orka_version: orka-0.1.1
  
@@ -26,7 +25,7 @@
  is_periodic_task: False
 
  # Paths for grunt tasks
- project_path: "{{myprojectdir}}/{{myprojectname}}"
+ project_path: "{{my_project_dir}}/{{my_project_name}}"
  path_to_folder_to_minify: "{{ember_django_dir}}/frontend/app/"
  path_to_folder_to_removelogging: "{{ember_django_dir}}/frontend/app/"
  escience_repo: https://github.com/ioannisstenos/e-science.git
