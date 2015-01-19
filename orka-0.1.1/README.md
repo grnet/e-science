@@ -69,33 +69,37 @@ Optional arguments for create command:
     --logging="critical, error, warning, summary, report, info, debug (Default Value=summary)"
     --use_hadoop_image="name of a hadoop image. Overrides image value" (Default value=HadoopImage)
 
+Install from a pre-configured image
+----------------------------------
 
-**Using the --use_hadoop_image argument creates faster the Hadoop cluster.This happens because the image it will use for the VMs is a specially created ~okeanos VM image with Java and YARN installed.**
+    Using the --use_hadoop_image argument creates the Hadoop cluster much faster because it utilises a specially
+    created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest
+    stable YARN version will be installed (but at the cost of lower speed).
 
 example for create cluster with default optionals (not hadoop_image):
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc ~okeanos_token project_name
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc <~okeanos_token> <project_name>
     
 example for create cluster with default optionals (with default hadoop image):
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc ~okeanos_token project_name --use_hadoop_image
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc <~okeanos_token> <project_name> --use_hadoop_image
 
 example for create cluster with a different hadoop image and logging level:
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc ~okeanos_token project_name --use_hadoop_image=hadoop_image_name --logging=report
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc <~okeanos_token> <project_name> --use_hadoop_image=hadoop_image_name --logging=report
 
-Required arguments for destroy command :
+Required positional arguments for destroy command :
 
-    master_ip="Public ip of the master vm of the Hadoop cluster"
+    master_ip="Public ip of the master VM of the Hadoop cluster"
     token="an ~okeanos token"
 
-Optional argument for destroy command:
+Optional arguments for destroy command:
 
     --logging="7 logging levels:critical, error, warning, summary, report, info, debug (Default Value summary)"
 
 example for destroy cluster:
 
-    orka destroy 83.83.83.83 ~okeanos_token --logging=report
+    orka destroy 83.83.83.83 <~okeanos_token> --logging=report
 
 Also, with
 

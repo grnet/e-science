@@ -1,7 +1,7 @@
 ---
   - name: format hdfs
     tags: postconfig
-    command: ./hdfs namenode -format -force chdir={{hadoop_home}}/bin
+    command: ./hdfs namenode -format chdir={{hadoop_home}}/bin
     when: format
 
   - name: start dfs
