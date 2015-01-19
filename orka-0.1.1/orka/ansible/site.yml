@@ -24,7 +24,7 @@
   hosts: webserver
   remote_user: root
   tasks:
-     - { include: setup_orca_admin.yml, when: create_orca_admin == 'True' and choose_role == 'webserver'}
+     - { include: setup_orka_admin.yml, when: create_orka_admin == 'True' and choose_role == 'webserver'}
 
 - name: Installing and configuring Django server
   hosts: webserver
