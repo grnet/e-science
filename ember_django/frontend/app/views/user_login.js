@@ -5,7 +5,7 @@ App.UserLoginView = Ember.View.extend({
     submit : function() {
 	// retrieve token
 	var text = this.get('controller.token');
-	// send it to the login action
+	// send it to the login action of the login controller
 	this.get('controller').send('login', text);
     }
 });

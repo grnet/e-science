@@ -4,6 +4,7 @@
 
 """orka.orka: provides entry point main()."""
 import logging
+import os
 from sys import argv
 from os.path import join, dirname, abspath
 from kamaki.clients import ClientError
@@ -112,7 +113,7 @@ def main():
         parser_c.add_argument("cluster_size", help='Total number of cluster nodes',
                               type=checker.two_or_bigger)
 
-        parser_c.add_argument("cpu_master", help='Number of cpu cores for the master node',
+        parser_c.add_argument("cpu_master", help='Number of CPU cores for the master node',
                               type=checker.unsigned_int)
 
         parser_c.add_argument("ram_master", help='Size of RAM (MB) for the master node',
@@ -121,7 +122,7 @@ def main():
         parser_c.add_argument("disk_master", help='Disk size (GB) for the master node',
                               type=checker.five_or_bigger)
 
-        parser_c.add_argument("cpu_slave", help='Number of cpu cores for the slave node(s)',
+        parser_c.add_argument("cpu_slave", help='Number of CPU cores for the slave node(s)',
                               type=checker.unsigned_int)
 
         parser_c.add_argument("ram_slave", help='Size of RAM (MB) for the slave node(s)',
@@ -130,7 +131,7 @@ def main():
         parser_c.add_argument("disk_slave", help='Disk size (GB) for the slave node(s)',
                               type=checker.five_or_bigger)
 
-        parser_c.add_argument("disk_template", help='Disk template',
+        parser_c.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
                               metavar='disk_template', choices=['drbd', 'ext_vlmc'])
 
         parser_c.add_argument("token", help='Synnefo authentication token')
@@ -139,7 +140,7 @@ def main():
                               ' to request resources from ')
 
         parser_c.add_argument("--image", help='OS for the cluster.'
-                              ' Default is Debian Base', metavar='image',
+                              ' Default is "Debian Base"', metavar='image',
                               default=default_image)
 
         parser_c.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
@@ -170,7 +171,7 @@ def main():
                 opts['image'] = opts['use_hadoop_image']
             
         if opts['logging'] == 'debug':
-            log_directory = dirname(abspath(__file__))
+            log_directory = os.getcwd()
             log_file_path = join(log_directory, "create_cluster_debug.log")
 
             logging.basicConfig(format='%(asctime)s:%(message)s',

@@ -202,7 +202,7 @@ class YarnCluster(object):
         for checker in [func for (order, func) in sorted(self._DispatchCheckers.items())]:
             # for k, checker in self._DispatchCheckers.iteritems():
             retval = checker()
-        return 0
+        return retval
 
     def get_flavor_id_master(self, cyclades_client):
         """

@@ -6,6 +6,7 @@
 .pydevproject
 *.log
 *_root_password
+ansible_hosts*
 .settings/
 bower_components/
 node_modules/

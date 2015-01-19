@@ -3,6 +3,7 @@
  db_user: developer
  db_password: escience
  db_name: escience
+ db_host: 127.0.0.1
 
  # Django admin variables
  django_admin_name: orka_admin
@@ -11,10 +12,11 @@
  ansible_sudo_pass: lalakia
  
  # Django project variables
- my_project_dir: projects
- my_project_name: e-science
+ user_home: /home/orka_admin
+ myprojectdir: "{{user_home}}/projects"
+ myprojectname: e-science
  ember_django_dir: ember_django
- settings_path: "{{my_project_dir}}/{{my_project_name}}/{{ember_django_dir}}/backend/"
+ settings_path: "{{myprojectdir}}/{{myprojectname}}/{{ember_django_dir}}/backend/"
  django_port: 8000
  orka_version: orka-0.1.1
  
@@ -23,7 +25,7 @@
  is_periodic_task: False
 
  # Paths for grunt tasks
- project_path: "{{my_project_dir}}/{{my_project_name}}"
+ project_path: "{{myprojectdir}}/{{myprojectname}}"
  path_to_folder_to_minify: "{{ember_django_dir}}/frontend/app/"
  path_to_folder_to_removelogging: "{{ember_django_dir}}/frontend/app/"
- escience_repo: https://github.com/gtzelepis/e-science.git
+ escience_repo: https://github.com/ioannisstenos/e-science.git

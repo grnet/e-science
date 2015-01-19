@@ -1,24 +1,20 @@
 ---
   - name: Install pip
-    tags: installpip
-    shell: apt-get -y install python-pip
+    tags: setuporkaadmin
+    apt: name=python-pip update_cache=yes
    
   - name: Install passlib
     pip: name=passlib
-    tags: installpasslib
+    tags: setuporkaadmin
 
   - name: create orka group
     group: name=orkagroup state=present
-    tags: setuporka
+    tags: setuporkaadmin
 
   - name: create orka_admin user
-    user: name=orka_admin group=orkagroup generate_ssh_key=yes shell=/bin/bash update_password=always password={{orka_admin_password}} state=present
-    tags: setuporka
+    user: name=orka_admin groups="orkagroup,sudo" generate_ssh_key=yes shell=/bin/bash update_password=always password={{orka_admin_password}} state=present
+    tags: setuporkaadmin
 
-  - name: Add orka_admin to sudo group 
-    shell: usermod -a -G sudo orka_admin
-    tags: setuporka  
-   
   - name: copy local box master ssh key to orka_admin
-    tags: setuporka
+    tags: setuporkaadmin
     authorized_key: user=orka_admin key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
