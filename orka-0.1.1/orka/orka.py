@@ -70,6 +70,11 @@ class HadoopCluster(object):
         """ Method for creating Hadoop clusters in~okeanos."""
         try:
             c_yarn_cluster = YarnCluster(self.opts)
+        except Exception, e:
+            logging.error(' Fatal error: ' + str(e.args[0]))
+            exit(error_fatal)
+
+        try:
             c_yarn_cluster.create_yarn_cluster()
 
         except Exception:
