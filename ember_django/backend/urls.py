@@ -16,6 +16,9 @@ urlpatterns = patterns('', url(r'^$', 'backend.views.main_page'),
                        url(r'^api/users', views.SessionView.as_view()),
                        url(r'^api/orka', views.DatabaseView.as_view()),
                        url(r'^api/clusters', views.StatusView.as_view()),
-                       url(r'^api/clusterchoices', views.StatusView.as_view())
+                       url(r'^api/clusterchoices', views.StatusView.as_view()),
+                       # celery test stuff - temporary
+                       url(r'^celery_test', 'backend.views.start_celery_task'),
+                       url(r'^celery_progress', 'backend.views.monitor_celery_task')
 
                        )
