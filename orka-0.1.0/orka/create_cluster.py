@@ -66,6 +66,18 @@ class YarnCluster(object):
             if self.opts['use_hadoop_image']:
                 self.hadoop_image = True
 
+        # check hadoopconf flag and set hadoop_image accordingly
+        list_current_images = self.plankton.list_public(True, 'default')
+        for image in list_current_images:
+            if self.opts['image'] in image['name']:
+                try:
+                    if 'true' in image['properties']['hadoopconf']: 
+                        self.hadoop_image = True
+                    else:
+                        self.hadoop_image = False
+                except:
+                    self.hadoop_image = False
+                        
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_cluster_size_quotas

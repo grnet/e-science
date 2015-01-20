@@ -12,6 +12,7 @@ from os.path import abspath, dirname, join
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
+from kamaki.clients.compute import ComputeClient
 from kamaki.clients.cyclades import CycladesClient, CycladesNetworkClient
 from time import sleep
 from cluster_errors_constants import *
@@ -336,6 +337,22 @@ def check_quota(token, project_id):
               'cluster_size': {'limit': limit_vm, 'available': available_vm}}
     return quotas
 
+def check_images(token, project_id):
+    """
+    Checks the list of the current images
+    Filter the ones that match with our uuid
+    Return the available images
+    """
+    auth = check_credentials(token)
+    endpoints, user_id = endpoints_and_user_id(auth)    
+    plankton = init_plankton(endpoints['plankton'], token)
+    list_current_images = plankton.list_public(True, 'default')
+    available_images = []
+    for image in list_current_images:
+        if "ec567bea-4fa2-433d-9935-261a0867ec60" in image['owner']:
+            available_images.append(image['name'])
+                
+    return available_images
 
 def endpoints_and_user_id(auth):
     """
