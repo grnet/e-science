@@ -6,6 +6,7 @@ from django.conf import settings
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 
 app = Celery('backend',
+             broker='amqp://guest:guest@localhost:5672//',
              include=['backend.tasks'])
 
 # Using a string here means the worker will not have to

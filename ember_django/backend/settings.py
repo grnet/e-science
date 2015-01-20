@@ -10,6 +10,11 @@ Celery settings
 # for relative imports by default.
 # Celery settings
 BROKER_URL = 'amqp://guest:guest@localhost:5672//'
+# BROKER_HOST = '127.0.0.1'
+# BROKER_PORT = '5672'
+# BROKER_VHOST = '/escience_tasks'
+# BROKER_USER = 'orkarbmq'
+# BROKER_PASSWORD = 'rBP@$$'
 #: Only add pickle to this list if your broker is secured
 #: from unwanted access (see userguide/security.html)
 CELERY_ACCEPT_CONTENT = ['json']
@@ -17,6 +22,9 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_RESULT_EXPIRES=3600
 CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
+import djcelery
+djcelery.setup_loader()
+
 
 '''
 Django settings for ember_django project.
