@@ -2,6 +2,23 @@
 # -*- coding: utf-8 -*-
 
 '''
+Celery settings
+'''
+# ^^^ The above is required if you want to import from the celery
+# library. If you don't have this then `from celery.schedules import`
+# becomes `proj.celery.schedules` in Python 2.x since it allows
+# for relative imports by default.
+# Celery settings
+BROKER_URL = 'amqp://guest:guest@localhost:5672//'
+#: Only add pickle to this list if your broker is secured
+#: from unwanted access (see userguide/security.html)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_RESULT_EXPIRES=3600
+CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
+
+'''
 Django settings for ember_django project.
 
 For more information on this file, see
@@ -39,10 +56,12 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'backend',
     'rest_framework',
     'rest_framework_ember',
-    'rest_framework.authtoken',
+    'rest_framework.authtoken',    
+    'kombu.transport.django.KombuAppConfig',
+    'djcelery',
+    'backend',
 )
 
 MIDDLEWARE_CLASSES = (
