@@ -349,7 +349,7 @@ def check_images(token, project_id):
     list_current_images = plankton.list_public(True, 'default')
     available_images = []
     for image in list_current_images:
-        if "ec567bea-4fa2-433d-9935-261a0867ec60" == image['owner']:
+        if image['owner'] == "ec567bea-4fa2-433d-9935-261a0867ec60":
             available_images.append(image['name'])
                 
     return available_images

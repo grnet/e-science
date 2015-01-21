@@ -71,7 +71,7 @@ class YarnCluster(object):
         for image in list_current_images:
             if self.opts['image'] == image['name']:
                 try:
-                    if 'true' == image['properties']['hadoopconf']: 
+                    if image['properties']['hadoopconf'] == 'true': 
                         self.hadoop_image = True
                     else:
                         self.hadoop_image = False
