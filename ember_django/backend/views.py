@@ -23,8 +23,6 @@ from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
 from django_db_after_login import *
 from orka.create_cluster import YarnCluster
 from orka.cluster_errors_constants import *
-from django.http.response import HttpResponseRedirect, HttpResponse
-from django.core.context_processors import request
 
 logging.addLevelName(REPORT, "REPORT")
 logging.addLevelName(SUMMARY, "SUMMARY")
@@ -242,6 +240,8 @@ class SessionView(APIView):
 
 
 # temporary for celery tests
+from django.http.response import HttpResponseRedirect, HttpResponse
+from django.core.context_processors import request
 from backend.tasks import progressive_increase
 from celery.result import AsyncResult
 try:

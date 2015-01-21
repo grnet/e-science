@@ -4,17 +4,7 @@
 '''
 Celery settings
 '''
-# ^^^ The above is required if you want to import from the celery
-# library. If you don't have this then `from celery.schedules import`
-# becomes `proj.celery.schedules` in Python 2.x since it allows
-# for relative imports by default.
-# Celery settings
-BROKER_URL = 'amqp://guest:guest@localhost:5672//'
-# BROKER_HOST = '127.0.0.1'
-# BROKER_PORT = '5672'
-# BROKER_VHOST = '/escience_tasks'
-# BROKER_USER = 'orkarbmq'
-# BROKER_PASSWORD = 'rBP@$$'
+BROKER_URL = 'amqp://orkarbmq:orkapass@localhost:5672//escience_tasks'
 #: Only add pickle to this list if your broker is secured
 #: from unwanted access (see userguide/security.html)
 CELERY_ACCEPT_CONTENT = ['json']
@@ -67,7 +57,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'rest_framework_ember',
     'rest_framework.authtoken',    
-    'kombu.transport.django.KombuAppConfig',
+    # 'kombu.transport.django.KombuAppConfig',
     'djcelery',
     'backend',
 )
