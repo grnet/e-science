@@ -8,11 +8,40 @@ and update the ClusterCreationParams model.
 @author: Ioannis Stenos, Nick Vrionis
 '''
 import logging
+import pycurl
+import cStringIO
+import subprocess
 from kamaki.clients import ClientError
 from orka.okeanos_utils import *
 from django_db_after_login import *
 from backend.models import ClusterCreationParams, ClusterInfo, UserInfo
 from orka.cluster_errors_constants import *
+
+def ssh_list(token):
+    """
+    Get the ssh_key dictionary of a user
+    """
+    
+    command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' + token + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
+    p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
+    out, err = p.communicate()
+    ouput = out[2:-2].split('}, {')
+    ssh_dict =[]
+    ssh_counter = 0
+    for dictionary in ouput:
+        mydict={}
+        new = dictionary.replace('"','')
+        d1 = new.split(', ')
+        for every in d1:
+            z=every.split(': ')
+            z1=[]
+            for item in z:
+                z1.append(item)
+            for k in z1:
+                mydict[z1[0]]=z1[1]
+        ssh_dict.append(mydict)        
+    print ssh_dict[0]['name']   
+    return ssh_dict
 
 
 def project_list_flavor_quota(user):
