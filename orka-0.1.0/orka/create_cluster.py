@@ -69,9 +69,9 @@ class YarnCluster(object):
         # check hadoopconf flag and set hadoop_image accordingly
         list_current_images = self.plankton.list_public(True, 'default')
         for image in list_current_images:
-            if self.opts['image'] in image['name']:
+            if self.opts['image'] == image['name']:
                 try:
-                    if 'true' in image['properties']['hadoopconf']: 
+                    if 'true' == image['properties']['hadoopconf']: 
                         self.hadoop_image = True
                     else:
                         self.hadoop_image = False
