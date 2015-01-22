@@ -76,6 +76,7 @@ class YarnCluster(object):
                     else:
                         self.hadoop_image = False
                 except:
+                    # if hadoopconf hasn't been set then hadoop_image flag is false
                     self.hadoop_image = False
                         
         self._DispatchCheckers = {}

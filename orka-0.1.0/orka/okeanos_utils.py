@@ -349,7 +349,10 @@ def check_images(token, project_id):
     list_current_images = plankton.list_public(True, 'default')
     available_images = []
     for image in list_current_images:
+        # owner of image will be checked based on the uuid
         if image['owner'] == "ec567bea-4fa2-433d-9935-261a0867ec60":
+            available_images.append(image['name'])
+        elif image['owner'] == "25ecced9-bf53-4145-91ee-cf47377e9fb2" and image['name'] == "Debian Base":
             available_images.append(image['name'])
                 
     return available_images
