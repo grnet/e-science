@@ -19,10 +19,13 @@ from models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterInfoSerializer, \
     ClusterchoicesSerializer, PendingQuotaSerializer, ProjectNameSerializer, \
-    MasterIpSerializer, UpdateDatabaseSerializer
+    MasterIpSerializer, UpdateDatabaseSerializer, TaskSerializer
 from django_db_after_login import *
 from orka.create_cluster import YarnCluster
 from orka.cluster_errors_constants import *
+from tasks import createcluster
+import exceptions
+from celery.result import AsyncResult
 
 logging.addLevelName(REPORT, "REPORT")
 logging.addLevelName(SUMMARY, "SUMMARY")
@@ -33,11 +36,40 @@ logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
                    level=logging_level, datefmt='%H:%M:%S')
 
 class MainPageView(generic.TemplateView):
-    '''Load the template file'''
+    """Load the template file"""
     template_name = 'index.html'
 
 main_page = MainPageView.as_view()
 
+class JobsView(APIView):
+    """
+    View to get info for our task.
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (IsAuthenticated, )
+    resource_name = 'job'
+    serializer_class = TaskSerializer
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get method
+        """
+        serializer = self.serializer_class(data=request.DATA)
+        if serializer.is_valid():
+            task_id = serializer.data['task_id']
+            c_task = AsyncResult(task_id)
+            user_token = Token.objects.get(key=request.auth)
+            user = UserInfo.objects.get(user_id=user_token.user.user_id)
+
+            if c_task.ready():
+                if c_task.successful():
+                    return Response({"message": c_task.result})
+                return Response({"message": c_task.result["exc_message"]})
+
+            else:
+                print 'celery is doing stuff'
+                return Response({'state': c_task.state})
+        return Response(serializer.errors)
 
 
 class DatabaseView(APIView):
@@ -93,7 +125,8 @@ class DatabaseView(APIView):
             try:
                 db_cluster_update(user, serializer.data['status'],
                                   serializer.data['cluster_name'],
-                                  master_ip=serializer.data['master_ip'])
+                                  master_IP=serializer.data['master_IP'],
+                                  state=serializer.data['state'])
                 return Response({"id": 1, "message": "Requested cluster updated"})
             except ClientError, e:
                 return Response({"id": 1, "message": e.message})
@@ -111,9 +144,8 @@ class DatabaseView(APIView):
             user_token = Token.objects.get(key=request.auth)
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
             try:
-                print serializer.data
                 db_cluster_destroy(user,
-                                   serializer.data['master_ip'])
+                                   serializer.data['master_IP'])
                 return Response({"id": 1, "message": "Requested cluster was deleted from db"})
             except ClientError, e:
                 return Response({"id": 1, "message": e.message})
@@ -125,22 +157,22 @@ class DatabaseView(APIView):
 
 
 class StatusView(APIView):
-    '''
+    """
     View to handle requests for retrieving cluster creation parameters
     from ~okeanos and checking user's choices for cluster creation
     coming from ember.
-    '''
+    """
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticatedOrIsCreation, )
     resource_name = 'cluster'
     serializer_class = ClusterCreationParamsSerializer
 
     def get(self, request, *args, **kwargs):
-        '''
+        """
         Return a serialized ClusterCreationParams model with information
         retrieved by kamaki calls. User with corresponding status will be
         found by the escience token.
-        '''
+        """
         user_token = Token.objects.get(key=request.auth)
         self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
         retrieved_cluster_info = project_list_flavor_quota(self.user)
@@ -149,11 +181,11 @@ class StatusView(APIView):
 
 
     def put(self, request, *args, **kwargs):
-        '''
+        """
         Handles ember requests with user's cluster creation parameters.
         Check the parameters with HadoopCluster object from create_cluster
         script.
-        '''
+        """
         self.resource_name = 'clusterchoice'
         self.serializer_class = ClusterchoicesSerializer
         serializer = self.serializer_class(data=request.DATA)
@@ -174,23 +206,17 @@ class StatusView(APIView):
                        'token': user.okeanos_token,
                        'project_name': serializer.data['project_name']}
 
-            try:
-                new_yarn_cluster = YarnCluster(choices)
-                MASTER_IP, servers = new_yarn_cluster.create_yarn_cluster()
-                return Response({"id": 1, "message": " Yarn Cluster is active."
-                                 "You can access it through " +
-                                 MASTER_IP + ":8088/cluster"})
-            except ClientError, e:
-                return Response({"id": 1, "message": e.message})
-            except Exception, e:
-                return Response({"id": 1, "message": e.args[0]})
+            c_cluster = createcluster.delay(choices)
+            task_id = c_cluster.id
+
+            return Response({"task_id": task_id}, status=202)
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)
 
 
 class SessionView(APIView):
-    '''View to handle requests from ember for user login and logout'''
+    """View to handle requests from ember for user login and logout"""
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticatedOrIsCreation, )
     resource_name = 'user'
@@ -198,22 +224,22 @@ class SessionView(APIView):
     user = None
 
     def get(self, request, *args, **kwargs):
-        '''
+        """
         Return a UserInfo object from db.
         User will be found by the escience token.
-        '''
+        """
         user_token = Token.objects.get(key=request.auth)
         self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
         self.serializer_class = UserInfoSerializer(self.user)
         return Response(self.serializer_class.data)
 
     def post(self, request, *args, **kwargs):
-        '''
+        """
         Authenticate a user with a ~okeanos token.  Return
         appropriate success flag, user id, cluster number
         and escience token or appropriate  error messages in case of
         error.
-        '''
+        """
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
             token = serializer.data['token']
@@ -228,12 +254,51 @@ class SessionView(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, *args, **kwargs):
-        '''
+        """
         Updates user status in database on user logout.
-        '''
+        """
         user_token = Token.objects.get(key=request.auth)
         self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
         db_logout_entry(self.user)
         self.serializer_class = UserInfoSerializer(self.user)
         return Response({"id": "1", "token": "null", "user_id": "null",
                          "cluster": "null"})
+
+
+# temporary for celery tests
+from django.http.response import HttpResponseRedirect, HttpResponse
+from django.core.context_processors import request
+from backend.tasks import progressive_increase
+from celery.result import AsyncResult
+try:
+    import json
+except ImportError:
+    from django.utils import simplejson as json
+def start_celery_task(request):
+    """
+    for testing progressive updates to celery tasks
+    """
+    task = progressive_increase.delay()
+    return HttpResponseRedirect( "%s%s" % ('/celery_progress?task_id=', task.id))
+
+def monitor_celery_task(request):
+    """
+    for testing progressive updates to celery tasks
+    """
+    if 'task_id' in request.GET:
+        task_id = request.GET['task_id']
+    else:
+        return HttpResponse('No task_id was passed.')
+    
+    task = AsyncResult(task_id)
+    data = task.result or task.state
+    return HttpResponse(json.dumps(data), content_type='application/json')
+        
+        
+        
+        
+        
+        
+        
+        
+        
