@@ -13,7 +13,6 @@ import os
 from django.db import models
 from djorm_pgarray.fields import IntegerArrayField, TextArrayField
 from ansible.utils import default
-from chardet.test import count
 
 
 class UserInfo(models.Model):
