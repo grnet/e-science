@@ -29,7 +29,7 @@ install:
 before_script:
 - psql -c 'create user developer with createdb;' -U postgres
 - psql -c 'create database escience with owner developer;' -U postgres
-- python ember_django/manage.py syncdb
+- python ember_django/manage.py syncdb --noinput
 - python ember_django/manage.py migrate --noinput
 - cd orka-0.1.1
 - python setup.py install
