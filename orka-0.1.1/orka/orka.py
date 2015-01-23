@@ -10,7 +10,7 @@ from os.path import join, dirname, abspath
 from kamaki.clients import ClientError
 from cluster_errors_constants import *
 from create_cluster import YarnCluster
-from okeanos_utils import destroy_cluster
+from okeanos_utils import destroy_cluster, get_user_clusters
 from argparse import ArgumentParser, ArgumentTypeError
 from version import __version__
 
@@ -92,6 +92,32 @@ class HadoopCluster(object):
             exit(error_fatal)
 
 
+class UserClusterInfo(object):
+    """ """
+    def __init__(self, opts):
+        self.opts = opts
+        self.data = list()
+    
+    def list(self):
+        try:
+            self.data.extend(get_user_clusters(self.opts['token']))
+        except ClientError, e:
+            logging.error(e.message)
+            exit(error_fatal)
+        except Exception, e:
+            logging.error(str(e.args[0]))
+            exit(error_fatal)
+        
+        if len(self.data) > 0:
+            # test our data, we want to format according to options
+            for cluster in self.data:
+                for key in cluster:
+                    fmt_string = key + ': {' + key + '}'
+                    print fmt_string.format(**cluster)
+                print '\n'
+        else:
+            print 'User has no clusters.'
+
 def main():
     """
     Entry point of orka package. Parses user arguments and return
@@ -110,6 +136,9 @@ def main():
     parser_d = subparsers.add_parser('destroy',
                                      help='Destroy a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
+    parser_i = subparsers.add_parser('list',
+                                     help='List user clusters.')
+    
     if len(argv) > 1:
 
         parser_c.add_argument("name", help='The specified name of the cluster.'
@@ -169,6 +198,18 @@ def main():
         parser_d.add_argument("--logging", default=default_logging,
                               choices=checker.logging_levels.keys(),
                               help='Logging Level. Default: summary')
+        
+        parser_i.add_argument('token',
+                              help='Synnefo authentication token')
+        
+        parser_i.add_argument('--status', help='Filter by status (status: {%(choices)s})'
+                              ' Default is ALL: no filtering.',
+                              metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
+        parser_i.add_argument('--verbose', help='List extra cluster details.',
+                              action="store_true")
+        parser_i.add_argument("--logging", default=default_logging,
+                              choices=checker.logging_levels.keys(),
+                              help='Logging Level. Default: summary')
 
         opts = vars(parser.parse_args(argv[1:]))
         if argv[1] == 'create':
@@ -199,6 +240,10 @@ def main():
 
     elif argv[1] == 'destroy':
         c_hadoopcluster.destroy()
+        
+    elif argv[1] == 'list':
+        c_userclusters = UserClusterInfo(opts)
+        c_userclusters.list()
 
 if __name__ == "__main__":
     main()
