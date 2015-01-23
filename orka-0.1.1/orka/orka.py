@@ -91,12 +91,53 @@ class HadoopCluster(object):
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
 
+from collections import OrderedDict
+def custom_sort_factory(order_list):
+    """ 
+    function factory: gets a list of lists with order keys
+    and returns a function that will produce an OrderedDict
+    with the specified order.
+    Keys not present in the sort list are returned at the end.
+    Example:
+        fruits = {'apple': 'red', 'orange': 'orange', 'lemon': 'yellow', 'banana': 'yellow'}
+        order_list = [['lemon','orange','banana','apple']]
+        sort_function = custom_sort_factory(order_list)
+        sorted_fruits = sort_function(fruits)
+        print fruits
+        print sorted_fruits
+    """
+    order_list = [{k: -i for (i, k) in enumerate(reversed(order), 1)} for order in order_list]
+    def sorter(stuff):
+        if isinstance(stuff, dict):
+            l = [(k, sorter(v)) for (k, v) in stuff.iteritems()]
+            keys = set(stuff)
+            for order in order_list:
+                if keys.issuperset(order):
+                    return OrderedDict(sorted(l, key=lambda x: order.get(x[0], 0)))
+            return OrderedDict(sorted(l))
+        if isinstance(stuff, list):
+            return [sorter(x) for x in stuff]
+        return stuff
+    return sorter
+
 
 class UserClusterInfo(object):
     """ """
     def __init__(self, opts):
         self.opts = opts
         self.data = list()
+        self.order_list = [['cluster_name','cluster_size','cluster_status','master_IP',
+                            'project_name','id','os_image','disk_template',
+                            'cpu_master','mem_master','disk_master',
+                            'cpu_slaves','mem_slaves','disk_slaves']]
+        self.sort_func = custom_sort_factory(self.order_list)
+        self.short_list = {'cluster_name':True, 'cluster_size':True, 'cluster_status':True, 'master_IP':True}
+        self.skip_list = {'id':True}
+        self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0'}
+        self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED'}
+        
+    def sort(self, clusters):
+        return self.sort_func(clusters)
     
     def list(self):
         try:
@@ -108,15 +149,29 @@ class UserClusterInfo(object):
             logging.error(str(e.args[0]))
             exit(error_fatal)
         
+        opt_short = not self.opts['verbose']
+        opt_status = False
+        if self.opts['status']:
+            opt_status = self.status_desc_to_status_id[self.opts['status'].upper()]
+        
         if len(self.data) > 0:
-            # test our data, we want to format according to options
             for cluster in self.data:
-                for key in cluster:
-                    fmt_string = key + ': {' + key + '}'
-                    print fmt_string.format(**cluster)
-                print '\n'
+                if opt_status and cluster['cluster_status'] != opt_status:
+                    continue
+                sorted_cluster = self.sort(cluster)
+                for key in sorted_cluster:
+                    if (opt_short and not self.short_list.has_key(key)) or self.skip_list.has_key(key):
+                        continue
+                    if key == 'cluster_name':
+                        fmt_string = '{:<5}' + key + ': {' + key + '}'
+                    elif key == 'cluster_status':
+                        fmt_string = '{:<10}' + key + ': ' + self.status_id_to_status_desc[sorted_cluster[key]]
+                    else:
+                        fmt_string = '{:<10}' + key + ': {' + key + '}'
+                    print fmt_string.format('',**sorted_cluster)
+                print ''
         else:
-            print 'User has no clusters.'
+            print 'User has no Cluster Information available.'
 
 def main():
     """
@@ -202,8 +257,8 @@ def main():
         parser_i.add_argument('token',
                               help='Synnefo authentication token')
         
-        parser_i.add_argument('--status', help='Filter by status (status: {%(choices)s})'
-                              ' Default is ALL: no filtering.',
+        parser_i.add_argument('--status', help='Filter by status ({%(choices)s})'
+                              ' Default is all: no filtering.', type=str.upper,
                               metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
         parser_i.add_argument('--verbose', help='List extra cluster details.',
                               action="store_true")
