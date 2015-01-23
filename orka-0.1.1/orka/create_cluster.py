@@ -264,7 +264,8 @@ class YarnCluster(object):
         the cluster.
         """
         self.pass_file = join('./', master_name + '_root_password')
-        self.pass_file = self.pass_file.replace(" ", "")
+        # add a "_" between date and time
+        self.pass_file = self.pass_file.replace(" ", "_")
         with open(self.pass_file, 'w') as f:
             f.write(master_root_pass)
 
