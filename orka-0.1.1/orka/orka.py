@@ -122,7 +122,10 @@ def custom_sort_factory(order_list):
 
 
 class UserClusterInfo(object):
-    """ """
+    """ Class holding user cluster info
+    sort: input clusters output cluster keys sorted according to spec
+    list: pretty printer
+    """
     def __init__(self, opts):
         self.opts = opts
         self.data = list()

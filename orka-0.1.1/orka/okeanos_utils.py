@@ -32,11 +32,12 @@ def get_api_urls(login=False, database=False):
     config_file = join(orka_dir, 'config.txt')
     parser.read(config_file)
     try:
+        base_url = parser.get('Web', 'url')
         if login:
-            url_login = parser.get('Login', 'url')
+            url_login = '{0}{1}'.format(base_url, login_endpoint)
             return url_login
         if database:
-            url_database = parser.get('Database', 'url')
+            url_database = '{0}{1}'.format(base_url, database_endpoint)
             return url_database
         else:
             logging.log(SUMMARY, ' Url to be returned from config file not specified')
