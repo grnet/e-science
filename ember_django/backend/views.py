@@ -204,7 +204,9 @@ class StatusView(APIView):
                        'disk_template': serializer.data['disk_template'],
                        'image': serializer.data['os_choice'],
                        'token': user.okeanos_token,
-                       'project_name': serializer.data['project_name']}
+                       'project_name': serializer.data['project_name'],
+                       'ssh_key_name': serializer.data['ssh_key_selection']
+                       }
 
             c_cluster = createcluster.delay(choices)
             task_id = c_cluster.id
@@ -263,42 +265,3 @@ class SessionView(APIView):
         self.serializer_class = UserInfoSerializer(self.user)
         return Response({"id": "1", "token": "null", "user_id": "null",
                          "cluster": "null"})
-
-
-# temporary for celery tests
-from django.http.response import HttpResponseRedirect, HttpResponse
-from django.core.context_processors import request
-from backend.tasks import progressive_increase
-from celery.result import AsyncResult
-try:
-    import json
-except ImportError:
-    from django.utils import simplejson as json
-def start_celery_task(request):
-    """
-    for testing progressive updates to celery tasks
-    """
-    task = progressive_increase.delay()
-    return HttpResponseRedirect( "%s%s" % ('/celery_progress?task_id=', task.id))
-
-def monitor_celery_task(request):
-    """
-    for testing progressive updates to celery tasks
-    """
-    if 'task_id' in request.GET:
-        task_id = request.GET['task_id']
-    else:
-        return HttpResponse('No task_id was passed.')
-    
-    task = AsyncResult(task_id)
-    data = task.result or task.state
-    return HttpResponse(json.dumps(data), content_type='application/json')
-        
-        
-        
-        
-        
-        
-        
-        
-        

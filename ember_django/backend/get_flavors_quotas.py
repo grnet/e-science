@@ -8,11 +8,39 @@ and update the ClusterCreationParams model.
 @author: Ioannis Stenos, Nick Vrionis
 """
 import logging
+import cStringIO
+import subprocess
 from kamaki.clients import ClientError
 from orka.okeanos_utils import *
 from django_db_after_login import *
 from backend.models import ClusterCreationParams, ClusterInfo, UserInfo
 from orka.cluster_errors_constants import *
+
+def ssh_list(token):
+    """
+    Get the ssh_key dictionary of a user
+    """
+    
+    command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' + token + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
+    p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
+    out, err = p.communicate()
+    ouput = out[2:-2].split('}, {')
+    ssh_dict =[]
+    ssh_counter = 0
+    for dictionary in ouput:
+        mydict={}
+        new = dictionary.replace('"','')
+        d1 = new.split(', ')
+        for every in d1:
+            z=every.split(': ')
+            z1=[]
+            for item in z:
+                z1.append(item)
+            for k in z1:
+                mydict[z1[0]]=z1[1]
+        ssh_dict.append(mydict)        
+    print ssh_dict[0]['name']   
+    return ssh_dict
 
 
 def project_list_flavor_quota(user):
@@ -21,6 +49,8 @@ def project_list_flavor_quota(user):
     list_of_resources = []
     flavors = get_flavor_id(okeanos_token)
     auth = check_credentials(okeanos_token)
+    ssh_info = ssh_list(okeanos_token)
+    ssh_keys_names =[]
     dict_quotas = auth.get_quotas()
     try:
         list_of_projects = auth.get_projects(state='active')
@@ -29,19 +59,24 @@ def project_list_flavor_quota(user):
         raise ClientError(msg, error_get_list_projects)
     # Id for ember-data, will use it for store.push the different projects
     ember_project_id = 1
+    ssh_info = ssh_list(okeanos_token)
+    for item in ssh_info:
+        ssh_keys_names.append(item['name'])
     for project in list_of_projects:
         if project['name'] == 'system:'+str(project['id']):
             list_of_projects.remove(project)
             list_of_projects.insert(0,project)
-    for project in list_of_projects:
+    for project in list_of_projects:   
         if project['id'] in dict_quotas:
             quotas = check_quota(okeanos_token, project['id'])
             list_of_resources.append(retrieve_ClusterCreationParams(flavors,
                                                                     quotas,
                                                                     project['name'],
                                                                     user,
-                                                                    ember_project_id))
+                                                                    ember_project_id,
+                                                                    ssh_keys_names))
             ember_project_id = ember_project_id + 1
+    
     return list_of_resources
 
 
@@ -73,7 +108,7 @@ def retrieve_pending_clusters(token, project_name):
     return pending_quota
 
 
-def retrieve_ClusterCreationParams(flavors, quotas, project_name, user, ember_project_id):
+def retrieve_ClusterCreationParams(flavors, quotas, project_name, user, ember_project_id,ssh_keys_names):
     """
     Retrieves user quotas and flavor list from kamaki
     using get_flavor_id and check_quota methods and returns the updated
@@ -116,6 +151,8 @@ def retrieve_ClusterCreationParams(flavors, quotas, project_name, user, ember_pr
                                                     mem_choices=mem_choices,
                                                     disk_choices=disk_choices,
                                                     disk_template=disk_template,
-                                                    os_choices=os_choices)
+                                                    os_choices=os_choices,
+                                                    ssh_keys_names=ssh_keys_names
+                                                    )
     # Return the ClusterCreationParams object
     return cluster_creation_params
