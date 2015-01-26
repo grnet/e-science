@@ -91,7 +91,8 @@ class ClusterCreationParams(models.Model):
     disk_template = TextArrayField()  # ArrayField
     # Operating system choices
     os_choices = TextArrayField()  # ArrayField
-
+    #ssh keys
+    ssh_keys_names = TextArrayField()  # ArrayField
     pending_status = models.NullBooleanField(default=False)
 
 

@@ -172,7 +172,8 @@ class StatusView(APIView):
                        'disk_template': serializer.data['disk_template'],
                        'image': serializer.data['os_choice'],
                        'token': user.okeanos_token,
-                       'project_name': serializer.data['project_name']}
+                       'project_name': serializer.data['project_name'],
+                       'ssh_key_name': serializer.data['ssh_key_selection']}
 
             try:
                 new_yarn_cluster = YarnCluster(choices)
