@@ -43,7 +43,6 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
     returns the name of the file.
     """
     ansible_hosts_prefix = cluster_name.replace(" ", "_")
-    ansible_hosts_prefix = ansible_hosts_prefix.replace(":", "")
 
     # Removes spaces and ':' from cluster name and appends it to ansible_hosts
     # The ansible_hosts file will now have a timestamped name
