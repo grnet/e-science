@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Methods for getting the list of resources of all user projects
 and update the ClusterCreationParams model.
 
 @author: Ioannis Stenos, Nick Vrionis
-'''
+"""
 import logging
 from kamaki.clients import ClientError
 from orka.okeanos_utils import *
@@ -33,7 +33,7 @@ def project_list_flavor_quota(user):
         if project['name'] == 'system:'+str(project['id']):
             list_of_projects.remove(project)
             list_of_projects.insert(0,project)
-    for project in list_of_projects:   
+    for project in list_of_projects:
         if project['id'] in dict_quotas:
             quotas = check_quota(okeanos_token, project['id'])
             list_of_resources.append(retrieve_ClusterCreationParams(flavors,
@@ -74,11 +74,11 @@ def retrieve_pending_clusters(token, project_name):
 
 
 def retrieve_ClusterCreationParams(flavors, quotas, project_name, user, ember_project_id):
-    '''
+    """
     Retrieves user quotas and flavor list from kamaki
     using get_flavor_id and check_quota methods and returns the updated
     ClusterCreationParams model.
-    '''
+    """
     i = 0
     j = 1
     vms_av = []

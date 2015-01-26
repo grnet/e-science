@@ -19,6 +19,7 @@ from ConfigParser import RawConfigParser, NoSectionError
 import requests
 import json
 import yaml
+from celery import current_task
 
 # Global constants
 MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
@@ -115,6 +116,19 @@ def get_user_clusters(token):
     return user_clusters  
     
 
+def set_cluster_state(token, status, name, state, master_IP=''):
+        """
+        Make a request to change the cluster state in database.
+        """
+        escience_token = authenticate_escience(token)
+        current_task.update_state(state=state)
+        payload = {"orka": {"status": status, "cluster_name": name,
+                            "master_IP": master_IP, "state": state}}
+
+        orka_req = OrkaRequest(escience_token, payload)
+        orka_req.update_cluster_db()
+
+
 def authenticate_escience(token):
     """
     Authenticate with escience database and retrieve escience token
@@ -147,13 +161,13 @@ def get_project_id(token, project_name):
     raise ClientError(msg, error_proj_id)
 
 
-def destroy_cluster(token, master_ip):
+def destroy_cluster(token, master_IP):
     """
     Destroys cluster and deletes network and floating ip. Finds the machines
-    that belong to the cluster from the master_ip that is given.
+    that belong to the cluster from the master_IP that is given.
     """
     servers_to_delete = []
-    float_ip_to_delete = master_ip
+    float_ip_to_delete = master_IP
     list_of_errors = []
     master_id = None
     network_to_delete_id = None
@@ -191,7 +205,7 @@ def destroy_cluster(token, master_ip):
             float_ip_to_delete
         raise ClientError(msg, error_get_ip)
 
-    payload = {"orka": {"master_ip": master_ip}}
+    payload = {"orka": {"master_IP": master_IP}}
     orka_request = OrkaRequest(escience_token, payload)
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
@@ -662,5 +676,4 @@ class Cluster(object):
         for attachment in master_details['attachments']:
             if attachment['OS-EXT-IPS:type'] == 'floating':
                         hostname_master = attachment['ipv4']
-
         return hostname_master, servers

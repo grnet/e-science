@@ -1,8 +1,17 @@
-from celeryapp import app # george: still not decided which style we're going to use: @task or @app.task
 from celery.task import task
 from celery import current_task
 from backend.models import CeleryTasks
 from time import sleep
+from orka.create_cluster import YarnCluster
+
+
+@task()
+def createcluster(choices):
+
+    new_yarn_cluster = YarnCluster(choices)
+    MASTER_IP, servers = new_yarn_cluster.create_yarn_cluster()
+
+    return MASTER_IP
 
 @task()
 def delayed_add(x, y):
@@ -21,18 +30,3 @@ def progressive_increase():
     for i in range(100):
         sleep(0.1)
         current_task.update_state(state="PROGRESS", meta={'current': i, 'total': 100})
-
-
-@app.task
-def add(x, y):
-    return x + y
-
-
-@app.task
-def mul(x, y):
-    return x * y
-
-
-@app.task
-def xsum(numbers):
-    return sum(numbers)

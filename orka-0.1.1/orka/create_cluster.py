@@ -15,8 +15,9 @@ from kamaki.clients import ClientError
 from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
     init_cyclades, init_cyclades_netclient, init_plankton, get_project_id, \
-    destroy_cluster, get_user_quota, authenticate_escience, OrkaRequest
+    destroy_cluster, get_user_quota, authenticate_escience, OrkaRequest, set_cluster_state
 from cluster_errors_constants import *
+from celery import current_task
 
 
 class YarnCluster(object):
@@ -27,6 +28,7 @@ class YarnCluster(object):
     def __init__(self, opts):
         """Initialization of YarnCluster data attributes"""
         self.opts = opts
+        current_task.update_state(state="STARTED")
         # Master VM ip, placeholder value
         self.HOSTNAME_MASTER_IP = '127.0.0.1'
         # master VM root password file, placeholder value
@@ -262,6 +264,7 @@ class YarnCluster(object):
             return 0
         return error_project_quota
 
+
     def create_bare_cluster(self):
         """Creates a bare ~okeanos cluster."""
         # Finds user public ssh key
@@ -269,6 +272,8 @@ class YarnCluster(object):
         chosen_image = {}
         pub_keys_path = join(user_home, ".ssh/id_rsa.pub")
         logging.log(SUMMARY, ' Authentication verified')
+        current_task.update_state(state="AUTHENTICATED")
+
         flavor_master = self.get_flavor_id_master(self.cyclades)
         flavor_slaves = self.get_flavor_id_slave(self.cyclades)
         if flavor_master == 0 or flavor_slaves == 0:
@@ -286,15 +291,12 @@ class YarnCluster(object):
         if not chosen_image:
             msg = self.opts['image']+' is not a valid image'
             raise ClientError(msg, error_image_id)
-        logging.log(SUMMARY, ' Creating ~okeanos cluster')
-
         # Create timestamped name of the cluster
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cluster_name = '%s%s%s' % (date_time, '-', self.opts['name'])
         self.opts['name'] = cluster_name
 
         # Update db with cluster status as pending
-
         payload = {"orka": {"cluster_name": self.opts['name'],
                             "cluster_size": self.opts['cluster_size'],
                             "cpu_master": self.opts['cpu_master'],
@@ -305,7 +307,8 @@ class YarnCluster(object):
                             "disk_slaves": self.opts['disk_slave'],
                             "disk_template": self.opts['disk_template'],
                             "os_choice": self.opts['image'],
-                            "project_name": self.opts['project_name']}}
+                            "project_name": self.opts['project_name'],
+                            "task_id": current_task.request.id}}
 
         orka_req = OrkaRequest(self.escience_token, payload)
         orka_req.create_cluster_db()
@@ -315,17 +318,21 @@ class YarnCluster(object):
                               chosen_image['id'], self.opts['cluster_size'],
                               self.net_client, self.auth, self.project_id)
 
+            state="Creating ~okeanos cluster"
+            logging.log(SUMMARY, state)
+            set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state)
             self.HOSTNAME_MASTER_IP, self.server_dict = \
                 cluster.create('', pub_keys_path, '')
             sleep(15)
         except Exception:
             # If error in bare cluster, update cluster status as destroyed
-            payload = {"orka": {"status": "Destroyed", "cluster_name": self.opts['name'], "master_ip": "placeholder"}}
-            orka_req_error = OrkaRequest(self.escience_token, payload)
-            orka_req_error.update_cluster_db()
+            set_cluster_state(self.opts['token'], 'Destroyed', self.opts['name'], 'Error')
             raise
         # wait for the machines to be pingable
-        logging.log(SUMMARY, ' ~okeanos cluster created')
+        state = ' ~okeanos cluster created'
+        logging.log(SUMMARY, state)
+        set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state,
+                               master_IP=self.HOSTNAME_MASTER_IP)
         # Get master VM root password
         master_root_pass = self.server_dict[0]['adminPass']
         master_name = self.server_dict[0]['name']
@@ -344,27 +351,29 @@ class YarnCluster(object):
         except Exception, e:
             logging.error(' Fatal error: ' + str(e.args[0]))
             raise
-        logging.log(SUMMARY, ' Creating Yarn cluster')
+        state = ' Configuring Yarn cluster node communication'
+        logging.log(SUMMARY, state)
+        set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state)
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
                                              self.HOSTNAME_MASTER_IP)
+            state = ' Installing and configuring Yarn'
+            logging.log(SUMMARY, state)
+            set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state)
 
-            logging.log(SUMMARY, ' Installing and configuring Yarn')
             install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.server_dict[0]['name'], self.hadoop_image)
+
             # If Yarn cluster is build, update cluster status as active
-            payload = {"orka": {"status": "Active", "cluster_name": self.opts['name'],
-                                "master_ip": self.HOSTNAME_MASTER_IP}}
-            orka_req = OrkaRequest(self.escience_token, payload)
-            orka_req.update_cluster_db()
+            state = ' Yarn Cluster is active'
+            set_cluster_state(self.opts['token'], 'Active', self.opts['name'], state)
+
             return self.HOSTNAME_MASTER_IP, self.server_dict
         except Exception, e:
             logging.error(' Fatal error:' + str(e.args[0]))
             logging.error(' Created cluster and resources will be deleted')
             # If error in Yarn cluster, update cluster status as destroyed
-            payload = {"orka": {"status": "Destroyed", "cluster_name": self.opts['name'], "master_ip": "placeholder"}}
-            orka_req_error = OrkaRequest(self.escience_token, payload)
-            orka_req_error.update_cluster_db()
+            set_cluster_state(self.opts['token'], 'Destroyed', self.opts['name'], 'Error')
             self.destroy()
             raise
 
