@@ -2,7 +2,7 @@
 App.RestrictedRoute = Ember.Route.extend({
 	beforeModel : function() {
 		// Check if user is logged in.
-		// If not, redirect to login screen.
+		// If not, redirect to login page.
 		if (!this.controllerFor('user.login').isLoggedIn()) {
 			this.transitionTo('user.login');
 		} else {

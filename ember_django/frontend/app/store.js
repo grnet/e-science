@@ -1,5 +1,5 @@
 /* 
- The store holds data loaded from the server (i.e. records). 
+ The store holds locally data loaded from the server (i.e. records). 
  Routes and controllers can query the store for records. 
  If a given record is called for the first time, then the store tells the adapter to load it over the network. 
  Then, the store caches it for the next time you ask for it. 

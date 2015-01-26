@@ -1,7 +1,4 @@
-// Ember application for Escience. Extending login/logout functionality
-// with choice of create cluster details from a form.
-// Django backend communicating with Ember through Django REST framework.
-
+// Ember application for e-science.
 window.App = Ember.Application.create({
 	VERSION: '0.1',
     // Basic logging
@@ -12,13 +9,13 @@ window.App = Ember.Application.create({
     // LOG_RESOLVER: true,
     rootElement: 'body',
   	ready: function() {
-  		
+
   }
 });
 
 App.attr = DS.attr;
 
-// Global variable for Escience token
+// Global variable for e-science token
 // for authorization purposes
 var escience_token;
 App.set('escience_token', "null");

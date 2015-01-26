@@ -1,4 +1,4 @@
-// Cluster/create route (/cluster/create url)
+// Cluster Create route
 App.ClusterCreateRoute = App.RestrictedRoute.extend({
 	needs : 'clusterCreate',
 	// model for create cluster choices (input form)

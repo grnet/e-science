@@ -8,10 +8,9 @@ env:
 addons:
 - postgresql: '9.1'
 before_install:
-- openssl aes-256-cbc -K $encrypted_b4362692ecb3_key -iv $encrypted_b4362692ecb3_iv
-  -in .private/.config.txt.enc -out .private/.config.txt -d
+- openssl aes-256-cbc -K $encrypted_67c9cddb9f0e_key -iv $encrypted_67c9cddb9f0e_iv -in .private/.config.txt.enc -out .private/.config.txt -d
 install:
-- pip install kamaki==0.13rc3
+- pip install kamaki==0.13.1
 - pip install paramiko
 - pip install ansible==1.7.2
 - pip install django
@@ -29,7 +28,7 @@ before_script:
 - psql -c 'create user developer with createdb;' -U postgres
 - psql -c 'create database escience with owner developer;' -U postgres
 - python ember_django/manage.py migrate --noinput
-- cd orka-0.1.0
+- cd orka-0.1.1
 - python setup.py install
 - cd ..
 - npm install testem -g

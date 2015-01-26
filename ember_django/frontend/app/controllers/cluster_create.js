@@ -1,38 +1,38 @@
-// Cluster/create controller
+// Cluster Create controller
 App.ClusterCreateController = Ember.Controller.extend({
 
 	needs : 'userWelcome',
-
-	// Initialization phase
-	project_index : 0, // index (position in the array) of the project
-	project_current : '', // current project
-	project_name : '', // name of the project
-	cluster_size : 0, // Initial cluster size
-	cluster_size_var : 0, // Initial cluster size keeper variable
-	master_cpu_selection : 0, // Initial master_cpu_selection, appears in master cpu summary
-	slaves_cpu_selection : 0, // Initial slaves_cpu_selection, appears in slaves cpu summary
-	master_ram_selection : 0, // Initial master_ram_selection, appears in master ram summary
-	slaves_ram_selection : 0, // Initial slaves_ram_selection, appears in slaves ram summary
-	master_disk_selection : 0, // Initial master_disk_selection, appears in master disk summary
-	slaves_disk_selection : 0, // Initial slaves_disk_selection, appears in slaves disk summary
-	cluster_name : '', // Initial cluster name, null
+	project_index : 0, 		// index (position in the array) of the project
+	project_current : '', 		// current project
+	project_name : '', 		// name of the project
+	cluster_size : 0, 		// Initial cluster size
+	cluster_size_var : 0, 		// Initial cluster size keeper variable
+	master_cpu_selection : 0, 	// Initial master_cpu_selection, appears in master cpu summary
+	slaves_cpu_selection : 0, 	// Initial slaves_cpu_selection, appears in slaves cpu summary
+	master_ram_selection : 0, 	// Initial master_ram_selection, appears in master ram summary
+	slaves_ram_selection : 0, 	// Initial slaves_ram_selection, appears in slaves ram summary
+	master_disk_selection : 0,	// Initial master_disk_selection, appears in master disk summary
+	slaves_disk_selection : 0, 	// Initial slaves_disk_selection, appears in slaves disk summary
+	cluster_name : '', 		// Initial cluster name, null
 	operating_system : 'Debian Base', // Preselected OS
-	disk_temp : 'ext_vlmc', // Initial storage selection, common for master and slaves
-	cluster_size_zero : false, // for checking the available VMs, cluster size
+	disk_temp : 'ext_vlmc', 	// Initial storage selection, common for master and slaves
+	cluster_size_zero : false, 	// for checking the available VMs, cluster size
 	create_cluster_disabled : true, // flag to disable create cluster button when project is not selected
-	message : '', // message when user presses the create cluster button
-	alert_mes_master_cpu : '', // alert message for master cpu buttons (if none selected)
-	alert_mes_master_ram : '', // alert message for master ram buttons (if none selected)
-	alert_mes_master_disk : '', // alert message for master disk buttons (if none selected)
-	alert_mes_slaves_cpu : '', // alert message for slaves cpu buttons (if none selected)
-	alert_mes_slaves_ram : '', // alert message for slaves ram buttons (if none selected)
-	alert_mes_slaves_disk : '', // alert message for slaves disk buttons (if none selected)
-	alert_mes_cluster_name : '', // alert message for cluster name (if none selected)
-	alert_mes_cluster_size : '', // alert message for cluster size (if none selected)
-	project_details : '', // project details: name and quota(Vms cpus ram disk)
-	name_of_project : '', // variable to set name of project as part of project details string helps parsing sytem project name
+	message : '', 			// message when user presses the create cluster button
+	alert_mes_master_cpu : '', 	// alert message for master cpu buttons (if none selected)
+	alert_mes_master_ram : '', 	// alert message for master ram buttons (if none selected)
+	alert_mes_master_disk : '', 	// alert message for master disk buttons (if none selected)
+	alert_mes_slaves_cpu : '', 	// alert message for slaves cpu buttons (if none selected)
+	alert_mes_slaves_ram : '', 	// alert message for slaves ram buttons (if none selected)
+	alert_mes_slaves_disk : '', 	// alert message for slaves disk buttons (if none selected)
+	alert_mes_cluster_name : '', 	// alert message for cluster name (if none selected)
+	alert_mes_cluster_size : '', 	// alert message for cluster size (if none selected)
+	project_details : '', 		// project details: name and quota(Vms cpus ram disk)
+	name_of_project : '', 		// variable to set name of project as part of project details string helps parsing sytem project name
 
-	// for projects
+	// reads available projects
+	// displays projects and available resources in the drop-down list
+	// (spaces inserted just for alignment of projects-resources)
 	projects_av : function() {
 		this.reset_variables();
 		this.set('project_current', '');
@@ -41,7 +41,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		var length = this.get('content.length');
 		var regular_exp_project_id = /system:[a-z,0-9]{8}(-[a-z,0-9]{4}){3}-[a-z,0-9]{12}/;
 		var max_space = 30;
-		var space_separate_project_name_and_quota = String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
+		var space_separate_project_name_and_quota = String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) +
 			String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160);
 		var space_between_quota = String.fromCharCode(160) + String.fromCharCode(160);
 		for (var i = 0; i < length; i++) {
@@ -51,11 +51,11 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				this.set('name_of_project', this.get('content').objectAt(i).get('project_name'));
 			}
-			projects[i] = this.get('name_of_project') + space_separate_project_name_and_quota + 
-			'VMs:' + this.get('content').objectAt(i).get('vms_av').length + space_between_quota + 
-			'CPUs:' + this.get('content').objectAt(i).get('cpu_av') + space_between_quota + 
-			'RAM:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + space_between_quota + 
-			'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB';
+			projects[i] = this.get('name_of_project') + space_separate_project_name_and_quota +
+				'VMs:' + this.get('content').objectAt(i).get('vms_av').length + space_between_quota +
+				'CPUs:' + this.get('content').objectAt(i).get('cpu_av') + space_between_quota +
+				'RAM:' + this.get('content').objectAt(i).get('mem_av') + 'MB' + space_between_quota +
+				'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB';
 		}
 		this.set('name_of_project', '');
 		for (var i = 0; i < length; i++) {
@@ -64,11 +64,12 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				this.set('name_of_project', this.get('content').objectAt(i).get('project_name'));
 			}
-			if ((projects[i] = this.get('name_of_project') + space_separate_project_name_and_quota + 
-				'VMs:' + this.get('content').objectAt(i).get('vms_av').length + space_between_quota + 
-				'CPUs:' + this.get('content').objectAt(i).get('cpu_av') + space_between_quota + 
-				'RAM:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + space_between_quota + 
-				'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) {
+			if ((projects[i] = this.get('name_of_project') + space_separate_project_name_and_quota +
+				'VMs:' + this.get('content').objectAt(i).get('vms_av').length + space_between_quota +
+				'CPUs:' + this.get('content').objectAt(i).get('cpu_av') + space_between_quota +
+				'RAM:' + this.get('content').objectAt(i).get('mem_av') + 'MB' + space_between_quota +
+				'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) 
+			{ 
 				this.set('create_cluster_disabled', false);
 				this.set('project_current', this.get('content').objectAt(i));
 				this.set('project_name', this.get('content').objectAt(i).get('project_name'));
@@ -82,7 +83,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// The total cpus selected for the cluster
 	total_cpu_selection : function() {
 		return (this.get('master_cpu_selection') + this.get('slaves_cpu_selection') * (this.size_of_cluster() - 1));
-	}.property('master_cpu_selection', 'slaves_cpu_selection', 'project_name', 'cluster_size_var'),
+	}.property('master_cpu_selection', 'slaves_cpu_selection', 'project_details', 'cluster_size_var'),
 
 	// Computes the available cpu each time total_cpu_selection changes
 	cpu_available : function() {
@@ -97,7 +98,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// The total memory selected for the cluster
 	total_ram_selection : function() {
 		return (this.get('master_ram_selection') + this.get('slaves_ram_selection') * (this.size_of_cluster() - 1));
-	}.property('master_ram_selection', 'slaves_ram_selection', 'project_name', 'cluster_size_var'),
+	}.property('master_ram_selection', 'slaves_ram_selection', 'project_details', 'cluster_size_var'),
 
 	// Computes the available memory each time total_mem_selection changes
 	ram_available : function() {
@@ -112,7 +113,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// The total disk selected for the cluster
 	total_disk_selection : function() {
 		return (this.get('master_disk_selection') + this.get('slaves_disk_selection') * (this.size_of_cluster() - 1));
-	}.property('master_disk_selection', 'slaves_disk_selection', 'project_name', 'cluster_size_var'),
+	}.property('master_disk_selection', 'slaves_disk_selection', 'project_details', 'cluster_size_var'),
 
 	// Computes the available disk each time total_disk_selection changes
 	disk_available : function() {
@@ -170,8 +171,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 		if (length == 0) {
 			if (this.get('project_name') != '') {
 				this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
-				alert(String(this));
-				alert(String(this.get('project_name')));
 			}
 			cluster_size_zero = true;
 			return max_cluster_size_limited_by_current_cpus;

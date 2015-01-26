@@ -1,0 +1,21 @@
+---
+  choose_role: yarn
+  
+  # setup_orca_admin variables
+  orka_admin_password: $1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20
+  create_orka_admin: False
+  
+  # Hadoop-yarn variables
+  hadoopuser_path: /home/hduser
+  start_yarn: False
+  format: False
+  is_master: False
+  is_slave: False
+  dfs_replication: 2
+  filename: /home/hduser/.ssh/id_rsa
+  etchosts_filename: /etc/hosts_2 
+  yarn_common_url: http://archive.apache.org/dist/hadoop/common
+  yarn_version: hadoop-2.5.2
+  path_to_hadoop: /usr/local
+  hadoop_home: "{{path_to_hadoop}}/hadoop"
+  master_key: master_{{ hostvars[groups['master'][0]].inventory_hostname_short}}_pub_key
