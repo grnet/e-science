@@ -24,33 +24,34 @@ def ssh_list(token):
     command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' + token + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
     p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
     out, err = p.communicate()
-    ouput = out[2:-2].split('}, {')
-    ssh_dict =[]
+    output = out[2:-2].split('}, {')
+    ssh_dict =list()
     ssh_counter = 0
-    for dictionary in ouput:
-        mydict={}
+    for dictionary in output:
+        mydict=dict()
         new = dictionary.replace('"','')
         d1 = new.split(', ')
         for every in d1:
             z=every.split(': ')
-            z1=[]
+            z1=list()
             for item in z:
                 z1.append(item)
-            for k in z1:
-                mydict[z1[0]]=z1[1]
+            if len(z1) > 1:
+                for k in z1:
+                    mydict[z1[0]]=z1[1]
         ssh_dict.append(mydict)        
-    print ssh_dict[0]['name']   
+    # print ssh_dict[0]['name']   
     return ssh_dict
 
 
 def project_list_flavor_quota(user):
     """Creates the list of resources for every project a user has quota"""
     okeanos_token = user.okeanos_token
-    list_of_resources = []
+    list_of_resources = list()
     flavors = get_flavor_id(okeanos_token)
     auth = check_credentials(okeanos_token)
     ssh_info = ssh_list(okeanos_token)
-    ssh_keys_names =[]
+    ssh_keys_names =list()
     dict_quotas = auth.get_quotas()
     try:
         list_of_projects = auth.get_projects(state='active')
@@ -61,7 +62,8 @@ def project_list_flavor_quota(user):
     ember_project_id = 1
     ssh_info = ssh_list(okeanos_token)
     for item in ssh_info:
-        ssh_keys_names.append(item['name'])
+        if item.has_key('name'):
+            ssh_keys_names.append(item['name'])
     for project in list_of_projects:
         if project['name'] == 'system:'+str(project['id']):
             list_of_projects.remove(project)

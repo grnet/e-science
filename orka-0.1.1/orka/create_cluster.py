@@ -404,7 +404,6 @@ class YarnCluster(object):
             logging.log(SUMMARY, state)
             set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state)
 
-            logging.log(SUMMARY, ' Installing and configuring Yarn')
             install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.server_dict[0]['name'], self.hadoop_image)
 
