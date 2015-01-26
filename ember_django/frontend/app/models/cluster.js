@@ -16,7 +16,7 @@ App.Cluster = DS.Model.extend({
 	disk_choices : attr(),       	// disk choices
 	disk_template : attr(),      	// storage choices
 	os_choices : attr(),          	// Operating System choices
-	ssh_keys_names : attr()          	// Ssh key's names
+	ssh_keys_names : attr()          	// ssh key's names
 });
 
 // For Fixtures

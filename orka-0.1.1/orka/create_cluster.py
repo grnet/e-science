@@ -270,36 +270,36 @@ class YarnCluster(object):
         Creates a file named after the timestamped name of cluster
         containing the public ssh_key of the user.
         """
-        ssh_info = self.ssh_list()
+        ssh_info = self.ssh_key_list()
         self.ssh_file = join('./', cluster_name + 'ssh_key')
         for item in ssh_info:
             if item['name'] == self.opts['ssh_key_name']:
                 with open(self.ssh_file, 'w') as f:
                     f.write(item['content'])
 
-    def ssh_list(self):
+    def ssh_key_list(self):
         """
         Get the ssh_key dictionary of a user
         """   
         command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' + self.opts['token'] + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
         p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
         out, err = p.communicate()
-        ouput = out[2:-2].split('}, {')
-        ssh_dict =[]
+        output = out[2:-2].split('}, {')
+        ssh_dict =list()
         ssh_counter = 0
-        for dictionary in ouput:
-            mydict={}
-            new = dictionary.replace('"','')
-            d1 = new.split(', ')
-            for every in d1:
-                z=every.split(': ')
-                z1=[]
-                for item in z:
-                    z1.append(item)
-                for k in z1:
-                    mydict[z1[0]]=z1[1]
-            ssh_dict.append(mydict)        
-        print ssh_dict[0]['name']   
+        for dictionary in output:
+            mydict=dict()
+            new_dictionary = dictionary.replace('"','')
+            dict1 = new_dictionary.split(', ')
+            for each in dict1:
+                list__keys_values_in_dict=each.split(': ')
+                new_list_of_dict_elements=list()
+                for item in list__keys_values_in_dict:
+                    new_list_of_dict_elements.append(item)
+                if len(new_list_of_dict_elements) > 1:
+                    for pair in new_list_of_dict_elements:
+                        mydict[new_list_of_dict_elements[0]]=new_list_of_dict_elements[1]
+            ssh_dict.append(mydict)          
         return ssh_dict
         
     def create_bare_cluster(self):
