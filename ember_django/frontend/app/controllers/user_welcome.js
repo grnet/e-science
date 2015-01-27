@@ -7,6 +7,8 @@ App.UserWelcomeController = Ember.Controller.extend({
 	// flag to see if the transition is from create cluster button
 	create_cluster_start : false,
 
+	tick : false, // temp for debug
+
 	sortedclusters : [],
 	column : '',
 	sortdir : null,
@@ -14,30 +16,9 @@ App.UserWelcomeController = Ember.Controller.extend({
 	sortbystatus : false,
 	sortbysize : false,
 	sortbyurl : false,
-	confirm: false,
-	ip_of_master: '',
+	confirm : false,
+	ip_of_master : '',
 	sortedCollection : function() {
-		// $options = {
-			// title : 'Creating...',
-			// fontColor : false,
-			// bgColor : 'white',
-			// size : 32,
-			// isOnly : true,
-			// bgOpacity : 0.5,
-			// imgUrl : "/frontend/app/images/loading[size].gif",
-			// onShow : function() {
-				// $.loader.shown = true;
-				// $('.loading_wrp').find('span').addClass('text-info');
-			// },
-			// onClose : function() {
-				// $.loader.shown = false;
-			// }
-		// };
-		// $.loader.close(true);
-		// setTimeout(function() {
-			// $('.glyphicon-time').closest('td').loader($options);
-		// }, 100);
-
 		// sorts content (clusters) based on properties
 		return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, {
 			content : this.get('sortedclusters'),
@@ -69,13 +50,31 @@ App.UserWelcomeController = Ember.Controller.extend({
 			this.set('sortedclusters', clusters);
 			this.set('column', column);
 		},
-		go_to_confirm: function(master_IP){
-			this.set('confirm',true);
-			this.set('ip_of_master',master_IP);
+		go_to_confirm : function(master_IP) {
+			this.set('confirm', true);
+			this.set('ip_of_master', master_IP);
 			alert(master_IP);
 		},
-		go_to_destroy: function(master_IP){
-			
-		}
+		go_to_destroy : function(master_IP) {
+
+		},
+		timer : function(status, store) {
+			console.log('timer called with: ' + String(status));
+			if (Ember.isNone(this.get('timer'))) {
+				this.set('timer', App.Ticker.create({
+					seconds : 3,
+					onTick : function() {
+						this.set('tick', !this.get('tick'));
+						console.log(this.get('tick'));
+						return store.fetch('user', 1);
+					}
+				}));
+			}
+			if (status) {
+				this.get('timer').start();
+			} else {
+				this.get('timer').stop();
+			}
+		},
 	},
 });

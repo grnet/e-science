@@ -29,6 +29,8 @@ App.UserCluster = DS.Model.extend({
 	disk_template : attr(),
 	os_image : attr(),
 	project_name : attr(),
+	task_id : attr(),
+	state : attr(),
 	// user that created the cluster
 	user : DS.belongsTo('user'),
 	cluster_url : function() {
@@ -65,9 +67,7 @@ App.UserCluster = DS.Model.extend({
 	cluster_status_pending : function(){
 		var status = this.get('cluster_status');
 		if (status == '2'){
-			return 'Pending...';
-		}else{
-			return '';
+			return this.get('state') || 'Pending...';
 		}
 	}.property('cluster_status'),
 	cluster_status_active : function(){
