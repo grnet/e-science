@@ -1,0 +1,150 @@
+---
+  - name: Install WebUpd8 apt key
+    apt_key: id=EEA14886 keyserver='keyserver.ubuntu.com' state=present
+    tags: preconfig
+
+  - name: Install WebUpd8 Team Java PPA (for Oracle Java)
+    apt_repository: repo='deb http://ppa.launchpad.net/webupd8team/java/ubuntu precise main' state=present
+    tags: preconfig
+
+  - name: Install WebUpd8 Team Java PPA2 (for Oracle Java)
+    apt_repository: repo='deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu precise main' state=present
+    tags: preconfig
+    
+  - name: Accept Oracle License
+    debconf: name=oracle-java8-installer question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+    tags: preconfig
+
+  - name: Install Java packages
+    apt: pkg={{ item }} state=latest update_cache=yes
+    with_items:
+       - oracle-java8-installer
+       - oracle-java8-set-default
+    tags: preconfig
+
+  - name: Disable ipv6
+    sysctl: "name={{item.name}} value={{item.value}} state={{item.state}}"
+    tags: preconfig
+    with_items:
+       - { name: 'net.ipv6.conf.all.disable_ipv6', value: '1', state: 'present' }
+       - { name: 'net.ipv6.conf.default.disable_ipv6', value: '1', state: 'present' }
+       - { name: 'net.ipv6.conf.lo.disable_ipv6', value: '1', state: 'present' }
+
+  - name: Change ssh_config to ssh from master with no StrictHostKeyCheck,command1
+    lineinfile: dest=/etc/ssh/ssh_config regexp='ask' line='StrictHostKeyChecking no' state=present
+    tags: postconfig
+    when: is_master
+
+  - name: Change ssh_config to ssh from master with no StrictHostKeyCheck,command2
+    lineinfile: dest=/etc/ssh/ssh_config line='UserKnownHostsFile=/dev/null' insertafter='EOF' state=present
+    tags: postconfig
+    when: is_master
+
+  - name: Remove second line of /etc/hosts
+    lineinfile: dest=/etc/hosts regexp='^127\.0\.1\.1' state=absent
+    tags: postconfig
+
+  - name: Add virtual machine private ips in /etc/hosts
+    template: src=hosts.j2 dest={{etchosts_filename}}
+    tags: postconfig
+
+  - name: Append the host file
+    shell: cat {{etchosts_filename}} >> /etc/hosts
+    tags: postconfig
+
+  - name: create hadoop group
+    group: name=hadoop state=present
+    tags: postconfig
+
+  - name: create hadoop user
+    user: name=hduser group=hadoop generate_ssh_key=yes shell=/bin/bash
+    tags: postconfig
+
+  - name: copy authorized_keys to hduser .ssh directory
+    tags: postconfig
+    copy: src=~/.ssh/id_rsa.pub dest=~hduser/.ssh/authorized_keys owner=hduser group=hadoop mode=0600
+ 
+  - name: prepare ssh 
+    tags: postconfig
+    shell: sudo -u hduser cat /home/hduser/.ssh/id_rsa.pub >> /home/hduser/.ssh/authorized_keys
+    when: is_master
+
+  - name: copy master public ssh key to local box
+    tags: postconfig
+    local_action: command  scp -v -o StrictHostKeyChecking=no root@{{ hostvars[groups['master'][0]].inventory_hostname }}:/home/hduser/.ssh/id_rsa.pub /tmp/{{master_key}}
+    when: is_master
+
+  - name: copy local box master ssh key to hduser
+    tags: postconfig
+    authorized_key: user=hduser key="{{ item }}"
+    with_file:
+      - /tmp/{{master_key}}
+    when: is_slave
+
+  - name: download hadoop-yarn src
+    tags: preconfig
+    get_url: dest=/usr/local url={{yarn_common_url}}/{{ yarn_version }}/{{ yarn_version }}.tar.gz
+
+  - name: unzip hadoop-yarn src
+    tags: preconfig
+    action: command tar -xzf {{ yarn_version }}.tar.gz chdir=/usr/local
+
+  - name: chown hadoop-src from root to hadoop group
+    tags: postconfig
+    action: |
+      command /bin/sh -c '
+      cd /usr/local
+      mv {{ yarn_version }} hadoop
+      chown -R hduser:hadoop hadoop'
+  
+  - name: update ~/.bashrc and hadoop-env.sh files
+    tags: postconfig
+    lineinfile: "dest={{item.dest}} state={{item.state}} insertafter={{item.insertafter}} line={{item.line}}"
+    with_items:
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_HOME=/usr/local/hadoop'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export JAVA_HOME=/usr/lib/jvm/java-8-oracle'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_INSTALL=/usr/local/hadoop'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_PREFIX=/usr/local/hadoop'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$HADOOP_INSTALL/bin'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$HADOOP_INSTALL/sbin'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_MAPRED_HOME=$HADOOP_INSTALL'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_COMMON_HOME=$HADOOP_INSTALL'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_HDFS_HOME=$HADOOP_INSTALL'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export YARN_HOME=$HADOOP_INSTALL'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export export HADOOP_CONF_DIR=$HADOOP_INSTALL/etc/hadoop'" }
+      - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle"' }
+      - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export HADOOP_PREFIX=/usr/local/hadoop"' }
+
+
+  - name: create app/hadoop/tmp to store HDFS
+    tags: postconfig
+    action: |
+      command /bin/sh -c '
+      mkdir -p /app/hadoop/tmp
+      chown hduser:hadoop /app/hadoop/tmp
+      chmod 750 /app/hadoop/tmp'
+
+  - name: copy yarn configuration xml files in every node
+    tags: postconfig
+    template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
+    with_items: 
+      - { src: 'core-site.j2', dest: '/usr/local/hadoop/etc/hadoop/core-site.xml', owner: 'hduser', group: 'hadoop' }
+      - { src: 'mapred-site.j2', dest: '/usr/local/hadoop/etc/hadoop/mapred-site.xml', owner: 'hduser', group: 'hadoop' }
+      - { src: 'hdfs-site.j2', dest: '/usr/local/hadoop/etc/hadoop/hdfs-site.xml', owner: 'hduser', group: 'hadoop' }
+      - { src: 'yarn-site.j2', dest: '/usr/local/hadoop/etc/hadoop/yarn-site.xml', owner: 'hduser', group: 'hadoop' }
+ 
+  - name: create masters and slaves files in hadoop-yarn master node
+    tags: postconfig
+    template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
+    with_items: 
+      - { src: 'masters.j2', dest: '/usr/local/hadoop/etc/hadoop/masters', owner: 'hduser', group: 'hadoop' }
+      - { src: 'slaves.j2', dest: '/usr/local/hadoop/etc/hadoop/slaves', owner: 'hduser', group: 'hadoop' }
+    when: is_master
+
+  - name: create app/hadoop/tmp/namenode and datanode
+    tags: postconfig
+    file: "dest={{item.dest}} mode={{item.mode}} owner={{item.owner}} group={{item.group}} state={{item.state}}"
+    with_items:
+      - { dest: '/app/hadoop/tmp/namenode', mode: '750', owner: 'hduser', group: 'hadoop', state: 'directory' }
+      - { dest: '/app/hadoop/tmp/datanode', mode: '750', owner: 'hduser', group: 'hadoop', state: 'directory' }
