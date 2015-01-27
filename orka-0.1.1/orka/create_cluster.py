@@ -9,6 +9,7 @@ This script creates a HadoopYarn cluster on ~okeanos.
 import datetime
 from time import sleep
 import logging
+import os
 import subprocess
 from os.path import join, expanduser
 from reroute_ssh import reroute_ssh_prep
@@ -283,7 +284,9 @@ class YarnCluster(object):
         containing the public ssh_key of the user.
         """
         ssh_info = self.ssh_list()
-        self.ssh_file = join('./', cluster_name + 'ssh_key')
+        cluster_name = cluster_name.replace(" ", "")
+        cluster_name = cluster_name.replace(":", "")
+        self.ssh_file = join(os.getcwd(), cluster_name + 'ssh_key')
         for item in ssh_info:
             if item['name'] == self.opts['ssh_key_name']:
                 with open(self.ssh_file, 'w') as f:
@@ -366,6 +369,7 @@ class YarnCluster(object):
         else:
             self.ssh_key_file(cluster_name)
             pub_keys_path = self.ssh_file
+            print pub_keys_path
         try:
             cluster = Cluster(self.cyclades, self.opts['name'],
                               flavor_master, flavor_slaves,
