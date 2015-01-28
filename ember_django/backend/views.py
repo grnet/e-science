@@ -71,6 +71,7 @@ class DatabaseView(APIView):
         user_token = Token.objects.get(key=request.auth)
         user = UserInfo.objects.get(user_id=user_token.user.user_id)
         if serializer.is_valid():
+
             try:
                 db_cluster_create(user, serializer.data)
                 return Response({"id": 1, "message": "Requested cluster created in db"})

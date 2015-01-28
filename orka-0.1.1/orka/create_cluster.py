@@ -284,9 +284,8 @@ class YarnCluster(object):
         containing the public ssh_key of the user.
         """
         ssh_info = self.ssh_list()
-        cluster_name = cluster_name.replace(" ", "")
-        cluster_name = cluster_name.replace(":", "")
-        self.ssh_file = join(os.getcwd(), cluster_name + 'ssh_key')
+        cluster_name = cluster_name.replace(" ", "_")
+        self.ssh_file = join(os.getcwd(), cluster_name + '_ssh_key')
         for item in ssh_info:
             if item['name'] == self.opts['ssh_key_name']:
                 with open(self.ssh_file, 'w') as f:
@@ -313,8 +312,7 @@ class YarnCluster(object):
                     z1.append(item)
                 for k in z1:
                     mydict[z1[0]]=z1[1]
-            ssh_dict.append(mydict)        
-        print ssh_dict[0]['name']   
+            ssh_dict.append(mydict)
         return ssh_dict
         
     def create_bare_cluster(self):
@@ -360,16 +358,18 @@ class YarnCluster(object):
                             "disk_slaves": self.opts['disk_slave'],
                             "disk_template": self.opts['disk_template'],
                             "os_choice": self.opts['image'],
-                            "project_name": self.opts['project_name']}}
+                            "project_name": self.opts['project_name'],
+                            "ssh_key_selection": "placeholder"}}
 
         orka_req = OrkaRequest(self.escience_token, payload)
         orka_req.create_cluster_db()
+        self.ssh_file = 'no_ssh_key_selected'
         if self.opts['ssh_key_name']=='no_ssh_key_selected':           
-            pub_keys_path = ''
+            pub_keys_path = '' # password should be returned to user
         else:
             self.ssh_key_file(cluster_name)
             pub_keys_path = self.ssh_file
-            print pub_keys_path
+
         try:
             cluster = Cluster(self.cyclades, self.opts['name'],
                               flavor_master, flavor_slaves,
@@ -412,7 +412,7 @@ class YarnCluster(object):
 
             logging.log(SUMMARY, ' Installing and configuring Yarn')
             install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
-                         self.server_dict[0]['name'], self.hadoop_image)
+                         self.server_dict[0]['name'], self.hadoop_image, self.ssh_file)
             # If Yarn cluster is build, update cluster status as active
             payload = {"orka": {"status": "Active", "cluster_name": self.opts['name'],
                                 "master_ip": self.HOSTNAME_MASTER_IP}}

@@ -104,7 +104,7 @@ class ClusterchoicesSerializer(serializers.Serializer):
 
     project_name = serializers.CharField()
     
-    ssh_key_selection = serializers.CharField()
+    ssh_key_selection = serializers.CharField(required=False)
 
 
 class ClusterInfoSerializer(serializers.ModelSerializer):

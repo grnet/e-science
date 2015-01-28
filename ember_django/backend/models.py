@@ -191,7 +191,7 @@ class ClusterInfo(models.Model):
 
     os_image = models.CharField("OS Image", max_length=255, null=False,
                                 help_text="Operating system of the cluster")
-    master_IP = models.CharField("Master IP", max_length=255, null=True,
+    master_IP = models.CharField("Master IP", max_length=255, blank=True,
                                  help_text="IP address of Master's node")
     user_id = models.ForeignKey(UserInfo, null=False, related_name='clusters',
                                 help_text="User ID "
