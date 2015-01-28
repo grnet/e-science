@@ -62,6 +62,9 @@ App.UserWelcomeController = Ember.Controller.extend({
 				this.set('timer', App.Ticker.create({
 					seconds : 5,
 					onTick : function() {
+						if (!store){
+							store = this.store;
+						}
 						var promise = store.fetch('user', 1);
 						promise.then(function(user) {
 							// success
