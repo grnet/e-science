@@ -1,11 +1,6 @@
 <!-- Grid header : [Name], [Status], [Size], [URL Address]
 Each cluster occupies a row with [Name], [Status], [Size], [IP:Port <= clickable to a new browser tab]
 Grid should be sort-able by status & size -->
-<script type="text/javascript">
-	$(function() {
-		$("[data-toggle='tooltip']").tooltip();
-	}); 
-</script>
 <div class="row">
     <div class="col col-sm-12">
         <div class="panel panel-default">
@@ -20,7 +15,7 @@ Grid should be sort-able by status & size -->
                             <td id="id_label_status"><a href="#" {{action 'sortBy' content.clusters 'cluster_status'}}>Status</a><i class="glyphicon small" {{bind-attr class="sortbystatus:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td><a href="#" {{action 'sortBy' content.clusters 'cluster_size'}}>Size</a><i class="glyphicon small" {{bind-attr class="sortbysize:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td><a href="#" {{action 'sortBy' content.clusters 'master_IP'}}>Active IP</a><i class="glyphicon small" {{bind-attr class="sortbyurl:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                            <td><a href="#" {{action 'sortBy' content.clusters 'master_IP'}}>Actions</a><i class="glyphicon small" {{bind-attr class="sortbyurl:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                            <td>Actions</td>
                         </tr>
                     </thead>
                     <tbody class="text-left">
@@ -31,16 +26,11 @@ Grid should be sort-able by status & size -->
                             <td><a data-toggle="tooltip" data-placement="right" {{bind-attr title='usercluster.cluster_status_verbose'}}> <i {{bind-attr class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</a></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
-                            <td>{{#if usercluster.cluster_status_active}}
-                            {{#if this.confirm}}
-                            <div class="alert alert-dismissable alert-warning text-center">
-                                <button type="button" class="close" data-dismiss="alert">×</button>
-                                <span id='id_confirm_message'>Confirm</span>
-                            </div> {{else}}
-                            {{#view "destroy-cluster-button"
-                            class="next btn btn-danger btn-md btn-block" value=usercluster.master_IP }}
-                            Destroy Cluster
-                            {{/view}}{{/if}}{{/if}}</td>
+                            <td>
+                            {{#if usercluster.cluster_status_active}}
+                            <a data-toggle="tooltip" data-placement="right" title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
+                            {{/if}}
+                            </td>
                         </tr>
                         {{else}}
                         <tr>
@@ -54,16 +44,11 @@ Grid should be sort-able by status & size -->
                             <td><a data-toggle="tooltip" data-placement="right" {{bind-attr title='usercluster.cluster_status_verbose'}}> <i {{bind-attr class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</a></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
-                            <td>{{#if usercluster.cluster_status_active}}
-                            {{#if this.comfirm}}
-                            <div class="alert alert-dismissable alert-warning text-center">
-                                <button type="button" class="close" data-dismiss="alert">×</button>
-                                <span id='id_confirm_message'>{{usercluster.confirm_destory}}</span>
-                            </div> {{else}}
-                            {{#view "destroy-cluster-button"
-                            class="next btn btn-danger btn-md btn-block" value=usercluster.master_IP }}
-                            Destroy Cluster
-                            {{/view}}{{/if}}{{/if}}</td>
+                            <td>
+                            {{#if usercluster.cluster_status_active}}
+                            <a data-toggle="tooltip" data-placement="right" title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
+                            {{/if}}
+                            </td>
                         </tr>
                         </tr>
                         {{else}}
