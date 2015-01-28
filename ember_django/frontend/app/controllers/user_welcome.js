@@ -63,7 +63,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 					seconds : 5,
 					onTick : function() {
 						if (!store){
-							store = this.store;
+							store = that.store;
 						}
 						var promise = store.fetch('user', 1);
 						promise.then(function(user) {
