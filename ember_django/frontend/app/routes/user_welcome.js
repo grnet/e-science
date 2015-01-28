@@ -35,6 +35,9 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			// failure
 			console.log(String(reason));
 		});
-	}
+	},
+	deactivate : function(){
+		this.controllerFor('userWelcome').send('timer', false);
+	},
 });
 
