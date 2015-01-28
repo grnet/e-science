@@ -68,6 +68,8 @@ App.UserCluster = DS.Model.extend({
 		var status = this.get('cluster_status');
 		if (status == '2'){
 			return this.get('state') || 'Pending...';
+		}else{
+			return '';
 		}
 	}.property('cluster_status'),
 	cluster_status_active : function(){
@@ -78,6 +80,14 @@ App.UserCluster = DS.Model.extend({
 			return false;
 		}
 	}.property('cluster_status'),
+	cluster_status_class_destroy : function(){
+		var status = this.get('cluster_status_active');
+		if (status){
+			return "glyphicon glyphicon-ban-circle text-danger";
+		}else{
+			return '';
+		}
+	}.property('cluster_status_active'),
 });
 
 // App.User.reopenClass({

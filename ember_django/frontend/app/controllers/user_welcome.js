@@ -7,8 +7,6 @@ App.UserWelcomeController = Ember.Controller.extend({
 	// flag to see if the transition is from create cluster button
 	create_cluster_start : false,
 
-	tick : false, // temp for debug
-
 	sortedclusters : [],
 	column : '',
 	sortdir : null,
@@ -59,14 +57,30 @@ App.UserWelcomeController = Ember.Controller.extend({
 
 		},
 		timer : function(status, store) {
-			console.log('timer called with: ' + String(status));
+			var that = this;
 			if (Ember.isNone(this.get('timer'))) {
 				this.set('timer', App.Ticker.create({
-					seconds : 3,
+					seconds : 5,
 					onTick : function() {
-						this.set('tick', !this.get('tick'));
-						console.log(this.get('tick'));
-						return store.fetch('user', 1);
+						var promise = store.fetch('user', 1);
+						promise.then(function(user) {
+							// success
+							var num_records = user.get('clusters').get('length');
+							var bPending = false;
+							for ( i = 0; i < num_records; i++) {
+								if (user.get('clusters').objectAt(i).get('cluster_status') == '2') {
+									bPending = true;
+									break;
+								}
+							}
+							if (!bPending) {
+								that.get('timer').stop();
+								status = false;
+							}
+						}, function(reason) {
+							console.log(reason);
+						});
+						return promise;
 					}
 				}));
 			}

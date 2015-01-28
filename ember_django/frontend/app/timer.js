@@ -21,7 +21,7 @@ App.Ticker = Ember.Object.extend({
 		this.set('timer', this.schedule(this.get('onTick')));
 	},
 	// overriden with the function we want to execute where the Timer object is instantiated
-	// example: var metro = App.Metronome.create({seconds:3, onTick: function(){console.log('tock!');}});
+	// example: var metro = App.Metronome.create({seconds: 3, onTick: function(){console.log('tock!');}});
 	// metro.reopen({seconds: 5, onTick: function(){console.log('ding');}});
 	onTick : function() {
 	}
