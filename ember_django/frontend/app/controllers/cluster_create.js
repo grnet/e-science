@@ -31,9 +31,15 @@ App.ClusterCreateController = Ember.Controller.extend({
 	alert_mes_cluster_size : '', // alert message for cluster size (if none selected)
 	project_details : '', // project details: name and quota(Vms cpus ram disk)
 	name_of_project : '', // variable to set name of project as part of project details string helps parsing sytem project name
-	vmflavor_selection : '',
-    vmflav_disabled : false,
-
+	vmflavor_selection_Master : '', // Initial vmflavor_selection_Master
+	vmflavor_selection_Slave : '', // Initial vmflavor_selection_Slave
+    vmflav_disabled_Master : false, // Global variable for handling restrictions
+    vmflav_disabled_Slave : false, // Global variable for handling restrictions
+    vmflav_masterMedium_disabled : false, // Global variable for handling restrictions
+    vmflav_masterLarge_disabled : false, // Global variable for handling restrictions
+    vmflav_slaveMedium_disabled : false, // Global variable for handling restrictions
+    vmflav_slaveLarge_disabled : false, // Global variable for handling restrictions
+    
 	// for projects
 	projects_av : function() {
 		this.reset_variables();
@@ -230,20 +236,53 @@ App.ClusterCreateController = Ember.Controller.extend({
 		return max_cluster_size_limited_by_current_disks;
 	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size_var', 'cluster_size', 'project_details'),
 
+    // Functionality about coloring of the vmflavor buttons and enable-disable responding to user events
+	// First, remove colors from all vmflavor buttons and then color the role's(master/slaves) selection
     vmflavor_buttons : function() {
-    	var elements = document.getElementsByName("vmflavor_button");
+    	var elements = document.getElementsByName("vmflavor_button_Master");
 		var length = elements.length;
 		var vmflavors = this.get('content').objectAt(this.get('project_index')).get('vmflavors_choices');
 		for (var i = 0; i < length; i++) {
 			elements[i].style.color = "initial";
-			if (vmflav_disabled) {
+			if (vmflav_disabled_Master) {
 				elements[i].disabled = true;
 			} else {
 				elements[i].disabled = false;
 			}
-			if ((this.get('vmflavor_selection') !== undefined) && (this.get('vmflavor_selection') !== null) && (this.get('vmflavor_selection') !== '')) {
-				var choice = document.getElementById(this.get('vmflavor_selection'));
-				choice.style.color = "white";
+			if (vmflav_masterMedium_disabled) {
+				elements[1].disabled = true;
+			}
+			if (vmflav_masterLarge_disabled) {
+				elements[2].disabled = true;
+			}
+			if ((this.get('vmflavor_selection_Master') !== undefined) && (this.get('vmflavor_selection_Master') !== null) && (this.get('vmflavor_selection_Master') !== '')) {
+				var choice = document.getElementById("master_vmfalvors".concat(this.get('vmflavor_selection_Master')));
+				if (((this.get('master_cpu_selection') == 2)&&(this.get('master_ram_selection') == 2048)&&(this.get('master_disk_selection') == 10))||(((this.get('master_cpu_selection') == 4)&&(this.get('master_ram_selection') == 2048)&&(this.get('master_disk_selection') == 20)))||(((this.get('master_cpu_selection') == 4)&&(this.get('master_ram_selection') == 4096)&&(this.get('master_disk_selection') == 40)))) {
+					choice.style.color = "white";
+				}				
+			}
+		}
+		var elements = document.getElementsByName("vmflavor_button_Slave");
+		var length = elements.length;
+		var vmflavors = this.get('content').objectAt(this.get('project_index')).get('vmflavors_choices');
+		for (var i = 0; i < length; i++) {
+			elements[i].style.color = "initial";
+			if (vmflav_disabled_Slave) {
+				elements[i].disabled = true;
+			} else {
+				elements[i].disabled = false;
+			}
+			if (vmflav_slaveMedium_disabled) {
+				elements[1].disabled = true;
+			}
+			if (vmflav_slaveLarge_disabled) {
+				elements[2].disabled = true;
+			}
+			if ((this.get('vmflavor_selection_Slave') !== undefined) && (this.get('vmflavor_selection_Slave') !== null) && (this.get('vmflavor_selection_Slave') !== '')) {
+				var choice = document.getElementById("slave_vmfalvors".concat(this.get('vmflavor_selection_Slave')));
+				if (((this.get('slaves_cpu_selection') == 2)&&(this.get('slaves_ram_selection') == 2048)&&(this.get('slaves_disk_selection') == 10))||(((this.get('slaves_cpu_selection') == 4)&&(this.get('slaves_ram_selection') == 2048)&&(this.get('slaves_disk_selection') == 20)))||(((this.get('slaves_cpu_selection') == 4)&&(this.get('slaves_ram_selection') == 4096)&&(this.get('slaves_disk_selection') == 40)))) {
+					choice.style.color = "white";
+				}				
 			}
 		}
 	},
@@ -270,13 +309,20 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 			if (cpus[i] > (this.get('content').objectAt(this.get('project_index')).get('cpu_av') - slaves_cpu * (this.size_of_cluster() - 1) )) {
 				elements[i].disabled = true;
-				vmflav_disabled=true;
+				vmflav_disabled_Master=true;
 			} else {
 				elements[i].disabled = false;
-				vmflav_disabled=false;
+				vmflav_disabled_Master=false;
 			}
 			if (elements[1].disabled == true) {
-				vmflav_disabled=true;
+				vmflav_disabled_Master=true;
+			}
+			if (elements[2].disabled == true) {
+				vmflav_masterMedium_disabled=true;
+				vmflav_masterLarge_disabled=true;
+			} else {
+				vmflav_masterMedium_disabled=false;
+				vmflav_masterLarge_disabled=false;
 			}
 		}
 
@@ -297,11 +343,20 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 			if (cpus[i] * (this.size_of_cluster() - 1) > (this.get('content').objectAt(this.get('project_index')).get('cpu_av') - master_cpu)) {
 				elements[i].disabled = true;
+				vmflav_disabled_Slave=true;
 			} else {
 				elements[i].disabled = false;
+				vmflav_disabled_Slave=false;
 			}
 			if (elements[1].disabled == true) {
-				vmflav_disabled=true;
+				vmflav_disabled_Slave=true;
+			}
+			if (elements[2].disabled == true) {
+				vmflav_slaveMedium_disabled=true;
+				vmflav_slaveLarge_disabled=true;
+			} else {
+				vmflav_slaveMedium_disabled=false;
+				vmflav_slaveLarge_disabled=false;
 			}
 		}
 	},
@@ -334,8 +389,12 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = false;
 			}
 			if (elements[2].disabled == true) {
-				vmflav_disabled=true;
+				vmflav_disabled_Master=true;
+				vmflav_masterMedium_disabled=true;
 			}
+			if (elements[3].disabled == true) {
+				vmflav_masterLarge_disabled=true;
+			}		
 		}
 
 		var elements = document.getElementsByName("slaves_ram_button");
@@ -359,7 +418,11 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = false;
 			}
 			if (elements[2].disabled == true) {
-				vmflav_disabled=true;
+				vmflav_disabled_Slave=true;
+				vmflav_slaveMedium_disabled=true;
+			}
+			if (elements[3].disabled == true) {
+				vmflav_slaveLarge_disabled=true;
 			}
 		}
 	},
@@ -391,7 +454,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = false;
 			}
 			if (elements[1].disabled == true) {
-				vmflav_disabled=true;
+				vmflav_disabled_Master=true;
+			}
+			if (elements[2].disabled == true) {
+				vmflav_masterMedium_disabled=true;
+			}
+			if (elements[3].disabled == true) {
+				vmflav_masterLarge_disabled=true;
 			}
 		}
 
@@ -416,7 +485,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = false;
 			}
 			if (elements[1].disabled == true) {
-				vmflav_disabled=true;
+				vmflav_disabled_Slave=true;
+			}
+			if (elements[2].disabled == true) {
+				vmflav_slaveMedium_disabled=true;
+			}
+			if (elements[3].disabled == true) {
+				vmflav_slaveLarge_disabled=true;
 			}
 		}
 	},
@@ -477,7 +552,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('cluster_name', '');
 		this.set('operating_system', 'Debian Base');
 		this.set('disk_temp', 'ext_vlmc');
-		this.set('vmflavor_selection', '');
+		this.set('vmflavor_selection_Master', '');
+		this.set('vmflavor_selection_Slave', '');
 		this.set('message', '');
 		this.init_alerts();
 	},
@@ -495,31 +571,42 @@ App.ClusterCreateController = Ember.Controller.extend({
 	actions : {
 		
 		vm_flavor_selection : function(value, name) {
-			this.set('vmflavor_selection', value);
-			if (value == "Small") {
-				this.set('master_cpu_selection', 2);
-				this.set('slaves_cpu_selection', 2);
-				this.set('master_ram_selection', 2048);
-				this.set('slaves_ram_selection', 2048);
-				this.set('master_disk_selection', 10);
-				this.set('slaves_disk_selection', 10);
+			if (name == "vmflavor_button_Master") {
+				this.set('vmflavor_selection_Master', value);
+				if (value == "Small") {
+					this.set('master_cpu_selection', 2);
+				    this.set('master_ram_selection', 2048);
+				    this.set('master_disk_selection', 10);
+				} 
+				if (value == "Medium") {
+					this.set('master_cpu_selection', 4);
+				    this.set('master_ram_selection', 2048);
+				    this.set('master_disk_selection', 20);
+				}
+				if (value == "Large") {
+					this.set('master_cpu_selection', 4);
+					this.set('master_ram_selection', 4096);
+					this.set('master_disk_selection', 40);
+				}
 			}
-			if (value == "Medium") {
-				this.set('master_cpu_selection', 4);
-				this.set('slaves_cpu_selection', 4);
-				this.set('master_ram_selection', 2048);
-				this.set('slaves_ram_selection', 2048);
-				this.set('master_disk_selection', 20);
-				this.set('slaves_disk_selection', 20);
-			}
-			if (value == "Large") {
-				this.set('master_cpu_selection', 4);
-				this.set('slaves_cpu_selection', 4);
-				this.set('master_ram_selection', 4096);
-				this.set('slaves_ram_selection', 4096);
-				this.set('master_disk_selection', 40);
-				this.set('slaves_disk_selection', 40);
-			}
+			if (name == "vmflavor_button_Slave") {
+				this.set('vmflavor_selection_Slave', value);
+				if (value == "Small") {
+					this.set('slaves_cpu_selection', 2);
+					this.set('slaves_ram_selection', 2048);
+					this.set('slaves_disk_selection', 10);
+				}
+				if (value == "Medium") {
+					this.set('slaves_cpu_selection', 4);
+					this.set('slaves_ram_selection', 2048);
+					this.set('slaves_disk_selection', 20);
+				}
+				if (value == "Large") {				
+					this.set('slaves_cpu_selection', 4);				
+					this.set('slaves_ram_selection', 4096);				
+					this.set('slaves_disk_selection', 40);
+				}
+			}			
 		},
 
 		// When a cpu button is clicked, the selected role's cpu selection takes the corresponding value

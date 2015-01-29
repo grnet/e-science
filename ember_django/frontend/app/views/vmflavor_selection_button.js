@@ -8,15 +8,20 @@ App.vmflavorSelButView = Ember.View.extend({
     // initialization
     init: function() {
         // set id
-	    if(this.get('name') == "vmflavor_button")
+	    if(this.get('name') == "vmflavor_button_Master")
 	{
-	    this.set('elementId', this.get('value'));
+	    this.set('elementId', "master_vmfalvors" + this.get('value'));
+	    return this._super();
+	}
+	    if(this.get('name') == "vmflavor_button_Slave")
+	{
+	    this.set('elementId', "slave_vmfalvors" + this.get('value'));
 	    return this._super();
 	}
     },    
     // on click
     click: function () {
-	// for this controller, trigger the vm_flavor_template_selection and send the value
+	// for this controller, trigger the vm_flavor_selection and send the value
         this.get('controller').send('vm_flavor_selection', this.get('value'), this.get('name'));
     }
 });
