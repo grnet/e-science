@@ -7,7 +7,8 @@
 		<meta name="description" content="e-Science Orca the hadoop cluster creator">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 
-		<link rel="stylesheet" href="{{ STATIC_URL }}styles/bootstrap.orca.css">
+		<script type="text/javascript">var THEME_URL="{{ THEME }}";</script>
+		<link rel="stylesheet" href="{{ STATIC_URL }}styles{{ THEME }}">
 		<link rel="stylesheet" href="{{ STATIC_URL }}styles/style.css">
 	</head>
 	<body class="" style="">
@@ -36,6 +37,7 @@
 	    <script src="{{ STATIC_URL }}controllers/homepage.js"></script>
 	    <script src="{{ STATIC_URL }}controllers/user_login.js"></script>
 	    <script src="{{ STATIC_URL }}controllers/cluster_create.js"></script>
+	    <script src="{{ STATIC_URL }}controllers/choice_select.js"></script>
 	
 	    <script src="{{ STATIC_URL }}router.js"></script>
 	    <script src="{{ STATIC_URL }}routes/index.js"></script>
@@ -52,6 +54,8 @@
 	    <script src="{{ STATIC_URL }}views/storage_selection_button.js"></script>
 	    <script src="{{ STATIC_URL }}views/create_cluster_button.js"></script>
 	    <script src="{{ STATIC_URL }}views/vmflavor_selection_button.js"></script>
+	    <script src="{{ STATIC_URL }}views/vmflavor_selection_button.js"></script>
+	    <script src="{{ STATIC_URL }}views/theme_selection_button.js"></script>
 	    
 	    <script src="{{ STATIC_URL }}store.js"></script> 
 	    <script src="{{ STATIC_URL }}models/user.js"></script>

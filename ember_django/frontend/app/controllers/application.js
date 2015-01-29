@@ -8,4 +8,5 @@ App.ApplicationController = Ember.Controller.extend({
 		}
 	}.property('loggedIn'),
 	STATIC_URL : DJANGO_STATIC_URL,
+	THEME : THEME_URL,
 });
