@@ -16,6 +16,7 @@ App.Cluster = DS.Model.extend({
 	disk_template : attr(),      	// storage choices
 	os_choices : attr(),          	// Operating System choices
 	vmflavors_choices : ['Small', 'Medium', 'Large']  //Predefined VM Flavors
+
 });
 
 // For Fixtures
@@ -57,4 +58,8 @@ App.Cluster = DS.Model.extend({
     }
   ]
 });
+<<<<<<< HEAD
 */
+=======
+*/
+>>>>>>> bb9f16caeaef5cad98a248f6a2a15990b0fd313c

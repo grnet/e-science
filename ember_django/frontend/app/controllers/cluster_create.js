@@ -357,7 +357,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				vmflav_slaveMedium_disabled=false;
 				vmflav_slaveLarge_disabled=false;
-			}
 		}
 	},
 
@@ -521,7 +520,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.disk_buttons();
 		this.storage_buttons();
 		this.vmflavor_buttons();
-	},
+=	},
 	size_of_cluster : function() {
 		if ((this.get('cluster_size') === null) || (this.get('cluster_size') === undefined) || (this.get('cluster_size') === 0)) {
 			this.set('cluster_size_var', 2);
