@@ -67,23 +67,15 @@ class ProjectNameSerializer(serializers.Serializer):
     project_name = serializers.CharField()
 
 
-class TaskSerializer(serializers.Serializer):
-    """Serializer for the celery task id."""
-    task_id = serializers.CharField()
-
-
 class MasterIpSerializer(serializers.Serializer):
     """ Serializer for master vm ip """
-    master_IP = serializers.CharField()
-
+    master_ip = serializers.CharField()
 
 class UpdateDatabaseSerializer(serializers.Serializer):
 
     status = serializers.CharField()
     cluster_name = serializers.CharField()
-    state = serializers.CharField()
-    master_IP = serializers.CharField(required=False)
-
+    master_ip = serializers.CharField()
 
 class ClusterchoicesSerializer(serializers.Serializer):
     """
@@ -112,19 +104,16 @@ class ClusterchoicesSerializer(serializers.Serializer):
 
     project_name = serializers.CharField()
     
-    ssh_key_selection = serializers.CharField()
-
-    task_id = serializers.CharField(required=False)
+    ssh_key_selection = serializers.CharField(required=False)
 
 
 class ClusterInfoSerializer(serializers.ModelSerializer):
     """ Serializer for ember request with user's available clusters."""
     class Meta:
         model = ClusterInfo
-        fields = ('id', 'cluster_name', 'cluster_status', 'cluster_size',
-                  'cpu_master', 'mem_master', 'disk_master', 'cpu_slaves',
-                  'mem_slaves', 'disk_slaves', 'disk_template', 'os_image',
-                  'master_IP', 'project_name', 'task_id', 'state')
+        fields = ('id', 'cluster_name', 'cluster_status', 'cluster_size', 'cpu_master',
+                  'mem_master', 'disk_master', 'cpu_slaves', 'mem_slaves',
+                  'disk_slaves', 'disk_template', 'os_image', 'master_IP', 'project_name')
 
 
 class UserInfoSerializer(serializers.ModelSerializer):

@@ -33,11 +33,14 @@ def reroute_ssh_prep(server, master_ip):
     # each time to list_of_hosts. List_of_hosts is the list that has every
     #  fqdn and private ip of the virtual machines.
     logging.log(SUMMARY, ' Configuring Yarn cluster node communication')
+    master_VM_password = server[0]['adminPass']
     for s in server:
         if s['name'].split('-')[-1] == '1':  # Master vm
             dict_s = {'fqdn': s['SNF:fqdn'], 'private_ip': '192.168.0.2',
-                      'port': 22}
+                      'port': 22, 'password': s['adminPass']}
             list_of_hosts.append(dict_s)
+            # Pre-setup the port forwarding that will happen later
+            get_ready_for_reroute(hostname_master, master_VM_password)
         else:
             # Every slave ip is increased by 1 from the private ip of the
             # previous slave.The first slave is increased by 1 from the
@@ -45,24 +48,22 @@ def reroute_ssh_prep(server, master_ip):
             slave_ip = '192.168.0.' + str(1 + int(s['name'].split('-')[-1]))
             port = ADD_TO_GET_PORT+int(s['name'].split('-')[-1])
             dict_s = {'fqdn': s['SNF:fqdn'], 'private_ip': slave_ip,
-                      'port': port}
+                      'port': port, 'password': s['adminPass']}
             list_of_hosts.append(dict_s)
-    # Pre-setup the port forwarding that will happen later
-    get_ready_for_reroute(hostname_master)
 
     # Port-forwarding now for every slave machine
     for vm in list_of_hosts[1:]:
-        reroute_ssh_to_slaves(vm['port'], vm['private_ip'], hostname_master)
+        reroute_ssh_to_slaves(vm['port'], vm['private_ip'], hostname_master, vm['password'], master_VM_password)
 
     return list_of_hosts
 
 
-def get_ready_for_reroute(hostname_master):
+def get_ready_for_reroute(hostname_master, password):
     """
     Runs pre-setup commands for port forwarding in master virtual machine.
     These commands are executed only.
     """
-    ssh_client = establish_connect(hostname_master, 'root', '',
+    ssh_client = establish_connect(hostname_master, 'root', password,
                                    MASTER_SSH_PORT)
     try:
         exec_command(ssh_client, 'apt-get update')
@@ -132,14 +133,14 @@ def check_command_exit_status(ex_status, command):
                     command, ex_status)
 
 
-def reroute_ssh_to_slaves(dport, slave_ip, hostname_master):
+def reroute_ssh_to_slaves(dport, slave_ip, hostname_master, password, master_VM_password):
     """
     For every slave vm in the cluster this function is called.
     Finishes the port forwarding and installs python for ansible
     in every machine. Arguments are the port and the private ip of
     the slave vm.
     """
-    ssh_client = establish_connect(hostname_master, 'root', '',
+    ssh_client = establish_connect(hostname_master, 'root', master_VM_password,
                                    MASTER_SSH_PORT)
     try:
         exec_command(ssh_client, 'iptables -A PREROUTING -t nat -i eth1 -p tcp'
@@ -150,7 +151,7 @@ def reroute_ssh_to_slaves(dport, slave_ip, hostname_master):
     finally:
         ssh_client.close()
 
-    ssh_client = establish_connect(hostname_master, 'root', '', dport)
+    ssh_client = establish_connect(hostname_master, 'root', password, dport)
     try:
         exec_command(ssh_client, 'route add default gw 192.168.0.2')
         exec_command(ssh_client, 'apt-get update')

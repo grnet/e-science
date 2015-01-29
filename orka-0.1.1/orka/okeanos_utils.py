@@ -12,6 +12,7 @@ from os.path import abspath, dirname, join
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
+from kamaki.clients.compute import ComputeClient
 from kamaki.clients.cyclades import CycladesClient, CycladesNetworkClient
 from time import sleep
 from cluster_errors_constants import *
@@ -19,7 +20,6 @@ from ConfigParser import RawConfigParser, NoSectionError
 import requests
 import json
 import yaml
-from celery import current_task
 
 # Global constants
 MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
@@ -56,7 +56,6 @@ class OrkaRequest(object):
         self.escience_token = escience_token
         self.payload = payload
         self.url_database = get_api_urls(database=True)
-        self.url_login = get_api_urls(login=True)
         self.headers = {'content-type': 'application/json',
                         'Authorization': 'Token ' + self.escience_token}
 
@@ -89,44 +88,6 @@ class OrkaRequest(object):
                          headers=self.headers)
         response = yaml.load(r.text)
         return response
-    
-    def retrieve_user_data(self):
-        """Request to orka database to get all user clusters."""
-        r = requests.get(self.url_login, data=json.dumps(self.payload),
-                         headers=self.headers)
-        response = json.loads(r.text)
-        return response
-
-def get_user_clusters(token):
-    """
-    Get the clusters of the user
-    """
-    try:
-        escience_token = authenticate_escience(token)
-    except TypeError:
-        msg = ' Authentication error with token: ' + token 
-        raise ClientError(msg, error_authentication)
-    except Exception,e:
-        print ' ' + str(e.args[0])
-    
-    payload = {"user": {"id": 1}} # check if we need to derive user id from token through auth
-    orka_request = OrkaRequest(escience_token, payload)
-    user_data = orka_request.retrieve_user_data()
-    user_clusters = user_data['user']['clusters']
-    return user_clusters  
-    
-
-def set_cluster_state(token, status, name, state, master_IP=''):
-        """
-        Make a request to change the cluster state in database.
-        """
-        escience_token = authenticate_escience(token)
-        current_task.update_state(state=state)
-        payload = {"orka": {"status": status, "cluster_name": name,
-                            "master_IP": master_IP, "state": state}}
-
-        orka_req = OrkaRequest(escience_token, payload)
-        orka_req.update_cluster_db()
 
 
 def authenticate_escience(token):
@@ -161,13 +122,13 @@ def get_project_id(token, project_name):
     raise ClientError(msg, error_proj_id)
 
 
-def destroy_cluster(token, master_IP):
+def destroy_cluster(token, master_ip):
     """
     Destroys cluster and deletes network and floating ip. Finds the machines
-    that belong to the cluster from the master_IP that is given.
+    that belong to the cluster from the master_ip that is given.
     """
     servers_to_delete = []
-    float_ip_to_delete = master_IP
+    float_ip_to_delete = master_ip
     list_of_errors = []
     master_id = None
     network_to_delete_id = None
@@ -205,7 +166,7 @@ def destroy_cluster(token, master_IP):
             float_ip_to_delete
         raise ClientError(msg, error_get_ip)
 
-    payload = {"orka": {"master_IP": master_IP}}
+    payload = {"orka": {"master_ip": master_ip}}
     orka_request = OrkaRequest(escience_token, payload)
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
@@ -376,6 +337,25 @@ def check_quota(token, project_id):
               'cluster_size': {'limit': limit_vm, 'available': available_vm}}
     return quotas
 
+def check_images(token, project_id):
+    """
+    Checks the list of the current images
+    Filter the ones that match with our uuid
+    Return the available images
+    """
+    auth = check_credentials(token)
+    endpoints, user_id = endpoints_and_user_id(auth)    
+    plankton = init_plankton(endpoints['plankton'], token)
+    list_current_images = plankton.list_public(True, 'default')
+    available_images = []
+    for image in list_current_images:
+        # owner of image will be checked based on the uuid
+        if image['owner'] == "ec567bea-4fa2-433d-9935-261a0867ec60":
+            available_images.append(image['name'])
+        elif image['owner'] == "25ecced9-bf53-4145-91ee-cf47377e9fb2" and image['name'] == "Debian Base":
+            available_images.append(image['name'])
+                
+    return available_images
 
 def endpoints_and_user_id(auth):
     """
@@ -676,4 +656,5 @@ class Cluster(object):
         for attachment in master_details['attachments']:
             if attachment['OS-EXT-IPS:type'] == 'floating':
                         hostname_master = attachment['ipv4']
+
         return hostname_master, servers

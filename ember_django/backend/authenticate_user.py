@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
+'''
 This script contains classes and functions that
 authenticate escience users.
 
 @author: Ioannis Stenos, Nick Vrionis
-"""
+'''
 
 import logging
 from kamaki.clients.astakos import AstakosClient
@@ -25,10 +25,10 @@ SAFE_METHODS = ['POST']
 
 
 class EscienceTokenAuthentication(TokenAuthentication):
-    """
+    '''
     Class that inherit the rest_framework default Token authentication class.
     Overrides the Token model used and authenticate_credentials method.
-    """
+    '''
 
     model = Token
 
@@ -42,11 +42,11 @@ class EscienceTokenAuthentication(TokenAuthentication):
 
 
 class IsAuthenticatedOrIsCreation(BasePermission):
-    """
+    '''
     Class for permissions. Only POST method will be allowed without
     Token authentication. Every other method will have to add
     as a request header the escience authentication token.
-    """
+    '''
 
     def has_permission(self, request, view):
         return (
@@ -57,10 +57,10 @@ class IsAuthenticatedOrIsCreation(BasePermission):
 
 
 class IsAuthenticated(BasePermission):
-    """
+    '''
     Class for permissions for database view. Every method will have to add
     as a request header the escience authentication token.
-    """
+    '''
 
     def has_permission(self, request, view):
         return (
@@ -71,7 +71,7 @@ class IsAuthenticated(BasePermission):
 
 def check_user_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
                       '/identity/v2.0'):
-    """Identity,Account/Astakos. Test ~okeanos authentication credentials"""
+    '''Identity,Account/Astakos. Test ~okeanos authentication credentials'''
     logging.info(' Test the credentials')
     try:
         auth = AstakosClient(auth_url, token)

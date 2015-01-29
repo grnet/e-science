@@ -14,8 +14,6 @@ App.UserWelcomeController = Ember.Controller.extend({
 	sortbystatus : false,
 	sortbysize : false,
 	sortbyurl : false,
-	confirm: false,
-	ip_of_master: '',
 	sortedCollection : function() {
 		// $options = {
 			// title : 'Creating...',
@@ -68,14 +66,6 @@ App.UserWelcomeController = Ember.Controller.extend({
 			}
 			this.set('sortedclusters', clusters);
 			this.set('column', column);
-		},
-		go_to_confirm: function(master_IP){
-			this.set('confirm',true);
-			this.set('ip_of_master',master_IP);
-			alert(master_IP);
-		},
-		go_to_destroy: function(master_IP){
-			
 		}
 	},
 });

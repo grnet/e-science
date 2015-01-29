@@ -1,22 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-Celery settings
-"""
-BROKER_URL = 'amqp://orkarbmq:orkapass@localhost:5672//escience_tasks'
-#: Only add pickle to this list if your broker is secured
-#: from unwanted access (see userguide/security.html)
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TASK_RESULT_EXPIRES=3600
-CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
-import djcelery
-djcelery.setup_loader()
-
-
-"""
+'''
 Django settings for ember_django project.
 
 For more information on this file, see
@@ -24,7 +9,7 @@ https://docs.djangoproject.com/en/1.7/topics/settings/
 
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.7/ref/settings/
-"""
+'''
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -54,12 +39,10 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'backend',
     'rest_framework',
     'rest_framework_ember',
-    'rest_framework.authtoken',    
-    # 'kombu.transport.django.KombuAppConfig',
-    'djcelery',
-    'backend',
+    'rest_framework.authtoken',
 )
 
 MIDDLEWARE_CLASSES = (

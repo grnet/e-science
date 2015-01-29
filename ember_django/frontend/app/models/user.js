@@ -70,14 +70,6 @@ App.UserCluster = DS.Model.extend({
 			return '';
 		}
 	}.property('cluster_status'),
-	cluster_status_active : function(){
-		var status = this.get('cluster_status');
-		if (status == '1'){
-			return true;
-		}else{
-			return false;
-		}
-	}.property('cluster_status'),
 });
 
 // App.User.reopenClass({

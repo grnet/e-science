@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
+'''
  e-Science database model
  @author: Vassilis Foteinos, Ioannis Stenos, Nick Vrionis
-"""
+'''
 
 import logging
 import datetime
@@ -15,7 +15,7 @@ from djorm_pgarray.fields import IntegerArrayField, TextArrayField
 
 
 class UserInfo(models.Model):
-    """Definition of a User object model."""
+    '''Definition of a User object model.'''
     user_id = models.AutoField("User ID", primary_key=True, null=False,
                                help_text="Auto-increment user id")
     uuid = models.CharField("UUID", null=False, blank=False, unique=True,
@@ -44,11 +44,11 @@ ACTION_STATUS_CHOICES = (
 
 
 class ClusterCreationParams(models.Model):
-    """
+    '''
     Definition of  ClusterChoices model for retrieving cluster creation
     parameters from okeanos. Imported djorm_pgarray package
     is needed for custom Arrayfields.
-    """
+    '''
     id = models.IntegerField("Id", primary_key=True, null=False,
                                        help_text="Id needed by ember.js store")
     user_id = models.ForeignKey(UserInfo, null=False,
@@ -102,7 +102,7 @@ class ClusterCreationParams(models.Model):
 
 
 class Token(models.Model):
-    """Definition of a e-science Token Authentication model."""
+    '''Definition of a e-science Token Authentication model.'''
     user = models.OneToOneField(UserInfo, related_name='escience_token')
     key = models.CharField(max_length=40, null=True)
 
@@ -123,7 +123,7 @@ class Token(models.Model):
 
 
 class UserLogin(models.Model):
-    """Definition of a User Login relationship model."""
+    '''Definition of a User Login relationship model.'''
     login_id = models.AutoField("Login ID", primary_key=True, null=False,
                                 help_text="Auto-increment login id")
     user_id = models.ForeignKey(UserInfo, null=False,
@@ -146,7 +146,6 @@ class UserLogin(models.Model):
     def __unicode__(self):
         return ("%s, %s") % (self.user_id.user_id, self.login_status)
 
-
 CLUSTER_STATUS_CHOICES = (
     ("0", "Destroyed"),
     ("1", "Active"),
@@ -154,7 +153,7 @@ CLUSTER_STATUS_CHOICES = (
 )
 
 class ClusterInfo(models.Model):
-    """Definition of a Hadoop Cluster object model."""
+    '''Definition of a Hadoop Cluster object model.'''
     id = models.AutoField("Cluster ID", primary_key=True, null=False,
                                   help_text="Auto-increment cluster id")
     cluster_name = models.CharField("Cluster Name", max_length=255, null=False,
@@ -201,13 +200,6 @@ class ClusterInfo(models.Model):
     project_name = models.CharField("Project Name", max_length=255, null=False,
                                     help_text="Project Name where"
                                     " Cluster was created")
-
-    task_id = models.CharField("Task Id", max_length=255,
-                               blank=True, help_text="Celery task id")
-
-    state = models.CharField("Task State", max_length=255,
-                               blank=True, help_text="Celery task state")
-
 
     class Meta:
         verbose_name = "Cluster"
