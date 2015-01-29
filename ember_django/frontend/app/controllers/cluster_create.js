@@ -636,7 +636,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 					if ((this.get('ssh_key_selection')=='') || (this.get('ssh_key_selection')==null)){
 						this.set('ssh_key_selection', 'no_ssh_key_selected');
 					}
-					var cluster_selection = this.store.update('clusterchoice', {
+					var cluster_selection = this.store.push('clusterchoice', {
 						// set the clusterchoice model with the user choices
 						'id' : 1,
 						'project_name' : self.get('project_name'),
@@ -660,8 +660,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 						self.set('controllers.userWelcome.output_message', data._data.message);
 						self.set('controllers.userWelcome.create_cluster_start', false);
 						self.store.fetch('user', 1);
-					}, function() {
+					}, function(reason) {
 						// Set the response to user's create cluster click when put fails.
+						console.log(reason.message);
 						$.loader.close(true);
 						self.set('message', 'A problem occured during your request. Please check your cluster parameters and try again');
 						self.set('controllers.userWelcome.output_message', 'A problem occured during your request. Please check your cluster parameters and try again');

@@ -110,7 +110,7 @@ def get_user_clusters(token):
     except Exception,e:
         print ' ' + str(e.args[0])
     
-    payload = {"user": {"id": 1}} # check if we need to derive user id from token through auth
+    payload = {"user": {"id": 1}}
     orka_request = OrkaRequest(escience_token, payload)
     user_data = orka_request.retrieve_user_data()
     user_clusters = user_data['user']['clusters']
@@ -377,6 +377,25 @@ def check_quota(token, project_id):
               'cluster_size': {'limit': limit_vm, 'available': available_vm}}
     return quotas
 
+def check_images(token, project_id):
+    """
+    Checks the list of the current images
+    Filter the ones that match with our uuid
+    Return the available images
+    """
+    auth = check_credentials(token)
+    endpoints, user_id = endpoints_and_user_id(auth)    
+    plankton = init_plankton(endpoints['plankton'], token)
+    list_current_images = plankton.list_public(True, 'default')
+    available_images = []
+    for image in list_current_images:
+        # owner of image will be checked based on the uuid
+        if image['owner'] == "ec567bea-4fa2-433d-9935-261a0867ec60":
+            available_images.append(image['name'])
+        elif image['owner'] == "25ecced9-bf53-4145-91ee-cf47377e9fb2" and image['name'] == "Debian Base":
+            available_images.append(image['name'])
+                
+    return available_images
 
 def endpoints_and_user_id(auth):
     """

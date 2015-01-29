@@ -15,7 +15,7 @@
     - {role: yarn, is_slave: True, when: "ansible_hostname != '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and choose_role == 'yarn'"}
 
 - name: Format cluster (if needed) and start the Hadoop-yarn daemons
-  remote_user: hduser
+  remote_user: root
   hosts: master
   tasks:
      - { include: start_yarn.yml, when: start_yarn == 'True'}

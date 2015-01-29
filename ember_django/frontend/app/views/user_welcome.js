@@ -1,7 +1,7 @@
 // User Welcome view
 App.UserWelcomeView = Ember.View.extend({
 	didInsertElement : function() {
-		// todo: need a way to refresh when the partial is re-rendered that's performance friendly
+		// performance heavy, prefer the addObserver implementation below
 		// $(this.get('element')).on('mousemove',function(){
 		// $("[data-toggle='tooltip']").tooltip();
 		// });

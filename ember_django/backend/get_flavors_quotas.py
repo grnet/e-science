@@ -71,8 +71,10 @@ def project_list_flavor_quota(user):
     for project in list_of_projects:   
         if project['id'] in dict_quotas:
             quotas = check_quota(okeanos_token, project['id'])
+            images = check_images(okeanos_token, project['id'])
             list_of_resources.append(retrieve_ClusterCreationParams(flavors,
                                                                     quotas,
+                                                                    images,
                                                                     project['name'],
                                                                     user,
                                                                     ember_project_id,
@@ -110,7 +112,7 @@ def retrieve_pending_clusters(token, project_name):
     return pending_quota
 
 
-def retrieve_ClusterCreationParams(flavors, quotas, project_name, user, ember_project_id,ssh_keys_names):
+def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, ember_project_id,ssh_keys_names):
     """
     Retrieves user quotas and flavor list from kamaki
     using get_flavor_id and check_quota methods and returns the updated
@@ -134,7 +136,7 @@ def retrieve_ClusterCreationParams(flavors, quotas, project_name, user, ember_pr
     mem_choices = flavors['ram']
     disk_choices = flavors['disk']
     disk_template = flavors['disk_template']
-    os_choices = ['Debian Base']
+    os_choices = images
 
     # Create a ClusterCreationParams object with the parameters returned from
     # get_flavor_id and check_quota.
@@ -154,7 +156,6 @@ def retrieve_ClusterCreationParams(flavors, quotas, project_name, user, ember_pr
                                                     disk_choices=disk_choices,
                                                     disk_template=disk_template,
                                                     os_choices=os_choices,
-                                                    ssh_keys_names=ssh_keys_names
-                                                    )
+                                                    ssh_keys_names=ssh_keys_names)
     # Return the ClusterCreationParams object
     return cluster_creation_params

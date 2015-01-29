@@ -44,7 +44,7 @@ class ClusterCreationParamsSerializer(serializers.ModelSerializer):
         fields = ('id', 'user_id', 'project_name', 'vms_max', 'vms_av',
                   'cpu_max', 'cpu_av', 'mem_max', 'mem_av', 'disk_max',
                   'disk_av', 'cpu_choices', 'mem_choices', 'disk_choices',
-                  'disk_template', 'os_choices','ssh_keys_names')
+                  'disk_template', 'os_choices', 'ssh_keys_names')
 
 
 class OkeanosTokenSerializer(serializers.Serializer):
@@ -112,7 +112,7 @@ class ClusterchoicesSerializer(serializers.Serializer):
 
     project_name = serializers.CharField()
     
-    ssh_key_selection = serializers.CharField()
+    ssh_key_selection = serializers.CharField(required=False)
 
     task_id = serializers.CharField(required=False)
 

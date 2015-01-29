@@ -12,7 +12,7 @@ App.UserLogoutRoute = Ember.Route.extend({
 		// reset variables in create cluster
 		this.controllerFor('clusterCreate').reset_project();
 		// Send PUT request for backend logout update.
-		var current_user = this.store.update('user', {
+		var current_user = this.store.push('user', {
 			'id' : 1
 		}).save();
 		current_user.then(function() {
