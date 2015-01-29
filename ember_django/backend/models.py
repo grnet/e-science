@@ -12,8 +12,6 @@ import binascii
 import os
 from django.db import models
 from djorm_pgarray.fields import IntegerArrayField, TextArrayField
-from ansible.utils import default
-from chardet.test import count
 
 
 class UserInfo(models.Model):
@@ -93,7 +91,8 @@ class ClusterCreationParams(models.Model):
     disk_template = TextArrayField()  # ArrayField
     # Operating system choices
     os_choices = TextArrayField()  # ArrayField
-
+    #ssh keys
+    ssh_keys_names = TextArrayField()  # ArrayField
     pending_status = models.NullBooleanField(default=False)
 
 
@@ -217,10 +216,3 @@ class ClusterInfo(models.Model):
     def __unicode__(self):
         return ("%s, %d, %s") % (self.cluster_name, self.cluster_size,
                                  self.cluster_status)
-
-
-class CeleryTasks(models.Model):
-    count = models.IntegerField(default=0)
-    
-    def __unicode__(self):
-        return unicode(self.count)

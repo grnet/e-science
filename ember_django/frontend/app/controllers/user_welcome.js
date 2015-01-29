@@ -14,28 +14,9 @@ App.UserWelcomeController = Ember.Controller.extend({
 	sortbystatus : false,
 	sortbysize : false,
 	sortbyurl : false,
+	confirm : false,
+	ip_of_master : '',
 	sortedCollection : function() {
-		// $options = {
-			// title : 'Creating...',
-			// fontColor : false,
-			// bgColor : 'white',
-			// size : 32,
-			// isOnly : true,
-			// bgOpacity : 0.5,
-			// imgUrl : "/frontend/app/images/loading[size].gif",
-			// onShow : function() {
-				// $.loader.shown = true;
-				// $('.loading_wrp').find('span').addClass('text-info');
-			// },
-			// onClose : function() {
-				// $.loader.shown = false;
-			// }
-		// };
-		// $.loader.close(true);
-		// setTimeout(function() {
-			// $('.glyphicon-time').closest('td').loader($options);
-		// }, 100);
-
 		// sorts content (clusters) based on properties
 		return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, {
 			content : this.get('sortedclusters'),
@@ -66,6 +47,51 @@ App.UserWelcomeController = Ember.Controller.extend({
 			}
 			this.set('sortedclusters', clusters);
 			this.set('column', column);
-		}
+		},
+		go_to_confirm : function(master_IP) {
+			this.set('confirm', true);
+			this.set('ip_of_master', master_IP);
+			alert(master_IP);
+		},
+		go_to_destroy : function(master_IP) {
+
+		},
+		timer : function(status, store) {
+			var that = this;
+			if (Ember.isNone(this.get('timer'))) {
+				this.set('timer', App.Ticker.create({
+					seconds : 5,
+					onTick : function() {
+						if (!store){
+							store = that.store;
+						}
+						var promise = store.fetch('user', 1);
+						promise.then(function(user) {
+							// success
+							var num_records = user.get('clusters').get('length');
+							var bPending = false;
+							for ( i = 0; i < num_records; i++) {
+								if (user.get('clusters').objectAt(i).get('cluster_status') == '2') {
+									bPending = true;
+									break;
+								}
+							}
+							if (!bPending) {
+								that.get('timer').stop();
+								status = false;
+							}
+						}, function(reason) {
+							console.log(reason);
+						});
+						return promise;
+					}
+				}));
+			}
+			if (status) {
+				this.get('timer').start();
+			} else {
+				this.get('timer').stop();
+			}
+		},
 	},
 });

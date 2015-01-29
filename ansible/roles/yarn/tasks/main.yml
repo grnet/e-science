@@ -66,10 +66,23 @@
     user: name=hduser group=hadoop generate_ssh_key=yes shell=/bin/bash
     tags: postconfig
 
+  - stat: path="{{ ssh_file_name }}"
+    tags: postconfig
+    register: p
+    delegate_to: 127.0.0.1
+
   - name: copy authorized_keys to hduser .ssh directory
     tags: postconfig
-    copy: src=~/.ssh/id_rsa.pub dest=~hduser/.ssh/authorized_keys owner=hduser group=hadoop mode=0600
- 
+    authorized_key: user=hduser key="{{ item }}"
+    with_file:
+      - "{{ ssh_file_name }}"
+    when: p.stat.exists
+
+  - name: change owner of hduser auth keys file
+    tags: postconfig
+    file: path={{hadoopuser_path}}/.ssh/authorized_keys owner=hduser group=hadoop mode=0600
+    when: p.stat.exists
+
   - name: prepare ssh 
     tags: postconfig
     shell: sudo -u hduser cat {{hadoopuser_path}}/.ssh/id_rsa.pub >> {{hadoopuser_path}}/.ssh/authorized_keys

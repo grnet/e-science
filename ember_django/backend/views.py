@@ -27,6 +27,7 @@ from tasks import createcluster
 import exceptions
 from celery.result import AsyncResult
 
+
 logging.addLevelName(REPORT, "REPORT")
 logging.addLevelName(SUMMARY, "SUMMARY")
 logger = logging.getLogger("report")
@@ -63,11 +64,10 @@ class JobsView(APIView):
 
             if c_task.ready():
                 if c_task.successful():
-                    return Response({"message": c_task.result})
-                return Response({"message": c_task.result["exc_message"]})
+                    return Response({'success': c_task.result})
+                return Response({'error': c_task.result["exc_message"]})
 
             else:
-                print 'celery is doing stuff'
                 return Response({'state': c_task.state})
         return Response(serializer.errors)
 
@@ -206,10 +206,12 @@ class StatusView(APIView):
                        'token': user.okeanos_token,
                        'project_name': serializer.data['project_name']}
 
+            if 'ssh_key_selection' in serializer.data:
+                choices.update({'ssh_key_name': serializer.data['ssh_key_selection']})
             c_cluster = createcluster.delay(choices)
             task_id = c_cluster.id
 
-            return Response({"task_id": task_id}, status=202)
+            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)
@@ -263,42 +265,3 @@ class SessionView(APIView):
         self.serializer_class = UserInfoSerializer(self.user)
         return Response({"id": "1", "token": "null", "user_id": "null",
                          "cluster": "null"})
-
-
-# temporary for celery tests
-from django.http.response import HttpResponseRedirect, HttpResponse
-from django.core.context_processors import request
-from backend.tasks import progressive_increase
-from celery.result import AsyncResult
-try:
-    import json
-except ImportError:
-    from django.utils import simplejson as json
-def start_celery_task(request):
-    """
-    for testing progressive updates to celery tasks
-    """
-    task = progressive_increase.delay()
-    return HttpResponseRedirect( "%s%s" % ('/celery_progress?task_id=', task.id))
-
-def monitor_celery_task(request):
-    """
-    for testing progressive updates to celery tasks
-    """
-    if 'task_id' in request.GET:
-        task_id = request.GET['task_id']
-    else:
-        return HttpResponse('No task_id was passed.')
-    
-    task = AsyncResult(task_id)
-    data = task.result or task.state
-    return HttpResponse(json.dumps(data), content_type='application/json')
-        
-        
-        
-        
-        
-        
-        
-        
-        

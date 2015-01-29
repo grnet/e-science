@@ -29,7 +29,19 @@ App.ClusterCreateController = Ember.Controller.extend({
 	alert_mes_cluster_size : '', 	// alert message for cluster size (if none selected)
 	project_details : '', 		// project details: name and quota(Vms cpus ram disk)
 	name_of_project : '', 		// variable to set name of project as part of project details string helps parsing sytem project name
-
+	ssh_key_selection : '',		// variable for selected public ssh_key to use upon cluster creation
+	
+	
+	// reads available ssh_keys
+	// displays ssh_keys names in the drop-down list
+	ssh_keys_av : function(){
+		this.set('ssh_key_selection','');
+		var keys =[];
+		keys = this.get('content').objectAt(0).get('ssh_keys_names');
+		return keys.sort();
+	}.property('project_details'),
+	
+	
 	// reads available projects
 	// displays projects and available resources in the drop-down list
 	// (spaces inserted just for alignment of projects-resources)
@@ -621,7 +633,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 				if ((this.get('total_cpu_selection') <= this.get('content').objectAt(this.get('project_index')).get('cpu_av')) && (this.get('total_ram_selection') <= this.get('content').objectAt(this.get('project_index')).get('mem_av')) && (this.get('total_disk_selection') <= this.get('content').objectAt(this.get('project_index')).get('disk_av'))) {
 					var self = this;
 					// PUT request
-					var cluster_selection = this.store.update('clusterchoice', {
+					if ((this.get('ssh_key_selection')=='') || (this.get('ssh_key_selection')==null)){
+						this.set('ssh_key_selection', 'no_ssh_key_selected');
+					}
+					var cluster_selection = this.store.push('clusterchoice', {
 						// set the clusterchoice model with the user choices
 						'id' : 1,
 						'project_name' : self.get('project_name'),
@@ -634,7 +649,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 						'mem_slaves' : self.get('slaves_ram_selection'),
 						'disk_slaves' : self.get('slaves_disk_selection'),
 						'disk_template' : self.get('disk_temp'),
-						'os_choice' : self.get('operating_system')
+						'os_choice' : self.get('operating_system'),
+						'ssh_key_selection' : self.get('ssh_key_selection')
 					}).save();
 
 					cluster_selection.then(function(data) {
@@ -644,8 +660,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 						self.set('controllers.userWelcome.output_message', data._data.message);
 						self.set('controllers.userWelcome.create_cluster_start', false);
 						self.store.fetch('user', 1);
-					}, function() {
+					}, function(reason) {
 						// Set the response to user's create cluster click when put fails.
+						console.log(reason.message);
 						$.loader.close(true);
 						self.set('message', 'A problem occured during your request. Please check your cluster parameters and try again');
 						self.set('controllers.userWelcome.output_message', 'A problem occured during your request. Please check your cluster parameters and try again');

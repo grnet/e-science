@@ -18,7 +18,6 @@ from cluster_errors_constants import *
 from ConfigParser import RawConfigParser, NoSectionError
 import requests
 import json
-import yaml
 from celery import current_task
 
 # Global constants
@@ -32,11 +31,12 @@ def get_api_urls(login=False, database=False):
     config_file = join(orka_dir, 'config.txt')
     parser.read(config_file)
     try:
+        base_url = parser.get('Web', 'url')
         if login:
-            url_login = parser.get('Login', 'url')
+            url_login = '{0}{1}'.format(base_url, login_endpoint)
             return url_login
         if database:
-            url_database = parser.get('Database', 'url')
+            url_database = '{0}{1}'.format(base_url, database_endpoint)
             return url_database
         else:
             logging.log(SUMMARY, ' Url to be returned from config file not specified')
@@ -56,6 +56,7 @@ class OrkaRequest(object):
         self.escience_token = escience_token
         self.payload = payload
         self.url_database = get_api_urls(database=True)
+        self.url_login = get_api_urls(login=True)
         self.headers = {'content-type': 'application/json',
                         'Authorization': 'Token ' + self.escience_token}
 
@@ -86,7 +87,7 @@ class OrkaRequest(object):
         """Request to orka database to get pending clusters."""
         r = requests.get(self.url_database, data=json.dumps(self.payload),
                          headers=self.headers)
-        response = yaml.load(r.text)
+        response = json.loads(r.text)
         return response
 
 
@@ -112,7 +113,7 @@ def authenticate_escience(token):
     headers = {'content-type': 'application/json'}
     url_login = get_api_urls(login=True)
     r = requests.post(url_login, data=json.dumps(payload), headers=headers)
-    response = yaml.load(r.text)
+    response = json.loads(r.text)
     escience_token = response['user']['escience_token']
     logging.log(REPORT, ' Authenticated with escience database')
     return escience_token
@@ -350,6 +351,25 @@ def check_quota(token, project_id):
               'cluster_size': {'limit': limit_vm, 'available': available_vm}}
     return quotas
 
+def check_images(token, project_id):
+    """
+    Checks the list of the current images
+    Filter the ones that match with our uuid
+    Return the available images
+    """
+    auth = check_credentials(token)
+    endpoints, user_id = endpoints_and_user_id(auth)    
+    plankton = init_plankton(endpoints['plankton'], token)
+    list_current_images = plankton.list_public(True, 'default')
+    available_images = []
+    for image in list_current_images:
+        # owner of image will be checked based on the uuid
+        if image['owner'] == "ec567bea-4fa2-433d-9935-261a0867ec60":
+            available_images.append(image['name'])
+        elif image['owner'] == "25ecced9-bf53-4145-91ee-cf47377e9fb2" and image['name'] == "Debian Base":
+            available_images.append(image['name'])
+                
+    return available_images
 
 def endpoints_and_user_id(auth):
     """

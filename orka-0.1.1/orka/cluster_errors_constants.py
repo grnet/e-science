@@ -56,3 +56,7 @@ Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 default_image = 'Debian Base'
 default_logging = 'summary'
+database_endpoint = '/api/orka'
+login_endpoint = '/api/users'
+cluster_endpoint = '/api/clusterchoices'
+job_endpoint = '/api/jobs'

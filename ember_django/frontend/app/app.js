@@ -19,3 +19,5 @@ App.attr = DS.attr;
 // for authorization purposes
 var escience_token;
 App.set('escience_token', "null");
+
+

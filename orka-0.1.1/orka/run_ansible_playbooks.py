@@ -14,7 +14,7 @@ import logging
 from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
 
 
-def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image):
+def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
     """
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn.
@@ -31,7 +31,7 @@ def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image):
         msg = 'Error while creating ansible hosts file'
         raise RuntimeError(msg, error_ansible_playbook)
     # Run Ansible playbook
-    run_ansible(file_name, cluster_size, hadoop_image)
+    run_ansible(file_name, cluster_size, hadoop_image, ssh_file)
     logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
                 + hostname_master + ':8088/cluster')
     os.system('rm /tmp/master_' + master_hostname + '_pub_key')
@@ -42,10 +42,9 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
     Function that creates the ansible_hosts file and
     returns the name of the file.
     """
-    ansible_hosts_prefix = cluster_name.replace(" ", "")
-    ansible_hosts_prefix = ansible_hosts_prefix.replace(":", "")
+    ansible_hosts_prefix = cluster_name.replace(" ", "_")
 
-    # Removes spaces and ':' from cluster name and appends it to ansible_hosts
+    # Turns spaces to underscores from cluster name and appends it to ansible_hosts
     # The ansible_hosts file will now have a timestamped name
 
     filename = os.getcwd() + '/ansible_hosts_' + ansible_hosts_prefix
@@ -55,18 +54,20 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
         target.write('[master]' + '\n')
         target.write(list_of_hosts[0]['fqdn'])
         target.write(' private_ip='+list_of_hosts[0]['private_ip'])
+        target.write(' ansible_ssh_pass='+list_of_hosts[0]['password'])
         target.write(' ansible_ssh_host=' + hostname_master + '\n' + '\n')
         target.write('[slaves]'+'\n')
 
         for host in list_of_hosts[1:]:
             target.write(host['fqdn'])
             target.write(' private_ip='+host['private_ip'])
+            target.write(' ansible_ssh_pass='+host['password'])
             target.write(' ansible_ssh_port='+str(host['port']))
             target.write(' ansible_ssh_host='+list_of_hosts[0]['fqdn'] + '\n')
     return filename
 
 
-def run_ansible(filename, cluster_size, hadoop_image):
+def run_ansible(filename, cluster_size, hadoop_image, ssh_file):
     """
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
@@ -101,14 +102,14 @@ def run_ansible(filename, cluster_size, hadoop_image):
                                 'ansible-playbook -i ' + filename + ' ' +
                                 ansible_path + ansible_verbosity +
                                 ' -f ' + str(cluster_size) +
-                                ' -e "choose_role=yarn format=True start_yarn=True" -t postconfig'
+                                ' -e "choose_role=yarn format=True start_yarn=True ssh_file_name='+ssh_file+'" -t postconfig'
                                 + ansible_log)
     else:
         exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
                                 'ansible-playbook -i ' + filename + ' ' +
                                 ansible_path + ansible_verbosity +
                                 ' -f ' + str(cluster_size) +
-                                ' -e "choose_role=yarn format=True start_yarn=True"'
+                                ' -e "choose_role=yarn format=True start_yarn=True ssh_file_name='+ssh_file+'"'
                                 + ansible_log)
     if exit_status != 0:
         msg = ' Ansible failed with exit status %d' % exit_status

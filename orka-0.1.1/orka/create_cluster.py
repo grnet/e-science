@@ -9,6 +9,8 @@ This script creates a HadoopYarn cluster on ~okeanos.
 import datetime
 from time import sleep
 import logging
+import subprocess
+import os
 from os.path import join, expanduser
 from reroute_ssh import reroute_ssh_prep
 from kamaki.clients import ClientError
@@ -64,10 +66,19 @@ class YarnCluster(object):
         # Instance of Plankton/ImageClient
         self.plankton = init_plankton(self.endpoints['plankton'],
                                       self.opts['token'])
-        if 'use_hadoop_image' in self.opts:
-            if self.opts['use_hadoop_image']:
-                self.hadoop_image = True
-
+        # check hadoopconf flag and set hadoop_image accordingly
+        list_current_images = self.plankton.list_public(True, 'default')
+        for image in list_current_images:
+            if self.opts['image'] == image['name']:
+                try:
+                    if image['properties']['hadoopconf'] == 'true': 
+                        self.hadoop_image = True
+                    else:
+                        self.hadoop_image = False
+                except:
+                    # if hadoopconf hasn't been set then hadoop_image flag is false
+                    self.hadoop_image = False
+                        
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_cluster_size_quotas
@@ -253,7 +264,8 @@ class YarnCluster(object):
         the cluster.
         """
         self.pass_file = join('./', master_name + '_root_password')
-        self.pass_file = self.pass_file.replace(" ", "")
+        # add a "-" between date and time
+        self.pass_file = self.pass_file.replace(" ", "-")
         with open(self.pass_file, 'w') as f:
             f.write(master_root_pass)
 
@@ -263,8 +275,46 @@ class YarnCluster(object):
         if self.project_id in dict_quotas:
             return 0
         return error_project_quota
+    
+    def ssh_key_file(self, cluster_name):
+        """
+        Creates a file named after the timestamped name of cluster
+        containing the public ssh_key of the user.
+        """
+        ssh_info = self.ssh_list()
+        cluster_name = cluster_name.replace(" ", "_")
+        self.ssh_file = join(os.getcwd(), cluster_name + '_ssh_key')
+        for item in ssh_info:
+            if item['name'] == self.opts['ssh_key_name']:
+                with open(self.ssh_file, 'w') as f:
+                    f.write(item['content'])
 
-
+    def ssh_list(self):
+        """
+        Get the ssh_key dictionary of a user
+        """   
+        command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' + self.opts['token'] + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
+        p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
+        out, err = p.communicate()
+        output = out[2:-2].split('}, {')
+        ssh_dict =list()
+        ssh_counter = 0
+        for dictionary in output:
+            mydict=dict()
+            new = dictionary.replace('"','')
+            d1 = new.split(', ')
+            for every in d1:
+                z=every.split(': ')
+                z1=list()
+                for item in z:
+                    z1.append(item)
+                if len(z1) > 1:
+                    for k in z1:
+                        mydict[z1[0]]=z1[1]
+            ssh_dict.append(mydict)        
+        # print ssh_dict[0]['name']   
+        return ssh_dict   
+        
     def create_bare_cluster(self):
         """Creates a bare ~okeanos cluster."""
         # Finds user public ssh key
@@ -291,12 +341,14 @@ class YarnCluster(object):
         if not chosen_image:
             msg = self.opts['image']+' is not a valid image'
             raise ClientError(msg, error_image_id)
+
         # Create timestamped name of the cluster
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cluster_name = '%s%s%s' % (date_time, '-', self.opts['name'])
         self.opts['name'] = cluster_name
 
         # Update db with cluster status as pending
+
         payload = {"orka": {"cluster_name": self.opts['name'],
                             "cluster_size": self.opts['cluster_size'],
                             "cpu_master": self.opts['cpu_master'],
@@ -308,10 +360,22 @@ class YarnCluster(object):
                             "disk_template": self.opts['disk_template'],
                             "os_choice": self.opts['image'],
                             "project_name": self.opts['project_name'],
-                            "task_id": current_task.request.id}}
+                            "task_id": current_task.request.id,
+							"ssh_key_selection": "placeholder"}}
 
         orka_req = OrkaRequest(self.escience_token, payload)
         orka_req.create_cluster_db()
+        self.ssh_file = 'no_ssh_key_selected'
+
+        if self.opts['ssh_key_name'] is None:
+            self.ssh_file = pub_keys_path
+
+        elif self.opts['ssh_key_name']=='no_ssh_key_selected':
+            pub_keys_path = '' # password should be returned to user
+
+        else:
+            self.ssh_key_file(cluster_name)
+            pub_keys_path = self.ssh_file
         try:
             cluster = Cluster(self.cyclades, self.opts['name'],
                               flavor_master, flavor_slaves,
@@ -362,7 +426,7 @@ class YarnCluster(object):
             set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state)
 
             install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
-                         self.server_dict[0]['name'], self.hadoop_image)
+                         self.server_dict[0]['name'], self.hadoop_image, self.ssh_file)
 
             # If Yarn cluster is build, update cluster status as active
             state = ' Yarn Cluster is active'
