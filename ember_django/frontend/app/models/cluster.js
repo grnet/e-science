@@ -57,4 +57,5 @@ App.Cluster = DS.Model.extend({
     }
   ]
 });
+<<<<<<< HEAD
 */
