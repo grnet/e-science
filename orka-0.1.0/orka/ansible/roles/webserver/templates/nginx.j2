@@ -1,0 +1,26 @@
+upstream django {
+    server 127.0.0.1:8889;
+}
+
+server {
+    listen 80;
+    server_name {{ inventory_hostname }};
+    root /home/orca_admin/projects/e-science/ember_django;
+    access_log /home/orca_admin/logs/access.log;
+    error_log /home/orca_admin/logs/error.log;
+
+    location /static/ { # STATIC_URL
+        alias /home/orca_admin/projects/e-science/ember_django/static/; # STATIC_ROOT
+        expires 30d;
+    }
+
+    location /media/ { # MEDIA_URL
+        alias /home/orca_admin/projects/e-science/ember_django/media/; # MEDIA_ROOT
+        expires 30d;
+    }
+
+    location / {
+        include uwsgi_params;
+        uwsgi_pass 127.0.0.1:8889;
+    }
+}
