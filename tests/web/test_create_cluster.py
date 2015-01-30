@@ -23,7 +23,7 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class test_text_respond_to_buttons(unittest.TestCase):
+class test_create_cluster(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -54,7 +54,7 @@ class test_text_respond_to_buttons(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     
-    def test_text_respond_to_buttons(self):
+    def test_create_cluster(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_id("id_login").click()     

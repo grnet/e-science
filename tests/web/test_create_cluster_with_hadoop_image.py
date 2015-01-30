@@ -23,7 +23,7 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class test_text_respond_to_buttons(unittest.TestCase):
+class test_create_cluster_with_hadoop_image(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
