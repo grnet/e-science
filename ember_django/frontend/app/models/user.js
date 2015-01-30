@@ -29,6 +29,8 @@ App.UserCluster = DS.Model.extend({
 	disk_template : attr(),
 	os_image : attr(),
 	project_name : attr(),
+	task_id : attr(),
+	state : attr(),
 	// user that created the cluster
 	user : DS.belongsTo('user'),
 	cluster_url : function() {
@@ -65,11 +67,27 @@ App.UserCluster = DS.Model.extend({
 	cluster_status_pending : function(){
 		var status = this.get('cluster_status');
 		if (status == '2'){
-			return 'Pending...';
+			return this.get('state') || 'Pending...';
 		}else{
 			return '';
 		}
 	}.property('cluster_status'),
+	cluster_status_active : function(){
+		var status = this.get('cluster_status');
+		if (status == '1'){
+			return true;
+		}else{
+			return false;
+		}
+	}.property('cluster_status'),
+	cluster_status_class_destroy : function(){
+		var status = this.get('cluster_status_active');
+		if (status){
+			return "glyphicon glyphicon-ban-circle text-danger";
+		}else{
+			return '';
+		}
+	}.property('cluster_status_active'),
 });
 
 // App.User.reopenClass({

@@ -111,11 +111,11 @@ def retrieve_pending_clusters(token, project_name):
 
 
 def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, ember_project_id,ssh_keys_names):
-    '''
+    """
     Retrieves user quotas and flavor list from kamaki
     using get_flavor_id and check_quota methods and returns the updated
     ClusterCreationParams model.
-    '''
+    """
     i = 0
     j = 1
     vms_av = []

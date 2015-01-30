@@ -12,14 +12,13 @@ from os.path import abspath, dirname, join
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
-from kamaki.clients.compute import ComputeClient
 from kamaki.clients.cyclades import CycladesClient, CycladesNetworkClient
 from time import sleep
 from cluster_errors_constants import *
 from ConfigParser import RawConfigParser, NoSectionError
 import requests
 import json
-import yaml
+from celery import current_task
 
 # Global constants
 MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
@@ -32,11 +31,12 @@ def get_api_urls(login=False, database=False):
     config_file = join(orka_dir, 'config.txt')
     parser.read(config_file)
     try:
+        base_url = parser.get('Web', 'url')
         if login:
-            url_login = parser.get('Login', 'url')
+            url_login = '{0}{1}'.format(base_url, login_endpoint)
             return url_login
         if database:
-            url_database = parser.get('Database', 'url')
+            url_database = '{0}{1}'.format(base_url, database_endpoint)
             return url_database
         else:
             logging.log(SUMMARY, ' Url to be returned from config file not specified')
@@ -56,6 +56,7 @@ class OrkaRequest(object):
         self.escience_token = escience_token
         self.payload = payload
         self.url_database = get_api_urls(database=True)
+        self.url_login = get_api_urls(login=True)
         self.headers = {'content-type': 'application/json',
                         'Authorization': 'Token ' + self.escience_token}
 
@@ -86,8 +87,21 @@ class OrkaRequest(object):
         """Request to orka database to get pending clusters."""
         r = requests.get(self.url_database, data=json.dumps(self.payload),
                          headers=self.headers)
-        response = yaml.load(r.text)
+        response = json.loads(r.text)
         return response
+
+
+def set_cluster_state(token, status, name, state, master_IP=''):
+        """
+        Make a request to change the cluster state in database.
+        """
+        escience_token = authenticate_escience(token)
+        current_task.update_state(state=state)
+        payload = {"orka": {"status": status, "cluster_name": name,
+                            "master_IP": master_IP, "state": state}}
+
+        orka_req = OrkaRequest(escience_token, payload)
+        orka_req.update_cluster_db()
 
 
 def authenticate_escience(token):
@@ -99,7 +113,7 @@ def authenticate_escience(token):
     headers = {'content-type': 'application/json'}
     url_login = get_api_urls(login=True)
     r = requests.post(url_login, data=json.dumps(payload), headers=headers)
-    response = yaml.load(r.text)
+    response = json.loads(r.text)
     escience_token = response['user']['escience_token']
     logging.log(REPORT, ' Authenticated with escience database')
     return escience_token
@@ -122,13 +136,13 @@ def get_project_id(token, project_name):
     raise ClientError(msg, error_proj_id)
 
 
-def destroy_cluster(token, master_ip):
+def destroy_cluster(token, master_IP):
     """
     Destroys cluster and deletes network and floating ip. Finds the machines
-    that belong to the cluster from the master_ip that is given.
+    that belong to the cluster from the master_IP that is given.
     """
     servers_to_delete = []
-    float_ip_to_delete = master_ip
+    float_ip_to_delete = master_IP
     list_of_errors = []
     master_id = None
     network_to_delete_id = None
@@ -166,7 +180,7 @@ def destroy_cluster(token, master_ip):
             float_ip_to_delete
         raise ClientError(msg, error_get_ip)
 
-    payload = {"orka": {"master_ip": master_ip}}
+    payload = {"orka": {"master_IP": master_IP}}
     orka_request = OrkaRequest(escience_token, payload)
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
@@ -656,5 +670,4 @@ class Cluster(object):
         for attachment in master_details['attachments']:
             if attachment['OS-EXT-IPS:type'] == 'floating':
                         hostname_master = attachment['ipv4']
-
         return hostname_master, servers

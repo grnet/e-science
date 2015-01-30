@@ -1,6 +1,7 @@
 *.pyc
 *.py~
 *~
+*ssh_key
 .idea
 .project
 .pydevproject
