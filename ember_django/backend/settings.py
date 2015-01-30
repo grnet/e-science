@@ -118,7 +118,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 if DEBUG:
     STATIC_PATH = os.path.join(BASE_DIR, 'frontend/app')
-    STATIC_URL = '/frontend/app/'
+    STATIC_URL = '/frontend/app/'   
     STATICFILES_DIRS = (
         STATIC_PATH,
     )

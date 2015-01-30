@@ -6,5 +6,4 @@ App.HomepageController = Ember.Controller.extend({
 		}
 	},
 	STATIC_URL : DJANGO_STATIC_URL,
-    THEME : THEME_URL,
 });
