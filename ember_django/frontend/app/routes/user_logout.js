@@ -19,10 +19,11 @@ App.UserLogoutRoute = Ember.Route.extend({
 			// Set global var escience and localStorage token to null when put is successful.
 			App.set('escience_token', "null");
 			window.localStorage.escience_auth_token = App.get('escience_token');
-		}, function() {
+		}, function(reason) {
 			// Set global var escience and localStorage token to null when put fails.
 			App.set('escience_token', "null");
 			window.localStorage.escience_auth_token = App.get('escience_token');
+			console.log(reason.message);
 		});
 		this.transitionTo('homepage');
 		this.controllerFor('application').set('loggedIn', false);

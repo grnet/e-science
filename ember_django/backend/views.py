@@ -211,7 +211,7 @@ class StatusView(APIView):
             c_cluster = createcluster.delay(choices)
             task_id = c_cluster.id
 
-            return Response({"id": 1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+            return Response({"id": 1, "task_id": task_id}, status=status.HTTP_200_OK) #HTTP_202_ACCEPTED
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)

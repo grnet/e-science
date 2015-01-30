@@ -133,7 +133,7 @@ class UserClusterInfo(object):
                             'cpu_slaves','mem_slaves','disk_slaves']]
         self.sort_func = custom_sort_factory(self.order_list)
         self.short_list = {'cluster_name':True, 'cluster_size':True, 'cluster_status':True, 'master_IP':True}
-        self.skip_list = {'id':True}
+        self.skip_list = {'id':True, 'task_id':True, 'state':True}
         self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0'}
         self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED'}
         

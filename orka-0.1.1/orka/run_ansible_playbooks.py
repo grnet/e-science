@@ -63,7 +63,7 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
             target.write(' private_ip='+host['private_ip'])
             target.write(' ansible_ssh_pass='+host['password'])
             target.write(' ansible_ssh_port='+str(host['port']))
-            target.write(' ansible_ssh_host='+list_of_hosts[0]['fqdn'] + '\n')
+            target.write(' ansible_ssh_host='+ hostname_master + '\n')
     return filename
 
 

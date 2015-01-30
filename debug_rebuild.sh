@@ -6,6 +6,10 @@ echo 'done'
 echo 'delete *.pyc'
 sudo find . -name "*.pyc" -type f -delete
 echo 'done'
+echo 'clean ansible files'
+sudo rm ~/.ssh/known_hosts
+sudo rm -rf ~/.ansible/
+echo 'done'
 echo 'rebuild orka'
 cd orka-0.1.1
 sudo rm -rf build/

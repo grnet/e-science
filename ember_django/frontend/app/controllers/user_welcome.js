@@ -62,30 +62,40 @@ App.UserWelcomeController = Ember.Controller.extend({
 				this.set('timer', App.Ticker.create({
 					seconds : 5,
 					onTick : function() {
-						if (!store){
+						if (!store) {
 							store = that.store;
 						}
-						var promise = store.fetch('user', 1);
-						promise.then(function(user) {
-							// success
-							var num_records = user.get('clusters').get('length');
-							var bPending = false;
-							for ( i = 0; i < num_records; i++) {
-								if (user.get('clusters').objectAt(i).get('cluster_status') == '2') {
-									bPending = true;
-									break;
+						if (store && that.controllerFor('application').get('loggedIn')) {
+							var promise = store.fetch('user', 1);
+							promise.then(function(user) {
+								// success
+								var num_records = user.get('clusters').get('length');
+								var bPending = false;
+								for ( i = 0; i < num_records; i++) {
+									if (user.get('clusters').objectAt(i).get('cluster_status') == '2') {
+										bPending = true;
+										break;
+									}
 								}
-							}
-							if (!bPending) {
+								if (!bPending) {
+									that.get('timer').stop();
+									status = false;
+								}
+							}, function(reason) {
 								that.get('timer').stop();
 								status = false;
-							}
-						}, function(reason) {
-							console.log(reason);
-						});
-						return promise;
+								console.log(reason);
+							});
+							return promise;
+						}
 					}
 				}));
+			} else {
+				if (status) {
+					that.get('timer').start();
+				} else {
+					that.get('timer').stop();
+				}
 			}
 			if (status) {
 				this.get('timer').start();

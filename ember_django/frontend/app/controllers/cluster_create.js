@@ -671,10 +671,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 					});
 					if (this.get('message') == "") {
 						// after ten seconds goes to welcome route
-						setTimeout(function() {
+						Ember.run.later(self,function(){
 							self.set('controllers.userWelcome.create_cluster_start', true);
 							self.transitionToRoute('user.welcome');
-						}, 10000);
+						}, 3000);
 					} else {
 						self.set('controllers.userWelcome.create_cluster_start', true);
 						this.transitionToRoute('user.welcome');

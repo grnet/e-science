@@ -13,7 +13,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		var promise = this.store.fetch('user', 1);
 		promise.then(function(user) {
 			// success
-			that.controllerFor('userWelcome').set('sortbystatus', true);
 			var num_records = user.get('clusters').get('length');
 			var bPending = false;
 			for ( i = 0; i < num_records; i++) {
@@ -35,7 +34,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 	afterModel : function(user, transition) {
 		// if we came from a link-to helper that doesn't fire the model hook
 		var that = this;
-		that.controllerFor('userWelcome').set('sortbystatus', true);
 		var num_records = user.get('clusters').get('length');
 		var bPending = false;
 		for ( i = 0; i < num_records; i++) {
@@ -49,8 +47,28 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			that.controllerFor('userWelcome').send('timer', false);
 		}
 	},
+	actions : {
+		willTransition : function(transition) {
+			// leaving this route
+			this.controller.send('timer', false);
+		},
+		didTransition : function() {
+			// arrived at this route
+			Ember.run.later(this, function() {
+				Ember.run.later(this, function() {
+					this.controller.set('sortbyname', true);
+					this.controller.set('sortbyname', false);
+					console.log('sort send');
+				}, 1000);
+				this.controller.send('timer', true);
+				console.log('action send');
+			}, 1500);
+			return true;
+		}
+	},
 	deactivate : function() {
-		this.controllerFor('userWelcome').send('timer', false);
+		// left this route
+		this.controller.send('timer', false);
 	},
 });
 
