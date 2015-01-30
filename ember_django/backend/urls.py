@@ -21,8 +21,8 @@ urlpatterns = patterns('', url(r'^$', 'backend.views.main_page'),
                        url(r'^api/jobs', views.JobsView.as_view())
                        )
 
-if settings.DEBUG:
-    import debug_toolbar
-    urlpatterns += patterns('',
-        url(r'^__debug__/', include(debug_toolbar.urls)),
-    )
+# if settings.DEBUG:
+#     import debug_toolbar
+#     urlpatterns += patterns('',
+#         url(r'^__debug__/', include(debug_toolbar.urls)),
+#     )
