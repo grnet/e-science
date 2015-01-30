@@ -16,7 +16,7 @@ from django_db_after_login import *
 from backend.models import ClusterCreationParams, ClusterInfo, UserInfo
 from orka.cluster_errors_constants import *
 
-def ssh_list(token):
+def ssh_key_list(token):
     """
     Get the ssh_key dictionary of a user
     """
@@ -29,18 +29,17 @@ def ssh_list(token):
     ssh_counter = 0
     for dictionary in output:
         mydict=dict()
-        new = dictionary.replace('"','')
-        d1 = new.split(', ')
-        for every in d1:
-            z=every.split(': ')
-            z1=list()
-            for item in z:
-                z1.append(item)
-            if len(z1) > 1:
-                for k in z1:
-                    mydict[z1[0]]=z1[1]
-        ssh_dict.append(mydict)        
-    # print ssh_dict[0]['name']   
+        new_dictionary = dictionary.replace('"','')
+        dict1 = new_dictionary.split(', ')
+        for each in dict1:
+            list__keys_values_in_dict=each.split(': ')
+            new_list_of_dict_elements=list()
+            for item in list__keys_values_in_dict:
+                new_list_of_dict_elements.append(item)
+            if len(new_list_of_dict_elements) > 1:
+                for pair in new_list_of_dict_elements:
+                    mydict[new_list_of_dict_elements[0]]=new_list_of_dict_elements[1]
+        ssh_dict.append(mydict)          
     return ssh_dict
 
 
@@ -50,7 +49,7 @@ def project_list_flavor_quota(user):
     list_of_resources = list()
     flavors = get_flavor_id(okeanos_token)
     auth = check_credentials(okeanos_token)
-    ssh_info = ssh_list(okeanos_token)
+    ssh_info = ssh_key_list(okeanos_token)
     ssh_keys_names =list()
     dict_quotas = auth.get_quotas()
     try:
@@ -60,7 +59,7 @@ def project_list_flavor_quota(user):
         raise ClientError(msg, error_get_list_projects)
     # Id for ember-data, will use it for store.push the different projects
     ember_project_id = 1
-    ssh_info = ssh_list(okeanos_token)
+    ssh_info = ssh_key_list(okeanos_token)
     for item in ssh_info:
         if item.has_key('name'):
             ssh_keys_names.append(item['name'])
