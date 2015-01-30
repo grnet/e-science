@@ -121,7 +121,7 @@ class test_create_cluster_with_ssh_key(unittest.TestCase):
         hadoop_image = 'Hadoop-2.5.2'                           
         Select(driver.find_element_by_id("os_systems")).select_by_visible_text(hadoop_image)
         ssh_keys_info = self.ssh_key_list()
-        if not ssh_keys_info:
+        if ssh_keys_info == [{}]:
             self.assertTrue(False,'No ssh_key available')
         else:
             ssh_key_name = ssh_keys_info[0]['name']
