@@ -66,10 +66,6 @@ class YarnCluster(object):
         # Instance of Plankton/ImageClient
         self.plankton = init_plankton(self.endpoints['plankton'],
                                       self.opts['token'])
-        if 'use_hadoop_image' in self.opts:
-            if self.opts['use_hadoop_image']:
-                self.hadoop_image = True
-
         # check hadoopconf flag and set hadoop_image accordingly
         list_current_images = self.plankton.list_public(True, 'default')
         for image in list_current_images:
@@ -370,8 +366,13 @@ class YarnCluster(object):
         orka_req = OrkaRequest(self.escience_token, payload)
         orka_req.create_cluster_db()
         self.ssh_file = 'no_ssh_key_selected'
-        if self.opts['ssh_key_name']=='no_ssh_key_selected':           
+
+        if self.opts['ssh_key_name'] is None:
+            self.ssh_file = pub_keys_path
+
+        elif self.opts['ssh_key_name']=='no_ssh_key_selected':
             pub_keys_path = '' # password should be returned to user
+
         else:
             self.ssh_key_file(cluster_name)
             pub_keys_path = self.ssh_file

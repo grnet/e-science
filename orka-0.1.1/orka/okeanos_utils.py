@@ -18,7 +18,6 @@ from cluster_errors_constants import *
 from ConfigParser import RawConfigParser, NoSectionError
 import requests
 import json
-import yaml
 from celery import current_task
 
 # Global constants
@@ -88,34 +87,9 @@ class OrkaRequest(object):
         """Request to orka database to get pending clusters."""
         r = requests.get(self.url_database, data=json.dumps(self.payload),
                          headers=self.headers)
-        response = yaml.load(r.text)
-        return response
-    
-    def retrieve_user_data(self):
-        """Request to orka database to get all user clusters."""
-        r = requests.get(self.url_login, data=json.dumps(self.payload),
-                         headers=self.headers)
         response = json.loads(r.text)
         return response
 
-def get_user_clusters(token):
-    """
-    Get the clusters of the user
-    """
-    try:
-        escience_token = authenticate_escience(token)
-    except TypeError:
-        msg = ' Authentication error with token: ' + token 
-        raise ClientError(msg, error_authentication)
-    except Exception,e:
-        print ' ' + str(e.args[0])
-    
-    payload = {"user": {"id": 1}}
-    orka_request = OrkaRequest(escience_token, payload)
-    user_data = orka_request.retrieve_user_data()
-    user_clusters = user_data['user']['clusters']
-    return user_clusters  
-    
 
 def set_cluster_state(token, status, name, state, master_IP=''):
         """
@@ -139,7 +113,7 @@ def authenticate_escience(token):
     headers = {'content-type': 'application/json'}
     url_login = get_api_urls(login=True)
     r = requests.post(url_login, data=json.dumps(payload), headers=headers)
-    response = yaml.load(r.text)
+    response = json.loads(r.text)
     escience_token = response['user']['escience_token']
     logging.log(REPORT, ' Authenticated with escience database')
     return escience_token

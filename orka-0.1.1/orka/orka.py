@@ -9,10 +9,11 @@ from sys import argv
 from os.path import join, dirname, abspath
 from kamaki.clients import ClientError
 from cluster_errors_constants import *
-from create_cluster import YarnCluster
-from okeanos_utils import destroy_cluster, get_user_clusters
 from argparse import ArgumentParser, ArgumentTypeError
 from version import __version__
+from utils import OrkaRequest, authenticate_escience
+from time import sleep
+from utils import get_user_clusters, custom_sort_factory
 
 
 class _ArgCheck(object):
@@ -65,60 +66,57 @@ class HadoopCluster(object):
     """Wrapper class for YarnCluster."""
     def __init__(self, opts):
         self.opts = opts
+        self.escience_token = authenticate_escience(self.opts['token'])
 
     def create(self):
         """ Method for creating Hadoop clusters in~okeanos."""
         try:
-            c_yarn_cluster = YarnCluster(self.opts)
+            payload = {"clusterchoice":{"project_name": self.opts['project_name'], "cluster_name": self.opts['name'],
+                                        "cluster_size": self.opts['cluster_size'],
+                                        "cpu_master": self.opts['cpu_master'], "mem_master": self.opts['ram_master'],
+                                        "disk_master": self.opts['disk_master'], "cpu_slaves": self.opts['cpu_slave'],
+                                        "mem_slaves": self.opts['ram_slave'], "disk_slaves": self.opts['disk_slave'],
+                                        "disk_template": self.opts['disk_template'], "os_choice": self.opts['image']}}
+            yarn_cluster_req = OrkaRequest(self.escience_token, payload, action='cluster')
+            response = yarn_cluster_req.create_cluster()
+            task_id = response['clusterchoice']['task_id']
+            payload = {"job":{"task_id": task_id}}
+            yarn_cluster_logger = OrkaRequest(self.escience_token, payload, action='job')
+            previous_response = ''
+            while True:
+                response = yarn_cluster_logger.retrieve()
+                if response != previous_response:
+                    if 'success' in response['job']:
+                        logging.log(SUMMARY, " Yarn Cluster is active.You can access it through " +
+                                    response['job']['success'] + ":8088/cluster")
+                        return 0
+
+                    elif 'error' in response['job']:
+                        logging.error(response['job']['error'])
+                        return error_fatal
+
+                    elif 'state' in response['job']:
+                        logging.log(SUMMARY, response['job']['state'])
+                        previous_response = response
+                else:
+                    logging.log(SUMMARY, 'Waiting for cluster status update')
+                    sleep(30)
+
+
         except Exception, e:
             logging.error(' Fatal error: ' + str(e.args[0]))
             exit(error_fatal)
 
-        try:
-            c_yarn_cluster.create_yarn_cluster()
-
-        except Exception:
-            exit(error_fatal)
 
     def destroy(self):
         """ Method for deleting Hadoop clusters in~okeanos."""
         try:
-            destroy_cluster(self.opts['token'], self.opts['master_ip'])
-        except ClientError, e:
-            logging.error(' Error:' + e.message)
-            exit(error_fatal)
+            payload = {"clusterchoice":{"token": self.opts['token'], "master_IP": self.opts['master_ip']}}
+            yarn_cluster_req = OrkaRequest(self.escience_token, payload, action='cluster')
+            yarn_cluster_req.delete_cluster()
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
-
-from collections import OrderedDict
-def custom_sort_factory(order_list):
-    """ 
-    function factory: gets a list of lists with order keys
-    and returns a function that will produce an OrderedDict
-    with the specified order.
-    Keys not present in the sort list are returned at the end.
-    Example:
-        fruits = {'apple': 'red', 'orange': 'orange', 'lemon': 'yellow', 'banana': 'yellow'}
-        order_list = [['lemon','orange','banana','apple']]
-        sort_function = custom_sort_factory(order_list)
-        sorted_fruits = sort_function(fruits)
-        print fruits
-        print sorted_fruits
-    """
-    order_list = [{k: -i for (i, k) in enumerate(reversed(order), 1)} for order in order_list]
-    def sorter(stuff):
-        if isinstance(stuff, dict):
-            l = [(k, sorter(v)) for (k, v) in stuff.iteritems()]
-            keys = set(stuff)
-            for order in order_list:
-                if keys.issuperset(order):
-                    return OrderedDict(sorted(l, key=lambda x: order.get(x[0], 0)))
-            return OrderedDict(sorted(l))
-        if isinstance(stuff, list):
-            return [sorter(x) for x in stuff]
-        return stuff
-    return sorter
 
 
 class UserClusterInfo(object):
@@ -238,7 +236,7 @@ def main():
         parser_c.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
                               ' Default is HadoopImage (overrides image selection)',
                               nargs='?', metavar='hadoop_image_name', default=None,
-                              const='HadoopBase')
+                              const='Hadoop-2.5.2')
 
         parser_c.add_argument("--auth_url", metavar='auth_url', default=auth_url,
                               help='Synnefo authentication url. Default is ' +

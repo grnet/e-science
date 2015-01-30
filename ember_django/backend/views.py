@@ -27,6 +27,7 @@ from tasks import createcluster
 import exceptions
 from celery.result import AsyncResult
 
+
 logging.addLevelName(REPORT, "REPORT")
 logging.addLevelName(SUMMARY, "SUMMARY")
 logger = logging.getLogger("report")
@@ -63,11 +64,10 @@ class JobsView(APIView):
 
             if c_task.ready():
                 if c_task.successful():
-                    return Response({"message": c_task.result})
-                return Response({"message": c_task.result["exc_message"]})
+                    return Response({'success': c_task.result})
+                return Response({'error': c_task.result["exc_message"]})
 
             else:
-                print 'celery is doing stuff'
                 return Response({'state': c_task.state})
         return Response(serializer.errors)
 
@@ -204,14 +204,14 @@ class StatusView(APIView):
                        'disk_template': serializer.data['disk_template'],
                        'image': serializer.data['os_choice'],
                        'token': user.okeanos_token,
-                       'project_name': serializer.data['project_name'],
-                       'ssh_key_name': serializer.data['ssh_key_selection']
-                       }
+                       'project_name': serializer.data['project_name']}
 
+            if 'ssh_key_selection' in serializer.data:
+                choices.update({'ssh_key_name': serializer.data['ssh_key_selection']})
             c_cluster = createcluster.delay(choices)
             task_id = c_cluster.id
 
-            return Response({"task_id": task_id}, status=202)
+            return Response({"id": 1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)

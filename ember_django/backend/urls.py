@@ -18,7 +18,6 @@ urlpatterns = patterns('', url(r'^$', 'backend.views.main_page'),
                        url(r'^api/orka', views.DatabaseView.as_view()),
                        url(r'^api/clusters', views.StatusView.as_view()),
                        url(r'^api/clusterchoices', views.StatusView.as_view()),
-                       # celery test stuff - temporary
                        url(r'^api/jobs', views.JobsView.as_view())
                        )
 

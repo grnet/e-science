@@ -653,11 +653,11 @@ App.ClusterCreateController = Ember.Controller.extend({
 						'ssh_key_selection' : self.get('ssh_key_selection')
 					}).save();
 
-					cluster_selection.then(function(data) {
+					cluster_selection.then(function(clusterchoice) {
 						// Set the response to user's create cluster click when put succeeds.
 						$.loader.close(true);
-						self.set('message', data._data.message);
-						self.set('controllers.userWelcome.output_message', data._data.message);
+						self.set('message', clusterchoice.get('message'));
+						self.set('controllers.userWelcome.output_message', clusterchoice.get('message'));
 						self.set('controllers.userWelcome.create_cluster_start', false);
 						self.store.fetch('user', 1);
 					}, function(reason) {
