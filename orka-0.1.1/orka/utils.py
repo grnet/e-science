@@ -38,7 +38,7 @@ def get_api_urls(action):
         raise NoSectionError(msg)
 
 
-class OrkaRequest(object):
+class ClusterRequest(object):
     """Class for REST requests in orka database."""
     def __init__(self, escience_token, payload, action='database'):
         """
@@ -65,8 +65,10 @@ class OrkaRequest(object):
         """
         Request to orka database for cluster deleting from CLI
         (Destroyed status update)"""
-        requests.delete(self.url, data=json.dumps(self.payload),
-                        headers=self.headers)
+        r = requests.delete(self.url, data=json.dumps(self.payload),
+                            headers=self.headers)
+        response = json.loads(r.text)
+        return response
 
     def retrieve(self):
         """Request to retrieve info from an endpoint."""
@@ -89,7 +91,7 @@ def get_user_clusters(token):
         print ' ' + str(e.args[0])
 
     payload = {"user": {"id": 1}}
-    orka_request = OrkaRequest(escience_token, payload, action='login')
+    orka_request = ClusterRequest(escience_token, payload, action='login')
     user_data = orka_request.retrieve()
     user_clusters = user_data['user']['clusters']
     return user_clusters

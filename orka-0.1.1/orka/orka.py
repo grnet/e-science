@@ -11,7 +11,7 @@ from kamaki.clients import ClientError
 from cluster_errors_constants import *
 from argparse import ArgumentParser, ArgumentTypeError
 from version import __version__
-from utils import OrkaRequest, authenticate_escience
+from utils import ClusterRequest, authenticate_escience
 from time import sleep
 from utils import get_user_clusters, custom_sort_factory
 
@@ -62,6 +62,33 @@ class _ArgCheck(object):
         return ival
 
 
+def task_message(task_id, escience_token):
+    """
+    Function to check create and destroy celery tasks running from orka-CLI
+    and log task state messages.
+    """
+    payload = {"job":{"task_id": task_id}}
+    yarn_cluster_logger = ClusterRequest(escience_token, payload, action='job')
+    previous_response = ''
+    while True:
+        response = yarn_cluster_logger.retrieve()
+        if response != previous_response:
+            if 'success' in response['job']:
+                return response['job']['success']
+
+            elif 'error' in response['job']:
+                logging.error(response['job']['error'])
+                return error_fatal
+
+            elif 'state' in response['job']:
+                logging.log(SUMMARY, response['job']['state'])
+                previous_response = response
+        else:
+            logging.log(SUMMARY, ' Waiting for cluster status update')
+            sleep(30)
+
+
+
 class HadoopCluster(object):
     """Wrapper class for YarnCluster."""
     def __init__(self, opts):
@@ -77,30 +104,12 @@ class HadoopCluster(object):
                                         "disk_master": self.opts['disk_master'], "cpu_slaves": self.opts['cpu_slave'],
                                         "mem_slaves": self.opts['ram_slave'], "disk_slaves": self.opts['disk_slave'],
                                         "disk_template": self.opts['disk_template'], "os_choice": self.opts['image']}}
-            yarn_cluster_req = OrkaRequest(self.escience_token, payload, action='cluster')
+            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
             response = yarn_cluster_req.create_cluster()
             task_id = response['clusterchoice']['task_id']
-            payload = {"job":{"task_id": task_id}}
-            yarn_cluster_logger = OrkaRequest(self.escience_token, payload, action='job')
-            previous_response = ''
-            while True:
-                response = yarn_cluster_logger.retrieve()
-                if response != previous_response:
-                    if 'success' in response['job']:
-                        logging.log(SUMMARY, " Yarn Cluster is active.You can access it through " +
-                                    response['job']['success'] + ":8088/cluster")
-                        return 0
-
-                    elif 'error' in response['job']:
-                        logging.error(response['job']['error'])
-                        return error_fatal
-
-                    elif 'state' in response['job']:
-                        logging.log(SUMMARY, response['job']['state'])
-                        previous_response = response
-                else:
-                    logging.log(SUMMARY, 'Waiting for cluster status update')
-                    sleep(30)
+            result = task_message(task_id, self.escience_token)
+            logging.log(SUMMARY, " Yarn Cluster is active.You can access it through " +
+                            result + ":8088/cluster")
 
 
         except Exception, e:
@@ -112,8 +121,12 @@ class HadoopCluster(object):
         """ Method for deleting Hadoop clusters in~okeanos."""
         try:
             payload = {"clusterchoice":{"token": self.opts['token'], "master_IP": self.opts['master_ip']}}
-            yarn_cluster_req = OrkaRequest(self.escience_token, payload, action='cluster')
-            yarn_cluster_req.delete_cluster()
+            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
+            response = yarn_cluster_req.delete_cluster()
+            task_id = response['clusterchoice']['task_id']
+            result = task_message(task_id, self.escience_token)
+            if result == 0:
+                logging.log(SUMMARY, " Requested Cluster Deleted")
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)

@@ -382,7 +382,7 @@ class YarnCluster(object):
                               chosen_image['id'], self.opts['cluster_size'],
                               self.net_client, self.auth, self.project_id)
 
-            state="Creating ~okeanos cluster"
+            state=" Creating ~okeanos cluster"
             logging.log(SUMMARY, state)
             set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state)
             self.HOSTNAME_MASTER_IP, self.server_dict = \

@@ -89,8 +89,7 @@ def db_cluster_create(user, choices):
 def db_cluster_update(user, status, cluster_name, master_IP='', state=''):
     """Updates DB when cluster is created or deleted from pending state"""
     try:
-        cluster = ClusterInfo.objects.get(user_id=user, cluster_status="2",
-                                          cluster_name=cluster_name)
+        cluster = ClusterInfo.objects.get(user_id=user, cluster_name=cluster_name)
     except ObjectDoesNotExist:
         msg = 'Cluster with given name does not exist in pending state'
         raise ObjectDoesNotExist(msg)
@@ -101,26 +100,12 @@ def db_cluster_update(user, status, cluster_name, master_IP='', state=''):
     elif status == "Destroyed":
         cluster.cluster_status = "0"
         cluster.master_IP = ''
+        cluster.state= 'Deleted'
 
     if state:
         cluster.state = state
     if master_IP:
         cluster.master_IP = master_IP
-    cluster.save()
-
-
-def db_cluster_destroy(user, master_IP):
-    """
-    Update database when cluster is destroyed, used with CLI destroy_cluster
-    """
-    try:
-        cluster = ClusterInfo.objects.get(user_id=user, master_IP=master_IP)
-    except ObjectDoesNotExist:
-        msg = 'Cluster with given master VM ip does not exist'
-        raise ObjectDoesNotExist(msg)
-    cluster.cluster_status = "0"
-    cluster.master_IP = ''
-    cluster.state = 'Deleted'
     cluster.save()
 
 

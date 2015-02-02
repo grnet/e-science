@@ -57,7 +57,7 @@ class OrkaRequest(object):
         self.payload = payload
         self.url_database = get_api_urls(database=True)
         self.url_login = get_api_urls(login=True)
-        self.headers = {'content-type': 'application/json',
+        self.headers = {'Accept': 'application/json', 'content-type': 'application/json',
                         'Authorization': 'Token ' + self.escience_token}
 
     def create_cluster_db(self):
@@ -68,12 +68,6 @@ class OrkaRequest(object):
         requests.post(self.url_database, data=json.dumps(self.payload),
                       headers=self.headers)
 
-    def delete_cluster_db(self):
-        """
-        Request to orka database for cluster deleting from CLI
-        (Destroyed status update)"""
-        requests.delete(self.url_database, data=json.dumps(self.payload),
-                        headers=self.headers)
 
     def update_cluster_db(self):
         """
@@ -141,6 +135,7 @@ def destroy_cluster(token, master_IP):
     Destroys cluster and deletes network and floating ip. Finds the machines
     that belong to the cluster from the master_IP that is given.
     """
+    current_task.update_state(state="STARTED")
     servers_to_delete = []
     float_ip_to_delete = master_IP
     list_of_errors = []
@@ -149,6 +144,7 @@ def destroy_cluster(token, master_IP):
     float_ip_to_delete_id = None
     new_status = 'placeholder'
     auth = check_credentials(token)
+    current_task.update_state(state="AUTHENTICATED")
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
     nc = init_cyclades_netclient(endpoints['network'], token)
@@ -161,7 +157,7 @@ def destroy_cluster(token, master_IP):
         msg = 'Could not get list of resources.'\
             'Cannot delete cluster'
         raise ClientError(msg, error_get_list_servers)
-    logging.log(SUMMARY, ' Starting deletion of requested cluster')
+
     # Get master virtual machine and network from ip
     for ip in list_of_ips:
         if ip['floating_ip_address'] == float_ip_to_delete:
@@ -180,11 +176,11 @@ def destroy_cluster(token, master_IP):
             float_ip_to_delete
         raise ClientError(msg, error_get_ip)
 
-    payload = {"orka": {"master_IP": master_IP}}
-    orka_request = OrkaRequest(escience_token, payload)
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
-        orka_request.delete_cluster_db()
+        state=" Deleted master VM"
+        logging.log(SUMMARY, state)
+        set_cluster_state(token, 'Destroyed', master_server.rsplit("-", 1)[0], state)
         msg = ' A valid network of master and slaves was not found.'\
             'Deleting the master VM only'
         raise ClientError(msg, error_cluster_corrupt)
@@ -195,28 +191,30 @@ def destroy_cluster(token, master_IP):
             if attachment['network_id'] == network_to_delete_id:
                 servers_to_delete.append(server)
                 break
-
+    cluster_name = servers_to_delete[0]['name'].rsplit("-", 1)[0]
     number_of_nodes = len(servers_to_delete)
-
+    state=" Starting deletion of requested cluster"
+    logging.log(SUMMARY, state)
+    set_cluster_state(token, 'Pending', cluster_name, state)
     # Start cluster deleting
     try:
         for server in servers_to_delete:
             cyclades.delete_server(server['id'])
-        logging.log(REPORT, ' There are %d servers to clean up'
-                    % number_of_nodes)
+        state= ' There are %d servers to clean up' % number_of_nodes
+        logging.log(SUMMARY, state)
+        set_cluster_state(token, 'Pending', cluster_name, state)
         # Wait for every server of the cluster to be deleted
         for server in servers_to_delete:
             new_status = cyclades.wait_server(server['id'],
                                               current_status='ACTIVE',
                                               max_wait=MAX_WAIT)
-            logging.log(REPORT, ' Server [%s] is being %s', server['name'],
-                        new_status)
             if new_status != 'DELETED':
                 logging.error(' Error deleting server [%s]' % server['name'])
                 list_of_errors.append(error_cluster_corrupt)
 
-        logging.log(REPORT, ' Cluster with master node [%s] is %s',
-                    servers_to_delete[0]['name'], new_status)
+        state= ' Cluster deleted.Deleting network and public ip'
+        logging.log(SUMMARY, state)
+        set_cluster_state(token, 'Pending', cluster_name, state)
     except ClientError:
         logging.exception(' Error in deleting server')
         list_of_errors.append(error_cluster_corrupt)
@@ -224,8 +222,9 @@ def destroy_cluster(token, master_IP):
     try:
         nc.delete_network(network_to_delete_id)
         sleep(10)  # Take some time to ensure it is deleted
-        logging.log(SUMMARY, ' Network with id [%s] is deleted'
-                    % network_to_delete_id)
+        state= ' Network with id [%s] is deleted' % network_to_delete_id
+        logging.log(SUMMARY, state)
+        set_cluster_state(token, 'Pending', cluster_name, state)
     except ClientError:
         logging.exception(' Error in deleting network')
         list_of_errors.append(error_cluster_corrupt)
@@ -233,8 +232,9 @@ def destroy_cluster(token, master_IP):
     # Delete the floating ip of deleted cluster
     try:
         nc.delete_floatingip(float_ip_to_delete_id)
-        logging.log(SUMMARY, ' Floating ip [%s] is deleted'
-                    % float_ip_to_delete)
+        state= ' Floating ip [%s] is deleted' % float_ip_to_delete
+        logging.log(SUMMARY, state)
+        set_cluster_state(token, 'Pending', cluster_name, state)
     except ClientError:
         logging.exception(' Error in deleting floating ip [%s]' %
                           float_ip_to_delete)
@@ -244,7 +244,9 @@ def destroy_cluster(token, master_IP):
                 ' was deleted', servers_to_delete[0]['name'],
                 number_of_nodes-1)
 
-    orka_request.delete_cluster_db()
+    state= ' Cluster with public IP [%s] was deleted ' % float_ip_to_delete
+    set_cluster_state(token, 'Destroyed', cluster_name, state)
+
     # Everything deleted as expected
     if not list_of_errors:
         return 0
