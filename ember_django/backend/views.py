@@ -23,7 +23,7 @@ from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
 from django_db_after_login import *
 from orka.cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async
-import exceptions
+from orka.create_cluster import YarnCluster
 from celery.result import AsyncResult
 
 
@@ -185,9 +185,14 @@ class StatusView(APIView):
 
             if 'ssh_key_selection' in serializer.data:
                 choices.update({'ssh_key_name': serializer.data['ssh_key_selection']})
+            try:
+                YarnCluster(choices).check_user_resources()
+            except ClientError, e:
+                return Response({"id": 1, "message": e.message})
+            except Exception, e:
+                return Response({"id": 1, "message": e.args[0]})
             c_cluster = create_cluster_async.delay(choices)
             task_id = c_cluster.id
-
             return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.

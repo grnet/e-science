@@ -97,6 +97,9 @@ def db_cluster_update(user, status, cluster_name, master_IP='', state=''):
     if status == "Active":
         cluster.cluster_status = "1"
 
+    if status == "Pending":
+        cluster.cluster_status = "2"
+
     elif status == "Destroyed":
         cluster.cluster_status = "0"
         cluster.master_IP = ''

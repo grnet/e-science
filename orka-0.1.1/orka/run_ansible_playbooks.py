@@ -97,9 +97,6 @@ def run_ansible(filename, cluster_size, hadoop_image, ssh_file):
         ansible_verbosity = " -v"
     orka_dir = dirname(abspath(__file__))
     ansible_path = orka_dir + '/ansible/site.yml'
-    ansible_verbosity = ' -vvvv'
-    log_file_path = os.path.join(os.getcwd(), "create_cluster_debug.log")
-    ansible_log = " >> " + log_file_path
     if hadoop_image:
         exit_status = os.system('ansible-playbook -i ' + filename + ' ' +
                                 ansible_path + ansible_verbosity +

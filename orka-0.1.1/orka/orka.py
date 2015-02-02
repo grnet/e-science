@@ -106,10 +106,15 @@ class HadoopCluster(object):
                                         "disk_template": self.opts['disk_template'], "os_choice": self.opts['image']}}
             yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
             response = yarn_cluster_req.create_cluster()
-            task_id = response['clusterchoice']['task_id']
+            if 'task_id' in response['clusterchoice']:
+                task_id = response['clusterchoice']['task_id']
+            else:
+                logging.error(response['clusterchoice']['message'])
+                exit(error_fatal)
             result = task_message(task_id, self.escience_token)
             logging.log(SUMMARY, " Yarn Cluster is active.You can access it through " +
-                            result + ":8088/cluster")
+                        result['master_IP'] + ":8088/cluster")
+            logging.log(SUMMARY, " The root password of your master VM is " + result['master_VM_password'])
 
 
         except Exception, e:
