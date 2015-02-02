@@ -6,7 +6,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 	output_message : '',
 	// flag to see if the transition is from create cluster button
 	create_cluster_start : false,
-
+	
 	sortedclusters : [],
 	column : '',
 	sortdir : null,
@@ -62,6 +62,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 				this.set('timer', App.Ticker.create({
 					seconds : 5,
 					onTick : function() {
+						that.set('create_cluster_start', false);
 						if (!store) {
 							store = that.store;
 						}
@@ -102,6 +103,10 @@ App.UserWelcomeController = Ember.Controller.extend({
 			} else {
 				this.get('timer').stop();
 			}
+		},
+		doRefresh : function() {
+			// console.log('controller > doRefresh called');
+			this.get('target.router').refresh();
 		},
 	},
 });
