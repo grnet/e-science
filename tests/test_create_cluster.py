@@ -166,7 +166,8 @@ class TestCreateCluster(TestCase):
                 'ram_master': 4096, 'disk_master': 5, 'cpu_slave': 2,
                 'ram_slave': 2048, 'disk_slave': 5, 'token': self.token,
                 'disk_template': 'ext_vlmc', 'image': 'ubuntu',
-                'auth_url': self.auth_url, 'project_name': self.project_name}
+                'auth_url': self.auth_url, 'project_name': self.project_name,
+                'ssh_key_name':'no_ssh_key_selected'}
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
