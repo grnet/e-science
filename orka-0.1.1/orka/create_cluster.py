@@ -9,6 +9,8 @@ This script creates a HadoopYarn cluster on ~okeanos.
 import datetime
 from time import sleep
 import logging
+import os
+import subprocess
 from os.path import join, expanduser
 from reroute_ssh import reroute_ssh_prep
 from kamaki.clients import ClientError
@@ -66,6 +68,19 @@ class YarnCluster(object):
             if self.opts['use_hadoop_image']:
                 self.hadoop_image = True
 
+        # check hadoopconf flag and set hadoop_image accordingly
+        list_current_images = self.plankton.list_public(True, 'default')
+        for image in list_current_images:
+            if self.opts['image'] == image['name']:
+                try:
+                    if image['properties']['hadoopconf'] == 'true': 
+                        self.hadoop_image = True
+                    else:
+                        self.hadoop_image = False
+                except:
+                    # if hadoopconf hasn't been set then hadoop_image flag is false
+                    self.hadoop_image = False
+                        
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_cluster_size_quotas
@@ -262,7 +277,45 @@ class YarnCluster(object):
         if self.project_id in dict_quotas:
             return 0
         return error_project_quota
+    
+    def ssh_key_file(self, cluster_name):
+        """
+        Creates a file named after the timestamped name of cluster
+        containing the public ssh_key of the user.
+        """
+        ssh_info = self.ssh_key_list()
+        cluster_name = cluster_name.replace(" ", "_")
+        self.ssh_file = join(os.getcwd(), cluster_name + '_ssh_key')
+        for item in ssh_info:
+            if item['name'] == self.opts['ssh_key_name']:
+                with open(self.ssh_file, 'w') as f:
+                    f.write(item['content'])
 
+    def ssh_key_list(self):
+        """
+        Get the ssh_key dictionary of a user
+        """   
+        command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' + self.opts['token'] + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
+        p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
+        out, err = p.communicate()
+        output = out[2:-2].split('}, {')
+        ssh_dict =list()
+        ssh_counter = 0
+        for dictionary in output:
+            mydict=dict()
+            new_dictionary = dictionary.replace('"','')
+            dict1 = new_dictionary.split(', ')
+            for each in dict1:
+                list__keys_values_in_dict=each.split(': ')
+                new_list_of_dict_elements=list()
+                for item in list__keys_values_in_dict:
+                    new_list_of_dict_elements.append(item)
+                if len(new_list_of_dict_elements) > 1:
+                    for pair in new_list_of_dict_elements:
+                        mydict[new_list_of_dict_elements[0]]=new_list_of_dict_elements[1]
+            ssh_dict.append(mydict)          
+        return ssh_dict
+        
     def create_bare_cluster(self):
         """Creates a bare ~okeanos cluster."""
         # Finds user public ssh key
@@ -306,10 +359,18 @@ class YarnCluster(object):
                             "disk_slaves": self.opts['disk_slave'],
                             "disk_template": self.opts['disk_template'],
                             "os_choice": self.opts['image'],
-                            "project_name": self.opts['project_name']}}
+                            "project_name": self.opts['project_name'],
+                            "ssh_key_selection": "placeholder"}}
 
         orka_req = OrkaRequest(self.escience_token, payload)
         orka_req.create_cluster_db()
+        self.ssh_file = 'no_ssh_key_selected'
+        if self.opts['ssh_key_name']=='no_ssh_key_selected':           
+            pub_keys_path = '' # password should be returned to user
+        else:
+            self.ssh_key_file(cluster_name)
+            pub_keys_path = self.ssh_file
+
         try:
             cluster = Cluster(self.cyclades, self.opts['name'],
                               flavor_master, flavor_slaves,
@@ -352,7 +413,7 @@ class YarnCluster(object):
 
             logging.log(SUMMARY, ' Installing and configuring Yarn')
             install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
-                         self.server_dict[0]['name'], self.hadoop_image)
+                         self.server_dict[0]['name'], self.hadoop_image, self.ssh_file)
             # If Yarn cluster is build, update cluster status as active
             payload = {"orka": {"status": "Active", "cluster_name": self.opts['name'],
                                 "master_ip": self.HOSTNAME_MASTER_IP}}

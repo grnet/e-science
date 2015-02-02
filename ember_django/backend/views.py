@@ -71,6 +71,7 @@ class DatabaseView(APIView):
         user_token = Token.objects.get(key=request.auth)
         user = UserInfo.objects.get(user_id=user_token.user.user_id)
         if serializer.is_valid():
+
             try:
                 db_cluster_create(user, serializer.data)
                 return Response({"id": 1, "message": "Requested cluster created in db"})
@@ -172,7 +173,8 @@ class StatusView(APIView):
                        'disk_template': serializer.data['disk_template'],
                        'image': serializer.data['os_choice'],
                        'token': user.okeanos_token,
-                       'project_name': serializer.data['project_name']}
+                       'project_name': serializer.data['project_name'],
+                       'ssh_key_name': serializer.data['ssh_key_selection']}
 
             try:
                 new_yarn_cluster = YarnCluster(choices)

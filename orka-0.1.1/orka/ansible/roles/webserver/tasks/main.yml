@@ -37,6 +37,7 @@
       - git
       - python-flup
       - nginx
+      - sshpass
 
   - name: Install Celery, Django and Django rest framework
     tags: installations
