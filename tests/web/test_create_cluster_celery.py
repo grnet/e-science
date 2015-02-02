@@ -24,7 +24,7 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class test_create_cluster_with_hadoop_image(unittest.TestCase):
+class test_create_cluster_celery(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -55,7 +55,7 @@ class test_create_cluster_with_hadoop_image(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     
-    def test_create_cluster_with_hadoop_image(self):
+    def test_create_cluster_celery(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_id("id_login").click()     
@@ -102,22 +102,24 @@ class test_create_cluster_with_hadoop_image(unittest.TestCase):
                 driver.find_element_by_id(button_id).click()
         driver.find_element_by_id("next").click()
         print 'Creating cluster...'
-        for i in range(900): 
+        for i in range(1200): 
             # wait for cluster create to finish
             try:
-                if "" != driver.find_element_by_id('id_output_message').text: break
+                if "glyphicon glyphicon-ok text-success" == driver.find_element_by_id('id_status_'+cluster_name).get_attribute("class"): 
+                    break
+                elif "glyphicon glyphicon-remove text-danger" == driver.find_element_by_id('id_status_'+cluster_name).get_attribute("class"):
+                    self.assertTrue(False,'Cluster destoryed')
+                    break
+                else:
+                    pass
             except: pass
             time.sleep(1)
-        message =  driver.find_element_by_id('id_output_message').text
-        if message.rsplit(':', 1)[-1] == '8088/cluster':         
-            cluster_url = message.rsplit(' ', 1)[-1]
-            driver.get(cluster_url)
-            print message
-            #check that cluster url is up and page is running
-            try: self.assertEqual("All Applications", driver.find_element_by_css_selector("h1").text)
-            except AssertionError as e: self.verificationErrors.append(str(e))
-        else:
-            self.assertTrue(False, message)
+        cluster_url = str(driver.find_element_by_id("id_ip_"+cluster_name).get_attribute("href"))
+        time.sleep(30)
+        driver.get(cluster_url)
+        #check that cluster url is up and page is running
+        try: self.assertEqual("All Applications", driver.find_element_by_css_selector("h1").text)
+        except AssertionError as e: self.verificationErrors.append(str(e))
 
 
     

@@ -18,6 +18,7 @@ import unittest, time, re
 from okeanos_utils import check_quota, get_flavor_id, destroy_cluster
 from create_cluster import YarnCluster
 from ClusterTest import ClusterTest
+from random import randint
 
 
 class TestClusterSize(ClusterTest):
@@ -41,7 +42,8 @@ class TestClusterSize(ClusterTest):
             # user's create cluster request
             master_ip, server = self.bind_okeanos_resources()
             driver.find_element_by_id("cluster_name").clear()
-            driver.find_element_by_id("cluster_name").send_keys("mycluster")
+            cluster_name = 'test_cluster' + str(randint(0,9999))
+            driver.find_element_by_id("cluster_name").send_keys(cluster_name)
             time.sleep(1)
             driver.find_element_by_id("master_cpus_1").click()
             time.sleep(1)

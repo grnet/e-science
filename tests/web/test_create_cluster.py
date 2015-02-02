@@ -19,6 +19,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
 from okeanos_utils import check_quota, get_flavor_id, check_credentials
+from random import randint
 import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
@@ -90,7 +91,8 @@ class test_create_cluster(unittest.TestCase):
         project_details = self.project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'CPUs:' + str(user_quota['cpus']['available']) + '  ' + 'RAM:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
         Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)                           
         driver.find_element_by_id("cluster_name").clear()
-        driver.find_element_by_id("cluster_name").send_keys("mycluster")
+        cluster_name = 'test_cluster' + str(randint(0,9999))
+        driver.find_element_by_id("cluster_name").send_keys(cluster_name)
         Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text('2')
         for role in ['master' , 'slaves']:
             for flavor in ['cpus' , 'ram' , 'disk']:

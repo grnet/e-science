@@ -98,8 +98,7 @@ def run_ansible(filename, cluster_size, hadoop_image, ssh_file):
     ansible_path = orka_dir + '/ansible/site.yml'
 
     if hadoop_image:
-        exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
-                                'ansible-playbook -i ' + filename + ' ' +
+        exit_status = os.system('ansible-playbook -i ' + filename + ' ' +
                                 ansible_path + ansible_verbosity +
                                 ' -f ' + str(cluster_size) +
                                 ' -e "choose_role=yarn format=True start_yarn=True ssh_file_name='+ssh_file+'" -t postconfig'

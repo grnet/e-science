@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Django script to update the database after a new login, logout,
 create, or destroy cluster action.
 
 @author: Ioannis Stenos, Nick Vrionis
-'''
+"""
 
 import django
 import logging
@@ -21,7 +21,7 @@ django.setup()
 
 
 def get_user_id(token):
-    '''Check kamaki and returns user uuid from matching ~okeanos token'''
+    """Check kamaki and returns user uuid from matching ~okeanos token"""
     auth = AstakosClient(auth_url, token)
     try:
         logging.info(' Get the uuid')
@@ -33,12 +33,12 @@ def get_user_id(token):
 
 
 def db_after_login(token, login=True):
-    '''
+    """
     Check if a user already exists in DB or make a new entry in UserInfo
     if it is a new user. Each user must have one entry in the UserInfo.
     If there are multiple entries, then raise an error.
     Also checks if okeanos token has changed and updates it in db.
-    '''
+    """
     given_uuid = get_user_id(token)
     try:
         existing_user = UserInfo.objects.get(uuid=given_uuid)
@@ -81,10 +81,12 @@ def db_cluster_create(user, choices):
                 disk_slaves=choices['disk_slaves'],
                 disk_template=choices['disk_template'],
                 os_image=choices['os_choice'], user_id=user,
-                project_name=choices['project_name']).save()
+                project_name=choices['project_name'],
+                task_id=choices['task_id'],
+                state='AUTHENTICATED').save()
 
 
-def db_cluster_update(user, status, cluster_name, master_ip=None):
+def db_cluster_update(user, status, cluster_name, master_IP='', state=''):
     """Updates DB when cluster is created or deleted from pending state"""
     try:
         cluster = ClusterInfo.objects.get(user_id=user, cluster_status="2",
@@ -94,39 +96,39 @@ def db_cluster_update(user, status, cluster_name, master_ip=None):
         raise ObjectDoesNotExist(msg)
 
     if status == "Active":
-        status = "1"
+        cluster.cluster_status = "1"
 
     elif status == "Destroyed":
-        status = "0"
+        cluster.cluster_status = "0"
+        cluster.master_IP = ''
 
-    else:
-        msg = "Not a valid cluster state given"
-        raise ValueError(msg)
-
-    cluster.cluster_status = status
-    if master_ip != 'placeholder':
-        cluster.master_IP = master_ip
+    if state:
+        cluster.state = state
+    if master_IP:
+        cluster.master_IP = master_IP
     cluster.save()
 
 
-def db_cluster_destroy(user, master_ip):
+def db_cluster_destroy(user, master_IP):
     """
     Update database when cluster is destroyed, used with CLI destroy_cluster
     """
     try:
-        cluster = ClusterInfo.objects.get(user_id=user, master_IP=master_ip)
+        cluster = ClusterInfo.objects.get(user_id=user, master_IP=master_IP)
     except ObjectDoesNotExist:
         msg = 'Cluster with given master VM ip does not exist'
         raise ObjectDoesNotExist(msg)
     cluster.cluster_status = "0"
+    cluster.master_IP = ''
+    cluster.state = 'Deleted'
     cluster.save()
 
 
 def db_login_entry(user):
-    '''
+    """
     Makes a new entry in the UserLogin
     table when the user logs in
-    '''
+    """
     current_date = timezone.now()
     new_login = UserLogin(user_id=user, action_date=current_date,
                           login_status="0")
@@ -135,10 +137,10 @@ def db_login_entry(user):
 
 
 def db_logout_entry(user):
-    '''
+    """
     Makes a new entry in the UserLogin
     table when the user logs out
-    '''
+    """
     current_date = timezone.now()
     new_logout = UserLogin(user_id=user, action_date=current_date,
                            login_status="1")

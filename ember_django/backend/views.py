@@ -27,6 +27,7 @@ from tasks import createcluster
 import exceptions
 from celery.result import AsyncResult
 
+
 logging.addLevelName(REPORT, "REPORT")
 logging.addLevelName(SUMMARY, "SUMMARY")
 logger = logging.getLogger("report")
