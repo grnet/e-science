@@ -1,13 +1,11 @@
 App.UserThemeController = Ember.Controller.extend({
-	actions : {		
-		DarkTheme: function(user_theme) {
-			changeCSS(user_theme, 0);
+	actions: {
+		user_theme_selection: function(value) {
+			console.log("received value is -->" + value);
+			this.set('linkcss', value);
+			console.log(linkcss);
+			//changeCSS(value, 0);
 			//location.reload();
-		},
-		WhiteTheme: function(user_theme) {
-			console.log("hello1");
-			changeCSS(user_theme, 0);
-			console.log("hello2");
 		}
 	}
 });

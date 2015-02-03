@@ -1,15 +1,23 @@
 App.UserThemeView = Ember.View.extend({	 
-	     
-	click: function () {
-		if(id==myLinkB) {
-			console.log("dark theme");
-			user_theme = 'styles/bootstrap.orca.css';
-			this.get('controller').send('DarkTheme', user_theme);
-		}		
-		if(id==myLinkW) {
-			console.log("white theme");
-			user_theme = 'styles/bootstrap.united.orca.css';
-			this.get('controller').send('WhiteTheme', user_theme);				
-		}
+	tagName: 'li',
+    attributeBindings: ['name', 'value'],
+    // initialization
+    init: function() {
+        // set id
+        if(this.get('name') == "myLinkB")
+	{
+	    this.set('elementId', this.get('value'));
+	    return this._super();
 	}
+        if(this.get('name') == "myLinkW")
+	{
+	    this.set('elementId', this.get('value'));
+	    return this._super();
+	}
+    },    
+    // on click
+    click: function () {
+    	console.log(this.get('value'));
+        this.get('controller').send('user_theme_selection', this.get('value'));
+    }
 });

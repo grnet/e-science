@@ -13,7 +13,7 @@ App.UserLoginController = Ember.Controller.extend({
 		}
 	},
 	loginFailed : false,
-	actions : {		
+	actions : {				
 		login : function(text) {
 			var self = this;
 			if (text) {
