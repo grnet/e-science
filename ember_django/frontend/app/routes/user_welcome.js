@@ -4,7 +4,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 	//"user" model for the welcome route
 	needs : 'userWelcome',
 
-	refreshed : 0,
 	model : function(params, transition) {
 		$.loader.close(true);
 		// Return user record with id 1.
@@ -29,7 +28,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			}
 		}, function(reason) {
 			// failure
-			console.log(reason.message);
+			console.log(reason);
 		});
 		return promise;
 	},
@@ -47,12 +46,13 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		didTransition : function() {
 			// arrived at this route
 			var from_create = this.controller.get('create_cluster_start');
-			var times_refreshed = this.get('refreshed');
-			if (from_create && (times_refreshed <= 5)) {
+			var times_refreshed = this.controller.get('refreshed');
+			if (from_create && (times_refreshed <= 10)) {
 				// this.controller.set('create_cluster_start', false);
 				Ember.run.later(this, function() {
-					// console.log('route > debouncing refresh');
-					this.set('refreshed', this.get('refreshed') + 1);
+					// console.log('route > debouncing refresh'); //debug
+					this.controller.set('refreshed', this.controller.get('refreshed') + 1);
+					// console.log(this.controller.get('refreshed')); //debug
 					this.controller.send('doRefresh');
 				}, 3000);
 			} else if (!from_create) {

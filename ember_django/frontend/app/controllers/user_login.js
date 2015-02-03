@@ -42,7 +42,7 @@ App.UserLoginController = Ember.Controller.extend({
 					self.transitionToRoute('user.welcome');
 				}, function(reason) {
 					// Failed login.
-					console.log(reason.message);
+					console.log(reason);
 					self.set('loginFailed', true);
 					self.set('controllers.application.loggedIn', false);
 					self.set('token', '');

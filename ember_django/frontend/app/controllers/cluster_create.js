@@ -658,27 +658,19 @@ App.ClusterCreateController = Ember.Controller.extend({
 						$.loader.close(true);
 						self.set('message', clusterchoice.get('message'));
 						self.set('controllers.userWelcome.output_message', clusterchoice.get('message'));
-						self.set('controllers.userWelcome.create_cluster_start', false);
+						self.set('controllers.userWelcome.create_cluster_start', true);
+						self.set('controllers.userWelcome.refreshed', 0);
+						self.transitionToRoute('user.welcome');
 						self.store.fetch('user', 1);
 					}, function(reason) {
 						// Set the response to user's create cluster click when put fails.
-						console.log(reason.message);
+						console.log(reason);
 						$.loader.close(true);
 						self.set('message', reason.message);
 						self.set('controllers.userWelcome.output_message', reason.message);
 						self.set('controllers.userWelcome.create_cluster_start', false);
 						self.store.fetch('user', 1);
 					});
-					if (this.get('message') == "") {
-						// after 2.5 seconds goes to welcome route
-						Ember.run.later(self,function(){
-							self.set('controllers.userWelcome.create_cluster_start', true);
-							self.transitionToRoute('user.welcome');
-						}, 2500);
-					} else {
-						self.set('controllers.userWelcome.create_cluster_start', true);
-						this.transitionToRoute('user.welcome');
-					}
 				} else {
 					alert('Requested resources unavailable!');
 					$.loader.close(true);
