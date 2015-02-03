@@ -653,28 +653,28 @@ App.ClusterCreateController = Ember.Controller.extend({
 						'ssh_key_selection' : self.get('ssh_key_selection')
 					}).save();
 
-					cluster_selection.then(function(data) {
+					cluster_selection.then(function(clusterchoice) {
 						// Set the response to user's create cluster click when put succeeds.
 						$.loader.close(true);
-						self.set('message', data._data.message);
-						self.set('controllers.userWelcome.output_message', data._data.message);
+						self.set('message', clusterchoice.get('message'));
+						self.set('controllers.userWelcome.output_message', clusterchoice.get('message'));
 						self.set('controllers.userWelcome.create_cluster_start', false);
 						self.store.fetch('user', 1);
 					}, function(reason) {
 						// Set the response to user's create cluster click when put fails.
 						console.log(reason.message);
 						$.loader.close(true);
-						self.set('message', 'A problem occured during your request. Please check your cluster parameters and try again');
-						self.set('controllers.userWelcome.output_message', 'A problem occured during your request. Please check your cluster parameters and try again');
+						self.set('message', reason.message);
+						self.set('controllers.userWelcome.output_message', reason.message);
 						self.set('controllers.userWelcome.create_cluster_start', false);
 						self.store.fetch('user', 1);
 					});
 					if (this.get('message') == "") {
-						// after ten seconds goes to welcome route
-						setTimeout(function() {
+						// after 2.5 seconds goes to welcome route
+						Ember.run.later(self,function(){
 							self.set('controllers.userWelcome.create_cluster_start', true);
 							self.transitionToRoute('user.welcome');
-						}, 10000);
+						}, 2500);
 					} else {
 						self.set('controllers.userWelcome.create_cluster_start', true);
 						this.transitionToRoute('user.welcome');

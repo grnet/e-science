@@ -6,7 +6,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 	output_message : '',
 	// flag to see if the transition is from create cluster button
 	create_cluster_start : false,
-
+	
 	sortedclusters : [],
 	column : '',
 	sortdir : null,
@@ -48,13 +48,20 @@ App.UserWelcomeController = Ember.Controller.extend({
 			this.set('sortedclusters', clusters);
 			this.set('column', column);
 		},
-		go_to_confirm : function(master_IP) {
-			this.set('confirm', true);
-			this.set('ip_of_master', master_IP);
-			alert(master_IP);
+		go_to_confirm : function(cluster) {
+			// this.set('confirm', true);
+			// this.set('ip_of_master', cluster.get('master_IP'));
+			var user = this.store.getById('user', 1);
+			var cluster_to_destroy = this.store.getById('user-cluster', cluster.get('id'));
+			user.get('clusters').removeObject(cluster_to_destroy);
+			user.save().then(function(){
+				cluster_to_destroy.destroyRecord();
+			});
+			// cluster_record.destroyRecord();
+			// cluster.destroyRecord();
 		},
 		go_to_destroy : function(master_IP) {
-
+			
 		},
 		timer : function(status, store) {
 			var that = this;
@@ -62,36 +69,51 @@ App.UserWelcomeController = Ember.Controller.extend({
 				this.set('timer', App.Ticker.create({
 					seconds : 5,
 					onTick : function() {
-						if (!store){
+						that.set('create_cluster_start', false);
+						if (!store) {
 							store = that.store;
 						}
-						var promise = store.fetch('user', 1);
-						promise.then(function(user) {
-							// success
-							var num_records = user.get('clusters').get('length');
-							var bPending = false;
-							for ( i = 0; i < num_records; i++) {
-								if (user.get('clusters').objectAt(i).get('cluster_status') == '2') {
-									bPending = true;
-									break;
+						if (store && that.controllerFor('application').get('loggedIn')) {
+							var promise = store.fetch('user', 1);
+							promise.then(function(user) {
+								// success
+								var num_records = user.get('clusters').get('length');
+								var bPending = false;
+								for ( i = 0; i < num_records; i++) {
+									if (user.get('clusters').objectAt(i).get('cluster_status') == '2') {
+										bPending = true;
+										break;
+									}
 								}
-							}
-							if (!bPending) {
+								if (!bPending) {
+									that.get('timer').stop();
+									status = false;
+								}
+							}, function(reason) {
 								that.get('timer').stop();
 								status = false;
-							}
-						}, function(reason) {
-							console.log(reason);
-						});
-						return promise;
+								console.log(reason);
+							});
+							return promise;
+						}
 					}
 				}));
+			} else {
+				if (status) {
+					that.get('timer').start();
+				} else {
+					that.get('timer').stop();
+				}
 			}
 			if (status) {
 				this.get('timer').start();
 			} else {
 				this.get('timer').stop();
 			}
+		},
+		doRefresh : function() {
+			// console.log('controller > doRefresh called');
+			this.get('target.router').refresh();
 		},
 	},
 });

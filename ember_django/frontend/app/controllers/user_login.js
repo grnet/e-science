@@ -23,25 +23,26 @@ App.UserLoginController = Ember.Controller.extend({
 					'token' : text
 				}).save();
 				// Handling the promise of POST request
-				response.then(function(data) {
+				response.then(function(user) {
 					// Succesfull login.
 					// Set global and localStorage variables to escience token.
-					App.set('escience_token', "Token " + data._data.escience_token);
+					App.set('escience_token', "Token " + user.get('escience_token'));
 					window.localStorage.escience_auth_token = App.get('escience_token');
 					// Push to store the user retrieved from Django backend.
 					self.store.push('user', {
 						id : 1,
-						user_id : data._data.user_id,
-						token : data._data.escience_token,
-						cluster : data._data.cluster
+						user_id : user.get('user_id'),
+						token : user.get('escience_token'),
+						cluster : user.get('cluster')
 					});
 					// Set the text in login screen to blank and redirect to welcome screen
 					self.set('loginFailed', false);
 					self.set('controllers.application.loggedIn', true);
 					self.set('token', '');
 					self.transitionToRoute('user.welcome');
-				}, function() {
+				}, function(reason) {
 					// Failed login.
+					console.log(reason.message);
 					self.set('loginFailed', true);
 					self.set('controllers.application.loggedIn', false);
 					self.set('token', '');

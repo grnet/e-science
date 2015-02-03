@@ -29,4 +29,4 @@
  project_path: "{{my_project_dir}}/{{my_project_name}}"
  path_to_folder_to_minify: "{{ember_django_dir}}/frontend/app/"
  path_to_folder_to_removelogging: "{{ember_django_dir}}/frontend/app/"
- escience_repo: https://github.com/VFoteinos/e-science.git
+ escience_repo: https://github.com/ioannisstenos/e-science.git

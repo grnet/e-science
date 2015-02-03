@@ -4,9 +4,17 @@
     sudo: yes
     tags: installations
 
-  - name: nginx apt key
+  #- name: nginx apt key
+    #sudo: yes
+    #shell: curl http://nginx.org/keys/nginx_signing.key | sudo apt-key add -
+    #tags: installations
+
+  - name: Install apt keys
+    apt_key: "url={{item.url}}"
     sudo: yes
-    shell: curl http://nginx.org/keys/nginx_signing.key | sudo apt-key add -
+    with_items:
+      - { url: 'http://nginx.org/keys/nginx_signing.key' }
+      - { url: 'http://packages.erlang-solutions.com/debian/erlang_solutions.asc' }
     tags: installations
 
   - name: Adding repos
@@ -17,19 +25,26 @@
       - deb http://ftp.debian.org/debian/ jessie-updates main contrib
       - deb http://nginx.org/packages/debian/ wheezy nginx
       - deb-src http://nginx.org/packages/debian/ wheezy nginx
+      - deb http://packages.erlang-solutions.com/debian wheezy contrib
     tags: installations
 
   - name: Copy my_preferences file
     sudo: yes
     copy: src=my_preferences dest=/etc/apt/preferences.d/
-    tags: installations1
+    tags: installations
+
+  - name: Assert that no old version of rabbitmq is on webserver
+    sudo: yes
+    tags: instalaltions
+    apt: name=rabbitmq-server purge=yes state=absent force=yes
 
   - name: Install RabbitMQ broker, PostgreSQL and needed dependencies
     tags: installations
     sudo: yes
     apt: "name={{item}}"
     with_items:
-      - rabbitmq-server
+      - erlang
+      - rabbitmq-server=3.4.3-1
       - postgresql-client
       - python-psycopg2
       - libpq-dev
@@ -59,6 +74,14 @@
       - { name: 'uwsgi' }
       - { name: 'south' }
       - { name: 'requests' }
+      - { name: 'django-celery' }
+      - { name: 'flower' }
+
+
+  #- name: Rabbitmq-server configuration
+    #tags: installations
+    #sudo: yes
+    #rabbitmq_user: user=orkarbmq password=orkapass
 
   - name: Copy script celeryd for daemonic workers
     tags: celery
@@ -160,6 +183,10 @@
     tags: djangosetup
     template: src=settings.j2 owner=orka_admin mode=0744 dest={{settings_path}}/settings.py
 
+  - name: Django project syncdb
+    django_manage: command=syncdb app_path={{project_path}}/{{ember_django_dir}}
+    tags: djangosetup
+
   - name: Django project migrate
     django_manage: command=migrate app_path={{project_path}}/{{ember_django_dir}}
     tags: djangosetup
@@ -204,3 +231,8 @@
   - name: Run collectstatic command
     tags: nginxsetup
     django_manage: command=collectstatic app_path={{project_path}}/{{ember_django_dir}}
+
+  - name: Run script for project setup
+    tags: projectreload
+    sudo: yes
+    shell: . debug_rebuild.sh chdir={{ project_path }}

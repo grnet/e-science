@@ -28,13 +28,13 @@ Grid should be sort-able by status & size -->
                             <td><a {{bind-attr href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
                             {{#if usercluster.cluster_status_active}}
-                            <a data-toggle="tooltip" data-placement="right" title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
+                            <a data-toggle="tooltip" data-placement="right" {{action 'deleteCluster' usercluster}} title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
                             {{/if}}
                             </td>
                         </tr>
                         {{else}}
                         <tr>
-                            <td colspan="4" class="text-center text-info">No user clusters found</td>
+                            <td colspan="5" class="text-center text-info">No user clusters found</td>
                         </tr>
                         {{/each}}
                         {{else}}
@@ -46,14 +46,14 @@ Grid should be sort-able by status & size -->
                             <td><a {{bind-attr href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
                             {{#if usercluster.cluster_status_active}}
-                            <a data-toggle="tooltip" data-placement="right" title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
+                            <a data-toggle="tooltip" data-placement="right" {{action 'deleteCluster' usercluster}} title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
                             {{/if}}
                             </td>
                         </tr>
                         </tr>
                         {{else}}
                         <tr>
-                            <td colspan="4" class="text-center text-info">No user clusters found</td>
+                            <td colspan="5" class="text-center text-info">No user clusters found</td>
                         </tr>
                         {{/each}}
                         {{/if}}
