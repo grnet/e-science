@@ -28,7 +28,7 @@ Grid should be sort-able by status & size -->
                             <td><a {{bind-attr href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
                             {{#if usercluster.cluster_status_active}}
-                            <a data-toggle="tooltip" data-placement="right" title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
+                            <a data-toggle="tooltip" data-placement="right" {{action 'deleteCluster' usercluster}} title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
                             {{/if}}
                             </td>
                         </tr>
@@ -46,7 +46,7 @@ Grid should be sort-able by status & size -->
                             <td><a {{bind-attr href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
                             {{#if usercluster.cluster_status_active}}
-                            <a data-toggle="tooltip" data-placement="right" title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
+                            <a data-toggle="tooltip" data-placement="right" {{action 'deleteCluster' usercluster}} title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
                             {{/if}}
                             </td>
                         </tr>

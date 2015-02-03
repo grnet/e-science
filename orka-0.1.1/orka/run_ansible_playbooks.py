@@ -27,14 +27,15 @@ def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
     try:
         file_name = create_ansible_hosts(cluster_name, list_of_hosts,
                                          hostname_master)
+        # Run Ansible playbook
+        run_ansible(file_name, cluster_size, hadoop_image, ssh_file)
     except Exception:
-        msg = 'Error while creating ansible hosts file'
+        msg = 'Error while running ansible'
         raise RuntimeError(msg, error_ansible_playbook)
-    # Run Ansible playbook
-    run_ansible(file_name, cluster_size, hadoop_image, ssh_file)
+    finally:
+        os.system('rm /tmp/master_' + master_hostname + '_pub_key ' + file_name)
     logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
                 + hostname_master + ':8088/cluster')
-    os.system('rm /tmp/master_' + master_hostname + '_pub_key')
 
 
 def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
@@ -63,7 +64,7 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
             target.write(' private_ip='+host['private_ip'])
             target.write(' ansible_ssh_pass='+host['password'])
             target.write(' ansible_ssh_port='+str(host['port']))
-            target.write(' ansible_ssh_host='+ hostname_master + '\n')
+            target.write(' ansible_ssh_host='+ hostname_master +'\n')
     return filename
 
 
@@ -96,17 +97,14 @@ def run_ansible(filename, cluster_size, hadoop_image, ssh_file):
         ansible_verbosity = " -v"
     orka_dir = dirname(abspath(__file__))
     ansible_path = orka_dir + '/ansible/site.yml'
-
     if hadoop_image:
-        exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
-                                'ansible-playbook -i ' + filename + ' ' +
+        exit_status = os.system('ansible-playbook -i ' + filename + ' ' +
                                 ansible_path + ansible_verbosity +
                                 ' -f ' + str(cluster_size) +
                                 ' -e "choose_role=yarn format=True start_yarn=True ssh_file_name='+ssh_file+'" -t postconfig'
                                 + ansible_log)
     else:
-        exit_status = os.system('export ANSIBLE_HOST_KEY_CHECKING=False;'
-                                'ansible-playbook -i ' + filename + ' ' +
+        exit_status = os.system('ansible-playbook -i ' + filename + ' ' +
                                 ansible_path + ansible_verbosity +
                                 ' -f ' + str(cluster_size) +
                                 ' -e "choose_role=yarn format=True start_yarn=True ssh_file_name='+ssh_file+'"'

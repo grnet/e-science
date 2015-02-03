@@ -30,7 +30,6 @@ class YarnCluster(object):
     def __init__(self, opts):
         """Initialization of YarnCluster data attributes"""
         self.opts = opts
-        current_task.update_state(state="STARTED")
         # Master VM ip, placeholder value
         self.HOSTNAME_MASTER_IP = '127.0.0.1'
         # master VM root password file, placeholder value
@@ -314,22 +313,20 @@ class YarnCluster(object):
             ssh_dict.append(mydict)        
         # print ssh_dict[0]['name']   
         return ssh_dict   
-        
-    def create_bare_cluster(self):
-        """Creates a bare ~okeanos cluster."""
-        # Finds user public ssh key
-        user_home = expanduser('~')
-        chosen_image = {}
-        pub_keys_path = join(user_home, ".ssh/id_rsa.pub")
-        logging.log(SUMMARY, ' Authentication verified')
-        current_task.update_state(state="AUTHENTICATED")
 
+    def check_user_resources(self):
+        """
+        Function for the final user quota checking before cluster
+        creation begins.
+        """
+        chosen_image = {}
         flavor_master = self.get_flavor_id_master(self.cyclades)
         flavor_slaves = self.get_flavor_id_slave(self.cyclades)
         if flavor_master == 0 or flavor_slaves == 0:
             msg = 'Combination of cpu, ram, disk and disk_template do' \
                 ' not match an existing id'
             raise ClientError(msg, error_flavor_id)
+
         list_current_images = self.plankton.list_public(True, 'default')
         # Check availability of resources
         retval = self.check_all_resources()
@@ -342,6 +339,16 @@ class YarnCluster(object):
             msg = self.opts['image']+' is not a valid image'
             raise ClientError(msg, error_image_id)
 
+        return flavor_master, flavor_slaves, chosen_image['id']
+
+    def create_bare_cluster(self):
+        """Creates a bare ~okeanos cluster."""
+        user_home = expanduser('~')
+        pub_keys_path = join(user_home, ".ssh/id_rsa.pub")
+        logging.log(SUMMARY, ' Authentication verified')
+        current_task.update_state(state="AUTHENTICATED")
+
+        flavor_master, flavor_slaves, image_id = self.check_user_resources()
         # Create timestamped name of the cluster
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cluster_name = '%s%s%s' % (date_time, '-', self.opts['name'])
@@ -379,10 +386,10 @@ class YarnCluster(object):
         try:
             cluster = Cluster(self.cyclades, self.opts['name'],
                               flavor_master, flavor_slaves,
-                              chosen_image['id'], self.opts['cluster_size'],
+                              image_id, self.opts['cluster_size'],
                               self.net_client, self.auth, self.project_id)
 
-            state="Creating ~okeanos cluster"
+            state=" Creating ~okeanos cluster"
             logging.log(SUMMARY, state)
             set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state)
             self.HOSTNAME_MASTER_IP, self.server_dict = \
@@ -398,10 +405,10 @@ class YarnCluster(object):
         set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state,
                                master_IP=self.HOSTNAME_MASTER_IP)
         # Get master VM root password
-        master_root_pass = self.server_dict[0]['adminPass']
+        self.master_root_pass = self.server_dict[0]['adminPass']
         master_name = self.server_dict[0]['name']
         # Write master VM root password to a file with same name as master VM
-        self.create_password_file(master_root_pass, master_name)
+        self.create_password_file(self.master_root_pass, master_name)
         logging.log(SUMMARY, ' The root password of master VM [%s] '
                         'is on file %s', self.server_dict[0]['name'],
                         self.pass_file)
@@ -411,6 +418,7 @@ class YarnCluster(object):
     def create_yarn_cluster(self):
         """Create Yarn cluster"""
         try:
+            current_task.update_state(state="STARTED")
             self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
         except Exception, e:
             logging.error(' Fatal error: ' + str(e.args[0]))
@@ -432,7 +440,7 @@ class YarnCluster(object):
             state = ' Yarn Cluster is active'
             set_cluster_state(self.opts['token'], 'Active', self.opts['name'], state)
 
-            return self.HOSTNAME_MASTER_IP, self.server_dict
+            return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass
         except Exception, e:
             logging.error(' Fatal error:' + str(e.args[0]))
             logging.error(' Created cluster and resources will be deleted')

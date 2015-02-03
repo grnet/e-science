@@ -38,7 +38,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		// console.log(user.get('clusters').get('length'));
 		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'cluster_name');
 		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'cluster_name');
-	},	
+	},
 	actions : {
 		willTransition : function(transition) {
 			// leaving this route
@@ -52,14 +52,28 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 				// this.controller.set('create_cluster_start', false);
 				Ember.run.later(this, function() {
 					// console.log('route > debouncing refresh');
-					this.set('refreshed',this.get('refreshed')+1);
+					this.set('refreshed', this.get('refreshed') + 1);
 					this.controller.send('doRefresh');
 				}, 3000);
-			}else if (!from_create){
-				this.set('refreshed',0);
+			} else if (!from_create) {
+				this.set('refreshed', 0);
 			}
 			return true;
 		},
+		deleteCluster : function(cluster) {
+			var that = this;
+			// this.store.find('user', 1).then(function(data){
+				// data.store.find('user-cluster', cluster.get('id')).then(function(data){
+					// data.destroyRecord();
+				// },function(reason){
+// 					
+				// });
+			// },function(reason){
+// 				
+			// });		
+			cluster.deleteRecord();
+			// cluster.destroyRecord();
+		}
 	},
 	deactivate : function() {
 		// left this route

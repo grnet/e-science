@@ -48,13 +48,20 @@ App.UserWelcomeController = Ember.Controller.extend({
 			this.set('sortedclusters', clusters);
 			this.set('column', column);
 		},
-		go_to_confirm : function(master_IP) {
-			this.set('confirm', true);
-			this.set('ip_of_master', master_IP);
-			alert(master_IP);
+		go_to_confirm : function(cluster) {
+			// this.set('confirm', true);
+			// this.set('ip_of_master', cluster.get('master_IP'));
+			var user = this.store.getById('user', 1);
+			var cluster_to_destroy = this.store.getById('user-cluster', cluster.get('id'));
+			user.get('clusters').removeObject(cluster_to_destroy);
+			user.save().then(function(){
+				cluster_to_destroy.destroyRecord();
+			});
+			// cluster_record.destroyRecord();
+			// cluster.destroyRecord();
 		},
 		go_to_destroy : function(master_IP) {
-
+			
 		},
 		timer : function(status, store) {
 			var that = this;

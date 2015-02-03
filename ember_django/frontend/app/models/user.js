@@ -6,12 +6,10 @@ App.User = DS.Model.extend({
 	// may have more than one clusters
 	clusters : DS.hasMany('userCluster', {
 		async : true,
+		inverse : 'user',
 	}), 						// user cluster records
 	cluster : attr(),
 	escience_token : attr(),
-	// cluster : function() {
-	// return this.get('clusters.length');
-	// }.property('clusters.length'),
 });
 
 // Information about user's clusters
@@ -32,7 +30,9 @@ App.UserCluster = DS.Model.extend({
 	task_id : attr(),
 	state : attr(),
 	// user that created the cluster
-	user : DS.belongsTo('user'),
+	user : DS.belongsTo('user', {
+		inverse : 'clusters',
+	}),
 	cluster_url : function() {
 		return 'http://' + this.get('master_IP') + ':8088/cluster';
 	}.property('master_IP'),
