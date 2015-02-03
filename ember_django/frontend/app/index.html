@@ -31,40 +31,13 @@
    			  });
 			});
      
-	        set_cookie( style_cookie_name, cssFile_URL, style_cookie_duration );	        
 	      }
 	      
-	      function set_style_from_cookie() {
-		    var setcssFile = get_cookie(style_cookie_name);
-			if (setcssFile != "") {
-			  changeCSS(setcssFile, 0);			  
-			}
-		  }
-		  
-		  function set_cookie ( cookie_name, cookie_value, lifespan_in_days ) {
-			var day = new Date();
-			day.setTime(day.getTime() + (lifespan_in_days*24*60*60*1000));
-			var expires = "expires=" + day.toGMTString();
-			document.cookie = cookie_name+"="+cookie_value+"; "+expires+"; path=/";
-		  }
-		  
-		  function get_cookie(cookie_name) {
-			var name = cookie_name + "=";
-			var ca = document.cookie.split(';');
-			for(var i=0; i<ca.length; i++) {
-			  var c = ca[i];
-			  while (c.charAt(0)==' ') c = c.substring(1);
-			  if (c.indexOf(name) == 0) {
-			      return c.substring(name.length, c.length);
-			  }
-			}
-			return "";
-		  }
 	    </script>
 		
 		<link rel="stylesheet" href="{{ STATIC_URL }}styles/style.css">
 	</head>
-	<body class="" style="" onload="set_style_from_cookie()">
+	<body class="" style="">
 		{% verbatim %}
 		<noscript>
 			<div style="display: table; margin: 0 auto; text-align: center;">
@@ -90,6 +63,7 @@
 	    <script src="{{ STATIC_URL }}controllers/homepage.js"></script>
 	    <script src="{{ STATIC_URL }}controllers/user_login.js"></script>
 	    <script src="{{ STATIC_URL }}controllers/cluster_create.js"></script>
+	    <script src="{{ STATIC_URL }}controllers/user_theme.js"></script>
 	
 	    <script src="{{ STATIC_URL }}router.js"></script>
 	    <script src="{{ STATIC_URL }}routes/index.js"></script>
@@ -106,6 +80,7 @@
 	    <script src="{{ STATIC_URL }}views/storage_selection_button.js"></script>
 	    <script src="{{ STATIC_URL }}views/create_cluster_button.js"></script>
 	    <script src="{{ STATIC_URL }}views/vmflavor_selection_button.js"></script>
+	    <script src="{{ STATIC_URL }}views/user_theme.js"></script>
 	    
 	    <script src="{{ STATIC_URL }}store.js"></script> 
 	    <script src="{{ STATIC_URL }}models/user.js"></script>

@@ -13,7 +13,7 @@ App.UserLoginController = Ember.Controller.extend({
 		}
 	},
 	loginFailed : false,
-	actions : {
+	actions : {		
 		login : function(text) {
 			var self = this;
 			if (text) {
@@ -32,6 +32,7 @@ App.UserLoginController = Ember.Controller.extend({
 						id : 1,
 						user_id : data._data.user_id,
 						token : data._data.escience_token,
+						user_theme : data._data.user_theme,
 						cluster : data._data.cluster
 					});
 					// Set the text in login screen to blank and redirect to welcome screen

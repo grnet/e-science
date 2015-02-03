@@ -3,6 +3,7 @@ attr = App.attr;
 App.User = DS.Model.extend({
 	token : attr('string'), 				// okeanos token
 	user_id : attr('number'), 				// user_id in backend database
+	user_theme : attr('string'),
 	clusters : DS.hasMany('userCluster', {
 		async : true,
 	}), 									// user cluster records
