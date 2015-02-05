@@ -313,10 +313,9 @@ class YarnCluster(object):
             ssh_dict.append(mydict)          
         return ssh_dict
         
-    def create_bare_cluster(self):
+    def check_user_resources(self):
         """Creates a bare ~okeanos cluster."""
         # Finds user public ssh key
-        user_home = expanduser('~')
         chosen_image = {}
         flavor_master = self.get_flavor_id_master(self.cyclades)
         flavor_slaves = self.get_flavor_id_slave(self.cyclades)
