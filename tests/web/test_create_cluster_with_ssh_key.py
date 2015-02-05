@@ -21,10 +21,11 @@ from ConfigParser import RawConfigParser, NoSectionError
 from okeanos_utils import check_quota, get_flavor_id, check_credentials
 from random import randint
 import unittest, time, re
+import subprocess
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class test_create_cluster(unittest.TestCase):
+class test_create_cluster_with_ssh_key(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -54,8 +55,34 @@ class test_create_cluster(unittest.TestCase):
             self.project_name = "INVALID_PROJECT_NAME"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
+                  
+    def ssh_key_list(self):
+            """
+            Get the ssh_key dictionary of a user
+            """   
+            command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' + self.token + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
+            p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
+            out, err = p.communicate()
+            output = out[2:-2].split('}, {')
+            ssh_dict =list()
+            ssh_counter = 0
+            for dictionary in output:
+                mydict=dict()
+                new_dictionary = dictionary.replace('"','')
+                dict1 = new_dictionary.split(', ')
+                for each in dict1:
+                    list__keys_values_in_dict=each.split(': ')
+                    new_list_of_dict_elements=list()
+                    for item in list__keys_values_in_dict:
+                        new_list_of_dict_elements.append(item)
+                    if len(new_list_of_dict_elements) > 1:
+                        for pair in new_list_of_dict_elements:
+                            mydict[new_list_of_dict_elements[0]]=new_list_of_dict_elements[1]
+                ssh_dict.append(mydict)          
+            return ssh_dict
+        
     
-    def test_create_cluster(self):
+    def test_create_cluster_with_ssh_key(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_id("id_login").click()     
@@ -93,6 +120,14 @@ class test_create_cluster(unittest.TestCase):
         driver.find_element_by_id("cluster_name").clear()
         cluster_name = 'test_cluster' + str(randint(0,9999))
         driver.find_element_by_id("cluster_name").send_keys(cluster_name)
+        hadoop_image = 'Hadoop-2.5.2'                           
+        Select(driver.find_element_by_id("os_systems")).select_by_visible_text(hadoop_image)
+        ssh_keys_info = self.ssh_key_list()
+        if ssh_keys_info == [{}]:
+            self.assertTrue(False,'No ssh_key available')
+        else:
+            ssh_key_name = ssh_keys_info[0]['name']
+        Select(driver.find_element_by_id("ssh_key")).select_by_visible_text(ssh_key_name)           
         Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text('2')
         for role in ['master' , 'slaves']:
             for flavor in ['cpus' , 'ram' , 'disk']:
@@ -100,7 +135,7 @@ class test_create_cluster(unittest.TestCase):
                 driver.find_element_by_id(button_id).click()
         driver.find_element_by_id("next").click()
         print 'Creating cluster...'
-        for i in range(1800): 
+        for i in range(1000): 
             # wait for cluster create to finish
             try:
                 if "" != driver.find_element_by_id('id_output_message').text: break
@@ -116,7 +151,6 @@ class test_create_cluster(unittest.TestCase):
             except AssertionError as e: self.verificationErrors.append(str(e))
         else:
             self.assertTrue(False, message)
-
 
     
     def is_element_present(self, how, what):

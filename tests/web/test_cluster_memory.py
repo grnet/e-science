@@ -19,6 +19,7 @@ import unittest, time, re
 from okeanos_utils import check_quota, get_flavor_id, destroy_cluster
 from create_cluster import YarnCluster
 from ClusterTest import ClusterTest
+from random import randint
 
 
 class TestClusterMemory(ClusterTest):
@@ -45,7 +46,8 @@ class TestClusterMemory(ClusterTest):
         
         time.sleep(1)
         driver.find_element_by_id("cluster_name").clear()
-        driver.find_element_by_id("cluster_name").send_keys("mycluster")
+        cluster_name = 'test_cluster' + str(randint(0,9999))
+        driver.find_element_by_id("cluster_name").send_keys(cluster_name)
         try:
             # Call the bind function that creates ~okeanos vms and 
             # causes later the server to respond with an error message to

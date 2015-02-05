@@ -4,10 +4,10 @@
     sudo: yes
     tags: installations
 
-  #- name: nginx apt key
-    #sudo: yes
-    #shell: curl http://nginx.org/keys/nginx_signing.key | sudo apt-key add -
-    #tags: installations
+  - name: Get rabbitmq-server latest version
+    tags: installations
+    sudo: yes
+    get_url: url=https://www.rabbitmq.com/releases/rabbitmq-server/v3.4.3/rabbitmq-server_3.4.3-1_all.deb dest=./
 
   - name: Install apt keys
     apt_key: "url={{item.url}}"
@@ -44,7 +44,6 @@
     apt: "name={{item}}"
     with_items:
       - erlang
-      - rabbitmq-server=3.4.3-1
       - postgresql-client
       - python-psycopg2
       - libpq-dev
@@ -53,6 +52,11 @@
       - python-flup
       - nginx
       - sshpass
+
+  - name: Install rabbitmq-server latest version
+    tags: installations
+    sudo: yes
+    apt: deb=rabbitmq-server_3.4.3-1_all.deb
 
   - name: Install Celery, Django and Django rest framework
     tags: installations
@@ -77,35 +81,15 @@
       - { name: 'django-celery' }
       - { name: 'flower' }
 
-
-  #- name: Rabbitmq-server configuration
-    #tags: installations
-    #sudo: yes
-    #rabbitmq_user: user=orkarbmq password=orkapass
-
-  - name: Copy script celeryd for daemonic workers
-    tags: celery
+  - name: Rabbitmq-server vhost configuration
+    tags: installations
     sudo: yes
-    copy: src=celeryd dest=/etc/init.d/celeryd owner=root mode=0744
-    when: is_daemon
+    rabbitmq_vhost: name=/escience_tasks state=present
 
-  - name: Copy celeryd configuration
-    tags: celery
+  - name: Rabbitmq-server user configuration
+    tags: installations
     sudo: yes
-    template: src=celeryd_conf.j2 dest=/etc/default/celeryd owner=root
-    when: is_daemon
-
-  - name: Copy script celerybeat for daemonic periodic tasks
-    tags: celery
-    sudo: yes
-    copy: src=celerybeat dest=/etc/init.d/celerybeat owner=root mode=0744
-    when: is_periodic_task
-
-  - name: Copy celerybeat configuration
-    tags: celery
-    sudo: yes
-    template: src=celerybeat_conf.j2 dest=/etc/default/celerybeat owner=root
-    when: is_periodic_task
+    rabbitmq_user: user=orkarbmq password=orkapass vhost=/escience_tasks configure_priv=.* read_priv=.* write_priv=.* state=present
 
   - name: create directory for projects
     tags: setupproject
@@ -232,7 +216,8 @@
     tags: nginxsetup
     django_manage: command=collectstatic app_path={{project_path}}/{{ember_django_dir}}
 
-  - name: Run script for project setup
-    tags: projectreload
-    sudo: yes
-    shell: . debug_rebuild.sh chdir={{ project_path }}
+  - name: Run celery as a daemon
+    tags: celerystart
+    command: celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%n\%I.log
+    args:
+      chdir: "{{project_path}}/{{ember_django_dir}}"

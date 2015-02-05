@@ -280,7 +280,7 @@ class YarnCluster(object):
         Creates a file named after the timestamped name of cluster
         containing the public ssh_key of the user.
         """
-        ssh_info = self.ssh_list()
+        ssh_info = self.ssh_key_list()
         cluster_name = cluster_name.replace(" ", "_")
         self.ssh_file = join(os.getcwd(), cluster_name + '_ssh_key')
         for item in ssh_info:
@@ -288,7 +288,7 @@ class YarnCluster(object):
                 with open(self.ssh_file, 'w') as f:
                     f.write(item['content'])
 
-    def ssh_list(self):
+    def ssh_key_list(self):
         """
         Get the ssh_key dictionary of a user
         """   
@@ -300,25 +300,23 @@ class YarnCluster(object):
         ssh_counter = 0
         for dictionary in output:
             mydict=dict()
-            new = dictionary.replace('"','')
-            d1 = new.split(', ')
-            for every in d1:
-                z=every.split(': ')
-                z1=list()
-                for item in z:
-                    z1.append(item)
-                if len(z1) > 1:
-                    for k in z1:
-                        mydict[z1[0]]=z1[1]
-            ssh_dict.append(mydict)        
-        # print ssh_dict[0]['name']   
-        return ssh_dict   
-
-    def check_user_resources(self):
-        """
-        Function for the final user quota checking before cluster
-        creation begins.
-        """
+            new_dictionary = dictionary.replace('"','')
+            dict1 = new_dictionary.split(', ')
+            for each in dict1:
+                list__keys_values_in_dict=each.split(': ')
+                new_list_of_dict_elements=list()
+                for item in list__keys_values_in_dict:
+                    new_list_of_dict_elements.append(item)
+                if len(new_list_of_dict_elements) > 1:
+                    for pair in new_list_of_dict_elements:
+                        mydict[new_list_of_dict_elements[0]]=new_list_of_dict_elements[1]
+            ssh_dict.append(mydict)          
+        return ssh_dict
+        
+    def create_bare_cluster(self):
+        """Creates a bare ~okeanos cluster."""
+        # Finds user public ssh key
+        user_home = expanduser('~')
         chosen_image = {}
         flavor_master = self.get_flavor_id_master(self.cyclades)
         flavor_slaves = self.get_flavor_id_slave(self.cyclades)

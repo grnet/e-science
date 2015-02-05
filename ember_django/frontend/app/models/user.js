@@ -88,6 +88,16 @@ App.UserCluster = DS.Model.extend({
 			return '';
 		}
 	}.property('cluster_status_active'),
+	cluster_status_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(20);
+		var status_id = "id_".concat("status_",cluster_name_sort);
+		return status_id;	
+	}.property('cluster_name'),
+	cluster_ip_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(20);
+		var ip_id = "id_".concat("ip_",cluster_name_sort);
+		return ip_id;	
+	}.property('cluster_name')
 });
 
 // App.User.reopenClass({

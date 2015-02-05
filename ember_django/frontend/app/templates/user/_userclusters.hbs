@@ -23,9 +23,9 @@ Grid should be sort-able by status & size -->
                         {{#each usercluster in sortedCollection}}
                         <tr>
                             <td>{{usercluster.cluster_name}}</td>
-                            <td><a data-toggle="tooltip" data-placement="right" {{bind-attr title='usercluster.cluster_status_verbose'}}> <i {{bind-attr class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</a></td>
+                            <td><a data-toggle="tooltip" data-placement="right" {{bind-attr title='usercluster.cluster_status_verbose'}}> <i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</a></td>
                             <td>{{usercluster.cluster_size}}</td>
-                            <td><a {{bind-attr href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
+                            <td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
                             {{#if usercluster.cluster_status_active}}
                             <a data-toggle="tooltip" data-placement="right" {{action 'deleteCluster' usercluster}} title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
