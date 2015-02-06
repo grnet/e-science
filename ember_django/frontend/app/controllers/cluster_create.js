@@ -33,10 +33,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 	name_of_project : '', // variable to set name of project as part of project details string helps parsing sytem project name
 	vmflavor_selection_Master : '', // Initial vmflavor_selection_Master
 	vmflavor_selection_Slave : '', // Initial vmflavor_selection_Slave
-    vmflav_disabled_Master : false, // Global variable for handling restrictions
-    vmflav_disabled_Slave : false, // Global variable for handling restrictions
+    vmflav_masterSmall_disabled : false,  // Global variable for handling restrictions
     vmflav_masterMedium_disabled : false, // Global variable for handling restrictions
     vmflav_masterLarge_disabled : false, // Global variable for handling restrictions
+    vmflav_slaveSmall_disabled : false, // Global variable for handling restrictions
     vmflav_slaveMedium_disabled : false, // Global variable for handling restrictions
     vmflav_slaveLarge_disabled : false, // Global variable for handling restrictions
     
@@ -244,22 +244,38 @@ App.ClusterCreateController = Ember.Controller.extend({
 		var vmflavors = this.get('content').objectAt(this.get('project_index')).get('vmflavors_choices');
 		for (var i = 0; i < length; i++) {
 			elements[i].style.color = "initial";
-			if (vmflav_disabled_Master) {
-				elements[i].disabled = true;
+			if (vmflav_masterSmall_disabled) {
+				elements[0].disabled = true;
 			} else {
-				elements[i].disabled = false;
+				elements[0].disabled = false;
 			}
 			if (vmflav_masterMedium_disabled) {
 				elements[1].disabled = true;
+			} else {
+				elements[1].disabled = false;
 			}
 			if (vmflav_masterLarge_disabled) {
 				elements[2].disabled = true;
+			} else {
+				elements[2].disabled = false;
 			}
 			if ((this.get('vmflavor_selection_Master') !== undefined) && (this.get('vmflavor_selection_Master') !== null) && (this.get('vmflavor_selection_Master') !== '')) {
 				var choice = document.getElementById("master_vmfalvors".concat(this.get('vmflavor_selection_Master')));
-				if (((this.get('master_cpu_selection') == 2)&&(this.get('master_ram_selection') == 2048)&&(this.get('master_disk_selection') == 10))||(((this.get('master_cpu_selection') == 4)&&(this.get('master_ram_selection') == 2048)&&(this.get('master_disk_selection') == 20)))||(((this.get('master_cpu_selection') == 4)&&(this.get('master_ram_selection') == 4096)&&(this.get('master_disk_selection') == 40)))) {
+				if ((this.get('master_cpu_selection') == 2)&&(this.get('master_ram_selection') == 2048)&&(this.get('master_disk_selection') == 10)) {
+					vmflavor_newMaster_Id = "master_vmfalvorsSmall";
+					choice = document.getElementById(vmflavor_newMaster_Id);
 					choice.style.color = "white";
-				}				
+				} 
+				if ((this.get('master_cpu_selection') == 4)&&(this.get('master_ram_selection') == 2048)&&(this.get('master_disk_selection') == 20)) {
+					vmflavor_newMaster_Id = "master_vmfalvorsMedium";
+					choice = document.getElementById(vmflavor_newMaster_Id);
+					choice.style.color = "white";					
+				}
+				if ((this.get('master_cpu_selection') == 4)&&(this.get('master_ram_selection') == 4096)&&(this.get('master_disk_selection') == 40)) {
+					vmflavor_newMaster_Id = "master_vmfalvorsLarge";
+					choice = document.getElementById(vmflavor_newMaster_Id);
+					choice.style.color = "white";
+				}								
 			}
 		}
 		var elements = document.getElementsByName("vmflavor_button_Slave");
@@ -267,22 +283,38 @@ App.ClusterCreateController = Ember.Controller.extend({
 		var vmflavors = this.get('content').objectAt(this.get('project_index')).get('vmflavors_choices');
 		for (var i = 0; i < length; i++) {
 			elements[i].style.color = "initial";
-			if (vmflav_disabled_Slave) {
-				elements[i].disabled = true;
+			if (vmflav_slaveSmall_disabled) {
+				elements[0].disabled = true;
 			} else {
-				elements[i].disabled = false;
+				elements[0].disabled = false;
 			}
 			if (vmflav_slaveMedium_disabled) {
 				elements[1].disabled = true;
+			} else {
+				elements[1].disabled = false;
 			}
 			if (vmflav_slaveLarge_disabled) {
 				elements[2].disabled = true;
+			} else {
+				elements[2].disabled = false;
 			}
 			if ((this.get('vmflavor_selection_Slave') !== undefined) && (this.get('vmflavor_selection_Slave') !== null) && (this.get('vmflavor_selection_Slave') !== '')) {
 				var choice = document.getElementById("slave_vmfalvors".concat(this.get('vmflavor_selection_Slave')));
-				if (((this.get('slaves_cpu_selection') == 2)&&(this.get('slaves_ram_selection') == 2048)&&(this.get('slaves_disk_selection') == 10))||(((this.get('slaves_cpu_selection') == 4)&&(this.get('slaves_ram_selection') == 2048)&&(this.get('slaves_disk_selection') == 20)))||(((this.get('slaves_cpu_selection') == 4)&&(this.get('slaves_ram_selection') == 4096)&&(this.get('slaves_disk_selection') == 40)))) {
+				if ((this.get('slaves_cpu_selection') == 2)&&(this.get('slaves_ram_selection') == 2048)&&(this.get('slaves_disk_selection') == 10)) {
+					vmflavor_newSlave_Id = "slave_vmfalvorsSmall";
+					choice = document.getElementById(vmflavor_newSlave_Id);
 					choice.style.color = "white";
-				}				
+				} 
+				if ((this.get('slaves_cpu_selection') == 4)&&(this.get('slaves_ram_selection') == 2048)&&(this.get('slaves_disk_selection') == 20)) {
+					vmflavor_newSlave_Id = "slave_vmfalvorsMedium";
+					choice = document.getElementById(vmflavor_newSlave_Id);
+					choice.style.color = "white";					
+				}
+				if ((this.get('slaves_cpu_selection') == 4)&&(this.get('slaves_ram_selection') == 4096)&&(this.get('slaves_disk_selection') == 40)) {
+					vmflavor_newSlave_Id = "slave_vmfalvorsLarge";
+					choice = document.getElementById(vmflavor_newSlave_Id);
+					choice.style.color = "white";
+				}							
 			}
 		}
 	},
@@ -309,13 +341,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 			if (cpus[i] > (this.get('content').objectAt(this.get('project_index')).get('cpu_av') - slaves_cpu * (this.size_of_cluster() - 1) )) {
 				elements[i].disabled = true;
-				vmflav_disabled_Master=true;
 			} else {
 				elements[i].disabled = false;
-				vmflav_disabled_Master=false;
-			}
+			}			
 			if (elements[1].disabled == true) {
-				vmflav_disabled_Master=true;
+				vmflav_masterSmall_disabled=true;
+			} else {
+				vmflav_masterSmall_disabled=false;
 			}
 			if (elements[2].disabled == true) {
 				vmflav_masterMedium_disabled=true;
@@ -343,13 +375,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 			if (cpus[i] * (this.size_of_cluster() - 1) > (this.get('content').objectAt(this.get('project_index')).get('cpu_av') - master_cpu)) {
 				elements[i].disabled = true;
-				vmflav_disabled_Slave=true;
 			} else {
 				elements[i].disabled = false;
-				vmflav_disabled_Slave=false;
 			}
 			if (elements[1].disabled == true) {
-				vmflav_disabled_Slave=true;
+				vmflav_slaveSmall_disabled=true;
+			} else {
+				vmflav_slaveSmall_disabled=false;
 			}
 			if (elements[2].disabled == true) {
 				vmflav_slaveMedium_disabled=true;
@@ -389,7 +421,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = false;
 			}
 			if (elements[2].disabled == true) {
-				vmflav_disabled_Master=true;
+				vmflav_masterSmall_disabled=true;
 				vmflav_masterMedium_disabled=true;
 			}
 			if (elements[3].disabled == true) {
@@ -418,7 +450,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = false;
 			}
 			if (elements[2].disabled == true) {
-				vmflav_disabled_Slave=true;
+				vmflav_slaveSmall_disabled=true;
 				vmflav_slaveMedium_disabled=true;
 			}
 			if (elements[3].disabled == true) {
@@ -454,7 +486,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = false;
 			}
 			if (elements[1].disabled == true) {
-				vmflav_disabled_Master=true;
+				vmflav_masterSmall_disabled=true;
 			}
 			if (elements[2].disabled == true) {
 				vmflav_masterMedium_disabled=true;
@@ -485,7 +517,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = false;
 			}
 			if (elements[1].disabled == true) {
-				vmflav_disabled_Slave=true;
+				vmflav_slaveSmall_disabled=true;
 			}
 			if (elements[2].disabled == true) {
 				vmflav_slaveMedium_disabled=true;
