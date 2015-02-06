@@ -133,7 +133,7 @@ def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, 
     cpu_choices = flavors['cpus']
     mem_choices = flavors['ram']
     disk_choices = flavors['disk']
-    disk_template = flavors['disk_template']
+    disk_template = ['Standard' , 'Archipelago']
     os_choices = images
 
     # Create a ClusterCreationParams object with the parameters returned from

@@ -228,6 +228,12 @@ class YarnCluster(object):
             msg = 'Could not get list of flavors'
             raise ClientError(msg, error_flavor_list)
         flavor_id = 0
+        if self.opts['disk_template'] == 'Archipelago':
+            self.opts['disk_template'] = 'ext_vlmc'
+        elif self.opts['disk_template'] == 'Standard':
+            self.opts['disk_template'] = 'drbd'
+        else:
+            pass
         for flavor in flavor_list:
             if flavor['ram'] == self.opts['ram_master'] and \
                                 flavor['SNF:disk_template'] == self.opts['disk_template'] and \
@@ -248,6 +254,12 @@ class YarnCluster(object):
             msg = 'Could not get list of flavors'
             raise ClientError(msg, error_flavor_list)
         flavor_id = 0
+        if self.opts['disk_template'] == 'Archipelago':
+            self.opts['disk_template'] = 'ext_vlmc'
+        elif self.opts['disk_template'] == 'Standard':
+            self.opts['disk_template'] = 'drbd'
+        else:
+            pass
         for flavor in flavor_list:
             if flavor['ram'] == self.opts['ram_slave'] and \
                                 flavor['SNF:disk_template'] == self.opts['disk_template'] and \

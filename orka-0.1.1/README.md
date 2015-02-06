@@ -58,7 +58,7 @@ Required positional arguments for create command:
     cpu_slave="each slave node: number of CPU cores",
     ram_slave="each slave node: memory in MB",
     disk_slave="each slave node: hard drive in GB",
-    disk_template= "drbd or ext_vlmc"
+    disk_template= "Standard or Archipelago"
     token="an ~okeanos token",
     project_name="name of a ~okeanos project, to pull resources from"
 
@@ -78,15 +78,15 @@ Install from a pre-configured image
 
 example for create cluster with default optionals (not hadoop_image):
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc <~okeanos_token> <project_name>
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <~okeanos_token> <project_name>
 
 example for create cluster with default optionals (with default hadoop image):
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc <~okeanos_token> <project_name> --use_hadoop_image
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <~okeanos_token> <project_name> --use_hadoop_image
 
 example for create cluster with a different hadoop image and logging level:
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc <~okeanos_token> <project_name> --use_hadoop_image=hadoop_image_name --logging=report
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <~okeanos_token> <project_name> --use_hadoop_image=hadoop_image_name --logging=report
 
 Required positional arguments for destroy command :
 
