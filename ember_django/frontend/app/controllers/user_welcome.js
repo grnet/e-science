@@ -86,7 +86,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 							}, function(reason) {
 								that.get('timer').stop();
 								status = false;
-								console.log(reason);
+								console.log(reason.message);
 							});
 							return promise;
 						}

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, expanduser
 from cluster_errors_constants import *
 from kamaki.clients import ClientError
 from ConfigParser import RawConfigParser, NoSectionError
@@ -13,11 +13,11 @@ from collections import OrderedDict
 def get_api_urls(action):
     """ Return api urls from config file"""
     parser = RawConfigParser()
-    orka_dir = dirname(abspath(__file__))
-    config_file = join(orka_dir, 'config.txt')
+    user_home = expanduser('~')
+    config_file = join(user_home, ".kamakirc")
     parser.read(config_file)
     try:
-        base_url = parser.get('Web', 'url')
+        base_url = parser.get('orka', 'base_url')
         if action == 'login':
             url_login = '{0}{1}'.format(base_url, login_endpoint)
             return url_login
@@ -34,7 +34,7 @@ def get_api_urls(action):
             logging.log(SUMMARY, ' Url to be returned from config file not specified')
             return 0
     except NoSectionError:
-        msg = 'Not a valid api url in config file'
+        msg = 'Did not find a valid orka api base_url in .kamakirc'
         raise NoSectionError(msg)
 
 

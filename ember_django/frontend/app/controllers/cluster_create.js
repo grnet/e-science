@@ -660,8 +660,11 @@ App.ClusterCreateController = Ember.Controller.extend({
 						self.set('controllers.userWelcome.output_message', clusterchoice.get('message'));
 						self.set('controllers.userWelcome.create_cluster_start', true);
 						self.set('controllers.userWelcome.refreshed', 0);
-						self.transitionToRoute('user.welcome');
-						self.store.fetch('user', 1);
+						self.store.fetch('user', 1).then(function(user){
+							self.transitionToRoute('user.welcome');
+						},function(reason){
+							console.log(reason.message);
+						});
 					}, function(reason) {
 						// Set the response to user's create cluster click when put fails.
 						console.log(reason);
