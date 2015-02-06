@@ -28,7 +28,6 @@ def get_api_urls(login=False, database=False):
     """ Return api urls from config file"""
     parser = RawConfigParser()
     user_home = expanduser('~')
-    orka_dir = dirname(abspath(__file__))
     config_file = join(user_home, ".kamakirc")
     parser.read(config_file)
     try:
