@@ -21,10 +21,9 @@ from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterchoicesSerializer, PendingQuotaSerializer, ProjectNameSerializer, \
     MasterIpSerializer, UpdateDatabaseSerializer, TaskSerializer
 from django_db_after_login import *
-from orka.create_cluster import YarnCluster
 from orka.cluster_errors_constants import *
-from tasks import createcluster
-import exceptions
+from tasks import create_cluster_async, destroy_cluster_async
+from orka.create_cluster import YarnCluster
 from celery.result import AsyncResult
 
 
@@ -115,8 +114,7 @@ class DatabaseView(APIView):
 
     def put(self, request, *args, **kwargs):
         """
-        Update database that a cluster is created or is destroyed
-        after fatal error.
+        Update database that a cluster is active or is destroyed
         """
         serializer = self.serializer_class(data=request.DATA)
         user_token = Token.objects.get(key=request.auth)
@@ -132,27 +130,6 @@ class DatabaseView(APIView):
                 return Response({"id": 1, "message": e.message})
             except Exception, e:
                 return Response({"id": 1, "message": e.args[0]})
-        return Response(serializer.errors)
-
-    def delete(self, request, *args, **kwargs):
-        """
-        Update database that a cluster is deleted from orka-cli.
-        """
-        self.serializer_class = MasterIpSerializer
-        serializer = self.serializer_class(data=request.DATA)
-        if serializer.is_valid():
-            user_token = Token.objects.get(key=request.auth)
-            user = UserInfo.objects.get(user_id=user_token.user.user_id)
-            try:
-                db_cluster_destroy(user,
-                                   serializer.data['master_IP'])
-                return Response({"id": 1, "message": "Requested cluster was deleted from db"})
-            except ClientError, e:
-                return Response({"id": 1, "message": e.message})
-            except Exception, e:
-                return Response({"id": 1, "message": e.args[0]})
-        # This will be send if user's delete cluster parameters are not de-serialized
-        # correctly.
         return Response(serializer.errors)
 
 
@@ -204,18 +181,41 @@ class StatusView(APIView):
                        'disk_template': serializer.data['disk_template'],
                        'image': serializer.data['os_choice'],
                        'token': user.okeanos_token,
-                       'project_name': serializer.data['project_name'],
-                       'ssh_key_name': serializer.data['ssh_key_selection']}
+                       'project_name': serializer.data['project_name']}
 
             if 'ssh_key_selection' in serializer.data:
                 choices.update({'ssh_key_name': serializer.data['ssh_key_selection']})
-            c_cluster = createcluster.delay(choices)
+            try:
+                YarnCluster(choices).check_user_resources()
+            except ClientError, e:
+                return Response({"id": 1, "message": e.message})
+            except Exception, e:
+                return Response({"id": 1, "message": e.args[0]})
+            c_cluster = create_cluster_async.delay(choices)
             task_id = c_cluster.id
-
-            return Response({"id": 1, "task_id": task_id}, status=status.HTTP_200_OK) #HTTP_202_ACCEPTED
+            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)
+
+
+    def delete(self, request, *args, **kwargs):
+        """
+        Delete cluster from ~okeanos.
+        """
+        self.resource_name = 'clusterchoice'
+        self.serializer_class = MasterIpSerializer
+        serializer = self.serializer_class(data=request.DATA)
+        if serializer.is_valid():
+            user_token = Token.objects.get(key=request.auth)
+            user = UserInfo.objects.get(user_id=user_token.user.user_id)
+            d_cluster = destroy_cluster_async.delay(serializer.data['master_IP'], user.okeanos_token)
+            task_id = d_cluster.id
+            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+        # This will be send if user's delete cluster parameters are not de-serialized
+        # correctly.
+        return Response(serializer.errors)
+
 
 
 class SessionView(APIView):

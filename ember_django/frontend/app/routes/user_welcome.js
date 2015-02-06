@@ -4,7 +4,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 	//"user" model for the welcome route
 	needs : 'userWelcome',
 
-	refreshed : 0,
 	model : function(params, transition) {
 		$.loader.close(true);
 		// Return user record with id 1.
@@ -15,6 +14,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		promise.then(function(user) {
 			// success
 			var num_records = user.get('clusters').get('length');
+			// console.log('route > model > num_records ' + num_records);
 			var bPending = false;
 			for ( i = 0; i < num_records; i++) {
 				if (user.get('clusters').objectAt(i).get('cluster_status') == '2') {
@@ -37,7 +37,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		// console.log(user.get('clusters').get('length'));
 		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'cluster_name');
 		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'cluster_name');
-	},	
+	},
 	actions : {
 		willTransition : function(transition) {
 			// leaving this route
@@ -46,19 +46,34 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		didTransition : function() {
 			// arrived at this route
 			var from_create = this.controller.get('create_cluster_start');
-			var times_refreshed = this.get('refreshed');
-			if (from_create && (times_refreshed <= 5)) {
+			var times_refreshed = this.controller.get('refreshed');
+			if (from_create && (times_refreshed <= 10)) {
 				// this.controller.set('create_cluster_start', false);
 				Ember.run.later(this, function() {
-					// console.log('route > debouncing refresh');
-					this.set('refreshed',this.get('refreshed')+1);
+					// console.log('route > debouncing refresh'); //debug
+					this.controller.set('refreshed', this.controller.get('refreshed') + 1);
+					// console.log(this.controller.get('refreshed')); //debug
 					this.controller.send('doRefresh');
 				}, 3000);
-			}else if (!from_create){
-				this.set('refreshed',0);
+			} else if (!from_create) {
+				this.set('refreshed', 0);
 			}
 			return true;
 		},
+		deleteCluster : function(cluster) {
+			var that = this;
+			// this.store.find('user', 1).then(function(data){
+				// data.store.find('user-cluster', cluster.get('id')).then(function(data){
+					// data.destroyRecord();
+				// },function(reason){
+// 					
+				// });
+			// },function(reason){
+// 				
+			// });		
+			cluster.deleteRecord();
+			// cluster.destroyRecord();
+		}
 	},
 	deactivate : function() {
 		// left this route

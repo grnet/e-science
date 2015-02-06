@@ -6,7 +6,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 	output_message : '',
 	// flag to see if the transition is from create cluster button
 	create_cluster_start : false,
-	
+	refreshed : 0,
 	sortedclusters : [],
 	column : '',
 	sortdir : null,
@@ -48,10 +48,11 @@ App.UserWelcomeController = Ember.Controller.extend({
 			this.set('sortedclusters', clusters);
 			this.set('column', column);
 		},
-		go_to_confirm : function(master_IP) {
-			this.set('confirm', true);
-			this.set('ip_of_master', master_IP);
-			alert(master_IP);
+		go_to_confirm : function(cluster) {
+			// this.set('confirm', true);
+			// this.set('ip_of_master', cluster.get('master_IP'));
+			// cluster_record.destroyRecord();
+			// cluster.destroyRecord();
 		},
 		go_to_destroy : function(master_IP) {
 
@@ -85,7 +86,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 							}, function(reason) {
 								that.get('timer').stop();
 								status = false;
-								console.log(reason);
+								console.log(reason.message);
 							});
 							return promise;
 						}

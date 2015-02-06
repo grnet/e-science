@@ -4,9 +4,17 @@
     sudo: yes
     tags: installations
 
-  - name: nginx apt key
+  - name: Get rabbitmq-server latest version
+    tags: installations
     sudo: yes
-    shell: curl http://nginx.org/keys/nginx_signing.key | sudo apt-key add -
+    get_url: url=https://www.rabbitmq.com/releases/rabbitmq-server/v3.4.3/rabbitmq-server_3.4.3-1_all.deb dest=./
+
+  - name: Install apt keys
+    apt_key: "url={{item.url}}"
+    sudo: yes
+    with_items:
+      - { url: 'http://nginx.org/keys/nginx_signing.key' }
+      - { url: 'http://packages.erlang-solutions.com/debian/erlang_solutions.asc' }
     tags: installations
 
   - name: Adding repos
@@ -17,19 +25,25 @@
       - deb http://ftp.debian.org/debian/ jessie-updates main contrib
       - deb http://nginx.org/packages/debian/ wheezy nginx
       - deb-src http://nginx.org/packages/debian/ wheezy nginx
+      - deb http://packages.erlang-solutions.com/debian wheezy contrib
     tags: installations
 
   - name: Copy my_preferences file
     sudo: yes
     copy: src=my_preferences dest=/etc/apt/preferences.d/
-    tags: installations1
+    tags: installations
+
+  - name: Assert that no old version of rabbitmq is on webserver
+    sudo: yes
+    tags: instalaltions
+    apt: name=rabbitmq-server purge=yes state=absent force=yes
 
   - name: Install RabbitMQ broker, PostgreSQL and needed dependencies
     tags: installations
     sudo: yes
     apt: "name={{item}}"
     with_items:
-      - rabbitmq-server
+      - erlang
       - postgresql-client
       - python-psycopg2
       - libpq-dev
@@ -38,6 +52,11 @@
       - python-flup
       - nginx
       - sshpass
+
+  - name: Install rabbitmq-server latest version
+    tags: installations
+    sudo: yes
+    apt: deb=rabbitmq-server_3.4.3-1_all.deb
 
   - name: Install Celery, Django and Django rest framework
     tags: installations
@@ -59,30 +78,18 @@
       - { name: 'uwsgi' }
       - { name: 'south' }
       - { name: 'requests' }
+      - { name: 'django-celery' }
+      - { name: 'flower' }
 
-  - name: Copy script celeryd for daemonic workers
-    tags: celery
+  - name: Rabbitmq-server vhost configuration
+    tags: installations
     sudo: yes
-    copy: src=celeryd dest=/etc/init.d/celeryd owner=root mode=0744
-    when: is_daemon
+    rabbitmq_vhost: name=/escience_tasks state=present
 
-  - name: Copy celeryd configuration
-    tags: celery
+  - name: Rabbitmq-server user configuration
+    tags: installations
     sudo: yes
-    template: src=celeryd_conf.j2 dest=/etc/default/celeryd owner=root
-    when: is_daemon
-
-  - name: Copy script celerybeat for daemonic periodic tasks
-    tags: celery
-    sudo: yes
-    copy: src=celerybeat dest=/etc/init.d/celerybeat owner=root mode=0744
-    when: is_periodic_task
-
-  - name: Copy celerybeat configuration
-    tags: celery
-    sudo: yes
-    template: src=celerybeat_conf.j2 dest=/etc/default/celerybeat owner=root
-    when: is_periodic_task
+    rabbitmq_user: user=orkarbmq password=orkapass vhost=/escience_tasks configure_priv=.* read_priv=.* write_priv=.* state=present
 
   - name: create directory for projects
     tags: setupproject
@@ -160,6 +167,10 @@
     tags: djangosetup
     template: src=settings.j2 owner=orka_admin mode=0744 dest={{settings_path}}/settings.py
 
+  - name: Django project syncdb
+    django_manage: command=syncdb app_path={{project_path}}/{{ember_django_dir}}
+    tags: djangosetup
+
   - name: Django project migrate
     django_manage: command=migrate app_path={{project_path}}/{{ember_django_dir}}
     tags: djangosetup
@@ -204,3 +215,9 @@
   - name: Run collectstatic command
     tags: nginxsetup
     django_manage: command=collectstatic app_path={{project_path}}/{{ember_django_dir}}
+
+  - name: Run celery as a daemon
+    tags: celerystart
+    command: celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%n\%I.log
+    args:
+      chdir: "{{project_path}}/{{ember_django_dir}}"

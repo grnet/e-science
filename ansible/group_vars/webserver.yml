@@ -1,10 +1,9 @@
 ---
  # PostgreSql variables
- db_user: developer
- db_password: escience
- db_name: escience
- db_host: 127.0.0.1
-
+ db_user: orcadbuser
+ db_password: 0rc@p@$$+
+ db_name: orcadb
+ db_host: 83.212.119.182
 
  # Django admin variables
  django_admin_name: orka_admin

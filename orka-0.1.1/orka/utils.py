@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, expanduser
 from cluster_errors_constants import *
 from kamaki.clients import ClientError
 from ConfigParser import RawConfigParser, NoSectionError
@@ -13,11 +13,11 @@ from collections import OrderedDict
 def get_api_urls(action):
     """ Return api urls from config file"""
     parser = RawConfigParser()
-    orka_dir = dirname(abspath(__file__))
-    config_file = join(orka_dir, 'config.txt')
+    user_home = expanduser('~')
+    config_file = join(user_home, ".kamakirc")
     parser.read(config_file)
     try:
-        base_url = parser.get('Web', 'url')
+        base_url = parser.get('orka', 'base_url')
         if action == 'login':
             url_login = '{0}{1}'.format(base_url, login_endpoint)
             return url_login
@@ -34,11 +34,11 @@ def get_api_urls(action):
             logging.log(SUMMARY, ' Url to be returned from config file not specified')
             return 0
     except NoSectionError:
-        msg = 'Not a valid api url in config file'
+        msg = 'Did not find a valid orka api base_url in .kamakirc'
         raise NoSectionError(msg)
 
 
-class OrkaRequest(object):
+class ClusterRequest(object):
     """Class for REST requests in orka database."""
     def __init__(self, escience_token, payload, action='database'):
         """
@@ -65,8 +65,10 @@ class OrkaRequest(object):
         """
         Request to orka database for cluster deleting from CLI
         (Destroyed status update)"""
-        requests.delete(self.url, data=json.dumps(self.payload),
-                        headers=self.headers)
+        r = requests.delete(self.url, data=json.dumps(self.payload),
+                            headers=self.headers)
+        response = json.loads(r.text)
+        return response
 
     def retrieve(self):
         """Request to retrieve info from an endpoint."""
@@ -89,7 +91,7 @@ def get_user_clusters(token):
         print ' ' + str(e.args[0])
 
     payload = {"user": {"id": 1}}
-    orka_request = OrkaRequest(escience_token, payload, action='login')
+    orka_request = ClusterRequest(escience_token, payload, action='login')
     user_data = orka_request.retrieve()
     user_clusters = user_data['user']['clusters']
     return user_clusters

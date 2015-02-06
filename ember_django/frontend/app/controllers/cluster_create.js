@@ -393,7 +393,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	},
 
 	// Functionality about storage buttons being colored when user selects one of them
-	storage_buttons : function() {		
+	storage_buttons : function() {
 		var elements = document.getElementsByName("storage_button");
 		var length = elements.length;
 		for (var i = 0; i < length; i++) {
@@ -658,27 +658,22 @@ App.ClusterCreateController = Ember.Controller.extend({
 						$.loader.close(true);
 						self.set('message', clusterchoice.get('message'));
 						self.set('controllers.userWelcome.output_message', clusterchoice.get('message'));
-						self.set('controllers.userWelcome.create_cluster_start', false);
-						self.store.fetch('user', 1);
+						self.set('controllers.userWelcome.create_cluster_start', true);
+						self.set('controllers.userWelcome.refreshed', 0);
+						self.store.fetch('user', 1).then(function(user){
+							self.transitionToRoute('user.welcome');
+						},function(reason){
+							console.log(reason.message);
+						});
 					}, function(reason) {
 						// Set the response to user's create cluster click when put fails.
 						console.log(reason.message);
 						$.loader.close(true);
-						self.set('message', 'A problem occured during your request. Please check your cluster parameters and try again');
-						self.set('controllers.userWelcome.output_message', 'A problem occured during your request. Please check your cluster parameters and try again');
+						self.set('message', reason.message);
+						self.set('controllers.userWelcome.output_message', reason.message);
 						self.set('controllers.userWelcome.create_cluster_start', false);
 						self.store.fetch('user', 1);
 					});
-					if (this.get('message') == "") {
-						// after 2.5 seconds goes to welcome route
-						Ember.run.later(self,function(){
-							self.set('controllers.userWelcome.create_cluster_start', true);
-							self.transitionToRoute('user.welcome');
-						}, 2500);
-					} else {
-						self.set('controllers.userWelcome.create_cluster_start', true);
-						this.transitionToRoute('user.welcome');
-					}
 				} else {
 					alert('Requested resources unavailable!');
 					$.loader.close(true);
