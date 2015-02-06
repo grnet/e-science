@@ -15,7 +15,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	slaves_disk_selection : 0, 	// Initial slaves_disk_selection, appears in slaves disk summary
 	cluster_name : '', 		// Initial cluster name, null
 	operating_system : 'Debian Base', // Preselected OS
-	disk_temp : 'ext_vlmc', 	// Initial storage selection, common for master and slaves
+	disk_temp : 'Archipelago', 	// Initial storage selection, common for master and slaves friendly to  user name
 	cluster_size_zero : false, 	// for checking the available VMs, cluster size
 	create_cluster_disabled : true, // flag to disable create cluster button when project is not selected
 	message : '', 			// message when user presses the create cluster button
@@ -426,7 +426,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			return this.get('cluster_size_var');
 		}
 	},
-	// reset project variables
+	// Reset project variables
 	reset_project : function() {
 		this.set('project_index', 0);
 		this.set('project_current', '');
@@ -446,7 +446,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('slaves_disk_selection', 0);
 		this.set('cluster_name', '');
 		this.set('operating_system', 'Debian Base');
-		this.set('disk_temp', 'ext_vlmc');
+		this.set('disk_temp', 'Archipelago');
 		this.set('message', '');
 		this.init_alerts();
 	},
@@ -658,8 +658,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 						$.loader.close(true);
 						self.set('message', clusterchoice.get('message'));
 						self.set('controllers.userWelcome.output_message', clusterchoice.get('message'));
-						self.set('controllers.userWelcome.create_cluster_start', false);
-						self.store.fetch('user', 1);
+						self.set('controllers.userWelcome.create_cluster_start', true);
+						self.set('controllers.userWelcome.refreshed', 0);
+						self.store.fetch('user', 1).then(function(user){
+							self.transitionToRoute('user.welcome');
+						},function(reason){
+							console.log(reason.message);
+						});
 					}, function(reason) {
 						// Set the response to user's create cluster click when put fails.
 						console.log(reason.message);
@@ -669,16 +674,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 						self.set('controllers.userWelcome.create_cluster_start', false);
 						self.store.fetch('user', 1);
 					});
-					if (this.get('message') == "") {
-						// after 2.5 seconds goes to welcome route
-						Ember.run.later(self,function(){
-							self.set('controllers.userWelcome.create_cluster_start', true);
-							self.transitionToRoute('user.welcome');
-						}, 2500);
-					} else {
-						self.set('controllers.userWelcome.create_cluster_start', true);
-						this.transitionToRoute('user.welcome');
-					}
 				} else {
 					alert('Requested resources unavailable!');
 					$.loader.close(true);

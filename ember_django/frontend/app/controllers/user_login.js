@@ -18,6 +18,7 @@ App.UserLoginController = Ember.Controller.extend({
 		login : function(text) {
 			var self = this;
 			if (text) {
+				text = $.trim(text);
 				// POST ~okeanos token to Django backend.
 				var response = this.store.createRecord('user', {
 					'token' : text
@@ -42,13 +43,18 @@ App.UserLoginController = Ember.Controller.extend({
 					self.transitionToRoute('user.welcome');
 				}, function(reason) {
 					// Failed login.
-					console.log(reason.message);
+					console.log(reason.errorThrown);
 					self.set('loginFailed', true);
 					self.set('controllers.application.loggedIn', false);
 					self.set('token', '');
 				});
 
 			}
-		}
+		},
+		dismiss : function(){
+			$('#token').focus();
+			$('#id_alert_wrongtoken > button').click();
+			this.set('loginFailed', false);
+		},
 	}
 }); 

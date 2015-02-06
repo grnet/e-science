@@ -8,7 +8,7 @@ This script contains useful classes and fuctions for orka package.
 """
 import logging
 from base64 import b64encode
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, expanduser
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
@@ -27,11 +27,11 @@ MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 def get_api_urls(login=False, database=False):
     """ Return api urls from config file"""
     parser = RawConfigParser()
-    orka_dir = dirname(abspath(__file__))
-    config_file = join(orka_dir, 'config.txt')
+    user_home = expanduser('~')
+    config_file = join(user_home, ".kamakirc")
     parser.read(config_file)
     try:
-        base_url = parser.get('Web', 'url')
+        base_url = parser.get('orka', 'base_url')
         if login:
             url_login = '{0}{1}'.format(base_url, login_endpoint)
             return url_login
@@ -42,7 +42,7 @@ def get_api_urls(login=False, database=False):
             logging.log(SUMMARY, ' Url to be returned from config file not specified')
             return 0
     except NoSectionError:
-        msg = 'Not a valid api url in config file'
+        msg = 'Did not find a valid orka api base_url in .kamakirc'
         raise NoSectionError(msg)
 
 

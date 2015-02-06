@@ -37,6 +37,10 @@ class YarnCluster(object):
         self.hadoop_image = False
         # List of cluster VMs
         self.server_dict = {}
+        if self.opts['disk_template'] == 'Archipelago':
+            self.opts['disk_template'] = 'ext_vlmc'
+        elif self.opts['disk_template'] == 'Standard':
+            self.opts['disk_template'] = 'drbd'
         # project id of project name given as argument
         self.project_id = get_project_id(self.opts['token'],
                                          self.opts['project_name'])
@@ -256,17 +260,6 @@ class YarnCluster(object):
 
         return flavor_id
 
-    def create_password_file(self, master_root_pass, master_name):
-        """
-        Creates a file named after the timestamped name of master node
-        containing the root password of the master virtual machine of
-        the cluster.
-        """
-        self.pass_file = join('./', master_name + '_root_password')
-        # add a "-" between date and time
-        self.pass_file = self.pass_file.replace(" ", "-")
-        with open(self.pass_file, 'w') as f:
-            f.write(master_root_pass)
 
     def check_project_quota(self):
         """Checks that for a given project actual quota exist"""
@@ -399,16 +392,12 @@ class YarnCluster(object):
         # wait for the machines to be pingable
         state = ' ~okeanos cluster created'
         logging.log(SUMMARY, state)
-        set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state,
-                               master_IP=self.HOSTNAME_MASTER_IP)
         # Get master VM root password
         self.master_root_pass = self.server_dict[0]['adminPass']
-        master_name = self.server_dict[0]['name']
-        # Write master VM root password to a file with same name as master VM
-        self.create_password_file(self.master_root_pass, master_name)
-        logging.log(SUMMARY, ' The root password of master VM [%s] '
-                        'is on file %s', self.server_dict[0]['name'],
-                        self.pass_file)
+
+        set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state,
+                               master_IP=self.HOSTNAME_MASTER_IP)
+
         # Return master node ip and server dict
         return self.HOSTNAME_MASTER_IP, self.server_dict
 
