@@ -354,8 +354,7 @@ class YarnCluster(object):
             raise ClientError(msg, error_image_id)
 
         # Create timestamped name of the cluster
-        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        cluster_name = '%s%s%s' % (date_time, '-', self.opts['name'])
+        cluster_name = '%s%s%s' % ('[orka]', '-', self.opts['name'])
         self.opts['name'] = cluster_name
 
         # Update db with cluster status as pending
@@ -393,7 +392,7 @@ class YarnCluster(object):
                               chosen_image['id'], self.opts['cluster_size'],
                               self.net_client, self.auth, self.project_id)
 
-            state="Creating ~okeanos cluster"
+            state="Creating ~okeanos cluster...1/4"
             logging.log(SUMMARY, state)
             set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state)
             self.HOSTNAME_MASTER_IP, self.server_dict = \
@@ -404,7 +403,7 @@ class YarnCluster(object):
             set_cluster_state(self.opts['token'], 'Destroyed', self.opts['name'], 'Error')
             raise
         # wait for the machines to be pingable
-        state = ' ~okeanos cluster created'
+        state = ' ~okeanos cluster created...2/4'
         logging.log(SUMMARY, state)
         set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state,
                                master_IP=self.HOSTNAME_MASTER_IP)
@@ -426,13 +425,13 @@ class YarnCluster(object):
         except Exception, e:
             logging.error(' Fatal error: ' + str(e.args[0]))
             raise
-        state = ' Configuring Yarn cluster node communication'
+        state = ' Configuring Yarn cluster node communication...3/4'
         logging.log(SUMMARY, state)
         set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state)
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
                                              self.HOSTNAME_MASTER_IP)
-            state = ' Installing and configuring Yarn'
+            state = ' Installing and configuring Yarn...4/4'
             logging.log(SUMMARY, state)
             set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state)
 
