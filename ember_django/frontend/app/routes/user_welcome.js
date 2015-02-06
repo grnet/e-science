@@ -3,9 +3,6 @@
 App.UserWelcomeRoute = App.RestrictedRoute.extend({
 	//"user" model for the welcome route
 	needs: 'userWelcome',
-	beforemodel: function (){
-		this.store.fetch('user', 1);
-	},
 	model : function() {
 		$.loader.close(true);
 		if (this.controllerFor('userWelcome').get('create_cluster_start') == true && this.controllerFor('userWelcome').get('output_message') == '') {
@@ -38,6 +35,11 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		// If user record not in store, perform a GET request
 		// and get user record from server.
 		return this.store.fetch('user', 1);
-	}
+	},
+	afterModel : function(user) {
+		// Change css style according to user's last choice, recorded in the database
+		if ((user.get('user_theme') !== "")&&(user.get('user_theme') !== undefined)&&(user.get('user_theme') !== null)) {
+			changeCSS(user.get('user_theme'), 0);			
+		}
+	},
 });
-

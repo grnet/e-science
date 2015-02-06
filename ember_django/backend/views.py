@@ -233,7 +233,17 @@ class SessionView(APIView):
         '''
         user_token = Token.objects.get(key=request.auth)
         self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
-        db_logout_entry(self.user)
-        self.serializer_class = UserInfoSerializer(self.user)
-        return Response({"id": "1", "token": "null", "user_id": "null",
-                         "cluster": "null"})
+        self.serializer_class = UserInfoSerializer
+        serializer = self.serializer_class(data=request.DATA)
+        if serializer.is_valid():
+            if serializer.data['user_theme']:
+                self.user.user_theme = serializer.data['user_theme']
+                self.user.save()
+            else:
+                db_logout_entry(self.user)
+
+            return Response({"id": "1", "token": "null", "user_id": "null",
+                            "cluster": "null"})
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)

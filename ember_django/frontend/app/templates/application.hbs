@@ -29,17 +29,16 @@
 						</ul>
 					</li>
 				</ul>
-				{{#if loggedIn}}
+				{{#if loggedIn}}				
 				<ul class="nav navbar-nav">
 					<li class="dropdown">
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_services_dd">Themes <b class="caret"></b></a>
 						<ul class="dropdown-menu">
+							{{#each theme in userTheme}}
 							<li>
-								<a id="myLinkB" onclick="changeCSS('styles/bootstrap.orca.css', 0);">Black Theme</a>
+								<a id="myCurrentPage" {{action "change_theme" theme.url}}>{{theme.name}}</a>
 							</li>
-							<li>
-								<a id="myLinkW" onclick="changeCSS('styles/bootstrap.united.orca.css', 0);">White Theme</a>								
-							</li>							
+							{{/each}}													
 						</ul>
 					</li>
 				</ul>

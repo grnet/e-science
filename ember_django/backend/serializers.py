@@ -121,12 +121,11 @@ class UserInfoSerializer(serializers.ModelSerializer):
     cluster = serializers.SerializerMethodField('number_of_clusters')
     escience_token = serializers.RelatedField()
     id = serializers.SerializerMethodField('get_ember_id')
-    user_theme = serializers.CharField()
     clusters = ClusterInfoSerializer(many=True)
 
     class Meta:
         model = UserInfo
-        fields = ('id', 'user_id', 'cluster', 'escience_token', 'clusters')
+        fields = ('id', 'user_id', 'user_theme', 'cluster', 'escience_token', 'clusters')
 
     def number_of_clusters(self, obj):
         """
