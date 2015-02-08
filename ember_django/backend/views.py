@@ -13,17 +13,16 @@ from rest_framework import status
 from kamaki.clients import ClientError
 from authenticate_user import *
 from django.views import generic
-from get_flavors_quotas import project_list_flavor_quota, \
-    retrieve_pending_clusters
-from models import *
+from get_flavors_quotas import project_list_flavor_quota
+from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterInfoSerializer, \
     ClusterchoicesSerializer, PendingQuotaSerializer, ProjectNameSerializer, \
     MasterIpSerializer, UpdateDatabaseSerializer, TaskSerializer
 from django_db_after_login import *
-from orka.cluster_errors_constants import *
+from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async
-from orka.create_cluster import YarnCluster
+from create_cluster import YarnCluster
 from celery.result import AsyncResult
 
 
@@ -71,68 +70,6 @@ class JobsView(APIView):
         return Response(serializer.errors)
 
 
-class DatabaseView(APIView):
-    """
-    View to handle database updating and retrieving cluster quota
-    """
-    authentication_classes = (EscienceTokenAuthentication, )
-    permission_classes = (IsAuthenticated, )
-    resource_name = 'orka'
-    serializer_class = UpdateDatabaseSerializer
-
-    def get(self, request, *args, **kwargs):
-        """Return pending cluster quota from database."""
-        self.serializer_class = ProjectNameSerializer
-        serializer = self.serializer_class(data=request.DATA)
-        user_token = Token.objects.get(key=request.auth)
-        user = UserInfo.objects.get(user_id=user_token.user.user_id)
-        if serializer.is_valid():
-            quota = retrieve_pending_clusters(user.okeanos_token,
-                                              serializer.data['project_name'])
-            serializer = PendingQuotaSerializer(quota)
-            return Response(serializer.data)
-
-        return Response(serializer.errors)
-
-
-    def post(self, request, *args, **kwargs):
-        """Update database that a cluster is being created"""
-        self.serializer_class = ClusterchoicesSerializer
-        serializer = self.serializer_class(data=request.DATA)
-        user_token = Token.objects.get(key=request.auth)
-        user = UserInfo.objects.get(user_id=user_token.user.user_id)
-        if serializer.is_valid():
-            try:
-                db_cluster_create(user, serializer.data)
-                return Response({"id": 1, "message": "Requested cluster created in db"})
-            except ClientError, e:
-                return Response({"id": 1, "message": e.message})
-            except Exception, e:
-                return Response({"id": 1, "message": e.args[0]})
-
-        return Response(serializer.errors)
-
-    def put(self, request, *args, **kwargs):
-        """
-        Update database that a cluster is active or is destroyed
-        """
-        serializer = self.serializer_class(data=request.DATA)
-        user_token = Token.objects.get(key=request.auth)
-        user = UserInfo.objects.get(user_id=user_token.user.user_id)
-        if serializer.is_valid():
-            try:
-                db_cluster_update(user, serializer.data['status'],
-                                  serializer.data['cluster_name'],
-                                  master_IP=serializer.data['master_IP'],
-                                  state=serializer.data['state'])
-                return Response({"id": 1, "message": "Requested cluster updated"})
-            except ClientError, e:
-                return Response({"id": 1, "message": e.message})
-            except Exception, e:
-                return Response({"id": 1, "message": e.args[0]})
-        return Response(serializer.errors)
-
-
 class StatusView(APIView):
     """
     View to handle requests for retrieving cluster creation parameters
@@ -170,19 +107,9 @@ class StatusView(APIView):
             user_token = Token.objects.get(key=request.auth)
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
             # Dictionary of YarnCluster arguments
-            choices = {'name': serializer.data['cluster_name'],
-                       'cluster_size': serializer.data['cluster_size'],
-                       'cpu_master': serializer.data['cpu_master'],
-                       'ram_master': serializer.data['mem_master'],
-                       'disk_master': serializer.data['disk_master'],
-                       'cpu_slave': serializer.data['cpu_slaves'],
-                       'ram_slave': serializer.data['mem_slaves'],
-                       'disk_slave': serializer.data['disk_slaves'],
-                       'disk_template': serializer.data['disk_template'],
-                       'image': serializer.data['os_choice'],
-                       'token': user.okeanos_token,
-                       'project_name': serializer.data['project_name']}
-
+            choices = dict()
+            choices = serializer.data.copy()
+            choices.update({'token': user.okeanos_token})
             if 'ssh_key_selection' in serializer.data:
                 choices.update({'ssh_key_name': serializer.data['ssh_key_selection']})
             try:
@@ -215,7 +142,6 @@ class StatusView(APIView):
         # This will be send if user's delete cluster parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)
-
 
 
 class SessionView(APIView):

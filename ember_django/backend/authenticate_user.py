@@ -15,7 +15,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import BasePermission
 from backend.models import Token
 from rest_framework import exceptions
-from orka.cluster_errors_constants import *
+from cluster_errors_constants import *
 
 # Constants
 AUTHENTICATED = 1

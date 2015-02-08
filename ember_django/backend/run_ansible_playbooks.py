@@ -95,8 +95,7 @@ def run_ansible(filename, cluster_size, hadoop_image, ssh_file):
         ansible_log = " >> " + log_file_path
     if level == logging.INFO:
         ansible_verbosity = " -v"
-    orka_dir = dirname(abspath(__file__))
-    ansible_path = orka_dir + '/ansible/site.yml'
+    ansible_path = dirname(abspath(__file__)) + '/ansible/site.yml'
     if hadoop_image:
         exit_status = os.system('ansible-playbook -i ' + filename + ' ' +
                                 ansible_path + ansible_verbosity +

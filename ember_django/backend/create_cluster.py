@@ -17,7 +17,8 @@ from kamaki.clients import ClientError
 from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
     init_cyclades, init_cyclades_netclient, init_plankton, get_project_id, \
-    destroy_cluster, get_user_quota, authenticate_escience, OrkaRequest, set_cluster_state
+    destroy_cluster, get_user_quota, set_cluster_state, retrieve_pending_clusters
+from django_db_after_login import db_cluster_create
 from cluster_errors_constants import *
 from celery import current_task
 
@@ -45,9 +46,6 @@ class YarnCluster(object):
         self.project_id = get_project_id(self.opts['token'],
                                          self.opts['project_name'])
         self.status = {}
-        self.escience_token = authenticate_escience(self.opts['token'])
-        self.orka_request = OrkaRequest(self.escience_token,
-                                        {"orka": {"project_name": self.opts['project_name']}})
         # Instance of an AstakosClient object
         self.auth = check_credentials(self.opts['token'],
                                       self.opts.get('auth_url',
@@ -69,10 +67,13 @@ class YarnCluster(object):
         # Instance of Plankton/ImageClient
         self.plankton = init_plankton(self.endpoints['plankton'],
                                       self.opts['token'])
+        # Get resources of pending clusters
+        self.pending_quota = retrieve_pending_clusters(self.opts['token'],
+                                                       self.opts['project_name'])
         # check hadoopconf flag and set hadoop_image accordingly
         list_current_images = self.plankton.list_public(True, 'default')
         for image in list_current_images:
-            if self.opts['image'] == image['name']:
+            if self.opts['os_choice'] == image['name']:
                 try:
                     if image['properties']['hadoopconf'] == 'true': 
                         self.hadoop_image = True
@@ -102,8 +103,7 @@ class YarnCluster(object):
         of VMs.
         """
         dict_quotas = get_user_quota(self.auth)
-        pending_quota = self.orka_request.retrieve_quota()
-        pending_vm = pending_quota['orka']['VMs']
+        pending_vm = self.pending_quota['VMs']
         limit_vm = dict_quotas[self.project_id]['cyclades.vm']['limit']
         usage_vm = dict_quotas[self.project_id]['cyclades.vm']['usage']
         available_vm = limit_vm - usage_vm - pending_vm
@@ -120,8 +120,7 @@ class YarnCluster(object):
         number of networks
         """
         dict_quotas = get_user_quota(self.auth)
-        pending_quota = self.orka_request.retrieve_quota()
-        pending_net = pending_quota['orka']['Network']
+        pending_net = self.pending_quota['Network']
         limit_net = dict_quotas[self.project_id]['cyclades.network.private']['limit']
         usage_net = dict_quotas[self.project_id]['cyclades.network.private']['usage']
         available_networks = limit_net - usage_net - pending_net
@@ -136,8 +135,7 @@ class YarnCluster(object):
         """Checks user's quota for unattached public ips."""
         dict_quotas = get_user_quota(self.auth)
         list_float_ips = self.net_client.list_floatingips()
-        pending_quota = self.orka_request.retrieve_quota()
-        pending_ips = pending_quota['orka']['Ip']
+        pending_ips = self.pending_quota['Ip']
         limit_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['limit']
         usage_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['usage']
         available_ips = limit_ips - usage_ips - pending_ips
@@ -157,13 +155,12 @@ class YarnCluster(object):
         number of cpus.
         """
         dict_quotas = get_user_quota(self.auth)
-        pending_quota = self.orka_request.retrieve_quota()
-        pending_cpu = pending_quota['orka']['Cpus']
+        pending_cpu = self.pending_quota['Cpus']
         limit_cpu = dict_quotas[self.project_id]['cyclades.cpu']['limit']
         usage_cpu = dict_quotas[self.project_id]['cyclades.cpu']['usage']
         available_cpu = limit_cpu - usage_cpu - pending_cpu
         cpu_req = self.opts['cpu_master'] + \
-            self.opts['cpu_slave'] * (self.opts['cluster_size'] - 1)
+            self.opts['cpu_slaves'] * (self.opts['cluster_size'] - 1)
         if available_cpu < cpu_req:
             msg = 'Cyclades cpu out of limit'
             raise ClientError(msg, error_quotas_cpu)
@@ -177,13 +174,12 @@ class YarnCluster(object):
         number of ram.
         """
         dict_quotas = get_user_quota(self.auth)
-        pending_quota = self.orka_request.retrieve_quota()
-        pending_ram = pending_quota['orka']['Ram']
+        pending_ram = self.pending_quota['Ram']
         limit_ram = dict_quotas[self.project_id]['cyclades.ram']['limit']
         usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
         available_ram = (limit_ram - usage_ram) / Bytes_to_MB - pending_ram
-        ram_req = self.opts['ram_master'] + \
-            self.opts['ram_slave'] * (self.opts['cluster_size'] - 1)
+        ram_req = self.opts['mem_master'] + \
+            self.opts['mem_slaves'] * (self.opts['cluster_size'] - 1)
         if available_ram < ram_req:
             msg = 'Cyclades ram out of limit'
             raise ClientError(msg, error_quotas_ram)
@@ -197,12 +193,11 @@ class YarnCluster(object):
         disk size.
         """
         dict_quotas = get_user_quota(self.auth)
-        pending_quota = self.orka_request.retrieve_quota()
-        pending_cd = pending_quota['orka']['Disk']
+        pending_cd = self.pending_quota['Disk']
         limit_cd = dict_quotas[self.project_id]['cyclades.disk']['limit']
         usage_cd = dict_quotas[self.project_id]['cyclades.disk']['usage']
         cyclades_disk_req = self.opts['disk_master'] + \
-            self.opts['disk_slave'] * (self.opts['cluster_size'] - 1)
+            self.opts['disk_slaves'] * (self.opts['cluster_size'] - 1)
         available_cyclades_disk_GB = (limit_cd - usage_cd) / Bytes_to_GB - pending_cd
         if available_cyclades_disk_GB < cyclades_disk_req:
             msg = 'Cyclades disk out of limit'
@@ -232,7 +227,7 @@ class YarnCluster(object):
             raise ClientError(msg, error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
-            if flavor['ram'] == self.opts['ram_master'] and \
+            if flavor['ram'] == self.opts['mem_master'] and \
                                 flavor['SNF:disk_template'] == self.opts['disk_template'] and \
                                 flavor['vcpus'] == self.opts['cpu_master'] and \
                                 flavor['disk'] == self.opts['disk_master']:
@@ -252,10 +247,10 @@ class YarnCluster(object):
             raise ClientError(msg, error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
-            if flavor['ram'] == self.opts['ram_slave'] and \
+            if flavor['ram'] == self.opts['mem_slaves'] and \
                                 flavor['SNF:disk_template'] == self.opts['disk_template'] and \
-                                flavor['vcpus'] == self.opts['cpu_slave'] and \
-                                flavor['disk'] == self.opts['disk_slave']:
+                                flavor['vcpus'] == self.opts['cpu_slaves'] and \
+                                flavor['disk'] == self.opts['disk_slaves']:
                     flavor_id = flavor['id']
 
         return flavor_id
@@ -322,11 +317,11 @@ class YarnCluster(object):
         retval = self.check_all_resources()
         # Find image id of the operating system arg given
         for lst in list_current_images:
-            if lst['name'] == self.opts['image']:
+            if lst['name'] == self.opts['os_choice']:
                 chosen_image = lst
                 break
         if not chosen_image:
-            msg = self.opts['image']+' is not a valid image'
+            msg = self.opts['os_choice']+' is not a valid image'
             raise ClientError(msg, error_image_id)
 
         return flavor_master, flavor_slaves, chosen_image['id']
@@ -341,27 +336,14 @@ class YarnCluster(object):
         flavor_master, flavor_slaves, image_id = self.check_user_resources()
         # Create timestamped name of the cluster
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        cluster_name = '%s%s%s' % (date_time, '-', self.opts['name'])
-        self.opts['name'] = cluster_name
+        cluster_name = '%s%s%s' % (date_time, '-', self.opts['cluster_name'])
+        self.opts['cluster_name'] = cluster_name
 
         # Update db with cluster status as pending
+        task_id = current_task.request.id
+        db_cluster_create(self.opts, task_id)
 
-        payload = {"orka": {"cluster_name": self.opts['name'],
-                            "cluster_size": self.opts['cluster_size'],
-                            "cpu_master": self.opts['cpu_master'],
-                            "mem_master": self.opts['ram_master'],
-                            "disk_master": self.opts['disk_master'],
-                            "cpu_slaves": self.opts['cpu_slave'],
-                            "mem_slaves": self.opts['ram_slave'],
-                            "disk_slaves": self.opts['disk_slave'],
-                            "disk_template": self.opts['disk_template'],
-                            "os_choice": self.opts['image'],
-                            "project_name": self.opts['project_name'],
-                            "task_id": current_task.request.id,
-							"ssh_key_selection": "placeholder"}}
 
-        orka_req = OrkaRequest(self.escience_token, payload)
-        orka_req.create_cluster_db()
         self.ssh_file = 'no_ssh_key_selected'
 
         if self.opts['ssh_key_name'] is None:
@@ -374,29 +356,24 @@ class YarnCluster(object):
             self.ssh_key_file(cluster_name)
             pub_keys_path = self.ssh_file
         try:
-            cluster = Cluster(self.cyclades, self.opts['name'],
+            cluster = Cluster(self.cyclades, self.opts['cluster_name'],
                               flavor_master, flavor_slaves,
                               image_id, self.opts['cluster_size'],
                               self.net_client, self.auth, self.project_id)
 
-            state=" Creating ~okeanos cluster"
-            logging.log(SUMMARY, state)
-            set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state)
+            set_cluster_state(self.opts['token'], self.opts['cluster_name'], " Creating ~okeanos cluster")
+
             self.HOSTNAME_MASTER_IP, self.server_dict = \
                 cluster.create('', pub_keys_path, '')
             sleep(15)
         except Exception:
             # If error in bare cluster, update cluster status as destroyed
-            set_cluster_state(self.opts['token'], 'Destroyed', self.opts['name'], 'Error')
+            set_cluster_state(self.opts['token'], self.opts['cluster_name'], 'Error', status='Destroyed')
             raise
-        # wait for the machines to be pingable
-        state = ' ~okeanos cluster created'
-        logging.log(SUMMARY, state)
         # Get master VM root password
         self.master_root_pass = self.server_dict[0]['adminPass']
-
-        set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state,
-                               master_IP=self.HOSTNAME_MASTER_IP)
+        set_cluster_state(self.opts['token'], self.opts['cluster_name'], ' ~okeanos cluster created',
+                          master_IP=self.HOSTNAME_MASTER_IP)
 
         # Return master node ip and server dict
         return self.HOSTNAME_MASTER_IP, self.server_dict
@@ -409,29 +386,27 @@ class YarnCluster(object):
         except Exception, e:
             logging.error(' Fatal error: ' + str(e.args[0]))
             raise
-        state = ' Configuring Yarn cluster node communication'
-        logging.log(SUMMARY, state)
-        set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state)
+        set_cluster_state(self.opts['token'], self.opts['cluster_name'],
+                          ' Configuring Yarn cluster node communication')
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
                                              self.HOSTNAME_MASTER_IP)
-            state = ' Installing and configuring Yarn'
-            logging.log(SUMMARY, state)
-            set_cluster_state(self.opts['token'], 'Pending', self.opts['name'], state)
+            set_cluster_state(self.opts['token'], self.opts['cluster_name'],
+                          ' Installing and configuring Yarn')
 
             install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.server_dict[0]['name'], self.hadoop_image, self.ssh_file)
 
             # If Yarn cluster is build, update cluster status as active
-            state = ' Yarn Cluster is active'
-            set_cluster_state(self.opts['token'], 'Active', self.opts['name'], state)
+            set_cluster_state(self.opts['token'], self.opts['cluster_name'],
+                              ' Yarn Cluster is active', status='Active')
 
             return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass
         except Exception, e:
             logging.error(' Fatal error:' + str(e.args[0]))
             logging.error(' Created cluster and resources will be deleted')
             # If error in Yarn cluster, update cluster status as destroyed
-            set_cluster_state(self.opts['token'], 'Destroyed', self.opts['name'], 'Error')
+            set_cluster_state(self.opts['token'], self.opts['cluster_name'], 'Error')
             self.destroy()
             raise
 

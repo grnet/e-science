@@ -7,8 +7,8 @@ This script contains the celery tasks that will be executed from django views.
 @author: George Tzelepis, Ioannis Stenos
 """
 from celery.task import task
-from orka.create_cluster import YarnCluster
-from orka.okeanos_utils import destroy_cluster
+from create_cluster import YarnCluster
+from okeanos_utils import destroy_cluster
 
 
 @task()
