@@ -24,7 +24,7 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class test_create_cluster(unittest.TestCase):
+class test_create_cluster_with_hadoop_image(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -55,7 +55,7 @@ class test_create_cluster(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     
-    def test_create_cluster(self):
+    def test_create_cluster_with_hadoop_image(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_id("id_login").click()     
@@ -93,6 +93,8 @@ class test_create_cluster(unittest.TestCase):
         driver.find_element_by_id("cluster_name").clear()
         cluster_name = 'test_cluster' + str(randint(0,9999))
         driver.find_element_by_id("cluster_name").send_keys(cluster_name)
+        hadoop_image = 'Hadoop-2.5.2'                           
+        Select(driver.find_element_by_id("os_systems")).select_by_visible_text(hadoop_image)
         Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text('2')
         for role in ['master' , 'slaves']:
             for flavor in ['cpus' , 'ram' , 'disk']:
@@ -100,7 +102,7 @@ class test_create_cluster(unittest.TestCase):
                 driver.find_element_by_id(button_id).click()
         driver.find_element_by_id("next").click()
         print 'Creating cluster...'
-        for i in range(1800): 
+        for i in range(900): 
             # wait for cluster create to finish
             try:
                 if "" != driver.find_element_by_id('id_output_message').text: break

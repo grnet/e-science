@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-This script is a test for cluster creation via GUI end to end
+This script is a test for clusters creation via GUI end to end with celery
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -24,7 +24,7 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class test_create_cluster(unittest.TestCase):
+class test_create_clusters_celery(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -55,7 +55,7 @@ class test_create_cluster(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     
-    def test_create_cluster(self):
+    def test_create_clusters_celery(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_id("id_login").click()     
@@ -77,7 +77,7 @@ class test_create_cluster(unittest.TestCase):
         driver.find_element_by_id("id_services_dd").click()
         driver.find_element_by_id("id_create_cluster").click()        
         try:
-            element = WebDriverWait(driver, 30).until(
+            element = WebDriverWait(driver, 60).until(
                 EC.presence_of_element_located((By.ID, "id_title_cluster_create_route"))
             ) 
         except: self.fail("time out")
@@ -93,6 +93,8 @@ class test_create_cluster(unittest.TestCase):
         driver.find_element_by_id("cluster_name").clear()
         cluster_name = 'test_cluster' + str(randint(0,9999))
         driver.find_element_by_id("cluster_name").send_keys(cluster_name)
+        hadoop_image = 'Hadoop-2.5.2'                           
+        Select(driver.find_element_by_id("os_systems")).select_by_visible_text(hadoop_image)
         Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text('2')
         for role in ['master' , 'slaves']:
             for flavor in ['cpus' , 'ram' , 'disk']:
@@ -100,22 +102,59 @@ class test_create_cluster(unittest.TestCase):
                 driver.find_element_by_id(button_id).click()
         driver.find_element_by_id("next").click()
         print 'Creating cluster...'
-        for i in range(1800): 
+        print cluster_name      
+        try:
+            element = WebDriverWait(driver, 30).until(
+                EC.presence_of_element_located((By.ID, "id_title_user_welcome_route"))
+            ) 
+        except: self.fail("time out")     
+        driver.find_element_by_id("id_services_dd").click()
+        driver.find_element_by_id("id_create_cluster").click()        
+        try:
+            element = WebDriverWait(driver, 60).until(
+                EC.presence_of_element_located((By.ID, "id_title_cluster_create_route"))
+            ) 
+        except: self.fail("time out")
+        auth = check_credentials(self.token)
+        try:
+            list_of_projects = auth.get_projects(state='active')
+        except Exception:
+            self.assertTrue(False,'Could not get list of projects')
+        kamaki_flavors = get_flavor_id(self.token)
+        user_quota = check_quota(self.token, self.project_id)
+        project_details = self.project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'CPUs:' + str(user_quota['cpus']['available']) + '  ' + 'RAM:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
+        Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)                           
+        driver.find_element_by_id("cluster_name").clear()
+        cluster_name1 = 'test_cluster' + str(randint(0,9999))
+        driver.find_element_by_id("cluster_name").send_keys(cluster_name1)
+        hadoop_image = 'Hadoop-2.5.2'                           
+        Select(driver.find_element_by_id("os_systems")).select_by_visible_text(hadoop_image)
+        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text('2')
+        for role in ['master' , 'slaves']:
+            for flavor in ['cpus' , 'ram' , 'disk']:
+                button_id = role + '_' + flavor + '_' + str(kamaki_flavors[flavor][0])
+                driver.find_element_by_id(button_id).click()
+        driver.find_element_by_id("next").click()
+        print 'Creating cluster...'
+        print cluster_name1        
+        for i in range(1500): 
             # wait for cluster create to finish
             try:
-                if "" != driver.find_element_by_id('id_output_message').text: break
+                if "glyphicon glyphicon-ok text-success" == driver.find_element_by_id('id_status_'+cluster_name1).get_attribute("class"): 
+                    break
+                elif "glyphicon glyphicon-remove text-danger" == driver.find_element_by_id('id_status_'+cluster_name1).get_attribute("class"):
+                    self.assertTrue(False,'Cluster destoryed')
+                    break
+                else:
+                    pass
             except: pass
             time.sleep(1)
-        message =  driver.find_element_by_id('id_output_message').text
-        if message.rsplit(':', 1)[-1] == '8088/cluster':         
-            cluster_url = message.rsplit(' ', 1)[-1]
-            driver.get(cluster_url)
-            print message
-            #check that cluster url is up and page is running
-            try: self.assertEqual("All Applications", driver.find_element_by_css_selector("h1").text)
-            except AssertionError as e: self.verificationErrors.append(str(e))
-        else:
-            self.assertTrue(False, message)
+        cluster_url = str(driver.find_element_by_id("id_ip_"+cluster_name1).get_attribute("href"))
+        time.sleep(30)
+        driver.get(cluster_url)
+        #check that cluster url is up and page is running
+        try: self.assertEqual("All Applications", driver.find_element_by_css_selector("h1").text)
+        except AssertionError as e: self.verificationErrors.append(str(e))
 
 
     

@@ -241,7 +241,7 @@ def main():
                               type=checker.five_or_bigger)
 
         parser_c.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
-                              metavar='disk_template', choices=['drbd', 'ext_vlmc'])
+                              metavar='disk_template', choices=['Standard', 'Archipelago'])
 
         parser_c.add_argument("token", help='Synnefo authentication token')
 

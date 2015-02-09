@@ -16,7 +16,7 @@ from backend.models import *
 from django.core.exceptions import *
 from authenticate_user import *
 from django.utils import timezone
-from orka.cluster_errors_constants import *
+from cluster_errors_constants import *
 django.setup()
 
 
@@ -69,8 +69,9 @@ def db_after_login(token, login=True):
         raise MultipleObjectsReturned(msg, error_multiple_entries)
 
 
-def db_cluster_create(user, choices):
+def db_cluster_create(choices, task_id):
     """Updates DB after user request for cluster creation"""
+    user =  UserInfo.objects.get(okeanos_token=choices['token'])
     ClusterInfo(cluster_name=choices['cluster_name'], action_date=timezone.now(),
                 cluster_status="2", cluster_size=choices['cluster_size'],
                 cpu_master=choices['cpu_master'],
@@ -82,13 +83,17 @@ def db_cluster_create(user, choices):
                 disk_template=choices['disk_template'],
                 os_image=choices['os_choice'], user_id=user,
                 project_name=choices['project_name'],
-                task_id=choices['task_id'],
+                task_id=task_id,
                 state='AUTHENTICATED').save()
 
 
-def db_cluster_update(user, status, cluster_name, master_IP='', state=''):
-    """Updates DB when cluster is created or deleted from pending state"""
+def db_cluster_update(token, status, cluster_name, master_IP='', state=''):
+    """
+    Updates DB when cluster is created or deleted from pending status and
+    when cluster state changes.
+    """
     try:
+        user =  UserInfo.objects.get(okeanos_token=token)
         cluster = ClusterInfo.objects.get(user_id=user, cluster_name=cluster_name)
     except ObjectDoesNotExist:
         msg = 'Cluster with given name does not exist in pending state'

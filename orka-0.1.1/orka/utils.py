@@ -21,9 +21,6 @@ def get_api_urls(action):
         if action == 'login':
             url_login = '{0}{1}'.format(base_url, login_endpoint)
             return url_login
-        if action == 'database':
-            url_database = '{0}{1}'.format(base_url, database_endpoint)
-            return url_database
         if action == 'cluster':
             url_cluster = '{0}{1}'.format(base_url, cluster_endpoint)
             return url_cluster
@@ -40,7 +37,7 @@ def get_api_urls(action):
 
 class ClusterRequest(object):
     """Class for REST requests in orka database."""
-    def __init__(self, escience_token, payload, action='database'):
+    def __init__(self, escience_token, payload, action='login'):
         """
         Initialize escience token used for token authentication, payload
         and appropriate headers for the request.

@@ -208,7 +208,6 @@ class ClusterInfo(models.Model):
     state = models.CharField("Task State", max_length=255,
                                blank=True, help_text="Celery task state")
 
-
     class Meta:
         verbose_name = "Cluster"
         app_label = 'backend'

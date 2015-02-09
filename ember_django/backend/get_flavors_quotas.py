@@ -11,12 +11,13 @@ import logging
 import cStringIO
 import subprocess
 from kamaki.clients import ClientError
-from orka.okeanos_utils import *
 from django_db_after_login import *
 from backend.models import ClusterCreationParams, ClusterInfo, UserInfo
-from orka.cluster_errors_constants import *
+from cluster_errors_constants import *
+from okeanos_utils import get_flavor_id, check_credentials, check_quota, check_images
 
-def ssh_list(token):
+
+def ssh_key_list(token):
     """
     Get the ssh_key dictionary of a user
     """
@@ -29,18 +30,17 @@ def ssh_list(token):
     ssh_counter = 0
     for dictionary in output:
         mydict=dict()
-        new = dictionary.replace('"','')
-        d1 = new.split(', ')
-        for every in d1:
-            z=every.split(': ')
-            z1=list()
-            for item in z:
-                z1.append(item)
-            if len(z1) > 1:
-                for k in z1:
-                    mydict[z1[0]]=z1[1]
-        ssh_dict.append(mydict)        
-    # print ssh_dict[0]['name']   
+        new_dictionary = dictionary.replace('"','')
+        dict1 = new_dictionary.split(', ')
+        for each in dict1:
+            list__keys_values_in_dict=each.split(': ')
+            new_list_of_dict_elements=list()
+            for item in list__keys_values_in_dict:
+                new_list_of_dict_elements.append(item)
+            if len(new_list_of_dict_elements) > 1:
+                for pair in new_list_of_dict_elements:
+                    mydict[new_list_of_dict_elements[0]]=new_list_of_dict_elements[1]
+        ssh_dict.append(mydict)          
     return ssh_dict
 
 
@@ -50,7 +50,7 @@ def project_list_flavor_quota(user):
     list_of_resources = list()
     flavors = get_flavor_id(okeanos_token)
     auth = check_credentials(okeanos_token)
-    ssh_info = ssh_list(okeanos_token)
+    ssh_info = ssh_key_list(okeanos_token)
     ssh_keys_names =list()
     dict_quotas = auth.get_quotas()
     try:
@@ -60,7 +60,7 @@ def project_list_flavor_quota(user):
         raise ClientError(msg, error_get_list_projects)
     # Id for ember-data, will use it for store.push the different projects
     ember_project_id = 1
-    ssh_info = ssh_list(okeanos_token)
+    ssh_info = ssh_key_list(okeanos_token)
     for item in ssh_info:
         if item.has_key('name'):
             ssh_keys_names.append(item['name'])
@@ -80,36 +80,7 @@ def project_list_flavor_quota(user):
                                                                     ember_project_id,
                                                                     ssh_keys_names))
             ember_project_id = ember_project_id + 1
-    
     return list_of_resources
-
-
-def retrieve_pending_clusters(token, project_name):
-    """Retrieve pending cluster info"""
-    uuid = get_user_id(token)
-    pending_quota = {"VMs": 0, "Cpus": 0, "Ram": 0, "Disk": 0, "Ip": 0,
-                     "Network": 0}
-    user = UserInfo.objects.get(uuid=uuid)
-    # Get clusters with pending status
-    pending_clusters = ClusterInfo.objects.filter(user_id=user,
-                                                  project_name=project_name,
-                                                  cluster_status="2")
-    if pending_clusters:
-        # Get all pending resources
-        # excluding ip and network (always zero pending as a convention
-        # for the time being)
-        vm_sum, vm_cpu, vm_ram, vm_disk = 0, 0, 0, 0
-        for cluster in pending_clusters:
-            vm_sum = vm_sum + cluster.cluster_size
-            vm_cpu = vm_cpu + cluster.cpu_master + cluster.cpu_slaves*(cluster.cluster_size - 1)
-            vm_ram = vm_ram + cluster.mem_master + cluster.mem_slaves*(cluster.cluster_size - 1)
-            vm_disk = vm_disk + cluster.disk_master + cluster.disk_slaves*(cluster.cluster_size - 1)
-
-        pending_quota = {"VMs": vm_sum, "Cpus": vm_cpu, "Ram": vm_ram,
-                         "Disk": vm_disk, "Ip": 0,
-                         "Network": 0}
-
-    return pending_quota
 
 
 def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, ember_project_id,ssh_keys_names):
@@ -135,7 +106,7 @@ def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, 
     cpu_choices = flavors['cpus']
     mem_choices = flavors['ram']
     disk_choices = flavors['disk']
-    disk_template = flavors['disk_template']
+    disk_template = ['Standard' , 'Archipelago']
     os_choices = images
 
     # Create a ClusterCreationParams object with the parameters returned from
