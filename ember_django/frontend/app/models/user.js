@@ -15,6 +15,7 @@ App.User = DS.Model.extend({
 // Information about user's clusters
 App.Usercluster = DS.Model.extend({
 	cluster_name : attr('string'),
+	action_date : attr('date'),
 	cluster_size : attr('number'),
 	cluster_status : attr('string'),
 	master_IP : attr('string'),
@@ -83,7 +84,7 @@ App.Usercluster = DS.Model.extend({
 	cluster_status_class_destroy : function(){
 		var status = this.get('cluster_status_active');
 		if (status){
-			return "glyphicon glyphicon-ban-circle text-danger";
+			return "glyphicon glyphicon-remove text-danger";
 		}else{
 			return '';
 		}

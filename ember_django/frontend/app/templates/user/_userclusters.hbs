@@ -12,7 +12,9 @@ Grid should be sort-able by status & size -->
                     <thead class="h4 text-left">
                         <tr>
                             <td><a href="#" {{action 'sortBy' content.clusters 'cluster_name'}}>Name</a><i class="glyphicon small" {{bind-attr class="sortbyname:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                            <td id="id_label_status"><a href="#" {{action 'sortBy' content.clusters 'cluster_status'}}>Status</a><i class="glyphicon small" {{bind-attr class="sortbystatus:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                            <td><a href="#" {{action 'sortBy' content.clusters 'action_date'}}>Date</a><i class="glyphicon small" {{bind-attr class="sortbydate:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                            <td id="id_label_status"><a href="#" {{action 'sortBy' content.clusters 'cluster_status'}}>Cluster Status</a><i class="glyphicon small" {{bind-attr class="sortbystatus:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                            <td>Hadoop Status</td>
                             <td><a href="#" {{action 'sortBy' content.clusters 'cluster_size'}}>Size</a><i class="glyphicon small" {{bind-attr class="sortbysize:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td><a href="#" {{action 'sortBy' content.clusters 'master_IP'}}>Active IP</a><i class="glyphicon small" {{bind-attr class="sortbyurl:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td>Actions</td>
@@ -23,7 +25,9 @@ Grid should be sort-able by status & size -->
                         {{#each usercluster in sortedCollection}}
                         <tr>
                             <td>{{usercluster.cluster_name}}</td>
+                            <td>{{usercluster.action_date}}</td>
                             <td><span data-toggle="tooltip" data-placement="top" {{bind-attr title='usercluster.cluster_status_verbose'}}> <i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span></td>
+                            <td><i class="glyphicon glyphicon-play text-success"></i></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
@@ -34,14 +38,16 @@ Grid should be sort-able by status & size -->
                         </tr>
                         {{else}}
                         <tr>
-                            <td colspan="5" class="text-center text-info">No user clusters found</td>
+                            <td colspan="7" class="text-center text-info">No user clusters found</td>
                         </tr>
                         {{/each}}
                         {{else}}
                         {{#each usercluster in model.clusters}}
                         <tr>
                             <td>{{usercluster.cluster_name}}</td>
+                            <td>{{usercluster.action_date}}</td>
                             <td><span data-toggle="tooltip" data-placement="top" {{bind-attr title='usercluster.cluster_status_verbose'}}> <i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span></td>
+                            <td><i class="glyphicon glyphicon-play text-success"></i></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
@@ -53,7 +59,7 @@ Grid should be sort-able by status & size -->
                         </tr>
                         {{else}}
                         <tr>
-                            <td colspan="5" class="text-center text-info">No user clusters found</td>
+                            <td colspan="7" class="text-center text-info">No user clusters found</td>
                         </tr>
                         {{/each}}
                         {{/if}}

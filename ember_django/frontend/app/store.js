@@ -52,6 +52,7 @@ App.UserclusterSerializer = DS.RESTSerializer.extend({
 	attrs : {
 		master_IP : {key : 'master_IP'},
 		cluster_name : {serialize: false},
+		action_date : {serialize: false},
 		cluster_size : {serialize: false},
 		cluster_status : {serialize: false},
 		cpu_master : {serialize: false},

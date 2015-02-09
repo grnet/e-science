@@ -35,8 +35,8 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 	afterModel : function(user, transition) {
 		// if we came from a link-to helper that doesn't fire the model hook
 		// console.log(user.get('clusters').get('length'));
-		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'cluster_name');
-		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'cluster_name');
+		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'action_date');
+		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'action_date');
 	},
 	actions : {
 		willTransition : function(transition) {
@@ -56,7 +56,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 					this.controller.send('doRefresh');
 				}, 3000);
 			} else if (!from_create) {
-				this.set('refreshed', 0);
+				this.controller.set('refreshed', 0);
 			}
 			return true;
 		},
@@ -65,7 +65,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			cluster.destroyRecord().then(function(data){
 				Ember.run.later(that, function() {
 					that.controller.send('doRefresh');
-				}, 1000);
+				}, 3000);
 			},function(reason){
 				console.log(reason.message);
 			});
