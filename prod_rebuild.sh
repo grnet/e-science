@@ -3,7 +3,7 @@
 
 # settings.py
 # DEBUG = False
-# orka-v/orka/config.txt make sure it points to same base_url
+# ~/.kamakirc make sure it points to same base_url
 echo 'stop nginx if running'
 sudo /etc/init.d/nginx stop
 echo 'done'
@@ -46,6 +46,9 @@ sudo python manage.py collectstatic --noinput
 echo 'done'
 echo 'restart rabbitmq'
 sudo /etc/init.d/rabbitmq-server restart
+echo 'done'
+echo 'replicate .kamakirc'
+sudo cp ~/.kamakirc /root/
 echo 'done'
 echo 'start celery'
 celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%n\%I.log

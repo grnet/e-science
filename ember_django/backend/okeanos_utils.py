@@ -8,111 +8,59 @@ This script contains useful classes and fuctions for orka package.
 """
 import logging
 from base64 import b64encode
-from os.path import abspath, dirname, join, expanduser
+from os.path import abspath
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.cyclades import CycladesClient, CycladesNetworkClient
 from time import sleep
 from cluster_errors_constants import *
-from ConfigParser import RawConfigParser, NoSectionError
-import requests
-import json
 from celery import current_task
-
 # Global constants
 MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
+from django_db_after_login import db_cluster_update, get_user_id
+from backend.models import UserInfo, ClusterInfo
 
 
-def get_api_urls(login=False, database=False):
-    """ Return api urls from config file"""
-    parser = RawConfigParser()
-    user_home = expanduser('~')
-    config_file = join(user_home, ".kamakirc")
-    parser.read(config_file)
-    try:
-        base_url = parser.get('orka', 'base_url')
-        if login:
-            url_login = '{0}{1}'.format(base_url, login_endpoint)
-            return url_login
-        if database:
-            url_database = '{0}{1}'.format(base_url, database_endpoint)
-            return url_database
-        else:
-            logging.log(SUMMARY, ' Url to be returned from config file not specified')
-            return 0
-    except NoSectionError:
-        msg = 'Did not find a valid orka api base_url in .kamakirc'
-        raise NoSectionError(msg)
+def retrieve_pending_clusters(token, project_name):
+    """Retrieve pending cluster info"""
+    uuid = get_user_id(token)
+    pending_quota = {"VMs": 0, "Cpus": 0, "Ram": 0, "Disk": 0, "Ip": 0,
+                     "Network": 0}
+    user = UserInfo.objects.get(uuid=uuid)
+    # Get clusters with pending status
+    pending_clusters = ClusterInfo.objects.filter(user_id=user,
+                                                  project_name=project_name,
+                                                  cluster_status="2")
+    if pending_clusters:
+        # Get all pending resources
+        # excluding ip and network (always zero pending as a convention
+        # for the time being)
+        vm_sum, vm_cpu, vm_ram, vm_disk = 0, 0, 0, 0
+        for cluster in pending_clusters:
+            vm_sum = vm_sum + cluster.cluster_size
+            vm_cpu = vm_cpu + cluster.cpu_master + cluster.cpu_slaves*(cluster.cluster_size - 1)
+            vm_ram = vm_ram + cluster.mem_master + cluster.mem_slaves*(cluster.cluster_size - 1)
+            vm_disk = vm_disk + cluster.disk_master + cluster.disk_slaves*(cluster.cluster_size - 1)
 
+        pending_quota = {"VMs": vm_sum, "Cpus": vm_cpu, "Ram": vm_ram,
+                         "Disk": vm_disk, "Ip": 0,
+                         "Network": 0}
 
-class OrkaRequest(object):
-    """Class for REST requests in orka database."""
-    def __init__(self, escience_token, payload):
-        """
-        Initialize escience token used for token authentication, payload
-        and appropriate headers for the request.
-        """
-        self.escience_token = escience_token
-        self.payload = payload
-        self.url_database = get_api_urls(database=True)
-        self.url_login = get_api_urls(login=True)
-        self.headers = {'Accept': 'application/json', 'content-type': 'application/json',
-                        'Authorization': 'Token ' + self.escience_token}
+    return pending_quota
 
-    def create_cluster_db(self):
-        """
-        Request to orka database that cluster creation is
-        starting (pending status update)
-        """
-        requests.post(self.url_database, data=json.dumps(self.payload),
-                      headers=self.headers)
-
-
-    def update_cluster_db(self):
-        """
-        Request to orka database for Active or Destroyed
-        cluster status update
-        """
-        requests.put(self.url_database, data=json.dumps(self.payload),
-                     headers=self.headers)
-
-    def retrieve_quota(self):
-        """Request to orka database to get pending clusters."""
-        r = requests.get(self.url_database, data=json.dumps(self.payload),
-                         headers=self.headers)
-        response = json.loads(r.text)
-        return response
-
-
-def set_cluster_state(token, status, name, state, master_IP=''):
-        """
-        Make a request to change the cluster state in database.
-        """
-        escience_token = authenticate_escience(token)
-        current_task.update_state(state=state)
-        payload = {"orka": {"status": status, "cluster_name": name,
-                            "master_IP": master_IP, "state": state}}
-
-        orka_req = OrkaRequest(escience_token, payload)
-        orka_req.update_cluster_db()
-
-
-def authenticate_escience(token):
+def set_cluster_state(token, name, state, status='Pending', master_IP=''):
     """
-    Authenticate with escience database and retrieve escience token
-    for Token Authentication
+    Logs a cluster state message and updates the celery and escience database
+    state.
     """
-    payload = {"user": {"token": token}}
-    headers = {'content-type': 'application/json'}
-    url_login = get_api_urls(login=True)
-    r = requests.post(url_login, data=json.dumps(payload), headers=headers)
-    response = json.loads(r.text)
-    escience_token = response['user']['escience_token']
-    logging.log(REPORT, ' Authenticated with escience database')
-    return escience_token
+    logging.log(SUMMARY, state)
+    db_cluster_update(token, status, name, master_IP, state=state)
+    if len(state) > 49:
+        state = 'Longer than 50 chars' # Must be fixed with dictionary error messages
+    current_task.update_state(state=state)
 
-        
+
 def get_project_id(token, project_name):
     """
     Return the id of an active ~okeanos project.
@@ -148,7 +96,6 @@ def destroy_cluster(token, master_IP):
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
     nc = init_cyclades_netclient(endpoints['network'], token)
-    escience_token = authenticate_escience(token)
     # Get list of servers and public ips
     try:
         list_of_servers = cyclades.list_servers(detail=True)
@@ -178,9 +125,7 @@ def destroy_cluster(token, master_IP):
 
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
-        state=" Deleted master VM"
-        logging.log(SUMMARY, state)
-        set_cluster_state(token, 'Destroyed', master_server.rsplit("-", 1)[0], state)
+        set_cluster_state(token, master_server.rsplit("-", 1)[0], " Deleted master VM", status='Destroyed')
         msg = ' A valid network of master and slaves was not found.'\
             'Deleting the master VM only'
         raise ClientError(msg, error_cluster_corrupt)
@@ -193,16 +138,13 @@ def destroy_cluster(token, master_IP):
                 break
     cluster_name = servers_to_delete[0]['name'].rsplit("-", 1)[0]
     number_of_nodes = len(servers_to_delete)
-    state=" Starting deletion of requested cluster"
-    logging.log(SUMMARY, state)
-    set_cluster_state(token, 'Pending', cluster_name, state)
+    set_cluster_state(token, cluster_name, " Starting deletion of requested cluster")
     # Start cluster deleting
     try:
         for server in servers_to_delete:
             cyclades.delete_server(server['id'])
         state= ' There are %d servers to clean up' % number_of_nodes
-        logging.log(SUMMARY, state)
-        set_cluster_state(token, 'Pending', cluster_name, state)
+        set_cluster_state(token, cluster_name, state)
         # Wait for every server of the cluster to be deleted
         for server in servers_to_delete:
             new_status = cyclades.wait_server(server['id'],
@@ -211,10 +153,7 @@ def destroy_cluster(token, master_IP):
             if new_status != 'DELETED':
                 logging.error(' Error deleting server [%s]' % server['name'])
                 list_of_errors.append(error_cluster_corrupt)
-
-        state= ' Cluster deleted.Deleting network and public ip'
-        logging.log(SUMMARY, state)
-        set_cluster_state(token, 'Pending', cluster_name, state)
+        set_cluster_state(token, cluster_name, ' Cluster deleted.Deleting network and public ip')
     except ClientError:
         logging.exception(' Error in deleting server')
         list_of_errors.append(error_cluster_corrupt)
@@ -223,8 +162,7 @@ def destroy_cluster(token, master_IP):
         nc.delete_network(network_to_delete_id)
         sleep(10)  # Take some time to ensure it is deleted
         state= ' Network with id [%s] is deleted' % network_to_delete_id
-        logging.log(SUMMARY, state)
-        set_cluster_state(token, 'Pending', cluster_name, state)
+        set_cluster_state(token, cluster_name, state)
     except ClientError:
         logging.exception(' Error in deleting network')
         list_of_errors.append(error_cluster_corrupt)
@@ -234,7 +172,7 @@ def destroy_cluster(token, master_IP):
         nc.delete_floatingip(float_ip_to_delete_id)
         state= ' Floating ip [%s] is deleted' % float_ip_to_delete
         logging.log(SUMMARY, state)
-        set_cluster_state(token, 'Pending', cluster_name, state)
+        set_cluster_state(token, cluster_name, state)
     except ClientError:
         logging.exception(' Error in deleting floating ip [%s]' %
                           float_ip_to_delete)
@@ -245,8 +183,7 @@ def destroy_cluster(token, master_IP):
                 number_of_nodes-1)
 
     state= ' Cluster with public IP [%s] was deleted ' % float_ip_to_delete
-    set_cluster_state(token, 'Destroyed', cluster_name, state)
-
+    set_cluster_state(token, cluster_name, state, status='Destroyed')
     # Everything deleted as expected
     if not list_of_errors:
         return 0
@@ -321,29 +258,26 @@ def check_quota(token, project_id):
     project_name = auth.get_project(project_id)['name']
     # Create request for orka database to
     # get pending quota for given project id
-    payload = {"orka": {"project_name": project_name}}
-    escience_token = authenticate_escience(token)
-    orka_request = OrkaRequest(escience_token, payload)
-    pending_quota = orka_request.retrieve_quota()
+    pending_quota = retrieve_pending_clusters(token, project_name)
 
     limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
     usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GB
-    pending_cd = pending_quota['orka']['Disk']
+    pending_cd = pending_quota['Disk']
     available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd)
 
     limit_cpu = dict_quotas[project_id]['cyclades.cpu']['limit']
     usage_cpu = dict_quotas[project_id]['cyclades.cpu']['usage']
-    pending_cpu = pending_quota['orka']['Cpus']
+    pending_cpu = pending_quota['Cpus']
     available_cpu = limit_cpu - usage_cpu - pending_cpu
 
     limit_ram = dict_quotas[project_id]['cyclades.ram']['limit'] / Bytes_to_MB
     usage_ram = dict_quotas[project_id]['cyclades.ram']['usage'] / Bytes_to_MB
-    pending_ram = pending_quota['orka']['Ram']
+    pending_ram = pending_quota['Ram']
     available_ram = (limit_ram-usage_ram-pending_ram)
 
     limit_vm = dict_quotas[project_id]['cyclades.vm']['limit']
     usage_vm = dict_quotas[project_id]['cyclades.vm']['usage']
-    pending_vm = pending_quota['orka']['VMs']
+    pending_vm = pending_quota['VMs']
     available_vm = limit_vm-usage_vm-pending_vm
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},

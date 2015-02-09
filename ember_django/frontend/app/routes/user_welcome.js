@@ -62,17 +62,13 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		},
 		deleteCluster : function(cluster) {
 			var that = this;
-			// this.store.find('user', 1).then(function(data){
-				// data.store.find('user-cluster', cluster.get('id')).then(function(data){
-					// data.destroyRecord();
-				// },function(reason){
-// 					
-				// });
-			// },function(reason){
-// 				
-			// });		
-			cluster.deleteRecord();
-			// cluster.destroyRecord();
+			cluster.destroyRecord().then(function(data){
+				Ember.run.later(that, function() {
+					that.controller.send('doRefresh');
+				}, 1000);
+			},function(reason){
+				console.log(reason.message);
+			});
 		}
 	},
 	deactivate : function() {
