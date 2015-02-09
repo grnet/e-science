@@ -373,7 +373,7 @@ class YarnCluster(object):
         # Get master VM root password
         self.master_root_pass = self.server_dict[0]['adminPass']
         set_cluster_state(self.opts['token'], self.opts['cluster_name'], ' ~okeanos cluster created',
-                          master_IP=self.HOSTNAME_MASTER_IP)
+                          master_IP=self.HOSTNAME_MASTER_IP, password=self.master_root_pass)
 
         # Return master node ip and server dict
         return self.HOSTNAME_MASTER_IP, self.server_dict

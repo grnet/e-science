@@ -124,7 +124,7 @@ class ClusterInfoSerializer(serializers.ModelSerializer):
         fields = ('id', 'cluster_name', 'cluster_status', 'cluster_size',
                   'cpu_master', 'mem_master', 'disk_master', 'cpu_slaves',
                   'mem_slaves', 'disk_slaves', 'disk_template', 'os_image',
-                  'master_IP', 'project_name', 'task_id', 'state')
+                  'master_IP', 'project_name', 'task_id', 'state', 'master_vm_password')
 
 
 class UserInfoSerializer(serializers.ModelSerializer):
