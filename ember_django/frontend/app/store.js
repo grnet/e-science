@@ -16,12 +16,65 @@ App.ApplicationAdapter = DS.ActiveModelAdapter.extend({
 	}.property("App.escience_token"),
 });
 
+App.UserclusterAdapter = DS.ActiveModelAdapter.extend({
+	headers : function() {
+		return {
+			"Authorization" : App.escience_token,
+		};
+	}.property("App.escience_token"),
+	deleteRecord : function(store, type, record) {
+		var data = this.serialize(record, {
+			includeId : true
+		});
+
+		var url = 'api/clusterchoices';
+		var headers = this.get('headers');
+
+		return new Ember.RSVP.Promise(function(resolve, reject) {
+			jQuery.ajax({
+				type : 'DELETE',
+				headers : headers,
+				url : url,
+				dataType : 'json',
+				data : data
+			}).then(function(data) {
+				Ember.run(null, resolve, data);
+			}, function(jqXHR) {
+				jqXHR.then = null;
+				// tame jQuery's ill mannered promises
+				Ember.run(null, reject, jqXHR);
+			});
+		});
+	},
+});
+
+App.UserclusterSerializer = DS.RESTSerializer.extend({
+	attrs : {
+		master_IP : {key : 'master_IP'},
+		cluster_name : {serialize: false},
+		cluster_size : {serialize: false},
+		cluster_status : {serialize: false},
+		cpu_master : {serialize: false},
+		mem_master : {serialize: false},
+		disk_master : {serialize: false},
+		cpu_slaves : {serialize: false},
+		mem_slaves : {serialize: false},
+		disk_slaves : {serialize: false},
+		disk_template : {serialize: false},
+		os_image : {serialize: false},
+		project_name : {serialize: false},
+		task_id : {serialize: false},
+		state : {serialize: false},
+		user : {serialize: false},
+	},
+});
+
 App.UserSerializer = DS.RESTSerializer.extend(DS.EmbeddedRecordsMixin, {
 	attrs : {
 		clusters : {
-			embedded : 'always'
+			embedded : 'always',
 		}
-	}
+	},
 });
 
 // For fixtures
