@@ -4,16 +4,16 @@ App.User = DS.Model.extend({
 	token : attr('string'), 			// okeanos token
 	user_id : attr('number'), 			// user_id in backend database
 	// may have more than one clusters
-	clusters : DS.hasMany('userCluster', {
+	clusters : DS.hasMany('usercluster', {
 		async : true,
-		inverse : 'user'
+		inverse : 'user',
 	}), 						// user cluster records
 	cluster : attr(),
-	escience_token : attr()
+	escience_token : attr(),
 });
 
 // Information about user's clusters
-App.UserCluster = DS.Model.extend({
+App.Usercluster = DS.Model.extend({
 	cluster_name : attr('string'),
 	cluster_size : attr('number'),
 	cluster_status : attr('string'),
@@ -31,7 +31,7 @@ App.UserCluster = DS.Model.extend({
 	state : attr(),
 	// user that created the cluster
 	user : DS.belongsTo('user', {
-		inverse : 'clusters'
+		inverse : 'clusters',
 	}),
 	cluster_url : function() {
 		return 'http://' + this.get('master_IP') + ':8088/cluster';
