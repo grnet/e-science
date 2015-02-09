@@ -125,10 +125,10 @@ helpful information about the orka CLI is depicted and
 
     orka -V
     orka --version
-
+    
 prints current version.
 
 Miscellaneous info
 ----------------
 - After cluster creation, the root password of the master virtual machine will be inside a file named [master_vm name]_root_password in the current working directory.
-- In the config.txt file of the project is the public ip of the nginx server in ~okeanos.It is required for updating the orka database.
+- The public ip of the orka web server in ~okeanos must be in ~/.kamakirc. It is required for updating the orka database.
