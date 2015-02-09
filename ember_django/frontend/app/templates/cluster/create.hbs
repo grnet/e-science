@@ -110,9 +110,9 @@
 	        <div class="col col-sm-3">
 	        </div>	
 	        <div class="col col-sm-5">
-	            <h4 id = "vmflavorsMaster" class="btn-group">Predefined VM Flavors: </h4>	            
-	                {{#each item in project_current.vmflavors_choices}}
-		            {{#view App.vmflavorSelButView value=item name="vmflavor_button_Master"
+	            <h4 id = "vm_flavors_Master" class="btn-group">Predefined VM Flavors: </h4>	            
+	                {{#each item in project_current.vm_flavors_choices}}
+		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_Master"
 		            class="btn btn-primary btn-sm" disabled = false}}
 		            {{item}}{{/view}}
 		            {{/each}}	            
@@ -188,9 +188,9 @@
 	        <div class="col col-sm-3">
 	        </div>	
 	        <div class="col col-sm-5">
-	            <h4 id = "vmflavorsMaster" class="btn-group">Predefined VM Flavors: </h4>	            
-	                {{#each item in project_current.vmflavors_choices}}
-		            {{#view App.vmflavorSelButView value=item name="vmflavor_button_Slave"
+	            <h4 id = "vm_flavors_Slave" class="btn-group">Predefined VM Flavors: </h4>	            
+	                {{#each item in project_current.vm_flavors_choices}}
+		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_Slave"
 		            class="btn btn-primary btn-sm" disabled = false}}
 		            {{item}}{{/view}}
 		            {{/each}}	            

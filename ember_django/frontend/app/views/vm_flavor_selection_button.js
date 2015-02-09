@@ -1,5 +1,5 @@
 // View used for vm flavor selection buttons
-App.vmflavorSelButView = Ember.View.extend({
+App.VMFlavorSelButView = Ember.View.extend({
     tagName: 'button',
     // class names, :emberbutton for CSS style
     classNameBindings: [':emberbutton'],
@@ -8,14 +8,14 @@ App.vmflavorSelButView = Ember.View.extend({
     // initialization
     init: function() {
         // set id
-	    if(this.get('name') == "vmflavor_button_Master")
+	    if(this.get('name') == "vm_flavor_button_Master")
 	{
-	    this.set('elementId', "master_vmfalvors" + this.get('value'));
+	    this.set('elementId', "master_vm_falvors_" + this.get('value'));
 	    return this._super();
 	}
-	    if(this.get('name') == "vmflavor_button_Slave")
+	    if(this.get('name') == "vm_flavor_button_Slave")
 	{
-	    this.set('elementId', "slave_vmfalvors" + this.get('value'));
+	    this.set('elementId', "slave_vm_falvors_" + this.get('value'));
 	    return this._super();
 	}
     },    
