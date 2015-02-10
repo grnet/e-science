@@ -143,7 +143,7 @@ def destroy_cluster(token, master_IP):
     try:
         for server in servers_to_delete:
             cyclades.delete_server(server['id'])
-        state= ' There are %d servers to clean up' % number_of_nodes
+        state= ' There are %d servers to clean up1/2' % number_of_nodes
         set_cluster_state(token, cluster_name, state)
         # Wait for every server of the cluster to be deleted
         for server in servers_to_delete:
@@ -153,7 +153,7 @@ def destroy_cluster(token, master_IP):
             if new_status != 'DELETED':
                 logging.error(' Error deleting server [%s]' % server['name'])
                 list_of_errors.append(error_cluster_corrupt)
-        set_cluster_state(token, cluster_name, ' Cluster deleted.Deleting network and public ip')
+        set_cluster_state(token, cluster_name, ' Cluster deleted.Deleting network and public ip2/2')
     except ClientError:
         logging.exception(' Error in deleting server')
         list_of_errors.append(error_cluster_corrupt)
