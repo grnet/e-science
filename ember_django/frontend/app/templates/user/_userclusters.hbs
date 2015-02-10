@@ -26,7 +26,9 @@ Grid should be sort-able by status & size -->
                         <tr>
                             <td>{{usercluster.cluster_name}}</td>
                             <td>{{formatDate usercluster.action_date format='shortdatetime'}}</td>
-                            <td><span data-toggle="tooltip" data-placement="top" {{bind-attr title='usercluster.cluster_status_verbose'}}> <i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span></td>
+                            <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
+                            	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
+                            </td>
                             <td><i class="glyphicon glyphicon-play text-success"></i></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
@@ -53,7 +55,9 @@ Grid should be sort-able by status & size -->
                         <tr>
                             <td>{{usercluster.cluster_name}}</td>
                             <td>{{formatDate usercluster.action_date format='shortdatetime'}}</td>
-                            <td><span data-toggle="tooltip" data-placement="top" {{bind-attr title='usercluster.cluster_status_verbose'}}> <i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span></td>
+                            <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
+                            	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
+                            </td>
                             <td><i class="glyphicon glyphicon-play text-success"></i></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>

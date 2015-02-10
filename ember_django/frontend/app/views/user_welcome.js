@@ -11,11 +11,18 @@ App.UserWelcomeView = Ember.View.extend({
 				$("[data-toggle='tooltip']").tooltip();
 			});
 		});
+		this.addObserver('controller.refreshed', function(){
+			var that = this;
+			Ember.run.scheduleOnce('afterRender', that, function() {
+				$("[data-toggle='tooltip']").tooltip();
+			});
+		});
 		$(function() {
 			$("[data-toggle='tooltip']").tooltip();
 		});
 	},
 	willDestroyElement : function() {
 		this.removeObserver('controller.sortdir');
+		this.removeObserver('controller.refreshed');
 	}
 });
