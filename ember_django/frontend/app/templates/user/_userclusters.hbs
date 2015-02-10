@@ -25,14 +25,21 @@ Grid should be sort-able by status & size -->
                         {{#each usercluster in sortedCollection}}
                         <tr>
                             <td>{{usercluster.cluster_name}}</td>
-                            <td>{{usercluster.action_date}}</td>
+                            <td>{{formatDate usercluster.action_date format='shortdatetime'}}</td>
                             <td><span data-toggle="tooltip" data-placement="top" {{bind-attr title='usercluster.cluster_status_verbose'}}> <i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span></td>
                             <td><i class="glyphicon glyphicon-play text-success"></i></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
                             {{#if usercluster.cluster_status_active}}
-                            <a data-toggle="tooltip" data-placement="right" {{action 'deleteCluster' usercluster}} title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
+                            {{#if usercluster.cluster_confirm_delete}}
+                            <div class="btn-group  btn-block">
+							    <a role="button" {{action 'deleteCluster' usercluster}} class="btn btn-danger btn-xs active">Confirm</a>
+							    <a role="button" {{action 'confirmDelete' usercluster false}} class="btn btn-danger btn-xs active">x</a>
+							</div>
+                            {{else}}
+                            <a data-toggle="tooltip" data-placement="right" href="#" role="button" {{action 'confirmDelete' usercluster true}} title='DESTROY CLUSTER'> <b {{bind-attr class='usercluster.cluster_status_class_destroy'}}></b> </a>
+                            {{/if}}	
                             {{/if}}
                             </td>
                         </tr>
@@ -45,14 +52,21 @@ Grid should be sort-able by status & size -->
                         {{#each usercluster in model.clusters}}
                         <tr>
                             <td>{{usercluster.cluster_name}}</td>
-                            <td>{{usercluster.action_date}}</td>
+                            <td>{{formatDate usercluster.action_date format='shortdatetime'}}</td>
                             <td><span data-toggle="tooltip" data-placement="top" {{bind-attr title='usercluster.cluster_status_verbose'}}> <i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span></td>
                             <td><i class="glyphicon glyphicon-play text-success"></i></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
                             {{#if usercluster.cluster_status_active}}
-                            <a data-toggle="tooltip" data-placement="right" {{action 'deleteCluster' usercluster}} title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
+                            {{#if usercluster.cluster_confirm_delete}}
+                            <div class="btn-group  btn-block">
+							    <a role="button" {{action 'deleteCluster' usercluster}} class="btn btn-danger btn-xs active">Confirm</a>
+							    <a role="button" {{action 'confirmDelete' usercluster false}} class="btn btn-danger btn-xs active">x</a>
+							</div>
+                            {{else}}
+                            <a data-toggle="tooltip" data-placement="right" href="#" role="button" {{action 'confirmDelete' usercluster true}} title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>
+                            {{/if}}	
                             {{/if}}
                             </td>
                         </tr>

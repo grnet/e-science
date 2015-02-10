@@ -15,7 +15,7 @@ App.User = DS.Model.extend({
 // Information about user's clusters
 App.Usercluster = DS.Model.extend({
 	cluster_name : attr('string'),
-	action_date : attr('date'),
+	action_date : attr('isodate'), // custom date transform implemented in store.js
 	cluster_size : attr('number'),
 	cluster_status : attr('string'),
 	master_IP : attr('string'),
@@ -98,7 +98,11 @@ App.Usercluster = DS.Model.extend({
 		var cluster_name_sort = this.get('cluster_name').slice(20);
 		var ip_id = "id_".concat("ip_",cluster_name_sort);
 		return ip_id;	
-	}.property('cluster_name')
+	}.property('cluster_name'),
+	cluster_confirm_delete : function(key, value){
+		this.set('confirm_delete', value);
+		return this.get('confirm_delete');
+	}.property(),
 });
 
 // App.User.reopenClass({

@@ -15,7 +15,6 @@ App.UserWelcomeController = Ember.Controller.extend({
 	sortbystatus : false,
 	sortbysize : false,
 	sortbyurl : false,
-	confirm : false,
 	ip_of_master : '',
 	sortedCollection : function() {
 		// sorts content (clusters) based on properties
