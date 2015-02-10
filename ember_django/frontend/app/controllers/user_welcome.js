@@ -4,6 +4,10 @@ App.UserWelcomeController = Ember.Controller.extend({
 	needs : 'clusterCreate',
 	// output message of create cluster script
 	output_message : '',
+    //function(){
+        //console.log('print something');
+        //return '';
+    //}.property('master_vm_password'),
 	// flag to see if the transition is from create cluster button
 	create_cluster_start : false,
 	refreshed : 0,
@@ -108,6 +112,6 @@ App.UserWelcomeController = Ember.Controller.extend({
 		doRefresh : function() {
 			// console.log('controller > doRefresh called');
 			this.get('target.router').refresh();
-		},
-	},
+		}
+	}
 });

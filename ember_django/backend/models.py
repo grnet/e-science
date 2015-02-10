@@ -26,6 +26,10 @@ class UserInfo(models.Model):
                                      null=True, blank=True, unique=True,
                                      help_text="Okeanos Authentication Token ")
 
+    master_vm_password = models.CharField("Master VM Password", max_length=255,
+                               blank=True, help_text="Root password of master VM")
+
+
     def is_authenticated(self):
         return True
 
@@ -207,10 +211,6 @@ class ClusterInfo(models.Model):
 
     state = models.CharField("Task State", max_length=255,
                                blank=True, help_text="Celery task state")
-
-    master_vm_password = models.CharField("Master VM Password", max_length=25,
-                               blank=True, help_text="Root password of master VM")
-
 
     class Meta:
         verbose_name = "Cluster"

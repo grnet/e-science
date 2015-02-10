@@ -656,8 +656,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 					cluster_selection.then(function(clusterchoice) {
 						// Set the response to user's create cluster click when put succeeds.
 						$.loader.close(true);
-						self.set('message', clusterchoice.get('message'));
-						self.set('controllers.userWelcome.output_message', clusterchoice.get('message'));
+                        var message = clusterchoice.get('data').message || "";
+                        self.set('message', message);
+                        self.set('controllers.userWelcome.output_message', message);
 						self.set('controllers.userWelcome.create_cluster_start', true);
 						self.set('controllers.userWelcome.refreshed', 0);
 						self.store.fetch('user', 1).then(function(user){

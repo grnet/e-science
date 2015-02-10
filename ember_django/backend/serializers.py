@@ -124,7 +124,7 @@ class ClusterInfoSerializer(serializers.ModelSerializer):
         fields = ('id', 'cluster_name', 'cluster_status', 'cluster_size',
                   'cpu_master', 'mem_master', 'disk_master', 'cpu_slaves',
                   'mem_slaves', 'disk_slaves', 'disk_template', 'os_image',
-                  'master_IP', 'project_name', 'task_id', 'state', 'master_vm_password')
+                  'master_IP', 'project_name', 'task_id', 'state')
 
 
 class UserInfoSerializer(serializers.ModelSerializer):
@@ -139,7 +139,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserInfo
-        fields = ('id', 'user_id', 'cluster', 'escience_token', 'clusters')
+        fields = ('id', 'user_id', 'cluster', 'master_vm_password', 'escience_token', 'clusters')
 
     def number_of_clusters(self, obj):
         """

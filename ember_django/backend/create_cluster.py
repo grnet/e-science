@@ -373,7 +373,7 @@ class YarnCluster(object):
         # Get master VM root password
         self.master_root_pass = self.server_dict[0]['adminPass']
         set_cluster_state(self.opts['token'], self.opts['cluster_name'], ' ~okeanos cluster created',
-                          master_IP=self.HOSTNAME_MASTER_IP, password=self.master_root_pass)
+                          master_IP=self.HOSTNAME_MASTER_IP)
 
         # Return master node ip and server dict
         return self.HOSTNAME_MASTER_IP, self.server_dict
@@ -387,7 +387,9 @@ class YarnCluster(object):
             logging.error(' Fatal error: ' + str(e.args[0]))
             raise
         set_cluster_state(self.opts['token'], self.opts['cluster_name'],
-                          ' Configuring Yarn cluster node communication')
+                          ' Configuring Yarn cluster node communication',
+                          password=self.master_root_pass)
+
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
                                              self.HOSTNAME_MASTER_IP)
