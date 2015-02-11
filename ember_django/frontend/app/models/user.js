@@ -104,7 +104,7 @@ App.Usercluster = DS.Model.extend({
 	cluster_confirm_delete : function(key, value){
 		this.set('confirm_delete', value);
 		return this.get('confirm_delete');
-	}.property(),
+	}.property()
 });
 
 // App.User.reopenClass({
