@@ -37,7 +37,11 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		// console.log(user.get('clusters').get('length'));
 		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'cluster_name');
 		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'cluster_name');
+		if ((user.get('user_theme') !== "")&&(user.get('user_theme') !== undefined)&&(user.get('user_theme') !== null)) {
+			changeCSS(user.get('user_theme'), 0);			
+		}
 	},
+	
 	actions : {
 		willTransition : function(transition) {
 			// leaving this route

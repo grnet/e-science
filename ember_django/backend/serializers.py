@@ -139,7 +139,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserInfo
-        fields = ('id', 'user_id', 'cluster', 'master_vm_password', 'escience_token', 'clusters')
+        fields = ('id', 'user_id', 'user_theme', 'cluster', 'master_vm_password', 'escience_token', 'clusters')
 
     def number_of_clusters(self, obj):
         """
@@ -152,3 +152,11 @@ class UserInfoSerializer(serializers.ModelSerializer):
     def get_ember_id(self, obj):
         """"Always returns id 1 for ember.js"""
         return 1
+
+
+class UserThemeSerializer(serializers.Serializer):
+    """
+    Serializer for ember request with user's
+    choices for theme.
+    """
+    user_theme = serializers.CharField(required=False)

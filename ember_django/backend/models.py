@@ -18,6 +18,7 @@ class UserInfo(models.Model):
     """Definition of a User object model."""
     user_id = models.AutoField("User ID", primary_key=True, null=False,
                                help_text="Auto-increment user id")
+    user_theme = models.CharField("User Theme", blank=True, max_length=255)
     uuid = models.CharField("UUID", null=False, blank=False, unique=True,
                             default="", max_length=255,
                             help_text="Universally unique identifier "

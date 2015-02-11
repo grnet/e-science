@@ -13,7 +13,8 @@ App.UserLogoutRoute = Ember.Route.extend({
 		this.controllerFor('clusterCreate').reset_project();
 		// Send PUT request for backend logout update.
 		var current_user = this.store.push('user', {
-			'id' : 1
+			'id' : 1,
+            'user_theme' : ''
 		}).save();
 		current_user.then(function() {
 			// Set global var escience and localStorage token to null when put is successful.
