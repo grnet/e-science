@@ -36,8 +36,8 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 	afterModel : function(user, transition) {
 		// if we came from a link-to helper that doesn't fire the model hook
 		// console.log(user.get('clusters').get('length'));
-		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'cluster_name');
-		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'cluster_name');
+		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'action_date');
+		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'action_date');
 		if ((user.get('user_theme') !== "")&&(user.get('user_theme') !== undefined)&&(user.get('user_theme') !== null)) {
 			changeCSS(user.get('user_theme'), 0);			
 		}
@@ -88,6 +88,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 	deactivate : function() {
 		// left this route
 		this.controller.send('timer', false);
-	},
+	}
 });
 
