@@ -83,7 +83,12 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		},
 		confirmDelete : function(cluster, value) {
 			cluster.set('cluster_confirm_delete', value);
-		}
+		},
+		error: function(err) {
+			// to catch errors
+			// for example 401 responses
+			this.transitionTo('user.logout');
+    	}
 	},
 	deactivate : function() {
 		// left this route
