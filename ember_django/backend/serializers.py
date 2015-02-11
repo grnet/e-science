@@ -121,7 +121,7 @@ class ClusterInfoSerializer(serializers.ModelSerializer):
     """ Serializer for ember request with user's available clusters."""
     class Meta:
         model = ClusterInfo
-        fields = ('id', 'cluster_name', 'cluster_status', 'cluster_size',
+        fields = ('id', 'cluster_name', 'action_date', 'cluster_status', 'cluster_size',
                   'cpu_master', 'mem_master', 'disk_master', 'cpu_slaves',
                   'mem_slaves', 'disk_slaves', 'disk_template', 'os_image',
                   'master_IP', 'project_name', 'task_id', 'state')

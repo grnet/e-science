@@ -12,7 +12,9 @@ Grid should be sort-able by status & size -->
                     <thead class="h4 text-left">
                         <tr>
                             <td><a href="#" {{action 'sortBy' content.clusters 'cluster_name'}}>Name</a><i class="glyphicon small" {{bind-attr class="sortbyname:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                            <td id="id_label_status"><a href="#" {{action 'sortBy' content.clusters 'cluster_status'}}>Status</a><i class="glyphicon small" {{bind-attr class="sortbystatus:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                            <td><a href="#" {{action 'sortBy' content.clusters 'action_date'}}>Date</a><i class="glyphicon small" {{bind-attr class="sortbydate:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                            <td id="id_label_status"><a href="#" {{action 'sortBy' content.clusters 'cluster_status'}}>Cluster Status</a><i class="glyphicon small" {{bind-attr class="sortbystatus:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                            <td>Hadoop Status</td>
                             <td><a href="#" {{action 'sortBy' content.clusters 'cluster_size'}}>Size</a><i class="glyphicon small" {{bind-attr class="sortbysize:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td><a href="#" {{action 'sortBy' content.clusters 'master_IP'}}>Active IP</a><i class="glyphicon small" {{bind-attr class="sortbyurl:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td>Actions</td>
@@ -23,39 +25,59 @@ Grid should be sort-able by status & size -->
                         {{#each usercluster in sortedCollection}}
                         <tr>
                             <td>{{usercluster.cluster_name}}</td>
-                            <td><span data-toggle="tooltip" data-placement="top" {{bind-attr title='usercluster.cluster_status_verbose'}}> <i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span></td>
+                            <td>{{formatDate usercluster.action_date format='shortdatetime'}}</td>
+                            <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
+                            	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
+                            </td>
+                            <td><i class="glyphicon glyphicon-play text-success"></i></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
                             {{#if usercluster.cluster_status_active}}
-                            <a data-toggle="tooltip" data-placement="right" {{action 'deleteCluster' usercluster}} title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
+                            {{#if usercluster.cluster_confirm_delete}}
+                            <div class="btn-group  btn-block">
+							    <a role="button" {{action 'deleteCluster' usercluster}} class="btn btn-danger btn-xs active">Confirm</a>
+							    <a role="button" {{action 'confirmDelete' usercluster false}} class="btn btn-danger btn-xs active">x</a>
+							</div>
+                            {{else}}
+                            <a data-toggle="tooltip" data-placement="right" href="#" role="button" {{action 'confirmDelete' usercluster true}} title='DESTROY CLUSTER'> <b {{bind-attr class='usercluster.cluster_status_class_destroy'}}></b> </a>
+                            {{/if}}	
                             {{/if}}
                             </td>
                         </tr>
                         {{else}}
                         <tr>
-                            <td colspan="5" class="text-center text-info">No user clusters found</td>
+                            <td colspan="7" class="text-center text-info">No user clusters found</td>
                         </tr>
                         {{/each}}
                         {{else}}
                         {{#each usercluster in model.clusters}}
                         <tr>
                             <td>{{usercluster.cluster_name}}</td>
-
-                            <td><span data-toggle="tooltip" data-placement="top" {{bind-attr title='usercluster.cluster_status_verbose'}}> <i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span></td>
-
+                            <td>{{formatDate usercluster.action_date format='shortdatetime'}}</td>
+                            <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
+                            	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
+                            </td>
+                            <td><i class="glyphicon glyphicon-play text-success"></i></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
                             {{#if usercluster.cluster_status_active}}
-                            <a data-toggle="tooltip" data-placement="right" {{action 'deleteCluster' usercluster}} title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>	
+                            {{#if usercluster.cluster_confirm_delete}}
+                            <div class="btn-group  btn-block">
+							    <a role="button" {{action 'deleteCluster' usercluster}} class="btn btn-danger btn-xs active">Confirm</a>
+							    <a role="button" {{action 'confirmDelete' usercluster false}} class="btn btn-danger btn-xs active">x</a>
+							</div>
+                            {{else}}
+                            <a data-toggle="tooltip" data-placement="right" href="#" role="button" {{action 'confirmDelete' usercluster true}} title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>
+                            {{/if}}	
                             {{/if}}
                             </td>
                         </tr>
                         </tr>
                         {{else}}
                         <tr>
-                            <td colspan="5" class="text-center text-info">No user clusters found</td>
+                            <td colspan="7" class="text-center text-info">No user clusters found</td>
                         </tr>
                         {{/each}}
                         {{/if}}
