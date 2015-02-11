@@ -38,6 +38,9 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		// console.log(user.get('clusters').get('length'));
 		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'action_date');
 		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'action_date');
+		if ((user.get('user_theme') !== "")&&(user.get('user_theme') !== undefined)&&(user.get('user_theme') !== null)) {
+			changeCSS(user.get('user_theme'), 0);			
+		}
 	},
 	actions : {
 		willTransition : function(transition) {
@@ -79,11 +82,16 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		},
 		confirmDelete : function(cluster, value) {
 			cluster.set('cluster_confirm_delete', value);
-		}
+		},
+		error: function(err) {
+			// to catch errors
+			// for example 401 responses
+			this.transitionTo('user.logout');
+    	}
 	},
 	deactivate : function() {
 		// left this route
 		this.controller.send('timer', false);
-	},
+	}
 });
 

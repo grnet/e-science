@@ -49,13 +49,13 @@ def retrieve_pending_clusters(token, project_name):
 
     return pending_quota
 
-def set_cluster_state(token, name, state, status='Pending', master_IP=''):
+def set_cluster_state(token, name, state, status='Pending', master_IP='', password=''):
     """
     Logs a cluster state message and updates the celery and escience database
     state.
     """
     logging.log(SUMMARY, state)
-    db_cluster_update(token, status, name, master_IP, state=state)
+    db_cluster_update(token, status, name, master_IP, state=state, password=password)
     if len(state) > 49:
         state = 'Longer than 50 chars' # Must be fixed with dictionary error messages
     current_task.update_state(state=state)

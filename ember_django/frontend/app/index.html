@@ -7,10 +7,11 @@
 		<meta name="description" content="e-Science Orka the hadoop cluster creator">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 
-		<link rel="stylesheet" href="{{ STATIC_URL }}styles/bootstrap.orka.css">
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/bootstrap.orka.css"/>
+
 		<link rel="stylesheet" href="{{ STATIC_URL }}styles/style.css">
 	</head>
-	<body class="" style="">
+	<body class="" style="" onload="set_style_from_cookie()">
 		{% verbatim %}
 		<noscript>
 			<div style="display: table; margin: 0 auto; text-align: center;">
@@ -24,6 +25,7 @@
 		<script type="text/javascript">var DJANGO_STATIC_URL="{{ STATIC_URL }}";</script>
 		<!--main libraries-->
 		<script src="{{ STATIC_URL }}libs/jquery-1.11.2.js"></script>
+        <script src="{{ STATIC_URL }}libs/theme-switcher.js"></script>
 		<script src="{{ STATIC_URL }}libs/jquery-loader.js"></script>
 		<script src="{{ STATIC_URL }}libs/moment-2.9.0.js"></script>
 		<script src="{{ STATIC_URL }}libs/handlebars-v2.0.0.js"></script>
@@ -66,6 +68,7 @@
 		<script src="{{ STATIC_URL }}views/storage_selection_button.js"></script>
 		<script src="{{ STATIC_URL }}views/create_cluster_button.js"></script>
 		<script src="{{ STATIC_URL }}views/destroy_cluster_button.js"></script>
+		<script src="{{ STATIC_URL }}views/vm_flavor_selection_button.js"></script>
 
 		<!--store for ember-->
 		<script src="{{ STATIC_URL }}store.js"></script> 

@@ -18,7 +18,7 @@ from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterInfoSerializer, \
     ClusterchoicesSerializer, PendingQuotaSerializer, ProjectNameSerializer, \
-    MasterIpSerializer, UpdateDatabaseSerializer, TaskSerializer
+    MasterIpSerializer, UpdateDatabaseSerializer, TaskSerializer, UserThemeSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async
@@ -188,7 +188,18 @@ class SessionView(APIView):
         """
         user_token = Token.objects.get(key=request.auth)
         self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
-        db_logout_entry(self.user)
-        self.serializer_class = UserInfoSerializer(self.user)
-        return Response({"id": "1", "token": "null", "user_id": "null",
-                         "cluster": "null"})
+        self.serializer_class = UserThemeSerializer
+        serializer = self.serializer_class(data=request.DATA)
+        if serializer.is_valid():
+            if serializer.data['user_theme']:
+                self.user.user_theme = serializer.data['user_theme']
+                self.user.save()
+            else:
+                db_logout_entry(self.user)
+
+            self.serializer_class = UserInfoSerializer(self.user)
+            return Response(self.serializer_class.data)
+
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)

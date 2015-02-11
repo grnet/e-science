@@ -103,6 +103,6 @@ App.UserWelcomeController = Ember.Controller.extend({
 		doRefresh : function() {
 			// console.log('controller > doRefresh called');
 			this.get('target.router').refresh();
-		},
-	},
+		}
+	}
 });

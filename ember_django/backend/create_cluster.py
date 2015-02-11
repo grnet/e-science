@@ -387,7 +387,9 @@ class YarnCluster(object):
             logging.error(' Fatal error: ' + str(e.args[0]))
             raise
         set_cluster_state(self.opts['token'], self.opts['cluster_name'],
-                          ' Configuring Yarn cluster node communication')
+                          ' Configuring Yarn cluster node communication',
+                          password=self.master_root_pass)
+
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
                                              self.HOSTNAME_MASTER_IP)
