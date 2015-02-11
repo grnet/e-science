@@ -28,7 +28,8 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			}
 		}, function(reason) {
 			// failure
-			console.log(reason.message);
+			console.log(reason.statusText);
+			transition.abort();
 		});
 		return promise;
 	},
