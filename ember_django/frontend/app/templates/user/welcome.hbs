@@ -34,6 +34,12 @@
 			<span id='id_output_message'>{{output_message}}</span>
 		</div>
 		{{/if}}
+        {{#if model.master_vm_password}}
+		<div class="alert alert-dismissable alert-warning text-center">
+			<button type="button" class="close" data-dismiss="alert">×</button>
+			<span id='id_output_message'>{{model.master_vm_password}}</span>
+		</div>
+		{{/if}}
 	</div>
 </div>
 <hr>

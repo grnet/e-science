@@ -41,6 +41,11 @@ App.UserLoginController = Ember.Controller.extend({
 					self.set('controllers.application.loggedIn', true);
 					self.set('token', '');
 					self.transitionToRoute('user.welcome');
+                    Ember.run.later(self, function(){
+                        self.set('controllers.application.loggedIn', false);
+						self.set('token', '');
+						self.transitionToRoute('user.logout');
+                    },3600000);
 				}, function(reason) {
 					// Failed login.
 					console.log(reason.errorThrown);
@@ -55,6 +60,6 @@ App.UserLoginController = Ember.Controller.extend({
 			$('#token').focus();
 			$('#id_alert_wrongtoken > button').click();
 			this.set('loginFailed', false);
-		},
+		}
 	}
 }); 

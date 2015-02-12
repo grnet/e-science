@@ -52,6 +52,7 @@ App.UserclusterSerializer = DS.RESTSerializer.extend({
 	attrs : {
 		master_IP : {key : 'master_IP'},
 		cluster_name : {serialize: false},
+		action_date : {serialize: false},
 		cluster_size : {serialize: false},
 		cluster_status : {serialize: false},
 		cpu_master : {serialize: false},
@@ -76,6 +77,16 @@ App.UserSerializer = DS.RESTSerializer.extend(DS.EmbeddedRecordsMixin, {
 		}
 	},
 });
+
+App.IsodateTransform = DS.Transform.extend({  
+  deserialize: function(serialized) {
+    return Ember.isEmpty(serialized) ? null : moment.utc(serialized, 'YYYY-MM-DD HH:mm:ss').toDate().toISOString();
+  },
+  serialize: function(deserialized) {
+    return Ember.isEmpty(deserialized) ? null : moment.utc(deserialized).format('YYYY-MM-DD HH:mm:ss');
+  }
+});
+App.register('transform:isodate', App.IsodateTransform);
 
 // For fixtures
 // App.ApplicationAdapter = DS.FixtureAdapter;

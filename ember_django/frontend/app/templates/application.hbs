@@ -29,6 +29,20 @@
 						</ul>
 					</li>
 				</ul>
+				{{#if loggedIn}}				
+				<ul class="nav navbar-nav">
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_services_dd">Themes <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							{{#each theme in userTheme}}
+							<li>
+                                <a href="#" id="myCurrentPage" {{action "change_theme" theme.url}}>{{theme.name}}</a>
+							</li>
+							{{/each}}													
+						</ul>
+					</li>
+				</ul>
+				{{/if}}
 				<ul class="nav navbar-nav navbar-right">
 					<li>
 						<div class="btn-group navbar-btn">
@@ -96,7 +110,7 @@
 				</p>
 
 				<p class="text-muted">
-					Copyright 2014 <a title="GRNET S.A." target="_blank" href="http://www.grnet.gr/en/">GRNET
+					Copyright 2015 <a title="GRNET S.A." target="_blank" href="http://www.grnet.gr/en/">GRNET
 					S.A.</a> All rights
 					reserved.
 				</p>

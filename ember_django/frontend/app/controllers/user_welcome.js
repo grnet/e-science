@@ -11,10 +11,10 @@ App.UserWelcomeController = Ember.Controller.extend({
 	column : '',
 	sortdir : null,
 	sortbyname : false,
+	sortbydate : false,
 	sortbystatus : false,
 	sortbysize : false,
 	sortbyurl : false,
-	confirm : false,
 	ip_of_master : '',
 	sortedCollection : function() {
 		// sorts content (clusters) based on properties
@@ -23,7 +23,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 			sortProperties : [this.get('column')],
 			sortAscending : this.get('sortdir')
 		});
-	}.property('sortdir', 'sortbyname', 'sortbystatus', 'sortbysize', 'sortbyurl'),
+	}.property('sortdir', 'sortbyname', 'sortbydate', 'sortbystatus', 'sortbysize', 'sortbyurl'),
 	actions : {
 		// sorts clusters based on selected column (name, status, size, IP)
 		sortBy : function(clusters, column) {
@@ -31,6 +31,10 @@ App.UserWelcomeController = Ember.Controller.extend({
 			case 'cluster_name':
 				this.set('sortbyname', !this.get('sortbyname'));
 				this.set('sortdir', this.get('sortbyname'));
+				break;
+			case 'action_date':
+				this.set('sortbydate', !this.get('sortbydate'));
+				this.set('sortdir', this.get('sortbydate'));
 				break;
 			case 'cluster_status':
 				this.set('sortbystatus', !this.get('sortbystatus'));
@@ -47,15 +51,6 @@ App.UserWelcomeController = Ember.Controller.extend({
 			}
 			this.set('sortedclusters', clusters);
 			this.set('column', column);
-		},
-		go_to_confirm : function(cluster) {
-			// this.set('confirm', true);
-			// this.set('ip_of_master', cluster.get('master_IP'));
-			// cluster_record.destroyRecord();
-			// cluster.destroyRecord();
-		},
-		go_to_destroy : function(master_IP) {
-
 		},
 		timer : function(status, store) {
 			var that = this;
@@ -108,6 +103,6 @@ App.UserWelcomeController = Ember.Controller.extend({
 		doRefresh : function() {
 			// console.log('controller > doRefresh called');
 			this.get('target.router').refresh();
-		},
-	},
+		}
+	}
 });

@@ -12,12 +12,13 @@ import binascii
 import os
 from django.db import models
 from djorm_pgarray.fields import IntegerArrayField, TextArrayField
-
+from django.utils import timezone
 
 class UserInfo(models.Model):
     """Definition of a User object model."""
     user_id = models.AutoField("User ID", primary_key=True, null=False,
                                help_text="Auto-increment user id")
+    user_theme = models.CharField("User Theme", blank=True, max_length=255)
     uuid = models.CharField("UUID", null=False, blank=False, unique=True,
                             default="", max_length=255,
                             help_text="Universally unique identifier "
@@ -25,6 +26,10 @@ class UserInfo(models.Model):
     okeanos_token = models.CharField('Okeanos Token', max_length=64,
                                      null=True, blank=True, unique=True,
                                      help_text="Okeanos Authentication Token ")
+
+    master_vm_password = models.CharField("Master VM Password", max_length=255,
+                               blank=True, help_text="Root password of master VM")
+
 
     def is_authenticated(self):
         return True
@@ -105,15 +110,26 @@ class Token(models.Model):
     """Definition of a e-science Token Authentication model."""
     user = models.OneToOneField(UserInfo, related_name='escience_token')
     key = models.CharField(max_length=40, null=True)
+    creation_date = models.DateTimeField('Creation Date')
 
     def save(self, *args, **kwargs):
         if not self.key:
             self.key = self.generate_token()
+            self.creation_date = timezone.now()
         return super(Token, self).save(*args, **kwargs)
 
     def generate_token(self):
         return binascii.hexlify(os.urandom(20)).decode()
 
+    def update_token(self, *args, **kwargs):
+        # checks if an amount of time has passed
+        # since the creation of the token
+        # and regenerates a new key
+        if(timezone.now() >  self.creation_date + datetime.timedelta(seconds=args[0])):
+            self.key = self.generate_token()
+            self.creation_date = timezone.now()
+        return super(Token, self).save()
+            
     def __unicode__(self):
         return self.key
 
@@ -213,5 +229,5 @@ class ClusterInfo(models.Model):
         app_label = 'backend'
 
     def __unicode__(self):
-        return ("%s, %d, %s") % (self.cluster_name, self.cluster_size,
+        return ("%d, %s, %d, %s") % (self.id, self.cluster_name, self.cluster_size,
                                  self.cluster_status)

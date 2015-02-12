@@ -28,16 +28,21 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			}
 		}, function(reason) {
 			// failure
-			console.log(reason.message);
+			console.log(reason.statusText);
+			transition.abort();
 		});
 		return promise;
 	},
 	afterModel : function(user, transition) {
 		// if we came from a link-to helper that doesn't fire the model hook
 		// console.log(user.get('clusters').get('length'));
-		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'cluster_name');
-		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'cluster_name');
+		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'action_date');
+		this.controllerFor('userWelcome').send('sortBy', user.get('clusters'), 'action_date');
+		if ((user.get('user_theme') !== "")&&(user.get('user_theme') !== undefined)&&(user.get('user_theme') !== null)) {
+			changeCSS(user.get('user_theme'), 0);			
+		}
 	},
+	
 	actions : {
 		willTransition : function(transition) {
 			// leaving this route
@@ -56,24 +61,38 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 					this.controller.send('doRefresh');
 				}, 3000);
 			} else if (!from_create) {
-				this.set('refreshed', 0);
+				this.controller.set('refreshed', 0);
 			}
 			return true;
 		},
 		deleteCluster : function(cluster) {
 			var that = this;
+			cluster.set('cluster_confirm_delete', false);
 			cluster.destroyRecord().then(function(data){
+				var times_refreshed = that.controller.get('refreshed');
+				var refresh = Math.max(5, times_refreshed);
+				that.controller.set('refreshed', 10-refresh);
+				that.controller.set('create_cluster_start', true);
 				Ember.run.later(that, function() {
 					that.controller.send('doRefresh');
 				}, 1000);
 			},function(reason){
 				console.log(reason.message);
+				that.controller.set('output_message', reason.message);
 			});
-		}
+		},
+		confirmDelete : function(cluster, value) {
+			cluster.set('cluster_confirm_delete', value);
+		},
+		error: function(err) {
+			// to catch errors
+			// for example 401 responses
+			this.transitionTo('user.logout');
+    	}
 	},
 	deactivate : function() {
 		// left this route
 		this.controller.send('timer', false);
-	},
+	}
 });
 

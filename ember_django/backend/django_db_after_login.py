@@ -87,7 +87,7 @@ def db_cluster_create(choices, task_id):
                 state='AUTHENTICATED').save()
 
 
-def db_cluster_update(token, status, cluster_name, master_IP='', state=''):
+def db_cluster_update(token, status, cluster_name, master_IP='', state='', password=''):
     """
     Updates DB when cluster is created or deleted from pending status and
     when cluster state changes.
@@ -98,7 +98,10 @@ def db_cluster_update(token, status, cluster_name, master_IP='', state=''):
     except ObjectDoesNotExist:
         msg = 'Cluster with given name does not exist in pending state'
         raise ObjectDoesNotExist(msg)
-
+    if password:
+        user.master_vm_password = 'The root password of ' + cluster_name + ' master VM is ' + password
+    else:
+        user.master_vm_password = password
     if status == "Active":
         cluster.cluster_status = "1"
 
@@ -114,6 +117,7 @@ def db_cluster_update(token, status, cluster_name, master_IP='', state=''):
         cluster.state = state
     if master_IP:
         cluster.master_IP = master_IP
+    user.save()
     cluster.save()
 
 

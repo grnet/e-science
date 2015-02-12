@@ -7,10 +7,11 @@
 		<meta name="description" content="e-Science Orka the hadoop cluster creator">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 
-		<link rel="stylesheet" href="{{ STATIC_URL }}styles/bootstrap.orka.css">
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/bootstrap.orka.css"/>
+
 		<link rel="stylesheet" href="{{ STATIC_URL }}styles/style.css">
 	</head>
-	<body class="" style="">
+	<body class="" style="" onload="set_style_from_cookie()">
 		{% verbatim %}
 		<noscript>
 			<div style="display: table; margin: 0 auto; text-align: center;">
@@ -24,7 +25,9 @@
 		<script type="text/javascript">var DJANGO_STATIC_URL="{{ STATIC_URL }}";</script>
 		<!--main libraries-->
 		<script src="{{ STATIC_URL }}libs/jquery-1.11.2.js"></script>
+        <script src="{{ STATIC_URL }}libs/theme-switcher.js"></script>
 		<script src="{{ STATIC_URL }}libs/jquery-loader.js"></script>
+		<script src="{{ STATIC_URL }}libs/moment-2.9.0.js"></script>
 		<script src="{{ STATIC_URL }}libs/handlebars-v2.0.0.js"></script>
 		<script src="{{ STATIC_URL }}libs/ember-1.9.1.js"></script>
 		<script src="{{ STATIC_URL }}libs/ember-data-1.0.0-beta.14.1.js"></script>
@@ -34,7 +37,10 @@
 		<!--main app-->
 		<script src="{{ STATIC_URL }}app.js"></script>
 		<script src="{{ STATIC_URL }}timer.js"></script>
-
+		
+		<!--helpers-->
+		<script src="{{ STATIC_URL }}helpers/helpers.js"></script>
+		
 		<!--controllers-->
 		<script src="{{ STATIC_URL }}controllers/application.js"></script>
 		<script src="{{ STATIC_URL }}controllers/user_welcome.js"></script>
@@ -44,6 +50,7 @@
 
 		<!--routers-->
 		<script src="{{ STATIC_URL }}router.js"></script>
+		<script src="{{ STATIC_URL }}routes/application.js"></script>
 		<script src="{{ STATIC_URL }}routes/index.js"></script>
 		<script src="{{ STATIC_URL }}routes/restricted.js"></script>
 		<script src="{{ STATIC_URL }}routes/user_login.js"></script>        
@@ -52,6 +59,7 @@
 		<script src="{{ STATIC_URL }}routes/cluster_create.js"></script>
 
 		<!--views-->
+		<script src="{{ STATIC_URL }}views/homepage.js"></script>
 		<script src="{{ STATIC_URL }}views/user_login.js"></script>
 		<script src="{{ STATIC_URL }}views/user_welcome.js"></script>
 		<script src="{{ STATIC_URL }}views/cpu_selection_button.js"></script>
@@ -60,6 +68,7 @@
 		<script src="{{ STATIC_URL }}views/storage_selection_button.js"></script>
 		<script src="{{ STATIC_URL }}views/create_cluster_button.js"></script>
 		<script src="{{ STATIC_URL }}views/destroy_cluster_button.js"></script>
+		<script src="{{ STATIC_URL }}views/vm_flavor_selection_button.js"></script>
 
 		<!--store for ember-->
 		<script src="{{ STATIC_URL }}store.js"></script> 
