@@ -42,7 +42,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			changeCSS(user.get('user_theme'), 0);			
 		}
 	},
-	
 	actions : {
 		willTransition : function(transition) {
 			// leaving this route

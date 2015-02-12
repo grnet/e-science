@@ -272,7 +272,7 @@ class YarnCluster(object):
         cluster_name = cluster_name.replace(" ", "_")
         self.ssh_file = join(os.getcwd(), cluster_name + '_ssh_key')
         for item in ssh_info:
-            if item['name'] == self.opts['ssh_key_name']:
+            if item['name'] == self.opts['ssh_key_selection']:
                 with open(self.ssh_file, 'w') as f:
                     f.write(item['content'])
 
@@ -328,31 +328,26 @@ class YarnCluster(object):
 
     def create_bare_cluster(self):
         """Creates a bare ~okeanos cluster."""
-        user_home = expanduser('~')
-        pub_keys_path = join(user_home, ".ssh/id_rsa.pub")
+        pub_keys_path = ''
         logging.log(SUMMARY, ' Authentication verified')
         current_task.update_state(state="AUTHENTICATED")
 
         flavor_master, flavor_slaves, image_id = self.check_user_resources()
-        # Create timestamped name of the cluster###############################needs more commenting
-        date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.ansible_hosts_name = '%s%s%s' % (date_time, '-', self.opts['cluster_name'])
+        # Create name of cluster with [orka] prefix
         cluster_name = '%s%s%s' % ('[orka]', '-', self.opts['cluster_name'])
         self.opts['cluster_name'] = cluster_name
 
         # Update db with cluster status as pending
         task_id = current_task.request.id
         self.cluster_id = db_cluster_create(self.opts, task_id)
-        self.ssh_file = 'no_ssh_key_selected'
-        if self.opts['ssh_key_name'] is None:
-            self.ssh_file = pub_keys_path
-
-        elif self.opts['ssh_key_name']=='no_ssh_key_selected':
-            pub_keys_path = '' # password should be returned to user
+        self.cluster_name_postfix_id = '%s%s%s' % (self.opts['cluster_name'], '-', self.cluster_id)
+        if self.opts['ssh_key_selection'] is None or self.opts['ssh_key_selection'] == 'no_ssh_key_selected':
+            self.ssh_file = 'no_ssh_key_selected'
 
         else:
-            self.ssh_key_file(cluster_name)
+            self.ssh_key_file(self.cluster_name_postfix_id)
             pub_keys_path = self.ssh_file
+
         try:
             cluster = Cluster(self.cyclades, self.opts['cluster_name'],
                               flavor_master, flavor_slaves,
@@ -395,7 +390,7 @@ class YarnCluster(object):
                           ' Installing and configuring Yarn...4/4')
 
             install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
-                         self.ansible_hosts_name, self.hadoop_image, self.ssh_file)
+                         self.cluster_name_postfix_id, self.hadoop_image, self.ssh_file)
 
             # If Yarn cluster is build, update cluster status as active
             set_cluster_state(self.opts['token'], self.cluster_id,

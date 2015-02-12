@@ -36,11 +36,11 @@ Grid should be sort-able by status & size -->
                             {{#if usercluster.cluster_status_active}}
                             {{#if usercluster.cluster_confirm_delete}}
                             <div class="btn-group  btn-block">
-							    <a role="button" {{action 'deleteCluster' usercluster}} class="btn btn-danger btn-xs active">Confirm</a>
+							    <a role="button" {{bind-attr id='usercluster.cluster_confirm_id'}} {{action 'deleteCluster' usercluster}} class="btn btn-danger btn-xs active">Confirm</a>
 							    <a role="button" {{action 'confirmDelete' usercluster false}} class="btn btn-danger btn-xs active">x</a>
 							</div>
                             {{else}}
-                            <a data-toggle="tooltip" data-placement="right" href="#" role="button" {{action 'confirmDelete' usercluster true}} title='DESTROY CLUSTER'> <b {{bind-attr class='usercluster.cluster_status_class_destroy'}}></b> </a>
+                            <a data-toggle="tooltip" data-placement="right" href="#" role="button" {{action 'confirmDelete' usercluster true}} title='DESTROY CLUSTER'> <b {{bind-attr id='usercluster.cluster_destroy_id' class='usercluster.cluster_status_class_destroy'}}></b> </a>
                             {{/if}}	
                             {{/if}}
                             </td>
@@ -65,11 +65,11 @@ Grid should be sort-able by status & size -->
                             {{#if usercluster.cluster_status_active}}
                             {{#if usercluster.cluster_confirm_delete}}
                             <div class="btn-group  btn-block">
-							    <a role="button" {{action 'deleteCluster' usercluster}} class="btn btn-danger btn-xs active">Confirm</a>
+							    <a role="button" {{bind-attr id='usercluster.cluster_confirm_id'}} {{action 'deleteCluster' usercluster}} class="btn btn-danger btn-xs active">Confirm</a>
 							    <a role="button" {{action 'confirmDelete' usercluster false}} class="btn btn-danger btn-xs active">x</a>
 							</div>
                             {{else}}
-                            <a data-toggle="tooltip" data-placement="right" href="#" role="button" {{action 'confirmDelete' usercluster true}} title='DESTROY CLUSTER'> <i {{bind-attr class='usercluster.cluster_status_class_destroy'}}></i> </a>
+                            <a data-toggle="tooltip" data-placement="right" href="#" role="button" {{action 'confirmDelete' usercluster true}} title='DESTROY CLUSTER'> <i {{bind-attr id='usercluster.cluster_destroy_id' class='usercluster.cluster_status_class_destroy'}}></i> </a>
                             {{/if}}	
                             {{/if}}
                             </td>

@@ -29,7 +29,7 @@ def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
                                          hostname_master)
         # Run Ansible playbook
         run_ansible(hosts_filename, cluster_size, hadoop_image, ssh_file)
-    except Exception:
+    except Exception, e:
         msg = 'Error while running ansible'
         raise RuntimeError(msg, error_ansible_playbook)
     finally:

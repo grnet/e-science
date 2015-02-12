@@ -109,8 +109,6 @@ class StatusView(APIView):
             choices = dict()
             choices = serializer.data.copy()
             choices.update({'token': user.okeanos_token})
-            if 'ssh_key_selection' in serializer.data:
-                choices.update({'ssh_key_name': serializer.data['ssh_key_selection']})
             try:
                 YarnCluster(choices).check_user_resources()
             except ClientError, e:

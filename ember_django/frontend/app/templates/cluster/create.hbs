@@ -4,43 +4,6 @@
 </div>
 <div class="panel panel-primary">
     <div class="panel-heading text-center v-center">
-        <h3 class="panel-title">Last Cluster Configuration</h3>
-    </div>
-    <div class="panel-body">
-        <div class="col col-lg-4">
-            <div class="form-horizontal">
-                <div class="form-group">
-                    <label for="last_conf" class="control-label col col-sm-8">Apply Last Configuration</label>
-                    <div class="col col-sm-4">
-						{{view Ember.Checkbox 
-							checkedBinding="last_cluster_conf_checked" 
-							valueBinding="last_cluster_conf_changed"}}
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col col-lg-2 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">
-            <div class="text-left">
-            	<button id="last_cond_details_button" class="btn btn-sm btn-primary" 
-            	{{action "lastConfDetails"}}> 
-            		{{last_conf_button_message}}
-            	</button>
-            </div>
-        </div>
-        <div class="col col-lg-6 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">
-            <div class="text-left">
-                {{{last_conf_details_message}}}
-            </div>
-        </div>        
-        <div class="row text-center text-danger">
-            <div class="col col-sm-4">
-                {{alert_mes_last_conf}}
-            </div>
-        </div>
-    </div>
-</div>
-<div class="panel panel-primary">
-    <div class="panel-heading text-center v-center">
         <h3 class="panel-title">~Okeanos Project Selection</h3>
     </div>
     <div class="panel-body">
@@ -54,13 +17,30 @@
                         selectionBinding="selected_project"
                         class="btn-primary btn-sm text-left"}}
                     </div>
-                </div>
+                </div>                
             </div>
-        </div>
+	    	<div class="text-center">
+	    	    ***Select your project first
+	    	</div>
+        </div>        
         <div class="col col-lg-4 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">
             <div class="text-left">
-                ***Select your project first
+                <button class="btn btn-default btn-sm" 
+                data-container="body" 
+                data-toggle="popover" 
+                data-placement="bottom-auto"
+                data-trigger='hover focus click'
+                data-html=true
+                {{bind-attr data-content=last_conf_message}} 
+                {{action "applyLastCluster"}}
+                >
+                Apply Last Cluster Configuration</button>
             </div>
+	        <div class="row text-center text-danger">
+	            <div class="col col-sm-4">
+	                {{alert_mes_last_conf}}
+	            </div>
+	        </div>            
         </div>
     </div>
 </div>
@@ -158,12 +138,14 @@
 	        <div class="col col-sm-3">
 	        </div>	
 	        <div class="col col-sm-5">
-	            <h4 id = "vm_flavors_Master" class="btn-group">Predefined VM Flavors: </h4>	            
+	            <h4 id = "vm_flavors_Master" class="btn-group">Predefined VM Flavors: </h4>
+                <div class="btn-group">
 	                {{#each item in project_current.vm_flavors_choices}}
 		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_Master"
 		            class="btn btn-primary btn-sm" disabled = false}}
 		            {{item}}{{/view}}
-		            {{/each}}	            
+		            {{/each}}
+                    </div>
 	        </div>
         </div>
     </div>
@@ -236,12 +218,14 @@
 	        <div class="col col-sm-3">
 	        </div>	
 	        <div class="col col-sm-5">
-	            <h4 id = "vm_flavors_Slave" class="btn-group">Predefined VM Flavors: </h4>	            
+	            <h4 id = "vm_flavors_Slave" class="btn-group">Predefined VM Flavors: </h4>
+                <div class="btn-group">
 	                {{#each item in project_current.vm_flavors_choices}}
 		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_Slave"
 		            class="btn btn-primary btn-sm" disabled = false}}
 		            {{item}}{{/view}}
-		            {{/each}}	            
+		            {{/each}}
+                </div>
 	        </div>
         </div>
     </div>

@@ -46,67 +46,16 @@ App.ClusterCreateController = Ember.Controller.extend({
     vm_flav_slave_Small_disabled : false, 
     vm_flav_slave_Medium_disabled : false, 
     vm_flav_slave_Large_disabled : false,
-	last_cluster_conf_checked: false,	// flag for last cluster configuration
-	last_conf_message : '',	
-	selected_project : '',
+	last_cluster_conf_checked: false,	// flag for last cluster configuration (when it is selected)
+	last_conf_message : '',			// last configuration in message to be displayed on screen
+	// selected project, image, cluster size, storage, from last configuration 
+	// (to be displayed for the user)
+	selected_project : '',	
 	selected_image : '',
 	selected_size : '',
 	selected_storage : '',
-	alert_mes_last_conf : '',
-	last_conf_details_message: '',
-	show_conf_details_pressed: false,
-	last_conf_button_message: 'Show Details',
-	
-	last_cluster_conf_changed : function() {
-
-		if (!Ember.isEmpty(this.get('last_cluster'))){
-			var clusterdata = this.get('last_cluster').get('data');
-			var label = "[CLUSTER NAME]: " + clusterdata.cluster_name
-			+ ", [PROJECT NAME]: " + clusterdata.project_name
-			+ ", [SELECTED IMAGE]: " + clusterdata.os_image
-			+ ", [CLUSTER SIZE]: " + clusterdata.cluster_size
-			+ ", [STORAGE]: " + clusterdata.disk_template
-			+ ", [MASTER CPU]: " + clusterdata.cpu_master
-			+ ", [MASTER MEMORY]: " + clusterdata.mem_master
-			+ ", [MASTER DISK]: " + clusterdata.disk_master
-			+ ", [SLAVES CPU]: " + clusterdata.cpu_slaves
-			+ ", [SLAVES MEMORY]: " + clusterdata.mem_slaves
-			+ ", [SLAVES DISK]: " + clusterdata.disk_slaves;
-	
-			this.set('last_conf_message', label);
-	
-			var isChecked = this.get('last_cluster_conf_checked');
-			
-			if (isChecked == true) {
-				
-				var projects = [];
-				projects = this.get('projects_av');
-				var length = projects.length;
-				for (var i = 0; i < length; i++) {
-					if (projects.objectAt(i).lastIndexOf(clusterdata.project_name, 0) === 0) {
-						this.set('selected_project', projects.objectAt(i));
-						break;
-					}
-				}
-
-				Ember.run.later (this, function() {
-					this.set('selected_image', clusterdata.os_image);
-					this.set('selected_size', clusterdata.cluster_size);
-					this.send('disk_template_selection', reverse_storage_lookup[clusterdata.disk_template], "storage_button");
-					this.send('cpu_selection', clusterdata.cpu_master, "master_cpus_button");
-					this.send('cpu_selection', clusterdata.cpu_slaves, "slaves_cpus_button");
-					this.send('ram_selection', clusterdata.mem_master, "master_ram_button");
-					this.send('ram_selection', clusterdata.mem_slaves, "slaves_ram_button");
-					this.send('disk_selection', clusterdata.disk_master, "master_disk_button");
-					this.send('disk_selection', clusterdata.disk_slaves, "slaves_disk_button");
-				}, 1000);
-
-			} else {
-				this.set('alert_mes_last_conf', '');
-			}
-		}
-	}.property('last_cluster','last_cluster_conf_checked'),
-        
+	alert_mes_last_conf : '',	// alert message when resources are not enough to apply last configuration
+	   
 	// reads available ssh_keys
 	// displays ssh_keys names in the drop-down list
 	ssh_keys_av : function(){
@@ -714,24 +663,52 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('alert_mes_cluster_size', '');
 	},
 	actions : {
-		lastConfDetails : function() {
-			this.set('show_conf_details_pressed', !this.get('show_conf_details_pressed'));
+		// action to apply last cluster configuration
+		// trigger when the corresponding button is pressed
+		applyLastCluster : function() {		
+			// set the flag to true, will be used for the error message
+			this.set('last_cluster_conf_checked', true);
 			
-			if(this.get('show_conf_details_pressed')==true)
-			{
-				this.set('last_conf_details_message', this.get('last_conf_message'));
-				this.set('last_conf_button_message', 'Hide Details');				
-			}
-			else
-			{
-				this.set('last_conf_details_message', '');				
-				this.set('last_conf_button_message', 'Show Details');
-			}
+			if (!Ember.isEmpty(this.get('last_cluster'))){
+				// find and select the last project
+				var projects = [];
+				projects = this.get('projects_av');
+				var length = projects.length;
+				for (var i = 0; i < length; i++) {
+					// check based on the name of the project (at screen we have both project name and quotas)
+					if (projects.objectAt(i).lastIndexOf(clusterdata.project_name, 0) === 0) {
+						this.set('selected_project', projects.objectAt(i));
+						break;
+					}
+				}
+				// select/set the remaining of the last configurations						
+				var self = this;
+				Ember.run.later (function() {			
+					self.set('selected_image', clusterdata.os_image);
+					self.set('selected_size', clusterdata.cluster_size);
+					self.send('disk_template_selection', reverse_storage_lookup[clusterdata.disk_template], "storage_button");
+					self.send('cpu_selection', clusterdata.cpu_master, "master_cpus_button");
+					self.send('cpu_selection', clusterdata.cpu_slaves, "slaves_cpus_button");
+					self.send('ram_selection', clusterdata.mem_master, "master_ram_button");
+					self.send('ram_selection', clusterdata.mem_slaves, "slaves_ram_button");
+					self.send('disk_selection', clusterdata.disk_master, "master_disk_button");
+					self.send('disk_selection', clusterdata.disk_slaves, "slaves_disk_button");					
+				}, 1000);
+
+			}			
+		
 		},
+		// action triggerred when entering the create cluster
+		// find last cluster configuration for this user
 		findLastCluster : function() {
+			this.set('alert_mes_last_conf', '');
+			this.set('last_conf_message', '');
+			this.set('last_cluster', '');
+			
 			var self = this;
 			var store = this.store;
-			store.find('user', 1).then(function(user) {
+			store.fetch('user', 1).then(function(user) {
+				
 				var clusters = user.get('clusters');
 				var length = clusters.get('length');
 				if (length > 0) {
@@ -748,10 +725,27 @@ App.ClusterCreateController = Ember.Controller.extend({
 						}
 					}
 				}
+				
+				if (!Ember.isEmpty(self.get('last_cluster'))){
+					clusterdata = self.get('last_cluster').get('data');
+					var label = '<b>Cluster Name</b>: <span class="text text-info">' + clusterdata.cluster_name + '</span>'
+					+ '<br><b>Projects</b>: <span class="text text-info">' + clusterdata.project_name + '</span>'
+					+ '<br><b>Available Images</b>: <span class="text text-info">' + clusterdata.os_image + '</span>'
+					+ '<br><b>Cluster Size</b>: <span class="text text-info">' + clusterdata.cluster_size + '</span>'
+					+ '<br><b>Storage</b>: <span class="text text-info">' + clusterdata.disk_template + '</span>'
+					+ '<br><b>Master CPUs</b>: <span class="text text-info">' + clusterdata.cpu_master + '</span>'
+					+ '<br><b>Master RAM</b>: <span class="text text-info">' + clusterdata.mem_master + '</span>'
+					+ '<br><b>Master Disk Size</b>: <span class="text text-info">' + clusterdata.disk_master + '</span>'
+					+ '<br><b>Slaves CPUs</b>: <span class="text text-info">' + clusterdata.cpu_slaves + '</span>'
+					+ '<br><b>Slaves RAM</b>: <span class="text text-info">' + clusterdata.mem_slaves + '</span>'
+					+ '<br><b>Slaves Disk Size</b>: <span class="text text-info">' + clusterdata.disk_slaves + '</span>';
+	
+					self.set('last_conf_message', label);
+				}
 			}, function(reason) {
 				console.log(reason.message);
 			});
-		},
+		},	
 		vm_flavor_selection : function(value, name) {
 			if (name == "vm_flavor_button_Master") {
 				this.set('vm_flavor_selection_Master', value);

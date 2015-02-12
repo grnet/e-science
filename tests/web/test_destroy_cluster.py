@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-This script is a test for cluster creation via GUI end to end
+This script is a test for cluster creation via GUI end to end with celery
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -8,6 +8,7 @@ from selenium import webdriver
 import sys, os
 from os.path import join, dirname, abspath
 sys.path.append(join(dirname(abspath(__file__)), '../../ember_django'))
+print sys.path
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -15,7 +16,7 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import NoAlertPresentExceptions
+from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
 from backend.okeanos_utils import check_quota, get_flavor_id, check_credentials
 from random import randint
@@ -23,7 +24,7 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class test_create_cluster_with_hadoop_image(unittest.TestCase):
+class test_destroy_cluster_celery(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -54,7 +55,7 @@ class test_create_cluster_with_hadoop_image(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     
-    def test_create_cluster_with_hadoop_image(self):
+    def test_destroy_cluster_celery(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_id("id_login").click()     
@@ -76,7 +77,7 @@ class test_create_cluster_with_hadoop_image(unittest.TestCase):
         driver.find_element_by_id("id_services_dd").click()
         driver.find_element_by_id("id_create_cluster").click()        
         try:
-            element = WebDriverWait(driver, 30).until(
+            element = WebDriverWait(driver, 60).until(
                 EC.presence_of_element_located((By.ID, "id_title_cluster_create_route"))
             ) 
         except: self.fail("time out")
@@ -101,22 +102,39 @@ class test_create_cluster_with_hadoop_image(unittest.TestCase):
                 driver.find_element_by_id(button_id).click()
         driver.find_element_by_id("next").click()
         print 'Creating cluster...'
-        for i in range(900): 
+        for i in range(1200): 
             # wait for cluster create to finish
             try:
-                if "" != driver.find_element_by_id('id_output_message').text: break
+                if "glyphicon glyphicon-ok text-success" == driver.find_element_by_id('id_status_'+cluster_name).get_attribute("class"): 
+                    print 'Cluster created.'
+                    break
+                elif "glyphicon glyphicon-remove text-danger" == driver.find_element_by_id('id_status_'+cluster_name).get_attribute("class"):
+                    self.assertTrue(False,'Cluster destoryed')
+                    break
+                else:
+                    pass
             except: pass
             time.sleep(1)
-        message =  driver.find_element_by_id('id_output_message').text
-        if message.rsplit(':', 1)[-1] == '8088/cluster':         
-            cluster_url = message.rsplit(' ', 1)[-1]
-            driver.get(cluster_url)
-            print message
-            #check that cluster url is up and page is running
-            try: self.assertEqual("All Applications", driver.find_element_by_css_selector("h1").text)
-            except AssertionError as e: self.verificationErrors.append(str(e))
+        driver.find_element_by_id('id_destroy_' + cluster_name).click()
+        time.sleep(2)
+        driver.find_element_by_id('id_confirm_' + cluster_name).click()
+        print 'Destroying cluster...'
+        flag =False
+        for i in range(1200): 
+            # wait for cluster create to finish
+            try: 
+                if "glyphicon glyphicon-remove text-danger" == driver.find_element_by_id('id_status_'+cluster_name).get_attribute("class"):     
+                    print 'Cluster destroyed.'
+                    flag = True
+                    break
+                else:
+                    pass
+            except: pass
+            time.sleep(1)
+        if flag:
+            self.assertTrue(True,'Cluster destoryed')
         else:
-            self.assertTrue(False, message)
+            self.assertTrue(False,'Error')       
 
 
     

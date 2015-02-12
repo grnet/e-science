@@ -16,9 +16,13 @@ function userThemeFunc(name, url) {
 	this.url = url;
 }
 
-var lightTheme = new userThemeFunc('Light Theme', 'styles/bootstrap.united.orka.css');
-var blackTheme = new userThemeFunc('Dark Theme', 'styles/bootstrap.orka.css');
-var user_themes = [blackTheme, lightTheme];
+var lightTheme = new userThemeFunc('Light', 'styles/bootstrap.united.orka.css');
+var blackTheme = new userThemeFunc('Dark', 'styles/bootstrap.orka.css');
+var blueTheme = new userThemeFunc('Blue (Flat)', 'styles/bootstrap.superhero.orka.css');
+var readableTheme = new userThemeFunc('Colorblind', 'styles/bootstrap.readable.orka.css');
+var darklyTheme = new userThemeFunc('Darkly (Flat)', 'styles/bootstrap.darkly.orka.css');
+var lumenTheme = new userThemeFunc('Lumen', 'styles/bootstrap.lumen.orka.css');
+var user_themes = [blackTheme, lightTheme, blueTheme, readableTheme, darklyTheme, lumenTheme];
 
 function changeCSS(cssFile_URL, cssLinkIndex) {
 	var cssFile = DJANGO_STATIC_URL + cssFile_URL;
