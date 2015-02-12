@@ -16,9 +16,8 @@ from django.views import generic
 from get_flavors_quotas import project_list_flavor_quota
 from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
-    ClusterCreationParamsSerializer, ClusterInfoSerializer, \
-    ClusterchoicesSerializer, PendingQuotaSerializer, ProjectNameSerializer, \
-    MasterIpSerializer, UpdateDatabaseSerializer, TaskSerializer, UserThemeSerializer
+    ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
+    DeleteClusterSerializer, TaskSerializer, UserThemeSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async
@@ -131,12 +130,12 @@ class StatusView(APIView):
         Delete cluster from ~okeanos.
         """
         self.resource_name = 'clusterchoice'
-        self.serializer_class = MasterIpSerializer
+        self.serializer_class = DeleteClusterSerializer
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
             user_token = Token.objects.get(key=request.auth)
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
-            d_cluster = destroy_cluster_async.delay(serializer.data['master_IP'], user.okeanos_token)
+            d_cluster = destroy_cluster_async.delay(user.okeanos_token, serializer.data['id'])
             task_id = d_cluster.id
             return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
         # This will be send if user's delete cluster parameters are not de-serialized

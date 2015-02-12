@@ -284,20 +284,20 @@ class YarnCluster(object):
         p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
         out, err = p.communicate()
         output = out[2:-2].split('}, {')
-        ssh_dict =list()
+        ssh_dict = list()
         ssh_counter = 0
         for dictionary in output:
-            mydict=dict()
+            mydict = dict()
             new_dictionary = dictionary.replace('"','')
             dict1 = new_dictionary.split(', ')
             for each in dict1:
-                list__keys_values_in_dict=each.split(': ')
-                new_list_of_dict_elements=list()
+                list__keys_values_in_dict = each.split(': ')
+                new_list_of_dict_elements = list()
                 for item in list__keys_values_in_dict:
                     new_list_of_dict_elements.append(item)
                 if len(new_list_of_dict_elements) > 1:
                     for pair in new_list_of_dict_elements:
-                        mydict[new_list_of_dict_elements[0]]=new_list_of_dict_elements[1]
+                        mydict[new_list_of_dict_elements[0]] = new_list_of_dict_elements[1]
             ssh_dict.append(mydict)          
         return ssh_dict
         
@@ -334,18 +334,16 @@ class YarnCluster(object):
         current_task.update_state(state="AUTHENTICATED")
 
         flavor_master, flavor_slaves, image_id = self.check_user_resources()
-        # Create timestamped name of the cluster
+        # Create timestamped name of the cluster###############################needs more commenting
         date_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        cluster_name = '%s%s%s' % (date_time, '-', self.opts['cluster_name'])
+        self.ansible_hosts_name = '%s%s%s' % (date_time, '-', self.opts['cluster_name'])
+        cluster_name = '%s%s%s' % ('[orka]', '-', self.opts['cluster_name'])
         self.opts['cluster_name'] = cluster_name
 
         # Update db with cluster status as pending
         task_id = current_task.request.id
-        db_cluster_create(self.opts, task_id)
-
-
+        self.cluster_id = db_cluster_create(self.opts, task_id)
         self.ssh_file = 'no_ssh_key_selected'
-
         if self.opts['ssh_key_name'] is None:
             self.ssh_file = pub_keys_path
 
@@ -361,18 +359,18 @@ class YarnCluster(object):
                               image_id, self.opts['cluster_size'],
                               self.net_client, self.auth, self.project_id)
 
-            set_cluster_state(self.opts['token'], self.opts['cluster_name'], " Creating ~okeanos cluster")
+            set_cluster_state(self.opts['token'], self.cluster_id, " Creating ~okeanos cluster...1/4")
 
             self.HOSTNAME_MASTER_IP, self.server_dict = \
                 cluster.create('', pub_keys_path, '')
             sleep(15)
         except Exception:
             # If error in bare cluster, update cluster status as destroyed
-            set_cluster_state(self.opts['token'], self.opts['cluster_name'], 'Error', status='Destroyed')
+            set_cluster_state(self.opts['token'], self.cluster_id, 'Error', status='Destroyed')
             raise
         # Get master VM root password
         self.master_root_pass = self.server_dict[0]['adminPass']
-        set_cluster_state(self.opts['token'], self.opts['cluster_name'], ' ~okeanos cluster created',
+        set_cluster_state(self.opts['token'], self.cluster_id, ' ~okeanos cluster created...2/4',
                           master_IP=self.HOSTNAME_MASTER_IP)
 
         # Return master node ip and server dict
@@ -386,21 +384,21 @@ class YarnCluster(object):
         except Exception, e:
             logging.error(' Fatal error: ' + str(e.args[0]))
             raise
-        set_cluster_state(self.opts['token'], self.opts['cluster_name'],
-                          ' Configuring Yarn cluster node communication',
+        set_cluster_state(self.opts['token'], self.cluster_id,
+                          ' Configuring Yarn cluster node communication...3/4',
                           password=self.master_root_pass)
 
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
                                              self.HOSTNAME_MASTER_IP)
-            set_cluster_state(self.opts['token'], self.opts['cluster_name'],
-                          ' Installing and configuring Yarn')
+            set_cluster_state(self.opts['token'], self.cluster_id,
+                          ' Installing and configuring Yarn...4/4')
 
             install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
-                         self.server_dict[0]['name'], self.hadoop_image, self.ssh_file)
+                         self.ansible_hosts_name, self.hadoop_image, self.ssh_file)
 
             # If Yarn cluster is build, update cluster status as active
-            set_cluster_state(self.opts['token'], self.opts['cluster_name'],
+            set_cluster_state(self.opts['token'], self.cluster_id,
                               ' Yarn Cluster is active', status='Active')
 
             return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass
@@ -408,10 +406,10 @@ class YarnCluster(object):
             logging.error(' Fatal error:' + str(e.args[0]))
             logging.error(' Created cluster and resources will be deleted')
             # If error in Yarn cluster, update cluster status as destroyed
-            set_cluster_state(self.opts['token'], self.opts['cluster_name'], 'Error')
+            set_cluster_state(self.opts['token'], self.cluster_id, 'Error')
             self.destroy()
             raise
 
     def destroy(self):
         """Destroy Cluster"""
-        destroy_cluster(self.opts['token'], self.HOSTNAME_MASTER_IP)
+        destroy_cluster(self.opts['token'], self.cluster_id)

@@ -106,9 +106,11 @@ def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, 
     cpu_choices = flavors['cpus']
     mem_choices = flavors['ram']
     disk_choices = flavors['disk']
-    disk_template = ['Standard' , 'Archipelago']
+    disk_template = list(flavors['disk_template']) 
     os_choices = images
-
+    for position ,element in enumerate(disk_template):
+        disk_template[position] = storage_template[disk_template[position]]
+        
     # Create a ClusterCreationParams object with the parameters returned from
     # get_flavor_id and check_quota.
     cluster_creation_params = ClusterCreationParams(id=ember_project_id,
