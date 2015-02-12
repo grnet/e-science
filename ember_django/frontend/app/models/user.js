@@ -101,6 +101,16 @@ App.Usercluster = DS.Model.extend({
 		var ip_id = "id_".concat("ip_",cluster_name_sort);
 		return ip_id;	
 	}.property('cluster_name'),
+	cluster_destroy_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var destroy_id = "id_".concat("destroy_",cluster_name_sort);
+		return destroy_id;	
+	}.property('cluster_name'),
+	cluster_confirm_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var confirm_id = "id_".concat("confirm_",cluster_name_sort);
+		return confirm_id;	
+	}.property('cluster_name'),
 	cluster_confirm_delete : function(key, value){
 		this.set('confirm_delete', value);
 		return this.get('confirm_delete');
