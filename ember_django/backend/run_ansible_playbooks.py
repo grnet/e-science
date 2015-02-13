@@ -13,6 +13,7 @@ import logging
 # Definitions of return value errors
 from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
 playbook = 'site.yml'
+ansible_hosts_prefix = 'ansible_hosts_'
 
 def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
     """
@@ -30,7 +31,7 @@ def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
         # Run Ansible playbook
         run_ansible(hosts_filename, cluster_size, hadoop_image, ssh_file)
     except Exception, e:
-        msg = 'Error while running ansible'
+        msg = 'Error while running Ansible '
         raise RuntimeError(msg, error_ansible_playbook)
     finally:
         os.system('rm /tmp/master_' + master_hostname + '_pub_key ' + hosts_filename)
@@ -43,12 +44,11 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
     Function that creates the ansible_hosts file and
     returns the name of the file.
     """
-    ansible_hosts_prefix = cluster_name.replace(" ", "_")
 
     # Turns spaces to underscores from cluster name and appends it to ansible_hosts
     # The ansible_hosts file will now have a timestamped name
 
-    hosts_filename = os.getcwd() + '/ansible_hosts_' + ansible_hosts_prefix
+    hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name.replace(" ", "_")
     # Create ansible_hosts file and write all information that is
     # required from Ansible playbook.
     with open(hosts_filename, 'w+') as target:
@@ -86,15 +86,14 @@ def run_ansible(hosts_filename, cluster_size, hadoop_image, ssh_file):
     # ansible_log file to write if logging level is
     # different than report or summary
     ansible_verbosity = ""
-    ansible_log = " > ansible.log"
-    if level in [REPORT, SUMMARY, logging.INFO]:
-        ansible_log = ""
-    elif level == logging.DEBUG:
-        ansible_verbosity = " -vv"
-        log_file_path = os.path.join(os.getcwd(), "create_cluster_debug.log")
-        ansible_log = " >> " + log_file_path
-    if level == logging.INFO:
-        ansible_verbosity = " -v"
+    #if level in [REPORT, SUMMARY, logging.INFO]:
+        #ansible_log = ""
+    #elif level == logging.DEBUG:
+        #ansible_verbosity = " -vv"
+    debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
+    ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
+    #if level == logging.INFO:
+        #ansible_verbosity = " -v"
 
     # find ansible playbook (site.yml)
     ansible_playbook = dirname(abspath(__file__)) + '/ansible/' + playbook
@@ -104,10 +103,10 @@ def run_ansible(hosts_filename, cluster_size, hadoop_image, ssh_file):
     # hadoop_image flag(true/false)
     if hadoop_image:
         # true -> use an available image (hadoop pre-installed)
-        ansible_code += '" -t postconfig'
+        ansible_code += '" -t postconfig' + ansible_log
     else:
         # false -> use a bare VM
-        ansible_code += '"'
+        ansible_code += '"' + ansible_log
 
     exit_status = os.system(ansible_code)
     if exit_status != 0:

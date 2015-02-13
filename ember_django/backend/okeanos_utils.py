@@ -264,23 +264,44 @@ def check_quota(token, project_id):
 
     limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
     usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GB
+    project_limit_cd = dict_quotas[project_id]['cyclades.disk']['project_limit'] / Bytes_to_GB
+    project_usage_cd = dict_quotas[project_id]['cyclades.disk']['project_usage'] / Bytes_to_GB
     pending_cd = pending_quota['Disk']
-    available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd)
+    available_cyclades_disk_GB = limit_cd-usage_cd
+    if (available_cyclades_disk_GB > (project_limit_cd - project_usage_cd)):
+        available_cyclades_disk_GB = project_limit_cd - project_usage_cd
+    available_cyclades_disk_GB = available_cyclades_disk_GB - pending_cd
 
     limit_cpu = dict_quotas[project_id]['cyclades.cpu']['limit']
     usage_cpu = dict_quotas[project_id]['cyclades.cpu']['usage']
+    project_limit_cpu = dict_quotas[project_id]['cyclades.cpu']['project_limit']
+    project_usage_cpu = dict_quotas[project_id]['cyclades.cpu']['project_usage']
     pending_cpu = pending_quota['Cpus']
-    available_cpu = limit_cpu - usage_cpu - pending_cpu
+    available_cpu = limit_cpu - usage_cpu
+    if (available_cpu > (project_limit_cpu - project_usage_cpu)):
+        available_cpu = project_limit_cpu - project_usage_cpu
+    available_cpu = available_cpu - pending_cpu
 
     limit_ram = dict_quotas[project_id]['cyclades.ram']['limit'] / Bytes_to_MB
     usage_ram = dict_quotas[project_id]['cyclades.ram']['usage'] / Bytes_to_MB
+    project_limit_ram = dict_quotas[project_id]['cyclades.ram']['project_limit'] / Bytes_to_MB
+    project_usage_ram = dict_quotas[project_id]['cyclades.ram']['project_usage'] / Bytes_to_MB
     pending_ram = pending_quota['Ram']
-    available_ram = (limit_ram-usage_ram-pending_ram)
+    available_ram = limit_ram-usage_ram
+    if (available_ram > (project_limit_ram - project_usage_ram)):
+        available_ram = project_limit_ram - project_usage_ram
+    available_ram = available_ram - pending_ram
 
     limit_vm = dict_quotas[project_id]['cyclades.vm']['limit']
     usage_vm = dict_quotas[project_id]['cyclades.vm']['usage']
+    project_limit_vm = dict_quotas[project_id]['cyclades.vm']['project_limit']
+    project_usage_vm = dict_quotas[project_id]['cyclades.vm']['project_usage']
     pending_vm = pending_quota['VMs']
-    available_vm = limit_vm-usage_vm-pending_vm
+    available_vm = limit_vm-usage_vm
+    if (available_vm > (project_limit_vm - project_usage_vm)):
+        available_vm = project_limit_vm - project_usage_vm
+    available_vm = available_vm - pending_vm
+
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
               'ram': {'limit': limit_ram, 'available': available_ram},
@@ -288,6 +309,7 @@ def check_quota(token, project_id):
                        'available': available_cyclades_disk_GB},
               'cluster_size': {'limit': limit_vm, 'available': available_vm}}
     return quotas
+
 
 def check_images(token, project_id):
     """

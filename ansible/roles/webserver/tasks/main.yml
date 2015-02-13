@@ -21,7 +21,7 @@
     apt_repository: repo='{{item}}' state=present update_cache=yes
     sudo: yes
     with_items:
-      - deb http://ftp.gr.debian.org/debian testing main contrib
+      - deb http://ftp.debian.org/debian testing main contrib
       - deb http://ftp.debian.org/debian/ jessie-updates main contrib
       - deb http://nginx.org/packages/debian/ wheezy nginx
       - deb-src http://nginx.org/packages/debian/ wheezy nginx
@@ -44,6 +44,7 @@
     apt: "name={{item}}"
     with_items:
       - erlang
+      - postgresql
       - postgresql-client
       - python-psycopg2
       - libpq-dev
@@ -166,6 +167,26 @@
     tags: djangosetup
     template: src=settings.j2 owner=orka_admin mode=0744 dest={{settings_path}}/settings.py
 
+  - name: Edit pg_hba.conf
+    sudo: yes
+    lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
+    tags: postgres
+
+  - name: Restart PostgreSql service
+    sudo: yes
+    service: name=postgresql state=restarted
+    tags: postgres
+
+  - name: Create PostgreSql user
+    sudo: yes
+    postgresql_user: name={{db_user}} password={{db_password}} role_attr_flags=CREATEDB,NOSUPERUSER,NOCREATEROLE
+    tags: postgres
+
+  - name: Create PostgreSql database
+    sudo: yes
+    postgresql_db: name={{db_name}} owner={{db_user}}
+    tags: postgres
+
   - name: Django project syncdb
     django_manage: command=syncdb app_path={{project_path}}/{{ember_django_dir}}
     tags: djangosetup
@@ -173,11 +194,21 @@
   - name: Django project migrate
     django_manage: command=migrate app_path={{project_path}}/{{ember_django_dir}}
     tags: djangosetup
-   
+
+  - name: Revert pg_hba.conf to default
+    sudo: yes
+    lineinfile: line="local\tall\t\tpostgres\t\t\t\tpeer" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=trust)" backrefs=yes
+    tags: postgres
+
+  - name: Restart PostgreSql service
+    sudo: yes
+    service: name=postgresql state=restarted
+    tags: postgres
+
   - name: Create Django superuser
     shell: echo "from django.contrib.auth.models import User; User.objects.create_superuser('{{django_admin_name}}', '{{django_admin_email}}', '{{django_admin_password}}')" | python manage.py shell chdir={{my_project_dir}}/{{my_project_name}}/{{ember_django_dir}}
     tags: djangosetup
-   
+
   - name: Copy uwsgi.ini file
     tags: nginxsetup
     copy: src=uwsgi.ini dest=./conf owner=orka_admin mode=0744
