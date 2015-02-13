@@ -126,7 +126,7 @@ class HadoopCluster(object):
     def destroy(self):
         """ Method for deleting Hadoop clusters in~okeanos."""
         try:
-            payload = {"clusterchoice":{"token": self.opts['token'], "master_IP": self.opts['master_ip']}}
+            payload = {"clusterchoice":{"id": self.opts['cluster_id']}}
             yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
             response = yarn_cluster_req.delete_cluster()
             task_id = response['clusterchoice']['task_id']
@@ -146,13 +146,13 @@ class UserClusterInfo(object):
     def __init__(self, opts):
         self.opts = opts
         self.data = list()
-        self.order_list = [['cluster_name','cluster_size','cluster_status','master_IP',
-                            'project_name','id','os_image','disk_template',
+        self.order_list = [['cluster_name','id','cluster_size','cluster_status','master_IP',
+                            'project_name','os_image','disk_template',
                             'cpu_master','mem_master','disk_master',
                             'cpu_slaves','mem_slaves','disk_slaves']]
         self.sort_func = custom_sort_factory(self.order_list)
-        self.short_list = {'cluster_name':True, 'cluster_size':True, 'cluster_status':True, 'master_IP':True}
-        self.skip_list = {'id':True, 'task_id':True, 'state':True}
+        self.short_list = {'id':True, 'cluster_name':True, 'cluster_size':True, 'cluster_status':True, 'master_IP':True}
+        self.skip_list = {'task_id':True, 'state':True}
         self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0'}
         self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED'}
         
@@ -265,8 +265,8 @@ def main():
                               choices=checker.logging_levels.keys(),
                               help='Logging Level. Default: summary')
 
-        parser_d.add_argument('master_ip',
-                              help='The public ip of the master vm of the cluster')
+        parser_d.add_argument('cluster_id',
+                              help='The id of the Hadoop cluster')
         parser_d.add_argument('token',
                               help='Synnefo authentication token')
 

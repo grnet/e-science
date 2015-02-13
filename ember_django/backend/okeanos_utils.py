@@ -270,7 +270,7 @@ def check_quota(token, project_id):
     available_cyclades_disk_GB = limit_cd-usage_cd
     if (available_cyclades_disk_GB > (project_limit_cd - project_usage_cd)):
         available_cyclades_disk_GB = project_limit_cd - project_usage_cd
-    available_cyclades_disk_GB = available_cyclades_disk_GB - project_usage_cd
+    available_cyclades_disk_GB = available_cyclades_disk_GB - pending_cd
 
     limit_cpu = dict_quotas[project_id]['cyclades.cpu']['limit']
     usage_cpu = dict_quotas[project_id]['cyclades.cpu']['usage']
