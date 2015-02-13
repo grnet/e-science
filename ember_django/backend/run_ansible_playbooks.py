@@ -12,7 +12,7 @@ import logging
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
-
+playbook = 'site.yml'
 
 def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
     """
@@ -25,15 +25,15 @@ def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
     cluster_size = len(list_of_hosts)
     # Create ansible_hosts file
     try:
-        file_name = create_ansible_hosts(cluster_name, list_of_hosts,
+        hosts_filename = create_ansible_hosts(cluster_name, list_of_hosts,
                                          hostname_master)
         # Run Ansible playbook
-        run_ansible(file_name, cluster_size, hadoop_image, ssh_file)
-    except Exception:
+        run_ansible(hosts_filename, cluster_size, hadoop_image, ssh_file)
+    except Exception, e:
         msg = 'Error while running ansible'
         raise RuntimeError(msg, error_ansible_playbook)
     finally:
-        os.system('rm /tmp/master_' + master_hostname + '_pub_key ' + file_name)
+        os.system('rm /tmp/master_' + master_hostname + '_pub_key ' + hosts_filename)
     logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
                 + hostname_master + ':8088/cluster')
 
@@ -48,10 +48,10 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
     # Turns spaces to underscores from cluster name and appends it to ansible_hosts
     # The ansible_hosts file will now have a timestamped name
 
-    filename = os.getcwd() + '/ansible_hosts_' + ansible_hosts_prefix
+    hosts_filename = os.getcwd() + '/ansible_hosts_' + ansible_hosts_prefix
     # Create ansible_hosts file and write all information that is
     # required from Ansible playbook.
-    with open(filename, 'w+') as target:
+    with open(hosts_filename, 'w+') as target:
         target.write('[master]' + '\n')
         target.write(list_of_hosts[0]['fqdn'])
         target.write(' private_ip='+list_of_hosts[0]['private_ip'])
@@ -65,10 +65,10 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
             target.write(' ansible_ssh_pass='+host['password'])
             target.write(' ansible_ssh_port='+str(host['port']))
             target.write(' ansible_ssh_host='+ hostname_master +'\n')
-    return filename
+    return hosts_filename
 
 
-def run_ansible(filename, cluster_size, hadoop_image, ssh_file):
+def run_ansible(hosts_filename, cluster_size, hadoop_image, ssh_file):
     """
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
@@ -87,7 +87,7 @@ def run_ansible(filename, cluster_size, hadoop_image, ssh_file):
     # different than report or summary
     ansible_verbosity = ""
     ansible_log = " > ansible.log"
-    if level == REPORT or level == SUMMARY or level == logging.INFO:
+    if level in [REPORT, SUMMARY, logging.INFO]:
         ansible_log = ""
     elif level == logging.DEBUG:
         ansible_verbosity = " -vv"
@@ -95,19 +95,21 @@ def run_ansible(filename, cluster_size, hadoop_image, ssh_file):
         ansible_log = " >> " + log_file_path
     if level == logging.INFO:
         ansible_verbosity = " -v"
-    ansible_path = dirname(abspath(__file__)) + '/ansible/site.yml'
+
+    # find ansible playbook (site.yml)
+    ansible_playbook = dirname(abspath(__file__)) + '/ansible/' + playbook
+
+    ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -f ' + str(cluster_size) + ' -e "choose_role=yarn format=True start_yarn=True ssh_file_name=' + ssh_file
+
+    # hadoop_image flag(true/false)
     if hadoop_image:
-        exit_status = os.system('ansible-playbook -i ' + filename + ' ' +
-                                ansible_path + ansible_verbosity +
-                                ' -f ' + str(cluster_size) +
-                                ' -e "choose_role=yarn format=True start_yarn=True ssh_file_name='+ssh_file+'" -t postconfig'
-                                + ansible_log)
+        # true -> use an available image (hadoop pre-installed)
+        ansible_code += '" -t postconfig'
     else:
-        exit_status = os.system('ansible-playbook -i ' + filename + ' ' +
-                                ansible_path + ansible_verbosity +
-                                ' -f ' + str(cluster_size) +
-                                ' -e "choose_role=yarn format=True start_yarn=True ssh_file_name='+ssh_file+'"'
-                                + ansible_log)
+        # false -> use a bare VM
+        ansible_code += '"'
+
+    exit_status = os.system(ansible_code)
     if exit_status != 0:
         msg = ' Ansible failed with exit status %d' % exit_status
         raise RuntimeError(msg, exit_status)

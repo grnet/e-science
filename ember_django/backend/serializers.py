@@ -72,9 +72,10 @@ class TaskSerializer(serializers.Serializer):
     task_id = serializers.CharField()
 
 
-class MasterIpSerializer(serializers.Serializer):
+class DeleteClusterSerializer(serializers.Serializer):
     """ Serializer for master vm ip """
-    master_IP = serializers.CharField()
+    master_IP = serializers.CharField(required=False)
+    id = serializers.IntegerField()
 
 
 class UpdateDatabaseSerializer(serializers.Serializer):

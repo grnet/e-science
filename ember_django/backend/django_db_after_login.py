@@ -54,10 +54,8 @@ def db_after_login(token, login=True):
 
     except ObjectDoesNotExist:
         # new user database entry
-        new_entry = UserInfo(uuid=given_uuid, okeanos_token=token)
-        new_entry.save()
-        new_token = Token(user=new_entry)
-        new_token.save()
+        new_entry = UserInfo.objects.create(uuid=given_uuid, okeanos_token=token)
+        new_token = Token.objects.create(user=new_entry)
         new_user = UserInfo.objects.get(uuid=given_uuid)
         logging.info(' The id of the new user is '+ str(new_user.user_id))
         if login:
@@ -72,34 +70,36 @@ def db_after_login(token, login=True):
 def db_cluster_create(choices, task_id):
     """Updates DB after user request for cluster creation"""
     user =  UserInfo.objects.get(okeanos_token=choices['token'])
-    ClusterInfo(cluster_name=choices['cluster_name'], action_date=timezone.now(),
-                cluster_status="2", cluster_size=choices['cluster_size'],
-                cpu_master=choices['cpu_master'],
-                mem_master=choices['mem_master'],
-                disk_master=choices['disk_master'],
-                cpu_slaves=choices['cpu_slaves'],
-                mem_slaves=choices['mem_slaves'],
-                disk_slaves=choices['disk_slaves'],
-                disk_template=choices['disk_template'],
-                os_image=choices['os_choice'], user_id=user,
-                project_name=choices['project_name'],
-                task_id=task_id,
-                state='AUTHENTICATED').save()
+    new_cluster = ClusterInfo.objects.create(cluster_name=choices['cluster_name'], action_date=timezone.now(),
+                    cluster_status="2", cluster_size=choices['cluster_size'],
+                    cpu_master=choices['cpu_master'],
+                    mem_master=choices['mem_master'],
+                    disk_master=choices['disk_master'],
+                    cpu_slaves=choices['cpu_slaves'],
+                    mem_slaves=choices['mem_slaves'],
+                    disk_slaves=choices['disk_slaves'],
+                    disk_template=choices['disk_template'],
+                    os_image=choices['os_choice'], user_id=user,
+                    project_name=choices['project_name'],
+                    task_id=task_id,
+                    state='AUTHENTICATED')
+
+    return new_cluster.id
 
 
-def db_cluster_update(token, status, cluster_name, master_IP='', state='', password=''):
+def db_cluster_update(token, status, cluster_id, master_IP='', state='', password=''):
     """
     Updates DB when cluster is created or deleted from pending status and
     when cluster state changes.
     """
     try:
         user =  UserInfo.objects.get(okeanos_token=token)
-        cluster = ClusterInfo.objects.get(user_id=user, cluster_name=cluster_name)
+        cluster = ClusterInfo.objects.get(id=cluster_id)
     except ObjectDoesNotExist:
         msg = 'Cluster with given name does not exist in pending state'
         raise ObjectDoesNotExist(msg)
     if password:
-        user.master_vm_password = 'The root password of ' + cluster_name + ' master VM is ' + password
+        user.master_vm_password = 'The root password of ' + cluster.cluster_name + ' master VM is ' + password
     else:
         user.master_vm_password = password
     if status == "Active":
