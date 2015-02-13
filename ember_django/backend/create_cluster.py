@@ -362,6 +362,7 @@ class YarnCluster(object):
         except Exception:
             # If error in bare cluster, update cluster status as destroyed
             set_cluster_state(self.opts['token'], self.cluster_id, 'Error', status='Destroyed')
+            os.system('rm ' + self.ssh_file)
             raise
         # Get master VM root password
         self.master_root_pass = self.server_dict[0]['adminPass']
@@ -396,7 +397,6 @@ class YarnCluster(object):
             set_cluster_state(self.opts['token'], self.cluster_id,
                               ' Yarn Cluster is active', status='Active')
 
-            return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass
         except Exception, e:
             logging.error(' Fatal error:' + str(e.args[0]))
             logging.error(' Created cluster and resources will be deleted')
@@ -404,6 +404,11 @@ class YarnCluster(object):
             set_cluster_state(self.opts['token'], self.cluster_id, 'Error')
             self.destroy()
             raise
+
+        finally:
+            os.system('rm ' + self.ssh_file)
+
+        return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass
 
     def destroy(self):
         """Destroy Cluster"""
