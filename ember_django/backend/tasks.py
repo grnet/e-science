@@ -23,10 +23,10 @@ def create_cluster_async(choices):
     return task_result
 
 @task()
-def destroy_cluster_async(master_IP, token):
+def destroy_cluster_async(token, cluster_id):
     """
     Asynchronous destroy cluster task.
     """
-    result = destroy_cluster(token, master_IP)
+    result = destroy_cluster(token, cluster_id)
     return result
 

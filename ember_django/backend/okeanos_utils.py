@@ -16,10 +16,11 @@ from kamaki.clients.cyclades import CycladesClient, CycladesNetworkClient
 from time import sleep
 from cluster_errors_constants import *
 from celery import current_task
-# Global constants
-MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 from django_db_after_login import db_cluster_update, get_user_id
 from backend.models import UserInfo, ClusterInfo
+# Global constants
+MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
+
 
 
 def retrieve_pending_clusters(token, project_name):
@@ -49,13 +50,13 @@ def retrieve_pending_clusters(token, project_name):
 
     return pending_quota
 
-def set_cluster_state(token, name, state, status='Pending', master_IP='', password=''):
+def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', password=''):
     """
     Logs a cluster state message and updates the celery and escience database
     state.
     """
     logging.log(SUMMARY, state)
-    db_cluster_update(token, status, name, master_IP, state=state, password=password)
+    db_cluster_update(token, status, cluster_id, master_IP, state=state, password=password)
     if len(state) > 49:
         state = 'Longer than 50 chars' # Must be fixed with dictionary error messages
     current_task.update_state(state=state)
@@ -78,14 +79,15 @@ def get_project_id(token, project_name):
     raise ClientError(msg, error_proj_id)
 
 
-def destroy_cluster(token, master_IP):
+def destroy_cluster(token, cluster_id):
     """
     Destroys cluster and deletes network and floating ip. Finds the machines
     that belong to the cluster from the master_IP that is given.
     """
     current_task.update_state(state="STARTED")
     servers_to_delete = []
-    float_ip_to_delete = master_IP
+    cluster_to_delete = ClusterInfo.objects.get(id=cluster_id)
+    float_ip_to_delete = cluster_to_delete.master_IP
     list_of_errors = []
     master_id = None
     network_to_delete_id = None
@@ -125,7 +127,7 @@ def destroy_cluster(token, master_IP):
 
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
-        set_cluster_state(token, master_server.rsplit("-", 1)[0], " Deleted master VM", status='Destroyed')
+        set_cluster_state(token, cluster_id, " Deleted master VM", status='Destroyed')
         msg = ' A valid network of master and slaves was not found.'\
             'Deleting the master VM only'
         raise ClientError(msg, error_cluster_corrupt)
@@ -138,13 +140,13 @@ def destroy_cluster(token, master_IP):
                 break
     cluster_name = servers_to_delete[0]['name'].rsplit("-", 1)[0]
     number_of_nodes = len(servers_to_delete)
-    set_cluster_state(token, cluster_name, " Starting deletion of requested cluster...1/3")
+    set_cluster_state(token, cluster_id, " Starting deletion of requested cluster...1/3")
     # Start cluster deleting
     try:
         for server in servers_to_delete:
             cyclades.delete_server(server['id'])
         state= ' There are %d servers to clean up...2/3' % number_of_nodes
-        set_cluster_state(token, cluster_name, state)
+        set_cluster_state(token, cluster_id, state)
         # Wait for every server of the cluster to be deleted
         for server in servers_to_delete:
             new_status = cyclades.wait_server(server['id'],
@@ -153,7 +155,7 @@ def destroy_cluster(token, master_IP):
             if new_status != 'DELETED':
                 logging.error(' Error deleting server [%s]' % server['name'])
                 list_of_errors.append(error_cluster_corrupt)
-        set_cluster_state(token, cluster_name, ' Cluster deleted.Deleting network and public ip...3/3')
+        set_cluster_state(token, cluster_id, ' Cluster deleted.Deleting network and public ip...3/3')
     except ClientError:
         logging.exception(' Error in deleting server')
         list_of_errors.append(error_cluster_corrupt)
@@ -162,7 +164,7 @@ def destroy_cluster(token, master_IP):
         nc.delete_network(network_to_delete_id)
         sleep(10)  # Take some time to ensure it is deleted
         state= ' Network with id [%s] is deleted' % network_to_delete_id
-        set_cluster_state(token, cluster_name, state)
+        set_cluster_state(token, cluster_id, state)
     except ClientError:
         logging.exception(' Error in deleting network')
         list_of_errors.append(error_cluster_corrupt)
@@ -172,7 +174,7 @@ def destroy_cluster(token, master_IP):
         nc.delete_floatingip(float_ip_to_delete_id)
         state= ' Floating ip [%s] is deleted' % float_ip_to_delete
         logging.log(SUMMARY, state)
-        set_cluster_state(token, cluster_name, state)
+        set_cluster_state(token, cluster_id, state)
     except ClientError:
         logging.exception(' Error in deleting floating ip [%s]' %
                           float_ip_to_delete)
@@ -183,7 +185,7 @@ def destroy_cluster(token, master_IP):
                 number_of_nodes-1)
 
     state= ' Cluster with public IP [%s] was deleted ' % float_ip_to_delete
-    set_cluster_state(token, cluster_name, state, status='Destroyed')
+    set_cluster_state(token, cluster_id, state, status='Destroyed')
     # Everything deleted as expected
     if not list_of_errors:
         return 0
@@ -262,23 +264,44 @@ def check_quota(token, project_id):
 
     limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
     usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GB
+    project_limit_cd = dict_quotas[project_id]['cyclades.disk']['project_limit'] / Bytes_to_GB
+    project_usage_cd = dict_quotas[project_id]['cyclades.disk']['project_usage'] / Bytes_to_GB
     pending_cd = pending_quota['Disk']
-    available_cyclades_disk_GB = (limit_cd-usage_cd-pending_cd)
+    available_cyclades_disk_GB = limit_cd-usage_cd
+    if (available_cyclades_disk_GB > (project_limit_cd - project_usage_cd)):
+        available_cyclades_disk_GB = project_limit_cd - project_usage_cd
+    available_cyclades_disk_GB = available_cyclades_disk_GB - project_usage_cd
 
     limit_cpu = dict_quotas[project_id]['cyclades.cpu']['limit']
     usage_cpu = dict_quotas[project_id]['cyclades.cpu']['usage']
+    project_limit_cpu = dict_quotas[project_id]['cyclades.cpu']['project_limit']
+    project_usage_cpu = dict_quotas[project_id]['cyclades.cpu']['project_usage']
     pending_cpu = pending_quota['Cpus']
-    available_cpu = limit_cpu - usage_cpu - pending_cpu
+    available_cpu = limit_cpu - usage_cpu
+    if (available_cpu > (project_limit_cpu - project_usage_cpu)):
+        available_cpu = project_limit_cpu - project_usage_cpu
+    available_cpu = available_cpu - pending_cpu
 
     limit_ram = dict_quotas[project_id]['cyclades.ram']['limit'] / Bytes_to_MB
     usage_ram = dict_quotas[project_id]['cyclades.ram']['usage'] / Bytes_to_MB
+    project_limit_ram = dict_quotas[project_id]['cyclades.ram']['project_limit'] / Bytes_to_MB
+    project_usage_ram = dict_quotas[project_id]['cyclades.ram']['project_usage'] / Bytes_to_MB
     pending_ram = pending_quota['Ram']
-    available_ram = (limit_ram-usage_ram-pending_ram)
+    available_ram = limit_ram-usage_ram
+    if (available_ram > (project_limit_ram - project_usage_ram)):
+        available_ram = project_limit_ram - project_usage_ram
+    available_ram = available_ram - pending_ram
 
     limit_vm = dict_quotas[project_id]['cyclades.vm']['limit']
     usage_vm = dict_quotas[project_id]['cyclades.vm']['usage']
+    project_limit_vm = dict_quotas[project_id]['cyclades.vm']['project_limit']
+    project_usage_vm = dict_quotas[project_id]['cyclades.vm']['project_usage']
     pending_vm = pending_quota['VMs']
-    available_vm = limit_vm-usage_vm-pending_vm
+    available_vm = limit_vm-usage_vm
+    if (available_vm > (project_limit_vm - project_usage_vm)):
+        available_vm = project_limit_vm - project_usage_vm
+    available_vm = available_vm - pending_vm
+    
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
               'ram': {'limit': limit_ram, 'available': available_ram},

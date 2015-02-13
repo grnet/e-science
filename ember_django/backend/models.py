@@ -140,8 +140,7 @@ class Token(models.Model):
 
 class UserLogin(models.Model):
     """Definition of a User Login relationship model."""
-    login_id = models.AutoField("Login ID", primary_key=True, null=False,
-                                help_text="Auto-increment login id")
+    login_id = models.AutoField("Login ID", primary_key=True, help_text="Auto-increment login id")
     user_id = models.ForeignKey(UserInfo, null=False,
                                 help_text="User ID")
     action_date = models.DateTimeField("Action Date", null=False,
@@ -171,8 +170,6 @@ CLUSTER_STATUS_CHOICES = (
 
 class ClusterInfo(models.Model):
     """Definition of a Hadoop Cluster object model."""
-    id = models.AutoField("Cluster ID", primary_key=True, null=False,
-                                  help_text="Auto-increment cluster id")
     cluster_name = models.CharField("Cluster Name", max_length=255, null=False,
                                     help_text="Name of the cluster")
     action_date = models.DateTimeField("Action Date", null=False,
