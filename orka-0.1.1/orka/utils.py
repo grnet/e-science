@@ -104,9 +104,13 @@ def authenticate_escience(token):
     url_login = get_api_urls(action='login')
     r = requests.post(url_login, data=json.dumps(payload), headers=headers)
     response = json.loads(r.text)
-    escience_token = response['user']['escience_token']
-    logging.log(REPORT, ' Authenticated with escience database')
-    return escience_token
+    try:
+        escience_token = response['user']['escience_token']
+        logging.log(REPORT, ' Authenticated with escience database')
+        return escience_token
+    except Exception, e:
+        print '\nWrong Token. Please try again.\n'
+        exit(error_fatal)
 
 
 def custom_sort_factory(order_list):

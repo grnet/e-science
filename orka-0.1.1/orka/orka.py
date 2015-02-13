@@ -9,10 +9,12 @@ from sys import argv
 from os.path import join, dirname, abspath
 from kamaki.clients import ClientError
 from cluster_errors_constants import *
-from create_cluster import YarnCluster
-from okeanos_utils import destroy_cluster, get_user_clusters
 from argparse import ArgumentParser, ArgumentTypeError
 from version import __version__
+from utils import ClusterRequest, authenticate_escience, \
+    get_user_clusters, custom_sort_factory
+from time import sleep
+
 
 
 class _ArgCheck(object):
@@ -61,42 +63,101 @@ class _ArgCheck(object):
         return ival
 
 
+def task_message(task_id, escience_token):
+    """
+    Function to check create and destroy celery tasks running from orka-CLI
+    and log task state messages.
+    """
+    payload = {"job":{"task_id": task_id}}
+    yarn_cluster_logger = ClusterRequest(escience_token, payload, action='job')
+    previous_response = ''
+    while True:
+        response = yarn_cluster_logger.retrieve()
+        if response != previous_response:
+            if 'success' in response['job']:
+                return response['job']['success']
+
+            elif 'error' in response['job']:
+                logging.error(response['job']['error'])
+                return error_fatal
+
+            elif 'state' in response['job']:
+                logging.log(SUMMARY, response['job']['state'])
+                previous_response = response
+        else:
+            logging.log(SUMMARY, ' Waiting for cluster status update')
+            sleep(30)
+
+
+
 class HadoopCluster(object):
     """Wrapper class for YarnCluster."""
     def __init__(self, opts):
         self.opts = opts
+        self.escience_token = authenticate_escience(self.opts['token'])
 
     def create(self):
         """ Method for creating Hadoop clusters in~okeanos."""
         try:
-            c_yarn_cluster = YarnCluster(self.opts)
+            payload = {"clusterchoice":{"project_name": self.opts['project_name'], "cluster_name": self.opts['name'],
+                                        "cluster_size": self.opts['cluster_size'],
+                                        "cpu_master": self.opts['cpu_master'], "mem_master": self.opts['ram_master'],
+                                        "disk_master": self.opts['disk_master'], "cpu_slaves": self.opts['cpu_slave'],
+                                        "mem_slaves": self.opts['ram_slave'], "disk_slaves": self.opts['disk_slave'],
+                                        "disk_template": self.opts['disk_template'], "os_choice": self.opts['image']}}
+            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
+            response = yarn_cluster_req.create_cluster()
+            if 'task_id' in response['clusterchoice']:
+                task_id = response['clusterchoice']['task_id']
+            else:
+                logging.error(response['clusterchoice']['message'])
+                exit(error_fatal)
+            result = task_message(task_id, self.escience_token)
+            logging.log(SUMMARY, " Yarn Cluster is active.You can access it through " +
+                        result['master_IP'] + ":8088/cluster")
+            logging.log(SUMMARY, " The root password of your master VM is " + result['master_VM_password'])
+
+
         except Exception, e:
             logging.error(' Fatal error: ' + str(e.args[0]))
             exit(error_fatal)
 
-        try:
-            c_yarn_cluster.create_yarn_cluster()
-
-        except Exception:
-            exit(error_fatal)
 
     def destroy(self):
         """ Method for deleting Hadoop clusters in~okeanos."""
         try:
-            destroy_cluster(self.opts['token'], self.opts['master_ip'])
-        except ClientError, e:
-            logging.error(' Error:' + e.message)
-            exit(error_fatal)
+            payload = {"clusterchoice":{"id": self.opts['cluster_id']}}
+            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
+            response = yarn_cluster_req.delete_cluster()
+            task_id = response['clusterchoice']['task_id']
+            result = task_message(task_id, self.escience_token)
+            if result == 0:
+                logging.log(SUMMARY, " Requested Cluster Deleted")
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
 
 
 class UserClusterInfo(object):
-    """ """
+    """ Class holding user cluster info
+    sort: input clusters output cluster keys sorted according to spec
+    list: pretty printer
+    """
     def __init__(self, opts):
         self.opts = opts
         self.data = list()
+        self.order_list = [['cluster_name','id','action_date','cluster_size','cluster_status','master_IP',
+                            'project_name','os_image','disk_template',
+                            'cpu_master','mem_master','disk_master',
+                            'cpu_slaves','mem_slaves','disk_slaves']]
+        self.sort_func = custom_sort_factory(self.order_list)
+        self.short_list = {'id':True, 'cluster_name':True, 'action_date':True, 'cluster_size':True, 'cluster_status':True, 'master_IP':True}
+        self.skip_list = {'task_id':True, 'state':True}
+        self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0'}
+        self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED'}
+        
+    def sort(self, clusters):
+        return self.sort_func(clusters)
     
     def list(self):
         try:
@@ -108,15 +169,39 @@ class UserClusterInfo(object):
             logging.error(str(e.args[0]))
             exit(error_fatal)
         
+        opt_short = not self.opts['verbose']
+        opt_status = False
+        if self.opts['status']:
+            opt_status = self.status_desc_to_status_id[self.opts['status'].upper()]
+        
         if len(self.data) > 0:
-            # test our data, we want to format according to options
             for cluster in self.data:
-                for key in cluster:
-                    fmt_string = key + ': {' + key + '}'
-                    print fmt_string.format(**cluster)
-                print '\n'
+                if opt_status and cluster['cluster_status'] != opt_status:
+                    continue
+                sorted_cluster = self.sort(cluster)
+                for key in sorted_cluster:
+                    if (opt_short and not self.short_list.has_key(key)) or self.skip_list.has_key(key):
+                        continue
+                    if key == 'cluster_name':
+                        fmt_string = '{:<5}' + key + ': {' + key + '}'
+                    elif key == 'action_date':
+                        action_date = sorted_cluster[key][:19]
+                        action_date = action_date.replace('T', ' ')
+                        fmt_string = '{:<10}' + key + ': ' + action_date
+                    elif key == 'disk_template':
+                        if (sorted_cluster[key] == 'ext_vlmc'):
+                            sorted_cluster[key] = 'Archipelago'
+                        elif (sorted_cluster[key] == 'sdbd'):
+                            sorted_cluster[key] = 'Standard'
+                        fmt_string = '{:<10}' + key + ': ' + sorted_cluster[key]
+                    elif key == 'cluster_status':
+                        fmt_string = '{:<10}' + key + ': ' + self.status_id_to_status_desc[sorted_cluster[key]]
+                    else:
+                        fmt_string = '{:<10}' + key + ': {' + key + '}'
+                    print fmt_string.format('',**sorted_cluster)
+                print ''
         else:
-            print 'User has no clusters.'
+            print 'User has no Cluster Information available.'
 
 def main():
     """
@@ -166,7 +251,7 @@ def main():
                               type=checker.five_or_bigger)
 
         parser_c.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
-                              metavar='disk_template', choices=['drbd', 'ext_vlmc'])
+                              metavar='disk_template', choices=['Standard', 'Archipelago'])
 
         parser_c.add_argument("token", help='Synnefo authentication token')
 
@@ -180,7 +265,7 @@ def main():
         parser_c.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
                               ' Default is HadoopImage (overrides image selection)',
                               nargs='?', metavar='hadoop_image_name', default=None,
-                              const='HadoopBase')
+                              const='Hadoop-2.5.2')
 
         parser_c.add_argument("--auth_url", metavar='auth_url', default=auth_url,
                               help='Synnefo authentication url. Default is ' +
@@ -190,8 +275,8 @@ def main():
                               choices=checker.logging_levels.keys(),
                               help='Logging Level. Default: summary')
 
-        parser_d.add_argument('master_ip',
-                              help='The public ip of the master vm of the cluster')
+        parser_d.add_argument('cluster_id',
+                              help='The id of the Hadoop cluster')
         parser_d.add_argument('token',
                               help='Synnefo authentication token')
 
@@ -202,8 +287,8 @@ def main():
         parser_i.add_argument('token',
                               help='Synnefo authentication token')
         
-        parser_i.add_argument('--status', help='Filter by status (status: {%(choices)s})'
-                              ' Default is ALL: no filtering.',
+        parser_i.add_argument('--status', help='Filter by status ({%(choices)s})'
+                              ' Default is all: no filtering.', type=str.upper,
                               metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
         parser_i.add_argument('--verbose', help='List extra cluster details.',
                               action="store_true")
