@@ -57,8 +57,8 @@ Required positional arguments for create command:
     disk_master="master node: hard drive in GB",
     cpu_slave="each slave node: number of CPU cores",
     ram_slave="each slave node: memory in MB",
-    disk_slave="each slave node: hard drive in GB",
-    disk_template= "Standard or Archipelago"
+    disk_slave="each slave node: hard drive in GB", 
+    disk_template= "drbd or ext_vlmc"
     token="an ~okeanos token",
     project_name="name of a ~okeanos project, to pull resources from"
     
@@ -72,21 +72,21 @@ Optional arguments for create command:
 Install from a pre-configured image
 ----------------------------------
 
-    Using the --use_hadoop_image argument creates the Hadoop cluster much faster because it utilises a specially
-    created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest
-    stable YARN version will be installed (but at the cost of lower speed).
+Using the --use_hadoop_image argument creates the Hadoop cluster much faster because it utilises a specially
+created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest
+stable YARN version will be installed (but at the cost of lower speed).
 
 example for create cluster with default optionals (not hadoop_image):
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <~okeanos_token> <project_name>
-
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc <~okeanos_token> <project_name>
+    
 example for create cluster with default optionals (with default hadoop image):
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <~okeanos_token> <project_name> --use_hadoop_image
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc <~okeanos_token> <project_name> --use_hadoop_image
 
 example for create cluster with a different hadoop image and logging level:
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <~okeanos_token> <project_name> --use_hadoop_image=hadoop_image_name --logging=report
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 ext_vlmc <~okeanos_token> <project_name> --use_hadoop_image=hadoop_image_name --logging=report
 
 Required positional arguments for destroy command :
 
@@ -101,26 +101,12 @@ example for destroy cluster:
 
     orka destroy 83.83.83.83 <~okeanos_token> --logging=report
 
-Required positional arguments for list command :
-
-    token="an ~okeanos token"
-
-Optional arguments for list command:
-
-    --status="3 cluster status:ACTIVE, PENDING, DESTROYED (case insensitive,shows only clusters of that status)"
-    --verbose (outputs full cluster details. Default off)
-
-example for list user clusters:
-
-    orka list <~okeanos_token> --status=active --verbose
-
 Also, with
 
     orka -h
     orka create -h
     orka destroy -h
-    orka list -h
-
+    
 helpful information about the orka CLI is depicted and
 
     orka -V
@@ -131,4 +117,4 @@ prints current version.
 Miscellaneous info
 ----------------
 - After cluster creation, the root password of the master virtual machine will be inside a file named [master_vm name]_root_password in the current working directory.
-- The public ip of the orka web server in ~okeanos must be in ~/.kamakirc. It is required for updating the orka database.
+- In the config.txt file of the project is the public ip of the nginx server in ~okeanos.It is required for updating the orka database.
