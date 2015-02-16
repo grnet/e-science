@@ -58,7 +58,7 @@ class IsAuthenticatedOrIsCreation(BasePermission):
 
 class IsAuthenticated(BasePermission):
     """
-    Class for permissions for database view. Every method will have to add
+    Class for permissions for celery jobs view. Every method will have to add
     as a request header the escience authentication token.
     """
 

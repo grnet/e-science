@@ -82,7 +82,8 @@ def get_project_id(token, project_name):
 def destroy_cluster(token, cluster_id):
     """
     Destroys cluster and deletes network and floating ip. Finds the machines
-    that belong to the cluster from the master_IP that is given.
+    that belong to the cluster from the cluster id that is given. Cluster id
+    is the unique integer that each cluster has in escience database.
     """
     current_task.update_state(state="STARTED")
     servers_to_delete = []
@@ -258,8 +259,7 @@ def check_quota(token, project_id):
     auth = check_credentials(token)
     dict_quotas = get_user_quota(auth)
     project_name = auth.get_project(project_id)['name']
-    # Create request for orka database to
-    # get pending quota for given project id
+    # Get pending quota for given project id
     pending_quota = retrieve_pending_clusters(token, project_name)
 
     limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
