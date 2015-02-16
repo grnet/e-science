@@ -83,9 +83,9 @@ Optional arguments for create command:
 Install from a pre-configured image
 ----------------------------------
 
-    Using the --use_hadoop_image argument creates the Hadoop cluster much faster because it utilises a specially
-    created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest
-    stable YARN version will be installed (but at the cost of lower speed).
+Using the --use_hadoop_image argument creates the Hadoop cluster much faster because it utilises a specially
+created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest
+stable YARN version will be installed (but at the cost of lower speed).
 
 Command {orka create} examples
 ---------------------------
