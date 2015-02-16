@@ -58,7 +58,7 @@ def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', 
     logging.log(SUMMARY, state)
     db_cluster_update(token, status, cluster_id, master_IP, state=state, password=password)
     if len(state) > 49:
-        state = 'Longer than 50 chars' # Must be fixed with dictionary error messages
+        state = state[:48] + '..' # Must be fixed with dictionary error messages
     current_task.update_state(state=state)
 
 
