@@ -70,12 +70,8 @@
       - { name: 'djangorestframework==2.4.3' }
       - { name: 'markdown' }
       - { name: 'django-filter' }
-      - { name: 'nose' }
-      - { name: 'mock' }
       - { name: 'djorm-pgarray' }
       - { name: 'paramiko' }
-      - { name: 'kamaki==0.13.1'}
-      - { name: 'ansible==1.7.2' }
       - { name: 'uwsgi' }
       - { name: 'requests' }
       - { name: 'django-celery' }
@@ -97,64 +93,12 @@
 
   - name: Git clone e-science project in the git directory
     tags: setupproject
-    git: repo={{escience_repo}} dest={{my_project_dir}}/{{my_project_name}}
+    git: repo={{escience_repo}} dest={{my_project_dir}}/{{my_project_name}} version={{escience_version|default(origin)}}
 
   - name: Install orka as a python package
     tags: setupproject
     sudo: yes
     pip: name={{project_path}}/{{orka_version}} chdir={{project_path}}
-
-  - name: Copy package.json to webserver
-    tags: setupproject
-    copy: src=package.json dest={{project_path}} owner=orka_admin mode=0644
-
-  - name: Copy Gruntfile.j2 template to webserver
-    tags: cpgruntfile
-    template: src=Gruntfile.j2 dest={{project_path}} owner=orka_admin mode=0644
-
-  - name: Rename Gruntfile.j2 template to Gruntfile.js
-    tags: renamegruntfile
-    command: mv Gruntfile.j2 Gruntfile.js chdir={{project_path}}
-
-  - name: Download NVM
-    tags: download_nvm
-    shell: curl https://raw.githubusercontent.com/creationix/nvm/v0.12.1/install.sh | bash
-
-  - name: NMV Commands in Terminal
-    tags: nvm_commands
-    shell: cd;bash -lc "source ~/.profile"
-
-  - name: Install NVM
-    tags: nvm_install
-    shell: cd;bash -lc "nvm install v0.11.13"
-
-  - name: NVM default version
-    tags: nvm_default
-    shell: cd;bash -lc "nvm alias default v0.11.13"
-
-  - name: Install grunt-cli
-    tags: grunt-cli_install
-    shell: cd;bash -lc "npm install -g grunt-cli"
-
-  - name: Install and add Grunt
-    tags: grunt_install_add
-    shell: cd;bash -lc "npm install grunt --save-dev"
-
-  - name: Link npm
-    tags: npm_link
-    shell: cd {{project_path}};bash -lc "npm link"
-    
-  - name: Install and add uglify
-    tags: uglify_install_add
-    shell: cd {{project_path}};bash -lc "npm install grunt-contrib-uglify --save-dev"
-
-  - name: Install and add removelogging
-    tags: removelogging_install_add
-    shell: cd {{project_path}};bash -lc "npm install grunt-remove-logging"
-    
-  - name: Run grunt tasks (uglify, removelogging)
-    tags: grunt_tasks_run
-    shell: cd {{project_path}}; bash -lc "grunt default --force"
 
   - name: Change owner of conf and logs
     file: path={{user_home}}/{{item}} recurse=yes state=directory
@@ -248,6 +192,6 @@
 
   - name: Run celery as a daemon
     tags: celerystart
-    command: celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%n\%I.log
+    command: celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%h.log
     args:
       chdir: "{{project_path}}/{{ember_django_dir}}"

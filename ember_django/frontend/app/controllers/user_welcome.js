@@ -66,11 +66,14 @@ App.UserWelcomeController = Ember.Controller.extend({
 							var promise = store.fetch('user', 1);
 							promise.then(function(user) {
 								// success
-								var num_records = user.get('clusters').get('length');
+								var user_clusters = user.get('clusters');
+								var num_records = user_clusters.get('length');
 								var bPending = false;
 								for ( i = 0; i < num_records; i++) {
-									if (user.get('clusters').objectAt(i).get('cluster_status') == '2') {
+									if (user_clusters.objectAt(i).get('cluster_status') == '2') {
 										bPending = true;
+										that.send('sortBy', user_clusters, 'action_date');
+										that.send('sortBy', user_clusters, 'action_date');
 										break;
 									}
 								}

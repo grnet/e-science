@@ -41,7 +41,7 @@ main_page = MainPageView.as_view()
 
 class JobsView(APIView):
     """
-    View to get info for our task.
+    View to get info for celery tasks.
     """
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticated, )
@@ -50,7 +50,7 @@ class JobsView(APIView):
 
     def get(self, request, *args, **kwargs):
         """
-        Get method
+        Get method for celery task state.
         """
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
@@ -142,7 +142,10 @@ class StatusView(APIView):
 
 
 class SessionView(APIView):
-    """View to handle requests from ember for user login and logout"""
+    """
+    View to handle requests from ember for user login and logout and
+    user theme update
+    """
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticatedOrIsCreation, )
     resource_name = 'user'
@@ -181,7 +184,7 @@ class SessionView(APIView):
 
     def put(self, request, *args, **kwargs):
         """
-        Updates user status in database on user logout.
+        Updates user status in database on user logout or user theme change.
         """
         user_token = Token.objects.get(key=request.auth)
         self.user = UserInfo.objects.get(user_id=user_token.user.user_id)

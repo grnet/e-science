@@ -302,8 +302,11 @@ class YarnCluster(object):
         return ssh_dict
         
     def check_user_resources(self):
-        """Creates a bare ~okeanos cluster."""
-        # Finds user public ssh key
+        """
+        Checks user resources before the starting cluster creation.
+        Also, returns the flavor id of master and slave VMS and the id of
+        the image chosen by the user.
+        """
         chosen_image = {}
         flavor_master = self.get_flavor_id_master(self.cyclades)
         flavor_slaves = self.get_flavor_id_slave(self.cyclades)
@@ -340,7 +343,12 @@ class YarnCluster(object):
         # Update db with cluster status as pending
         task_id = current_task.request.id
         self.cluster_id = db_cluster_create(self.opts, task_id)
+        # Append the cluster_id in the cluster name to create a unique name
+        # used later for naming various files, e.g. ansible_hosts file and
+        # create_cluster_debug file.
         self.cluster_name_postfix_id = '%s%s%s' % (self.opts['cluster_name'], '-', self.cluster_id)
+
+        # Check if user chose ssh keys or not.
         if self.opts['ssh_key_selection'] is None or self.opts['ssh_key_selection'] == 'no_ssh_key_selected':
             self.ssh_file = 'no_ssh_key_selected'
 
@@ -362,6 +370,7 @@ class YarnCluster(object):
         except Exception:
             # If error in bare cluster, update cluster status as destroyed
             set_cluster_state(self.opts['token'], self.cluster_id, 'Error', status='Destroyed')
+            os.system('rm ' + self.ssh_file)
             raise
         # Get master VM root password
         self.master_root_pass = self.server_dict[0]['adminPass']
@@ -379,6 +388,7 @@ class YarnCluster(object):
         except Exception, e:
             logging.error(' Fatal error: ' + str(e.args[0]))
             raise
+        # Update cluster info with the master VM root password.
         set_cluster_state(self.opts['token'], self.cluster_id,
                           ' Configuring Yarn cluster node communication...3/4',
                           password=self.master_root_pass)
@@ -396,7 +406,6 @@ class YarnCluster(object):
             set_cluster_state(self.opts['token'], self.cluster_id,
                               ' Yarn Cluster is active', status='Active')
 
-            return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass
         except Exception, e:
             logging.error(' Fatal error:' + str(e.args[0]))
             logging.error(' Created cluster and resources will be deleted')
@@ -404,6 +413,11 @@ class YarnCluster(object):
             set_cluster_state(self.opts['token'], self.cluster_id, 'Error')
             self.destroy()
             raise
+
+        finally:
+            os.system('rm ' + self.ssh_file)
+
+        return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass
 
     def destroy(self):
         """Destroy Cluster"""

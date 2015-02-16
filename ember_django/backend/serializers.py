@@ -52,21 +52,6 @@ class OkeanosTokenSerializer(serializers.Serializer):
     token = serializers.CharField()
 
 
-class PendingQuotaSerializer(serializers.Serializer):
-    """Serializer for pending quota returned from escience database """
-    VMs = serializers.IntegerField()
-    Cpus = serializers.IntegerField()
-    Ram = serializers.IntegerField()
-    Disk = serializers.IntegerField()
-    Ip = serializers.IntegerField()
-    Network = serializers.IntegerField()
-
-
-class ProjectNameSerializer(serializers.Serializer):
-    """ Serializer for project name"""
-    project_name = serializers.CharField()
-
-
 class TaskSerializer(serializers.Serializer):
     """Serializer for the celery task id."""
     task_id = serializers.CharField()
@@ -76,14 +61,6 @@ class DeleteClusterSerializer(serializers.Serializer):
     """ Serializer for master vm ip """
     master_IP = serializers.CharField(required=False)
     id = serializers.IntegerField()
-
-
-class UpdateDatabaseSerializer(serializers.Serializer):
-
-    status = serializers.CharField()
-    cluster_name = serializers.CharField()
-    state = serializers.CharField()
-    master_IP = serializers.CharField(required=False)
 
 
 class ClusterchoicesSerializer(serializers.Serializer):

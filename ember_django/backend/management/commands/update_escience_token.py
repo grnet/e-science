@@ -1,6 +1,11 @@
-# django-admin command to run on the backend
-# Periodically checks and updates the escience token in the database
-# Triggers the update_token function of the Token model
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+django-admin command to run on the backend
+Periodically checks and updates the escience token in the database
+Triggers the update_token function of the Token model
+"""
 
 import datetime
 import time

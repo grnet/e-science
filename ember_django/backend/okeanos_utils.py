@@ -58,7 +58,7 @@ def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', 
     logging.log(SUMMARY, state)
     db_cluster_update(token, status, cluster_id, master_IP, state=state, password=password)
     if len(state) > 49:
-        state = 'Longer than 50 chars' # Must be fixed with dictionary error messages
+        state = state[:48] + '..' # Must be fixed with dictionary error messages
     current_task.update_state(state=state)
 
 
@@ -82,7 +82,8 @@ def get_project_id(token, project_name):
 def destroy_cluster(token, cluster_id):
     """
     Destroys cluster and deletes network and floating ip. Finds the machines
-    that belong to the cluster from the master_IP that is given.
+    that belong to the cluster from the cluster id that is given. Cluster id
+    is the unique integer that each cluster has in escience database.
     """
     current_task.update_state(state="STARTED")
     servers_to_delete = []
@@ -258,8 +259,7 @@ def check_quota(token, project_id):
     auth = check_credentials(token)
     dict_quotas = get_user_quota(auth)
     project_name = auth.get_project(project_id)['name']
-    # Create request for orka database to
-    # get pending quota for given project id
+    # Get pending quota for given project id
     pending_quota = retrieve_pending_clusters(token, project_name)
 
     limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
@@ -301,7 +301,7 @@ def check_quota(token, project_id):
     if (available_vm > (project_limit_vm - project_usage_vm)):
         available_vm = project_limit_vm - project_usage_vm
     available_vm = available_vm - pending_vm
-    
+
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
               'ram': {'limit': limit_ram, 'available': available_ram},
@@ -309,6 +309,7 @@ def check_quota(token, project_id):
                        'available': available_cyclades_disk_GB},
               'cluster_size': {'limit': limit_vm, 'available': available_vm}}
     return quotas
+
 
 def check_images(token, project_id):
     """
