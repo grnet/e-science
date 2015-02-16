@@ -29,7 +29,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		}, function(reason) {
 			// failure
 			console.log(reason.statusText);
-			transition.abort();
+			// transition.abort();
 		});
 		return promise;
 	},
