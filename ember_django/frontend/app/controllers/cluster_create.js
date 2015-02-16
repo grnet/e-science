@@ -152,7 +152,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('selected_project', '');
 			}			
 		} else {
-			this.set('alert_mes_last_conf', '');
 			return ram_avail;
 		}
 	}.property('total_ram_selection'),
@@ -173,7 +172,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('selected_project', '');
 			}			
 		} else {
-			this.set('alert_mes_last_conf', '');
 			return disk_avail;
 		}
 	}.property('total_disk_selection'),
@@ -205,6 +203,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 			cluster_size_zero = true;
 			return this.get('content').objectAt(this.get('project_index')).get('vms_av');
+		} else {
+			this.set('alert_mes_last_conf', '');
 		}
 		for (var i = 1; i < length; i++) {
 			if (this.get('master_cpu_selection') == 0) {
@@ -237,6 +237,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 			cluster_size_zero = true;
 			return max_cluster_size_limited_by_current_cpus;
+		} else {
+			this.set('alert_mes_last_conf', '');
 		}
 		for ( i = 0; i < length; i++) {
 			if (this.get('master_ram_selection') == 0) {
@@ -269,6 +271,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 			cluster_size_zero = true;
 			return max_cluster_size_limited_by_current_mems;
+		} else {
+			this.set('alert_mes_last_conf', '');
 		}
 		for ( i = 0; i < length; i++) {
 			if (this.get('slaves_disk_selection') == 0) {
@@ -296,6 +300,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('selected_project', '');
 			}			
 			cluster_size_zero = true;
+		} else {
+			this.set('alert_mes_last_conf', '');
 		}
 		return max_cluster_size_limited_by_current_disks;
 	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size_var', 'cluster_size', 'project_details'),
@@ -734,7 +740,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 					+ '<br><b>Projects</b>: <span class="text text-info">' + clusterdata.project_name + '</span>'
 					+ '<br><b>Available Images</b>: <span class="text text-info">' + clusterdata.os_image + '</span>'
 					+ '<br><b>Cluster Size</b>: <span class="text text-info">' + clusterdata.cluster_size + '</span>'
-					+ '<br><b>Storage</b>: <span class="text text-info">' + clusterdata.disk_template + '</span>'
+					+ '<br><b>Storage</b>: <span class="text text-info">' + reverse_storage_lookup[clusterdata.disk_template] + '</span>'
 					+ '<br><b>Master CPUs</b>: <span class="text text-info">' + clusterdata.cpu_master + '</span>'
 					+ '<br><b>Master RAM</b>: <span class="text text-info">' + clusterdata.mem_master + '</span>'
 					+ '<br><b>Master Disk Size</b>: <span class="text text-info">' + clusterdata.disk_master + '</span>'
