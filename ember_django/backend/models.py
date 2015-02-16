@@ -122,9 +122,11 @@ class Token(models.Model):
         return binascii.hexlify(os.urandom(20)).decode()
 
     def update_token(self, *args, **kwargs):
-        # checks if an amount of time has passed
-        # since the creation of the token
-        # and regenerates a new key
+        """
+        Checks if an amount of time has passed
+        since the creation of the token
+        and regenerates a new key
+        """
         if(timezone.now() >  self.creation_date + datetime.timedelta(seconds=args[0])):
             self.key = self.generate_token()
             self.creation_date = timezone.now()

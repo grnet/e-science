@@ -13,7 +13,7 @@ from collections import OrderedDict
 from datetime import datetime
 
 def get_api_urls(action):
-    """ Return api urls from config file"""
+    """ Return api url from .kamakirc file"""
     parser = RawConfigParser()
     user_home = expanduser('~')
     config_file = join(user_home, ".kamakirc")
@@ -38,7 +38,7 @@ def get_api_urls(action):
 
 
 class ClusterRequest(object):
-    """Class for REST requests in orka database."""
+    """Class for REST requests to application server."""
     def __init__(self, escience_token, payload, action='login'):
         """
         Initialize escience token used for token authentication, payload
@@ -51,19 +51,14 @@ class ClusterRequest(object):
                         'Authorization': 'Token ' + self.escience_token}
 
     def create_cluster(self):
-        """
-        Request to orka database that cluster creation is
-        starting (pending status update)
-        """
+        """Request to create a Hadoop Cluster in ~okeanos."""
         r = requests.put(self.url, data=json.dumps(self.payload),
                          headers=self.headers)
         response = json.loads(r.text)
         return response
 
     def delete_cluster(self):
-        """
-        Request to orka database for cluster deleting from CLI
-        (Destroyed status update)"""
+        """Request to delete a Hadoop Cluster in ~okeanos."""
         r = requests.delete(self.url, data=json.dumps(self.payload),
                             headers=self.headers)
         response = json.loads(r.text)
