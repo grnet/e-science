@@ -18,7 +18,7 @@ Setup user environment to run orka
 Important info    
 --------------
     
-User should open ~/.kamakirc and add these two lines :
+User should open ~/.kamakirc and add these two lines:
     
 [orka]                                                              
 base_url = **< e-science -IP- or -url address- >**
@@ -44,7 +44,7 @@ Following commands are common for installation in virtual environment or not:
     cd to <project_name>/orka-0.1.1
     [sudo if not using virtualenv] python setup.py install
  
-  Now orka commands are usable from anywhere .
+  Now orka commands are usable from anywhere.
 
 
 
@@ -61,27 +61,24 @@ orka [command] "arguments"
 
 Required positional arguments for create command:
          
-name : "name of the cluster" , 
-cluster_size : "total VMs, including master node",  
-cpu_master : "master node: number of CPU cores" , 
-ram_master : "master node: memory in MB", 
-disk_master : "master node: hard drive in GB", 
-cpu_slave : "each slave node: number of CPU cores", 
-ram_slave : "each slave node: memory in MB", 
-disk_slave : "each slave node: hard drive in GB", 
-disk_template : "Standard or Archipelago", 
-token : "an ~okeanos token", 
-project_name : "name of a ~okeanos project, to pull resources from"
+    name: "name of the cluster" 
+    cluster_size: "total VMs, including master node" 
+    cpu_master: "master node: number of CPU cores" 
+    ram_master: "master node: memory in MB",
+    disk_master: "master node: hard drive in GB",
+    cpu_slave: "each slave node: number of CPU cores",
+    ram_slave: "each slave node: memory in MB",
+    disk_slave: "each slave node: hard drive in GB",
+    disk_template: "Standard or Archipelago"
+    token: "an ~okeanos token",
+    project_name: "name of a ~okeanos project, to pull resources from"
     
 Optional arguments for create command:
 
---image : "Operating System (Default Value=Debian Base)",
-
---auth_url : "authentication url (Default Value=https://accounts.okeanos.grnet.gr/identity/v2.0)"
-
---logging : "critical, error, warning, summary, report, info, debug (Default Value=summary)"
-
---use_hadoop_image : "name of a hadoop image. Overrides image value" (Default value=HadoopImage)
+    --image="Operating System (Default Value=Debian Base)",
+    --auth_url="authentication url (Default Value=https://accounts.okeanos.grnet.gr/identity/v2.0)"
+    --logging="critical, error, warning, summary, report, info, debug (Default Value=summary)"
+    --use_hadoop_image="name of a hadoop image. Overrides image value" (Default value=HadoopImage)
 
 Install from a pre-configured image
 ----------------------------------
@@ -107,15 +104,14 @@ example for create cluster with a different hadoop image and logging level:
 "list" command
 ----------------
 
-Required positional arguments for list command :
+Required positional arguments for list command:
 
-token : "an ~okeanos token"
+token: "an ~okeanos token"
 
 Optional arguments for list command:
 
---status="3 cluster status:ACTIVE, PENDING, DESTROYED (case insensitive,shows only clusters of that status)"
-
---verbose (outputs full cluster details. Default off)
+    --status="3 cluster status:ACTIVE, PENDING, DESTROYED (case insensitive,shows only clusters of that status)"
+    --verbose (outputs full cluster details. Default off)
     
 Command {orka list} example
 ---------------------------    
@@ -128,16 +124,16 @@ example for list user clusters:
 "destroy" command
 ----------------
 
-Required positional arguments for destroy command :
+Required positional arguments for destroy command:
 
-cluster_id="Cluster id in e-science database"  
+cluster_id: "Cluster id in e-science database"  
 (cluster_id is given by **orka list** command)
 
-token="an ~okeanos token"
+token: "an ~okeanos token"
 
 Optional arguments for destroy command:
 
---logging="7 logging levels:critical, error, warning, summary, report, info, debug (Default Value summary)"
+    --logging="7 logging levels:critical, error, warning, summary, report, info, debug (Default Value summary)"
 
 Command {orka destroy} example
 ---------------------------
