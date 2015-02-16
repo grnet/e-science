@@ -114,25 +114,11 @@ class test_create_clusters_celery(unittest.TestCase):
                 EC.presence_of_element_located((By.ID, "id_title_cluster_create_route"))
             ) 
         except: self.fail("time out")
-        auth = check_credentials(self.token)
-        try:
-            list_of_projects = auth.get_projects(state='active')
-        except Exception:
-            self.assertTrue(False,'Could not get list of projects')
-        kamaki_flavors = get_flavor_id(self.token)
-        user_quota = check_quota(self.token, self.project_id)
-        project_details = self.project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'CPUs:' + str(user_quota['cpus']['available']) + '  ' + 'RAM:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
-        Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)                           
+        driver.find_element_by_id("id_apply_last_cluster").click()        
+        time.sleep(2)                      
         driver.find_element_by_id("cluster_name").clear()
         cluster_name1 = 'test_cluster' + str(randint(0,9999))
         driver.find_element_by_id("cluster_name").send_keys(cluster_name1)
-        hadoop_image = 'Hadoop-2.5.2'                           
-        Select(driver.find_element_by_id("os_systems")).select_by_visible_text(hadoop_image)
-        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text('2')
-        for role in ['master' , 'slaves']:
-            for flavor in ['cpus' , 'ram' , 'disk']:
-                button_id = role + '_' + flavor + '_' + str(kamaki_flavors[flavor][0])
-                driver.find_element_by_id(button_id).click()
         driver.find_element_by_id("next").click()
         print 'Creating cluster...'
         print cluster_name1        
