@@ -152,6 +152,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('selected_project', '');
 			}			
 		} else {
+			this.set('alert_mes_last_conf', '');
 			return ram_avail;
 		}
 	}.property('total_ram_selection'),
@@ -172,6 +173,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('selected_project', '');
 			}			
 		} else {
+			this.set('alert_mes_last_conf', '');
 			return disk_avail;
 		}
 	}.property('total_disk_selection'),

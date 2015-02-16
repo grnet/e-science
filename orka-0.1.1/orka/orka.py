@@ -9,10 +9,10 @@ from sys import argv
 from os.path import join, dirname, abspath
 from kamaki.clients import ClientError
 from cluster_errors_constants import *
-from argparse import ArgumentParser, ArgumentTypeError
+from argparse import ArgumentParser, ArgumentTypeError 
 from version import __version__
-from utils import ClusterRequest, authenticate_escience, \
-    get_user_clusters, custom_sort_factory
+from utils import ClusterRequest, ConnectionError, authenticate_escience, \
+    get_user_clusters, custom_sort_factory, custom_date_format
 from time import sleep
 
 
@@ -36,7 +36,7 @@ class _ArgCheck(object):
         logging.addLevelName(REPORT, "REPORT")
         logging.addLevelName(SUMMARY, "SUMMARY")
 
-    def unsigned_int(self, val):
+    def positive_num_is(self, val):
         """
         :param val: int
         :return: val if val > 0 or raise exception
@@ -46,7 +46,7 @@ class _ArgCheck(object):
             raise ArgumentTypeError(" %s must be a positive number." % val)
         return ival
 
-    def two_or_bigger(self, val):
+    def two_or_larger_is(self, val):
         """
         :param val: int
         :return: val if > 2 or raise exception
@@ -56,11 +56,31 @@ class _ArgCheck(object):
             raise ArgumentTypeError(" %s must be at least 2." % val)
         return ival
 
-    def five_or_bigger(self, val):
+    def five_or_larger_is(self, val):
         ival = int(val)
         if ival < 5:
             raise ArgumentTypeError(" %s must be at least 5." % val)
         return ival
+    
+    def a_number_is(self, val):
+        """
+        :param val: str
+        :return val if it contains only numbers
+        """
+        if val.isdigit():
+            return val
+        else:
+            raise ArgumentTypeError(" %s must be a number." % val)
+        
+    def a_string_is(self, val):
+        """
+        :param val: str
+        :return val if it contains at least one letter
+        """
+        if not val.isdigit():
+            return val
+        else:
+            raise ArgumentTypeError(" %s must containt at least one letter." % val)
 
 
 def task_message(task_id, escience_token):
@@ -94,7 +114,15 @@ class HadoopCluster(object):
     """Wrapper class for YarnCluster."""
     def __init__(self, opts):
         self.opts = opts
-        self.escience_token = authenticate_escience(self.opts['token'])
+        try: 
+            self.escience_token = authenticate_escience(self.opts['token'])
+        except ConnectionError:
+            logging.error(' e-science server unreachable or down.')
+            exit(error_fatal)
+        except ClientError:
+            logging.error(' Authentication error with token: ' + self.opts['token'])
+            exit(error_fatal)
+        
 
     def create(self):
         """ Method for creating Hadoop clusters in~okeanos."""
@@ -146,8 +174,8 @@ class UserClusterInfo(object):
     def __init__(self, opts):
         self.opts = opts
         self.data = list()
-        self.order_list = [['cluster_name','id','action_date','cluster_size','cluster_status','master_IP',
-                            'project_name','os_image','disk_template',
+        self.order_list = [['cluster_name','id','action_date','cluster_size','cluster_status',
+                            'master_IP','project_name','os_image','disk_template',
                             'cpu_master','mem_master','disk_master',
                             'cpu_slaves','mem_slaves','disk_slaves']]
         self.sort_func = custom_sort_factory(self.order_list)
@@ -155,6 +183,7 @@ class UserClusterInfo(object):
         self.skip_list = {'task_id':True, 'state':True}
         self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0'}
         self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED'}
+        self.disk_template_to_label = {'ext_vlmc':'Archipelago', 'drbd':'Standard'}
         
     def sort(self, clusters):
         return self.sort_func(clusters)
@@ -184,18 +213,12 @@ class UserClusterInfo(object):
                         continue
                     if key == 'cluster_name':
                         fmt_string = '{:<5}' + key + ': {' + key + '}'
-                    elif key == 'action_date':
-                        action_date = sorted_cluster[key][:19]
-                        action_date = action_date.replace('T', ' ')
-                        fmt_string = '{:<10}' + key + ': ' + action_date
-                    elif key == 'disk_template':
-                        if (sorted_cluster[key] == 'ext_vlmc'):
-                            sorted_cluster[key] = 'Archipelago'
-                        elif (sorted_cluster[key] == 'sdbd'):
-                            sorted_cluster[key] = 'Standard'
-                        fmt_string = '{:<10}' + key + ': ' + sorted_cluster[key]
                     elif key == 'cluster_status':
                         fmt_string = '{:<10}' + key + ': ' + self.status_id_to_status_desc[sorted_cluster[key]]
+                    elif key == 'disk_template':
+                        fmt_string = '{:<10}' + key + ': ' + self.disk_template_to_label[sorted_cluster[key]]
+                    elif key == 'action_date':
+                        fmt_string = '{:<10}' + key + ': ' + custom_date_format(sorted_cluster[key])
                     else:
                         fmt_string = '{:<10}' + key + ': {' + key + '}'
                     print fmt_string.format('',**sorted_cluster)
@@ -227,36 +250,36 @@ def main():
     if len(argv) > 1:
 
         parser_c.add_argument("name", help='The specified name of the cluster.'
-                              ' Will be prefixed by a timestamp')
+                              ' Will be prefixed by [orka]', type=checker.a_string_is)
 
         parser_c.add_argument("cluster_size", help='Total number of cluster nodes',
-                              type=checker.two_or_bigger)
+                              type=checker.two_or_larger_is)
 
         parser_c.add_argument("cpu_master", help='Number of CPU cores for the master node',
-                              type=checker.unsigned_int)
+                              type=checker.positive_num_is)
 
         parser_c.add_argument("ram_master", help='Size of RAM (MB) for the master node',
-                              type=checker.unsigned_int)
+                              type=checker.positive_num_is)
 
         parser_c.add_argument("disk_master", help='Disk size (GB) for the master node',
-                              type=checker.five_or_bigger)
+                              type=checker.five_or_larger_is)
 
         parser_c.add_argument("cpu_slave", help='Number of CPU cores for the slave node(s)',
-                              type=checker.unsigned_int)
+                              type=checker.positive_num_is)
 
         parser_c.add_argument("ram_slave", help='Size of RAM (MB) for the slave node(s)',
-                              type=checker.unsigned_int)
+                              type=checker.positive_num_is)
 
         parser_c.add_argument("disk_slave", help='Disk size (GB) for the slave node(s)',
-                              type=checker.five_or_bigger)
+                              type=checker.five_or_larger_is)
 
         parser_c.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
                               metavar='disk_template', choices=['Standard', 'Archipelago'])
 
-        parser_c.add_argument("token", help='Synnefo authentication token')
+        parser_c.add_argument("token", help='Synnefo authentication token', type=checker.a_string_is)
 
         parser_c.add_argument("project_name", help='~okeanos project name'
-                              ' to request resources from ')
+                              ' to request resources from ', type=checker.a_string_is)
 
         parser_c.add_argument("--image", help='OS for the cluster.'
                               ' Default is "Debian Base"', metavar='image',
@@ -272,28 +295,30 @@ def main():
                               auth_url)
 
         parser_c.add_argument("--logging", default=default_logging,
-                              choices=checker.logging_levels.keys(),
+                              choices=checker.logging_levels.keys(), type=str.lower,
                               help='Logging Level. Default: summary')
 
         parser_d.add_argument('cluster_id',
-                              help='The id of the Hadoop cluster')
+                              help='The id of the Hadoop cluster', type=checker.positive_num_is)
         parser_d.add_argument('token',
-                              help='Synnefo authentication token')
+                              help='Synnefo authentication token', type=checker.a_string_is)
 
         parser_d.add_argument("--logging", default=default_logging,
-                              choices=checker.logging_levels.keys(),
+                              choices=checker.logging_levels.keys(), type=str.lower,
                               help='Logging Level. Default: summary')
         
         parser_i.add_argument('token',
-                              help='Synnefo authentication token')
+                              help='Synnefo authentication token', type=checker.a_string_is)
         
         parser_i.add_argument('--status', help='Filter by status ({%(choices)s})'
                               ' Default is all: no filtering.', type=str.upper,
                               metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
+        
         parser_i.add_argument('--verbose', help='List extra cluster details.',
                               action="store_true")
+        
         parser_i.add_argument("--logging", default=default_logging,
-                              choices=checker.logging_levels.keys(),
+                              choices=checker.logging_levels.keys(), type=str.lower,
                               help='Logging Level. Default: summary')
 
         opts = vars(parser.parse_args(argv[1:]))

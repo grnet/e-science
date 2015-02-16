@@ -7,8 +7,10 @@ from cluster_errors_constants import *
 from kamaki.clients import ClientError
 from ConfigParser import RawConfigParser, NoSectionError
 import requests
+from requests import ConnectionError
 import json
 from collections import OrderedDict
+from datetime import datetime
 
 def get_api_urls(action):
     """ Return api urls from config file"""
@@ -106,12 +108,27 @@ def authenticate_escience(token):
     response = json.loads(r.text)
     try:
         escience_token = response['user']['escience_token']
-        logging.log(REPORT, ' Authenticated with escience database')
-        return escience_token
-    except Exception, e:
-        print '\nWrong Token. Please try again.\n'
-        exit(error_fatal)
+    except TypeError:
+        msg = ' Authentication error with token: ' + token
+        raise ClientError(msg, error_authentication)
+    logging.log(REPORT, ' Authenticated with escience database')
+    return escience_token
 
+
+def custom_date_format(datestring, fmt='shortdatetime'):
+    """
+    Format a utc date time to human friendly date time.
+    Both input and output are string representations of datetime
+    If the passed in datetime string representation can't be reformatted it is returned unaltered
+    """
+    date_formats = {'shortdate':'%Y-%m-%d', 'shortdatetime':'%a %b %Y %H:%M:%S'}
+    date_fmt = date_formats.has_key(fmt) and date_formats[fmt] or date_formats['shortdatetime']
+    try:
+        date_in = datetime.strptime(datestring, '%Y-%m-%dT%H:%M:%S.%fZ')
+        return date_in.strftime(date_fmt)
+    except ValueError:
+        return datestring
+    
 
 def custom_sort_factory(order_list):
     """

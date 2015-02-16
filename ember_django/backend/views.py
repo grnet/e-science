@@ -193,3 +193,10 @@ class SessionView(APIView):
                 self.user.save()
             else:
                 db_logout_entry(self.user)
+
+            self.serializer_class = UserInfoSerializer(self.user)
+            return Response(self.serializer_class.data)
+
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
