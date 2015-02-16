@@ -1,8 +1,8 @@
 #!/bin/bash
-SERVERNAME=$1 # StagingServer
-PROJECTGUID=$2 # project guid as found by 'kamaki project list' 10bdefe7-07dd-43ae-a32e-d9b569640717
+SERVERNAME=$1 # StagingServerName
+PROJECTGUID=$2 # project guid as found by 'kamaki project list' eg. 10bdefe7-07dd-43ae-a32e-d9b569640717
 GITREPO=$3 # a git repo uri
-GITBRANCH=$4 # a git repo branch name or hash
+GITBRANCH=$4 # a git repo branch name, tag or hash
 if [ $# -lt 3 ]
   then
   echo ""
