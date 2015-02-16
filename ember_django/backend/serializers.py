@@ -37,13 +37,14 @@ class ClusterCreationParamsSerializer(serializers.ModelSerializer):
     disk_choices = PGArrayField(required=False)
     disk_template = PGArrayField(required=False)
     os_choices = PGArrayField(required=False)
-
+    ssh_keys_names = PGArrayField(required=False)
+    
     class Meta:
         model = ClusterCreationParams
         fields = ('id', 'user_id', 'project_name', 'vms_max', 'vms_av',
                   'cpu_max', 'cpu_av', 'mem_max', 'mem_av', 'disk_max',
                   'disk_av', 'cpu_choices', 'mem_choices', 'disk_choices',
-                  'disk_template', 'os_choices')
+                  'disk_template', 'os_choices', 'ssh_keys_names')
 
 
 class OkeanosTokenSerializer(serializers.Serializer):
@@ -51,30 +52,16 @@ class OkeanosTokenSerializer(serializers.Serializer):
     token = serializers.CharField()
 
 
-class PendingQuotaSerializer(serializers.Serializer):
-    """Serializer for pending quota returned from escience database """
-    VMs = serializers.IntegerField()
-    Cpus = serializers.IntegerField()
-    Ram = serializers.IntegerField()
-    Disk = serializers.IntegerField()
-    Ip = serializers.IntegerField()
-    Network = serializers.IntegerField()
+class TaskSerializer(serializers.Serializer):
+    """Serializer for the celery task id."""
+    task_id = serializers.CharField()
 
 
-class ProjectNameSerializer(serializers.Serializer):
-    """ Serializer for project name"""
-    project_name = serializers.CharField()
-
-
-class MasterIpSerializer(serializers.Serializer):
+class DeleteClusterSerializer(serializers.Serializer):
     """ Serializer for master vm ip """
-    master_ip = serializers.CharField()
+    master_IP = serializers.CharField(required=False)
+    id = serializers.IntegerField()
 
-class UpdateDatabaseSerializer(serializers.Serializer):
-
-    status = serializers.CharField()
-    cluster_name = serializers.CharField()
-    master_ip = serializers.CharField()
 
 class ClusterchoicesSerializer(serializers.Serializer):
     """
@@ -102,15 +89,20 @@ class ClusterchoicesSerializer(serializers.Serializer):
     os_choice = serializers.CharField()
 
     project_name = serializers.CharField()
+    
+    ssh_key_selection = serializers.CharField(required=False)
+
+    task_id = serializers.CharField(required=False)
 
 
 class ClusterInfoSerializer(serializers.ModelSerializer):
     """ Serializer for ember request with user's available clusters."""
     class Meta:
         model = ClusterInfo
-        fields = ('id', 'cluster_name', 'cluster_status', 'cluster_size', 'cpu_master',
-                  'mem_master', 'disk_master', 'cpu_slaves', 'mem_slaves',
-                  'disk_slaves', 'disk_template', 'os_image', 'master_IP', 'project_name')
+        fields = ('id', 'cluster_name', 'action_date', 'cluster_status', 'cluster_size',
+                  'cpu_master', 'mem_master', 'disk_master', 'cpu_slaves',
+                  'mem_slaves', 'disk_slaves', 'disk_template', 'os_image',
+                  'master_IP', 'project_name', 'task_id', 'state')
 
 
 class UserInfoSerializer(serializers.ModelSerializer):
@@ -125,7 +117,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserInfo
-        fields = ('id', 'user_id', 'cluster', 'escience_token', 'clusters')
+        fields = ('id', 'user_id', 'user_theme', 'cluster', 'master_vm_password', 'escience_token', 'clusters')
 
     def number_of_clusters(self, obj):
         """
@@ -138,3 +130,11 @@ class UserInfoSerializer(serializers.ModelSerializer):
     def get_ember_id(self, obj):
         """"Always returns id 1 for ember.js"""
         return 1
+
+
+class UserThemeSerializer(serializers.Serializer):
+    """
+    Serializer for ember request with user's
+    choices for theme.
+    """
+    user_theme = serializers.CharField(required=False)

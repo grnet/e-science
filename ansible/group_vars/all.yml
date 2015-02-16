@@ -19,3 +19,4 @@
   path_to_hadoop: /usr/local
   hadoop_home: "{{path_to_hadoop}}/hadoop"
   master_key: master_{{ hostvars[groups['master'][0]].inventory_hostname_short}}_pub_key
+  ssh_file_name: no_ssh_key_selected

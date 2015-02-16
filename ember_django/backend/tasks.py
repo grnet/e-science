@@ -1,38 +1,32 @@
-from celeryapp import app # george: still not decided which style we're going to use: @task or @app.task
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+This script contains the celery tasks that will be executed from django views.
+
+@author: George Tzelepis, Ioannis Stenos
+"""
 from celery.task import task
-from celery import current_task
-from backend.models import CeleryTasks
-from time import sleep
+from create_cluster import YarnCluster
+from okeanos_utils import destroy_cluster
+
 
 @task()
-def delayed_add(x, y):
+def create_cluster_async(choices):
     """
-    dummy method to simulate a long running task
+    Asynchronous create cluster task.
     """
-    sleep(10)
-    count = CeleryTasks.objects.create(count = x + y)
-    return count
+    new_yarn_cluster = YarnCluster(choices)
+    MASTER_IP, servers ,password= new_yarn_cluster.create_yarn_cluster()
+    task_result = {"master_IP": MASTER_IP, "master_VM_password": password}
+
+    return task_result
 
 @task()
-def progressive_increase():
+def destroy_cluster_async(token, cluster_id):
     """
-    progressive task for testing task feedback
+    Asynchronous destroy cluster task.
     """
-    for i in range(100):
-        sleep(0.1)
-        current_task.update_state(state="PROGRESS", meta={'current': i, 'total': 100})
+    result = destroy_cluster(token, cluster_id)
+    return result
 
-
-@app.task
-def add(x, y):
-    return x + y
-
-
-@app.task
-def mul(x, y):
-    return x * y
-
-
-@app.task
-def xsum(numbers):
-    return sum(numbers)

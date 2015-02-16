@@ -1,24 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
 Urls for backend ember-django application.
 
 @author: Ioannis Stenos, Nick Vrionis
-'''
+"""
 
+from django.conf import settings
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
-import views
+from views import SessionView, StatusView, JobsView
 
 urlpatterns = patterns('', url(r'^$', 'backend.views.main_page'),
                        url(r'^admin', include(admin.site.urls)),
-                       url(r'^api/users', views.SessionView.as_view()),
-                       url(r'^api/orka', views.DatabaseView.as_view()),
-                       url(r'^api/clusters', views.StatusView.as_view()),
-                       url(r'^api/clusterchoices', views.StatusView.as_view()),
-                       # celery test stuff - temporary
-                       url(r'^celery_test', 'backend.views.start_celery_task'),
-                       url(r'^celery_progress', 'backend.views.monitor_celery_task')
-
+                       url(r'^api/users', SessionView.as_view()),
+                       url(r'^api/clusters', StatusView.as_view()),
+                       url(r'^api/clusterchoices', StatusView.as_view()),
+                       url(r'^api/jobs', JobsView.as_view())
                        )
+
+# if settings.DEBUG:
+#     import debug_toolbar
+#     urlpatterns += patterns('',
+#         url(r'^__debug__/', include(debug_toolbar.urls)),
+#     )

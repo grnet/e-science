@@ -7,8 +7,7 @@ This script is a test for cluster creation via GUI end to end
 from selenium import webdriver
 import sys, os
 from os.path import join, dirname, abspath
-sys.path.append(join(dirname(abspath(__file__)), '../../orka-0.1.1/orka'))
-sys.path.append(join(dirname(__file__), '../../ember_django/backend'))
+sys.path.append(join(dirname(abspath(__file__)), '../../ember_django'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -18,12 +17,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
-from okeanos_utils import check_quota, get_flavor_id, check_credentials
+from backend.okeanos_utils import check_quota, get_flavor_id, check_credentials
+from random import randint
 import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class test_text_respond_to_buttons(unittest.TestCase):
+class test_create_cluster(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -54,7 +54,7 @@ class test_text_respond_to_buttons(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     
-    def test_text_respond_to_buttons(self):
+    def test_create_cluster(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_id("id_login").click()     
@@ -90,7 +90,8 @@ class test_text_respond_to_buttons(unittest.TestCase):
         project_details = self.project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'CPUs:' + str(user_quota['cpus']['available']) + '  ' + 'RAM:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
         Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)                           
         driver.find_element_by_id("cluster_name").clear()
-        driver.find_element_by_id("cluster_name").send_keys("mycluster")
+        cluster_name = 'test_cluster' + str(randint(0,9999))
+        driver.find_element_by_id("cluster_name").send_keys(cluster_name)
         Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text('2')
         for role in ['master' , 'slaves']:
             for flavor in ['cpus' , 'ram' , 'disk']:
