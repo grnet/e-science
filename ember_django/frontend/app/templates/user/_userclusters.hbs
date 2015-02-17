@@ -29,7 +29,7 @@ Grid should be sort-able by status & size -->
                             <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
                             	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
                             </td>
-                            <td><i class="glyphicon glyphicon-play text-success"></i></td>
+                            <td><i {{bind-attr class="usercluster.cluster_hadoop_status_class"}}></i></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
@@ -58,7 +58,7 @@ Grid should be sort-able by status & size -->
                             <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
                             	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
                             </td>
-                            <td><i class="glyphicon glyphicon-play text-success"></i></td>
+                            <td><i {{bind-attr class="usercluster.cluster_hadoop_status_class"}}></i></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>

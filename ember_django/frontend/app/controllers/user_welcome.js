@@ -25,7 +25,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 		});
 	}.property('sortdir', 'sortbyname', 'sortbydate', 'sortbystatus', 'sortbysize', 'sortbyurl'),
 	actions : {
-		// sorts clusters based on selected column (name, status, size, IP)
+		// sorts clusters based on selected column (name, date, status, size, IP)
 		sortBy : function(clusters, column) {
 			switch (column) {
 			case 'cluster_name':

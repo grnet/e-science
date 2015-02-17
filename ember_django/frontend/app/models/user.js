@@ -67,6 +67,16 @@ App.Usercluster = DS.Model.extend({
 			return "glyphicon glyphicon glyphicon-question-sign text-muted";
 		}
 	}.property('cluster_status'),
+	cluster_hadoop_status_class : function()
+	{
+		var status = this.get('cluster_status');
+		switch (status){
+		case "1":
+			return "glyphicon glyphicon-play text-success";
+		default:
+			return "glyphicon glyphicon-stop text-danger";
+		}
+	}.property('cluster_status'),
 	cluster_status_pending : function(){
 		var status = this.get('cluster_status');
 		if (status == '2'){
