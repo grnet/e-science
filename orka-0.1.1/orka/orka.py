@@ -99,7 +99,7 @@ def task_message(task_id, escience_token):
 
             elif 'error' in response['job']:
                 logging.error(response['job']['error'])
-                return error_fatal
+                exit(error_fatal)
 
             elif 'state' in response['job']:
                 logging.log(SUMMARY, response['job']['state'])
