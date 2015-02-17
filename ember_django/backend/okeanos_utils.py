@@ -88,8 +88,8 @@ def destroy_cluster(token, cluster_id, master_IP=''):
     current_task.update_state(state=" Started")
     servers_to_delete = []
     cluster_to_delete = ClusterInfo.objects.get(id=cluster_id)
-    if cluster_to_delete.status == 'Destroyed':
-        msg = 'Cluster is already deleted'
+    if cluster_to_delete.cluster_status == '0' or cluster_to_delete.cluster_status == '2':
+        msg = ' Cluster is already deleted or in pending status'
         raise RuntimeError(msg)
     if cluster_to_delete.master_IP:
         float_ip_to_delete = cluster_to_delete.master_IP
