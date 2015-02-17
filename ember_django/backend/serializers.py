@@ -130,11 +130,3 @@ class UserInfoSerializer(serializers.ModelSerializer):
     def get_ember_id(self, obj):
         """"Always returns id 1 for ember.js"""
         return 1
-
-
-class UserThemeSerializer(serializers.Serializer):
-    """
-    Serializer for ember request with user's
-    choices for theme.
-    """
-    user_theme = serializers.CharField(required=False)
