@@ -32,6 +32,7 @@ App.Usercluster = DS.Model.extend({
 	project_name : attr(),
 	task_id : attr(),
 	state : attr(),
+	// hadoop_status : attr('string'),
 	// user that created the cluster
 	user : DS.belongsTo('user', {
 		inverse : 'clusters'

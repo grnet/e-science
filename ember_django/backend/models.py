@@ -170,6 +170,12 @@ CLUSTER_STATUS_CHOICES = (
     ("2", "Pending"),
 )
 
+# HADOOP_STATUS_CHOICES = (
+#     ("0", "Stop"),
+#     ("1", "Start"),
+#     ("2", "Format"),
+# )
+
 class ClusterInfo(models.Model):
     """Definition of a Hadoop Cluster object model."""
     cluster_name = models.CharField("Cluster Name", max_length=255, null=False,
@@ -222,11 +228,18 @@ class ClusterInfo(models.Model):
 
     state = models.CharField("Task State", max_length=255,
                                blank=True, help_text="Celery task state")
-
+    
+#     hadoop_status = models.CharField("Hadoop Status", max_length=1,
+#                                     choices=HADOOP_STATUS_CHOICES,
+#                                       null=False, help_text="Stop/Start/Format"
+#                                       " hadoop status on the cluster")
+    
     class Meta:
         verbose_name = "Cluster"
         app_label = 'backend'
 
     def __unicode__(self):
-        return ("%d, %s, %d, %s") % (self.id, self.cluster_name, self.cluster_size,
-                                 self.cluster_status)
+        return ("%d, %s, %d, %s , %s") % (self.id, self.cluster_name, self.cluster_size,
+                                 self.cluster_status)        
+#         return ("%d, %s, %d, %s , %s") % (self.id, self.cluster_name, self.cluster_size,
+#                                  self.cluster_status, self.hadoop_status)
