@@ -73,6 +73,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.reset_variables();
 		this.set('project_current', '');
 		this.set('project_name', '');
+
 		var projects = [];
 		var length = this.get('content.length');
 		var regular_exp_project_id = /system:[a-z,0-9]{8}(-[a-z,0-9]{4}){3}-[a-z,0-9]{12}/;
@@ -106,6 +107,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 				'RAM:' + this.get('content').objectAt(i).get('mem_av') + 'MB' + space_between_quota +
 				'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) 
 			{ 
+				if(this.get('last_cluster_conf_checked') == false)
+				{
+					this.set('alert_mes_last_conf', '');
+				}
 				this.set('create_cluster_disabled', false);
 				this.set('project_current', this.get('content').objectAt(i));
 				this.set('project_name', this.get('content').objectAt(i).get('project_name'));
@@ -125,11 +130,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 	cpu_available : function() {
 		var cpu_avail = this.get('content').objectAt(this.get('project_index')).get('cpu_av') - this.get('total_cpu_selection');
 		if (cpu_avail < 0) {
-			alert('The cluster size you selected with the current cpu choices exceed the cpu quota. You should lower the clustersize, change cpu values and select the clustersize again');
 			if(this.get('last_cluster_conf_checked') == true)
 			{
 				this.set('alert_mes_last_conf', 'Lack of available resources.');
-				this.set('selected_project', '');
+			//	this.set('selected_project', '');
+				this.reset_variables();
+				this.reset_project();
+				this.set('last_cluster_conf_checked', false);
 			}
 		} else {
 			return cpu_avail;
@@ -145,11 +152,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 	ram_available : function() {
 		ram_avail = this.get('content').objectAt(this.get('project_index')).get('mem_av') - this.get('total_ram_selection');
 		if (ram_avail < 0) {
-			alert('The cluster size you selected with the current ram choices exceed the ram quota. You should lower the clustersize, change ram values and select the clustersize again');
 			if(this.get('last_cluster_conf_checked')==true)
 			{
 				this.set('alert_mes_last_conf', 'Lack of available resources.');
-				this.set('selected_project', '');
+			//	this.set('selected_project', '');
+				this.reset_variables();
+				this.reset_project();		
+				this.set('last_cluster_conf_checked', false);		
 			}			
 		} else {
 			return ram_avail;
@@ -165,11 +174,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 	disk_available : function() {
 		disk_avail = this.get('content').objectAt(this.get('project_index')).get('disk_av') - this.get('total_disk_selection');
 		if (disk_avail < 0) {
-			alert('The cluster size you selected with the current disk choices exceed the disk quota. You should lower the clustersize, change disk values and select the clustersize again');
 			if(this.get('last_cluster_conf_checked')==true)
 			{
 				this.set('alert_mes_last_conf', 'Lack of available resources.');
-				this.set('selected_project', '');
+			//	this.set('selected_project', '');
+				this.reset_variables();
+				this.reset_project();		
+				this.set('last_cluster_conf_checked', false);		
 			}			
 		} else {
 			return disk_avail;
@@ -197,7 +208,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 				if(this.get('last_cluster_conf_checked')==true)
 				{
 					this.set('alert_mes_last_conf', 'Lack of available resources.');
-					this.set('selected_project', '');
+				//	this.set('selected_project', '');
+					this.reset_variables();
+					this.reset_project();	
+					this.set('last_cluster_conf_checked', false);				
 				}				
 			}
 
@@ -230,7 +244,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 				if(this.get('last_cluster_conf_checked')==true)
 				{
 					this.set('alert_mes_last_conf', 'Lack of available resources.');
-					this.set('selected_project', '');
+				//	this.set('selected_project', '');
+					this.reset_variables();
+					this.reset_project();	
+					this.set('last_cluster_conf_checked', false);				
 				}				
 			}
 			cluster_size_zero = true;
@@ -262,7 +279,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 				if(this.get('last_cluster_conf_checked')==true)
 				{
 					this.set('alert_mes_last_conf', 'Lack of available resources.');
-					this.set('selected_project', '');
+				//	this.set('selected_project', '');
+					this.reset_variables();
+					this.reset_project();		
+					this.set('last_cluster_conf_checked', false);			
 				}				
 			}
 			cluster_size_zero = true;
@@ -291,7 +311,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 			if(this.get('last_cluster_conf_checked')==true)
 			{
 				this.set('alert_mes_last_conf', 'Lack of available resources.');
-				this.set('selected_project', '');
+			//	this.set('selected_project', '');
+				this.reset_variables();
+				this.reset_project();		
+				this.set('last_cluster_conf_checked', false);		
 			}			
 			cluster_size_zero = true;
 		}
@@ -732,7 +755,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 					+ '<br><b>Projects</b>: <span class="text text-info">' + clusterdata.project_name + '</span>'
 					+ '<br><b>Available Images</b>: <span class="text text-info">' + clusterdata.os_image + '</span>'
 					+ '<br><b>Cluster Size</b>: <span class="text text-info">' + clusterdata.cluster_size + '</span>'
-					+ '<br><b>Storage</b>: <span class="text text-info">' + clusterdata.disk_template + '</span>'
+					+ '<br><b>Storage</b>: <span class="text text-info">' + reverse_storage_lookup[clusterdata.disk_template] + '</span>'
 					+ '<br><b>Master CPUs</b>: <span class="text text-info">' + clusterdata.cpu_master + '</span>'
 					+ '<br><b>Master RAM</b>: <span class="text text-info">' + clusterdata.mem_master + '</span>'
 					+ '<br><b>Master Disk Size</b>: <span class="text text-info">' + clusterdata.disk_master + '</span>'
@@ -844,7 +867,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 		// When a disk button is clicked, the selected role's disk selection takes the corresponding value
 		disk_selection : function(value, name) {
-
+			// if the selected disk size is >20 GB
+			// then select 'Archipelago'
+			if(value > 20)
+			{
+				this.send('disk_template_selection', 'Archipelago', "storage_button");
+			}
+			
 			if (this.get('master_disk_selection') == 0) {
 				var master_disk = this.get('content').objectAt(this.get('project_index')).get('disk_choices')[0];
 			} else {
@@ -875,6 +904,45 @@ App.ClusterCreateController = Ember.Controller.extend({
 		// When a storage button is clicked, the selected role's storage selection takes the corresponding value
 		disk_template_selection : function(value, name) {
 			this.set('disk_temp', value);
+
+			// if "Standard" is selected, check disk sizes 
+			// disk sizes for master/slaves should be <=20
+			if(value == 'Standard')
+			{
+				var length = this.get('content').objectAt(this.get('project_index'))
+								.get('disk_choices').length;
+												
+				// if master disk selection invalid
+				if(this.get('master_disk_selection') > 20)
+				{
+					// then select the highest allowed value
+					for (var i = length-1; i >= 0; i--) {
+						var value = this.get('content').objectAt(this.get('project_index'))
+						.get('disk_choices')[i];
+						
+						if( value <= 20)
+						{
+							this.send('disk_selection', value, "master_disk_button");
+							break;
+						}					
+					}	
+				}
+				// if slaves disk selection invalid
+				if(this.get('slaves_disk_selection') > 20)
+				{
+					// then select the highest allowed value
+					for (var i = length-1; i >= 0; i--) {
+						var value = this.get('content').objectAt(this.get('project_index'))
+						.get('disk_choices')[i];
+						
+						if( value <= 20)
+						{
+							this.send('disk_selection', value, "slaves_disk_button");
+							break;
+						}					
+					}	
+				}				
+			}
 		},
 		// Cancel action when in create cluster -> redirect to user's welcome screen
 		cancel : function() {
