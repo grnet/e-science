@@ -106,6 +106,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 				'RAM:' + this.get('content').objectAt(i).get('mem_av') + 'MB' + space_between_quota +
 				'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) 
 			{ 
+				if (this.get('last_cluster_conf_checked') == false){
+					this.set('alert_mes_last_conf', '');
+				}
 				this.set('create_cluster_disabled', false);
 				this.set('project_current', this.get('content').objectAt(i));
 				this.set('project_name', this.get('content').objectAt(i).get('project_name'));
@@ -130,6 +133,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('selected_project', '');
 				this.reset_variables();
 				this.reset_project();
+				this.set('last_cluster_conf_checked', false);
 			}
 		} else {
 			return cpu_avail;
@@ -150,6 +154,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('selected_project', '');
 				this.reset_variables();
 				this.reset_project();
+				this.set('last_cluster_conf_checked', false);
 			}			
 		} else {
 			return ram_avail;
@@ -170,6 +175,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('selected_project', '');
 				this.reset_variables();
 				this.reset_project();
+				this.set('last_cluster_conf_checked', false);
 			}			
 		} else {
 			return disk_avail;
@@ -200,6 +206,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 					this.set('selected_project', '');
 					this.reset_variables();
 					this.reset_project();
+					this.set('last_cluster_conf_checked', false);
 				}
 			}
 
@@ -235,6 +242,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 					this.set('selected_project', '');
 					this.reset_variables();
 					this.reset_project();
+					this.set('last_cluster_conf_checked', false);
 				}
 			}
 			cluster_size_zero = true;
@@ -269,6 +277,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 					this.set('selected_project', '');
 					this.reset_variables();
 					this.reset_project();
+					this.set('last_cluster_conf_checked', false);
 				}
 			}
 			cluster_size_zero = true;
@@ -300,6 +309,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('selected_project', '');
 				this.reset_variables();
 				this.reset_project();
+				this.set('last_cluster_conf_checked', false);
 			}
 			cluster_size_zero = true;
 		}
@@ -740,7 +750,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 					+ '<br><b>Projects</b>: <span class="text text-info">' + clusterdata.project_name + '</span>'
 					+ '<br><b>Available Images</b>: <span class="text text-info">' + clusterdata.os_image + '</span>'
 					+ '<br><b>Cluster Size</b>: <span class="text text-info">' + clusterdata.cluster_size + '</span>'
-					+ '<br><b>Storage</b>: <span class="text text-info">' + clusterdata.disk_template + '</span>'
+					+ '<br><b>Storage</b>: <span class="text text-info">' + reverse_storage_lookup[clusterdata.disk_template] + '</span>'
 					+ '<br><b>Master CPUs</b>: <span class="text text-info">' + clusterdata.cpu_master + '</span>'
 					+ '<br><b>Master RAM</b>: <span class="text text-info">' + clusterdata.mem_master + '</span>'
 					+ '<br><b>Master Disk Size</b>: <span class="text text-info">' + clusterdata.disk_master + '</span>'
