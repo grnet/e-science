@@ -374,8 +374,8 @@ class YarnCluster(object):
             raise
         # Get master VM root password
         self.master_root_pass = self.server_dict[0]['adminPass']
-        set_cluster_state(self.opts['token'], self.cluster_id, ' ~okeanos cluster created...2/4',
-                          master_IP=self.HOSTNAME_MASTER_IP)
+        set_cluster_state(self.opts['token'], self.cluster_id, ' ~okeanos cluster created...2/4')
+                          
 
         # Return master node ip and server dict
         return self.HOSTNAME_MASTER_IP, self.server_dict
@@ -404,7 +404,7 @@ class YarnCluster(object):
 
             # If Yarn cluster is build, update cluster status as active
             set_cluster_state(self.opts['token'], self.cluster_id,
-                              ' Yarn Cluster is active', status='Active')
+                              ' Yarn Cluster is active', status='Active',master_IP=self.HOSTNAME_MASTER_IP)
 
         except Exception, e:
             logging.error(' Fatal error:' + str(e.args[0]))
