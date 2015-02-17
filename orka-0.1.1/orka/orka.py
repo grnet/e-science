@@ -166,12 +166,6 @@ class HadoopCluster(object):
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
             
-#     def start(self):
-#         """ Method for starting Hadoop's status """
-#         
-#     def stop(self):
-#         """ Method for stoping Hadoop's status """
-
 
 class UserClusterInfo(object):
     """ Class holding user cluster info
@@ -253,8 +247,6 @@ def main():
                                      ' on ~okeanos.')
     parser_i = subparsers.add_parser('list',
                                      help='List user clusters.')
-#     parser_h = subparsers.add_parser('hadoop', 
-#                                      help='Start or Stop a Hadoop-Yarn cluster')
     
     if len(argv) > 1:
 
@@ -329,13 +321,7 @@ def main():
         parser_i.add_argument("--logging", default=default_logging,
                               choices=checker.logging_levels.keys(), type=str.lower,
                               help='Logging Level. Default: summary')
-#         parser_h.add_argument('cluster_id',
-#                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
-#         parser_h.add_argument('hadoop_status', help='Hadoop status (choices: {%(choices)s})',
-#                               choices=['start, stop'])
-#         parser_h.add_argument('token',
-#                               help='Synnefo authentication token', type=checker.a_string_is)
-                                                          
+    
         opts = vars(parser.parse_args(argv[1:]))
         if argv[1] == 'create':
             if opts['use_hadoop_image']:
@@ -369,13 +355,6 @@ def main():
     elif argv[1] == 'list':
         c_userclusters = UserClusterInfo(opts)
         c_userclusters.list()
-#     elif argv[1] == 'hadoop':
-#         if argv[2] == 'start':
-#             print 'start'
-#         elif argv[2] == 'stop':
-#             print 'stop'
-#         else:
-#             print 'wrong argument'
 
 if __name__ == "__main__":
     main()
