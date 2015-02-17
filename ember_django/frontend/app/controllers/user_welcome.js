@@ -27,6 +27,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 	actions : {
 		// sorts clusters based on selected column (name, date, status, size, IP)
 		sortBy : function(clusters, column) {
+			// flags used for showing/hiding arrows next to column names
 			this.set('sortbynamearrow', false);
 			this.set('sortbydatearrow', false);
 			this.set('sortbystatusarrow', false);
