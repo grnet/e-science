@@ -11,9 +11,9 @@ if [ $# -lt 3 ]
 	echo ". deploy_project.sh SERVERNAME PROJECTGUID GITREPO [GITBRANCH]"
 	echo "Example:"
 	echo "--------"
-	echo ". deploy_project.sh Staging_ES250 \\"
-	echo "10bdefe7-07dd-43ae-a32e-d9b569640717 \\"
-	echo "https://github.com/ioannisstenos/e-science.git develop"
+	echo ". deploy_project.sh ES250 \\"
+	echo "10bfake7-07dd-43ae-a32e-placeholder7 \\"
+	echo "https://github.com/grnet/e-science.git develop"
 	echo "Hints:"
 	echo "------"
 	echo "'kamaki -k project list' will return available project info."
@@ -38,7 +38,7 @@ if [ -z "$IP" ]
 fi
 sleep 5
 kamaki -k server create --project-id=$PROJECTGUID --name=$SERVERNAME \
---flavor-id=145 --image-id=643bf714-7c92-412d-92bb-013dc37efec9 \
+--flavor-id=145 --image-id=5ea34246-d5a9-4f38-8903-da4c284fdd5d \
 --network=$NID,$IP \
 -p ~/.ssh/id_rsa.pub,/root/.ssh/authorized_keys,root,root,0700 --wait 2>&1 | tee tmp_vm.txt
 VM=$(cat tmp_vm.txt | grep "SNF:fqdn:" |cut -d' ' -f2)

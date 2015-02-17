@@ -25,7 +25,7 @@ kamaki -k project list
 
 ##### Example
 ```shell
-. deploy_project.sh 10bfake7-07dd-43ae-a32e-placeholder7 ES250 https://github.com/grnet/e-science.git develop
+. deploy_project.sh ES250 10bfake7-07dd-43ae-a32e-placeholder7 https://github.com/grnet/e-science.git develop
 ```
 
 ### Results, Script Feedback
