@@ -22,8 +22,12 @@ App.Ticker = Ember.Object.extend({
 	},
 	// Starts the timer, i.e. executes the `onTick` function every interval.
 	start : function() {
-		if (!this.get('ticking')){		
-			this.set('timer', this.schedule(this.get('onTick')));
+		if (!this.get('ticking')){
+			var func = this.get('onTick');
+			Ember.run.once(this, function(){
+				func.apply(this);
+			});
+			this.set('timer', this.schedule(func));
 			this.set('ticking', true);
 		}
 	},

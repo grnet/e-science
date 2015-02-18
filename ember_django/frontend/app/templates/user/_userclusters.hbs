@@ -11,12 +11,17 @@ Grid should be sort-able by status & size -->
                 <table class="table table-striped table-hover table-border">
                     <thead class="h4 text-left">
                         <tr>
-                            <td><a href="#" {{action 'sortBy' content.clusters 'cluster_name'}}>Name</a><i class="glyphicon small" {{bind-attr class="sortbyname:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                            <td><a href="#" {{action 'sortBy' content.clusters 'action_date'}}>Date</a><i class="glyphicon small" {{bind-attr class="sortbydate:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                            <td id="id_label_status"><a href="#" {{action 'sortBy' content.clusters 'cluster_status'}}>Cluster Status</a><i class="glyphicon small" {{bind-attr class="sortbystatus:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                            <td><a href="#" {{action 'sortBy' content.clusters 'cluster_name'}}>Name</a> 
+                            	<i {{bind-attr class="sortbynamearrow:glyphicon:hide sortbynamearrow:small:hide sortbyname:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                            <td><a href="#" {{action 'sortBy' content.clusters 'action_date'}}>Date</a> 
+                            	<i {{bind-attr class="sortbydatearrow:glyphicon:hide sortbydatearrow:small:hide sortbydate:glyphicon-arrow-up:glyphicon-arrow-down"}}></i> </td>
+                            <td id="id_label_status"><a href="#" {{action 'sortBy' content.clusters 'cluster_status'}}>Cluster Status</a> 
+                            	<i {{bind-attr class="sortbystatusarrow:glyphicon:hide sortbystatusarrow:small:hide sortbystatus:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td>Hadoop Status</td>
-                            <td><a href="#" {{action 'sortBy' content.clusters 'cluster_size'}}>Size</a><i class="glyphicon small" {{bind-attr class="sortbysize:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                            <td><a href="#" {{action 'sortBy' content.clusters 'master_IP'}}>Active IP</a><i class="glyphicon small" {{bind-attr class="sortbyurl:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                            <td><a href="#" {{action 'sortBy' content.clusters 'cluster_size'}}>Size</a>
+                            	<i {{bind-attr class="sortbysizearrow:glyphicon:hide sortbysizearrow:small:hide sortbysize:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                            <td><a href="#" {{action 'sortBy' content.clusters 'master_IP'}}>Active IP</a>
+                            	<i {{bind-attr class="sortbyurlarrow:glyphicon:hide sortbyurlarrow:small:hide sortbyurl:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td>Actions</td>
                         </tr>
                     </thead>
@@ -29,7 +34,7 @@ Grid should be sort-able by status & size -->
                             <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
                             	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
                             </td>
-                            <td><i class="glyphicon glyphicon-play text-success"></i></td>
+                            <td><i {{bind-attr class="usercluster.cluster_hadoop_status_class"}}></i></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
@@ -58,7 +63,7 @@ Grid should be sort-able by status & size -->
                             <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
                             	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
                             </td>
-                            <td><i class="glyphicon glyphicon-play text-success"></i></td>
+                            <td><i {{bind-attr class="usercluster.cluster_hadoop_status_class"}}></i></td>
                             <td>{{usercluster.cluster_size}}</td>
                             <td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             <td>
