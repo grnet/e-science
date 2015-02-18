@@ -1,6 +1,5 @@
 language: python
-services:
-- postgresql
+services: postgresql
 python:
 - '2.7'
 env:
@@ -10,7 +9,6 @@ env:
 addons:
 - postgresql: "9.1"
 before_install:
-- export DJANGO_SETTINGS_MODULE=backend.settings
 - openssl aes-256-cbc -K $encrypted_b254a382580f_key -iv $encrypted_b254a382580f_iv
   -in .private/.config.txt.enc -out .private/.config.txt -d
 install:
