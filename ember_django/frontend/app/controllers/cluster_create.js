@@ -1050,7 +1050,6 @@ App.ClusterCreateController = Ember.Controller.extend({
                         self.set('message', message);
                         self.set('controllers.userWelcome.output_message', message);
 						self.set('controllers.userWelcome.create_cluster_start', true);
-						self.set('controllers.userWelcome.refreshed', 0);
 						self.store.fetch('user', 1).then(function(user){
 							self.transitionToRoute('user.welcome');
 						},function(reason){

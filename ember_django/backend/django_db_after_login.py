@@ -82,7 +82,7 @@ def db_cluster_create(choices, task_id):
                     os_image=choices['os_choice'], user_id=user,
                     project_name=choices['project_name'],
                     task_id=task_id,
-                    state='AUTHENTICATED')
+                    state='Authenticated')
 
     return new_cluster.id
 

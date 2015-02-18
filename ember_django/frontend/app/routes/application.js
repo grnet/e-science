@@ -3,12 +3,13 @@
 // Allows us to have logic to handle slower loading routes or errors in a generic way.
 
 App.ApplicationRoute = Ember.Route.extend({
-	actions: {
-		loading: function(transition, route){
-			if(transition.targetName == 'cluster.create')
-			{ this.set('loaderTitle', 'Computing available resources...'); }
-			else
-			{ this.set('loaderTitle', 'Working...'); }
+	actions : {
+		loading : function(transition, route) {
+			if (transition.targetName == 'cluster.create') {
+				this.set('loaderTitle', 'Computing available resources...');
+			} else {
+				this.set('loaderTitle', 'Working...');
+			}
 			$options = {
 				title : this.get('loaderTitle'),
 				fontColor : false,
@@ -26,7 +27,7 @@ App.ApplicationRoute = Ember.Route.extend({
 				}
 			};
 			$.loader.open($options);
-			function loader_close(){
+			function loader_close() {
 				$.loader.close(true);
 			}
 			this.router.one('didTransition', null, loader_close);
