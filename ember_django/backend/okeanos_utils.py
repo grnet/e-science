@@ -191,7 +191,7 @@ def destroy_cluster(token, cluster_id, master_IP=''):
     set_cluster_state(token, cluster_id, state, status='Destroyed')
     # Everything deleted as expected
     if not list_of_errors:
-        return 0
+        return cluster_name
     # There was one or more errors, return error message
     else:
         msg = ' Error while deleting cluster'
