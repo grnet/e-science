@@ -6,7 +6,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 	output_message : '',
 	// flag to see if the transition is from create cluster button
 	create_cluster_start : false,
-	refreshed : 0,
+	count : 0,
 	sortedclusters : [],
 	column : '',
 	sortdir : null,
@@ -25,32 +25,43 @@ App.UserWelcomeController = Ember.Controller.extend({
 		});
 	}.property('sortdir', 'sortbyname', 'sortbydate', 'sortbystatus', 'sortbysize', 'sortbyurl'),
 	actions : {
-		// sorts clusters based on selected column (name, status, size, IP)
+		// sorts clusters based on selected column (name, date, status, size, IP)
 		sortBy : function(clusters, column) {
+			// flags used for showing/hiding arrows next to column names
+			this.set('sortbynamearrow', false);
+			this.set('sortbydatearrow', false);
+			this.set('sortbystatusarrow', false);
+			this.set('sortbysizearrow', false);
+			this.set('sortbyurlarrow', false);
+			this.set('sortedclusters', clusters);
+			this.set('column', column);
 			switch (column) {
-			case 'cluster_name':
+			case 'cluster_name':	
+				this.set('sortbynamearrow', true);															
 				this.set('sortbyname', !this.get('sortbyname'));
 				this.set('sortdir', this.get('sortbyname'));
 				break;
 			case 'action_date':
+				this.set('sortbydatearrow', true);
 				this.set('sortbydate', !this.get('sortbydate'));
 				this.set('sortdir', this.get('sortbydate'));
 				break;
 			case 'cluster_status':
+				this.set('sortbystatusarrow', true);
 				this.set('sortbystatus', !this.get('sortbystatus'));
 				this.set('sortdir', this.get('sortbystatus'));
 				break;
 			case 'cluster_size':
+				this.set('sortbysizearrow', true);
 				this.set('sortbysize', !this.get('sortbysize'));
 				this.set('sortdir', this.get('sortbysize'));
 				break;
 			case 'master_IP':
+				this.set('sortbyurlarrow', true);
 				this.set('sortbyurl', !this.get('sortbyurl'));
 				this.set('sortdir', this.get('sortbyurl'));
 				break;
 			}
-			this.set('sortedclusters', clusters);
-			this.set('column', column);
 		},
 		timer : function(status, store) {
 			var that = this;
@@ -78,8 +89,12 @@ App.UserWelcomeController = Ember.Controller.extend({
 									}
 								}
 								if (!bPending) {
-									that.get('timer').stop();
-									status = false;
+									if (that.get('count') > 0) {
+										that.set('count', that.get('count')-1);
+									}else{
+										that.get('timer').stop();
+										status = false;
+									}
 								}
 							}, function(reason) {
 								that.get('timer').stop();
@@ -103,9 +118,5 @@ App.UserWelcomeController = Ember.Controller.extend({
 				this.get('timer').stop();
 			}
 		},
-		doRefresh : function() {
-			// console.log('controller > doRefresh called');
-			this.get('target.router').refresh();
-		}
 	}
 });

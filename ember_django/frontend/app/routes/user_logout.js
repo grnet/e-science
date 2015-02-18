@@ -26,6 +26,8 @@ App.UserLogoutRoute = Ember.Route.extend({
 			window.localStorage.escience_auth_token = App.get('escience_token');
 			console.log(reason.message);
 		});
+		// scroll to top of the page
+		window.scrollTo(0,0);
 		this.transitionTo('homepage');
 		this.controllerFor('application').set('loggedIn', false);
 	}

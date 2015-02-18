@@ -32,7 +32,6 @@ App.Usercluster = DS.Model.extend({
 	project_name : attr(),
 	task_id : attr(),
 	state : attr(),
-	// hadoop_status : attr('string'),
 	// user that created the cluster
 	user : DS.belongsTo('user', {
 		inverse : 'clusters'
@@ -66,6 +65,16 @@ App.Usercluster = DS.Model.extend({
 
 		default:
 			return "glyphicon glyphicon glyphicon-question-sign text-muted";
+		}
+	}.property('cluster_status'),
+	cluster_hadoop_status_class : function()
+	{
+		var status = this.get('cluster_status');
+		switch (status){
+		case "1":
+			return "glyphicon glyphicon-play text-success";
+		default:
+			return "glyphicon glyphicon-stop text-danger";
 		}
 	}.property('cluster_status'),
 	cluster_status_pending : function(){

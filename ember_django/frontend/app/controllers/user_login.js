@@ -40,7 +40,13 @@ App.UserLoginController = Ember.Controller.extend({
 					self.set('loginFailed', false);
 					self.set('controllers.application.loggedIn', true);
 					self.set('token', '');
-					self.transitionToRoute('user.welcome');
+					var previousTransition = self.get('previousTransition');
+					if (previousTransition){
+						self.set('previousTransition', null);
+						previousTransition.retry();
+					}else{
+						self.transitionToRoute('user.welcome');	
+					}
                     Ember.run.later(self, function(){
                         self.set('controllers.application.loggedIn', false);
 						self.set('token', '');

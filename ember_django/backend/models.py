@@ -233,13 +233,13 @@ class ClusterInfo(models.Model):
 #                                     choices=HADOOP_STATUS_CHOICES,
 #                                       null=False, help_text="Stop/Start/Format"
 #                                       " hadoop status on the cluster")
-    
+
     class Meta:
         verbose_name = "Cluster"
         app_label = 'backend'
 
     def __unicode__(self):
-        return ("%d, %s, %d, %s , %s") % (self.id, self.cluster_name, self.cluster_size,
-                                 self.cluster_status)        
+        return ("%d, %s, %d, %s") % (self.id, self.cluster_name, self.cluster_size,
+                                 self.cluster_status)
 #         return ("%d, %s, %d, %s , %s") % (self.id, self.cluster_name, self.cluster_size,
 #                                  self.cluster_status, self.hadoop_status)
