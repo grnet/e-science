@@ -17,7 +17,7 @@ from get_flavors_quotas import project_list_flavor_quota
 from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
-    DeleteClusterSerializer, TaskSerializer, UserThemeSerializer
+    DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, UpdateDBHadoopSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async
@@ -118,6 +118,22 @@ class StatusView(APIView):
             c_cluster = create_cluster_async.delay(choices)
             task_id = c_cluster.id
             return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+        else:
+            print 'update DB hadoop status'
+            self.serializer_class = UpdateDBHadoopSerializer
+            serializer = self.serializer_class(data=request.DATA)
+            if serializer.is_valid():
+                print 'proccess...'
+                user_token = Token.objects.get(key=request.auth)
+#                 user = UserInfo.objects.get(user_id=user_token.user.user_id)
+#                 # Dictionary of YarnCluster arguments
+                status = dict()
+                status = serializer.data.copy()
+                print status
+#                 status.update({'hadoop_status': hadoop_status})
+#                 print "status: " + str(status)
+                h_status = db_hadoop_update(user_token, status)                
+#                 print h_status
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)

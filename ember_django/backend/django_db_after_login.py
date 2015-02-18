@@ -86,6 +86,22 @@ def db_cluster_create(choices, task_id):
 
     return new_cluster.id
 
+def db_hadoop_update(token, hadoop_status):
+    try:
+        print "hadoop update..."
+        user =  UserInfo.objects.get(okeanos_token=token)
+        print "user: " + str(user)
+        cluster = ClusterInfo.objects.get(id=cluster_id)
+        print "cluster obj: " + str(cluster)
+        print "cluster id: " + str(cluster_id)
+    except ObjectDoesNotExist:
+        msg = 'Cluster with given id does not exist'
+        raise ObjectDoesNotExist(msg)
+    if hadoop_status:
+        cluster.hadoop_status = hadoop_status 
+    cluster.save()
+    return hadoop_status
+        
 
 def db_cluster_update(token, status, cluster_id, master_IP='', state='', password=''):
     """

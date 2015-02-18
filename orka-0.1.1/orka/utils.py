@@ -75,6 +75,7 @@ class ClusterRequest(object):
                          headers=self.headers)
         response = json.loads(r.text)
         return response
+        
 
 
 def get_user_clusters(token):

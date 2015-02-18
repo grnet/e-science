@@ -84,7 +84,12 @@ class UpdateDatabaseSerializer(serializers.Serializer):
     cluster_name = serializers.CharField()
     state = serializers.CharField()
     master_IP = serializers.CharField(required=False)
+    
+class UpdateDBHadoopSerializer(serializers.Serializer):
 
+    cluster_id = serializers.CharField()
+    hadoop_status = serializers.CharField(required=False)
+    
 
 class ClusterchoicesSerializer(serializers.Serializer):
     """
@@ -116,6 +121,8 @@ class ClusterchoicesSerializer(serializers.Serializer):
     ssh_key_selection = serializers.CharField(required=False)
 
     task_id = serializers.CharField(required=False)
+    
+    hadoop_status = serializers.CharField(required=False)
 
 
 class ClusterInfoSerializer(serializers.ModelSerializer):
@@ -125,7 +132,7 @@ class ClusterInfoSerializer(serializers.ModelSerializer):
         fields = ('id', 'cluster_name', 'action_date', 'cluster_status', 'cluster_size',
                   'cpu_master', 'mem_master', 'disk_master', 'cpu_slaves',
                   'mem_slaves', 'disk_slaves', 'disk_template', 'os_image',
-                  'master_IP', 'project_name', 'task_id', 'state')
+                  'master_IP', 'project_name', 'task_id', 'state', 'hadoop_status')
 
 
 class UserInfoSerializer(serializers.ModelSerializer):

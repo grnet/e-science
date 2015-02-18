@@ -164,6 +164,30 @@ class HadoopCluster(object):
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
+            
+            
+    def start(self):
+        """ Method for starting Hadoop """
+        try:
+            payload = {"clusterchoice":{"cluster_id": str(self.opts['cluster_id']),"hadoop_status": "start"}}
+            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
+            yarn_cluster_req.create_cluster()
+            print 'Start ' + 'cluster with id: ' + str(self.opts['cluster_id'])
+        except Exception, e:
+            logging.error(' Error:' + str(e.args[0]))
+            exit(error_fatal)
+            
+            
+    def stop(self):
+        """ Method for stopping Hadoop """
+        try:
+            payload = {"clusterchoice":{"id": self.opts['cluster_id']}}
+            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
+            print 'Stopped ' + 'cluster with id: ' + str(self.opts['cluster_id'])
+        except Exception, e:
+            logging.error(' Error:' + str(e.args[0]))
+            exit(error_fatal)
+                    
 
 
 class UserClusterInfo(object):
@@ -369,11 +393,10 @@ def main():
         
     elif argv[1] == 'hadoop':
         if argv[2] == 'start':
-            print 'start'
+            c_hadoopcluster.start()
         elif argv[2] == 'stop':
-            print 'stop'
-        else:
-            print 'wrong argument'
+            c_hadoopcluster.stop()
+                    
 
 if __name__ == "__main__":
     main()

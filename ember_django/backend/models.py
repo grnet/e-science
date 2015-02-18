@@ -220,6 +220,9 @@ class ClusterInfo(models.Model):
 
     state = models.CharField("Task State", max_length=255,
                                blank=True, help_text="Celery task state")
+    
+    hadoop_status =  models.CharField("Hadoop Status", max_length=255,
+                               blank=True, help_text="Hadoop Status")
 
     class Meta:
         verbose_name = "Cluster"
