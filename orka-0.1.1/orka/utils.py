@@ -75,6 +75,12 @@ class ClusterRequest(object):
                          headers=self.headers)
         response = json.loads(r.text)
         return response
+    
+    def update_hadoop_status(self):
+        r = requests.put('http://127.0.0.1:8000/api/hadoopchoices', data=json.dumps(self.payload),
+                         headers=self.headers)
+        response = json.loads(r.text)
+        return response
         
 
 

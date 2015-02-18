@@ -169,9 +169,9 @@ class HadoopCluster(object):
     def start(self):
         """ Method for starting Hadoop """
         try:
-            payload = {"clusterchoice":{"cluster_id": self.opts['cluster_id'],"hadoop_status": "start"}}
+            payload = {"hadoopchoice":{"cluster_id": self.opts['cluster_id'],"hadoop_status": "start"}}
             yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
-            yarn_cluster_req.create_cluster()
+            yarn_cluster_req.update_hadoop_status()
             print 'Start ' + 'cluster with id: ' + str(self.opts['cluster_id'])
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
@@ -181,9 +181,9 @@ class HadoopCluster(object):
     def stop(self):
         """ Method for stopping Hadoop """
         try:
-            payload = {"clusterchoice":{"cluster_id": self.opts['cluster_id'],"hadoop_status": "stop"}}
+            payload = {"hadoopchoice":{"cluster_id": self.opts['cluster_id'],"hadoop_status": "stop"}}
             yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
-            yarn_cluster_req.create_cluster()
+            yarn_cluster_req.update_hadoop_status()
             print 'Stopped ' + 'cluster with id: ' + str(self.opts['cluster_id'])
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
