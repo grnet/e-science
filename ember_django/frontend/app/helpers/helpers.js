@@ -3,7 +3,7 @@
 
 var DateFormats = {  
   shortdate: 'YYYY-MM-DD', // 2015-12-30
-  shortdatetime: 'ddd MMM YYYY HH:mm:ss' //Day Mon 2015 23:59:59
+  shortdatetime: 'ddd,DD MMM YYYY HH:mm:ss' //Day,15 Mon 2015 23:59:59
 };
 
 Ember.Handlebars.helper('formatDate', function(date, options) {  

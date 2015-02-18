@@ -6,7 +6,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 	output_message : '',
 	// flag to see if the transition is from create cluster button
 	create_cluster_start : false,
-	refreshed : 0,
+	count : 0,
 	sortedclusters : [],
 	column : '',
 	sortdir : null,
@@ -89,8 +89,12 @@ App.UserWelcomeController = Ember.Controller.extend({
 									}
 								}
 								if (!bPending) {
-									that.get('timer').stop();
-									status = false;
+									if (that.get('count') > 0) {
+										that.set('count', that.get('count')-1);
+									}else{
+										that.get('timer').stop();
+										status = false;
+									}
 								}
 							}, function(reason) {
 								that.get('timer').stop();
@@ -114,9 +118,5 @@ App.UserWelcomeController = Ember.Controller.extend({
 				this.get('timer').stop();
 			}
 		},
-		doRefresh : function() {
-			// console.log('controller > doRefresh called');
-			this.get('target.router').refresh();
-		}
 	}
 });
