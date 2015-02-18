@@ -125,15 +125,12 @@ class StatusView(APIView):
             if serializer.is_valid():
                 print 'proccess...'
                 user_token = Token.objects.get(key=request.auth)
-#                 user = UserInfo.objects.get(user_id=user_token.user.user_id)
-#                 # Dictionary of YarnCluster arguments
+                user = UserInfo.objects.get(user_id=user_token.user.user_id)
                 status = dict()
                 status = serializer.data.copy()
-                print status
-#                 status.update({'hadoop_status': hadoop_status})
-#                 print "status: " + str(status)
-                h_status = db_hadoop_update(user_token, status)                
-#                 print h_status
+                cluster_id = serializer.data['cluster_id']
+                hadoop_status = serializer.data[u'hadoop_status']
+                h_status = db_hadoop_update(cluster_id, hadoop_status, user.okeanos_token)                
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)

@@ -87,7 +87,7 @@ class UpdateDatabaseSerializer(serializers.Serializer):
     
 class UpdateDBHadoopSerializer(serializers.Serializer):
 
-    cluster_id = serializers.CharField()
+    cluster_id = serializers.IntegerField()
     hadoop_status = serializers.CharField(required=False)
     
 
