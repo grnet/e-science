@@ -164,8 +164,7 @@ class HadoopCluster(object):
             response = yarn_cluster_req.delete_cluster()
             task_id = response['clusterchoice']['task_id']
             result = task_message(task_id, self.escience_token, wait_timer_delete)
-            if result == 0:
-                logging.log(SUMMARY, " Cluster with id [%s] and all its resources deleted" %(self.opts['cluster_id']))
+            logging.log(SUMMARY, ' Cluster with name "%s" and all its resources deleted' %(result))
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
