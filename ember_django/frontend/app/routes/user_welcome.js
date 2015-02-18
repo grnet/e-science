@@ -70,8 +70,8 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 				var count = that.controller.get('count');
 				var extend = Math.max(5, count);
 				that.controller.set('count', extend);
-				that.controller.send('timer', true, that.store);
 				that.controller.set('create_cluster_start', true);
+				that.controller.send('timer', true, that.store);
 			},function(reason){
 				console.log(reason.message);
 				that.controller.set('output_message', reason.message);

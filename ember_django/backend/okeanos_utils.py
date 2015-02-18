@@ -313,6 +313,7 @@ def check_quota(token, project_id):
               'cluster_size': {'limit': limit_vm, 'available': available_vm}}
     return quotas
 
+
 def check_images(token, project_id):
     """
     Checks the list of the current images
