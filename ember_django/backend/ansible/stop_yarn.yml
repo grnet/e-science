@@ -1,0 +1,12 @@
+---
+  - name: start dfs
+    tags: postconfig
+    command: sudo -u hduser ./stop-dfs.sh chdir={{hadoop_home}}/sbin
+
+  - name: start history server
+    tags: postconfig
+    command: sudo -u hduser ./mr-jobhistory-daemon.sh stop historyserver chdir={{hadoop_home}}/sbin
+
+  - name: start yarn
+    tags: postconfig
+    command: sudo -u hduser ./stop-yarn.sh chdir={{hadoop_home}}/sbin

@@ -8,6 +8,9 @@
   # Hadoop-yarn variables
   hadoopuser_path: /home/hduser
   start_yarn: False
+  restart_yarn: False
+  reformat_yarn: False
+  stop_yarn: False
   format: False
   is_master: False
   is_slave: False
