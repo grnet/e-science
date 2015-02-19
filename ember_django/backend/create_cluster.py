@@ -362,7 +362,7 @@ class YarnCluster(object):
                               image_id, self.opts['cluster_size'],
                               self.net_client, self.auth, self.project_id)
 
-            set_cluster_state(self.opts['token'], self.cluster_id, " Creating ~okeanos cluster...1/3")
+            set_cluster_state(self.opts['token'], self.cluster_id, " Creating ~okeanos cluster (1/3)")
 
             self.HOSTNAME_MASTER_IP, self.server_dict = \
                 cluster.create('', pub_keys_path, '')
@@ -387,14 +387,14 @@ class YarnCluster(object):
             raise
         # Update cluster info with the master VM root password.
         set_cluster_state(self.opts['token'], self.cluster_id,
-                          ' Configuring Yarn cluster node communication...2/3',
+                          ' Configuring Yarn cluster node communication (2/3)',
                           password=self.master_root_pass)
 
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
                                              self.HOSTNAME_MASTER_IP)
             set_cluster_state(self.opts['token'], self.cluster_id,
-                          ' Installing and configuring Yarn...3/3')
+                          ' Installing and configuring Yarn (3/3)')
 
             install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.cluster_name_postfix_id, self.hadoop_image, self.ssh_file)
