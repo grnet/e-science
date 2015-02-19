@@ -1,17 +1,16 @@
 ---
   - name: format hdfs
-    tags: postconfig
+    tags: format
     command: sudo -u hduser ./hdfs namenode -format chdir={{hadoop_home}}/bin
-    when: format
 
   - name: start dfs
-    tags: postconfig
+    tags: start
     command: sudo -u hduser ./start-dfs.sh chdir={{hadoop_home}}/sbin
 
   - name: start history server
-    tags: postconfig
+    tags: start
     command: sudo -u hduser ./mr-jobhistory-daemon.sh start historyserver chdir={{hadoop_home}}/sbin
 
   - name: start yarn
-    tags: postconfig
+    tags: start
     command: sudo -u hduser ./start-yarn.sh chdir={{hadoop_home}}/sbin

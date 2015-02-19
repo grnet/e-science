@@ -82,10 +82,21 @@ def db_cluster_create(choices, task_id):
                     os_image=choices['os_choice'], user_id=user,
                     project_name=choices['project_name'],
                     task_id=task_id,
-                    state='Authenticated')
+                    state='Authenticated',
+                    hadoop_status="0")
 
     return new_cluster.id
 
+def db_hadoop_update(cluster_id, hadoop_status):
+    try:
+        cluster = ClusterInfo.objects.get(id=cluster_id)
+    except ObjectDoesNotExist:
+        msg = 'Cluster with given id does not exist'
+        raise ObjectDoesNotExist(msg)
+    if hadoop_status:
+        cluster.hadoop_status =  HADOOP_STATUS_CHOICES['hadoop_status']
+    cluster.save()
+        
 
 def db_cluster_update(token, status, cluster_id, master_IP='', state='', password=''):
     """

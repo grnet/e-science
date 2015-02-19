@@ -109,6 +109,9 @@ class StatusView(APIView):
             choices = dict()
             choices = serializer.data.copy()
             choices.update({'token': user.okeanos_token})
+            if serializer.data['hadoop_status']:
+                db_hadoop_update(serializer.data['id'], serializer.data['hadoop_status'])
+                return Response({"status":"alright"})
             try:
                 YarnCluster(choices).check_user_resources()
             except ClientError, e:
@@ -118,6 +121,7 @@ class StatusView(APIView):
             c_cluster = create_cluster_async.delay(choices)
             task_id = c_cluster.id
             return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)

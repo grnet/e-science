@@ -413,7 +413,8 @@ class YarnCluster(object):
             raise
 
         finally:
-            os.system('rm ' + self.ssh_file)
+            if self.ssh_file != 'no_ssh_key_selected':
+                os.system('rm ' + self.ssh_file)
 
         return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass
 
