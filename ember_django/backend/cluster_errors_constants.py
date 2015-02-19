@@ -61,4 +61,4 @@ default_logging = 'summary'
 login_endpoint = '/api/users'
 cluster_endpoint = '/api/clusterchoices'
 job_endpoint = '/api/jobs'
-HADOOP_STATUS_CHOICES = {"Stop": "0", "Start": "1" ,"Format": "2"}
+HADOOP_STATUS_CHOICES = {"stop": "0", "start": "1" ,"format": "2"}

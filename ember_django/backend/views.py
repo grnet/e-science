@@ -23,6 +23,7 @@ from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
+from run_ansible_playbooks import ansible_manage_cluster
 
 
 logging.addLevelName(REPORT, "REPORT")
@@ -105,13 +106,17 @@ class StatusView(APIView):
         if serializer.is_valid():
             user_token = Token.objects.get(key=request.auth)
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
+            if serializer.data['hadoop_status']:
+                try:
+                    ansible_manage_cluster(serializer.data['id'], serializer.data['hadoop_status'])
+                    return Response({"status":"ok!"})
+                except Exception, e:
+                    return Response({"status": str(e.args[0])})
+
             # Dictionary of YarnCluster arguments
             choices = dict()
             choices = serializer.data.copy()
             choices.update({'token': user.okeanos_token})
-            if serializer.data['hadoop_status']:
-                db_hadoop_update(serializer.data['id'], serializer.data['hadoop_status'])
-                return Response({"status":"alright"})
             try:
                 YarnCluster(choices).check_user_resources()
             except ClientError, e:

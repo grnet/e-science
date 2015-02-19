@@ -93,8 +93,8 @@ def db_hadoop_update(cluster_id, hadoop_status):
     except ObjectDoesNotExist:
         msg = 'Cluster with given id does not exist'
         raise ObjectDoesNotExist(msg)
-    if hadoop_status:
-        cluster.hadoop_status =  HADOOP_STATUS_CHOICES['hadoop_status']
+
+    cluster.hadoop_status =  HADOOP_STATUS_CHOICES[hadoop_status]
     cluster.save()
         
 
@@ -104,7 +104,7 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
     when cluster state changes.
     """
     try:
-        user =  UserInfo.objects.get(okeanos_token=token)
+        user = UserInfo.objects.get(okeanos_token=token)
         cluster = ClusterInfo.objects.get(id=cluster_id)
     except ObjectDoesNotExist:
         msg = 'Cluster with given name does not exist in pending state'

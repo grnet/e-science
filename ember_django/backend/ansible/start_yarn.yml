@@ -1,7 +1,7 @@
 ---
   - name: format hdfs
     tags: format
-    command: sudo -u hduser ./hdfs namenode -format chdir={{hadoop_home}}/bin
+    command: sudo -u hduser ./hdfs namenode -format -force chdir={{hadoop_home}}/bin
 
   - name: start dfs
     tags: start
@@ -14,3 +14,7 @@
   - name: start yarn
     tags: start
     command: sudo -u hduser ./start-yarn.sh chdir={{hadoop_home}}/sbin
+
+  - name: Stop everything in hadoop cluster
+    tags: stop
+    command: sudo -u hduser ./stop-all.sh chdir={{hadoop_home}}/sbin

@@ -10,6 +10,7 @@ import os
 from os.path import dirname, abspath, isfile
 import logging
 from backend.models import ClusterInfo
+from django_db_after_login import db_hadoop_update
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
@@ -17,7 +18,7 @@ from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
 playbook = 'site.yml'
 ansible_playbook = dirname(abspath(__file__)) + '/ansible/' + playbook
 ansible_hosts_prefix = 'ansible_hosts_'
-ansible_verbosity = ""
+ansible_verbosity = ' -vvvv'
 
 
 
@@ -37,7 +38,9 @@ def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
                                          hostname_master)
         # Run Ansible playbook
         ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file)
-        ansible_manage_cluster(cluster_id)
+        # Format and start Hadoop cluster
+        ansible_manage_cluster(cluster_id, 'format')
+        ansible_manage_cluster(cluster_id, 'start')
     except Exception, e:
         msg = 'Error while running Ansible '
         raise RuntimeError(msg, error_ansible_playbook)
@@ -64,29 +67,30 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
         target.write('[master]' + '\n')
         target.write(list_of_hosts[0]['fqdn'])
         target.write(' private_ip='+list_of_hosts[0]['private_ip'])
-        target.write(' ansible_ssh_pass='+list_of_hosts[0]['password'])
+        # target.write(' ansible_ssh_pass='+list_of_hosts[0]['password'])
         target.write(' ansible_ssh_host=' + hostname_master + '\n' + '\n')
         target.write('[slaves]'+'\n')
 
         for host in list_of_hosts[1:]:
             target.write(host['fqdn'])
             target.write(' private_ip='+host['private_ip'])
-            target.write(' ansible_ssh_pass='+host['password'])
+            # target.write(' ansible_ssh_pass='+host['password'])
             target.write(' ansible_ssh_port='+str(host['port']))
             target.write(' ansible_ssh_host='+ hostname_master +'\n')
     return hosts_filename
 
 
-def ansible_manage_cluster(cluster_id, actions=''):
+def ansible_manage_cluster(cluster_id, action):
     """
-    Start,stop or format a hadoop cluster.
+    Start,stop or format a hadoop cluster, depending on the action arg.
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
     cluster_name_postfix_id = '%s%s%s' % (cluster.cluster_name, '-', cluster_id)
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name_postfix_id.replace(" ", "_")
     if isfile(hosts_filename):
-        ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t format,start'
+        ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + action
         execute_ansible_playbook(ansible_code)
+        db_hadoop_update(cluster_id, action)
 
     else:
         msg = ' Ansible hosts file [%s] does not exist' % hosts_filename
@@ -105,7 +109,6 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file)
     logging.log(REPORT, ' Ansible starts Yarn installation on master and '
                         'slave nodes')
     level = logging.getLogger().getEffectiveLevel()
-    ansible_verbosity = ""
 
     # Create debug file for ansible
     debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"

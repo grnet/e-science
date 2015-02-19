@@ -169,23 +169,11 @@ class HadoopCluster(object):
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
             
-            
-    def start(self):
-        """ Method for starting Hadoop """
+
+    def hadoop_action(self, action):
+        """ Method for applying an action to a Hadoop cluster"""
         try:
-            payload = {"clusterchoice":{"id": self.opts['cluster_id'], "hadoop_status": "start"}}
-            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
-            response = yarn_cluster_req.create_cluster()
-            print response
-        except Exception, e:
-            logging.error(' Error:' + str(e.args[0]))
-            exit(error_fatal)
-            
-            
-    def stop(self):
-        """ Method for stopping Hadoop """
-        try:
-            payload = {"clusterchoice":{"id": self.opts['cluster_id'], "hadoop_status": "start"}}
+            payload = {"clusterchoice":{"id": self.opts['cluster_id'], "hadoop_status": action}}
             yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
             response = yarn_cluster_req.create_cluster()
             print response
@@ -343,7 +331,7 @@ def main():
         
         
         parser_h.add_argument('hadoop_status', help='Hadoop status (choices: {%(choices)s})',
-                              choices=['start', 'stop'])
+                              choices=['start', 'format', 'stop'])
         parser_h.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         parser_h.add_argument('token',
@@ -375,11 +363,8 @@ def main():
         c_userclusters.list()
         
     elif argv[1] == 'hadoop':
-        if argv[2] == 'start':
-            c_hadoopcluster.start()
-        elif argv[2] == 'stop':
-            c_hadoopcluster.stop()
-                    
+        c_hadoopcluster.hadoop_action(argv[2])
+
 
 if __name__ == "__main__":
     main()
