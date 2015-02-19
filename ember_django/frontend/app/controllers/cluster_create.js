@@ -730,6 +730,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 					this.set('master_cpu_selection', this.large_flavor_settings[0]);
 					this.set('master_ram_selection', this.large_flavor_settings[1]);
 					this.set('master_disk_selection', this.large_flavor_settings[2]);
+					this.send('disk_template_selection', 'Archipelago', "storage_button");
 				}
 			}
 			if (name == "vm_flavor_button_Slave") {
@@ -748,6 +749,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 					this.set('slaves_cpu_selection', this.large_flavor_settings[0]);				
 					this.set('slaves_ram_selection', this.large_flavor_settings[1]);				
 					this.set('slaves_disk_selection', this.large_flavor_settings[2]);
+					this.send('disk_template_selection', 'Archipelago', "storage_button");	
 				}
 			}			
 		},

@@ -13,9 +13,11 @@ import orka
 
 requires = ['kamaki==0.13.1','paramiko','requests','PyYAML']
 
+# setup
 setup(
     name = "orka",
     packages = ["orka"],
+    # starts from this main
     entry_points = {
         "console_scripts": ['orka = orka.orka:main']
         },

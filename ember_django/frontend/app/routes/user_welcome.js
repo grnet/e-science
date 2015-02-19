@@ -43,8 +43,14 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		// if we came from a link-to helper that doesn't fire the model hook
 		// console.log(user.get('clusters').get('length'));
 		var user_clusters = user.get('clusters');
-		this.controllerFor('userWelcome').send('sortBy', user_clusters, 'action_date');
-		this.controllerFor('userWelcome').send('sortBy', user_clusters, 'action_date');
+		var lastsort = this.controllerFor('userWelcome').get('column');
+		if (!Ember.isBlank(lastsort)){
+			this.controllerFor('userWelcome').send('sortBy', user_clusters, lastsort);
+			this.controllerFor('userWelcome').send('sortBy', user_clusters, lastsort);
+		}else{
+			this.controllerFor('userWelcome').send('sortBy', user_clusters, 'action_date');
+			this.controllerFor('userWelcome').send('sortBy', user_clusters, 'action_date');
+		}
 		if ((user.get('user_theme') !== "")&&(user.get('user_theme') !== undefined)&&(user.get('user_theme') !== null)) {
 			changeCSS(user.get('user_theme'), 0);			
 		}
@@ -70,8 +76,8 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 				var count = that.controller.get('count');
 				var extend = Math.max(5, count);
 				that.controller.set('count', extend);
-				that.controller.send('timer', true, that.store);
 				that.controller.set('create_cluster_start', true);
+				that.controller.send('timer', true, that.store);
 			},function(reason){
 				console.log(reason.message);
 				that.controller.set('output_message', reason.message);

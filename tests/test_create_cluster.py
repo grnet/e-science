@@ -15,7 +15,7 @@ from os.path import join, dirname, abspath
 sys.path.append(join(dirname(abspath(__file__)), '../ember_django'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 # import objects we aim to test
-from backend.create_cluster import YarnCluster, ClientError, current_task
+from backend.create_cluster import YarnCluster, ClientError, current_task, retrieve_pending_clusters
 from backend.cluster_errors_constants import error_quotas_cluster_size, error_quotas_network, \
     error_get_ip, error_quotas_cpu, error_quotas_ram, error_quotas_cyclades_disk
 
@@ -99,9 +99,10 @@ def mock_get_flavorid(*args):
     return 1
 
 
-def mock_check_quota(*args):
+def mock_retrieve_pending_clusters(*args):
     """ No implementation, just declaration. """
-    print 'in mock check quota'
+    print 'in mock retrieve pending clusters'
+    return {"VMs": 0, "Cpus": 0, "Ram": 0, "Disk": 0, "Ip": 0, "Network": 0}
 
 
 class MockPlankton():
@@ -154,6 +155,7 @@ def mock_get_project_id(*args):
 @patch('backend.create_cluster.init_cyclades', mock_init_cyclades)
 @patch('backend.create_cluster.YarnCluster.get_flavor_id_master', mock_get_flavorid)
 @patch('backend.create_cluster.YarnCluster.get_flavor_id_slave', mock_get_flavorid)
+@patch('backend.create_cluster.retrieve_pending_clusters', mock_retrieve_pending_clusters)
 @patch('backend.create_cluster.current_task', mock_current_task)
 @patch('backend.create_cluster.get_project_id', mock_get_project_id)
 @patch('backend.create_cluster.init_plankton', mock_init_plankton)
