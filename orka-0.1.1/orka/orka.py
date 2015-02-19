@@ -151,6 +151,13 @@ class HadoopCluster(object):
 
     def destroy(self):
         """ Method for deleting Hadoop clusters in~okeanos."""
+        clusters = get_user_clusters(self.opts['token'])
+        for cluster in clusters:
+            if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == '1':
+                break
+        else:
+            logging.error(' Only active clusters can be destroyed.')
+            exit(error_fatal)
         try:
             payload = {"clusterchoice":{"id": self.opts['cluster_id']}}
             yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
