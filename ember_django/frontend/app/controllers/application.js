@@ -18,7 +18,7 @@ App.ApplicationController = Ember.Controller.extend({
 		change_theme : function(cssUrl) {
 			var self = this;
 			changeCSS(cssUrl, 0);
-			// PUT user_theme to Django backend, while user logout.
+			// PUT user_theme to Django backend, when selected.
 			if (cssUrl) {
 				this.store.find('user', 1).then(function(user) {
 					user.set('user_theme', cssUrl);

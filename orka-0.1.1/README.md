@@ -76,14 +76,14 @@ Required positional arguments for create command:
 Optional arguments for create command:
 
     --image="Operating System (Default Value=Debian Base)",
-    --auth_url="authentication url (Default Value=https://accounts.okeanos.grnet.gr/identity/v2.0)"
-    --logging="critical, error, warning, summary, report, info, debug (Default Value=summary)"
-    --use_hadoop_image="name of a hadoop image. Overrides image value" (Default value=HadoopImage)
+    --auth_url="authentication url (Default Value=https://accounts.okeanos.grnet.gr/identity/v2.0)",
+    --use_hadoop_image="name of a hadoop image. Overrides image value (Default value=HadoopImage)"
 
 Install from a pre-configured image
 ----------------------------------
 
-Using the --use_hadoop_image argument creates the Hadoop cluster much faster because it utilises a specially created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest
+Using the --use_hadoop_image argument creates the Hadoop cluster much faster because it utilises a specially
+created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest
 stable YARN version will be installed (but at the cost of lower speed).
 
 Command {orka create} examples
@@ -99,14 +99,14 @@ example for create cluster with default optionals (with default hadoop image):
 
 example for create cluster with a different hadoop image and logging level:
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <~okeanos_token> <project_name> --use_hadoop_image=hadoop_image_name --logging=report
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <~okeanos_token> <project_name> --use_hadoop_image=hadoop_image_name
 
 "list" command
 ----------------
 
 Required positional arguments for list command:
 
-token: "an ~okeanos token"
+    token: "an ~okeanos token"
 
 Optional arguments for list command:
 
@@ -126,21 +126,17 @@ example for list user clusters:
 
 Required positional arguments for destroy command:
 
-cluster_id: "Cluster id in e-science database"  
+    cluster_id: "Cluster id in e-science database" 
+    token: "an ~okeanos token"
 (cluster_id is given by **orka list** command)
 
-token: "an ~okeanos token"
-
-Optional arguments for destroy command:
-
-    --logging="7 logging levels:critical, error, warning, summary, report, info, debug (Default Value summary)"
 
 Command {orka destroy} example
 ---------------------------
 
 example for destroy cluster:
 
-    orka destroy <cluster_id> <~okeanos_token> --logging=report
+    orka destroy <cluster_id> <~okeanos_token>
 
 Also, with
 

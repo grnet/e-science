@@ -302,8 +302,11 @@ class YarnCluster(object):
         return ssh_dict
         
     def check_user_resources(self):
-        """Creates a bare ~okeanos cluster."""
-        # Finds user public ssh key
+        """
+        Checks user resources before the starting cluster creation.
+        Also, returns the flavor id of master and slave VMS and the id of
+        the image chosen by the user.
+        """
         chosen_image = {}
         flavor_master = self.get_flavor_id_master(self.cyclades)
         flavor_slaves = self.get_flavor_id_slave(self.cyclades)
@@ -330,7 +333,7 @@ class YarnCluster(object):
         """Creates a bare ~okeanos cluster."""
         pub_keys_path = ''
         logging.log(SUMMARY, ' Authentication verified')
-        current_task.update_state(state="AUTHENTICATED")
+        current_task.update_state(state="Authenticated")
 
         flavor_master, flavor_slaves, image_id = self.check_user_resources()
         # Create name of cluster with [orka] prefix
@@ -340,7 +343,12 @@ class YarnCluster(object):
         # Update db with cluster status as pending
         task_id = current_task.request.id
         self.cluster_id = db_cluster_create(self.opts, task_id)
+        # Append the cluster_id in the cluster name to create a unique name
+        # used later for naming various files, e.g. ansible_hosts file and
+        # create_cluster_debug file.
         self.cluster_name_postfix_id = '%s%s%s' % (self.opts['cluster_name'], '-', self.cluster_id)
+
+        # Check if user chose ssh keys or not.
         if self.opts['ssh_key_selection'] is None or self.opts['ssh_key_selection'] == 'no_ssh_key_selected':
             self.ssh_file = 'no_ssh_key_selected'
 
@@ -354,7 +362,7 @@ class YarnCluster(object):
                               image_id, self.opts['cluster_size'],
                               self.net_client, self.auth, self.project_id)
 
-            set_cluster_state(self.opts['token'], self.cluster_id, " Creating ~okeanos cluster...1/4")
+            set_cluster_state(self.opts['token'], self.cluster_id, " Creating ~okeanos cluster...1/3")
 
             self.HOSTNAME_MASTER_IP, self.server_dict = \
                 cluster.create('', pub_keys_path, '')
@@ -366,36 +374,35 @@ class YarnCluster(object):
             raise
         # Get master VM root password
         self.master_root_pass = self.server_dict[0]['adminPass']
-        set_cluster_state(self.opts['token'], self.cluster_id, ' ~okeanos cluster created...2/4',
-                          master_IP=self.HOSTNAME_MASTER_IP)
-
         # Return master node ip and server dict
         return self.HOSTNAME_MASTER_IP, self.server_dict
 
     def create_yarn_cluster(self):
         """Create Yarn cluster"""
         try:
-            current_task.update_state(state="STARTED")
+            current_task.update_state(state=" Started")
             self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
         except Exception, e:
             logging.error(' Fatal error: ' + str(e.args[0]))
             raise
+        # Update cluster info with the master VM root password.
         set_cluster_state(self.opts['token'], self.cluster_id,
-                          ' Configuring Yarn cluster node communication...3/4',
+                          ' Configuring Yarn cluster node communication...2/3',
                           password=self.master_root_pass)
 
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
                                              self.HOSTNAME_MASTER_IP)
             set_cluster_state(self.opts['token'], self.cluster_id,
-                          ' Installing and configuring Yarn...4/4')
+                          ' Installing and configuring Yarn...3/3')
 
             install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.cluster_name_postfix_id, self.hadoop_image, self.ssh_file)
 
             # If Yarn cluster is build, update cluster status as active
             set_cluster_state(self.opts['token'], self.cluster_id,
-                              ' Yarn Cluster is active', status='Active')
+                              ' Yarn Cluster is active', status='Active',
+                              master_IP=self.HOSTNAME_MASTER_IP)
 
         except Exception, e:
             logging.error(' Fatal error:' + str(e.args[0]))
@@ -412,4 +419,4 @@ class YarnCluster(object):
 
     def destroy(self):
         """Destroy Cluster"""
-        destroy_cluster(self.opts['token'], self.cluster_id)
+        destroy_cluster(self.opts['token'], self.cluster_id, master_IP=self.HOSTNAME_MASTER_IP)

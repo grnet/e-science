@@ -122,9 +122,11 @@ class Token(models.Model):
         return binascii.hexlify(os.urandom(20)).decode()
 
     def update_token(self, *args, **kwargs):
-        # checks if an amount of time has passed
-        # since the creation of the token
-        # and regenerates a new key
+        """
+        Checks if an amount of time has passed
+        since the creation of the token
+        and regenerates a new key
+        """
         if(timezone.now() >  self.creation_date + datetime.timedelta(seconds=args[0])):
             self.key = self.generate_token()
             self.creation_date = timezone.now()
@@ -167,6 +169,12 @@ CLUSTER_STATUS_CHOICES = (
     ("1", "Active"),
     ("2", "Pending"),
 )
+
+# HADOOP_STATUS_CHOICES = (
+#     ("0", "Stop"),
+#     ("1", "Start"),
+#     ("2", "Format"),
+# )
 
 class ClusterInfo(models.Model):
     """Definition of a Hadoop Cluster object model."""
@@ -224,6 +232,11 @@ class ClusterInfo(models.Model):
     hadoop_status =  models.CharField("Hadoop Status", max_length=255,
                                blank=True, help_text="Hadoop Status")
 
+#     hadoop_status = models.CharField("Hadoop Status", max_length=1,
+#                                     choices=HADOOP_STATUS_CHOICES,
+#                                       null=False, help_text="Stop/Start/Format"
+#                                       " hadoop status on the cluster")
+
     class Meta:
         verbose_name = "Cluster"
         app_label = 'backend'
@@ -231,3 +244,5 @@ class ClusterInfo(models.Model):
     def __unicode__(self):
         return ("%d, %s, %d, %s") % (self.id, self.cluster_name, self.cluster_size,
                                  self.cluster_status)
+#         return ("%d, %s, %d, %s , %s") % (self.id, self.cluster_name, self.cluster_size,
+#                                  self.cluster_status, self.hadoop_status)

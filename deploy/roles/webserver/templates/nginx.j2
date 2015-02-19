@@ -1,0 +1,31 @@
+upstream django {
+    server 127.0.0.1:8080;
+}
+
+server {
+    listen 80;
+    server_name {{ inventory_hostname }};
+    root /home/orka_admin/projects/e-science/ember_django;
+    access_log /home/orka_admin/logs/access.log;
+    error_log /home/orka_admin/logs/error.log;
+
+    location /static/ { # STATIC_URL
+        alias /home/orka_admin/projects/e-science/ember_django/static/; # STATIC_ROOT
+        expires 30d;
+    }
+
+    location /media/ { # MEDIA_URL
+        alias /home/orka_admin/projects/e-science/ember_django/media/; # MEDIA_ROOT
+        expires 30d;
+    }
+
+    location /favicon.ico {
+        alias /home/orka_admin/projects/e-science/ember_django/static/favicon.ico;
+    }
+
+    location / {
+        include /etc/nginx/uwsgi_params;
+        uwsgi_read_timeout 3000;
+        uwsgi_pass 127.0.0.1:8080;
+    }
+}

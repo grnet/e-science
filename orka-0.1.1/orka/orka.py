@@ -4,9 +4,7 @@
 
 """orka.orka: provides entry point main()."""
 import logging
-import os
 from sys import argv
-from os.path import join, dirname, abspath
 from kamaki.clients import ClientError
 from cluster_errors_constants import *
 from argparse import ArgumentParser, ArgumentTypeError 
@@ -83,7 +81,7 @@ class _ArgCheck(object):
             raise ArgumentTypeError(" %s must containt at least one letter." % val)
 
 
-def task_message(task_id, escience_token):
+def task_message(task_id, escience_token, wait_timer):
     """
     Function to check create and destroy celery tasks running from orka-CLI
     and log task state messages.
@@ -99,14 +97,14 @@ def task_message(task_id, escience_token):
 
             elif 'error' in response['job']:
                 logging.error(response['job']['error'])
-                return error_fatal
+                exit(error_fatal)
 
             elif 'state' in response['job']:
                 logging.log(SUMMARY, response['job']['state'])
                 previous_response = response
+                logging.log(SUMMARY, ' Waiting for cluster status update...')
         else:
-            logging.log(SUMMARY, ' Waiting for cluster status update')
-            sleep(30)
+            sleep(wait_timer)
 
 
 
@@ -140,7 +138,7 @@ class HadoopCluster(object):
             else:
                 logging.error(response['clusterchoice']['message'])
                 exit(error_fatal)
-            result = task_message(task_id, self.escience_token)
+            result = task_message(task_id, self.escience_token, wait_timer_create)
             logging.log(SUMMARY, " Yarn Cluster is active.You can access it through " +
                         result['master_IP'] + ":8088/cluster")
             logging.log(SUMMARY, " The root password of your master VM is " + result['master_VM_password'])
@@ -153,14 +151,20 @@ class HadoopCluster(object):
 
     def destroy(self):
         """ Method for deleting Hadoop clusters in~okeanos."""
+        clusters = get_user_clusters(self.opts['token'])
+        for cluster in clusters:
+            if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == '1':
+                break
+        else:
+            logging.error(' Only active clusters can be destroyed.')
+            exit(error_fatal)
         try:
             payload = {"clusterchoice":{"id": self.opts['cluster_id']}}
             yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
             response = yarn_cluster_req.delete_cluster()
             task_id = response['clusterchoice']['task_id']
-            result = task_message(task_id, self.escience_token)
-            if result == 0:
-                logging.log(SUMMARY, " Requested Cluster Deleted")
+            result = task_message(task_id, self.escience_token, wait_timer_delete)
+            logging.log(SUMMARY, ' Cluster with name "%s" and all its resources deleted' %(result))
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
@@ -362,19 +366,9 @@ def main():
         if argv[1] == 'create':
             if opts['use_hadoop_image']:
                 opts['image'] = opts['use_hadoop_image']
-            
-        if opts['logging'] == 'debug':
-            log_directory = os.getcwd()
-            log_file_path = join(log_directory, "create_cluster_debug.log")
 
-            logging.basicConfig(format='%(asctime)s:%(message)s',
-                                filename=log_file_path,
-                                level=logging.DEBUG, datefmt='%H:%M:%S')
-            print ' Creating Hadoop cluster, logs will' + \
-                  ' be appended in create_cluster_debug.log'
-        else:
-            logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-                                level=checker.logging_levels[opts['logging']],
+        logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
+                                level=checker.logging_levels['summary'],
                                 datefmt='%H:%M:%S')
 
     else:

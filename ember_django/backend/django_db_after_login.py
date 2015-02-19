@@ -30,7 +30,7 @@ def get_user_id(token):
     except ClientError:
         msg = 'Failed to get uuid from identity server'
         raise ClientError(msg)
-    
+
 
 def db_after_login(token, login=True):
     """
@@ -83,7 +83,7 @@ def db_cluster_create(choices, task_id):
                     project_name=choices['project_name'],
                     hadoop_status = "start",
                     task_id=task_id,
-                    state='AUTHENTICATED')
+                    state='Authenticated')
 
     return new_cluster.id
 
