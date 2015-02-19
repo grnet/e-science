@@ -6,9 +6,9 @@ App.ApplicationRoute = Ember.Route.extend({
 	actions : {
 		loading : function(transition, route) {
 			if (transition.targetName == 'cluster.create') {
-				this.set('loaderTitle', 'Computing available resources...');
+				this.set('loaderTitle', 'Computing available resources');
 			} else {
-				this.set('loaderTitle', 'Working...');
+				this.set('loaderTitle', 'Working');
 			}
 			$options = {
 				title : this.get('loaderTitle'),

@@ -83,8 +83,14 @@ App.UserWelcomeController = Ember.Controller.extend({
 								for ( i = 0; i < num_records; i++) {
 									if (user_clusters.objectAt(i).get('cluster_status') == '2') {
 										bPending = true;
-										that.send('sortBy', user_clusters, 'action_date');
-										that.send('sortBy', user_clusters, 'action_date');
+										var lastsort = that.get('column');
+										if (!Ember.isBlank(lastsort)){
+											that.send('sortBy', user_clusters, lastsort);
+											that.send('sortBy', user_clusters, lastsort);
+										}else{
+											that.send('sortBy', user_clusters, 'action_date');
+											that.send('sortBy', user_clusters, 'action_date');
+										}
 										break;
 									}
 								}
