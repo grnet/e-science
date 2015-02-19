@@ -169,10 +169,10 @@ class HadoopCluster(object):
     def start(self):
         """ Method for starting Hadoop """
         try:
-            payload = {"clusterchoice":{"cluster_id": self.opts['cluster_id'],"hadoop_status": "start"}}
-            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
-            yarn_cluster_req.create_cluster()
-            print 'Start ' + 'cluster with id: ' + str(self.opts['cluster_id'])
+            payload = {"hadoopchoice":{"cluster_id": self.opts['cluster_id'],"hadoop_status": "start"}}
+            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='hadoop')
+            yarn_cluster_req.update_hadoop_status()
+            print 'Start cluster with id: ' + str(self.opts['cluster_id'])
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
@@ -181,10 +181,10 @@ class HadoopCluster(object):
     def stop(self):
         """ Method for stopping Hadoop """
         try:
-            payload = {"clusterchoice":{"cluster_id": self.opts['cluster_id'],"hadoop_status": "stop"}}
-            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
-            yarn_cluster_req.create_cluster()
-            print 'Stopped ' + 'cluster with id: ' + str(self.opts['cluster_id'])
+            payload = {"hadoopchoice":{"cluster_id": self.opts['cluster_id'],"hadoop_status": "stop"}}
+            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='hadoop')
+            yarn_cluster_req.update_hadoop_status()
+            print 'Stopped cluster with id: ' + str(self.opts['cluster_id'])
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
@@ -394,8 +394,10 @@ def main():
         
     elif argv[1] == 'hadoop':
         if argv[2] == 'start':
+            print "starting..."
             c_hadoopcluster.start()
         elif argv[2] == 'stop':
+            print "shutting down..."
             c_hadoopcluster.stop()
                     
 
