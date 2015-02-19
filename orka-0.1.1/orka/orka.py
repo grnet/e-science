@@ -193,6 +193,17 @@ class HadoopCluster(object):
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
                     
+                    
+    def format(self):
+        """ Method for formating Hadoop """
+        try:
+            payload = {"hadoopchoice":{"cluster_id": self.opts['cluster_id'],"hadoop_status": "format"}}
+            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='hadoop')
+            yarn_cluster_req.update_hadoop_status()
+            print 'Format successful'
+        except Exception, e:
+            logging.error(' Error:' + str(e.args[0]))
+            exit(error_fatal)
 
 
 class UserClusterInfo(object):
@@ -353,7 +364,7 @@ def main():
                               help='Logging Level. Default: summary')
         
         parser_h.add_argument('hadoop_status', help='Hadoop status (choices: {%(choices)s})',
-                              choices=['start', 'stop'])
+                              type=str.lower, choices=['start', 'stop', 'format'])
         parser_h.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         parser_h.add_argument('token',
@@ -393,6 +404,9 @@ def main():
         elif argv[2] == 'stop':
             print "shutting down..."
             c_hadoopcluster.stop()
+        elif argv[2] == 'format':
+            print "initialize HDFS"
+            c_hadoopcluster.format()
                     
 
 if __name__ == "__main__":

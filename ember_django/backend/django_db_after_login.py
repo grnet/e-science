@@ -88,8 +88,13 @@ def db_cluster_create(choices, task_id):
     return new_cluster.id
 
 def db_hadoop_update(token, cluster_id, hadoop_status): 
-    user =  UserInfo.objects.get(okeanos_token=token)
-    cluster = ClusterInfo.objects.get(id=cluster_id)
+    try:
+        user =  UserInfo.objects.get(okeanos_token=token)
+        cluster = ClusterInfo.objects.get(id=cluster_id)
+    except ObjectDoesNotExist:
+        msg = 'Cluster with given name does not exist'
+        raise ObjectDoesNotExist(msg)
+#     if cluster.cluster_status == "0":                                                  
     cluster.hadoop_status = hadoop_status 
     cluster.save()
         
@@ -119,6 +124,7 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
         cluster.cluster_status = "0"
         cluster.master_IP = ''
         cluster.state= 'Deleted'
+        cluster.hadoop_status = ''
 
     if state:
         cluster.state = state
