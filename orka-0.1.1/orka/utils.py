@@ -30,9 +30,6 @@ def get_api_urls(action):
         if action == 'job':
             url_job = '{0}{1}'.format(base_url, job_endpoint)
             return url_job
-        if action == 'hadoop':
-            url_hadoop = '{0}{1}'.format(base_url, hadoop_endpoint)
-            return url_hadoop
         else:
             logging.log(SUMMARY, ' Url to be returned from config file not specified')
             return 0
@@ -71,12 +68,6 @@ class ClusterRequest(object):
     def retrieve(self):
         """Request to retrieve info from an endpoint."""
         r = requests.get(self.url, data=json.dumps(self.payload),
-                         headers=self.headers)
-        response = json.loads(r.text)
-        return response
-    
-    def update_hadoop_status(self):
-        r = requests.put(self.url, data=json.dumps(self.payload),
                          headers=self.headers)
         response = json.loads(r.text)
         return response

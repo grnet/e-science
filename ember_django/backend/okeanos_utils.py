@@ -435,6 +435,16 @@ class Cluster(object):
     def _personality(self, ssh_keys_path='', pub_keys_path=''):
         """Personality injects ssh keys to the virtual machines we create"""
         personality = []
+        if ssh_keys_path:
+            try:
+                with open(abspath(ssh_keys_path)) as f:
+                    personality.append(dict(
+                        contents=b64encode(f.read()),
+                        path='/root/.ssh/authorized_keys',
+                        owner='root', group='root', mode=0600))
+            except IOError:
+                msg = " No valid public ssh key(id_rsa.pub) in " + (abspath(ssh_keys_path))
+                raise IOError(msg)
         if pub_keys_path:
             try:
                 with open(abspath(pub_keys_path)) as f:

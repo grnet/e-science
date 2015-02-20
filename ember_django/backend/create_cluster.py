@@ -331,6 +331,8 @@ class YarnCluster(object):
 
     def create_bare_cluster(self):
         """Creates a bare ~okeanos cluster."""
+        server_home_path = expanduser('~')
+        server_ssh_keys = join(server_home_path, ".ssh/id_rsa.pub")
         pub_keys_path = ''
         logging.log(SUMMARY, ' Authentication verified')
         current_task.update_state(state="Authenticated")
@@ -365,7 +367,7 @@ class YarnCluster(object):
             set_cluster_state(self.opts['token'], self.cluster_id, " Creating ~okeanos cluster...1/3")
 
             self.HOSTNAME_MASTER_IP, self.server_dict = \
-                cluster.create('', pub_keys_path, '')
+                cluster.create(server_ssh_keys, pub_keys_path, '')
             sleep(15)
         except Exception:
             # If error in bare cluster, update cluster status as destroyed
@@ -413,7 +415,8 @@ class YarnCluster(object):
             raise
 
         finally:
-            os.system('rm ' + self.ssh_file)
+            if self.ssh_file != 'no_ssh_key_selected':
+                os.system('rm ' + self.ssh_file)
 
         return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass
 

@@ -169,41 +169,18 @@ class HadoopCluster(object):
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
             
-            
-    def start(self):
-        """ Method for starting Hadoop """
+
+    def hadoop_action(self, action):
+        """ Method for applying an action to a Hadoop cluster"""
         try:
-            payload = {"hadoopchoice":{"cluster_id": self.opts['cluster_id'],"hadoop_status": "start"}}
-            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='hadoop')
-            yarn_cluster_req.update_hadoop_status()
-            print 'Start cluster with id: ' + str(self.opts['cluster_id'])
-        except Exception, e:
-            logging.error(' Error:' + str(e.args[0]))
-            exit(error_fatal)
-            
-            
-    def stop(self):
-        """ Method for stopping Hadoop """
-        try:
-            payload = {"hadoopchoice":{"cluster_id": self.opts['cluster_id'],"hadoop_status": "stop"}}
-            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='hadoop')
-            yarn_cluster_req.update_hadoop_status()
-            print 'Stopped cluster with id: ' + str(self.opts['cluster_id'])
+            payload = {"clusterchoice":{"id": self.opts['cluster_id'], "hadoop_status": action}}
+            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
+            response = yarn_cluster_req.create_cluster()
+            print response
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
                     
-                    
-    def format(self):
-        """ Method for formating Hadoop """
-        try:
-            payload = {"hadoopchoice":{"cluster_id": self.opts['cluster_id'],"hadoop_status": "format"}}
-            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='hadoop')
-            yarn_cluster_req.update_hadoop_status()
-            print 'Format successful'
-        except Exception, e:
-            logging.error(' Error:' + str(e.args[0]))
-            exit(error_fatal)
 
 
 class UserClusterInfo(object):
@@ -336,18 +313,11 @@ def main():
                               help='Synnefo authentication url. Default is ' +
                               auth_url)
 
-        parser_c.add_argument("--logging", default=default_logging,
-                              choices=checker.logging_levels.keys(), type=str.lower,
-                              help='Logging Level. Default: summary')
 
         parser_d.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         parser_d.add_argument('token',
                               help='Synnefo authentication token', type=checker.a_string_is)
-
-        parser_d.add_argument("--logging", default=default_logging,
-                              choices=checker.logging_levels.keys(), type=str.lower,
-                              help='Logging Level. Default: summary')
         
         parser_i.add_argument('token',
                               help='Synnefo authentication token', type=checker.a_string_is)
@@ -359,24 +329,19 @@ def main():
         parser_i.add_argument('--verbose', help='List extra cluster details.',
                               action="store_true")
         
-        parser_i.add_argument("--logging", default=default_logging,
-                              choices=checker.logging_levels.keys(), type=str.lower,
-                              help='Logging Level. Default: summary')
         
         parser_h.add_argument('hadoop_status', help='Hadoop status (choices: {%(choices)s})',
-                              type=str.lower, choices=['start', 'stop', 'format'])
+                              type=str.lower, choices=['start', 'format', 'stop'])
         parser_h.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         parser_h.add_argument('token',
                               help='Synnefo authentication token', type=checker.a_string_is)
-        parser_h.add_argument("--logging", default=default_logging,
-                              choices=checker.logging_levels.keys(), type=str.lower,
-                              help='Logging Level. Default: summary')
 
         opts = vars(parser.parse_args(argv[1:]))
         if argv[1] == 'create':
             if opts['use_hadoop_image']:
                 opts['image'] = opts['use_hadoop_image']
+     
 
         logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
                                 level=checker.logging_levels['summary'],
@@ -398,16 +363,8 @@ def main():
         c_userclusters.list()
         
     elif argv[1] == 'hadoop':
-        if argv[2] == 'start':
-            print "starting..."
-            c_hadoopcluster.start()
-        elif argv[2] == 'stop':
-            print "shutting down..."
-            c_hadoopcluster.stop()
-        elif argv[2] == 'format':
-            print "initialize HDFS"
-            c_hadoopcluster.format()
-                    
+        c_hadoopcluster.hadoop_action(argv[2])
+
 
 if __name__ == "__main__":
     main()

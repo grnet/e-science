@@ -63,38 +63,34 @@ class DeleteClusterSerializer(serializers.Serializer):
     id = serializers.IntegerField()
 
 
-class UpdateDBHadoopSerializer(serializers.Serializer):
-
-    cluster_id = serializers.IntegerField()
-    hadoop_status = serializers.CharField(required=False)
-    
-
 class ClusterchoicesSerializer(serializers.Serializer):
     """
     Serializer for ember request with user's
     choices for cluster creation.
     """
-    cluster_name = serializers.CharField()
+    cluster_name = serializers.CharField(required=False)
 
-    cluster_size = serializers.IntegerField()
+    id = serializers.CharField(required=False)
 
-    cpu_master = serializers.IntegerField()
+    cluster_size = serializers.IntegerField(required=False)
 
-    mem_master = serializers.IntegerField()
+    cpu_master = serializers.IntegerField(required=False)
 
-    disk_master = serializers.IntegerField()
+    mem_master = serializers.IntegerField(required=False)
 
-    cpu_slaves = serializers.IntegerField()
+    disk_master = serializers.IntegerField(required=False)
 
-    mem_slaves = serializers.IntegerField()
+    cpu_slaves = serializers.IntegerField(required=False)
 
-    disk_slaves = serializers.IntegerField()
+    mem_slaves = serializers.IntegerField(required=False)
 
-    disk_template = serializers.CharField()
+    disk_slaves = serializers.IntegerField(required=False)
 
-    os_choice = serializers.CharField()
+    disk_template = serializers.CharField(required=False)
 
-    project_name = serializers.CharField()
+    os_choice = serializers.CharField(required=False)
+
+    project_name = serializers.CharField(required=False)
     
     ssh_key_selection = serializers.CharField(required=False)
 

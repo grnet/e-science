@@ -81,21 +81,21 @@ def db_cluster_create(choices, task_id):
                     disk_template=choices['disk_template'],
                     os_image=choices['os_choice'], user_id=user,
                     project_name=choices['project_name'],
-                    hadoop_status = "start",
+                    #hadoop_status = "start",
                     task_id=task_id,
-                    state='Authenticated')
+                    state='Authenticated',
+                    hadoop_status="0")
 
     return new_cluster.id
 
-def db_hadoop_update(token, cluster_id, hadoop_status): 
+def db_hadoop_update(cluster_id, hadoop_status):
     try:
-        user =  UserInfo.objects.get(okeanos_token=token)
         cluster = ClusterInfo.objects.get(id=cluster_id)
     except ObjectDoesNotExist:
-        msg = 'Cluster with given name does not exist'
+        msg = 'Cluster with given id does not exist'
         raise ObjectDoesNotExist(msg)
 #     if cluster.cluster_status == "0":                                                  
-    cluster.hadoop_status = hadoop_status 
+    cluster.hadoop_status =  HADOOP_STATUS_CHOICES[hadoop_status]
     cluster.save()
         
 
@@ -105,7 +105,7 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
     when cluster state changes.
     """
     try:
-        user =  UserInfo.objects.get(okeanos_token=token)
+        user = UserInfo.objects.get(okeanos_token=token)
         cluster = ClusterInfo.objects.get(id=cluster_id)
     except ObjectDoesNotExist:
         msg = 'Cluster with given name does not exist in pending state'

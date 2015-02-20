@@ -17,12 +17,13 @@ from get_flavors_quotas import project_list_flavor_quota
 from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
-    DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, UpdateDBHadoopSerializer
+    DeleteClusterSerializer, TaskSerializer, UserThemeSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
+from run_ansible_playbooks import ansible_manage_cluster
 
 
 logging.addLevelName(REPORT, "REPORT")
@@ -67,24 +68,7 @@ class JobsView(APIView):
             else:
                 return Response({'state': c_task.state})
         return Response(serializer.errors)
-    
-    
-class HadoopView(APIView):
-    authentication_classes = (EscienceTokenAuthentication, )
-    permission_classes = (IsAuthenticatedOrIsCreation, )
-    def put(self, request, *args, **kwargs):
-        self.resource_name = 'hadoopchoice'
-        self.serializer_class = UpdateDBHadoopSerializer
-        serializer = self.serializer_class(data=request.DATA)
-        if serializer.is_valid():
-            user_token = Token.objects.get(key=request.auth)
-            user = UserInfo.objects.get(user_id=user_token.user.user_id)
-            status = dict()
-            status = serializer.data.copy()
-            cluster_id = serializer.data['cluster_id']
-            hadoop_status = serializer.data[u'hadoop_status']
-            h_status = db_hadoop_update(user.okeanos_token, cluster_id, hadoop_status)
-        return Response(serializer.errors)
+
 
 class StatusView(APIView):
     """
@@ -122,6 +106,13 @@ class StatusView(APIView):
         if serializer.is_valid():
             user_token = Token.objects.get(key=request.auth)
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
+            if serializer.data['hadoop_status']:
+                try:
+                    ansible_manage_cluster(serializer.data['id'], serializer.data['hadoop_status'])
+                    return Response({"status":"ok!"})
+                except Exception, e:
+                    return Response({"status": str(e.args[0])})
+
             # Dictionary of YarnCluster arguments
             choices = dict()
             choices = serializer.data.copy()
@@ -135,6 +126,7 @@ class StatusView(APIView):
             c_cluster = create_cluster_async.delay(choices)
             task_id = c_cluster.id
             return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)

@@ -281,8 +281,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 			if ((this.get('vm_flavor_selection_Master') !== undefined) && (this.get('vm_flavor_selection_Master') !== null) && (this.get('vm_flavor_selection_Master') !== '')) {
 				var choice = document.getElementById("master_vm_falvors_".concat(this.get('vm_flavor_selection_Master')));
 				if ((this.get('master_cpu_selection') == this.small_flavor_settings[0])&&(this.get('master_ram_selection') == this.small_flavor_settings[1])&&(this.get('master_disk_selection') == this.small_flavor_settings[2])) {
-					//vm_flavor_newMaster_Id = "master_vm_falvors_Small";
-					choice = document.getElementById("master_vm_falvors_Small");
+					vm_flavor_newMaster_Id = "master_vm_falvors_Small";
+					choice = document.getElementById(vm_flavor_newMaster_Id);
 					choice.style.color = "white";
 				} 
 				if ((this.get('master_cpu_selection') == this.medium_flavor_settings[0])&&(this.get('master_ram_selection') == this.medium_flavor_settings[1])&&(this.get('master_disk_selection') == this.medium_flavor_settings[2])) {
