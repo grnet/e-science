@@ -10,12 +10,12 @@ App.VMFlavorSelButView = Ember.View.extend({
         // set id
 	    if(this.get('name') == "vm_flavor_button_Master")
 	{
-	    this.set('elementId', "master_vm_falvors_" + this.get('value'));
+	    this.set('elementId', "master_vm_flavors_" + this.get('value'));
 	    return this._super();
 	}
 	    if(this.get('name') == "vm_flavor_button_Slave")
 	{
-	    this.set('elementId', "slave_vm_falvors_" + this.get('value'));
+	    this.set('elementId', "slave_vm_flavors_" + this.get('value'));
 	    return this._super();
 	}
     },    
