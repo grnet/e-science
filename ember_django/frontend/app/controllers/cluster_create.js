@@ -674,31 +674,33 @@ App.ClusterCreateController = Ember.Controller.extend({
 				}
 				// select/set the remaining of the last configurations						
 				var self = this;
-				Ember.run.later (function() {	
-					self.set('last_cluster_conf_checked', true);	
-					if ((clusterdata.cluster_size <= (self.get('max_cluster_size_av').length+1)) 
-					&& ((clusterdata.cpu_master+(clusterdata.cpu_slaves*(clusterdata.cluster_size-1)))<= self.get('cpu_available')) 
-					&& ((clusterdata.mem_master+(clusterdata.mem_slaves*(clusterdata.cluster_size-1)))<= self.get('ram_available'))
-					&& ((clusterdata.disk_master+(clusterdata.disk_slaves*(clusterdata.cluster_size-1)))<= self.get('disk_available'))){
-					self.set('alert_mes_last_conf', '');
-					self.set('selected_image', clusterdata.os_image);
-					self.set('selected_size', clusterdata.cluster_size);
-					self.send('disk_template_selection', self.get('reverse_storage_lookup')[clusterdata.disk_template], "storage_button");
-					self.send('cpu_selection', clusterdata.cpu_master, "master_cpus_button");
-					self.send('cpu_selection', clusterdata.cpu_slaves, "slaves_cpus_button");
-					self.send('ram_selection', clusterdata.mem_master, "master_ram_button");
-					self.send('ram_selection', clusterdata.mem_slaves, "slaves_ram_button");
-					self.send('disk_selection', clusterdata.disk_master, "master_disk_button");
-					self.send('disk_selection', clusterdata.disk_slaves, "slaves_disk_button");	
-					}
-					else{
-						self.set('alert_mes_last_conf', 'Lack of available resources.');
-						
-						self.reset_variables();
-						self.reset_project();
-						self.set('last_cluster_conf_checked', false);
-					}				
-				}, 1000);
+    			Ember.run.later (function() { 
+     			self.set('last_cluster_conf_checked', true);
+     			console.log(self.get('cluster_size'));
+     			console.log(self.size_of_cluster());
+     			if ((clusterdata.cluster_size <= (self.get('max_cluster_size_av').length+1)) 
+     			&& ((clusterdata.cpu_master+(clusterdata.cpu_slaves*(clusterdata.cluster_size-1)))<= self.get('cpu_available')+self.get('master_cpu_selection')+self.get('slaves_cpu_selection')*(self.size_of_cluster()-1)) 
+     			&& ((clusterdata.mem_master+(clusterdata.mem_slaves*(clusterdata.cluster_size-1)))<= self.get('ram_available')+self.get('master_ram_selection')+self.get('slaves_ram_selection')*(self.size_of_cluster()-1))
+     			&& ((clusterdata.disk_master+(clusterdata.disk_slaves*(clusterdata.cluster_size-1)))<= self.get('disk_available')+self.get('master_disk_selection')+self.get('slaves_disk_selection')*(self.size_of_cluster()-1)))
+     			{
+     				self.set('alert_mes_last_conf', '');
+     				self.set('selected_image', clusterdata.os_image);
+     				self.set('cluster_size', clusterdata.cluster_size);
+     				self.set('disk_template_selection', reverse_storage_lookup[clusterdata.disk_template], "storage_button");
+     				self.set('master_cpu_selection', clusterdata.cpu_master);
+     				self.set('slaves_cpu_selection', clusterdata.cpu_slaves);
+     				self.set('master_ram_selection', clusterdata.mem_master);
+     				self.set('slaves_ram_selection', clusterdata.mem_slaves);
+     				self.set('master_disk_selection', clusterdata.disk_master);
+     				self.set('slaves_disk_selection', clusterdata.disk_slaves); 
+     			}
+     			else{
+      				self.set('alert_mes_last_conf', 'Lack of available resources.');
+      				self.reset_variables();
+      				self.reset_project();
+      				self.set('last_cluster_conf_checked', false);
+     			}    
+    			}, 1000);
 			}			
 		
 		},
