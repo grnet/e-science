@@ -176,7 +176,9 @@ class HadoopCluster(object):
             payload = {"clusterchoice":{"id": self.opts['cluster_id'], "hadoop_status": action}}
             yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
             response = yarn_cluster_req.create_cluster()
-            print response
+            task_id = response['clusterchoice']['task_id']
+            result = task_message(task_id, self.escience_token, wait_timer_delete)
+            logging.log(SUMMARY, result)
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
@@ -293,7 +295,8 @@ def main():
                               type=checker.five_or_larger_is)
 
         parser_c.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
-                              metavar='disk_template', choices=['Standard', 'Archipelago'])
+                              metavar='disk_template', choices=['Standard', 'Archipelago'], 
+                              type=str.capitalize)
 
         parser_c.add_argument("token", help='Synnefo authentication token', type=checker.a_string_is)
 

@@ -15,7 +15,7 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import NoAlertPresentExceptions
+from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
 from backend.okeanos_utils import check_quota, get_flavor_id, check_credentials
 from random import randint
