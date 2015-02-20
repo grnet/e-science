@@ -278,7 +278,8 @@ def main():
                               type=checker.five_or_larger_is)
 
         parser_c.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
-                              metavar='disk_template', choices=['Standard', 'Archipelago'])
+                              metavar='disk_template', choices=['Standard', 'Archipelago'], 
+                              type=str.capitalize)
 
         parser_c.add_argument("token", help='Synnefo authentication token', type=checker.a_string_is)
 
