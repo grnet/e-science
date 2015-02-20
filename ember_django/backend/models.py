@@ -234,11 +234,6 @@ class ClusterInfo(models.Model):
                                        blank=False, help_text="Stop/Start/Format"
                                        " hadoop status on the cluster")
 
-#     hadoop_status = models.CharField("Hadoop Status", max_length=1,
-#                                     choices=HADOOP_STATUS_CHOICES,
-#                                       null=False, help_text="Stop/Start/Format"
-#                                       " hadoop status on the cluster")
-
     class Meta:
         verbose_name = "Cluster"
         app_label = 'backend'

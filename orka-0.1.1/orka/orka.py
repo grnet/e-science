@@ -176,7 +176,9 @@ class HadoopCluster(object):
             payload = {"clusterchoice":{"id": self.opts['cluster_id'], "hadoop_status": action}}
             yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
             response = yarn_cluster_req.create_cluster()
-            print response
+            task_id = response['clusterchoice']['task_id']
+            result = task_message(task_id, self.escience_token, wait_timer_delete)
+            logging.log(SUMMARY, result)
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
@@ -194,12 +196,13 @@ class UserClusterInfo(object):
         self.order_list = [['cluster_name','id','action_date','cluster_size','cluster_status',
                             'master_IP','project_name','os_image','disk_template',
                             'cpu_master','mem_master','disk_master',
-                            'cpu_slaves','mem_slaves','disk_slaves']]
+                            'cpu_slaves','mem_slaves','disk_slaves','hadoop_status']]
         self.sort_func = custom_sort_factory(self.order_list)
         self.short_list = {'id':True, 'cluster_name':True, 'action_date':True, 'cluster_size':True, 'cluster_status':True, 'master_IP':True}
         self.skip_list = {'task_id':True, 'state':True}
         self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0'}
         self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED'}
+        self.hadoop_id_to_hadoop_desc = {'1':'Start', '2':'Format', '0':'Stop','':''}
         self.disk_template_to_label = {'ext_vlmc':'Archipelago', 'drbd':'Standard'}
         
     def sort(self, clusters):
@@ -232,6 +235,8 @@ class UserClusterInfo(object):
                         fmt_string = '{:<5}' + key + ': {' + key + '}'
                     elif key == 'cluster_status':
                         fmt_string = '{:<10}' + key + ': ' + self.status_id_to_status_desc[sorted_cluster[key]]
+                    elif key == 'hadoop_status':
+                        fmt_string = '{:<10}' + key + ': ' + self.hadoop_id_to_hadoop_desc[sorted_cluster[key]]
                     elif key == 'disk_template':
                         fmt_string = '{:<10}' + key + ': ' + self.disk_template_to_label[sorted_cluster[key]]
                     elif key == 'action_date':
@@ -264,7 +269,7 @@ def main():
     parser_i = subparsers.add_parser('list',
                                      help='List user clusters.')
     parser_h = subparsers.add_parser('hadoop', 
-                                     help='Start or Stop a Hadoop-Yarn cluster')
+                                     help='Start, Format or Stop a Hadoop-Yarn cluster')
     
     if len(argv) > 1:
 
@@ -293,7 +298,8 @@ def main():
                               type=checker.five_or_larger_is)
 
         parser_c.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
-                              metavar='disk_template', choices=['Standard', 'Archipelago'])
+                              metavar='disk_template', choices=['Standard', 'Archipelago'], 
+                              type=str.capitalize)
 
         parser_c.add_argument("token", help='Synnefo authentication token', type=checker.a_string_is)
 
@@ -363,7 +369,7 @@ def main():
         c_userclusters.list()
         
     elif argv[1] == 'hadoop':
-        c_hadoopcluster.hadoop_action(argv[2])
+        c_hadoopcluster.hadoop_action(argv[2].lower())
 
 
 if __name__ == "__main__":

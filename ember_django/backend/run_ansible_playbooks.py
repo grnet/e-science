@@ -11,6 +11,8 @@ from os.path import dirname, abspath, isfile
 import logging
 from backend.models import ClusterInfo
 from django_db_after_login import db_hadoop_update
+from celery import current_task
+from cluster_errors_constants import HADOOP_STATUS_CHOICES
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
@@ -67,14 +69,12 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
         target.write('[master]' + '\n')
         target.write(list_of_hosts[0]['fqdn'])
         target.write(' private_ip='+list_of_hosts[0]['private_ip'])
-        # target.write(' ansible_ssh_pass='+list_of_hosts[0]['password'])
         target.write(' ansible_ssh_host=' + hostname_master + '\n' + '\n')
         target.write('[slaves]'+'\n')
 
         for host in list_of_hosts[1:]:
             target.write(host['fqdn'])
             target.write(' private_ip='+host['private_ip'])
-            # target.write(' ansible_ssh_pass='+host['password'])
             target.write(' ansible_ssh_port='+str(host['port']))
             target.write(' ansible_ssh_host='+ hostname_master +'\n')
     return hosts_filename
@@ -83,14 +83,26 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
 def ansible_manage_cluster(cluster_id, action):
     """
     Start,stop or format a hadoop cluster, depending on the action arg.
+    Updates database only when starting or stopping a cluster.
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
+    #if cluster.cluster_status == "0": 
+     #   print "Cluster is Destroyed"
+      #  return
+    #else:
     cluster_name_postfix_id = '%s%s%s' % (cluster.cluster_name, '-', cluster_id)
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name_postfix_id.replace(" ", "_")
     if isfile(hosts_filename):
+        state = ' %s %s cluster' %(HADOOP_STATUS_CHOICES[action][1], cluster.cluster_name)
+        current_task.update_state(state=state)
         ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + action
-        execute_ansible_playbook(ansible_code)
-        db_hadoop_update(cluster_id, action)
+        ansible_exit_status = execute_ansible_playbook(ansible_code)
+        if action in ['start', 'stop']:
+            db_hadoop_update(cluster_id, action)
+
+        if ansible_exit_status == 0:
+            msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_CHOICES[action][2])
+            return msg
 
     else:
         msg = ' Ansible hosts file [%s] does not exist' % hosts_filename
@@ -138,3 +150,5 @@ def execute_ansible_playbook(ansible_command):
     if exit_status != 0:
         msg = ' Ansible failed with exit status %d' % exit_status
         raise RuntimeError(msg, exit_status)
+
+    return 0

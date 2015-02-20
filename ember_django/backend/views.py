@@ -20,10 +20,10 @@ from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     DeleteClusterSerializer, TaskSerializer, UserThemeSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
-from tasks import create_cluster_async, destroy_cluster_async
+from tasks import create_cluster_async, destroy_cluster_async, \
+    hadoop_cluster_action_async
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
-from run_ansible_playbooks import ansible_manage_cluster
 
 
 logging.addLevelName(REPORT, "REPORT")
@@ -108,8 +108,9 @@ class StatusView(APIView):
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
             if serializer.data['hadoop_status']:
                 try:
-                    ansible_manage_cluster(serializer.data['id'], serializer.data['hadoop_status'])
-                    return Response({"status":"ok!"})
+                    cluster_action = hadoop_cluster_action_async.delay(serializer.data['id'], serializer.data['hadoop_status'])
+                    task_id = cluster_action.id
+                    return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
                 except Exception, e:
                     return Response({"status": str(e.args[0])})
 

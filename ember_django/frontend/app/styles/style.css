@@ -30,7 +30,8 @@ css for the jquery spinner plugin
   position: absolute;
   top: 0;
   width: 100%;
-  z-index: 1020;
+  z-index: 999;
+  text-shadow: 1.5px 1.5px 0.5px rgba(0,0,0,255); 
 }
 
 .loading_wrp .x16 span {
