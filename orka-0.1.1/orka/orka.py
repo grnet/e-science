@@ -202,7 +202,7 @@ class UserClusterInfo(object):
         self.skip_list = {'task_id':True, 'state':True}
         self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0'}
         self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED'}
-        self.hadoop_id_to_hadoop_desc = {'1':'Start', '2':'Format', '0':'Stop','':''}
+        self.hadoop_id_to_hadoop_desc = {'1':'Start', '0':'Stop','':''}
         self.disk_template_to_label = {'ext_vlmc':'Archipelago', 'drbd':'Standard'}
         
     def sort(self, clusters):

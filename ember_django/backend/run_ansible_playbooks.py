@@ -86,27 +86,27 @@ def ansible_manage_cluster(cluster_id, action):
     Updates database only when starting or stopping a cluster.
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
-    #if cluster.cluster_status == "0": 
-     #   print "Cluster is Destroyed"
-      #  return
-    #else:
-    cluster_name_postfix_id = '%s%s%s' % (cluster.cluster_name, '-', cluster_id)
-    hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name_postfix_id.replace(" ", "_")
-    if isfile(hosts_filename):
-        state = ' %s %s cluster' %(HADOOP_STATUS_CHOICES[action][1], cluster.cluster_name)
-        current_task.update_state(state=state)
-        ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + action
-        ansible_exit_status = execute_ansible_playbook(ansible_code)
-        if action in ['start', 'stop']:
-            db_hadoop_update(cluster_id, action)
-
-        if ansible_exit_status == 0:
-            msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_CHOICES[action][2])
-            return msg
-
+    if cluster.cluster_status == "0": 
+        msg = "Cluster is Destroyed"
+        return msg
     else:
-        msg = ' Ansible hosts file [%s] does not exist' % hosts_filename
-        raise RuntimeError(msg)
+        cluster_name_postfix_id = '%s%s%s' % (cluster.cluster_name, '-', cluster_id)
+        hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name_postfix_id.replace(" ", "_")
+        if isfile(hosts_filename):
+            state = ' %s %s cluster' %(HADOOP_STATUS_CHOICES[action][1], cluster.cluster_name)
+            current_task.update_state(state=state)
+            ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + action
+            ansible_exit_status = execute_ansible_playbook(ansible_code)
+            if action in ['start', 'stop']:
+                db_hadoop_update(cluster_id, action)
+    
+            if ansible_exit_status == 0:
+                msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_CHOICES[action][2])
+                return msg
+    
+        else:
+            msg = ' Ansible hosts file [%s] does not exist' % hosts_filename
+            raise RuntimeError(msg)
 
 
 def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file):
