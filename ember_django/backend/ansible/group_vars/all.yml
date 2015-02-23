@@ -8,7 +8,7 @@
   # Hadoop-yarn variables
   hadoopuser_path: /home/hduser
   start_yarn: False
-  format: False
+  server_ssh_key: ~/.ssh/id_rsa.pub
   is_master: False
   is_slave: False
   dfs_replication: 2
