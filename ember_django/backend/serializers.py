@@ -68,31 +68,35 @@ class ClusterchoicesSerializer(serializers.Serializer):
     Serializer for ember request with user's
     choices for cluster creation.
     """
-    cluster_name = serializers.CharField()
+    cluster_name = serializers.CharField(required=False)
 
-    cluster_size = serializers.IntegerField()
+    id = serializers.CharField(required=False)
 
-    cpu_master = serializers.IntegerField()
+    cluster_size = serializers.IntegerField(required=False)
 
-    mem_master = serializers.IntegerField()
+    cpu_master = serializers.IntegerField(required=False)
 
-    disk_master = serializers.IntegerField()
+    mem_master = serializers.IntegerField(required=False)
 
-    cpu_slaves = serializers.IntegerField()
+    disk_master = serializers.IntegerField(required=False)
 
-    mem_slaves = serializers.IntegerField()
+    cpu_slaves = serializers.IntegerField(required=False)
 
-    disk_slaves = serializers.IntegerField()
+    mem_slaves = serializers.IntegerField(required=False)
 
-    disk_template = serializers.CharField()
+    disk_slaves = serializers.IntegerField(required=False)
 
-    os_choice = serializers.CharField()
+    disk_template = serializers.CharField(required=False)
 
-    project_name = serializers.CharField()
+    os_choice = serializers.CharField(required=False)
+
+    project_name = serializers.CharField(required=False)
     
     ssh_key_selection = serializers.CharField(required=False)
 
     task_id = serializers.CharField(required=False)
+    
+    hadoop_status = serializers.CharField(required=False)
 
 
 class ClusterInfoSerializer(serializers.ModelSerializer):
@@ -100,13 +104,9 @@ class ClusterInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClusterInfo
         fields = ('id', 'cluster_name', 'action_date', 'cluster_status', 'cluster_size',
-                  'cpu_master', 'mem_master', 'disk_master', 'cpu_slaves',
-                  'mem_slaves', 'disk_slaves', 'disk_template', 'os_image',
-                  'master_IP', 'project_name', 'task_id', 'state')
-#         fields = ('id', 'cluster_name', 'action_date', 'cluster_status', 'cluster_size',
-#                   'cpu_master', 'mem_master', 'disk_master', 'cpu_slaves',
-#                   'mem_slaves', 'disk_slaves', 'disk_template', 'os_image',
-#                   'master_IP', 'project_name', 'task_id', 'state', 'hadoop_status')
+                   'cpu_master', 'mem_master', 'disk_master', 'cpu_slaves',
+                   'mem_slaves', 'disk_slaves', 'disk_template', 'os_image',
+                   'master_IP', 'project_name', 'task_id', 'state', 'hadoop_status')
 
 
 class UserInfoSerializer(serializers.ModelSerializer):

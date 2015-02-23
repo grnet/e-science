@@ -20,7 +20,8 @@ from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     DeleteClusterSerializer, TaskSerializer, UserThemeSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
-from tasks import create_cluster_async, destroy_cluster_async
+from tasks import create_cluster_async, destroy_cluster_async, \
+    hadoop_cluster_action_async
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
 
@@ -105,6 +106,14 @@ class StatusView(APIView):
         if serializer.is_valid():
             user_token = Token.objects.get(key=request.auth)
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
+            if serializer.data['hadoop_status']:
+                try:
+                    cluster_action = hadoop_cluster_action_async.delay(serializer.data['id'], serializer.data['hadoop_status'])
+                    task_id = cluster_action.id
+                    return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+                except Exception, e:
+                    return Response({"status": str(e.args[0])})
+
             # Dictionary of YarnCluster arguments
             choices = dict()
             choices = serializer.data.copy()
@@ -118,6 +127,7 @@ class StatusView(APIView):
             c_cluster = create_cluster_async.delay(choices)
             task_id = c_cluster.id
             return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)
