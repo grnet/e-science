@@ -3,9 +3,23 @@ html {
   height: 100%;
 }
 body {
-	padding-top: 50px;
-    height: 100%;
+  padding-top: 50px;
+  height: 100%;
 }
+/* apply directly to an <a> to remove underlines */
+a.nounder, 
+a.nounder:link, 
+a.nounder:visited, 
+a.nounder:active, 
+a.nounder:hover{
+  text-decoration: none !important;
+  border: none  !important;
+}
+/* apply to a container (eg. div) to remove underlines from child links */
+/*.nounder > a, a:link, a:visited, a:active, a:hover{
+  text-decoration: none !important;
+  border: none  !important;
+}*/
 /*
 css for the jquery spinner plugin
  */
@@ -53,7 +67,7 @@ cursor: not-allowed;
 }
 /* The real magic ;) */
 .dropdown-menu > .disabled > a{
-pointer-events: none;
+  pointer-events: none;
 }
 /* Wrapper for application page content to push down footer */
 body > .ember-view {

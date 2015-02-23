@@ -33,13 +33,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 	vm_flavor_selection_Master : '', // Initial vm_flavor_selection_Master
 	vm_flavor_selection_Slave : '', // Initial vm_flavor_selection_Slave
 	// Global variables for handling restrictions on master settings
-    vm_flav_master_Small_disabled : false,  
-    vm_flav_master_Medium_disabled : false, 
-    vm_flav_master_Large_disabled : false, 
-    // Global variable for handling restrictions on slaves settings
-    vm_flav_slave_Small_disabled : false, 
-    vm_flav_slave_Medium_disabled : false, 
-    vm_flav_slave_Large_disabled : false,
+	vm_flav_master_Small_disabled : false,  
+	vm_flav_master_Medium_disabled : false, 
+	vm_flav_master_Large_disabled : false, 
+	// Global variable for handling restrictions on slaves settings
+	vm_flav_slave_Small_disabled : false, 
+	vm_flav_slave_Medium_disabled : false, 
+	vm_flav_slave_Large_disabled : false,
 	last_cluster_conf_checked: false,	// flag for last cluster configuration (when it is selected)
 	last_conf_message : '',			// last configuration in message to be displayed on screen
 	// selected project, image, cluster size, storage, from last configuration 
@@ -613,11 +613,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 	size_of_cluster : function() {
 		if ((this.get('cluster_size') === null) || (this.get('cluster_size') === undefined) || (this.get('cluster_size') === 0)) {
 			this.set('cluster_size_var', 2);
-			return this.get('cluster_size_var');
 		} else {
 			this.set('cluster_size_var', this.get('cluster_size'));
-			return this.get('cluster_size_var');
 		}
+		return this.get('cluster_size_var');
 	},
 	// Reset project variables
 	reset_project : function() {
@@ -677,23 +676,26 @@ App.ClusterCreateController = Ember.Controller.extend({
 				Ember.run.later (function() {	
 					self.set('last_cluster_conf_checked', true);	
 					if ((clusterdata.cluster_size <= (self.get('max_cluster_size_av').length+1)) 
-					&& ((clusterdata.cpu_master+(clusterdata.cpu_slaves*(clusterdata.cluster_size-1)))<= self.get('cpu_available')) 
-					&& ((clusterdata.mem_master+(clusterdata.mem_slaves*(clusterdata.cluster_size-1)))<= self.get('ram_available'))
-					&& ((clusterdata.disk_master+(clusterdata.disk_slaves*(clusterdata.cluster_size-1)))<= self.get('disk_available'))){
-					self.set('alert_mes_last_conf', '');
-					self.set('selected_image', clusterdata.os_image);
-					self.set('selected_size', clusterdata.cluster_size);
-					self.send('disk_template_selection', self.get('reverse_storage_lookup')[clusterdata.disk_template], "storage_button");
-					self.send('cpu_selection', clusterdata.cpu_master, "master_cpus_button");
-					self.send('cpu_selection', clusterdata.cpu_slaves, "slaves_cpus_button");
-					self.send('ram_selection', clusterdata.mem_master, "master_ram_button");
-					self.send('ram_selection', clusterdata.mem_slaves, "slaves_ram_button");
-					self.send('disk_selection', clusterdata.disk_master, "master_disk_button");
-					self.send('disk_selection', clusterdata.disk_slaves, "slaves_disk_button");	
+					&& ((clusterdata.cpu_master+(clusterdata.cpu_slaves*(clusterdata.cluster_size-1)))
+						<= self.get('cpu_available')+self.get('master_cpu_selection')+self.get('slaves_cpu_selection')*(self.size_of_cluster()-1)) 
+					&& ((clusterdata.mem_master+(clusterdata.mem_slaves*(clusterdata.cluster_size-1)))
+						<= self.get('ram_available')+self.get('master_ram_selection')+self.get('slaves_ram_selection')*(self.size_of_cluster()-1))
+					&& ((clusterdata.disk_master+(clusterdata.disk_slaves*(clusterdata.cluster_size-1)))
+						<= self.get('disk_available')+self.get('master_disk_selection')+self.get('slaves_disk_selection')*(self.size_of_cluster()-1)))
+					{
+						self.set('alert_mes_last_conf', '');
+						self.set('selected_image', clusterdata.os_image);
+						self.set('cluster_size', clusterdata.cluster_size);
+						self.set('disk_template_selection', self.get('reverse_storage_lookup')[clusterdata.disk_template], "storage_button");
+						self.set('master_cpu_selection', clusterdata.cpu_master);
+						self.set('slaves_cpu_selection', clusterdata.cpu_slaves);
+						self.set('master_ram_selection', clusterdata.mem_master);
+						self.set('slaves_ram_selection', clusterdata.mem_slaves);
+						self.set('master_disk_selection', clusterdata.disk_master);
+						self.set('slaves_disk_selection', clusterdata.disk_slaves);	
 					}
 					else{
 						self.set('alert_mes_last_conf', 'Lack of available resources.');
-						
 						self.reset_variables();
 						self.reset_project();
 						self.set('last_cluster_conf_checked', false);
@@ -702,7 +704,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}			
 		
 		},
-		// action triggerred when entering the create cluster
+		// action triggered when entering the create cluster
 		// find last cluster configuration for this user
 		findLastCluster : function() {
 			this.set('alert_mes_last_conf', '');
