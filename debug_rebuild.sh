@@ -25,13 +25,13 @@ echo 'stop nginx if running'
 sudo /etc/init.d/nginx stop
 echo 'done'
 echo 'stop celery'
-celery multi stopwait celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%n\%I.log
+celery multi stopwait celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%h.log
 echo 'done'
 echo 'restart rabbitmq'
 sudo /etc/init.d/rabbitmq-server restart
 echo 'done'
 echo 'start celery'
-celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%n\%I.log
+celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%h.log
 echo 'done'
 echo 'start django test server'
 python manage.py runserver
