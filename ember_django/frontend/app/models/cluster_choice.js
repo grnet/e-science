@@ -12,6 +12,6 @@ App.Clusterchoice = DS.Model.extend({
 	mem_slaves : attr('number'),		// memory for slaves
 	disk_slaves : attr('number'),		// disk for slaves
 	disk_template : attr('string'),		// disk template
-	os_choice : attr('string'),		// operating system
-	ssh_key_selection : attr('string'),		// ssh_key_name
+	os_choice : attr('string'),			// operating system
+	ssh_key_selection : attr('string'),	// ssh_key_name
 });

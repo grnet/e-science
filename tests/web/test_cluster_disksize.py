@@ -19,6 +19,7 @@ import unittest, time, re
 from okeanos_utils import check_quota, get_flavor_id, destroy_cluster
 from create_cluster import YarnCluster
 from ClusterTest import ClusterTest
+from random import randint
 
 
 class TestClusterDiskSize(ClusterTest):
@@ -45,7 +46,8 @@ class TestClusterDiskSize(ClusterTest):
             self.assertTrue(False,'Not enough vms to run the test')
         time.sleep(1)
         driver.find_element_by_id("cluster_name").clear()
-        driver.find_element_by_id("cluster_name").send_keys("mycluster")
+        cluster_name = 'test_cluster' + str(randint(0,9999))
+        driver.find_element_by_id("cluster_name").send_keys(cluster_name)
         try:
             # Call the bind function that creates ~okeanos vms and 
             # causes later the server to respond with an error message to
@@ -86,7 +88,7 @@ class TestClusterDiskSize(ClusterTest):
 	    opts = {"name": self.name,
                               "clustersize": 2,
                               "cpu_master": 1, "ram_master": 1024, "disk_master": 5,
-                              "disk_template":'ext_vlmc', "cpu_slave": 1,
+                              "disk_template":'Archipelago', "cpu_slave": 1,
                               "ram_slave": 1024, "disk_slave": 5, "token": self.token,
                               "image": 'Debian Base', "project_name": self.project_name}
 	    c_yarn_cluster = YarnCluster(opts)
@@ -99,7 +101,7 @@ class TestClusterDiskSize(ClusterTest):
                     opts = {"name": self.name,
                               "clustersize": 2,
                               "cpu_master": 1, "ram_master": 1024, "disk_master": remaining_disk,
-                              "disk_template":'ext_vlmc', "cpu_slave": 1,
+                              "disk_template":'Archipelago', "cpu_slave": 1,
                               "ram_slave": 1024, "disk_slave": remaining_disk, "token": self.token,
                               "image": 'Debian Base', "project_name": self.project_name}
 	            c_yarn_cluster = YarnCluster(opts)

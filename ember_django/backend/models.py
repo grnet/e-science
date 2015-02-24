@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-'''
+"""
  e-Science database model
  @author: Vassilis Foteinos, Ioannis Stenos, Nick Vrionis
-'''
+"""
 
 import logging
 import datetime
@@ -12,12 +12,13 @@ import binascii
 import os
 from django.db import models
 from djorm_pgarray.fields import IntegerArrayField, TextArrayField
-
+from django.utils import timezone
 
 class UserInfo(models.Model):
-    '''Definition of a User object model.'''
+    """Definition of a User object model."""
     user_id = models.AutoField("User ID", primary_key=True, null=False,
                                help_text="Auto-increment user id")
+    user_theme = models.CharField("User Theme", blank=True, max_length=255)
     uuid = models.CharField("UUID", null=False, blank=False, unique=True,
                             default="", max_length=255,
                             help_text="Universally unique identifier "
@@ -25,6 +26,10 @@ class UserInfo(models.Model):
     okeanos_token = models.CharField('Okeanos Token', max_length=64,
                                      null=True, blank=True, unique=True,
                                      help_text="Okeanos Authentication Token ")
+
+    master_vm_password = models.CharField("Master VM Password", max_length=255,
+                               blank=True, help_text="Root password of master VM")
+
 
     def is_authenticated(self):
         return True
@@ -44,11 +49,11 @@ ACTION_STATUS_CHOICES = (
 
 
 class ClusterCreationParams(models.Model):
-    '''
+    """
     Definition of  ClusterChoices model for retrieving cluster creation
     parameters from okeanos. Imported djorm_pgarray package
     is needed for custom Arrayfields.
-    '''
+    """
     id = models.IntegerField("Id", primary_key=True, null=False,
                                        help_text="Id needed by ember.js store")
     user_id = models.ForeignKey(UserInfo, null=False,
@@ -102,18 +107,31 @@ class ClusterCreationParams(models.Model):
 
 
 class Token(models.Model):
-    '''Definition of a e-science Token Authentication model.'''
+    """Definition of a e-science Token Authentication model."""
     user = models.OneToOneField(UserInfo, related_name='escience_token')
     key = models.CharField(max_length=40, null=True)
+    creation_date = models.DateTimeField('Creation Date')
 
     def save(self, *args, **kwargs):
         if not self.key:
             self.key = self.generate_token()
+            self.creation_date = timezone.now()
         return super(Token, self).save(*args, **kwargs)
 
     def generate_token(self):
         return binascii.hexlify(os.urandom(20)).decode()
 
+    def update_token(self, *args, **kwargs):
+        """
+        Checks if an amount of time has passed
+        since the creation of the token
+        and regenerates a new key
+        """
+        if(timezone.now() >  self.creation_date + datetime.timedelta(seconds=args[0])):
+            self.key = self.generate_token()
+            self.creation_date = timezone.now()
+        return super(Token, self).save()
+            
     def __unicode__(self):
         return self.key
 
@@ -123,9 +141,8 @@ class Token(models.Model):
 
 
 class UserLogin(models.Model):
-    '''Definition of a User Login relationship model.'''
-    login_id = models.AutoField("Login ID", primary_key=True, null=False,
-                                help_text="Auto-increment login id")
+    """Definition of a User Login relationship model."""
+    login_id = models.AutoField("Login ID", primary_key=True, help_text="Auto-increment login id")
     user_id = models.ForeignKey(UserInfo, null=False,
                                 help_text="User ID")
     action_date = models.DateTimeField("Action Date", null=False,
@@ -146,6 +163,7 @@ class UserLogin(models.Model):
     def __unicode__(self):
         return ("%s, %s") % (self.user_id.user_id, self.login_status)
 
+
 CLUSTER_STATUS_CHOICES = (
     ("0", "Destroyed"),
     ("1", "Active"),
@@ -153,9 +171,7 @@ CLUSTER_STATUS_CHOICES = (
 )
 
 class ClusterInfo(models.Model):
-    '''Definition of a Hadoop Cluster object model.'''
-    id = models.AutoField("Cluster ID", primary_key=True, null=False,
-                                  help_text="Auto-increment cluster id")
+    """Definition of a Hadoop Cluster object model."""
     cluster_name = models.CharField("Cluster Name", max_length=255, null=False,
                                     help_text="Name of the cluster")
     action_date = models.DateTimeField("Action Date", null=False,
@@ -201,10 +217,16 @@ class ClusterInfo(models.Model):
                                     help_text="Project Name where"
                                     " Cluster was created")
 
+    task_id = models.CharField("Task Id", max_length=255,
+                               blank=True, help_text="Celery task id")
+
+    state = models.CharField("Task State", max_length=255,
+                               blank=True, help_text="Celery task state")
+
     class Meta:
         verbose_name = "Cluster"
         app_label = 'backend'
 
     def __unicode__(self):
-        return ("%s, %d, %s") % (self.cluster_name, self.cluster_size,
+        return ("%d, %s, %d, %s") % (self.id, self.cluster_name, self.cluster_size,
                                  self.cluster_status)

@@ -16,6 +16,7 @@ App.Cluster = DS.Model.extend({
 	disk_choices : attr(),       	// disk choices
 	disk_template : attr(),      	// storage choices
 	os_choices : attr(),          	// Operating System choices
+	vm_flavors_choices : ['Small', 'Medium', 'Large'],  //Predefined VM Flavors
 	ssh_keys_names : attr()          	// ssh key's names
 });
 

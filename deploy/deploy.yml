@@ -1,0 +1,18 @@
+---
+- name: Setting up common tasks for every host 
+  hosts: all
+  remote_user: root
+  roles:
+     - commons
+
+- name: Setup orka_admin user in Django server
+  hosts: webserver
+  remote_user: root
+  tasks:
+     - { include: setup_orka_admin.yml, when: create_orka_admin == 'True' and choose_role == 'webserver'}
+
+- name: Installing and configuring Django server
+  hosts: webserver
+  remote_user: orka_admin
+  roles:
+     - {role: webserver, when: choose_role == 'webserver'}

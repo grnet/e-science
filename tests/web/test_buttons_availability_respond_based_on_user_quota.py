@@ -7,8 +7,7 @@ This script is a test generator and checks that the buttons are enabled or disab
 from selenium import webdriver
 import sys, os
 from os.path import join, dirname, abspath
-sys.path.append(join(dirname(abspath(__file__)), '../../orka-0.1.1/orka'))
-sys.path.append(join(dirname(__file__), '../../ember_django/backend'))
+sys.path.append(join(dirname(abspath(__file__)), '../../ember_django'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -18,7 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
-from okeanos_utils import check_quota, get_flavor_id, check_credentials
+from backend.okeanos_utils import check_quota, get_flavor_id, check_credentials
 import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")

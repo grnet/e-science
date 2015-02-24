@@ -47,12 +47,11 @@ error_project_quota = -73
 error_authentication = -99
 
 # Package constants
-ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
 REPORT = 25  # Define logging level of REPORT
 SUMMARY = 29  # Define logging level of SUMMARY
-Mbytes_to_GB = 1024  # Global to convert megabytes to gigabytes
-Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
-Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 default_image = 'Debian Base'
 default_logging = 'summary'
+login_endpoint = '/api/users'
+cluster_endpoint = '/api/clusterchoices'
+job_endpoint = '/api/jobs'

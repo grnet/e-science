@@ -5,7 +5,7 @@
 	<div class="col col-sm-3"></div>
 	<div class="alert alert-dismissable alert-success col-sm-6">
 		<button type="button" class="close" data-dismiss="alert">×</button>
-		Successfully <strong>logged in.</strong> You can <a href="#/cluster/create">create cluster</a>  from the Services menu.
+		Successfully <strong>logged in.</strong> You can {{#link-to 'cluster.create'}}create cluster{{/link-to}}  from the Services menu.
 	</div>
 	<div class="col col-sm-3"></div>
 	</div>
@@ -32,6 +32,12 @@
 		<div class="alert alert-dismissable alert-warning text-center">
 			<button type="button" class="close" data-dismiss="alert">×</button>
 			<span id='id_output_message'>{{output_message}}</span>
+		</div>
+		{{/if}}
+        {{#if model.master_vm_password}}
+		<div class="alert alert-dismissable alert-warning text-center">
+			<button type="button" class="close" data-dismiss="alert">×</button>
+			<span id='id_output_message'>{{model.master_vm_password}}</span>
 		</div>
 		{{/if}}
 	</div>
