@@ -95,7 +95,10 @@ def db_hadoop_update(cluster_id, hadoop_status, state):
         raise ObjectDoesNotExist(msg)
 
     cluster.state = state
-    cluster.hadoop_status =  HADOOP_STATUS_ACTIONS[hadoop_status][0]
+    if hadoop_status == 'Pending':
+        cluster.hadoop_status = "2"
+    else:
+        cluster.hadoop_status =  HADOOP_STATUS_ACTIONS[hadoop_status][0]
     cluster.save()
         
 
