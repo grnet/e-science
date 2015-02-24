@@ -84,7 +84,7 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
     return hosts_filename
 
 
-def ansible_manage_cluster(token, cluster_id, action):
+def ansible_manage_cluster(cluster_id, action):
     """
     Start,stop or format a hadoop cluster, depending on the action arg.
     Updates database only when starting or stopping a cluster.
