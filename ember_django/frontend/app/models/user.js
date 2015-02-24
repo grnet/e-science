@@ -80,6 +80,8 @@ App.Usercluster = DS.Model.extend({
 			return "glyphicon glyphicon-stop text-danger";
 		case "1":
 			return "glyphicon glyphicon-play text-success";
+		case "2":
+			return "glyphicon glyphicon-eraser text-warning";
 		default:
 			return "glyphicon glyphicon-hourglass text-muted";
 		}

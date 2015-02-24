@@ -398,13 +398,13 @@ class YarnCluster(object):
             set_cluster_state(self.opts['token'], self.cluster_id,
                           ' Installing and configuring Yarn (3/3)')
 
-            install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
+            install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.cluster_name_postfix_id, self.hadoop_image, self.ssh_file)
 
             # If Yarn cluster is build, update cluster status as active
-            set_cluster_state(self.opts['token'], self.cluster_id,
-                              ' Yarn Cluster is active', status='Active',
-                              master_IP=self.HOSTNAME_MASTER_IP)
+            # set_cluster_state(self.opts['token'], self.cluster_id,
+            #                   ' Yarn Cluster is active', status='Active',
+            #                   master_IP=self.HOSTNAME_MASTER_IP)
 
         except Exception, e:
             logging.error(' Fatal error:' + str(e.args[0]))

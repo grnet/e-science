@@ -65,3 +65,4 @@ HADOOP_STATUS_ACTIONS = {"stop": ["0","Stopping","stopped"],
                          "start": ["1","Starting","started"],
                          "format": ["2","Formatting","formatted"]}
 
+REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}

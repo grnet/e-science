@@ -34,9 +34,9 @@ def destroy_cluster_async(token, cluster_id):
 
 
 @task()
-def hadoop_cluster_action_async(cluster_id, action):
+def hadoop_cluster_action_async(token, cluster_id, action):
     """
     Asynchronous start, stop or format Hadoop cluster task.
     """
-    result = ansible_manage_cluster(cluster_id, action)
+    result = ansible_manage_cluster(token, cluster_id, action)
     return result
