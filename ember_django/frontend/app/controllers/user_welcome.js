@@ -13,6 +13,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 	sortbyname : false,
 	sortbydate : false,
 	sortbystatus : false,
+	sortbyhdpstatus : false,
 	sortbysize : false,
 	sortbyurl : false,
 	ip_of_master : '',
@@ -23,7 +24,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 			sortProperties : [this.get('column')],
 			sortAscending : this.get('sortdir')
 		});
-	}.property('sortdir', 'sortbyname', 'sortbydate', 'sortbystatus', 'sortbysize', 'sortbyurl'),
+	}.property('sortdir', 'sortbyname', 'sortbydate', 'sortbystatus', 'sortbyhdpstatus', 'sortbysize', 'sortbyurl'),
 	actions : {
 		// sorts clusters based on selected column (name, date, status, size, IP)
 		sortBy : function(clusters, column) {
@@ -31,6 +32,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 			this.set('sortbynamearrow', false);
 			this.set('sortbydatearrow', false);
 			this.set('sortbystatusarrow', false);
+			this.set('sortbyhdpstatusarrow', false);
 			this.set('sortbysizearrow', false);
 			this.set('sortbyurlarrow', false);
 			this.set('sortedclusters', clusters);
@@ -50,6 +52,11 @@ App.UserWelcomeController = Ember.Controller.extend({
 				this.set('sortbystatusarrow', true);
 				this.set('sortbystatus', !this.get('sortbystatus'));
 				this.set('sortdir', this.get('sortbystatus'));
+				break;
+			case 'hadoop_status':
+				this.set('sortbyhdpstatusarrow', true);
+				this.set('sortbyhdpstatus', !this.get('sortbyhdpstatus'));
+				this.set('sortdir', this.get('sortbyhdpstatus'));
 				break;
 			case 'cluster_size':
 				this.set('sortbysizearrow', true);

@@ -94,7 +94,7 @@ def db_hadoop_update(cluster_id, hadoop_status):
         msg = 'Cluster with given id does not exist'
         raise ObjectDoesNotExist(msg)
 
-    cluster.hadoop_status =  HADOOP_STATUS_CHOICES[hadoop_status][0]
+    cluster.hadoop_status =  HADOOP_STATUS_ACTIONS[hadoop_status][0]
     cluster.save()
         
 

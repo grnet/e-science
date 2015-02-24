@@ -171,9 +171,10 @@ CLUSTER_STATUS_CHOICES = (
 )
 
 HADOOP_STATUS_CHOICES = (
-     ("0", "Stop"),
-     ("1", "Start"),
-     ("2", "Format"),
+     ("0", "Stopped"),
+     ("1", "Started"),
+     ("2", "Formatted"),
+     ("3", "Unformatted"),
  )
 
 class ClusterInfo(models.Model):
@@ -231,7 +232,7 @@ class ClusterInfo(models.Model):
     
     hadoop_status = models.CharField("Hadoop Status", max_length=1,
                                      choices=HADOOP_STATUS_CHOICES,
-                                       blank=False, help_text="Stop/Start/Format"
+                                       blank=False, help_text="Stopped/Started/Formatted/Unformatted"
                                        " hadoop status on the cluster")
 
     class Meta:
