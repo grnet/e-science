@@ -282,7 +282,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 
 	// Function to set master and slaves vm_flavor_selection
- 	vm_flavor_buttons_responce: function (){
+ 	vm_flavor_buttons_response: function (){
  		
 		if ((this.small_flavor_settings['cpu']==this.get('master_cpu_selection')) && (this.small_flavor_settings['ram']==this.get('master_ram_selection')) && (this.small_flavor_settings['disk']==this.get('master_disk_selection'))){
 			this.set('vm_flavor_selection_Master', 'Small');
@@ -311,30 +311,26 @@ App.ClusterCreateController = Ember.Controller.extend({
 		var length = elements.length;
 		var vm_flavors = this.get('content').objectAt(this.get('project_index')).get('vm_flavors_choices');
 		
-		this.vm_flavor_buttons_responce();
-		
-		
+		this.vm_flavor_buttons_response();
 		for (var i = 0; i < length; i++) {
 			elements[i].style.color = "initial";
-			if (vm_flav_master_Small_disabled) {
+			if (this.get('vm_flav_master_Small_disabled')) {
 				elements[0].disabled = true;
 			} else {
 				elements[0].disabled = false;
 			}
-			if (vm_flav_master_Medium_disabled) {
+			if (this.get('vm_flav_master_Medium_disabled')) {
 				elements[1].disabled = true;
 			} else {
 				elements[1].disabled = false;
 			}
-			if (vm_flav_master_Large_disabled) {
+			if (this.get('vm_flav_master_Large_disabled')) {
 				elements[2].disabled = true;
 			} else {
 				elements[2].disabled = false;
 			}
-			console.log(this.get('vm_flavor_selection_Master'));
 			if ((this.get('vm_flavor_selection_Master') !== undefined) && (this.get('vm_flavor_selection_Master') !== null) && (this.get('vm_flavor_selection_Master') !== '')) {
 				var choice = document.getElementById("master_vm_flavors_".concat(this.get('vm_flavor_selection_Master')));
-				alert('test_alert_2');
 				if ((this.get('master_cpu_selection') == this.small_flavor_settings['cpu'])
 					&&(this.get('master_ram_selection') == this.small_flavor_settings['ram'])
 					&&(this.get('master_disk_selection') == this.small_flavor_settings['disk'])) {
@@ -363,17 +359,17 @@ App.ClusterCreateController = Ember.Controller.extend({
 		var vm_flavors = this.get('content').objectAt(this.get('project_index')).get('vm_flavors_choices');
 		for (var i = 0; i < length; i++) {
 			elements[i].style.color = "initial";
-			if (vm_flav_slave_Small_disabled) {
+			if (this.get('vm_flav_slave_Small_disabled')) {
 				elements[0].disabled = true;
 			} else {
 				elements[0].disabled = false;
 			}
-			if (vm_flav_slave_Medium_disabled) {
+			if (this.get('vm_flav_slave_Medium_disabled')) {
 				elements[1].disabled = true;
 			} else {
 				elements[1].disabled = false;
 			}
-			if (vm_flav_slave_Large_disabled) {
+			if (this.get('vm_flav_slave_Large_disabled')) {
 				elements[2].disabled = true;
 			} else {
 				elements[2].disabled = false;
@@ -429,18 +425,20 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = true;
 			} else {
 				elements[i].disabled = false;
-			}			
+			}
+		}
+		if (length != 0){			
 			if (elements[1].disabled == true) {
-				vm_flav_master_Small_disabled=true;
+				this.set('vm_flav_master_Small_disabled', true);
 			} else {
-				vm_flav_master_Small_disabled=false;
+				this.set('vm_flav_master_Small_disabled', false);
 			}
 			if (elements[2].disabled == true) {
-				vm_flav_master_Medium_disabled=true;
-				vm_flav_master_Large_disabled=true;
+				this.set('vm_flav_master_Medium_disabled', true);
+				this.set('vm_flav_master_Large_disabled', true);
 			} else {
-				vm_flav_master_Medium_disabled=false;
-				vm_flav_master_Large_disabled=false;
+				this.set('vm_flav_master_Medium_disabled', false);
+				this.set('vm_flav_master_Large_disabled', false);
 			}
 		}
 
@@ -464,17 +462,19 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				elements[i].disabled = false;
 			}
+		}
+		if (length != 0){
 			if (elements[1].disabled == true) {
-				vm_flav_slave_Small_disabled=true;
+				this.set('vm_flav_slave_Small_disabled', true);
 			} else {
-				vm_flav_slave_Small_disabled=false;
+				this.set('vm_flav_slave_Small_disabled', false);
 			}
 			if (elements[2].disabled == true) {
-				vm_flav_slave_Medium_disabled=true;
-				vm_flav_slave_Large_disabled=true;
+				this.set('vm_flav_slave_Medium_disabled', true);
+				this.set('vm_flav_slave_Large_disabled', true);
 			} else {
-				vm_flav_slave_Medium_disabled=false;
-				vm_flav_slave_Large_disabled=false;
+				this.set('vm_flav_slave_Medium_disabled', false);
+				this.set('vm_flav_slave_Large_disabled', false);
 			}
 		}
 	},
@@ -506,12 +506,14 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				elements[i].disabled = false;
 			}
+		}
+		if (length != 0){
 			if (elements[2].disabled == true) {
-				vm_flav_master_Small_disabled=true;
-				vm_flav_master_Medium_disabled=true;
+				this.set('vm_flav_master_Small_disabled', true);
+				this.set('vm_flav_master_Medium_disabled', true);
 			}
 			if (elements[3].disabled == true) {
-				vm_flav_master_Large_disabled=true;
+				this.set('vm_flav_master_Large_disabled', true);
 			}		
 		}
 
@@ -535,13 +537,15 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				elements[i].disabled = false;
 			}
+		}
+		if (length != 0){
 			if (elements[2].disabled == true) {
-				vm_flav_slave_Small_disabled=true;
-				vm_flav_slave_Medium_disabled=true;
+				this.set('vm_flav_slave_Small_disabled', true);
+				this.set('vm_flav_slave_Medium_disabled', true);
 			}
 			if (elements[3].disabled == true) {
-				vm_flav_slave_Large_disabled=true;
-			}
+				this.set('vm_flav_slave_Large_disabled', true);
+			}	
 		}
 	},
 
@@ -571,14 +575,16 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				elements[i].disabled = false;
 			}
+		}
+		if (length != 0){
 			if (elements[1].disabled == true) {
-				vm_flav_master_Small_disabled=true;
+				this.set('vm_flav_master_Small_disabled', true);
 			}
 			if (elements[2].disabled == true) {
-				vm_flav_master_Medium_disabled=true;
+				this.set('vm_flav_master_Medium_disabled', true);
 			}
 			if (elements[3].disabled == true) {
-				vm_flav_master_Large_disabled=true;
+				this.set('vm_flav_master_Large_disabled', true);
 			}
 		}
 
@@ -602,14 +608,16 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				elements[i].disabled = false;
 			}
+		}
+		if (length != 0){
 			if (elements[1].disabled == true) {
-				vm_flav_slave_Small_disabled=true;
+				this.set('vm_flav_slave_Small_disabled', true);
 			}
 			if (elements[2].disabled == true) {
-				vm_flav_slave_Medium_disabled=true;
+				this.set('vm_flav_slave_Medium_disabled', true);
 			}
 			if (elements[3].disabled == true) {
-				vm_flav_slave_Large_disabled=true;
+				this.set('vm_flav_slave_Large_disabled', true);
 			}
 		}
 	},
