@@ -732,8 +732,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				
 				if (!Ember.isEmpty(self.get('last_cluster'))){
 					clusterdata = self.get('last_cluster').get('data');
-					var label = '<b>Cluster Name</b>: <span class="text text-info">' + clusterdata.cluster_name + '</span>'
-					+ '<br><b>Projects</b>: <span class="text text-info">' + clusterdata.project_name + '</span>'
+					var label = '<b>Projects</b>: <span class="text text-info">' + clusterdata.project_name + '</span>'
 					+ '<br><b>Available Images</b>: <span class="text text-info">' + clusterdata.os_image + '</span>'
 					+ '<br><b>Cluster Size</b>: <span class="text text-info">' + clusterdata.cluster_size + '</span>'
 					+ '<br><b>Storage</b>: <span class="text text-info">' + self.get('reverse_storage_lookup')[clusterdata.disk_template] + '</span>'

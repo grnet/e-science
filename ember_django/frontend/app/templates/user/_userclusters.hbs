@@ -41,7 +41,7 @@ Grid should be sort-able by status & size -->
                             {{#if usercluster.cluster_status_active}}
                             {{#if usercluster.cluster_confirm_delete}}
                             <div class="btn-group  btn-block">
-							    <a role="button" {{bind-attr id='usercluster.cluster_confirm_id'}} {{action 'deleteCluster' usercluster}} class="btn btn-danger btn-xs active">Confirm</a>
+							    <a role="button" {{bind-attr id='usercluster.cluster_confirm_id'}} {{action 'deleteCluster' usercluster}} class="btn btn-danger btn-xs active">Confirm Deletion</a>
 							    <a role="button" {{action 'confirmDelete' usercluster false}} class="btn btn-danger btn-xs active">x</a>
 							</div>
                             {{else}}
