@@ -172,7 +172,7 @@ class HadoopCluster(object):
 
     def hadoop_action(self, action):
         """ Method for applying an action to a Hadoop cluster"""
-        action = str.lower(action)
+		action = str.lower(action)
         clusters = get_user_clusters(self.opts['token'])
         active_cluster = None
         for cluster in clusters:
@@ -220,7 +220,7 @@ class UserClusterInfo(object):
         self.skip_list = {'task_id':True, 'state':True}
         self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0'}
         self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED'}
-        self.hdp_status_id_to_status_desc = {'0':'STOPPED','1':'STARTED','2':'FORMAT'}
+        self.hdp_status_id_to_status_desc = {'0':'STOPPED','1':'STARTED','2':'FORMAT', '':''}
         self.hdp_status_desc_to_status_id = {'STOPPED':'0','STARTED':'1','FORMAT':'2'}
         self.disk_template_to_label = {'ext_vlmc':'Archipelago', 'drbd':'Standard'}
         
