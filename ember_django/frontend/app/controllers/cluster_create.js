@@ -307,23 +307,20 @@ App.ClusterCreateController = Ember.Controller.extend({
 				var choice = document.getElementById("master_vm_flavors_".concat(this.get('vm_flavor_selection_Master')));
 				if ((this.get('master_cpu_selection') == this.small_flavor_settings['cpu'])
 					&&(this.get('master_ram_selection') == this.small_flavor_settings['ram'])
-					&&(this.get('master_disk_selection') == this.small_flavor_settings['disk'])) {
-					vm_flavor_newMaster_Id = "master_vm_flavors_Small";
-					choice = document.getElementById(vm_flavor_newMaster_Id);
+					&&(this.get('master_disk_selection') == this.small_flavor_settings['disk'])) {					
+					var choice = document.getElementById("master_vm_flavors_Small");
 					choice.style.color = "white";
 				} 
 				if ((this.get('master_cpu_selection') == this.medium_flavor_settings['cpu'])
 					&&(this.get('master_ram_selection') == this.medium_flavor_settings['ram'])
-					&&(this.get('master_disk_selection') == this.medium_flavor_settings['disk'])) {
-					vm_flavor_newMaster_Id = "master_vm_flavors_Medium";
-					choice = document.getElementById(vm_flavor_newMaster_Id);
+					&&(this.get('master_disk_selection') == this.medium_flavor_settings['disk'])) {					
+					var choice = document.getElementById("master_vm_flavors_Medium");
 					choice.style.color = "white";					
 				}
 				if ((this.get('master_cpu_selection') == this.large_flavor_settings['cpu'])
 					&&(this.get('master_ram_selection') == this.large_flavor_settings['ram'])
-					&&(this.get('master_disk_selection') == this.large_flavor_settings['disk'])) {
-					vm_flavor_newMaster_Id = "master_vm_flavors_Large";
-					choice = document.getElementById(vm_flavor_newMaster_Id);
+					&&(this.get('master_disk_selection') == this.large_flavor_settings['disk'])) {				
+					var choice = document.getElementById("master_vm_flavors_Large");
 					choice.style.color = "white";
 				}								
 			}
@@ -353,22 +350,19 @@ App.ClusterCreateController = Ember.Controller.extend({
 				if ((this.get('slaves_cpu_selection') == this.small_flavor_settings['cpu'])
 					&&(this.get('slaves_ram_selection') == this.small_flavor_settings['ram'])
 					&&(this.get('slaves_disk_selection') == this.small_flavor_settings['disk'])) {
-					vm_flavor_newSlave_Id = "slave_vm_flavors_Small";
-					choice = document.getElementById(vm_flavor_newSlave_Id);
+					var choice = document.getElementById("slave_vm_flavors_Small");
 					choice.style.color = "white";
 				} 
 				if ((this.get('slaves_cpu_selection') == this.medium_flavor_settings['cpu'])
 					&&(this.get('slaves_ram_selection') == this.medium_flavor_settings['ram'])
 					&&(this.get('slaves_disk_selection') == this.medium_flavor_settings['disk'])) {
-					vm_flavor_newSlave_Id = "slave_vm_flavors_Medium";
-					choice = document.getElementById(vm_flavor_newSlave_Id);
+					var choice = document.getElementById("slave_vm_flavors_Medium");
 					choice.style.color = "white";					
 				}
 				if ((this.get('slaves_cpu_selection') == this.large_flavor_settings['cpu'])
 					&&(this.get('slaves_ram_selection') == this.large_flavor_settings['ram'])
 					&&(this.get('slaves_disk_selection') == this.large_flavor_settings['disk'])) {
-					vm_flavor_newSlave_Id = "slave_vm_flavors_Large";
-					choice = document.getElementById(vm_flavor_newSlave_Id);
+					var choice = document.getElementById("slave_vm_flavors_Large");
 					choice.style.color = "white";
 				}							
 			}
