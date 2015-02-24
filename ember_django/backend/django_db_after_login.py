@@ -87,13 +87,14 @@ def db_cluster_create(choices, task_id):
 
     return new_cluster.id
 
-def db_hadoop_update(cluster_id, hadoop_status):
+def db_hadoop_update(cluster_id, hadoop_status, state):
     try:
         cluster = ClusterInfo.objects.get(id=cluster_id)
     except ObjectDoesNotExist:
         msg = 'Cluster with given id does not exist'
         raise ObjectDoesNotExist(msg)
 
+    cluster.state = state
     cluster.hadoop_status =  HADOOP_STATUS_ACTIONS[hadoop_status][0]
     cluster.save()
         
@@ -123,6 +124,7 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
         cluster.cluster_status = "0"
         cluster.master_IP = ''
         cluster.state= 'Deleted'
+        cluster.hadoop_status = "0"
 
     if state:
         cluster.state = state
