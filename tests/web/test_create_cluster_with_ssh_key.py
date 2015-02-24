@@ -7,8 +7,7 @@ This script is a test for cluster creation via GUI end to end
 from selenium import webdriver
 import sys, os
 from os.path import join, dirname, abspath
-sys.path.append(join(dirname(abspath(__file__)), '../../orka-0.1.1/orka'))
-sys.path.append(join(dirname(__file__), '../../ember_django/backend'))
+sys.path.append(join(dirname(abspath(__file__)), '../../ember_django'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -18,7 +17,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
-from okeanos_utils import check_quota, get_flavor_id, check_credentials
+from backend.okeanos_utils import check_quota, get_flavor_id, check_credentials
+from random import randint
 import unittest, time, re
 import subprocess
 
@@ -117,7 +117,8 @@ class test_create_cluster_with_ssh_key(unittest.TestCase):
         project_details = self.project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'CPUs:' + str(user_quota['cpus']['available']) + '  ' + 'RAM:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
         Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)                           
         driver.find_element_by_id("cluster_name").clear()
-        driver.find_element_by_id("cluster_name").send_keys("mycluster")
+        cluster_name = 'test_cluster' + str(randint(0,9999))
+        driver.find_element_by_id("cluster_name").send_keys(cluster_name)
         hadoop_image = 'Hadoop-2.5.2'                           
         Select(driver.find_element_by_id("os_systems")).select_by_visible_text(hadoop_image)
         ssh_keys_info = self.ssh_key_list()

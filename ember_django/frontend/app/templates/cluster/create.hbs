@@ -14,15 +14,33 @@
                     <div class="col col-sm-8">
                         {{view Ember.Select contentBinding="projects_av"
                         valueBinding="project_details" id="project_id" prompt="*Select project*"
+                        selectionBinding="selected_project"
                         class="btn-primary btn-sm text-left"}}
                     </div>
-                </div>
+                </div>                
             </div>
-        </div>
+	    	<div class="text-center">
+	    	    ***Select your project first
+	    	</div>
+        </div>        
         <div class="col col-lg-4 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">
             <div class="text-left">
-                ***Select your project first
+                <button class="btn btn-default btn-sm" 
+                data-container="body" 
+                data-toggle="popover" 
+                data-placement="bottom-auto"
+                data-trigger='hover focus click'
+                data-html=true
+                {{bind-attr data-content=last_conf_message}} 
+                {{action "applyLastCluster"}}
+                >
+                Apply Last Cluster Configuration</button>
             </div>
+	        <div class="row text-center text-danger">
+	            <div class="col col-sm-4">
+	                {{alert_mes_last_conf}}
+	            </div>
+	        </div>            
         </div>
     </div>
 </div>
@@ -39,6 +57,7 @@
                     <div class="col col-sm-7">
                         {{view Ember.Select contentBinding="project_current.os_choices"
                         valueBinding="operating_system" id="os_systems"
+                        selectionBinding="selected_image"
                         class="btn btn-primary btn-sm"}}
                     </div>
                 </div>
@@ -47,6 +66,7 @@
                     <div class="col col-sm-7">
                         {{view Ember.Select contentBinding="max_cluster_size_av"
                         valueBinding="cluster_size" prompt="Select size" id="size_of_cluster"
+                        selectionBinding="selected_size"
                         class="btn btn-primary btn-sm text-left"}}
                     </div>
                 </div>
@@ -73,10 +93,10 @@
                     </div>
                 </div>
               <div class="form-group">
-                    <label for="names_of_ssh_keys" class="control-label col-sm-4">ssh_key </label>
+                    <label for="names_of_ssh_keys" class="control-label col-sm-4">public keys </label>
                     <div class="col col-sm-8">
                         {{view Ember.Select contentBinding="ssh_keys_av"
-                        valueBinding="ssh_key_selection" prompt="Select ssh_key" id="ssh_key"
+                        valueBinding="ssh_key_selection" prompt="Select public key" id="ssh_key"
                         class="btn btn-primary btn-sm text-left"}}
                     </div>
                 </div>
@@ -112,6 +132,22 @@
 <div class="panel panel-primary">
     <div id = "master_settings" class="panel-heading text-center v-center">
         <h3 class="panel-title">Master Settings</h3>
+    </div>
+    <div class="panel-body text-center">
+	    <div class="horizontal">
+	        <div class="col col-sm-3">
+	        </div>	
+	        <div class="col col-sm-5">
+	            <h4 id = "vm_flavors_Master" class="btn-group">Predefined VM Flavors: </h4>
+                <div class="btn-group">
+	                {{#each item in project_current.vm_flavors_choices}}
+		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_Master"
+		            class="btn btn-primary btn-sm" disabled = false}}
+		            {{item}}{{/view}}
+		            {{/each}}
+                    </div>
+	        </div>
+        </div>
     </div>
     <div class="panel-body text-center">
         <div class="row">
@@ -176,6 +212,22 @@
 <div class="panel panel-primary">
     <div id = "slaves_settings" class="panel-heading text-center v-center">
         <h3 class="panel-title">Slaves Settings</h3>
+    </div>
+    <div class="panel-body text-center">
+	    <div class="horizontal">
+	        <div class="col col-sm-3">
+	        </div>	
+	        <div class="col col-sm-5">
+	            <h4 id = "vm_flavors_Slave" class="btn-group">Predefined VM Flavors: </h4>
+                <div class="btn-group">
+	                {{#each item in project_current.vm_flavors_choices}}
+		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_Slave"
+		            class="btn btn-primary btn-sm" disabled = false}}
+		            {{item}}{{/view}}
+		            {{/each}}
+                </div>
+	        </div>
+        </div>
     </div>
     <div class="panel-body text-center">
         <div class="row">
