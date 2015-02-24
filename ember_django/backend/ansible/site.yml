@@ -20,24 +20,6 @@
   tasks:
      - { include: start_yarn.yml, when: start_yarn == 'True'}
 
-- name: Force format cluster and start the Hadoop-yarn daemons
-  remote_user: root
-  hosts: master
-  tasks:
-     - { include: reformat_yarn.yml, when: reformat_yarn == 'True'}
-     
-- name: Start the Hadoop-yarn daemons without format
-  remote_user: root
-  hosts: master
-  tasks:
-     - { include: restart_yarn.yml, when: restart_yarn == 'True'}
- 
-- name: Stop the Hadoop-yarn daemons
-  remote_user: root
-  hosts: master
-  tasks:
-     - { include: stop_yarn.yml, when: stop_yarn == 'True'}
-     
 - name: Setup orka_admin user in Django server
   hosts: webserver
   remote_user: root

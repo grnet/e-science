@@ -280,12 +280,40 @@ App.ClusterCreateController = Ember.Controller.extend({
 		return max_cluster_size_limited_by_current_disks;
 	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size_var', 'cluster_size', 'project_details'),
 
+
+	// Function to set master and slaves vm_flavor_selection
+ 	vm_flavor_buttons_responce: function (){
+ 		
+		if ((this.small_flavor_settings['cpu']==this.get('master_cpu_selection')) && (this.small_flavor_settings['ram']==this.get('master_ram_selection')) && (this.small_flavor_settings['disk']==this.get('master_disk_selection'))){
+			this.set('vm_flavor_selection_Master', 'Small');
+		}
+		if ((this.medium_flavor_settings['cpu']==this.get('master_cpu_selection')) && (this.medium_flavor_settings['ram']==this.get('master_ram_selection')) && (this.medium_flavor_settings['disk']==this.get('master_disk_selection'))){
+			this.set('vm_flavor_selection_Master', 'Medium');
+		}
+		if ((this.large_flavor_settings['cpu']==this.get('master_cpu_selection')) && (this.large_flavor_settings['ram']==this.get('master_ram_selection')) && (this.large_flavor_settings['disk']==this.get('master_disk_selection'))){
+			this.set('vm_flavor_selection_Master', 'Large');
+		}
+		if ((this.small_flavor_settings['cpu']==this.get('slaves_cpu_selection')) && (this.small_flavor_settings['ram']==this.get('slaves_ram_selection')) && (this.small_flavor_settings['disk']==this.get('slaves_disk_selection'))){
+			this.set('vm_flavor_selection_Slave', 'Small');
+		}
+		if ((this.medium_flavor_settings['cpu']==this.get('slaves_cpu_selection')) && (this.medium_flavor_settings['ram']==this.get('slaves_ram_selection')) && (this.medium_flavor_settings['disk']==this.get('slaves_disk_selection'))){
+			this.set('vm_flavor_selection_Slave', 'Medium');
+		}
+		if ((this.large_flavor_settings['cpu']==this.get('slaves_cpu_selection')) && (this.large_flavor_settings['ram']==this.get('slaves_ram_selection')) && (this.large_flavor_settings['disk']==this.get('slaves_disk_selection'))){
+			this.set('vm_flavor_selection_Slave', 'Large');
+		}
+	},
+
     // Functionality about coloring of the vm_flavor buttons and enable-disable responding to user events
 	// First, remove colors from all vm_flavor buttons and then color the role's(master/slaves) selection
     vm_flavor_buttons : function() {
     	var elements = document.getElementsByName("vm_flavor_button_Master");
 		var length = elements.length;
 		var vm_flavors = this.get('content').objectAt(this.get('project_index')).get('vm_flavors_choices');
+		
+		this.vm_flavor_buttons_responce();
+		
+		
 		for (var i = 0; i < length; i++) {
 			elements[i].style.color = "initial";
 			if (vm_flav_master_Small_disabled) {
@@ -303,8 +331,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				elements[2].disabled = false;
 			}
+			console.log(this.get('vm_flavor_selection_Master'));
 			if ((this.get('vm_flavor_selection_Master') !== undefined) && (this.get('vm_flavor_selection_Master') !== null) && (this.get('vm_flavor_selection_Master') !== '')) {
 				var choice = document.getElementById("master_vm_flavors_".concat(this.get('vm_flavor_selection_Master')));
+				alert('test_alert_2');
 				if ((this.get('master_cpu_selection') == this.small_flavor_settings['cpu'])
 					&&(this.get('master_ram_selection') == this.small_flavor_settings['ram'])
 					&&(this.get('master_disk_selection') == this.small_flavor_settings['disk'])) {
@@ -610,6 +640,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.storage_buttons();
 		this.vm_flavor_buttons();
 	},
+	
+	// Function which make the size of cluster equal or greater than minimum cluster
 	size_of_cluster : function() {
 		if ((this.get('cluster_size') === null) || (this.get('cluster_size') === undefined) || (this.get('cluster_size') === 0)) {
 			this.set('cluster_size_var', 2);
@@ -618,6 +650,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		}
 		return this.get('cluster_size_var');
 	},
+	
 	// Reset project variables
 	reset_project : function() {
 		this.set('project_index', 0);
@@ -626,6 +659,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('project_details', '');
 		
 	},
+	
 	// Reset variables after logout
 	reset_variables : function() {
 		this.set('cluster_size', 0);
@@ -655,6 +689,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('alert_mes_cluster_name', '');
 		this.set('alert_mes_cluster_size', '');
 	},
+	
 	actions : {
 		// action to apply last cluster configuration
 		// trigger when the corresponding button is pressed
