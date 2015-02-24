@@ -78,6 +78,17 @@
       - "{{ ssh_file_name }}"
     when: p.stat.exists
 
+  - name: copy server authorized_keys to root .ssh directory
+    tags: postconfig
+    authorized_key: user=root key="{{ item }}"
+    with_file:
+      - "{{ server_ssh_key }}"
+
+  - name: create master vm root user ssh key..will used for copying master root ssh to all vms
+    user: name=root generate_ssh_key=yes shell=/bin/bash state=present
+    tags: postconfig
+    when: is_master
+
   - name: change owner of hduser auth keys file
     tags: postconfig
     file: path={{hadoopuser_path}}/.ssh/authorized_keys owner=hduser group=hadoop mode=0600
