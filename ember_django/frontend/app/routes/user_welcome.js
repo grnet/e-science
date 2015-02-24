@@ -19,7 +19,8 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			// console.log('route > model > num_records ' + num_records);
 			var bPending = false;
 			for ( i = 0; i < num_records; i++) {
-				if (user_clusters.objectAt(i).get('cluster_status') == '2') {
+				if ((user_clusters.objectAt(i).get('cluster_status') == '2')
+					||(user_clusters.objectAt(i).get('hadoop_status') == '2')) {
 					that.controllerFor('userWelcome').send('timer', true, that.store);
 					bPending = true;
 					break;

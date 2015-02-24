@@ -81,11 +81,22 @@ App.Usercluster = DS.Model.extend({
 		case "1":
 			return "glyphicon glyphicon-play text-success";
 		case "2":
-			return "glyphicon glyphicon-eraser text-warning";
+			return "glyphicon glyphicon-hourglass text-warning";
 		default:
-			return "glyphicon glyphicon-hourglass text-muted";
+			return "glyphicon glyphicon-question-sign text-muted";
 		}
 	}.property('hadoop_status','cluster_status'),
+	hadoop_status_verbose : function(){
+		var cluster_status = this.get('cluster_status');
+		var hadoop_status = this.get('hadoop_status');
+		var state = this.get('state');
+		if (cluster_status == '1' && hadoop_status == '2'){
+			return state;
+		}else
+		{
+			return '';
+		}
+	}.property('hadoop_status', 'cluster_status'),
 	hadoop_status_active : function(){
 		var status = this.get('hadoop_status');
 		var cluster_status = this.get('cluster_status');
@@ -129,7 +140,7 @@ App.Usercluster = DS.Model.extend({
 		return "glyphicon glyphicon-stop text-danger";
 	}.property(),
 	hadoop_status_class_format : function(){
-		return "glyphicon glyphicon-hdd text-warning";
+		return "glyphicon glyphicon-erase text-warning";
 	}.property(),
 	cluster_status_id : function (){
 		var cluster_name_sort = this.get('cluster_name').slice(7);
@@ -154,7 +165,22 @@ App.Usercluster = DS.Model.extend({
 	cluster_confirm_action : function(key, value){
 		this.set('confirm_action', value);
 		return this.get('confirm_action');
-	}.property()
+	}.property(),
+	cluster_confirm_action_verbose : function(key, value){
+		var confirm_action = this.get('cluster_confirm_action');
+		switch(confirm_action){
+		case 'cluster_delete':
+			return 'Destroy Cluster';
+		case 'hadoop_start':
+			return 'Start Hadoop';
+		case 'hadoop_stop':
+			return 'Stop Hadoop';
+		case 'hadoop_format':
+			return 'Format Hadoop';
+		default:
+			return 'Confirm';
+		}
+	}.property('cluster_confirm_action')
 });
 
 // App.User.reopenClass({

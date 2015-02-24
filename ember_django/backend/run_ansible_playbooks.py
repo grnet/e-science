@@ -84,17 +84,21 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
     return hosts_filename
 
 
-def ansible_manage_cluster(token, cluster_id, action):
+def ansible_manage_cluster(cluster_id, action):
     """
     Start,stop or format a hadoop cluster, depending on the action arg.
     Updates database only when starting or stopping a cluster.
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
-    current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
+    if action == 'format':
+        current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
+    else:
+        current_hadoop_status = action
     cluster_name_postfix_id = '%s%s%s' % (cluster.cluster_name, '-', cluster_id)
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name_postfix_id.replace(" ", "_")
     if isfile(hosts_filename):
         state = ' %s %s cluster' %(HADOOP_STATUS_ACTIONS[action][1], cluster.cluster_name)
+        current_task.update_state(state=state)
         db_hadoop_update(cluster_id, 'Pending', state)
         ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + action
         ansible_exit_status = execute_ansible_playbook(ansible_code)
