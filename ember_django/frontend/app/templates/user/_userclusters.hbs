@@ -23,7 +23,7 @@ Grid should be sort-able by status & size -->
                             	<i {{bind-attr class="sortbysizearrow:glyphicon:hide sortbysizearrow:small:hide sortbysize:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td><a href="#" {{action 'sortBy' content.clusters 'master_IP'}}>Active IP</a>
                             	<i {{bind-attr class="sortbyurlarrow:glyphicon:hide sortbyurlarrow:small:hide sortbyurl:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                            <td class="col col-sm-1"><a class="nounder">Actions</a></td>
+                            <td class="col col-sm-2"><a class="nounder">Actions</a></td>
                         </tr>
                     </thead>
                     <tbody class="text-left">
@@ -35,7 +35,7 @@ Grid should be sort-able by status & size -->
                             <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
                             	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
                             </td>
-                            <td><i {{bind-attr class="usercluster.cluster_hadoop_status_class"}}></i></td>
+                            <td><i {{bind-attr class="usercluster.cluster_hadoop_status_class"}}></i>{{usercluster.hadoop_status_verbose}}</td>
                             <td>{{usercluster.cluster_size}}</td>
                             {{#if usercluster.hadoop_status_active}}
                             	<td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
@@ -46,7 +46,7 @@ Grid should be sort-able by status & size -->
                             {{#if usercluster.cluster_status_active}}
                             {{#if usercluster.cluster_confirm_action}}
                             <div class="btn-group  btn-block">
-							    <a role="button" {{bind-attr id='usercluster.cluster_confirm_id'}} {{action 'takeAction' usercluster}} class="btn btn-danger btn-xs active">Confirm</a>
+							    <a role="button" {{bind-attr id='usercluster.cluster_confirm_id'}} {{action 'takeAction' usercluster}} class="btn btn-danger btn-xs active">{{usercluster.cluster_confirm_action_verbose}}</a>
 							    <a role="button" {{action 'confirmAction' usercluster false}} class="btn btn-danger btn-xs active">x</a>
 							</div>
                             {{else}}
@@ -77,7 +77,7 @@ Grid should be sort-able by status & size -->
                             <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
                             	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
                             </td>
-                            <td><i {{bind-attr class="usercluster.cluster_hadoop_status_class"}}></i></td>
+                            <td><i {{bind-attr class="usercluster.cluster_hadoop_status_class"}}></i>{{usercluster.hadoop_status_verbose}}</td>
                             <td>{{usercluster.cluster_size}}</td>
                             {{#if usercluster.hadoop_status_active}}
                             	<td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
@@ -88,7 +88,7 @@ Grid should be sort-able by status & size -->
                             {{#if usercluster.cluster_status_active}}
                             {{#if usercluster.cluster_confirm_action}}
                             <div class="btn-group  btn-block">
-							    <a role="button" {{bind-attr id='usercluster.cluster_confirm_id'}} {{action 'takeAction' usercluster}} class="btn btn-danger btn-xs active">Confirm</a>
+							    <a role="button" {{bind-attr id='usercluster.cluster_confirm_id'}} {{action 'takeAction' usercluster}} class="btn btn-danger btn-xs active">{{usercluster.cluster_confirm_action_verbose}}</a>
 							    <a role="button" {{action 'confirmAction' usercluster false}} class="btn btn-danger btn-xs active">x</a>
 							</div>
                             {{else}}

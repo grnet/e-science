@@ -88,7 +88,8 @@ App.UserWelcomeController = Ember.Controller.extend({
 								var num_records = user_clusters.get('length');
 								var bPending = false;
 								for ( i = 0; i < num_records; i++) {
-									if (user_clusters.objectAt(i).get('cluster_status') == '2') {
+									if ((user_clusters.objectAt(i).get('cluster_status') == '2') 
+										||(user_clusters.objectAt(i).get('hadoop_status') == '2')) {
 										bPending = true;
 										var lastsort = that.get('column');
 										if (!Ember.isBlank(lastsort)){
