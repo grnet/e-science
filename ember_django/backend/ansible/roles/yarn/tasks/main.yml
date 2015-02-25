@@ -78,15 +78,14 @@
       - "{{ ssh_file_name }}"
     when: p.stat.exists
 
-  - name: copy server authorized_keys to root .ssh directory
-    tags: postconfig
-    authorized_key: user=root key="{{ item }}"
-    with_file:
-      - "{{ server_ssh_key }}"
-
   - name: create master vm root user ssh key..will used for copying master root ssh to all vms
     user: name=root generate_ssh_key=yes shell=/bin/bash state=present
     tags: postconfig
+    when: is_master
+
+  - name: copy master root public ssh key to local box
+    tags: postconfig
+    fetch: src={{hadoopuser_path}}/.ssh/id_rsa.pub dest=/tmp/{{master_key}} flat=yes
     when: is_master
 
   - name: change owner of hduser auth keys file
@@ -105,6 +104,13 @@
     when: is_master
 
   - name: copy local box master ssh key to hduser
+    tags: postconfig
+    authorized_key: user=hduser key="{{ item }}"
+    with_file:
+      - /tmp/{{master_key}}
+    when: is_slave
+
+  - name: copy local box master root ssh key to root every VM
     tags: postconfig
     authorized_key: user=hduser key="{{ item }}"
     with_file:
