@@ -4,7 +4,7 @@ App.Ticker = Ember.Object.extend({
 	ticking : false,
 	interval : function() {
 		return (this.get('minutes') * 60 + this.get('seconds')) * 1000 || 5000;
-		// Time between ticks (in miliseconds)
+		// Time between ticks (in milliseconds)
 	}.property(),
 	// Schedules the function `f` to be executed every `interval` time.
 	schedule : function(f) {

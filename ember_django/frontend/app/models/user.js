@@ -32,6 +32,7 @@ App.Usercluster = DS.Model.extend({
 	project_name : attr(),
 	task_id : attr(),
 	state : attr(),
+	hadoop_status : attr(),
 	// user that created the cluster
 	user : DS.belongsTo('user', {
 		inverse : 'clusters'
@@ -64,19 +65,50 @@ App.Usercluster = DS.Model.extend({
 			return "glyphicon glyphicon-time text-warning";
 
 		default:
-			return "glyphicon glyphicon glyphicon-question-sign text-muted";
+			return "glyphicon glyphicon-question-sign text-muted";
 		}
 	}.property('cluster_status'),
 	cluster_hadoop_status_class : function()
 	{
-		var status = this.get('cluster_status');
+		var status = this.get('hadoop_status');
+		var cluster_status = this.get('cluster_status');
+		if (cluster_status !== "1"){
+			status = "0";
+		}
 		switch (status){
+		case "0":
+			return "glyphicon glyphicon-stop text-danger";
 		case "1":
 			return "glyphicon glyphicon-play text-success";
+		case "2":
+			return "glyphicon glyphicon-hourglass text-warning";
 		default:
-			return "glyphicon glyphicon-stop text-danger";
+			return "glyphicon glyphicon-question-sign text-muted";
 		}
-	}.property('cluster_status'),
+	}.property('hadoop_status','cluster_status'),
+	hadoop_status_verbose : function(){
+		var cluster_status = this.get('cluster_status');
+		var hadoop_status = this.get('hadoop_status');
+		var state = this.get('state');
+		if (cluster_status == '1' && hadoop_status == '2'){
+			return state;
+		}else
+		{
+			return '';
+		}
+	}.property('hadoop_status', 'cluster_status'),
+	hadoop_status_active : function(){
+		var status = this.get('hadoop_status');
+		var cluster_status = this.get('cluster_status');
+		if (cluster_status !== "1"){
+			status = "0";
+		}
+		if (status == '1'){
+			return true;
+		}else{
+			return false;
+		}
+	}.property('hadoop_status','cluster_status'),
 	cluster_status_pending : function(){
 		var status = this.get('cluster_status');
 		if (status == '2'){
@@ -101,6 +133,15 @@ App.Usercluster = DS.Model.extend({
 			return '';
 		}
 	}.property('cluster_status_active'),
+	hadoop_status_class_start : function(){
+		return "glyphicon glyphicon-play text-success";
+	}.property(),
+	hadoop_status_class_stop : function(){
+		return "glyphicon glyphicon-stop text-danger";
+	}.property(),
+	hadoop_status_class_format : function(){
+		return "glyphicon glyphicon-erase text-warning";
+	}.property(),
 	cluster_status_id : function (){
 		var cluster_name_sort = this.get('cluster_name').slice(7);
 		var status_id = "id_".concat("status_",cluster_name_sort);
@@ -121,10 +162,25 @@ App.Usercluster = DS.Model.extend({
 		var confirm_id = "id_".concat("confirm_",cluster_name_sort);
 		return confirm_id;	
 	}.property('cluster_name'),
-	cluster_confirm_delete : function(key, value){
-		this.set('confirm_delete', value);
-		return this.get('confirm_delete');
-	}.property()
+	cluster_confirm_action : function(key, value){
+		this.set('confirm_action', value);
+		return this.get('confirm_action');
+	}.property(),
+	cluster_confirm_action_verbose : function(key, value){
+		var confirm_action = this.get('cluster_confirm_action');
+		switch(confirm_action){
+		case 'cluster_delete':
+			return 'Destroy Cluster';
+		case 'hadoop_start':
+			return 'Start Hadoop';
+		case 'hadoop_stop':
+			return 'Stop Hadoop';
+		case 'hadoop_format':
+			return 'Format Hadoop';
+		default:
+			return 'Confirm';
+		}
+	}.property('cluster_confirm_action')
 });
 
 // App.User.reopenClass({

@@ -108,7 +108,8 @@ class StatusView(APIView):
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
             if serializer.data['hadoop_status']:
                 try:
-                    cluster_action = hadoop_cluster_action_async.delay(serializer.data['id'], serializer.data['hadoop_status'])
+                    cluster_action = hadoop_cluster_action_async.delay(serializer.data['id'],
+                                                                       serializer.data['hadoop_status'])
                     task_id = cluster_action.id
                     return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
                 except Exception, e:

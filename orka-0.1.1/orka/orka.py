@@ -211,16 +211,17 @@ class UserClusterInfo(object):
     def __init__(self, opts):
         self.opts = opts
         self.data = list()
-        self.order_list = [['cluster_name','id','action_date','cluster_size','cluster_status',
+        self.order_list = [['cluster_name','id','action_date','cluster_size','cluster_status','hadoop_status',
                             'master_IP','project_name','os_image','disk_template',
                             'cpu_master','mem_master','disk_master',
-                            'cpu_slaves','mem_slaves','disk_slaves','hadoop_status']]
+                            'cpu_slaves','mem_slaves','disk_slaves']]
         self.sort_func = custom_sort_factory(self.order_list)
-        self.short_list = {'id':True, 'cluster_name':True, 'action_date':True, 'cluster_size':True, 'cluster_status':True, 'master_IP':True}
+        self.short_list = {'id':True, 'cluster_name':True, 'action_date':True, 'cluster_size':True, 'cluster_status':True, 'hadoop_status':True, 'master_IP':True}
         self.skip_list = {'task_id':True, 'state':True}
         self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0'}
         self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED'}
-        self.hadoop_id_to_hadoop_desc = {'1':'Start', '0':'Stop','':''}
+        self.hdp_status_id_to_status_desc = {'0':'STOPPED','1':'STARTED','2':'FORMAT','':''}
+        self.hdp_status_desc_to_status_id = {'STOPPED':'0','STARTED':'1','FORMAT':'2'}
         self.disk_template_to_label = {'ext_vlmc':'Archipelago', 'drbd':'Standard'}
         
     def sort(self, clusters):
@@ -254,7 +255,7 @@ class UserClusterInfo(object):
                     elif key == 'cluster_status':
                         fmt_string = '{:<10}' + key + ': ' + self.status_id_to_status_desc[sorted_cluster[key]]
                     elif key == 'hadoop_status':
-                        fmt_string = '{:<10}' + key + ': ' + self.hadoop_id_to_hadoop_desc[sorted_cluster[key]]
+                        fmt_string = '{:<10}' + key + ': ' + self.hdp_status_id_to_status_desc[sorted_cluster[key]]
                     elif key == 'disk_template':
                         fmt_string = '{:<10}' + key + ': ' + self.disk_template_to_label[sorted_cluster[key]]
                     elif key == 'action_date':
@@ -354,8 +355,9 @@ def main():
                               action="store_true")
         
         
-        parser_h.add_argument('hadoop_status', help='Hadoop status (choices: {%(choices)s})',
-                              type=str.lower, choices=['start', 'format', 'stop'])
+        parser_h.add_argument('hadoop_status', 
+                              help='Hadoop status (choices: {%(choices)s})', type=str.lower,
+                              metavar='hadoop_status', choices=['start', 'format', 'stop'])
         parser_h.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         parser_h.add_argument('token',
@@ -387,7 +389,7 @@ def main():
         c_userclusters.list()
         
     elif argv[1] == 'hadoop':
-        c_hadoopcluster.hadoop_action(argv[2].lower())
+        c_hadoopcluster.hadoop_action(argv[2])
 
 
 if __name__ == "__main__":
