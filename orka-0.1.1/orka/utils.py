@@ -123,7 +123,7 @@ def custom_date_format(datestring, fmt='shortdatetime'):
     datestring_microsec = datestring
     datestring_microsec = re.sub(':(\d+)Z$', lambda m: ':{0}.000000Z'.format(m.group(1)), datestring_microsec)
     datestring_microsec = re.sub('\.(\d+)Z$', lambda m: '.{:0<6}Z'.format(m.group(1)), datestring_microsec)
-    date_formats = {'shortdate':'%Y-%m-%d', 'shortdatetime':'%a,%d %b %Y %H:%M:%S'}
+    date_formats = {'shortdate':'%Y-%m-%d', 'shortdatetime':'%a, %d %b %Y %H:%M:%S'}
     date_fmt = date_formats.has_key(fmt) and date_formats[fmt] or date_formats['shortdatetime']
     try:
         date_in = datetime.strptime(datestring_microsec, '%Y-%m-%dT%H:%M:%S.%fZ')

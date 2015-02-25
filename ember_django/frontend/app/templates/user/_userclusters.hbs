@@ -51,14 +51,14 @@ Grid should be sort-able by status & size -->
 							</div>
                             {{else}}
                             <div class='btn-group btn-block'>
-                            	<a class="nounder" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'cluster_delete'}} data-title='DESTROY CLUSTER'>
-                            		<b {{bind-attr id='usercluster.cluster_destroy_id' class='usercluster.cluster_status_class_destroy'}}></b> </a>
-                            	<a class="nounder" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'hadoop_start'}} data-title='START HADOOP'> 
-                            		<b {{bind-attr id='usercluster.hadoop_start_id' class='usercluster.hadoop_status_class_start'}}></b> </a>
-                            	<a class="nounder" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'hadoop_stop'}} data-title='STOP HADOOP'> 
-                            		<b {{bind-attr id='usercluster.hadoop_stop_id' class='usercluster.hadoop_status_class_stop'}}></b> </a>
-                            	<a class="nounder" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'hadoop_format'}} data-title='FORMAT HADOOP'> 
-                            		<b {{bind-attr id='usercluster.hadoop_format_id' class='usercluster.hadoop_status_class_format'}}></b> </a>
+                            	<button class="btn btn-xs btn-default" data-toggle="tooltip" data-placement="top" href="#" {{action 'confirmAction' usercluster 'cluster_delete'}} data-title='DESTROY CLUSTER'>
+                            		<b {{bind-attr id='usercluster.cluster_destroy_id' class='usercluster.cluster_status_class_destroy'}}></b> </button>
+                            	<button class="btn btn-xs btn-default" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'hadoop_start'}} data-title='START HADOOP'> 
+                            		<b {{bind-attr id='usercluster.hadoop_start_id' class='usercluster.hadoop_status_class_start'}}></b> </button>
+                            	<button class="btn btn-xs btn-default" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'hadoop_stop'}} data-title='STOP HADOOP'> 
+                            		<b {{bind-attr id='usercluster.hadoop_stop_id' class='usercluster.hadoop_status_class_stop'}}></b> </button>
+                            	<button class="btn btn-xs btn-default" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'hadoop_format'}} data-title='FORMAT HADOOP'> 
+                            		<b {{bind-attr id='usercluster.hadoop_format_id' class='usercluster.hadoop_status_class_format'}}></b> </button>
                             </div>
                             {{/if}}	
                             {{/if}}
@@ -92,15 +92,15 @@ Grid should be sort-able by status & size -->
 							    <a role="button" {{action 'confirmAction' usercluster false}} class="btn btn-danger btn-xs active">x</a>
 							</div>
                             {{else}}
-                            <div class='btn-group btn-block nounder'>
-                            	<a class="nounder" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'cluster_delete'}} data-title='DESTROY CLUSTER'>
-                            		<b {{bind-attr id='usercluster.cluster_destroy_id' class='usercluster.cluster_status_class_destroy'}}></b> </a>
-                            	<a class="nounder" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'hadoop_start'}} data-title='START HADOOP'> 
-                            		<b {{bind-attr id='usercluster.hadoop_start_id' class='usercluster.hadoop_status_class_start'}}></b> </a>
-                            	<a class="nounder" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'hadoop_stop'}} data-title='STOP HADOOP'> 
-                            		<b {{bind-attr id='usercluster.hadoop_stop_id' class='usercluster.hadoop_status_class_stop'}}></b> </a>
-                            	<a class="nounder" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'hadoop_format'}} data-title='FORMAT HADOOP'> 
-                            		<b {{bind-attr id='usercluster.hadoop_format_id' class='usercluster.hadoop_status_class_format'}}></b> </a>
+                            <div class='btn-group btn-block'>
+                            	<button class="btn btn-xs btn-default" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'cluster_delete'}} data-title='DESTROY CLUSTER'>
+                            		<b {{bind-attr id='usercluster.cluster_destroy_id' class='usercluster.cluster_status_class_destroy'}}></b> </button>
+                            	<button class="btn btn-xs btn-default" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'hadoop_start'}} data-title='START HADOOP'> 
+                            		<b {{bind-attr id='usercluster.hadoop_start_id' class='usercluster.hadoop_status_class_start'}}></b> </button>
+                            	<button class="btn btn-xs btn-default" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'hadoop_stop'}} data-title='STOP HADOOP'> 
+                            		<b {{bind-attr id='usercluster.hadoop_stop_id' class='usercluster.hadoop_status_class_stop'}}></b> </button>
+                            	<button class="btn btn-xs btn-default" data-toggle="tooltip" data-placement="top" href="#" role="button" {{action 'confirmAction' usercluster 'hadoop_format'}} data-title='FORMAT HADOOP'> 
+                            		<b {{bind-attr id='usercluster.hadoop_format_id' class='usercluster.hadoop_status_class_format'}}></b> </button>
                             </div>
                             {{/if}}	
                             {{/if}}
