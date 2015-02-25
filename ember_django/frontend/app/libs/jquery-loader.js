@@ -24,6 +24,7 @@
 		},
 
 		template : function(snippet, data) {
+			// strip out <script> tags we have put in the template to hide the snippet from browser before it loads
 			snippet = snippet.replace(/(<[\/]?script>)/g,'');
 			$.each(data, function(k, v) {
 				snippet = snippet.replace('${' + k + '}', v);
