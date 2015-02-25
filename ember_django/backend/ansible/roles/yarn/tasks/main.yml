@@ -78,14 +78,9 @@
       - "{{ ssh_file_name }}"
     when: p.stat.exists
 
-  - name: create master vm root user ssh key..will used for copying master root ssh to all vms
+  - name: create master vm root user ssh key
     user: name=root generate_ssh_key=yes shell=/bin/bash state=present
     tags: postconfig
-    when: is_master
-
-  - name: copy master root public ssh key to local box
-    tags: postconfig
-    fetch: src={{hadoopuser_path}}/.ssh/id_rsa.pub dest=/tmp/{{master_key}} flat=yes
     when: is_master
 
   - name: change owner of hduser auth keys file
@@ -98,23 +93,28 @@
     shell: sudo -u hduser cat {{hadoopuser_path}}/.ssh/id_rsa.pub >> {{hadoopuser_path}}/.ssh/authorized_keys
     when: is_master
 
-  - name: copy master public ssh key to local box
+  - name: copy master hduser public ssh key to local box
     tags: postconfig
-    fetch: src={{hadoopuser_path}}/.ssh/id_rsa.pub dest=/tmp/{{master_key}} flat=yes
+    fetch: src={{hadoopuser_path}}/.ssh/id_rsa.pub dest=/tmp/{{master_key_hduser}} flat=yes
     when: is_master
 
-  - name: copy local box master ssh key to hduser
+  - name: copy master root public ssh key to local box
+    tags: postconfig
+    fetch: src=/root/.ssh/id_rsa.pub dest=/tmp/{{master_key_root}} flat=yes
+    when: is_master
+
+  - name: copy local box master hduser ssh key to hduser
     tags: postconfig
     authorized_key: user=hduser key="{{ item }}"
     with_file:
-      - /tmp/{{master_key}}
+      - /tmp/{{master_key_hduser}}
     when: is_slave
 
   - name: copy local box master root ssh key to root every VM
     tags: postconfig
-    authorized_key: user=hduser key="{{ item }}"
+    authorized_key: user=root key="{{ item }}"
     with_file:
-      - /tmp/{{master_key}}
+      - /tmp/{{master_key_root}}
     when: is_slave
 
   - name: chown hadoop-src from root to hadoop group

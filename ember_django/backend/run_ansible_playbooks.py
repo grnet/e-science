@@ -51,7 +51,7 @@ def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_f
         msg = 'Error while running Ansible '
         raise RuntimeError(msg, error_ansible_playbook)
     finally:
-        os.system('rm /tmp/master_' + master_hostname + '_pub_key ')
+        os.system('rm /tmp/master_' + master_hostname + '_pub_key_* ')
     logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
                 + hostname_master + ':8088/cluster')
 
