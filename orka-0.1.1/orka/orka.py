@@ -172,15 +172,25 @@ class HadoopCluster(object):
 
     def hadoop_action(self, action):
         """ Method for applying an action to a Hadoop cluster"""
+        action = str.lower(action)
         clusters = get_user_clusters(self.opts['token'])
+        active_cluster = None
         for cluster in clusters:
-            if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == '1':
-                break
+            if (cluster['id'] == self.opts['cluster_id']):
+                active_cluster = cluster
+                if cluster['cluster_status'] == '1':
+                    break
         else:
             logging.error(' Hadoop can only be managed for an active cluster.')
             exit(error_fatal)
+        if active_cluster:            
+            if (active_cluster['hadoop_status'] == "1" and action == "start"):
+                logging.error(' Hadoop already started.')
+                exit(error_fatal)
+            elif (active_cluster['hadoop_status'] == "0" and action == "stop"):
+                logging.error(' Hadoop already stopped.')
+                exit(error_fatal)
         try:
-            action = str.lower(action)
             payload = {"clusterchoice":{"id": self.opts['cluster_id'], "hadoop_status": action}}
             yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
             response = yarn_cluster_req.create_cluster()
