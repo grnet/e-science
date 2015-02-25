@@ -123,7 +123,12 @@ class YarnCluster(object):
         pending_net = self.pending_quota['Network']
         limit_net = dict_quotas[self.project_id]['cyclades.network.private']['limit']
         usage_net = dict_quotas[self.project_id]['cyclades.network.private']['usage']
-        available_networks = limit_net - usage_net - pending_net
+        project_limit_net = dict_quotas[self.project_id]['cyclades.network.private']['project_limit']
+        project_usage_net = dict_quotas[self.project_id]['cyclades.network.private']['project_usage']
+        available_networks = limit_net - usage_net
+        if (available_networks > (project_limit_net - project_usage_net)):
+            available_networks = project_limit_net - project_usage_net
+        available_networks -= pending_net
         if available_networks >= 1:
             logging.log(REPORT, ' Private Network quota is ok')
             return 0
@@ -138,7 +143,14 @@ class YarnCluster(object):
         pending_ips = self.pending_quota['Ip']
         limit_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['limit']
         usage_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['usage']
-        available_ips = limit_ips - usage_ips - pending_ips
+
+        project_limit_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['project_limit']
+        project_usage_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['project_usage']
+
+        available_ips = limit_ips-usage_ips
+        if (available_ips > (project_limit_ips - project_usage_ips)):
+            available_ips = project_limit_ips - project_usage_ips
+        available_ips -= pending_ips
         for d in list_float_ips:
             if d['instance_id'] is None and d['port_id'] is None:
                 available_ips += 1
