@@ -5,6 +5,7 @@
  db_name: escience
  db_host: 127.0.0.1
 
+
  # Django admin variables
  django_admin_name: orka_admin
  django_admin_email: orka@example.com
