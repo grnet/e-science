@@ -9,6 +9,7 @@ from ConfigParser import RawConfigParser, NoSectionError
 import requests
 from requests import ConnectionError
 import json
+import re
 from collections import OrderedDict
 from datetime import datetime
 
@@ -114,12 +115,17 @@ def custom_date_format(datestring, fmt='shortdatetime'):
     """
     Format a utc date time to human friendly date time.
     Both input and output are string representations of datetime
-    If the passed in datetime string representation can't be reformatted it is returned unaltered
+    If the passed in datetime string representation can't be reformatted return it unaltered
+    strptime expects microseconds so we try to capture both with and w/o microsecond utc format 
+    and right-pad the milisecond segment to microseconds.
     """
-    date_formats = {'shortdate':'%Y-%m-%d', 'shortdatetime':'%a %b %Y %H:%M:%S'}
+    datestring_microsec = datestring
+    datestring_microsec = re.sub(':(\d+)Z$', lambda m: ':{0}.000000Z'.format(m.group(1)), datestring_microsec)
+    datestring_microsec = re.sub('\.(\d+)Z$', lambda m: '.{:0<6}Z'.format(m.group(1)), datestring_microsec)
+    date_formats = {'shortdate':'%Y-%m-%d', 'shortdatetime':'%a,%d %b %Y %H:%M:%S'}
     date_fmt = date_formats.has_key(fmt) and date_formats[fmt] or date_formats['shortdatetime']
     try:
-        date_in = datetime.strptime(datestring, '%Y-%m-%dT%H:%M:%S.%fZ')
+        date_in = datetime.strptime(datestring_microsec, '%Y-%m-%dT%H:%M:%S.%fZ')
         return date_in.strftime(date_fmt)
     except ValueError:
         return datestring
