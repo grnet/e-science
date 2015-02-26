@@ -218,7 +218,7 @@ App.Usercluster = DS.Model.extend({
 		case 'hadoop_stop':
 			return 'Stop Hadoop';
 		case 'hadoop_format':
-			return 'Format Hadoop';
+			return 'Format HDFS';
 		default:
 			return 'Confirm';
 		}
