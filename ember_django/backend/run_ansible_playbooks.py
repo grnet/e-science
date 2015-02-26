@@ -97,7 +97,7 @@ def ansible_manage_cluster(cluster_id, action):
     cluster_name_postfix_id = '%s%s%s' % (cluster.cluster_name, '-', cluster_id)
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name_postfix_id.replace(" ", "_")
     if isfile(hosts_filename):
-        state = ' %s %s cluster' %(HADOOP_STATUS_ACTIONS[action][1], cluster.cluster_name)
+        state = ' %s %s' %(HADOOP_STATUS_ACTIONS[action][1], cluster.cluster_name)
         current_task.update_state(state=state)
         db_hadoop_update(cluster_id, 'Pending', state)
         ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + action

@@ -68,6 +68,9 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 				this.controller.set('count', 10);
 				this.controller.send('timer', true, this.store);
 			}
+            else {
+                this.controller.set('output_message', '');
+            }
 			return true;
 		},
 		takeAction : function(cluster) {

@@ -67,13 +67,14 @@ def get_project_id(token, project_name):
     Return the id of an active ~okeanos project.
     """
     auth = check_credentials(token)
+    dict_quotas = auth.get_quotas()
     try:
         list_of_projects = auth.get_projects(state='active')
     except ClientError:
         msg = ' Could not get list of active projects'
         raise ClientError(msg, error_get_list_projects)
     for project in list_of_projects:
-        if project['name'] == project_name:
+        if project['name'] == project_name and project['id'] in dict_quotas:
             return project['id']
     msg = ' No project id was found for ' + project_name
     raise ClientError(msg, error_proj_id)
