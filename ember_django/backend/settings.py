@@ -56,8 +56,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_ember',
-    'rest_framework.authtoken',    
-    # 'kombu.transport.django.KombuAppConfig',
+    'rest_framework.authtoken',
     'djcelery',
     'backend',
 )

@@ -68,6 +68,30 @@ App.Usercluster = DS.Model.extend({
 			return "glyphicon glyphicon-question-sign text-muted";
 		}
 	}.property('cluster_status'),
+	cluster_status_pending : function(){
+		var status = this.get('cluster_status');
+		if (status == '2'){
+			return this.get('state') || 'Pending...';
+		}else{
+			return '';
+		}
+	}.property('cluster_status'),
+	cluster_status_active : function(){
+		var status = this.get('cluster_status');
+		if (status == '1'){
+			return true;
+		}else{
+			return false;
+		}
+	}.property('cluster_status'),
+	cluster_status_class_destroy : function(){
+		var status = this.get('cluster_status_active');
+		if (status){
+			return "glyphicon glyphicon-remove text-danger";
+		}else{
+			return '';
+		}
+	}.property('cluster_status_active'),	
 	cluster_hadoop_status_class : function()
 	{
 		var status = this.get('hadoop_status');
@@ -97,42 +121,60 @@ App.Usercluster = DS.Model.extend({
 			return '';
 		}
 	}.property('hadoop_status', 'cluster_status'),
+	hadoop_action_start_disabled : function(){
+		var status = this.get('hadoop_status');
+		var cluster_status = this.get('cluster_status');
+		if (cluster_status !== "1"){
+			status = "0";
+		}
+		switch (status){
+		case "0":
+			return false;
+		default:
+			return true;
+		}
+	}.property('hadoop_status','cluster_status'),
+	hadoop_action_stop_disabled : function(){
+		var status = this.get('hadoop_status');
+		var cluster_status = this.get('cluster_status');
+		if (cluster_status !== "1"){
+			status = "0";
+		}
+		switch (status){
+		case "1":
+			return false;
+		default:
+			return true;
+		}
+	}.property('hadoop_status','cluster_status'),
+	hadoop_action_format_disabled : function(){
+		var status = this.get('hadoop_status');
+		var cluster_status = this.get('cluster_status');
+		if (cluster_status !== "1"){
+			status = "0";
+		}
+		switch (status){
+		case "0":
+			return false;
+		case "1":
+			return false;
+		default:
+			return true;
+		}
+	}.property('hadoop_status','cluster_status'),
 	hadoop_status_active : function(){
 		var status = this.get('hadoop_status');
 		var cluster_status = this.get('cluster_status');
 		if (cluster_status !== "1"){
 			status = "0";
 		}
-		if (status == '1'){
+		switch (status){
+		case "1":
 			return true;
-		}else{
+		default:
 			return false;
 		}
 	}.property('hadoop_status','cluster_status'),
-	cluster_status_pending : function(){
-		var status = this.get('cluster_status');
-		if (status == '2'){
-			return this.get('state') || 'Pending...';
-		}else{
-			return '';
-		}
-	}.property('cluster_status'),
-	cluster_status_active : function(){
-		var status = this.get('cluster_status');
-		if (status == '1'){
-			return true;
-		}else{
-			return false;
-		}
-	}.property('cluster_status'),
-	cluster_status_class_destroy : function(){
-		var status = this.get('cluster_status_active');
-		if (status){
-			return "glyphicon glyphicon-remove text-danger";
-		}else{
-			return '';
-		}
-	}.property('cluster_status_active'),
 	hadoop_status_class_start : function(){
 		return "glyphicon glyphicon-play text-success";
 	}.property(),
