@@ -133,7 +133,7 @@ class YarnCluster(object):
             logging.log(REPORT, ' Private Network quota is ok')
             return 0
         else:
-            msg = 'Private Network quota exceeded'
+            msg = 'Private Network quota exceeded in project: ' + self.opts['project_name']
             raise ClientError(msg, error_quotas_network)
 
     def check_ip_quotas(self):
@@ -157,7 +157,7 @@ class YarnCluster(object):
         if available_ips > 0:
             return 0
         else:
-            msg = 'Floating IP not available'
+            msg = 'Floating IP not available in project: ' + self.opts['project_name']
             raise ClientError(msg, error_get_ip)
 
     def check_cpu_valid(self):
