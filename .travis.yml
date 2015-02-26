@@ -40,4 +40,3 @@ before_script:
 - nohup bash -c "webdriver-manager start 2>&1 &"
 script:
 - nosetests -sv tests/test_create_cluster.py
-
