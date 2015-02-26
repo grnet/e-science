@@ -12,18 +12,22 @@ App.UserLogoutRoute = Ember.Route.extend({
 		// reset variables in create cluster
 		this.controllerFor('clusterCreate').reset_project();
 		// Send PUT request for backend logout update.
-		var current_user = this.store.update('user', {
-			'id' : 1
+		var current_user = this.store.push('user', {
+			'id' : 1,
+            'user_theme' : ''
 		}).save();
 		current_user.then(function() {
 			// Set global var escience and localStorage token to null when put is successful.
 			App.set('escience_token', "null");
 			window.localStorage.escience_auth_token = App.get('escience_token');
-		}, function() {
+		}, function(reason) {
 			// Set global var escience and localStorage token to null when put fails.
 			App.set('escience_token', "null");
 			window.localStorage.escience_auth_token = App.get('escience_token');
+			console.log(reason.message);
 		});
+		// scroll to top of the page
+		window.scrollTo(0,0);
 		this.transitionTo('homepage');
 		this.controllerFor('application').set('loggedIn', false);
 	}

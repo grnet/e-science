@@ -1,5 +1,6 @@
 attr = App.attr;
-// Model used for sending user's choices regarding create cluster information
+// Model used for sending user's choices to the backend 
+// regarding create cluster information.
 App.Clusterchoice = DS.Model.extend({
 	project_name : attr('string'),		// name of the project
 	cluster_name : attr('string'),		// name of the cluster
@@ -12,4 +13,5 @@ App.Clusterchoice = DS.Model.extend({
 	disk_slaves : attr('number'),		// disk for slaves
 	disk_template : attr('string'),		// disk template
 	os_choice : attr('string'),			// operating system
+	ssh_key_selection : attr('string'),	// ssh_key_name
 });

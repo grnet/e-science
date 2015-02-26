@@ -1,3 +1,4 @@
+<span id="string_pixel_count" style="visibility:hidden"></span>
 <div id="wrap">
 	<div class="navbar navbar-default navbar-fixed-top">
 		<div class="container">
@@ -8,7 +9,7 @@
 					<span class="icon-bar"></span>
 				</button>
 				<a {{bind-attr href='homeURL'}} class="navbar-brand">
-					<img class="img-responsive" src="{{unbound STATIC_URL}}images/orca.png" alt="orca" width="65"/>
+					<img class="img-responsive" src="{{unbound STATIC_URL}}images/orka.png" alt="orka" width="65"/>
 				</a>
 			</div>
 			<div class="navbar-collapse collapse navbar-responsive-collapse">
@@ -17,18 +18,29 @@
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_services_dd">Services <b class="caret"></b></a>
 						<ul class="dropdown-menu">
 							<li>
-								<a id="id_create_cluster" href="#/cluster/create"><i class="glyphicon glyphicon-cloud"></i> Create Cluster</a>
+								{{#link-to 'cluster.create' id="id_create_cluster"}}<i class="glyphicon glyphicon-cloud"></i> Create Cluster</a>{{/link-to}}
 							</li>
 							<li class="divider"></li>
 							<li class="dropdown-header">
 								Not yet implemented
 							</li>
-							<li class="disabled">
-								<a href="#" disabled>Pre-built Images</a>
-							</li>
 						</ul>
 					</li>
 				</ul>
+				{{#if loggedIn}}				
+				<ul class="nav navbar-nav">
+					<li class="dropdown">
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_themes_dd">Themes <b class="caret"></b></a>
+						<ul class="dropdown-menu">
+							{{#each theme in userTheme}}
+							<li>
+                                <a href="#" id="myCurrentPage" {{action "change_theme" theme.url}}>{{theme.name}}</a>
+							</li>
+							{{/each}}													
+						</ul>
+					</li>
+				</ul>
+				{{/if}}
 				<ul class="nav navbar-nav navbar-right">
 					<li>
 						<div class="btn-group navbar-btn">
@@ -44,9 +56,6 @@
 								<li class="divider"></li>
 								<li class="dropdown-header">
 									Not yet implemented
-								</li>
-								<li class="disabled">
-									<a href="#" disabled>Dashboard</a>
 								</li>
 							</ul>							
 						</div>
@@ -72,7 +81,7 @@
 			<div class="col-lg-12">
 				<ul class="list-inline list-unstyled">
 					<li class="termslink pull-right text-muted">
-						<a href="https://accounts.okeanos.grnet.gr/ui/approval_terms">Terms
+						<a href="https://accounts.okeanos.grnet.gr/ui/approval_terms" target="_blank">Terms
 						of
 						use</a>
 					</li>
@@ -96,7 +105,7 @@
 				</p>
 
 				<p class="text-muted">
-					Copyright 2014 <a title="GRNET S.A." target="_blank" href="http://www.grnet.gr/en/">GRNET
+					Copyright 2014-2015 <a title="GRNET S.A." target="_blank" href="http://www.grnet.gr/en/">GRNET
 					S.A.</a> All rights
 					reserved.
 				</p>

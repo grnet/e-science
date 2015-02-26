@@ -1,23 +1,26 @@
 attr = App.attr;
-// User model used in our app (welcome screen)
+// Information about user (welcome screen)
 App.User = DS.Model.extend({
-	token : attr('string'), 				// okeanos token
-	user_id : attr('number'), 				// user_id in backend database
-	clusters : DS.hasMany('userCluster', {
+	token : attr('string'), 			// okeanos token
+	user_id : attr('number'), 			// user_id in backend database
+	// may have more than one clusters
+	user_theme : attr('string'),        // user's theme in backend database
+	clusters : DS.hasMany('usercluster', {
 		async : true,
-	}), 									// user cluster records
+		inverse : 'user'
+	}), 						// user cluster records
 	cluster : attr(),
 	escience_token : attr(),
-	// cluster : function() {
-	// return this.get('clusters.length');
-	// }.property('clusters.length'),
+    master_vm_password: attr('string')
 });
 
-App.UserCluster = DS.Model.extend({
-	cluster_name : attr('string'), 				// name of the cluster
-	cluster_size : attr('number'), 				// size of cluster (master+slaves)
-	cluster_status : attr('string'), 			// status of cluster
-	master_IP : attr('string'), 				// master ip
+// Information about user's clusters
+App.Usercluster = DS.Model.extend({
+	cluster_name : attr('string'),
+	action_date : attr('isodate'), // custom date transform implemented in store.js
+	cluster_size : attr('number'),
+	cluster_status : attr('string'),
+	master_IP : attr('string'),
 	cpu_master : attr(),
 	mem_master : attr(),
 	disk_master : attr(),
@@ -27,7 +30,12 @@ App.UserCluster = DS.Model.extend({
 	disk_template : attr(),
 	os_image : attr(),
 	project_name : attr(),
-	user : DS.belongsTo('user'), // user that created the cluster
+	task_id : attr(),
+	state : attr(),
+	// user that created the cluster
+	user : DS.belongsTo('user', {
+		inverse : 'clusters'
+	}),
 	cluster_url : function() {
 		return 'http://' + this.get('master_IP') + ':8088/cluster';
 	}.property('master_IP'),
@@ -59,14 +67,64 @@ App.UserCluster = DS.Model.extend({
 			return "glyphicon glyphicon glyphicon-question-sign text-muted";
 		}
 	}.property('cluster_status'),
+	cluster_hadoop_status_class : function()
+	{
+		var status = this.get('cluster_status');
+		switch (status){
+		case "1":
+			return "glyphicon glyphicon-play text-success";
+		default:
+			return "glyphicon glyphicon-stop text-danger";
+		}
+	}.property('cluster_status'),
 	cluster_status_pending : function(){
 		var status = this.get('cluster_status');
 		if (status == '2'){
-			return 'Pending...';
+			return this.get('state') || 'Pending...';
 		}else{
 			return '';
 		}
 	}.property('cluster_status'),
+	cluster_status_active : function(){
+		var status = this.get('cluster_status');
+		if (status == '1'){
+			return true;
+		}else{
+			return false;
+		}
+	}.property('cluster_status'),
+	cluster_status_class_destroy : function(){
+		var status = this.get('cluster_status_active');
+		if (status){
+			return "glyphicon glyphicon-remove text-danger";
+		}else{
+			return '';
+		}
+	}.property('cluster_status_active'),
+	cluster_status_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var status_id = "id_".concat("status_",cluster_name_sort);
+		return status_id;	
+	}.property('cluster_name'),
+	cluster_ip_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var ip_id = "id_".concat("ip_",cluster_name_sort);
+		return ip_id;	
+	}.property('cluster_name'),
+	cluster_destroy_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var destroy_id = "id_".concat("destroy_",cluster_name_sort);
+		return destroy_id;	
+	}.property('cluster_name'),
+	cluster_confirm_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var confirm_id = "id_".concat("confirm_",cluster_name_sort);
+		return confirm_id;	
+	}.property('cluster_name'),
+	cluster_confirm_delete : function(key, value){
+		this.set('confirm_delete', value);
+		return this.get('confirm_delete');
+	}.property()
 });
 
 // App.User.reopenClass({

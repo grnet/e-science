@@ -16,18 +16,20 @@
 			position : [0, 0, 0, 0],
 			title : '',
 			isOnly : true,
-			imgUrl : '/frontend/app/images/loading[size].gif',
+			imgUrl : DJANGO_STATIC_URL + 'images/loading[size].gif',
 			onShow : function() {
 			},
 			onClose : function() {
 			}
 		},
 
-		template : function(tmpl, data) {
+		template : function(snippet, data) {
+			// strip out <script> tags we have put in the template to hide the snippet from browser before it loads
+			snippet = snippet.replace(/(<[\/]?script>)/g,'');
 			$.each(data, function(k, v) {
-				tmpl = tmpl.replace('${' + k + '}', v);
+				snippet = snippet.replace('${' + k + '}', v);
 			});
-			return $(tmpl);
+			return $(snippet);
 		},
 
 		init : function(scope, options) {
@@ -79,7 +81,7 @@
 		create : function() {
 			var ops = this.options;
 			ops.imgUrl = ops.imgUrl.replace('[size]', ops.size + 'x' + ops.size);
-			this.loading = this.template($.loader.tmpl, {
+			this.loading = this.template($.loader.snippet, {
 				Class : 'x' + ops.size,
 				Src : ops.imgUrl,
 				Title : ops.title
@@ -161,7 +163,7 @@
 
 		close : function(all) {
 			if (all) {
-				var className = $($.loader.tmpl).attr('class');
+				var className = $(this.loading).attr('class');
 				$('.' + className).remove();
 			} else {
 				if (this.loading != undefined) {
@@ -174,7 +176,13 @@
 	};
 
 	$.loader = {
-		tmpl : '<div class="loading_wrp"><div class="loading ${Class}"><img src="${Src}" /><span>${Title}</span></div></div>',
+		snippet : '<script>'+
+		            '<div class="loading_wrp">'+
+		              '<div class="loading ${Class}">'+
+		                '<img src="${Src}" /><span>${Title}</span>'+
+		              '</div>'+
+		            '</div>'+
+		          '</script>',
 
 		open : function(arg) {
 			return $('body').loader(arg);
