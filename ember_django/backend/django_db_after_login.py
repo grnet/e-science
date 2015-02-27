@@ -128,6 +128,7 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
         cluster.master_IP = ''
         cluster.state= 'Deleted'
         cluster.hadoop_status = "0"
+        user.master_vm_password = ''
 
     if state:
         cluster.state = state
