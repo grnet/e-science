@@ -168,6 +168,39 @@ class HadoopCluster(object):
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
+            
+
+    def hadoop_action(self, action):
+        """ Method for applying an action to a Hadoop cluster"""
+        action = str.lower(action)
+        clusters = get_user_clusters(self.opts['token'])
+        active_cluster = None
+        for cluster in clusters:
+            if (cluster['id'] == self.opts['cluster_id']):
+                active_cluster = cluster
+                if cluster['cluster_status'] == '1':
+                    break
+        else:
+            logging.error(' Hadoop can only be managed for an active cluster.')
+            exit(error_fatal)
+        if active_cluster:            
+            if (active_cluster['hadoop_status'] == "1" and action == "start"):
+                logging.error(' Hadoop already started.')
+                exit(error_fatal)
+            elif (active_cluster['hadoop_status'] == "0" and action == "stop"):
+                logging.error(' Hadoop already stopped.')
+                exit(error_fatal)
+        try:
+            payload = {"clusterchoice":{"id": self.opts['cluster_id'], "hadoop_status": action}}
+            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
+            response = yarn_cluster_req.create_cluster()
+            task_id = response['clusterchoice']['task_id']
+            result = task_message(task_id, self.escience_token, wait_timer_delete)
+            logging.log(SUMMARY, result)
+        except Exception, e:
+            logging.error(' Error:' + str(e.args[0]))
+            exit(error_fatal)
+                    
 
 
 class UserClusterInfo(object):
@@ -178,15 +211,17 @@ class UserClusterInfo(object):
     def __init__(self, opts):
         self.opts = opts
         self.data = list()
-        self.order_list = [['cluster_name','id','action_date','cluster_size','cluster_status',
+        self.order_list = [['cluster_name','id','action_date','cluster_size','cluster_status','hadoop_status',
                             'master_IP','project_name','os_image','disk_template',
                             'cpu_master','mem_master','disk_master',
                             'cpu_slaves','mem_slaves','disk_slaves']]
         self.sort_func = custom_sort_factory(self.order_list)
-        self.short_list = {'id':True, 'cluster_name':True, 'action_date':True, 'cluster_size':True, 'cluster_status':True, 'master_IP':True}
+        self.short_list = {'id':True, 'cluster_name':True, 'action_date':True, 'cluster_size':True, 'cluster_status':True, 'hadoop_status':True, 'master_IP':True}
         self.skip_list = {'task_id':True, 'state':True}
         self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0'}
         self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED'}
+        self.hdp_status_id_to_status_desc = {'0':'STOPPED','1':'STARTED','2':'FORMAT'}
+        self.hdp_status_desc_to_status_id = {'STOPPED':'0','STARTED':'1','FORMAT':'2'}
         self.disk_template_to_label = {'ext_vlmc':'Archipelago', 'drbd':'Standard'}
         
     def sort(self, clusters):
@@ -219,6 +254,8 @@ class UserClusterInfo(object):
                         fmt_string = '{:<5}' + key + ': {' + key + '}'
                     elif key == 'cluster_status':
                         fmt_string = '{:<10}' + key + ': ' + self.status_id_to_status_desc[sorted_cluster[key]]
+                    elif key == 'hadoop_status':
+                        fmt_string = '{:<10}' + key + ': ' + self.hdp_status_id_to_status_desc[sorted_cluster[key]]
                     elif key == 'disk_template':
                         fmt_string = '{:<10}' + key + ': ' + self.disk_template_to_label[sorted_cluster[key]]
                     elif key == 'action_date':
@@ -250,6 +287,8 @@ def main():
                                      ' on ~okeanos.')
     parser_i = subparsers.add_parser('list',
                                      help='List user clusters.')
+    parser_h = subparsers.add_parser('hadoop', 
+                                     help='Start or Stop a Hadoop-Yarn cluster')
     
     if len(argv) > 1:
 
@@ -299,6 +338,7 @@ def main():
                               help='Synnefo authentication url. Default is ' +
                               auth_url)
 
+
         parser_d.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         parser_d.add_argument('token',
@@ -313,11 +353,21 @@ def main():
         
         parser_i.add_argument('--verbose', help='List extra cluster details.',
                               action="store_true")
+        
+        
+        parser_h.add_argument('hadoop_status', 
+                              help='Hadoop status (choices: {%(choices)s})', type=str.lower,
+                              metavar='hadoop_status', choices=['start', 'format', 'stop'])
+        parser_h.add_argument('cluster_id',
+                              help='The id of the Hadoop cluster', type=checker.positive_num_is)
+        parser_h.add_argument('token',
+                              help='Synnefo authentication token', type=checker.a_string_is)
 
         opts = vars(parser.parse_args(argv[1:]))
         if argv[1] == 'create':
             if opts['use_hadoop_image']:
                 opts['image'] = opts['use_hadoop_image']
+     
 
         logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
                                 level=checker.logging_levels['summary'],
@@ -337,6 +387,10 @@ def main():
     elif argv[1] == 'list':
         c_userclusters = UserClusterInfo(opts)
         c_userclusters.list()
+        
+    elif argv[1] == 'hadoop':
+        c_hadoopcluster.hadoop_action(argv[2])
+
 
 if __name__ == "__main__":
     main()
