@@ -90,12 +90,12 @@ App.UserWelcomeController = Ember.Controller.extend({
 					store.deleteRecord(record);
 					messages.compact();
 				}
-			}//gtzelepis: enable this snippet when done testing dummy messages.
-			// for (i=0;i<count;i++){
-				// if (arrMessages[i].get('msg_text')==obj['msg_text']){
-					// return;
-				// }
-			// }
+			}
+			for (i=0;i<count;i++){
+				if (arrMessages[i].get('msg_text')==obj['msg_text']){
+					return;
+				}
+			}
 			var message = {msg_type: obj['msg_type'], msg_text: obj['msg_text']};
 			while (store.hasRecordForId('usermessages',count)){
 				count+=1;

@@ -146,8 +146,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		},
 		confirmAction : function(cluster, value) {
 			cluster.set('cluster_confirm_action', value);
-			//debug: gtzelepis remove the next line when done testing with dummy messages
-			this.controller.send('addMessage',{'msg_type':'warning','msg_text':'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolores aut.'});
 		},
 		error : function(err) {
 			// to catch errors
