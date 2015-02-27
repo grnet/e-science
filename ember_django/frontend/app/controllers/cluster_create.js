@@ -1073,7 +1073,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 						$.loader.close(true);
                         var message = clusterchoice.get('data').message || "";
                         self.set('message', message);
-                        self.set('controllers.userWelcome.output_message', message);
+                        if (!Ember.isBlank(message)){
+                        	var msg = {'msg_type':'danger','msg_text':message};
+                        	self.get('controllers.userWelcome').send('addMessage',msg);
+                        }
 						self.set('controllers.userWelcome.create_cluster_start', true);
 						self.store.fetch('user', 1).then(function(user){
 							self.transitionToRoute('user.welcome');
@@ -1085,7 +1088,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 						console.log(reason.message);
 						$.loader.close(true);
 						self.set('message', reason.message);
-						self.set('controllers.userWelcome.output_message', reason.message);
+						if (!Ember.isBlank(reason.message)){
+							var msg = {'msg_type':'danger','msg_text':reason.message};
+                        	self.get('controllers.userWelcome').send('addMessage',msg);
+						}
 						self.set('controllers.userWelcome.create_cluster_start', false);
 						self.store.fetch('user', 1);
 					});

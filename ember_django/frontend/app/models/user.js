@@ -225,6 +225,23 @@ App.Usercluster = DS.Model.extend({
 	}.property('cluster_confirm_action')
 });
 
+App.Usermessages = DS.Model.extend({
+	// msg_types: 'default', 'primary', 'info', 'success', 'warning', 'danger'
+	msg_type : attr('string'),
+	msg_text : attr('string'),
+	inc: function(){
+		return Number(this.get('id'))+1;
+	}.property(),
+	msg_type_to_list_style : function(){
+		var base_type = this.get('msg_type');
+		return 'list-group-item-'+base_type+' spacious';
+	}.property('msg_type'),
+	msg_type_to_text_style : function(){
+		var base_type = this.get('msg_type');
+		return 'text-'+base_type;
+	}.property('msg_type'),
+});
+
 // App.User.reopenClass({
 // FIXTURES : [{
 // id : 1,
