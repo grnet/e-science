@@ -50,6 +50,9 @@ echo 'done'
 echo 'replicate .kamakirc'
 sudo cp ~/.kamakirc /root/
 echo 'done'
+echo 'fix log file permissions'
+sudo chown $USER:$USER $HOME/logs/*.log
+echo 'done'
 echo 'start celery'
 celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%h.log
 echo 'done'

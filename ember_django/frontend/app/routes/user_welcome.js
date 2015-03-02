@@ -60,6 +60,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		willTransition : function(transition) {
 			// leaving this route
 			this.controller.send('timer', false);
+			this.controller.send('removeMessage',1,true);
 		},
 		didTransition : function() {
 			// arrived at this route
@@ -68,9 +69,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 				this.controller.set('count', 10);
 				this.controller.send('timer', true, this.store);
 			}
-            else {
-                this.controller.send('removeMessage',1,true);
-            }
 			return true;
 		},
 		takeAction : function(cluster) {

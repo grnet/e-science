@@ -31,6 +31,10 @@ App.UserWelcomeController = Ember.Controller.extend({
 			this.send('addMessage',msg);
 		}
 	}.observes('content.master_vm_password'),
+	no_messages : function(){
+		var num_messages = Number(this.get('user_messages').get('length'));
+		return (num_messages==0 || Ember.isEmpty(num_messages));
+	}.property('user_messages.@each'),
 	actions : {
 		// sorts clusters based on selected column (name, date, status, size, IP)
 		sortBy : function(clusters, column) {
@@ -78,7 +82,7 @@ App.UserWelcomeController = Ember.Controller.extend({
 		},
 		addMessage : function(obj){
 			// routes/controllers > controller.send('addMessage',{'msg_type':'default|info|success|warning|danger', 'msg_text':'Lorem ipsum dolor sit amet, consectetur adipisicing elit'})
-			// templates > {{#each message in user_messages}}message.msg_text{{/each}}
+			// templates > {{#each message in user_messages}}{{message.msg_text}}{{/each}}
 			var store = this.store;
 			var messages = store.all('usermessages');
 			var arrMessages = messages.toArray();

@@ -5,13 +5,13 @@
 	<div class="col col-sm-3"></div>
 	<div class="alert alert-dismissable alert-success col-sm-6">
 		<button type="button" class="close" data-dismiss="alert">×</button>
-		Successfully <strong>logged in.</strong> You can {{#link-to 'cluster.create'}}create cluster{{/link-to}}  from the Services menu.
+		You are <strong>logged in.</strong> You can {{#link-to 'cluster.create'}}create cluster{{/link-to}}  from the Services menu.
 	</div>
 	<div class="col col-sm-3"></div>
 	</div>
 </div>
 <div class="row">
-	<div class="col col-sm-6">
+	<div class="col col-sm-5">
 		<ul class="list-group list-unstyled">
 			 <li class="list-group-item text-center">
 			 	<h4 class="list-group-item-heading">User info</h4>
@@ -24,16 +24,19 @@
 		  </li>
 		</ul>
 	</div>
-	<div class="col col-sm-6 pull-right">
+	<div class="col col-sm-7 pull-right">
 		<div class="panel panel-default text-left">
-			<div class="panel-heading text-primary text-center">
-				<span class="h4"> Message Panel </span><button class="btn btn-xs btn-primary" {{action 'removeMessage' 1 true}}>
-					<b class="glyphicon glyphicon-trash text-danger v-center"></b></button>
-			</div>
 			<ul class="list-group list-unstyled">
+			<li class="list-group-item text-center">
+			 	<span class="h4"> Messages </span><span>({{user_messages.length}}/10)</span>
+				<div class="btn-group pull-right">
+					<button class="btn btn-xs btn-primary" {{action 'removeMessage' 1 true}}{{bind-attr disabled=no_messages}}>
+					Clear all<b class="glyphicon glyphicon-trash text-danger v-center"></b></button>
+				</div>
+			 </li>
 			{{#each message in user_messages}}
-				<li {{bind-attr class="message.msg_type_to_list_style"}}>&nbsp;&nbsp;<strong>{{message.msg_text}}</strong>
-					<a href="#" role="button" class="nounder pull-right" {{action 'removeMessage' message.id}}><i class="glyphicon glyphicon-trash active v-center"></i>&nbsp;&nbsp;</a>
+				<li {{bind-attr class="message.msg_type_to_list_style"}}><strong>{{message.msg_text}}</strong>
+					<a href="#" role="button" class="nounder pull-right" {{action 'removeMessage' message.id}}><i class="glyphicon glyphicon-trash active v-center"></i></a>
 				</li>
 			{{/each}}
 			</ul>

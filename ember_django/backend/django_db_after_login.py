@@ -114,7 +114,7 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
         msg = 'Cluster with given name does not exist in pending state'
         raise ObjectDoesNotExist(msg)
     if password:
-        user.master_vm_password = 'The root password of ' + cluster.cluster_name + ' master VM is ' + password
+        user.master_vm_password = 'The root password of \"{0}\"({1}) master VM is {2}'.format(cluster.cluster_name,cluster.id,password)
 
     if status == "Active":
         cluster.cluster_status = "1"
