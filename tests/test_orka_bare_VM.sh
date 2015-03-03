@@ -29,5 +29,5 @@ virtualenv --system-site-packages orkaenv;
 pip install ansible==1.7.2;
 cd ~;
 git clone '$GITREPO' -b develop;
-cd e-science/orka-0.1.1;
+cd e-science/orka;
 python setup.py install'
