@@ -28,7 +28,7 @@ sudo rm ~/.ssh/known_hosts
 sudo rm -rf ~/.ansible/
 echo 'done'
 echo 'rebuild orka'
-cd orka-0.1.1
+cd orka
 sudo rm -rf build/
 sudo rm -rf dist/
 sudo rm -rf orka.egg-info/
@@ -49,6 +49,9 @@ sudo /etc/init.d/rabbitmq-server restart
 echo 'done'
 echo 'replicate .kamakirc'
 sudo cp ~/.kamakirc /root/
+echo 'done'
+echo 'fix log file permissions'
+sudo chown $USER:$USER $HOME/logs/*.log
 echo 'done'
 echo 'start celery'
 celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%h.log

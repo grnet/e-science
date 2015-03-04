@@ -60,6 +60,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		willTransition : function(transition) {
 			// leaving this route
 			this.controller.send('timer', false);
+			this.controller.send('removeMessage',1,true);
 		},
 		didTransition : function() {
 			// arrived at this route
@@ -85,7 +86,10 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 					self.controller.send('timer', true, store);
 				}, function(reason) {
 					console.log(reason.message);
-					self.controller.set('output_message', reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
 				});
 				break;
 			case 'hadoop_start':
@@ -98,7 +102,10 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 					self.controller.send('timer', true, store);
 				},function(reason){
 					console.log(reason.message);
-					self.controller.set('output_message', reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
 				});
 				break;
 			case 'hadoop_stop':
@@ -111,7 +118,10 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 					self.controller.send('timer', true, store);
 				},function(reason){
 					console.log(reason.message);
-					self.controller.set('output_message', reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
 				});
 				break;
 			case 'hadoop_format':
@@ -124,7 +134,10 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 					self.controller.send('timer', true, store);
 				},function(reason){
 					console.log(reason.message);
-					self.controller.set('output_message', reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
 				});
 				break;
 			}

@@ -11,7 +11,7 @@ sudo rm ~/.ssh/known_hosts
 sudo rm -rf ~/.ansible/
 echo 'done'
 echo 'rebuild orka'
-cd orka-0.1.1
+cd orka
 sudo rm -rf build/
 sudo rm -rf dist/
 sudo rm -rf orka.egg-info/

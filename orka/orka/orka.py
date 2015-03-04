@@ -288,7 +288,7 @@ def main():
     parser_i = subparsers.add_parser('list',
                                      help='List user clusters.')
     parser_h = subparsers.add_parser('hadoop', 
-                                     help='Start, Format or Stop a Hadoop-Yarn cluster')
+                                     help='Start or Stop a Hadoop-Yarn cluster')
     
     if len(argv) > 1:
 
