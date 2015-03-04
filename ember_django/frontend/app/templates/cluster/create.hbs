@@ -135,7 +135,7 @@
         <h3 class="panel-title">Master Settings</h3>
     </div>
     <div class="panel-body text-center">
-	    <div class="horizontal">
+	    <div class="row horizontal">
 	        <div class="col col-sm-3">
 	        </div>	
 	        <div class="col col-sm-5">
@@ -148,9 +148,9 @@
 		            {{/each}}
                     </div>
 	        </div>
+	        <div class="col col-sm-4">
+	        </div>
         </div>
-    </div>
-    <div class="panel-body text-center">
         <div class="row">
             <div class="col col-sm-4">
                 <h4 id = "master_cpu_summary">CPUs: {{this.master_cpu_selection}} </h4>
@@ -215,9 +215,8 @@
         <h3 class="panel-title">Slaves Settings</h3>
     </div>
     <div class="panel-body text-center">
-	    <div class="horizontal">
-	        <div class="col col-sm-3">
-	        </div>	
+	    <div class="row horizontal">
+	        <div class="col col-sm-3"></div>	
 	        <div class="col col-sm-5">
 	            <h4 id = "vm_flavors_Slave" class="btn-group">Predefined VM Flavors: </h4>
                 <div class="btn-group">
@@ -228,9 +227,8 @@
 		            {{/each}}
                 </div>
 	        </div>
+	        <div class="col col-sm-4"></div>
         </div>
-    </div>
-    <div class="panel-body text-center">
         <div class="row">
             <div class="col col-sm-4">
                 <h4 id = "slaves_cpu_summary">CPUs each: {{this.slaves_cpu_selection}}</h4>

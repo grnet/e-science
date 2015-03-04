@@ -3,10 +3,29 @@ html {
   height: 100%;
 }
 body {
-	padding-top: 50px;
-    height: 100%;
+  padding-top: 50px;
+  height: 100%;
+}
+/* apply directly to an <a> to remove underlines */
+a.nounder, 
+a.nounder:link, 
+a.nounder:visited, 
+a.nounder:active, 
+a.nounder:hover{
+  text-decoration: none !important;
+  border: none  !important;
+}
+/* apply to a container (eg. div) to remove underlines from child links */
+/*.nounder > a, a:link, a:visited, a:active, a:hover{
+  text-decoration: none !important;
+  border: none  !important;
+}*/
+li.spacious{
+  margin: 1px;
+  border: 1px;
 }
 /*
+ */
 css for the jquery spinner plugin
  */
 .loading { margin: auto; }
@@ -49,11 +68,11 @@ Mimic cursor style from native .dropdown-menu > .disabled > a{} styles,
 since `pointer-events: none` kills the cursor state, too.
 */
 .dropdown-menu > .disabled{
-cursor: not-allowed;
+  cursor: not-allowed;
 }
 /* The real magic ;) */
 .dropdown-menu > .disabled > a{
-pointer-events: none;
+  pointer-events: none;
 }
 /* Wrapper for application page content to push down footer */
 body > .ember-view {
@@ -73,6 +92,10 @@ body > .ember-view {
   margin: 0 auto -60px;
   /* Pad bottom by footer height */
   padding: 0 0 60px;
+}
+#id_message_panel {
+  height: 50%;
+  background: aqua;
 }
 #banner {
 	min-height: 250px;

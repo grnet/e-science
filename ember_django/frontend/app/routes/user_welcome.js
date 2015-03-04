@@ -19,7 +19,8 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			// console.log('route > model > num_records ' + num_records);
 			var bPending = false;
 			for ( i = 0; i < num_records; i++) {
-				if (user_clusters.objectAt(i).get('cluster_status') == '2') {
+				if ((user_clusters.objectAt(i).get('cluster_status') == '2')
+					||(user_clusters.objectAt(i).get('hadoop_status') == '2')) {
 					that.controllerFor('userWelcome').send('timer', true, that.store);
 					bPending = true;
 					break;
@@ -44,54 +45,112 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		// console.log(user.get('clusters').get('length'));
 		var user_clusters = user.get('clusters');
 		var lastsort = this.controllerFor('userWelcome').get('column');
-		if (!Ember.isBlank(lastsort)){
+		if (!Ember.isBlank(lastsort)) {
 			this.controllerFor('userWelcome').send('sortBy', user_clusters, lastsort);
 			this.controllerFor('userWelcome').send('sortBy', user_clusters, lastsort);
-		}else{
+		} else {
 			this.controllerFor('userWelcome').send('sortBy', user_clusters, 'action_date');
 			this.controllerFor('userWelcome').send('sortBy', user_clusters, 'action_date');
 		}
-		if ((user.get('user_theme') !== "")&&(user.get('user_theme') !== undefined)&&(user.get('user_theme') !== null)) {
-			changeCSS(user.get('user_theme'), 0);			
+		if ((user.get('user_theme') !== "") && (user.get('user_theme') !== undefined) && (user.get('user_theme') !== null)) {
+			changeCSS(user.get('user_theme'), 0);
 		}
 	},
 	actions : {
 		willTransition : function(transition) {
 			// leaving this route
 			this.controller.send('timer', false);
+			this.controller.send('removeMessage',1,true);
 		},
 		didTransition : function() {
 			// arrived at this route
 			var from_create = this.controller.get('create_cluster_start');
-			if (from_create){
+			if (from_create) {
 				this.controller.set('count', 10);
 				this.controller.send('timer', true, this.store);
 			}
 			return true;
 		},
-		deleteCluster : function(cluster) {
-			var that = this;
-			cluster.set('cluster_confirm_delete', false);
-			cluster.destroyRecord().then(function(data){
-				var count = that.controller.get('count');
-				var extend = Math.max(5, count);
-				that.controller.set('count', extend);
-				that.controller.set('create_cluster_start', true);
-				that.controller.send('timer', true, that.store);
-			},function(reason){
-				console.log(reason.message);
-				that.controller.set('output_message', reason.message);
-			});
+		takeAction : function(cluster) {
+			var self = this;
+			var store = this.store;
+			var action = cluster.get('cluster_confirm_action');
+			cluster.set('cluster_confirm_action', false);
+			switch(action) {
+			case 'cluster_delete':
+				cluster.destroyRecord().then(function(data) {
+					var count = self.controller.get('count');
+					var extend = Math.max(5, count);
+					self.controller.set('count', extend);
+					self.controller.set('create_cluster_start', true);
+					self.controller.send('timer', true, store);
+				}, function(reason) {
+					console.log(reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
+				});
+				break;
+			case 'hadoop_start':
+				cluster.set('hadoop_status','start');
+				cluster.save().then(function(data){
+					var count = self.controller.get('count');
+					var extend = Math.max(5, count);
+					self.controller.set('count', extend);
+					self.controller.set('create_cluster_start', true);
+					self.controller.send('timer', true, store);
+				},function(reason){
+					console.log(reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
+				});
+				break;
+			case 'hadoop_stop':
+				cluster.set('hadoop_status','stop');
+				cluster.save().then(function(data){
+					var count = self.controller.get('count');
+					var extend = Math.max(5, count);
+					self.controller.set('count', extend);
+					self.controller.set('create_cluster_start', true);
+					self.controller.send('timer', true, store);
+				},function(reason){
+					console.log(reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
+				});
+				break;
+			case 'hadoop_format':
+				cluster.set('hadoop_status','format');
+				cluster.save().then(function(data){
+					var count = self.controller.get('count');
+					var extend = Math.max(5, count);
+					self.controller.set('count', extend);
+					self.controller.set('create_cluster_start', true);
+					self.controller.send('timer', true, store);
+				},function(reason){
+					console.log(reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
+				});
+				break;
+			}
 		},
-		confirmDelete : function(cluster, value) {
-			cluster.set('cluster_confirm_delete', value);
+		confirmAction : function(cluster, value) {
+			cluster.set('cluster_confirm_action', value);
 		},
-		error: function(err) {
+		error : function(err) {
 			// to catch errors
 			// for example 401 responses
 			console.log(err.TypeError);
 			this.transitionTo('user.logout');
-    	}
+		}
 	},
 	deactivate : function() {
 		// left this route

@@ -98,7 +98,7 @@
   - name: Install orka as a python package
     tags: setupproject
     sudo: yes
-    pip: name={{project_path}}/{{orka_version}} chdir={{project_path}}
+    pip: name={{project_path}}/orka chdir={{project_path}}
 
   - name: Change owner of conf and logs
     file: path={{user_home}}/{{item}} recurse=yes state=directory

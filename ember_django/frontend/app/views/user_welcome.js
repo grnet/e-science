@@ -5,15 +5,14 @@ App.UserWelcomeView = Ember.View.extend({
 		// $(this.get('element')).on('mousemove',function(){
 		// $("[data-toggle='tooltip']").tooltip();
 		// });
+		var self = this;
 		this.addObserver('controller.sortdir', function() {
-			var that = this;
-			Ember.run.scheduleOnce('afterRender', that, function() {
+			Ember.run.scheduleOnce('afterRender', self, function() {
 				$("[data-toggle='tooltip']").tooltip();
 			});
 		});
-		this.addObserver('controller.refreshed', function(){
-			var that = this;
-			Ember.run.scheduleOnce('afterRender', that, function() {
+		this.addObserver('controller.count', function(){
+			Ember.run.scheduleOnce('afterRender', self, function() {
 				$("[data-toggle='tooltip']").tooltip();
 			});
 		});
@@ -23,6 +22,6 @@ App.UserWelcomeView = Ember.View.extend({
 	},
 	willDestroyElement : function() {
 		this.removeObserver('controller.sortdir');
-		this.removeObserver('controller.refreshed');
+		this.removeObserver('controller.count');
 	}
 });

@@ -41,7 +41,7 @@ Following commands are common for installation in virtual environment or not:
     [sudo if not using virtualenv] pip install ansible==1.7.2
     cd
     git clone <escience git repo> <project_name> 
-    cd to <project_name>/orka-0.1.1
+    cd to <project_name>/orka
     [sudo if not using virtualenv] python setup.py install
  
   Now orka commands are usable from anywhere .

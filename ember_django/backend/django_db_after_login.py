@@ -82,10 +82,25 @@ def db_cluster_create(choices, task_id):
                     os_image=choices['os_choice'], user_id=user,
                     project_name=choices['project_name'],
                     task_id=task_id,
-                    state='Authenticated')
+                    state='Authenticated',
+                    hadoop_status="0")
 
     return new_cluster.id
 
+def db_hadoop_update(cluster_id, hadoop_status, state):
+    try:
+        cluster = ClusterInfo.objects.get(id=cluster_id)
+    except ObjectDoesNotExist:
+        msg = 'Cluster with given id does not exist'
+        raise ObjectDoesNotExist(msg)
+
+    cluster.state = state
+    if hadoop_status == 'Pending':
+        cluster.hadoop_status = "2"
+    else:
+        cluster.hadoop_status =  HADOOP_STATUS_ACTIONS[hadoop_status][0]
+    cluster.save()
+        
 
 def db_cluster_update(token, status, cluster_id, master_IP='', state='', password=''):
     """
@@ -93,17 +108,17 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
     when cluster state changes.
     """
     try:
-        user =  UserInfo.objects.get(okeanos_token=token)
+        user = UserInfo.objects.get(okeanos_token=token)
         cluster = ClusterInfo.objects.get(id=cluster_id)
     except ObjectDoesNotExist:
         msg = 'Cluster with given name does not exist in pending state'
         raise ObjectDoesNotExist(msg)
     if password:
-        user.master_vm_password = 'The root password of ' + cluster.cluster_name + ' master VM is ' + password
-    else:
-        user.master_vm_password = password
+        user.master_vm_password = 'The root password of \"{0}\"({1}) master VM is {2}'.format(cluster.cluster_name,cluster.id,password)
+
     if status == "Active":
         cluster.cluster_status = "1"
+        user.master_vm_password = ''
 
     if status == "Pending":
         cluster.cluster_status = "2"
@@ -112,6 +127,7 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
         cluster.cluster_status = "0"
         cluster.master_IP = ''
         cluster.state= 'Deleted'
+        cluster.hadoop_status = "0"
 
     if state:
         cluster.state = state

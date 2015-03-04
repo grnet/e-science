@@ -68,13 +68,14 @@ def get_project_id(token, project_name):
     Return the id of an active ~okeanos project.
     """
     auth = check_credentials(token)
+    dict_quotas = auth.get_quotas()
     try:
         list_of_projects = auth.get_projects(state='active')
     except ClientError:
         msg = ' Could not get list of active projects'
         raise ClientError(msg, error_get_list_projects)
     for project in list_of_projects:
-        if project['name'] == project_name:
+        if project['name'] == project_name and project['id'] in dict_quotas:
             return project['id']
     msg = ' No project id was found for ' + project_name
     raise ClientError(msg, error_proj_id)
@@ -436,15 +437,25 @@ class Cluster(object):
     def _personality(self, ssh_keys_path='', pub_keys_path=''):
         """Personality injects ssh keys to the virtual machines we create"""
         personality = []
-        if pub_keys_path:
+        if ssh_keys_path and pub_keys_path:
             try:
-                with open(abspath(pub_keys_path)) as f:
+                with open(abspath(ssh_keys_path)) as f1, open(abspath(pub_keys_path)) as f2:
+                    personality.append(dict(
+                        contents=b64encode(f1.read() + f2.read()),
+                        path='/root/.ssh/authorized_keys',
+                        owner='root', group='root', mode=0600))
+            except IOError:
+                msg = " No valid public ssh key(id_rsa.pub) in %s or %s" %((abspath(ssh_keys_path)),(abspath(pub_keys_path)))
+                raise IOError(msg)
+        elif ssh_keys_path:
+            try:
+                with open(abspath(ssh_keys_path)) as f:
                     personality.append(dict(
                         contents=b64encode(f.read()),
                         path='/root/.ssh/authorized_keys',
                         owner='root', group='root', mode=0600))
             except IOError:
-                msg = " No valid public ssh key(id_rsa.pub) in " + (abspath(pub_keys_path))
+                msg = " No valid public ssh key(id_rsa.pub) in " + (abspath(ssh_keys_path))
                 raise IOError(msg)
         if ssh_keys_path or pub_keys_path:
                 personality.append(dict(
