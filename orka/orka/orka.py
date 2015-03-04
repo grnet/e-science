@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from __builtin__ import True
 
 
 """orka.orka: provides entry point main()."""
@@ -10,7 +11,7 @@ from cluster_errors_constants import *
 from argparse import ArgumentParser, ArgumentTypeError 
 from version import __version__
 from utils import ClusterRequest, ConnectionError, authenticate_escience, \
-    get_user_clusters, custom_sort_factory, custom_date_format
+    get_user_clusters, custom_sort_factory, custom_date_format, get_token
 from time import sleep
 
 
@@ -112,13 +113,15 @@ class HadoopCluster(object):
     """Wrapper class for YarnCluster."""
     def __init__(self, opts):
         self.opts = opts
-        try: 
-            self.escience_token = authenticate_escience(self.opts['token'])
+        try:
+#           cloud = self.opts['cloud']
+            token = get_token()
+            self.escience_token = authenticate_escience(token)
         except ConnectionError:
             logging.error(' e-science server unreachable or down.')
             exit(error_fatal)
         except ClientError:
-            logging.error(' Authentication error with token: ' + self.opts['token'])
+            logging.error(' Authentication error with token: ' + token)
             exit(error_fatal)
         
 
@@ -151,7 +154,8 @@ class HadoopCluster(object):
 
     def destroy(self):
         """ Method for deleting Hadoop clusters in~okeanos."""
-        clusters = get_user_clusters(self.opts['token'])
+#       cloud = self.opts['cloud']
+        clusters = get_user_clusters(get_token())
         for cluster in clusters:
             if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == '1':
                 break
@@ -173,7 +177,8 @@ class HadoopCluster(object):
     def hadoop_action(self, action):
         """ Method for applying an action to a Hadoop cluster"""
         action = str.lower(action)
-        clusters = get_user_clusters(self.opts['token'])
+#       cloud = self.opts['cloud']
+        clusters = get_user_clusters(get_token())
         active_cluster = None
         for cluster in clusters:
             if (cluster['id'] == self.opts['cluster_id']):
@@ -226,10 +231,11 @@ class UserClusterInfo(object):
         
     def sort(self, clusters):
         return self.sort_func(clusters)
-    
-    def list(self):
+        
+    def list(self, cluster_id):
         try:
-            self.data.extend(get_user_clusters(self.opts['token']))
+#           cloud = self.opts['cloud']
+            self.data.extend(get_user_clusters(get_token()))
         except ClientError, e:
             logging.error(e.message)
             exit(error_fatal)
@@ -243,13 +249,18 @@ class UserClusterInfo(object):
             opt_status = self.status_desc_to_status_id[self.opts['status'].upper()]
         
         if len(self.data) > 0:
+            valid_cluster_id = False
             for cluster in self.data:
+                if cluster_id > 0:                    
+                    if str(cluster['id']) != str(cluster_id):
+                        continue
+                    valid_cluster_id = True
                 if opt_status and cluster['cluster_status'] != opt_status:
                     continue
                 sorted_cluster = self.sort(cluster)
                 for key in sorted_cluster:
                     if (opt_short and not self.short_list.has_key(key)) or self.skip_list.has_key(key):
-                        continue
+                        continue                    
                     if key == 'cluster_name':
                         fmt_string = '{:<5}' + key + ': {' + key + '}'
                     elif key == 'cluster_status':
@@ -262,8 +273,13 @@ class UserClusterInfo(object):
                         fmt_string = '{:<10}' + key + ': ' + custom_date_format(sorted_cluster[key])
                     else:
                         fmt_string = '{:<10}' + key + ': {' + key + '}'
-                    print fmt_string.format('',**sorted_cluster)
+                        
+                    print fmt_string.format('',**sorted_cluster)                
                 print ''
+            if cluster_id > 0: 
+                if valid_cluster_id == False:
+                    logging.error(' Invalid cluster id.')
+                    exit(error_fatal)
         else:
             print 'User has no Cluster Information available.'
 
@@ -288,7 +304,9 @@ def main():
     parser_i = subparsers.add_parser('list',
                                      help='List user clusters.')
     parser_h = subparsers.add_parser('hadoop', 
-                                     help='Start or Stop a Hadoop-Yarn cluster')
+                                     help='Start, Format or Stop a Hadoop-Yarn cluster.')
+    parser_info = subparsers.add_parser('info',
+                                        help='Information for a specific Hadoop cluster.')
     
     if len(argv) > 1:
 
@@ -319,8 +337,8 @@ def main():
         parser_c.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
                               metavar='disk_template', choices=['Standard', 'Archipelago'], 
                               type=str.capitalize)
-
-        parser_c.add_argument("token", help='Synnefo authentication token', type=checker.a_string_is)
+#         parser_c.add_argument("cloud", 
+#                               help='Cloud\'s name for getting specific authentication token', type=checker.a_string_is)
 
         parser_c.add_argument("project_name", help='~okeanos project name'
                               ' to request resources from ', type=checker.a_string_is)
@@ -341,12 +359,13 @@ def main():
 
         parser_d.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
-        parser_d.add_argument('token',
-                              help='Synnefo authentication token', type=checker.a_string_is)
         
-        parser_i.add_argument('token',
-                              help='Synnefo authentication token', type=checker.a_string_is)
-        
+#         parser_d.add_argument('cloud',
+#                               help='Cloud\'s name for getting specific authentication token', type=checker.a_string_is)
+
+#         parser_i.add_argument('cloud',
+#                               help='Cloud\'s name for getting specific authentication token', type=checker.a_string_is)
+
         parser_i.add_argument('--status', help='Filter by status ({%(choices)s})'
                               ' Default is all: no filtering.', type=str.upper,
                               metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
@@ -359,10 +378,15 @@ def main():
                               help='Hadoop status (choices: {%(choices)s})', type=str.lower,
                               metavar='hadoop_status', choices=['start', 'format', 'stop'])
         parser_h.add_argument('cluster_id',
-                              help='The id of the Hadoop cluster', type=checker.positive_num_is)
-        parser_h.add_argument('token',
-                              help='Synnefo authentication token', type=checker.a_string_is)
-
+                              help='The id of the Hadoop cluster', type=checker.positive_num_is)        
+#         parser_h.add_argument('cloud',
+#                               help='Cloud\'s name for getting specific authentication token', type=checker.a_string_is)
+        
+        parser_info.add_argument('cluster_id',
+                                 help='The id of the Hadoop cluster', type=checker.positive_num_is)
+#         parser_h.add_argument('cloud',
+#                               help='Cloud\'s name for getting specific authentication token', type=checker.a_string_is)
+        
         opts = vars(parser.parse_args(argv[1:]))
         if argv[1] == 'create':
             if opts['use_hadoop_image']:
@@ -386,10 +410,16 @@ def main():
         
     elif argv[1] == 'list':
         c_userclusters = UserClusterInfo(opts)
-        c_userclusters.list()
+        c_userclusters.list(cluster_id=0)
         
     elif argv[1] == 'hadoop':
         c_hadoopcluster.hadoop_action(argv[2])
+        
+    elif argv[1] == 'info':
+        opts['verbose'] = True
+        opts['status'] = None
+        c_userclusters = UserClusterInfo(opts)
+        c_userclusters.list(cluster_id=argv[2])
 
 
 if __name__ == "__main__":

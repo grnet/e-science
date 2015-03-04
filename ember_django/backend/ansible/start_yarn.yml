@@ -2,6 +2,10 @@
   - name: format hdfs
     tags: format
     command: sudo -u hduser ./hdfs namenode -format -force chdir={{hadoop_home}}/bin
+    
+  - name: Creates directory
+    tags: format
+    file: path=/user/hduser state=directory
 
   - name: start dfs
     tags: start

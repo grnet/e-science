@@ -36,7 +36,20 @@ def get_api_urls(action):
     except NoSectionError:
         msg = 'Did not find a valid orka api base_url in .kamakirc'
         raise NoSectionError(msg)
-
+    
+def get_token(cloud="~okeanos"):
+    """ Return token from .kamakirc file"""
+    parser = RawConfigParser()
+    user_home = expanduser('~')
+    config_file = join(user_home, ".kamakirc")
+    parser.read(config_file)
+    try:
+        token = parser.get('cloud '+ '"' + cloud + '"', 'token')
+        return token
+    except NoSectionError:
+        msg = 'Did not find user token in .kamakirc'
+        raise NoSectionError(msg)
+    
 
 class ClusterRequest(object):
     """Class for REST requests to application server."""
