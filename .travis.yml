@@ -9,7 +9,7 @@ env:
 addons:
 - postgresql: "9.1"
 before_install:
-- openssl aes-256-cbc -K $encrypted_b254a382580f_key -iv $encrypted_b254a382580f_iv
+- openssl aes-256-cbc -K $encrypted_d970304f6e82_key -iv $encrypted_d970304f6e82_iv
   -in .private/.config.txt.enc -out .private/.config.txt -d
 install:
 - pip install kamaki==0.13.1
@@ -31,7 +31,7 @@ before_script:
 - psql -c 'create user developer with createdb;' -U postgres
 - psql -c 'create database escience with owner developer;' -U postgres
 - python ember_django/manage.py syncdb --noinput
-- cd orka
+- cd orka-0.1.1
 - python setup.py install
 - cd ..
 - npm install testem -g
