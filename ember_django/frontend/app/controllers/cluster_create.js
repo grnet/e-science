@@ -17,7 +17,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 	operating_system : '', // Preselected OS
 	disk_temp : 'Archipelago', 	// Initial storage selection, common for master and slaves friendly to  user name
 	cluster_size_zero : false, 	// for checking the available VMs, cluster size
-	create_cluster_disabled : true, // flag to disable create cluster button when project is not selected
 	message : '', 			// message when user presses the create cluster button
 	alert_mes_master_cpu : '', 	// alert message for master cpu buttons (if none selected)
 	alert_mes_master_ram : '', 	// alert message for master ram buttons (if none selected)
@@ -132,7 +131,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 				{
 					this.set('alert_mes_last_conf', '');
 				}
-				this.set('create_cluster_disabled', false);
 				this.set('project_current', model.objectAt(i));
 				this.set('project_name', model.objectAt(i).get('project_name'));
 				this.set('project_index', i);
@@ -186,6 +184,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		net_av = this.get('content').objectAt(this.get('project_index')).get('net_av');
 		var project_name = this.get('project_name');
 		if (Number(net_av) <= 0 && !Ember.isBlank(project_name)){
+			// this.get('disable_controls')(true);
 			return 'No Networks available for this project.';
 		}
 	}.property('project_details'),
@@ -195,9 +194,23 @@ App.ClusterCreateController = Ember.Controller.extend({
 		float_ip_av = this.get('content').objectAt(this.get('project_index')).get('floatip_av');
 		var project_name = this.get('project_name');
 		if (Number(float_ip_av) <= 0 && !Ember.isBlank(project_name)){
+			// this.get('disable_controls')(true);
 			return 'No Floating IPs available for this project.';
 		}
 	}.property('project_details'),
+	
+	disable_controls : function(flag){
+		var flag = flag && true || false;
+		var aryButtons = $('.emberbutton');
+		aryButtons.each(function(i, button){
+			button.disabled = flag;
+		});
+		var aryControlIDs = ['os_systems','size_of_cluster','cluster_name','ssh_key'];
+		$.each(aryControlIDs,function(i, elementID){
+			var element = $('#'+elementID);
+			element.prop('disabled',flag);
+		});
+	},
 	
 	// Computes the maximum VMs that can be build with current flavor choices and return this to the drop down menu on index
 	// If a flavor selection of a role(master/slaves) is 0, we assume that the role should be able to have at least the minimum option of the corresponding flavor
@@ -208,8 +221,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 		var max_cluster_size_limited_by_current_cpus = [];
 		var max_cluster_size_limited_by_current_mems = [];
 		var max_cluster_size_limited_by_current_disks = [];
-		this.buttons();
-		if ((this.get('project_name') === null) || (this.get('project_name') === undefined) || (this.get('project_name') === '')) {
+		var insufficient_net_or_ip = this.buttons();
+		if (Ember.isEmpty(this.get('project_name')) || insufficient_net_or_ip){
 			return [];
 		}
 		if (length < 2) {
@@ -219,7 +232,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('alert_mes_cluster_size', 'Your VM quota are not enough to build the minimum cluster');
 			}
 
-			cluster_size_zero = true;
+			this.set('cluster_size_zero',true);
 			return this.get('content').objectAt(this.get('project_index')).get('vms_av');
 		}
 		for (var i = 1; i < length; i++) {
@@ -246,7 +259,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			if (this.get('project_name') != '') {
 				this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
 			}
-			cluster_size_zero = true;
+			this.set('cluster_size_zero',true);
 			return max_cluster_size_limited_by_current_cpus;
 		}
 		for ( i = 0; i < length; i++) {
@@ -273,7 +286,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			if (this.get('project_name') != '') {
 				this.set('alert_mes_cluster_size', 'Your ram quota are not enough to build the minimum cluster');
 			}
-			cluster_size_zero = true;
+			this.set('cluster_size_zero',true);
 			return max_cluster_size_limited_by_current_mems;
 		}
 		for ( i = 0; i < length; i++) {
@@ -296,7 +309,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		}
 		if (max_cluster_size_limited_by_current_disks.length == 0) {
 			this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
-			cluster_size_zero = true;
+			this.set('cluster_size_zero',true);
 		}
 		return max_cluster_size_limited_by_current_disks;
 	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size_var', 'cluster_size', 'project_details'),
@@ -662,11 +675,19 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 	// Function which call each button function
 	buttons : function() {
+		var insufficient_net_or_ip = !(Ember.isBlank(this.get('alert_mes_network')) && Ember.isBlank(this.get('alert_mes_float_ip')));
+		if (!insufficient_net_or_ip){
+			this.get('disable_controls')(false);
+		}
 		this.cpu_buttons();
 		this.memory_buttons();
 		this.disk_buttons();
 		this.storage_buttons();
 		this.vm_flavor_buttons();
+		if (insufficient_net_or_ip){
+			this.get('disable_controls')(true);
+		}
+		return insufficient_net_or_ip;
 	},
 	
 	// Function which make the size of cluster equal or greater than minimum cluster
@@ -997,7 +1018,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 		},
 		// Cancel action when in create cluster -> redirect to user's welcome screen
 		cancel : function() {
-			this.set('create_cluster_disabled', true);
 			// reset variables();
 			this.reset_variables();
 			this.reset_project();

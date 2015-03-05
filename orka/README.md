@@ -5,7 +5,7 @@ Orka
 Overview
 --------
 
-orka is an interactive command-line tool, and also a
+orka is a command-line tool, and also a
 client development library for creating and deleting Hadoop-Yarn clusters of virtual machines
 in ~okeanos.
 
@@ -18,7 +18,7 @@ Setup user environment to run orka
 Important info    
 --------------
     
-User should open ~/.kamakirc and add these two lines :
+User should open ~/.kamakirc and add these two lines:
     
 [orka]                                                              
 base_url = **< e-science -IP- or -url address- >**
@@ -79,14 +79,14 @@ Optional arguments for create command:
     --auth_url="authentication url (Default Value=https://accounts.okeanos.grnet.gr/identity/v2.0)",
     --use_hadoop_image="name of a hadoop image. Overrides image value (Default value=HadoopImage)"
 
-Install from a pre-configured image
+Create Hadoop cluster from a pre-configured image
 ----------------------------------
 
 Using the --use_hadoop_image argument creates the Hadoop cluster much faster because it utilises a specially
 created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest
 stable YARN version will be installed (but at the cost of lower speed).
 
-Command {orka create} examples
+{orka create} command examples
 ---------------------------
 
 example for create cluster with default optionals (not hadoop_image):
@@ -104,7 +104,7 @@ example for create cluster with a different hadoop image and logging level:
 "list" command
 ----------------
 
-Required positional arguments for list command :
+Required positional arguments for list command:
 
     token="an ~okeanos token"
 
@@ -113,7 +113,7 @@ Optional arguments for list command:
     --status="3 cluster status:ACTIVE, PENDING, DESTROYED (case insensitive,shows only clusters of that status)"
     --verbose (outputs full cluster details. Default off)
     
-Command {orka list} example
+{orka list} command example
 ---------------------------    
 
 example for list user clusters:
@@ -124,14 +124,14 @@ example for list user clusters:
 "destroy" command
 ----------------
 
-Required positional arguments for destroy command :
+Required positional arguments for destroy command:
 
     cluster_id="Cluster id in e-science database" 
     token="an ~okeanos token"
 (cluster_id is given by **orka list** command)
 
 
-Command {orka destroy} example
+{orka destroy} command example
 ---------------------------
 
 example for destroy cluster:
@@ -152,8 +152,4 @@ helpful information about the orka CLI is depicted and
     
 prints current version.
 
-Miscellaneous info
-----------------
-
-- The public ip of the orka web server in ~okeanos must be in ~/.kamakirc. It is required for the orka CLI.
 
