@@ -1,9 +1,19 @@
 <p></p>
 <div class="well well-lg text-center v-center">
-    <h3 id = 'id_title_cluster_create_route'>Hadoop Cluster Configuration</h3>
+	<div class="row">
+	<h3 id = 'id_title_cluster_create_route'>Hadoop Cluster Configuration</h3>
+	<div class="col col-sm-3"></div>
+	{{#if no_project_selected}}
+	<div id="id_alert_noproject" class="alert alert-dismissable alert-warning col-sm-6">
+		<button type="button" class="close" data-dismiss="alert">×</button>
+		Please <a href="#" {{action 'focus_project_selection'}}>select</a> a project.
+	</div>
+	{{/if}}
+	<div class="col col-sm-3"></div>
+	</div>    
 </div>
 <div class="panel panel-primary">
-    <div class="panel-heading text-center v-center">
+    <div id="id_project_selection" class="panel-heading text-center v-center">
         <h3 class="panel-title">~Okeanos Project Selection</h3>
     </div>
     <div class="panel-body">
@@ -19,8 +29,11 @@
                     </div>
                 </div>                
             </div>
-	    	<div class="text-center">
-	    	    ***Select your project first
+	    	<div class="text-center text-danger">
+	    	    {{alert_mes_network}}
+	    	</div>
+	    	<div class="text-center text-danger">
+	    		{{alert_mes_float_ip}}
 	    	</div>
         </div>        
         <div class="col col-lg-4 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">

@@ -141,7 +141,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 		}
 		return projects.sort();
 	}.property('project_details'),
-
+	
+	// For alerting the user if they have no project selected
+	no_project_selected : function(){		
+		var no_project = Ember.isBlank(this.get('project_name'));
+		return no_project;
+	}.property('project_name'),
+	
 	// The total cpus selected for the cluster
 	total_cpu_selection : function() {
 		return (this.get('master_cpu_selection') + this.get('slaves_cpu_selection') * (this.size_of_cluster() - 1));
@@ -174,7 +180,25 @@ App.ClusterCreateController = Ember.Controller.extend({
 		disk_avail = this.get('content').objectAt(this.get('project_index')).get('disk_av') - this.get('total_disk_selection');
 		return disk_avail;
 	}.property('total_disk_selection'),
-
+	
+	// alert if no available networks
+	alert_mes_network : function(){
+		net_av = this.get('content').objectAt(this.get('project_index')).get('net_av');
+		var project_name = this.get('project_name');
+		if (Number(net_av) <= 0 && !Ember.isBlank(project_name)){
+			return 'No Networks available for this project.';
+		}
+	}.property('project_details'),
+	
+	// alert if no available floating ips
+	alert_mes_float_ip : function(){
+		float_ip_av = this.get('content').objectAt(this.get('project_index')).get('floatip_av');
+		var project_name = this.get('project_name');
+		if (Number(float_ip_av) <= 0 && !Ember.isBlank(project_name)){
+			return 'No Floating IPs available for this project.';
+		}
+	}.property('project_details'),
+	
 	// Computes the maximum VMs that can be build with current flavor choices and return this to the drop down menu on index
 	// If a flavor selection of a role(master/slaves) is 0, we assume that the role should be able to have at least the minimum option of the corresponding flavor
 	// Available VMs are limited by user quota. First, they are filtered with cpu limits, then with ram and finally with disk. The result is returned to the drop down menu on index
@@ -695,6 +719,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 	},
 	
 	actions : {
+		// action to focus project selection view
+		focus_project_selection : function(){
+			$('#project_id').focus();
+		},
 		// action to apply last cluster configuration
 		// trigger when the corresponding button is pressed
 		applyLastCluster : function() {					
@@ -998,8 +1026,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 			//$('#next').loader($options); // on $('selector')
 
 			this.init_alerts();
-			// check that all fields are filled
-			if ((this.get('cluster_size') === null) || (this.get('cluster_size') === undefined) || (this.get('cluster_size') === 0)) {
+			if (!Ember.isBlank(this.get('alert_mes_network')) || !Ember.isBlank(this.get('alert_mes_float_ip'))){
+				var elem = $('#id_project_selection');
+				window.scrollTo(elem.offsetLeft, elem.offsetTop);
+			} else if ((this.get('cluster_size') === null) || (this.get('cluster_size') === undefined) || (this.get('cluster_size') === 0)) {
 				this.set('alert_mes_cluster_size', 'Please select cluster size');
 				// scroll to message
 				var elem = document.getElementById("common_settings");
@@ -1045,7 +1075,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 				// check if everything is allowed
 				if ((this.get('total_cpu_selection') <= this.get('content').objectAt(this.get('project_index')).get('cpu_av')) 
 					&& (this.get('total_ram_selection') <= this.get('content').objectAt(this.get('project_index')).get('mem_av')) 
-					&& (this.get('total_disk_selection') <= this.get('content').objectAt(this.get('project_index')).get('disk_av'))) {
+					&& (this.get('total_disk_selection') <= this.get('content').objectAt(this.get('project_index')).get('disk_av'))
+					&& (this.get('content').objectAt(this.get('project_index')).get('net_av')>0)
+					&& (this.get('content').objectAt(this.get('project_index')).get('floatip_av')>0) ) {
 					var self = this;
 					// PUT request
 					if ((this.get('ssh_key_selection')=='') || (this.get('ssh_key_selection')==null)){

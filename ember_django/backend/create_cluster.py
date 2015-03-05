@@ -155,6 +155,7 @@ class YarnCluster(object):
             if d['instance_id'] is None and d['port_id'] is None:
                 available_ips += 1
         if available_ips > 0:
+            logging.log(REPORT, ' Floating IP quota is ok')
             return 0
         else:
             msg = 'Floating IP not available in project: ' + self.opts['project_name']
@@ -225,6 +226,7 @@ class YarnCluster(object):
         for checker in [func for (order, func) in sorted(self._DispatchCheckers.items())]:
             # for k, checker in self._DispatchCheckers.iteritems():
             retval = checker()
+            # print checker.__name__ + ":" + str(retval) #debug
         return retval
 
     def get_flavor_id_master(self, cyclades_client):

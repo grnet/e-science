@@ -144,6 +144,8 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		},
 		confirmAction : function(cluster, value) {
 			cluster.set('cluster_confirm_action', value);
+			// remove following line comment for easy message panel debug
+			// this.controller.send('addMessage',{'msg_type':'info','msg_text':'Lorem ipsum dolor sit amet.'+ String(Math.floor(Math.random() * 11))});
 		},
 		error : function(err) {
 			// to catch errors
