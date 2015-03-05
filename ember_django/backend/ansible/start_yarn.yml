@@ -2,10 +2,6 @@
   - name: format hdfs
     tags: format
     command: sudo -u hduser ./hdfs namenode -format -force chdir={{hadoop_home}}/bin
-    
-  - name: Creates directory
-    tags: format
-    file: path=/user/hduser state=directory
 
   - name: start dfs
     tags: start
@@ -18,6 +14,13 @@
   - name: start history server
     tags: start
     command: sudo -u hduser ./mr-jobhistory-daemon.sh start historyserver chdir={{hadoop_home}}/sbin
+
+  - name: Creates directory
+    tags: makehduser
+    action: command {{item}} chdir={{hadoop_home}}/bin
+    with_items:
+      - sudo -u hduser ./hadoop fs -mkdir /user 
+      - sudo -u hduser ./hadoop fs -mkdir /user/hduser
 
   - name: Stop dfs
     tags: stop

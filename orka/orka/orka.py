@@ -250,6 +250,7 @@ class UserClusterInfo(object):
         
         if len(self.data) > 0:
             valid_cluster_id = False
+#             order_list2 = []
             for cluster in self.data:
                 if cluster_id > 0:                    
                     if str(cluster['id']) != str(cluster_id):
@@ -258,6 +259,8 @@ class UserClusterInfo(object):
                 if opt_status and cluster['cluster_status'] != opt_status:
                     continue
                 sorted_cluster = self.sort(cluster)
+#                 order_list2.extend(sorted_cluster.items()[1])
+#                 print order_list2
                 for key in sorted_cluster:
                     if (opt_short and not self.short_list.has_key(key)) or self.skip_list.has_key(key):
                         continue                    
