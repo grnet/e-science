@@ -224,16 +224,14 @@ class HadoopCluster(object):
             filename = self.opts['source'].split("/")
             print filename[len(filename)-1]
             
-            os.system("ssh hduser@" + cluster['master_IP'] + " \"mkdir /home/hduser/temp\"")
-            os.system("scp " + self.opts['source'] + " hduser@" 
-                      + cluster['master_IP'] + ":/home/hduser/temp")
+            os.system("ssh hduser@" + cluster['master_IP'] + " \"mkdir /home/hduser/orkatemp\"")
             os.system("ssh hduser@" + cluster['master_IP'] + " \"/usr/local/hadoop/bin/hdfs dfs -mkdir " 
                       + self.opts['destination'] + "\"")
-            os.system("ssh hduser@" + cluster['master_IP'] 
-                      + " \"/usr/local/hadoop/bin/hdfs dfs -put /home/hduser/temp/" 
-                      + filename[len(filename)-1] + " " + self.opts['destination'] + "\"")
 
-
+            os.system("cat " + self.opts['source']  
+                      + " | ssh hduser@" + cluster['master_IP'] 
+                      + " /usr/local/hadoop/bin/hdfs dfs -put - " + self.opts['destination'])
+        
             logging.log(SUMMARY, ' Uploaded file to Hadoop filesystem' )
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
