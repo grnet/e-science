@@ -70,13 +70,13 @@ Required positional arguments for create command:
     ram_slave: "each slave node: memory in MB",
     disk_slave: "each slave node: hard drive in GB",
     disk_template: "Standard or Archipelago"
-    token: "an ~okeanos token",
     project_name: "name of a ~okeanos project, to pull resources from"
     
 Optional arguments for create command:
 
     --image="Operating System (Default Value=Debian Base)",
     --auth_url="authentication url (Default Value=https://accounts.okeanos.grnet.gr/identity/v2.0)",
+    --token="an ~okeanos token (Default Value read from ~/.kamakirc)",
     --use_hadoop_image="name of a hadoop image. Overrides image value (Default value=HadoopImage)"
 
 Create Hadoop cluster from a pre-configured image
@@ -91,26 +91,23 @@ stable YARN version will be installed (but at the cost of lower speed).
 
 example for create cluster with default optionals (not hadoop_image):
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <~okeanos_token> <project_name>
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <project_name>
 
 example for create cluster with default optionals (with default hadoop image):
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <~okeanos_token> <project_name> --use_hadoop_image
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <project_name> --use_hadoop_image
 
-example for create cluster with a different hadoop image and logging level:
+example for create cluster with a different hadoop image:
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <~okeanos_token> <project_name> --use_hadoop_image=hadoop_image_name
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <project_name> --use_hadoop_image=hadoop_image_name
 
 "list" command
 ----------------
 
-Required positional arguments for list command:
-
-    token: "an ~okeanos token"
-
 Optional arguments for list command:
 
-    --status="3 cluster status:ACTIVE, PENDING, DESTROYED (case insensitive,shows only clusters of that status)"
+    --status="One of:ACTIVE, PENDING, DESTROYED (case insensitive, shows only clusters of that status)"
+    --token="an ~okeanos token (Default Value read from ~/.kamakirc)",
     --verbose (outputs full cluster details. Default off)
     
 {orka list} command example
@@ -118,8 +115,50 @@ Optional arguments for list command:
 
 example for list user clusters:
 
-    orka list <~okeanos_token> --status=active --verbose
+    orka list --status=active --verbose
     
+"info" command
+----------------
+
+Required positional arguments for info command:
+
+    cluster_id: "Cluster id in e-science database" 
+(cluster_id can be found with **orka list** command)
+
+Optional arguments for info command:
+
+    --token="an ~okeanos token (Default Value read from ~/.kamakirc)",
+
+{orka info} command example
+---------------------------
+
+example for cluster info:
+
+    orka info <cluster_id>
+
+"hadoop" command
+----------------
+
+Required positional arguments for hadoop command:
+
+    hadoop_status: "One of:START, FORMAT, STOP (case insensitive, takes the action on the cluster with id of cluster_id)"
+    cluster_id: "Cluster id in e-science database" 
+(cluster_id can be found with **orka list** command)
+
+Optional arguments for hadoop command:
+
+    --token="an ~okeanos token (Default Value read from ~/.kamakirc)",
+
+{orka hadoop} command examples
+---------------------------
+
+example for hadoop start:
+
+    orka hadoop start <cluster_id>
+
+example for hadoop stop:
+
+    orka hadoop stop <cluster_id>
 
 "destroy" command
 ----------------
@@ -127,16 +166,20 @@ example for list user clusters:
 Required positional arguments for destroy command:
 
     cluster_id: "Cluster id in e-science database" 
-    token: "an ~okeanos token"
-(cluster_id is given by **orka list** command)
+(cluster_id can be found with **orka list** command)
 
+Optional arguments for destroy command:
+
+    --token="an ~okeanos token (Default Value read from ~/.kamakirc)",
 
 {orka destroy} command example
 ---------------------------
 
 example for destroy cluster:
 
-    orka destroy <cluster_id> <~okeanos_token>
+    orka destroy <cluster_id>
+
+
 
 Also, with
 
@@ -144,6 +187,8 @@ Also, with
     orka create -h
     orka destroy -h
     orka list -h
+    orka info -h
+    orka hadoop -h
 
 helpful information about the orka CLI is depicted and
 

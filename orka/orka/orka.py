@@ -244,6 +244,8 @@ class UserClusterInfo(object):
         
         opt_short = not self.opts['verbose']
         opt_status = False
+        opt_cluster_id = self.opts.get('cluster_id',False)
+        cluster_count = 0
         if self.opts['status']:
             opt_status = self.status_desc_to_status_id[self.opts['status'].upper()]
         
@@ -252,6 +254,9 @@ class UserClusterInfo(object):
             for cluster in sorted_cluster_list:
                 if opt_status and cluster['cluster_status'] != opt_status:
                     continue
+                if opt_cluster_id and cluster['id'] != opt_cluster_id:
+                    continue
+                cluster_count += 1
                 sorted_cluster = self.sortdict(cluster)
                 for key in sorted_cluster:
                     if (opt_short and not self.cluster_short_list.has_key(key)) or self.cluster_skip_list.has_key(key):
@@ -270,8 +275,10 @@ class UserClusterInfo(object):
                         fmt_string = '{:<10}' + key + ': {' + key + '}'
                     print fmt_string.format('',**sorted_cluster)
                 print ''
+            if cluster_count == 0:
+                print 'No cluster(s) found matching those options.'
         else:
-            print 'User has no Cluster Information available.'
+            print 'No user cluster Information available.'
 
 def main():
     """
@@ -302,8 +309,11 @@ def main():
                                      ' on ~okeanos.')
     parser_i = subparsers.add_parser('list',
                                      help='List user clusters.')
+    parser_n = subparsers.add_parser('info',
+                                     help='Information for a specific Hadoop-Yarn cluster.')    
     parser_h = subparsers.add_parser('hadoop', 
-                                     help='Start or Stop a Hadoop-Yarn cluster')
+                                     help='Start or Stop a Hadoop-Yarn cluster.')
+
     
     if len(argv) > 1:
 
@@ -339,13 +349,13 @@ def main():
                               help='Synnefo authentication url. Default is ' +
                               auth_url)       
         parser_c.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
-                              help='Synnefo authentication token. Default from .kamakirc')
+                              help='Synnefo authentication token. Default read from .kamakirc')
 
 
         parser_d.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         parser_d.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
-                              help='Synnefo authentication token. Default from .kamakirc')
+                              help='Synnefo authentication token. Default read from .kamakirc')
 
        
         parser_i.add_argument('--status', help='Filter by status ({%(choices)s})'
@@ -354,7 +364,7 @@ def main():
         parser_i.add_argument('--verbose', help='List extra cluster details.',
                               action="store_true")
         parser_i.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
-                              help='Synnefo authentication token. Default from .kamakirc')         
+                              help='Synnefo authentication token. Default read from .kamakirc')         
         
         
         parser_h.add_argument('hadoop_status', 
@@ -363,12 +373,23 @@ def main():
         parser_h.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         parser_h.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
-                              help='Synnefo authentication token. Default from .kamakirc')
+                              help='Synnefo authentication token. Default read from .kamakirc')
+        
+        
+        parser_n.add_argument('cluster_id',
+                                 help='The id of the Hadoop cluster', type=checker.positive_num_is)
+        parser_n.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+                              help='Synnefo authentication token. Default read from .kamakirc')
+
 
         opts = vars(parser.parse_args(argv[1:]))
-        if argv[1] == 'create':
+        verb = argv[1]
+        if verb == 'create':
             if opts['use_hadoop_image']:
                 opts['image'] = opts['use_hadoop_image']
+        elif verb == 'info':
+            opts['verbose'] = True
+            opts['status'] = None
 
     else:
         logging.error('No arguments were given')
@@ -376,16 +397,16 @@ def main():
         exit(error_no_arguments)
     c_hadoopcluster = HadoopCluster(opts)
     c_userclusters = UserClusterInfo(opts)
-    if argv[1] == 'create':
+    if verb == 'create':
         c_hadoopcluster.create()
 
-    elif argv[1] == 'destroy':
+    elif verb == 'destroy':
         c_hadoopcluster.destroy()
         
-    elif argv[1] == 'list':
+    elif verb == 'list' or verb == 'info':
         c_userclusters.list()
         
-    elif argv[1] == 'hadoop':
+    elif verb == 'hadoop':
         c_hadoopcluster.hadoop_action()
 
 
