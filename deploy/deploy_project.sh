@@ -38,7 +38,7 @@ if [ -z "$IP" ]
 fi
 sleep 5
 kamaki -k server create --project-id=$PROJECTGUID --name=$SERVERNAME \
---flavor-id=145 --image-id=5ea34246-d5a9-4f38-8903-da4c284fdd5d \
+--flavor-id=145 --image-id=6427b9cb-69b3-4012-8164-236ba7f29a90 \
 --network=$NID,$IP \
 -p ~/.ssh/id_rsa.pub,/root/.ssh/authorized_keys,root,root,0700 --wait 2>&1 | tee tmp_vm.txt
 VM=$(cat tmp_vm.txt | grep "SNF:fqdn:" |cut -d' ' -f2)
@@ -82,7 +82,7 @@ echo "[defaults]" > ansible.cfg
 echo "host_key_checking = False" >> ansible.cfg
 echo ""
 echo "Setting up Servers (Ansible)"
-ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True"
+ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True" -t postimage
 END=$(date +"%s")
 DIFF=$(($END-$START))
 echo ""

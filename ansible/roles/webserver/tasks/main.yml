@@ -21,7 +21,6 @@
     apt_repository: repo='{{item}}' state=present update_cache=yes
     sudo: yes
     with_items:
-      - deb http://ftp.debian.org/debian testing main contrib
       - deb http://ftp.debian.org/debian/ jessie-updates main contrib
       - deb http://nginx.org/packages/debian/ wheezy nginx
       - deb-src http://nginx.org/packages/debian/ wheezy nginx
