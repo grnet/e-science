@@ -10,7 +10,7 @@ from cluster_errors_constants import *
 from argparse import ArgumentParser, ArgumentTypeError 
 from version import __version__
 from utils import ClusterRequest, ConnectionError, authenticate_escience, \
-    get_user_clusters, custom_sort_factory, custom_date_format
+    get_user_clusters, custom_sort_factory, custom_sort_list, custom_date_format
 from time import sleep
 
 
@@ -170,9 +170,9 @@ class HadoopCluster(object):
             exit(error_fatal)
             
 
-    def hadoop_action(self, action):
+    def hadoop_action(self):
         """ Method for applying an action to a Hadoop cluster"""
-        action = str.lower(action)
+        action = str.lower(self.opts['hadoop_status'])
         clusters = get_user_clusters(self.opts['token'])
         active_cluster = None
         for cluster in clusters:
@@ -205,27 +205,33 @@ class HadoopCluster(object):
 
 class UserClusterInfo(object):
     """ Class holding user cluster info
-    sort: input clusters output cluster keys sorted according to spec
+    sortdict: input a cluster dictionary, output cluster with keys sorted according to order
+    sortlist: input a clusters list of cluster dictionaries, output a clusters list sorted according to cluster key
     list: pretty printer
     """
     def __init__(self, opts):
         self.opts = opts
         self.data = list()
-        self.order_list = [['cluster_name','id','action_date','cluster_size','cluster_status','hadoop_status',
+        self.cluster_list_order = [['cluster_name','id','action_date','cluster_size','cluster_status','hadoop_status',
                             'master_IP','project_name','os_image','disk_template',
                             'cpu_master','mem_master','disk_master',
                             'cpu_slaves','mem_slaves','disk_slaves']]
-        self.sort_func = custom_sort_factory(self.order_list)
-        self.short_list = {'id':True, 'cluster_name':True, 'action_date':True, 'cluster_size':True, 'cluster_status':True, 'hadoop_status':True, 'master_IP':True}
-        self.skip_list = {'task_id':True, 'state':True}
+        self.sort_cluster_func = custom_sort_factory(self.cluster_list_order)
+        self.cluster_short_list = {'id':True, 'cluster_name':True, 'action_date':True, 'cluster_size':True,
+                                   'cluster_status':True, 'hadoop_status':True, 'master_IP':True}
+        self.cluster_skip_list = {'task_id':True, 'state':True}
         self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0'}
         self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED'}
         self.hdp_status_id_to_status_desc = {'0':'STOPPED','1':'STARTED','2':'FORMAT'}
         self.hdp_status_desc_to_status_id = {'STOPPED':'0','STARTED':'1','FORMAT':'2'}
         self.disk_template_to_label = {'ext_vlmc':'Archipelago', 'drbd':'Standard'}
-        
-    def sort(self, clusters):
-        return self.sort_func(clusters)
+        self.clusters_list_order = ['id']
+
+    def sortdict(self, cluster):
+        return self.sort_cluster_func(cluster)
+    
+    def sortlist(self, clusters, keys):
+        return custom_sort_list(clusters, keys)
     
     def list(self):
         try:
@@ -243,12 +249,13 @@ class UserClusterInfo(object):
             opt_status = self.status_desc_to_status_id[self.opts['status'].upper()]
         
         if len(self.data) > 0:
-            for cluster in self.data:
+            sorted_cluster_list = self.sortlist(self.data, self.clusters_list_order)
+            for cluster in sorted_cluster_list:
                 if opt_status and cluster['cluster_status'] != opt_status:
                     continue
-                sorted_cluster = self.sort(cluster)
+                sorted_cluster = self.sortdict(cluster)
                 for key in sorted_cluster:
-                    if (opt_short and not self.short_list.has_key(key)) or self.skip_list.has_key(key):
+                    if (opt_short and not self.cluster_short_list.has_key(key)) or self.cluster_skip_list.has_key(key):
                         continue
                     if key == 'cluster_name':
                         fmt_string = '{:<5}' + key + ': {' + key + '}'
@@ -378,6 +385,7 @@ def main():
         parser.parse_args(' -h'.split())
         exit(error_no_arguments)
     c_hadoopcluster = HadoopCluster(opts)
+    c_userclusters = UserClusterInfo(opts)
     if argv[1] == 'create':
         c_hadoopcluster.create()
 
@@ -385,11 +393,10 @@ def main():
         c_hadoopcluster.destroy()
         
     elif argv[1] == 'list':
-        c_userclusters = UserClusterInfo(opts)
         c_userclusters.list()
         
     elif argv[1] == 'hadoop':
-        c_hadoopcluster.hadoop_action(argv[2])
+        c_hadoopcluster.hadoop_action()
 
 
 if __name__ == "__main__":
