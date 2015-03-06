@@ -128,7 +128,7 @@ class test_destroy_cluster_celery(unittest.TestCase):
         for i in range(1200): 
             # wait for cluster create to finish
             try: 
-                if "glyphicon glyphicon-remove text-danger" == driver.find_element_by_id('id_status_'+cluster_name).get_attribute("class"):     
+                if "glyphicon glyphicon-remove text-danger" == driver.find_element_by_id('id_cluster_status_'+cluster_name).get_attribute("class"):     
                     print 'Cluster destroyed.'
                     flag = True
                     break
