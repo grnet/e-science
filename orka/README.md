@@ -61,17 +61,17 @@ orka [command] "arguments"
 
 Required positional arguments for create command:
          
-    name="name of the cluster" 
-    cluster_size="total VMs, including master node" 
-    cpu_master="master node: number of CPU cores" 
-    ram_master="master node: memory in MB",
-    disk_master="master node: hard drive in GB",
-    cpu_slave="each slave node: number of CPU cores",
-    ram_slave="each slave node: memory in MB",
-    disk_slave="each slave node: hard drive in GB",
-    disk_template= "Standard or Archipelago"
-    token="an ~okeanos token",
-    project_name="name of a ~okeanos project, to pull resources from"
+    name: "name of the cluster" 
+    cluster_size: "total VMs, including master node" 
+    cpu_master: "master node: number of CPU cores" 
+    ram_master: "master node: memory in MB",
+    disk_master: "master node: hard drive in GB",
+    cpu_slave: "each slave node: number of CPU cores",
+    ram_slave: "each slave node: memory in MB",
+    disk_slave: "each slave node: hard drive in GB",
+    disk_template: "Standard or Archipelago"
+    token: "an ~okeanos token",
+    project_name: "name of a ~okeanos project, to pull resources from"
     
 Optional arguments for create command:
 
@@ -106,7 +106,7 @@ example for create cluster with a different hadoop image and logging level:
 
 Required positional arguments for list command:
 
-    token="an ~okeanos token"
+    token: "an ~okeanos token"
 
 Optional arguments for list command:
 
@@ -126,8 +126,8 @@ example for list user clusters:
 
 Required positional arguments for destroy command:
 
-    cluster_id="Cluster id in e-science database" 
-    token="an ~okeanos token"
+    cluster_id: "Cluster id in e-science database" 
+    token: "an ~okeanos token"
 (cluster_id is given by **orka list** command)
 
 

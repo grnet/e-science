@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 """orka.orka: provides entry point main()."""
 import logging
 from sys import argv
@@ -9,8 +8,8 @@ from kamaki.clients import ClientError
 from cluster_errors_constants import *
 from argparse import ArgumentParser, ArgumentTypeError 
 from version import __version__
-from utils import ClusterRequest, ConnectionError, authenticate_escience, \
-    get_user_clusters, custom_sort_factory, custom_sort_list, custom_date_format
+from utils import ClusterRequest, ConnectionError, authenticate_escience, get_user_clusters, \
+    custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf
 from time import sleep
 
 
@@ -282,6 +281,15 @@ def main():
     parser = ArgumentParser(description='Create or Destroy a Hadoop-Yarn'
                                         ' cluster in ~okeanos')
     checker = _ArgCheck()
+    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
+                                level=checker.logging_levels['summary'],
+                                datefmt='%H:%M:%S')
+    try:
+        kamaki_token = get_from_kamaki_conf('cloud "~okeanos"', 'token')
+    except ClientError, e:
+        kamaki_token = ' '
+        logging.warning(e.message)
+    
     subparsers = parser.add_subparsers(help='Choose Hadoop cluster action'
                                             ' create or destroy')
     parser.add_argument("-V", "--version", action='version',
@@ -301,65 +309,52 @@ def main():
 
         parser_c.add_argument("name", help='The specified name of the cluster.'
                               ' Will be prefixed by [orka]', type=checker.a_string_is)
-
         parser_c.add_argument("cluster_size", help='Total number of cluster nodes',
                               type=checker.two_or_larger_is)
-
         parser_c.add_argument("cpu_master", help='Number of CPU cores for the master node',
                               type=checker.positive_num_is)
-
         parser_c.add_argument("ram_master", help='Size of RAM (MB) for the master node',
                               type=checker.positive_num_is)
-
         parser_c.add_argument("disk_master", help='Disk size (GB) for the master node',
                               type=checker.five_or_larger_is)
-
         parser_c.add_argument("cpu_slave", help='Number of CPU cores for the slave node(s)',
                               type=checker.positive_num_is)
-
         parser_c.add_argument("ram_slave", help='Size of RAM (MB) for the slave node(s)',
                               type=checker.positive_num_is)
-
         parser_c.add_argument("disk_slave", help='Disk size (GB) for the slave node(s)',
                               type=checker.five_or_larger_is)
-
         parser_c.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
                               metavar='disk_template', choices=['Standard', 'Archipelago'], 
                               type=str.capitalize)
-
-        parser_c.add_argument("token", help='Synnefo authentication token', type=checker.a_string_is)
-
         parser_c.add_argument("project_name", help='~okeanos project name'
                               ' to request resources from ', type=checker.a_string_is)
-
         parser_c.add_argument("--image", help='OS for the cluster.'
                               ' Default is "Debian Base"', metavar='image',
                               default=default_image)
-
         parser_c.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
                               ' Default is HadoopImage (overrides image selection)',
                               nargs='?', metavar='hadoop_image_name', default=None,
                               const='Hadoop-2.5.2')
-
         parser_c.add_argument("--auth_url", metavar='auth_url', default=auth_url,
                               help='Synnefo authentication url. Default is ' +
-                              auth_url)
+                              auth_url)       
+        parser_c.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+                              help='Synnefo authentication token. Default from .kamakirc')
 
 
         parser_d.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
-        parser_d.add_argument('token',
-                              help='Synnefo authentication token', type=checker.a_string_is)
-        
-        parser_i.add_argument('token',
-                              help='Synnefo authentication token', type=checker.a_string_is)
-        
+        parser_d.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+                              help='Synnefo authentication token. Default from .kamakirc')
+
+       
         parser_i.add_argument('--status', help='Filter by status ({%(choices)s})'
                               ' Default is all: no filtering.', type=str.upper,
                               metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
-        
         parser_i.add_argument('--verbose', help='List extra cluster details.',
                               action="store_true")
+        parser_i.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+                              help='Synnefo authentication token. Default from .kamakirc')         
         
         
         parser_h.add_argument('hadoop_status', 
@@ -367,18 +362,13 @@ def main():
                               metavar='hadoop_status', choices=['start', 'format', 'stop'])
         parser_h.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
-        parser_h.add_argument('token',
-                              help='Synnefo authentication token', type=checker.a_string_is)
+        parser_h.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+                              help='Synnefo authentication token. Default from .kamakirc')
 
         opts = vars(parser.parse_args(argv[1:]))
         if argv[1] == 'create':
             if opts['use_hadoop_image']:
                 opts['image'] = opts['use_hadoop_image']
-     
-
-        logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-                                level=checker.logging_levels['summary'],
-                                datefmt='%H:%M:%S')
 
     else:
         logging.error('No arguments were given')

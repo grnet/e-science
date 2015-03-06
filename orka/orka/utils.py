@@ -5,7 +5,7 @@ import logging
 from os.path import abspath, dirname, join, expanduser
 from cluster_errors_constants import *
 from kamaki.clients import ClientError
-from ConfigParser import RawConfigParser, NoSectionError
+from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
 import requests
 from requests import ConnectionError
 import json
@@ -26,8 +26,11 @@ def get_from_kamaki_conf(section, option, action=None):
     try:
         option_value = parser.get(section,option)
     except NoSectionError:
-        msg = 'Did not find a valid {0} value in section {1} in .kamakirc'.format(option,section)
-        raise NoSectionError(msg)
+        msg = ' Did not find a section {0} in .kamakirc'.format(section)
+        raise ClientError(msg, error_syntax_auth_token)
+    except NoOptionError:
+        msg = ' Did not find an option {0} in section {1} in .kamakirc'.format(option,section)
+        raise ClientError(msg, error_syntax_auth_token)
     
     if option_value:
         if not action:
