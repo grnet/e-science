@@ -193,10 +193,10 @@ def custom_sort_list(input_list, keys, functions={}, getter=itemgetter):
         comparers.append((functions[column], 1 if column == key else -1))
 
     def comparer(left, right):
-        for func, polarity in comparers:
+        for func, direction in comparers:
             result = cmp(func(left), func(right))
             if result:
-                return polarity * result
+                return direction * result
         else:
             return 0
     return sorted(input_list, cmp=comparer)
