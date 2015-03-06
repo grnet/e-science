@@ -126,9 +126,9 @@ class HadoopCluster(object):
         try:
             payload = {"clusterchoice":{"project_name": self.opts['project_name'], "cluster_name": self.opts['name'],
                                         "cluster_size": self.opts['cluster_size'],
-                                        "cpu_master": self.opts['cpu_master'], "mem_master": self.opts['ram_master'],
+                                        "cpu_master": self.opts['cpu_master'], "ram_master": self.opts['ram_master'],
                                         "disk_master": self.opts['disk_master'], "cpu_slaves": self.opts['cpu_slave'],
-                                        "mem_slaves": self.opts['ram_slave'], "disk_slaves": self.opts['disk_slave'],
+                                        "ram_slaves": self.opts['ram_slave'], "disk_slaves": self.opts['disk_slave'],
                                         "disk_template": self.opts['disk_template'], "os_choice": self.opts['image']}}
             yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
             response = yarn_cluster_req.create_cluster()
@@ -213,8 +213,8 @@ class UserClusterInfo(object):
         self.data = list()
         self.cluster_list_order = [['cluster_name','id','action_date','cluster_size','cluster_status','hadoop_status',
                             'master_IP','project_name','os_image','disk_template',
-                            'cpu_master','mem_master','disk_master',
-                            'cpu_slaves','mem_slaves','disk_slaves']]
+                            'cpu_master','ram_master','disk_master',
+                            'cpu_slaves','ram_slaves','disk_slaves']]
         self.sort_cluster_func = custom_sort_factory(self.cluster_list_order)
         self.cluster_short_list = {'id':True, 'cluster_name':True, 'action_date':True, 'cluster_size':True,
                                    'cluster_status':True, 'hadoop_status':True, 'master_IP':True}

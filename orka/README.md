@@ -64,10 +64,10 @@ Required positional arguments for create command:
     name: "name of the cluster" 
     cluster_size: "total VMs, including master node" 
     cpu_master: "master node: number of CPU cores" 
-    ram_master: "master node: memory in MB",
+    ram_master: "master node: ram in MB",
     disk_master: "master node: hard drive in GB",
     cpu_slave: "each slave node: number of CPU cores",
-    ram_slave: "each slave node: memory in MB",
+    ram_slave: "each slave node: ram in MB",
     disk_slave: "each slave node: hard drive in GB",
     disk_template: "Standard or Archipelago"
     project_name: "name of a ~okeanos project, to pull resources from"

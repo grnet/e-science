@@ -41,7 +41,7 @@ def retrieve_pending_clusters(token, project_name):
         for cluster in pending_clusters:
             vm_sum = vm_sum + cluster.cluster_size
             vm_cpu = vm_cpu + cluster.cpu_master + cluster.cpu_slaves*(cluster.cluster_size - 1)
-            vm_ram = vm_ram + cluster.mem_master + cluster.mem_slaves*(cluster.cluster_size - 1)
+            vm_ram = vm_ram + cluster.ram_master + cluster.ram_slaves*(cluster.cluster_size - 1)
             vm_disk = vm_disk + cluster.disk_master + cluster.disk_slaves*(cluster.cluster_size - 1)
 
         pending_quota = {"VMs": vm_sum, "Cpus": vm_cpu, "Ram": vm_ram,

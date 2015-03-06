@@ -27,12 +27,12 @@ class PGArrayField(serializers.WritableField):
 class ClusterCreationParamsSerializer(serializers.ModelSerializer):
     """
     Serializer for ClusterCreationParams model.
-    Custom fields are cpu_choices, mem_choices, vms_av, disk_choices,
+    Custom fields are cpu_choices, ram_choices, vms_av, disk_choices,
     disk_template and os_choices. They are custom because their model
     counterparts are arrays.
     """
     cpu_choices = PGArrayField(required=False)
-    mem_choices = PGArrayField(required=False)
+    ram_choices = PGArrayField(required=False)
     vms_av = PGArrayField(required=False)
     disk_choices = PGArrayField(required=False)
     disk_template = PGArrayField(required=False)
@@ -42,8 +42,8 @@ class ClusterCreationParamsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClusterCreationParams
         fields = ('id', 'user_id', 'project_name', 'vms_max', 'vms_av',
-                  'cpu_max', 'cpu_av', 'net_av', 'floatip_av', 'mem_max', 'mem_av', 
-                  'disk_max', 'disk_av', 'cpu_choices', 'mem_choices', 'disk_choices',
+                  'cpu_max', 'cpu_av', 'net_av', 'floatip_av', 'ram_max', 'ram_av', 
+                  'disk_max', 'disk_av', 'cpu_choices', 'ram_choices', 'disk_choices',
                   'disk_template', 'os_choices', 'ssh_keys_names')
 
 
@@ -76,13 +76,13 @@ class ClusterchoicesSerializer(serializers.Serializer):
 
     cpu_master = serializers.IntegerField(required=False)
 
-    mem_master = serializers.IntegerField(required=False)
+    ram_master = serializers.IntegerField(required=False)
 
     disk_master = serializers.IntegerField(required=False)
 
     cpu_slaves = serializers.IntegerField(required=False)
 
-    mem_slaves = serializers.IntegerField(required=False)
+    ram_slaves = serializers.IntegerField(required=False)
 
     disk_slaves = serializers.IntegerField(required=False)
 
@@ -104,8 +104,8 @@ class ClusterInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClusterInfo
         fields = ('id', 'cluster_name', 'action_date', 'cluster_status', 'cluster_size',
-                   'cpu_master', 'mem_master', 'disk_master', 'cpu_slaves',
-                   'mem_slaves', 'disk_slaves', 'disk_template', 'os_image',
+                   'cpu_master', 'ram_master', 'disk_master', 'cpu_slaves',
+                   'ram_slaves', 'disk_slaves', 'disk_template', 'os_image',
                    'master_IP', 'project_name', 'task_id', 'state', 'hadoop_status')
 
 

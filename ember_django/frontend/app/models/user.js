@@ -22,10 +22,10 @@ App.Usercluster = DS.Model.extend({
 	cluster_status : attr('string'),
 	master_IP : attr('string'),
 	cpu_master : attr(),
-	mem_master : attr(),
+	ram_master : attr(),
 	disk_master : attr(),
 	cpu_slaves : attr(),
-	mem_slaves : attr(),
+	ram_slaves : attr(),
 	disk_slaves : attr(),
 	disk_template : attr(),
 	os_image : attr(),
@@ -186,8 +186,13 @@ App.Usercluster = DS.Model.extend({
 	}.property(),
 	cluster_status_id : function (){
 		var cluster_name_sort = this.get('cluster_name').slice(7);
-		var status_id = "id_".concat("status_",cluster_name_sort);
-		return status_id;	
+		var cluster_status_id = "id_".concat("cluster_status_",cluster_name_sort);
+		return cluster_status_id;	
+	}.property('cluster_name'),
+	hadoop_status_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var hadoop_status_id = "id_".concat("hadoop_status_",cluster_name_sort);
+		return hadoop_status_id;	
 	}.property('cluster_name'),
 	cluster_ip_id : function (){
 		var cluster_name_sort = this.get('cluster_name').slice(7);
@@ -198,6 +203,21 @@ App.Usercluster = DS.Model.extend({
 		var cluster_name_sort = this.get('cluster_name').slice(7);
 		var destroy_id = "id_".concat("destroy_",cluster_name_sort);
 		return destroy_id;	
+	}.property('cluster_name'),
+	hadoop_start_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var start_id = "id_".concat("hadoop_start_",cluster_name_sort);
+		return start_id;	
+	}.property('cluster_name'),
+	hadoop_stop_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var stop_id = "id_".concat("hadoop_stop_",cluster_name_sort);
+		return stop_id;	
+	}.property('cluster_name'),
+	hadoop_format_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var format_id = "id_".concat("hadoop_format_",cluster_name_sort);
+		return format_id;	
 	}.property('cluster_name'),
 	cluster_confirm_id : function (){
 		var cluster_name_sort = this.get('cluster_name').slice(7);

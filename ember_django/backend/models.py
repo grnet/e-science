@@ -74,11 +74,11 @@ class ClusterCreationParams(models.Model):
     # Available cpus
     cpu_av = models.IntegerField("Available Cpus", null=True,
                                  help_text="Available Cpus")
-    # Maximum allowed memory
-    mem_max = models.IntegerField("Max Ram", null=True,
+    # Maximum allowed ram
+    ram_max = models.IntegerField("Max Ram", null=True,
                                   help_text="Maximum Allowed Ram")
-    # Available memory
-    mem_av = models.IntegerField("Available Ram", null=True,
+    # Available ram
+    ram_av = models.IntegerField("Available Ram", null=True,
                                  help_text="Available Ram")
     # Maximum allowed disk size
     disk_max = models.IntegerField("Max disk size", null=True,
@@ -94,8 +94,8 @@ class ClusterCreationParams(models.Model):
                                      help_text="Available floating IPs")
     # Cpu choices
     cpu_choices = IntegerArrayField()  # ArrayField
-    # Memory choices
-    mem_choices = IntegerArrayField()  # ArrayField
+    # Ram choices
+    ram_choices = IntegerArrayField()  # ArrayField
     # Disk size choices
     disk_choices = IntegerArrayField()  # ArrayField
     # Disk template choices
@@ -199,7 +199,7 @@ class ClusterInfo(models.Model):
     cpu_master = models.IntegerField("Master Cpu", null=False,
                                      help_text="Cpu number of master VM")
 
-    mem_master = models.IntegerField("Master Ram", null=False,
+    ram_master = models.IntegerField("Master Ram", null=False,
                                      help_text="Ram of master VM")
 
     disk_master = models.IntegerField("Master Disksize", null=False,
@@ -208,7 +208,7 @@ class ClusterInfo(models.Model):
     cpu_slaves = models.IntegerField("Slaves Cpu", null=False,
                                      help_text="Cpu number of Slave VMs")
 
-    mem_slaves = models.IntegerField("Slaves Ram", null=False,
+    ram_slaves = models.IntegerField("Slaves Ram", null=False,
                                      help_text="Ram of slave VMs")
 
     disk_slaves = models.IntegerField("Slaves Disksize", null=False,

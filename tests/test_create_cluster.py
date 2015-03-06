@@ -175,8 +175,8 @@ class TestCreateCluster(TestCase):
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
             self.project_name = parser.get('project', 'name')
             self.opts = {'name': 'Test', 'cluster_size': 2, 'cpu_master': 2,
-                'mem_master': 4096, 'disk_master': 5, 'cpu_slaves': 2,
-                'mem_slaves': 2048, 'disk_slaves': 5, 'token': self.token,
+                'ram_master': 4096, 'disk_master': 5, 'cpu_slaves': 2,
+                'ram_slaves': 2048, 'disk_slaves': 5, 'token': self.token,
                 'disk_template': 'Archipelago', 'os_choice': 'ubuntu',
                 'auth_url': self.auth_url, 'project_name': self.project_name}
         except NoSectionError:

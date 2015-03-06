@@ -191,8 +191,8 @@ class YarnCluster(object):
         limit_ram = dict_quotas[self.project_id]['cyclades.ram']['limit']
         usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
         available_ram = (limit_ram - usage_ram) / Bytes_to_MB - pending_ram
-        ram_req = self.opts['mem_master'] + \
-            self.opts['mem_slaves'] * (self.opts['cluster_size'] - 1)
+        ram_req = self.opts['ram_master'] + \
+            self.opts['ram_slaves'] * (self.opts['cluster_size'] - 1)
         if available_ram < ram_req:
             msg = 'Cyclades ram out of limit'
             raise ClientError(msg, error_quotas_ram)
@@ -241,7 +241,7 @@ class YarnCluster(object):
             raise ClientError(msg, error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
-            if flavor['ram'] == self.opts['mem_master'] and \
+            if flavor['ram'] == self.opts['ram_master'] and \
                                 flavor['SNF:disk_template'] == self.opts['disk_template'] and \
                                 flavor['vcpus'] == self.opts['cpu_master'] and \
                                 flavor['disk'] == self.opts['disk_master']:
@@ -261,7 +261,7 @@ class YarnCluster(object):
             raise ClientError(msg, error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
-            if flavor['ram'] == self.opts['mem_slaves'] and \
+            if flavor['ram'] == self.opts['ram_slaves'] and \
                                 flavor['SNF:disk_template'] == self.opts['disk_template'] and \
                                 flavor['vcpus'] == self.opts['cpu_slaves'] and \
                                 flavor['disk'] == self.opts['disk_slaves']:
