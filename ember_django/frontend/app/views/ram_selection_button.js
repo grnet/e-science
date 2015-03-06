@@ -1,5 +1,5 @@
 // View for ram selection buttons
-App.MEMSelButView = Ember.View.extend({
+App.RAMSelButView = Ember.View.extend({
     tagName: 'button',
     // class names, :emberbutton for CSS style
     classNameBindings: [':emberbutton'],

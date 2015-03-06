@@ -179,7 +179,7 @@
                 <h4 id="master_ram_summary">RAM: {{this.master_ram_selection}} </h4>
                 <div class="btn-group">
                     {{#each item in project_current.ram_choices}}
-                    {{#view App.MEMSelButView value=item name="master_ram_button"
+                    {{#view App.RAMSelButView value=item name="master_ram_button"
                     class="btn btn-primary btn-sm" disabled=master_ram_Not_Allow}}
                     {{item}}{{/view}}
                     {{/each}}
@@ -214,7 +214,7 @@
                 CPUs ({{this.cpu_available}} available)
             </div>
             <div class="col col-sm-4">
-                Memory size ({{this.ram_available}} MB available)
+                RAM size ({{this.ram_available}} MB available)
             </div>
             <div class="col col-sm-4">
                 Disk size ({{this.disk_available}} GB available)
@@ -257,7 +257,7 @@
                 <h4 id="slaves_ram_summary">RAM each: {{this.slaves_ram_selection}}</h4>
                 <div class="btn-group">
                     {{#each item in project_current.ram_choices}}
-                    {{#view App.MEMSelButView value=item name="slaves_ram_button" class="btn btn-primary btn-sm" disabled=slaves_ram_Not_Allow}}{{item}}{{/view}}
+                    {{#view App.RAMSelButView value=item name="slaves_ram_button" class="btn btn-primary btn-sm" disabled=slaves_ram_Not_Allow}}{{item}}{{/view}}
                     {{/each}}
                 </div>
             </div>
@@ -290,7 +290,7 @@
                 CPUs ({{this.cpu_available}} available)
             </div>
             <div class="col col-sm-4">
-                Memory size ({{this.ram_available}} MB available)
+                RAM size ({{this.ram_available}} MB available)
             </div>
             <div class="col col-sm-4">
                 Disk size ({{this.disk_available}} GB available)
@@ -307,7 +307,7 @@
     </div>
     <div class="col col-sm-6">
         {{#view App.CreateClusterButView id="next"
-        class="next btn btn-success btn-md btn-block" disabled=create_cluster_disabled}}
+        class="next btn btn-success btn-md btn-block"}}
         Create Cluster
         {{/view}}
         <h4>{{message}}</h4>
