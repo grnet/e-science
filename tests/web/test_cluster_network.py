@@ -39,8 +39,6 @@ class TestClusterNetwork(ClusterTest):
             # and causes later the server to respond with an error message to
             # user's create cluster request
             net_client, net_ids = self.bind_okeanos_resources()
-            driver.find_element_by_id("cluster_name").clear()
-            driver.find_element_by_id("cluster_name").send_keys("mycluster")
             time.sleep(1)            
             driver.find_element_by_id("master_cpus_1").click()
             time.sleep(1)

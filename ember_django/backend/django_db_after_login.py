@@ -73,10 +73,10 @@ def db_cluster_create(choices, task_id):
     new_cluster = ClusterInfo.objects.create(cluster_name=choices['cluster_name'], action_date=timezone.now(),
                     cluster_status="2", cluster_size=choices['cluster_size'],
                     cpu_master=choices['cpu_master'],
-                    mem_master=choices['mem_master'],
+                    ram_master=choices['ram_master'],
                     disk_master=choices['disk_master'],
                     cpu_slaves=choices['cpu_slaves'],
-                    mem_slaves=choices['mem_slaves'],
+                    ram_slaves=choices['ram_slaves'],
                     disk_slaves=choices['disk_slaves'],
                     disk_template=choices['disk_template'],
                     os_image=choices['os_choice'], user_id=user,
@@ -87,14 +87,18 @@ def db_cluster_create(choices, task_id):
 
     return new_cluster.id
 
-def db_hadoop_update(cluster_id, hadoop_status):
+def db_hadoop_update(cluster_id, hadoop_status, state):
     try:
         cluster = ClusterInfo.objects.get(id=cluster_id)
     except ObjectDoesNotExist:
         msg = 'Cluster with given id does not exist'
         raise ObjectDoesNotExist(msg)
 
-    cluster.hadoop_status =  HADOOP_STATUS_ACTIONS[hadoop_status][0]
+    cluster.state = state
+    if hadoop_status == 'Pending':
+        cluster.hadoop_status = "2"
+    else:
+        cluster.hadoop_status =  HADOOP_STATUS_ACTIONS[hadoop_status][0]
     cluster.save()
         
 
@@ -110,11 +114,11 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
         msg = 'Cluster with given name does not exist in pending state'
         raise ObjectDoesNotExist(msg)
     if password:
-        user.master_vm_password = 'The root password of ' + cluster.cluster_name + ' master VM is ' + password
-    else:
-        user.master_vm_password = password
+        user.master_vm_password = 'The root password of \"{0}\"({1}) master VM is {2}'.format(cluster.cluster_name,cluster.id,password)
+
     if status == "Active":
         cluster.cluster_status = "1"
+        user.master_vm_password = ''
 
     if status == "Pending":
         cluster.cluster_status = "2"
@@ -123,7 +127,7 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
         cluster.cluster_status = "0"
         cluster.master_IP = ''
         cluster.state= 'Deleted'
-        cluster.hadoop_status = ''
+        cluster.hadoop_status = "0"
 
     if state:
         cluster.state = state

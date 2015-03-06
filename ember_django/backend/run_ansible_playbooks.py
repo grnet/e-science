@@ -12,7 +12,8 @@ import logging
 from backend.models import ClusterInfo
 from django_db_after_login import db_hadoop_update
 from celery import current_task
-from cluster_errors_constants import HADOOP_STATUS_ACTIONS
+from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS
+from okeanos_utils import set_cluster_state
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
@@ -24,7 +25,7 @@ ansible_verbosity = ' -vvvv'
 
 
 
-def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
+def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
     """
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn.
@@ -41,13 +42,16 @@ def install_yarn(hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
         # Run Ansible playbook
         ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file)
         # Format and start Hadoop cluster
+        set_cluster_state(token, cluster_id,
+                          ' Yarn Cluster is active', status='Active',
+                          master_IP=master_ip)
         ansible_manage_cluster(cluster_id, 'format')
         ansible_manage_cluster(cluster_id, 'start')
     except Exception, e:
         msg = 'Error while running Ansible '
         raise RuntimeError(msg, error_ansible_playbook)
     finally:
-        os.system('rm /tmp/master_' + master_hostname + '_pub_key ')
+        os.system('rm /tmp/master_' + master_hostname + '_pub_key_* ')
     logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
                 + hostname_master + ':8088/cluster')
 
@@ -86,19 +90,25 @@ def ansible_manage_cluster(cluster_id, action):
     Updates database only when starting or stopping a cluster.
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
+    if action == 'format':
+        current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
+    else:
+        current_hadoop_status = action
     cluster_name_postfix_id = '%s%s%s' % (cluster.cluster_name, '-', cluster_id)
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name_postfix_id.replace(" ", "_")
     if isfile(hosts_filename):
-        state = ' %s %s cluster' %(HADOOP_STATUS_ACTIONS[action][1], cluster.cluster_name)
+        state = ' %s %s' %(HADOOP_STATUS_ACTIONS[action][1], cluster.cluster_name)
         current_task.update_state(state=state)
+        db_hadoop_update(cluster_id, 'Pending', state)
         ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + action
         ansible_exit_status = execute_ansible_playbook(ansible_code)
-        if action in ['start', 'stop', 'format']:
-            db_hadoop_update(cluster_id, action)
 
         if ansible_exit_status == 0:
             msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
+            db_hadoop_update(cluster_id, current_hadoop_status, msg)
             return msg
+
+        db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action')
 
     else:
         msg = ' Ansible hosts file [%s] does not exist' % hosts_filename

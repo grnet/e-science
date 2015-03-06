@@ -123,12 +123,17 @@ class YarnCluster(object):
         pending_net = self.pending_quota['Network']
         limit_net = dict_quotas[self.project_id]['cyclades.network.private']['limit']
         usage_net = dict_quotas[self.project_id]['cyclades.network.private']['usage']
-        available_networks = limit_net - usage_net - pending_net
+        project_limit_net = dict_quotas[self.project_id]['cyclades.network.private']['project_limit']
+        project_usage_net = dict_quotas[self.project_id]['cyclades.network.private']['project_usage']
+        available_networks = limit_net - usage_net
+        if (available_networks > (project_limit_net - project_usage_net)):
+            available_networks = project_limit_net - project_usage_net
+        available_networks -= pending_net
         if available_networks >= 1:
             logging.log(REPORT, ' Private Network quota is ok')
             return 0
         else:
-            msg = 'Private Network quota exceeded'
+            msg = 'Private Network quota exceeded in project: ' + self.opts['project_name']
             raise ClientError(msg, error_quotas_network)
 
     def check_ip_quotas(self):
@@ -138,14 +143,22 @@ class YarnCluster(object):
         pending_ips = self.pending_quota['Ip']
         limit_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['limit']
         usage_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['usage']
-        available_ips = limit_ips - usage_ips - pending_ips
+
+        project_limit_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['project_limit']
+        project_usage_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['project_usage']
+
+        available_ips = limit_ips-usage_ips
+        if (available_ips > (project_limit_ips - project_usage_ips)):
+            available_ips = project_limit_ips - project_usage_ips
+        available_ips -= pending_ips
         for d in list_float_ips:
             if d['instance_id'] is None and d['port_id'] is None:
                 available_ips += 1
         if available_ips > 0:
+            logging.log(REPORT, ' Floating IP quota is ok')
             return 0
         else:
-            msg = 'Floating IP not available'
+            msg = 'Floating IP not available in project: ' + self.opts['project_name']
             raise ClientError(msg, error_get_ip)
 
     def check_cpu_valid(self):
@@ -178,8 +191,8 @@ class YarnCluster(object):
         limit_ram = dict_quotas[self.project_id]['cyclades.ram']['limit']
         usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
         available_ram = (limit_ram - usage_ram) / Bytes_to_MB - pending_ram
-        ram_req = self.opts['mem_master'] + \
-            self.opts['mem_slaves'] * (self.opts['cluster_size'] - 1)
+        ram_req = self.opts['ram_master'] + \
+            self.opts['ram_slaves'] * (self.opts['cluster_size'] - 1)
         if available_ram < ram_req:
             msg = 'Cyclades ram out of limit'
             raise ClientError(msg, error_quotas_ram)
@@ -211,7 +224,6 @@ class YarnCluster(object):
         Returns zero if everything available.
         """
         for checker in [func for (order, func) in sorted(self._DispatchCheckers.items())]:
-            # for k, checker in self._DispatchCheckers.iteritems():
             retval = checker()
         return retval
 
@@ -227,7 +239,7 @@ class YarnCluster(object):
             raise ClientError(msg, error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
-            if flavor['ram'] == self.opts['mem_master'] and \
+            if flavor['ram'] == self.opts['ram_master'] and \
                                 flavor['SNF:disk_template'] == self.opts['disk_template'] and \
                                 flavor['vcpus'] == self.opts['cpu_master'] and \
                                 flavor['disk'] == self.opts['disk_master']:
@@ -247,7 +259,7 @@ class YarnCluster(object):
             raise ClientError(msg, error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
-            if flavor['ram'] == self.opts['mem_slaves'] and \
+            if flavor['ram'] == self.opts['ram_slaves'] and \
                                 flavor['SNF:disk_template'] == self.opts['disk_template'] and \
                                 flavor['vcpus'] == self.opts['cpu_slaves'] and \
                                 flavor['disk'] == self.opts['disk_slaves']:
@@ -398,13 +410,8 @@ class YarnCluster(object):
             set_cluster_state(self.opts['token'], self.cluster_id,
                           ' Installing and configuring Yarn (3/3)')
 
-            install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
+            install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.cluster_name_postfix_id, self.hadoop_image, self.ssh_file)
-
-            # If Yarn cluster is build, update cluster status as active
-            set_cluster_state(self.opts['token'], self.cluster_id,
-                              ' Yarn Cluster is active', status='Active',
-                              master_IP=self.HOSTNAME_MASTER_IP)
 
         except Exception, e:
             logging.error(' Fatal error:' + str(e.args[0]))

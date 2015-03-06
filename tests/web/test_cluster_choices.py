@@ -17,7 +17,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 import unittest, time, re
 from ClusterTest import ClusterTest
-from random import randint
 
 
 class TestClusterChoices(ClusterTest):
@@ -33,9 +32,6 @@ class TestClusterChoices(ClusterTest):
             time.sleep(1)
         except:
             self.assertTrue(False,'Not enough vms to run the test')        
-        driver.find_element_by_id("cluster_name").clear()
-        cluster_name = 'test_cluster' + str(randint(0,9999))
-        driver.find_element_by_id("cluster_name").send_keys(cluster_name)
         time.sleep(1)
         driver.find_element_by_id("master_cpus_1").click()
         time.sleep(1)

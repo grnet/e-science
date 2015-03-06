@@ -83,7 +83,7 @@ def project_list_flavor_quota(user):
     return list_of_resources
 
 
-def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, ember_project_id,ssh_keys_names):
+def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, ember_project_id, ssh_keys_names):
     """
     Retrieves user quotas and flavor list from kamaki
     using get_flavor_id and check_quota methods and returns the updated
@@ -99,12 +99,14 @@ def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, 
         j = j +1
     cpu_max = quotas['cpus']['limit']
     cpu_av = quotas['cpus']['available']
-    mem_max = quotas['ram']['limit']
-    mem_av = quotas['ram']['available']
+    ram_max = quotas['ram']['limit']
+    ram_av = quotas['ram']['available']
     disk_max = quotas['disk']['limit']
     disk_av = quotas['disk']['available']
+    net_av = quotas['network']['available']
+    floatip_av = quotas['float_ips']['available']
     cpu_choices = flavors['cpus']
-    mem_choices = flavors['ram']
+    ram_choices = flavors['ram']
     disk_choices = flavors['disk']
     disk_template = list(flavors['disk_template']) 
     os_choices = images
@@ -120,12 +122,14 @@ def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, 
                                                     vms_av=vms_av,
                                                     cpu_max=cpu_max,
                                                     cpu_av=cpu_av,
-                                                    mem_max=mem_max,
-                                                    mem_av=mem_av,
+                                                    ram_max=ram_max,
+                                                    ram_av=ram_av,
                                                     disk_max=disk_max,
                                                     disk_av=disk_av,
+                                                    net_av=net_av,
+                                                    floatip_av=floatip_av,
                                                     cpu_choices=cpu_choices,
-                                                    mem_choices=mem_choices,
+                                                    ram_choices=ram_choices,
                                                     disk_choices=disk_choices,
                                                     disk_template=disk_template,
                                                     os_choices=os_choices,
