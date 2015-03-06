@@ -805,13 +805,14 @@ App.ClusterCreateController = Ember.Controller.extend({
 				var clusters = user.get('clusters');
 				var length = clusters.get('length');
 				if (length > 0) {
-					var last_date = clusters.objectAt(0).get('action_date');
+					var last_date = null;
 					if ((clusters.objectAt(0).get('cluster_status') == 1) || (clusters.objectAt(0).get('cluster_status') == 2)) {
+						last_date = clusters.objectAt(0).get('action_date');
 						self.set('last_cluster', clusters.objectAt(0));
 					}
 					for (var i = 1; i < length; i++) {
 						if ((clusters.objectAt(i).get('cluster_status') == 1) || (clusters.objectAt(i).get('cluster_status') == 2)) {
-							if (clusters.objectAt(i).get('action_date') > last_date) {
+							if ((last_date==null) || (clusters.objectAt(i).get('action_date') > last_date)) {
 								last_date = clusters.objectAt(i).get('action_date');
 								self.set('last_cluster', clusters.objectAt(i));
 							}
