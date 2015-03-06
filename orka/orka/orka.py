@@ -12,7 +12,7 @@ from version import __version__
 from utils import ClusterRequest, ConnectionError, authenticate_escience, \
     get_user_clusters, custom_sort_factory, custom_date_format
 from time import sleep
-
+import os
 
 
 class _ArgCheck(object):
@@ -201,6 +201,28 @@ class HadoopCluster(object):
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
                     
+    def put(self):
+        """ Method for putting files to Hadoop clusters in~okeanos."""
+        clusters = get_user_clusters(token)
+        for cluster in clusters:
+            if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == '1':
+                break
+        else:
+            logging.error(' You can upload files to active clusters only.')
+            exit(error_fatal)
+        try:
+            payload = {"hdfs":{"id": self.opts['cluster_id'], "source": self.opts['source'],
+                                        "dest": self.opts['destination']}}
+            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='hdfs')
+            response = yarn_cluster_req.post()
+            task_id = response['hdfs']['task_id']
+            result = task_message(task_id, self.escience_token, wait_timer_delete)
+            logging.log(SUMMARY, result)
+        except Exception, e:
+            logging.error(' Error:' + str(e.args[0]))
+            exit(error_fatal)
+
+        logging.log(SUMMARY, ' Uploaded file to Hadoop filesystem' )
 
 
 class UserClusterInfo(object):
@@ -289,7 +311,8 @@ def main():
                                      help='List user clusters.')
     parser_h = subparsers.add_parser('hadoop', 
                                      help='Start or Stop a Hadoop-Yarn cluster')
-    
+    parser_p = subparsers.add_parser('put', 
+                                     help='Put/Upload a file on a Hadoop-Yarn filesystem')    
     if len(argv) > 1:
 
         parser_c.add_argument("name", help='The specified name of the cluster.'
@@ -363,6 +386,19 @@ def main():
         parser_h.add_argument('token',
                               help='Synnefo authentication token', type=checker.a_string_is)
 
+        parser_p.add_argument('cluster_id',
+                              help='The id of the Hadoop cluster', type=checker.positive_num_is)
+        parser_p.add_argument('source',
+                              help='The file to be uploaded')
+        parser_p.add_argument('destination',
+                              help='Destination in the Hadoop filesystem')
+        parser_p.add_argument('token',
+                              help='Synnefo authentication token', type=checker.a_string_is)
+        parser_p.add_argument('--user',
+                              help='Ftp-Http remote user')
+        parser_p.add_argument('--password',
+                              help='ftp-http password')
+                
         opts = vars(parser.parse_args(argv[1:]))
         if argv[1] == 'create':
             if opts['use_hadoop_image']:
@@ -391,6 +427,8 @@ def main():
     elif argv[1] == 'hadoop':
         c_hadoopcluster.hadoop_action(argv[2])
 
+    elif argv[1] == 'put':
+        c_hadoopcluster.put()
 
 if __name__ == "__main__":
     main()

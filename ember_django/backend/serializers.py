@@ -24,6 +24,17 @@ class PGArrayField(serializers.WritableField):
         return obj
 
 
+class HdfsSerializer(serializers.Serializer):
+    """
+    Serializer for put files in hdfs from ftp-http
+    """
+    id = serializers.CharField()
+    source = serializers.CharField()
+    dest = serializers.CharField()
+    user = serializers.CharField(required=False)
+    password = serializers.CharField(required=False)
+
+
 class ClusterCreationParamsSerializer(serializers.ModelSerializer):
     """
     Serializer for ClusterCreationParams model.

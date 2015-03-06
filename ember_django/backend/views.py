@@ -17,11 +17,12 @@ from get_flavors_quotas import project_list_flavor_quota
 from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
-    DeleteClusterSerializer, TaskSerializer, UserThemeSerializer
+    DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, \
+    HdfsSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async, \
-    hadoop_cluster_action_async
+    hadoop_cluster_action_async, put_hdfs_async
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
 
@@ -39,6 +40,37 @@ class MainPageView(generic.TemplateView):
     template_name = 'index.html'
 
 main_page = MainPageView.as_view()
+
+
+class HdfsView(APIView):
+    """
+    View for handling request for hdfs file transfer.
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (IsAuthenticated, )
+    resource_name = 'hdfs'
+    serializer_class = HdfsSerializer
+
+    def post(self, request, *args, **kwargs):
+        """
+        Put file in hdfs from ftp or pithos.
+        """
+        serializer = self.serializer_class(data=request.DATA)
+        if serializer.is_valid():
+            user_token = Token.objects.get(key=request.auth)
+            cluster = ClusterInfo.objects.get(id=serializer.data['id'])
+
+            try:
+                hdfs_task = put_hdfs_async.delay(serializer.data)
+                task_id = hdfs_task.id
+                return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+            except Exception, e:
+                return Response({"status": str(e.args[0])})
+
+        # This will be send if user's cluster parameters are not de-serialized
+        # correctly.
+        return Response(serializer.errors)
+
 
 class JobsView(APIView):
     """

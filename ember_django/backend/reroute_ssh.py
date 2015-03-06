@@ -22,6 +22,41 @@ CHAN_TIMEOUT = 360  # Paramiko channel timeout
 CONNECTION_TRIES = 9    # Max number(+1) of connection attempts to a VM
 
 
+class HdfsRequest(object):
+
+    def init(self, opts):
+        self.opts = opts
+        self.ssh_client = establish_connect(self.opts['master_IP'], 'hduser', '',
+                                   MASTER_SSH_PORT)
+
+    def check_file(self):
+        """
+        Check if file exists in hdfs
+        """
+        check_cmd = 'hadoop fs -ls ' + self.opts['dest']
+        try:
+            exec_command(self.ssh_client, check_cmd)
+        except RuntimeError, e:
+            if e.args[1] == 1:
+                return 0
+            else:
+                msg = 'Path already exists'
+                raise RuntimeError(msg, e.args[1])
+
+    def put_file_hdfs(self):
+        """
+        Put a file from ftp to hdfs
+        """
+
+        try:
+            put_cmd = ' wget --user=' + self.opts['user'] + ' --password=' + self.opts['password'] + ' ' +\
+                      self.opts['source'] + ' -O - |hadoop fs -put - ' + self.opts['dest']
+            exec_command(self.ssh_client, put_cmd)
+        finally:
+            self.ssh_client.close()
+
+
+
 def reroute_ssh_prep(server, master_ip):
     """
     Creates list of host and ip-tables for reroute ssh to all slaves
