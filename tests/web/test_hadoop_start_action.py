@@ -143,10 +143,11 @@ class test_hadoop_start_action(unittest.TestCase):
         time.sleep(2)
         driver.find_element_by_id('id_confirm_' + cluster_name).click()
         success =False
-        for i in range(180): 
+        for i in range(300): 
             # wait for cluster create to finish
             try:
                 if "glyphicon glyphicon-play text-success" == driver.find_element_by_id('id_hadoop_status_'+cluster_name).get_attribute("class"): 
+                    self.assertTrue(True, "ok")
                     success = True
                     break
                 else:
