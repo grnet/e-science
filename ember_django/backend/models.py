@@ -86,6 +86,12 @@ class ClusterCreationParams(models.Model):
     # Available disk size
     disk_av = models.IntegerField("Available disk size", null=True,
                                   help_text="Available disk size")
+    # network
+    net_av = models.IntegerField("Available Networks", null=True,
+                                 help_text="Available Networks")
+    # floating ips
+    floatip_av = models.IntegerField("Available floating IPs", null=True,
+                                     help_text="Available floating IPs")
     # Cpu choices
     cpu_choices = IntegerArrayField()  # ArrayField
     # Memory choices

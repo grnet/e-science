@@ -18,7 +18,7 @@ urlpatterns = patterns('', url(r'^$', 'backend.views.main_page'),
                        url(r'^api/clusters', StatusView.as_view()),
                        url(r'^api/clusterchoices', StatusView.as_view()),
                        url(r'^api/jobs', JobsView.as_view()),
-                       url(r'^/api/hdfs', HdfsView.as_view())
+                       url(r'^api/hdfs', HdfsView.as_view())
                        )
 
 # if settings.DEBUG:

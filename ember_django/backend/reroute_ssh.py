@@ -18,13 +18,13 @@ from cluster_errors_constants import error_ssh_client, REPORT, \
 
 # Global constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
-CHAN_TIMEOUT = 360  # Paramiko channel timeout
+CHAN_TIMEOUT = 3600  # Paramiko channel timeout
 CONNECTION_TRIES = 9    # Max number(+1) of connection attempts to a VM
 
 
 class HdfsRequest(object):
 
-    def init(self, opts):
+    def __init__(self, opts):
         self.opts = opts
         self.ssh_client = establish_connect(self.opts['master_IP'], 'hduser', '',
                                    MASTER_SSH_PORT)
@@ -40,7 +40,7 @@ class HdfsRequest(object):
             if e.args[1] == 1:
                 return 0
             else:
-                msg = 'Path already exists'
+                msg = 'Path or file already exists'
                 raise RuntimeError(msg, e.args[1])
 
     def put_file_hdfs(self):
@@ -51,7 +51,8 @@ class HdfsRequest(object):
         try:
             put_cmd = ' wget --user=' + self.opts['user'] + ' --password=' + self.opts['password'] + ' ' +\
                       self.opts['source'] + ' -O - |hadoop fs -put - ' + self.opts['dest']
-            exec_command(self.ssh_client, put_cmd)
+            status = exec_command(self.ssh_client, put_cmd)
+            return status
         finally:
             self.ssh_client.close()
 
@@ -131,6 +132,7 @@ def exec_command(ssh, command):
     # get exit status of command executed and check it with check_command
     ex_status = stdout.channel.recv_exit_status()
     check_command_exit_status(ex_status, command)
+    return ex_status
 
 
 class mySSHClient(paramiko.SSHClient):

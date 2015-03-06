@@ -83,7 +83,7 @@ def project_list_flavor_quota(user):
     return list_of_resources
 
 
-def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, ember_project_id,ssh_keys_names):
+def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, ember_project_id, ssh_keys_names):
     """
     Retrieves user quotas and flavor list from kamaki
     using get_flavor_id and check_quota methods and returns the updated
@@ -103,6 +103,8 @@ def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, 
     mem_av = quotas['ram']['available']
     disk_max = quotas['disk']['limit']
     disk_av = quotas['disk']['available']
+    net_av = quotas['network']['available']
+    floatip_av = quotas['float_ips']['available']
     cpu_choices = flavors['cpus']
     mem_choices = flavors['ram']
     disk_choices = flavors['disk']
@@ -124,6 +126,8 @@ def retrieve_ClusterCreationParams(flavors, quotas, images, project_name, user, 
                                                     mem_av=mem_av,
                                                     disk_max=disk_max,
                                                     disk_av=disk_av,
+                                                    net_av=net_av,
+                                                    floatip_av=floatip_av,
                                                     cpu_choices=cpu_choices,
                                                     mem_choices=mem_choices,
                                                     disk_choices=disk_choices,

@@ -25,6 +25,7 @@ from tasks import create_cluster_async, destroy_cluster_async, \
     hadoop_cluster_action_async, put_hdfs_async
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
+from reroute_ssh import HdfsRequest
 
 
 logging.addLevelName(REPORT, "REPORT")
@@ -57,16 +58,17 @@ class HdfsView(APIView):
         """
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
-            user_token = Token.objects.get(key=request.auth)
             cluster = ClusterInfo.objects.get(id=serializer.data['id'])
-
+            user_args = dict()
+            user_args = serializer.data.copy()
+            user_args.update({'master_IP': cluster.master_IP})
             try:
-                hdfs_task = put_hdfs_async.delay(serializer.data)
-                task_id = hdfs_task.id
-                return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+                HdfsRequest(user_args).check_file()
             except Exception, e:
-                return Response({"status": str(e.args[0])})
-
+                return Response({"message": str(e.args[0])})
+            hdfs_task = put_hdfs_async.delay(user_args)
+            task_id = hdfs_task.id
+            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)

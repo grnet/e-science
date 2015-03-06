@@ -53,8 +53,8 @@ class ClusterCreationParamsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClusterCreationParams
         fields = ('id', 'user_id', 'project_name', 'vms_max', 'vms_av',
-                  'cpu_max', 'cpu_av', 'mem_max', 'mem_av', 'disk_max',
-                  'disk_av', 'cpu_choices', 'mem_choices', 'disk_choices',
+                  'cpu_max', 'cpu_av', 'net_av', 'floatip_av', 'mem_max', 'mem_av', 
+                  'disk_max', 'disk_av', 'cpu_choices', 'mem_choices', 'disk_choices',
                   'disk_template', 'os_choices', 'ssh_keys_names')
 
 

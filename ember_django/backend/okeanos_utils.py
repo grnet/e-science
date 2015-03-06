@@ -259,6 +259,8 @@ def check_quota(token, project_id):
     auth = check_credentials(token)
     dict_quotas = get_user_quota(auth)
     project_name = auth.get_project(project_id)['name']
+    endpoints, user_id = endpoints_and_user_id(auth)
+    net_client = init_cyclades_netclient(endpoints['network'],token)
     # Get pending quota for given project id
     pending_quota = retrieve_pending_clusters(token, project_name)
 
@@ -301,13 +303,38 @@ def check_quota(token, project_id):
     if (available_vm > (project_limit_vm - project_usage_vm)):
         available_vm = project_limit_vm - project_usage_vm
     available_vm = available_vm - pending_vm
-
+    
+    pending_net = pending_quota['Network']
+    limit_net = dict_quotas[project_id]['cyclades.network.private']['limit']
+    usage_net = dict_quotas[project_id]['cyclades.network.private']['usage']
+    project_limit_net = dict_quotas[project_id]['cyclades.network.private']['project_limit']
+    project_usage_net = dict_quotas[project_id]['cyclades.network.private']['project_usage']
+    available_networks = limit_net - usage_net
+    if (available_networks > (project_limit_net - project_usage_net)):
+        available_networks = project_limit_net - project_usage_net
+    available_networks -= pending_net
+    
+    list_float_ips = net_client.list_floatingips()
+    pending_ips = pending_quota['Ip']
+    limit_ips = dict_quotas[project_id]['cyclades.floating_ip']['limit']
+    usage_ips = dict_quotas[project_id]['cyclades.floating_ip']['usage']
+    project_limit_ips = dict_quotas[project_id]['cyclades.floating_ip']['project_limit']
+    project_usage_ips = dict_quotas[project_id]['cyclades.floating_ip']['project_usage']
+    available_ips = limit_ips-usage_ips
+    if (available_ips > (project_limit_ips - project_usage_ips)):
+        available_ips = project_limit_ips - project_usage_ips
+    available_ips -= pending_ips
+    for d in list_float_ips:
+        if d['instance_id'] is None and d['port_id'] is None:
+            available_ips += 1
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
               'ram': {'limit': limit_ram, 'available': available_ram},
               'disk': {'limit': limit_cd,
                        'available': available_cyclades_disk_GB},
-              'cluster_size': {'limit': limit_vm, 'available': available_vm}}
+              'cluster_size': {'limit': limit_vm, 'available': available_vm},
+              'network': {'available': available_networks},
+              'float_ips': {'available': available_ips}}
     return quotas
 
 
@@ -325,7 +352,9 @@ def check_images(token, project_id):
     for image in list_current_images:
         # owner of image will be checked based on the uuid
         if image['owner'] == "ec567bea-4fa2-433d-9935-261a0867ec60":
-            available_images.append(image['name'])
+            image_properties = image['properties']
+            if image_properties.has_key('hadoopconf'):
+                available_images.append(image['name'])
         elif image['owner'] == "25ecced9-bf53-4145-91ee-cf47377e9fb2" and image['name'] == "Debian Base":
             available_images.append(image['name'])
                 
