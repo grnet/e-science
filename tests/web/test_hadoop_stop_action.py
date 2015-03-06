@@ -123,7 +123,7 @@ class test_hadoop_stop_action(unittest.TestCase):
             except: pass
             time.sleep(1)
         driver.find_element_by_id('id_hadoop_stop_'+cluster_name).click()
-        time.sleep(2)
+        time.sleep(5)
         driver.find_element_by_id('id_confirm_' + cluster_name).click()
         success =False
         for i in range(180): 

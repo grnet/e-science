@@ -123,7 +123,7 @@ class test_hadoop_start_action(unittest.TestCase):
             except: pass
             time.sleep(1)
         driver.find_element_by_id('id_hadoop_stop_'+cluster_name).click()
-        time.sleep(2)
+        time.sleep(5)
         driver.find_element_by_id('id_confirm_' + cluster_name).click()
         success =False
         for i in range(180): 
@@ -140,7 +140,7 @@ class test_hadoop_start_action(unittest.TestCase):
         if not success:
             self.assertTrue(False,'hadoop status did not stop')
         driver.find_element_by_id('id_hadoop_start_'+cluster_name).click()
-        time.sleep(2)
+        time.sleep(5)
         driver.find_element_by_id('id_confirm_' + cluster_name).click()
         success =False
         for i in range(300): 
