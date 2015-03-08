@@ -45,9 +45,9 @@ def get_from_kamaki_conf(section, option, action=None):
             if action == 'job':
                 url_job = '{0}{1}'.format(option_value, job_endpoint)
                 return url_job
-			if action == 'hdfs':
-            url_hdfs = '{0}{1}'.format(base_url, hdfs_endpoint)
-            return url_hdfs
+            if action == 'hdfs':
+                url_hdfs = '{0}{1}'.format(option_value, hdfs_endpoint)
+                return url_hdfs
             else:
                 logging.log(SUMMARY, ' Url to be returned from .kamakirc not specified')
                 return 0
@@ -92,7 +92,6 @@ class ClusterRequest(object):
         r = requests.post(self.url, data=json.dumps(self.payload),
                          headers=self.headers)
         response = json.loads(r.text)
-        print response
         return response
         
 

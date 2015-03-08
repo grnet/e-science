@@ -59,13 +59,17 @@ class HdfsView(APIView):
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
             cluster = ClusterInfo.objects.get(id=serializer.data['id'])
+            if not serializer.data['user']:
+                serializer.data['user'] = ''
+            if not serializer.data['password']:
+                serializer.data['password'] = ''
             user_args = dict()
             user_args = serializer.data.copy()
             user_args.update({'master_IP': cluster.master_IP})
             try:
-                HdfsRequest(user_args).check_file()
+                 HdfsRequest(user_args).check_file()
             except Exception, e:
-                return Response({"message": str(e.args[0])})
+                 return Response({"message": str(e.args[0])})
             hdfs_task = put_hdfs_async.delay(user_args)
             task_id = hdfs_task.id
             return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)

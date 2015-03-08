@@ -11,7 +11,7 @@ from version import __version__
 from utils import ClusterRequest, ConnectionError, authenticate_escience, get_user_clusters, \
     custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf
 from time import sleep
-
+import sys
 
 
 class _ArgCheck(object):
@@ -88,6 +88,7 @@ def task_message(task_id, escience_token, wait_timer):
     payload = {"job":{"task_id": task_id}}
     yarn_cluster_logger = ClusterRequest(escience_token, payload, action='job')
     previous_response = ''
+    i = 0
     while True:
         response = yarn_cluster_logger.retrieve()
         if response != previous_response:
@@ -210,11 +211,13 @@ class HadoopCluster(object):
             logging.error(' You can upload files to active clusters only.')
             exit(error_fatal)
         try:
-
+            # hard-coded for testing the file transfer
             self.opts['source']='https://dumps.wikimedia.org/elwiki/latest/elwiki-latest-pages-meta-current.xml.bz2'
             self.opts['destination']='hadoopwiki'
             payload = {"hdfs":{"id": self.opts['cluster_id'], "source": self.opts['source'],
-                                        "dest": self.opts['destination']}}
+                                        "dest": self.opts['destination'], "user": self.opts['user'],
+                                        "password": self.opts['password']}}
+            # payload = {"hdfs":self.opts}.....needs to change cluster_id->id for this to work.
             yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='hdfs')
             response = yarn_cluster_req.post()
             if 'task_id' in response['hdfs']:
@@ -373,8 +376,6 @@ def main():
                               metavar='disk_template', choices=['Standard', 'Archipelago'], 
                               type=str.capitalize)
 
-        parser_c.add_argument("token", help='Synnefo authentication token', type=checker.a_string_is)
-
         parser_c.add_argument("project_name", help='~okeanos project name'
                               ' to request resources from ', type=checker.a_string_is)
 
@@ -430,8 +431,8 @@ def main():
                               help='The file to be uploaded')
         parser_p.add_argument('destination',
                               help='Destination in the Hadoop filesystem')
-        parser_p.add_argument('token',
-                              help='Synnefo authentication token', type=checker.a_string_is)
+        parser_p.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+                              help='Synnefo authentication token. Default read from .kamakirc')
         parser_p.add_argument('--user',
                               help='Ftp-Http remote user')
         parser_p.add_argument('--password',
