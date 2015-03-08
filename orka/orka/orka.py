@@ -222,17 +222,39 @@ class HadoopCluster(object):
             exit(error_fatal)
         try:
             filename = self.opts['source'].split("/")
-            print filename[len(filename)-1]
             
-            os.system("ssh hduser@" + cluster['master_IP'] + " \"mkdir /home/hduser/orkatemp\"")
+            """ Copying 
+            logging.log(SUMMARY, ' Creating temporary directory in master' )
+            os.system("ssh hduser@" + cluster['master_IP'] + " \"mkdir /home/hduser/orka-temp\"")
+            
+            logging.log(SUMMARY, ' Copying local file to temporary directory' )
+            os.system("scp " + self.opts['source'] + " hduser@" 
+                      + cluster['master_IP'] + ":/home/hduser/orka-temp")
+            
+            logging.log(SUMMARY, ' Creating target directory to hdfs' )            
             os.system("ssh hduser@" + cluster['master_IP'] + " \"/usr/local/hadoop/bin/hdfs dfs -mkdir " 
                       + self.opts['destination'] + "\"")
-
+            logging.log(SUMMARY, ' Uploading file to hdfs' )
+            os.system("ssh hduser@" + cluster['master_IP'] 
+                      + " \"/usr/local/hadoop/bin/hdfs dfs -put /home/hduser/orka-temp/" 
+                      + filename[len(filename)-1] + " " + self.opts['destination'] + "\"")
+            logging.log(SUMMARY, ' Deleting temporary directory' )
+            os.system("ssh hduser@" + cluster['master_IP'] + " \"rm -r /home/hduser/orka-temp/\"")
+            """
+            
+            """ Streaming """
+            logging.log(SUMMARY, ' Creating target directory to hdfs (if not exists)' )
+            os.system("ssh hduser@" + cluster['master_IP'] + " \"/usr/local/hadoop/bin/hdfs dfs -mkdir " 
+                      + self.opts['destination'] + "\"")
+            
+            logging.log(SUMMARY, ' Start uploading file to hdfs' )
             os.system("cat " + self.opts['source']  
                       + " | ssh hduser@" + cluster['master_IP'] 
-                      + " /usr/local/hadoop/bin/hdfs dfs -put - " + self.opts['destination'])
-        
-            logging.log(SUMMARY, ' Uploaded file to Hadoop filesystem' )
+                      + " /usr/local/hadoop/bin/hdfs dfs -put - " + self.opts['destination']
+                      + "/" + filename[len(filename)-1])
+            
+            
+            logging.log(SUMMARY, ' File uploaded to Hadoop filesystem' )
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
