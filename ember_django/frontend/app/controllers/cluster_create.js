@@ -162,9 +162,12 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 	// Computes the available cpu each time total_cpu_selection changes
 	cpu_available : function() {
+		if (this.get('no_project_selected')){
+			return 0;
+		}
 		var cpu_avail = this.get('content').objectAt(this.get('project_index')).get('cpu_av') - this.get('total_cpu_selection');
 		return cpu_avail;
-	}.property('total_cpu_selection'),
+	}.property('total_cpu_selection', 'no_project_selected'),
 
 	// The total ram selected for the cluster
 	total_ram_selection : function() {
@@ -173,9 +176,12 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 	// Computes the available ram each time total_ram_selection changes
 	ram_available : function() {
+		if (this.get('no_project_selected')){
+			return 0;
+		}
 		ram_avail = this.get('content').objectAt(this.get('project_index')).get('ram_av') - this.get('total_ram_selection');
 		return ram_avail;
-	}.property('total_ram_selection'),
+	}.property('total_ram_selection', 'no_project_selected'),
 
 	// The total disk selected for the cluster
 	total_disk_selection : function() {
@@ -184,9 +190,12 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 	// Computes the available disk each time total_disk_selection changes
 	disk_available : function() {
+		if (this.get('no_project_selected')){
+			return 0;
+		}
 		disk_avail = this.get('content').objectAt(this.get('project_index')).get('disk_av') - this.get('total_disk_selection');
 		return disk_avail;
-	}.property('total_disk_selection'),
+	}.property('total_disk_selection', 'no_project_selected'),
 	
 	// alert if no available networks
 	alert_mes_network : function(){
