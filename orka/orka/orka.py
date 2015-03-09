@@ -80,7 +80,7 @@ class _ArgCheck(object):
             raise ArgumentTypeError(" %s must containt at least one letter." % val)
 
 
-def task_message(task_id, escience_token, wait_timer):
+def task_message(task_id, escience_token, wait_timer, cli_message=' Waiting for cluster status update...'):
     """
     Function to check create and destroy celery tasks running from orka-CLI
     and log task state messages.
@@ -89,22 +89,31 @@ def task_message(task_id, escience_token, wait_timer):
     yarn_cluster_logger = ClusterRequest(escience_token, payload, action='job')
     previous_response = ''
     i = 0
-    while True:
-        response = yarn_cluster_logger.retrieve()
+    response = yarn_cluster_logger.retrieve()
+    while response:
+        i+=1
         if response != previous_response:
             if 'success' in response['job']:
+                print i
                 return response['job']['success']
 
             elif 'error' in response['job']:
                 logging.error(response['job']['error'])
+                print i
                 exit(error_fatal)
 
             elif 'state' in response['job']:
-                logging.log(SUMMARY, response['job']['state'])
+                #logging.log(SUMMARY, response['job']['state'])
+                #print '{0}\r'.format(response['job']['state']),
+                print i
                 previous_response = response
-                logging.log(SUMMARY, ' Waiting for cluster status update...')
+                #print '{0}\r'.format(cli_message)
+                response = yarn_cluster_logger.retrieve()
+
         else:
+            print 'inside sleep'
             sleep(wait_timer)
+            response = yarn_cluster_logger.retrieve()
 
 
 
@@ -212,8 +221,8 @@ class HadoopCluster(object):
             exit(error_fatal)
         try:
             # hard-coded for testing the file transfer
-            self.opts['source']='https://dumps.wikimedia.org/elwiki/latest/elwiki-latest-pages-meta-current.xml.bz2'
-            self.opts['destination']='hadoopwiki'
+            #self.opts['source']='https://dumps.wikimedia.org/elwiki/latest/elwiki-latest-pages-meta-current.xml.bz2'
+            #self.opts['destination']='hadoopwiki'
             payload = {"hdfs":{"id": self.opts['cluster_id'], "source": self.opts['source'],
                                         "dest": self.opts['destination'], "user": self.opts['user'],
                                         "password": self.opts['password']}}
@@ -225,7 +234,8 @@ class HadoopCluster(object):
             else:
                 logging.error(response['hdfs']['message'])
                 exit(error_fatal)
-            result = task_message(task_id, self.escience_token, wait_timer_delete)
+            result = task_message(task_id, self.escience_token, wait_timer_delete,
+                                  cli_message=' Waiting for file transfer status update...')
             if result == 0:
                 logging.log(SUMMARY, ' Transfered file to Hadoop filesystem')
         except Exception, e:

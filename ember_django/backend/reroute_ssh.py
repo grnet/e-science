@@ -12,6 +12,7 @@ import logging
 import paramiko
 from time import sleep
 import select
+from celery import current_task
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ssh_client, REPORT, \
@@ -42,7 +43,7 @@ class HdfsRequest(object):
             if e.args[1] == 1:
                 return 0
         if status == 0:
-            msg = ' Path or file already exists'
+            msg = ' Path or file %s already exists' % self.opts['dest']
             raise RuntimeError(msg)
 
     def put_file_hdfs(self):
@@ -54,8 +55,7 @@ class HdfsRequest(object):
             # -c to resume download, -b to background
             put_cmd = ' wget --user=' + self.opts['user'] + ' --password=' + self.opts['password'] + ' ' +\
                       self.opts['source'] + ' -O - |' + HADOOP_HOME + 'hadoop fs -put - ' + self.opts['dest']
-            status = exec_command(self.ssh_client, put_cmd)
-            # HADOOP_HOME + 'hadoop fs -du -h ' + self.opts['dest'] + '*' this command checks file size in hdfs while copying
+            status = exec_command(self.ssh_client, put_cmd, command_state='celery_task')
             return status
         finally:
             self.ssh_client.close()
@@ -119,51 +119,34 @@ def get_ready_for_reroute(hostname_master, password):
         ssh_client.close()
 
 
-def exec_command(ssh, command):
+def exec_command(ssh, command, command_state=''):
     """
     Calls overloaded exec_command function of the ssh object given
     as argument. Command is the second argument and its a string.
-    check_command_id is used for commands that need additional input after
-    exec_command, e.g. ssh-_after_hadoop needs yes[enter].
+    Command_state argument is used when running celery tasks and
+    feedback is needed.
     """
-    # channel = ssh.get_transport().open_session()
-    # try:
-    #     channel.exec_command(command)
-    # except Exception, e:
-    #     logging.exception(e.args)
-    #     raise
-    # with open('/tmp/john', 'w+') as f:
-    #     while True:
-    #         if channel.exit_status_ready():
-    #             ex_status = channel.recv_exit_status()
-    #             check_command_exit_status(ex_status, command)
-    #             return ex_status
-    #
-    #         rl, wl, xl = select.select([channel], [], [], 0.0)
-    #         if len(rl) > 0:
-    #             f.write(channel.recv(1024))
-
-
     try:
         stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
     except Exception, e:
         logging.exception(e.args)
         raise
-    # Wait for the command to terminate
-    with open('/tmp/john', 'w+') as f:
+    if command_state == 'celery_task':
+        # Wait for the command to terminate
         while not stdout.channel.exit_status_ready():
-    # Only print data if there is data to read in the channel
+            # Only update celery task state if there is data to read in the channel
             if stdout.channel.recv_ready():
                 rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
                 if len(rl) > 0:
-                    print stdout.channel.recv(1024)
-                    f.write(stdout.channel.recv(1024))
+                    state = stdout.channel.recv(1024)
+                    if len(state) > 349:
+                        state = state[:348] + '..'
+                    current_task.update_state(state=state)
 
-
-    # stdin.flush()
-    # stdin.channel.shutdown_write()
-    # sderr = stderr.read()
     # get exit status of command executed and check it with check_command
+    ex_status = stdout.channel.recv_exit_status()
+    check_command_exit_status(ex_status, command)
+    return ex_status
 
 
 class mySSHClient(paramiko.SSHClient):
