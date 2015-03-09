@@ -149,6 +149,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// For alerting the user if they have no project selected
 	no_project_selected : function(){		
 		var no_project = Ember.isBlank(this.get('project_name'));
+		if (no_project){
+			this.reset_project();
+		}
 		return no_project;
 	}.property('project_name'),
 	
