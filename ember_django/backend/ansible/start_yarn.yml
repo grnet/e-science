@@ -16,7 +16,7 @@
     command: sudo -u hduser ./mr-jobhistory-daemon.sh start historyserver chdir={{hadoop_home}}/sbin
 
   - name: Creates directory
-    tags: makehduser
+    tags: HDFSMkdir
     action: command {{item}} chdir={{hadoop_home}}/bin
     with_items:
       - sudo -u hduser ./hadoop fs -mkdir /user 

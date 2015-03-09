@@ -47,7 +47,7 @@ def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_f
                           master_IP=master_ip)
         ansible_manage_cluster(cluster_id, 'format')
         ansible_manage_cluster(cluster_id, 'start')
-        ansible_manage_cluster(cluster_id, 'makehduser')
+        ansible_manage_cluster(cluster_id, 'HDFSMkdir')
     except Exception, e:
         msg = 'Error while running Ansible '
         raise RuntimeError(msg, error_ansible_playbook)
@@ -91,7 +91,7 @@ def ansible_manage_cluster(cluster_id, action):
     Updates database only when starting or stopping a cluster.
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
-    if action == 'format' or action == 'makehduser':
+    if action == 'format' or action == 'HDFSMkdir':
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
         current_hadoop_status = action

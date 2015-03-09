@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __builtin__ import True
 
 
 """orka.orka: provides entry point main()."""
@@ -13,7 +12,7 @@ from version import __version__
 from utils import ClusterRequest, ConnectionError, authenticate_escience, \
     get_user_clusters, custom_sort_factory, custom_date_format, get_token
 from time import sleep
-
+import os
 
 
 class _ArgCheck(object):
@@ -115,13 +114,13 @@ class HadoopCluster(object):
         self.opts = opts
         try:
 #           cloud = self.opts['cloud']
-            token = get_token()
-            self.escience_token = authenticate_escience(token)
+            self.token = get_token()
+            self.escience_token = authenticate_escience(self.token)
         except ConnectionError:
             logging.error(' e-science server unreachable or down.')
             exit(error_fatal)
         except ClientError:
-            logging.error(' Authentication error with token: ' + token)
+            logging.error(' Authentication error with token: ' + self.token)
             exit(error_fatal)
         
 
@@ -155,7 +154,7 @@ class HadoopCluster(object):
     def destroy(self):
         """ Method for deleting Hadoop clusters in~okeanos."""
 #       cloud = self.opts['cloud']
-        clusters = get_user_clusters(get_token())
+        clusters = get_user_clusters(self.token)
         for cluster in clusters:
             if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == '1':
                 break
@@ -178,7 +177,7 @@ class HadoopCluster(object):
         """ Method for applying an action to a Hadoop cluster"""
         action = str.lower(action)
 #       cloud = self.opts['cloud']
-        clusters = get_user_clusters(get_token())
+        clusters = get_user_clusters(self.token)
         active_cluster = None
         for cluster in clusters:
             if (cluster['id'] == self.opts['cluster_id']):
@@ -206,8 +205,129 @@ class HadoopCluster(object):
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
                     
-
-
+    def put(self):
+        """ Method for putting files to Hadoop clusters in~okeanos."""
+        
+        try:
+            escience_token = authenticate_escience(self.token)
+        except TypeError:
+            msg = ' Authentication error with token: ' + self.token
+            raise ClientError(msg, error_authentication)
+        except Exception,e:
+            print ' ' + str(e.args[0])
+    
+        clusters = get_user_clusters(self.token)
+        for cluster in clusters:
+            if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == '1':
+                break
+        else:
+            logging.error(' You can upload files to active clusters only.')
+            exit(error_fatal)
+        try:
+            filename = self.opts['source'].split("/")
+            
+            """ Copying 
+            logging.log(SUMMARY, ' Creating temporary directory in master' )
+            os.system("ssh hduser@" + cluster['master_IP'] + " \"mkdir /home/hduser/orka-temp\"")
+            
+            logging.log(SUMMARY, ' Copying local file to temporary directory' )
+            os.system("scp " + self.opts['source'] + " hduser@" 
+                      + cluster['master_IP'] + ":/home/hduser/orka-temp")
+            
+            logging.log(SUMMARY, ' Creating target directory to hdfs' )            
+            os.system("ssh hduser@" + cluster['master_IP'] + " \"/usr/local/hadoop/bin/hdfs dfs -mkdir " 
+                      + self.opts['destination'] + "\"")
+            logging.log(SUMMARY, ' Uploading file to hdfs' )
+            os.system("ssh hduser@" + cluster['master_IP'] 
+                      + " \"/usr/local/hadoop/bin/hdfs dfs -put /home/hduser/orka-temp/" 
+                      + filename[len(filename)-1] + " " + self.opts['destination'] + "\"")
+            logging.log(SUMMARY, ' Deleting temporary directory' )
+            os.system("ssh hduser@" + cluster['master_IP'] + " \"rm -r /home/hduser/orka-temp/\"")
+            """
+            
+            """ Streaming """
+            logging.log(SUMMARY, ' Creating target directory to hdfs (if not exists)' )
+            os.system("ssh hduser@" + cluster['master_IP'] + " \"/usr/local/hadoop/bin/hdfs dfs -mkdir " 
+                      + self.opts['destination'] + "\"")
+            
+            logging.log(SUMMARY, ' Start uploading file to hdfs' )
+            os.system("cat " + self.opts['source']  
+                      + " | ssh hduser@" + cluster['master_IP'] 
+                      + " /usr/local/hadoop/bin/hdfs dfs -put - " + self.opts['destination']
+                      + "/" + filename[len(filename)-1])
+            
+            
+            logging.log(SUMMARY, ' File uploaded to Hadoop filesystem' )
+        except Exception, e:
+            logging.error(' Error:' + str(e.args[0]))
+            exit(error_fatal)
+            
+            
+    def get(self):
+        """ Method for getting files from Hadoop clusters in ~okeanos."""        
+        try:
+            escience_token = authenticate_escience(self.token)
+        except TypeError:
+            msg = ' Authentication error with token: ' + self.token
+            raise ClientError(msg, error_authentication)
+        except Exception,e:
+            print ' ' + str(e.args[0])
+    
+        clusters = get_user_clusters(self.token)
+        for cluster in clusters:
+            if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == '1':
+                break
+        else:
+            logging.error(' You can download files from active clusters only.')
+            exit(error_fatal)               
+        try:
+            """ Copying """
+            filename = self.opts['source'].split("/")
+            filename = filename[len(filename)-1]
+            check = os.system("ssh hduser@" + cluster['master_IP'] + " \"/usr/local/hadoop/bin/hdfs dfs -test -e " + self.opts['source'] + "\"")
+            if check != 0:
+                logging.error(' File does not exist')
+                exit(error_fatal)
+            else:
+                logging.log(SUMMARY, ' Creating temporary directory in master')
+                os.system("ssh hduser@" + cluster['master_IP'] + " \"mkdir /home/hduser/orka-temp/\"")
+                logging.log(SUMMARY, ' Downloading file from hdfs')
+                os.system("ssh hduser@" + cluster['master_IP'] 
+                          + " \"/usr/local/hadoop/bin/hdfs dfs -get -ignoreCrc -crc " + self.opts['source'] + " " + "/home/hduser/orka-temp/\"")
+                logging.log(SUMMARY, ' Copying file from temporary directory to local')
+                os.system("scp hduser@" + cluster['master_IP'] + ":" + "/home/hduser/orka-temp/" + filename + " " + self.opts['destination'])
+                logging.log(SUMMARY, ' Deleting temporary directory' )
+                os.system("ssh hduser@" + cluster['master_IP'] + " \"rm -rf /home/hduser/orka-temp/\"")
+                if os.path.isfile(self.opts['destination'] + filename):
+                    logging.log(SUMMARY, ' File downloaded from Hadoop filesystem.')
+                else:
+                    logging.error(' Error while downloading from Hadoop filesystem.')
+            
+            """ Streaming 
+            filename = self.opts['source'].split("/")
+            filename = filename[len(filename)-1] 
+            logging.log(SUMMARY, ' Checking if \"' + filename + '\" exist in Hadoop filesystem.' )
+            check = os.system("ssh hduser@" + cluster['master_IP'] + " \"/usr/local/hadoop/bin/hdfs dfs -test -e " + self.opts['source'] + "\"")
+            if check != 0:
+                logging.error(' File does not exist.')
+                exit(error_fatal)
+            else:
+                logging.log(SUMMARY, ' Start downloading file from hdfs')
+                os.system("STDOUT=$(ssh hduser@" + cluster['master_IP'] + " /usr/local/hadoop/bin/hdfs dfs -cat " 
+                          + self.opts['source'] + ")")
+                os.system("ssh hduser@" + cluster['master_IP'] 
+                          + " /usr/local/hadoop/bin/hdfs dfs -get -ignoreCrc -crc $STDOUT " + self.opts['destination']
+                          + "/" + filename)                          
+                if os.path.isfile(self.opts['destination'] + filename):
+                    logging.log(SUMMARY, ' File downloaded from Hadoop filesystem.')
+                else:
+                    logging.error(' Error while downloading from Hadoop filesystem.')
+            """
+        except Exception, e:
+            logging.error(' Error:' + str(e.args[0]))
+            exit(error_fatal)
+            
+            
 class UserClusterInfo(object):
     """ Class holding user cluster info
     sort: input clusters output cluster keys sorted according to spec
@@ -310,6 +430,10 @@ def main():
                                      help='Start, Format or Stop a Hadoop-Yarn cluster.')
     parser_info = subparsers.add_parser('info',
                                         help='Information for a specific Hadoop cluster.')
+    parser_p = subparsers.add_parser('put',
+                                     help='Put/Upload a file on a Hadoop-Yarn filesystem') 
+    parser_down = subparsers.add_parser('get',
+                                     help='Get/Download a file from a Hadoop-Yarn filesystem')   
     
     if len(argv) > 1:
 
@@ -389,6 +513,20 @@ def main():
                                  help='The id of the Hadoop cluster', type=checker.positive_num_is)
 #         parser_h.add_argument('cloud',
 #                               help='Cloud\'s name for getting specific authentication token', type=checker.a_string_is)
+
+        parser_p.add_argument('cluster_id',
+                              help='The id of the Hadoop cluster', type=checker.positive_num_is)
+        parser_p.add_argument('source',
+                              help='The file to be uploaded')
+        parser_p.add_argument('destination',
+                              help='Destination in the Hadoop filesystem')
+        
+        parser_down.add_argument('cluster_id',
+                              help='The id of the Hadoop cluster', type=checker.positive_num_is)
+        parser_down.add_argument('source',
+                              help='The file to be downloaded')
+        parser_down.add_argument('destination',
+                              help='Destination in Local filesystem')
         
         opts = vars(parser.parse_args(argv[1:]))
         if argv[1] == 'create':
@@ -424,6 +562,11 @@ def main():
         c_userclusters = UserClusterInfo(opts)
         c_userclusters.list(cluster_id=argv[2])
 
+    elif argv[1] == 'put':
+        c_hadoopcluster.put()
+        
+    elif argv[1] == 'get':
+        c_hadoopcluster.get()
 
 if __name__ == "__main__":
     main()
