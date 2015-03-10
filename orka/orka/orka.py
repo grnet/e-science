@@ -12,7 +12,8 @@ from cluster_errors_constants import *
 from argparse import ArgumentParser, ArgumentTypeError 
 from version import __version__
 from utils import ClusterRequest, ConnectionError, authenticate_escience, \
-    get_user_clusters, custom_sort_factory, custom_date_format
+    get_user_clusters, custom_sort_factory, custom_date_format, \
+    ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to__hadoop
 from time import sleep
 
 
@@ -226,68 +227,46 @@ class HadoopCluster(object):
             filename = self.opts['source'].split("/")
             
             # check if file already exists in hdfs, 0: exists, 1: doesn't exist
-            file_exists = subprocess.call( "ssh hduser@" + cluster['master_IP'] 
-                            + " \"/usr/local/hadoop/bin/hdfs dfs -test -e " + self.opts['destination'] 
-                            + filename[len(filename)-1] + "\"", stderr=FNULL, shell=True)
+            file_exists = ssh_call_hadoop("hduser", cluster['master_IP'], 
+                                      " dfs -test -e " + self.opts['destination'] + filename[len(filename)-1])
 
             if file_exists==0:
                 logging.log(SUMMARY, ' File already exists. Aborting upload.' )
                 exit()
             else:
                 # size of file to be uploaded (in bytes)
-                size = os.path.getsize(self.opts['source'])
-            
+                file_size = os.path.getsize(self.opts['source'])
+
                 # check available free space in hdfs
-                av = subprocess.check_output( "ssh hduser@" + cluster['master_IP'] 
-                            + " \"/usr/local/hadoop/bin/hdfs dfs -count -q / " + "\"", shell=True)
-                print(av)                
+                report = ssh_check_output_hadoop("hduser", cluster['master_IP'], " dfsadmin -report / ")
+                for line in report:
+                    if line.startswith('DFS Remaining'):
+                        tokens = line.split(' ')
+                        dfs_remaining = tokens[2]
+                        break
                 
-                
-                
-                # if file can be uploaded to hdfs
-
-
-
-
-                # check if directory exists
-                dir_exists = subprocess.call( "ssh hduser@" + cluster['master_IP'] 
-                    + " \"/usr/local/hadoop/bin/hdfs dfs -test -e " + self.opts['destination'] 
-                    + "\"", stderr=FNULL, shell=True)
-
-                if dir_exists==0:
-                    logging.log(SUMMARY, ' Directory already exists' )
+                # check if file can be uploaded to hdfs
+                if file_size > int(dfs_remaining):
+                    logging.log(SUMMARY, ' File too big to be uploaded' )
+                    exit()
                 else:
-                    logging.log(SUMMARY, ' Creating target directory to hdfs' )
-                    subprocess.call("ssh hduser@" + cluster['master_IP'] + " \"/usr/local/hadoop/bin/hdfs dfs -mkdir " 
-                      + self.opts['destination'] + "\"", stderr=FNULL, shell=True)
+                    # check if directory exists
+                    dir_exists = ssh_call_hadoop("hduser", cluster['master_IP'], 
+                                                 " dfs -test -e " + self.opts['destination'])
+
+                    if dir_exists==0:
+                        logging.log(SUMMARY, ' Target directory already exists' )
+                    else:
+                        logging.log(SUMMARY, ' Creating target directory to hdfs' )
+                        ssh_call_hadoop("hduser", cluster['master_IP'],
+                                        " dfs -mkdir " + self.opts['destination'])
                 
-                """ Streaming """                
-                logging.log(SUMMARY, ' Start uploading file to hdfs' )            
-                subprocess.call("cat " + self.opts['source']  
-                      + " | ssh hduser@" + cluster['master_IP'] 
-                      + " /usr/local/hadoop/bin/hdfs dfs -put - " + self.opts['destination']
-                      + "/" + filename[len(filename)-1], stderr=FNULL, shell=True)
-                        
-                """ or Copying 
-                logging.log(SUMMARY, ' Creating temporary directory in master' )
-                os.system("ssh hduser@" + cluster['master_IP'] + " \"mkdir /home/hduser/orka-temp\"")
-            
-                logging.log(SUMMARY, ' Copying local file to temporary directory' )
-                os.system("scp " + self.opts['source'] + " hduser@" 
-                      + cluster['master_IP'] + ":/home/hduser/orka-temp")
-            
-                logging.log(SUMMARY, ' Creating target directory to hdfs' )            
-                os.system("ssh hduser@" + cluster['master_IP'] + " \"/usr/local/hadoop/bin/hdfs dfs -mkdir " 
-                      + self.opts['destination'] + "\"")
-                logging.log(SUMMARY, ' Uploading file to hdfs' )
-                os.system("ssh hduser@" + cluster['master_IP'] 
-                      + " \"/usr/local/hadoop/bin/hdfs dfs -put /home/hduser/orka-temp/" 
-                      + filename[len(filename)-1] + " " + self.opts['destination'] + "\"")
-                logging.log(SUMMARY, ' Deleting temporary directory' )
-                os.system("ssh hduser@" + cluster['master_IP'] + " \"rm -r /home/hduser/orka-temp/\"")
-                """
-            
-                logging.log(SUMMARY, ' File uploaded to Hadoop filesystem' )
+                    """ Streaming """                
+                    logging.log(SUMMARY, ' Start uploading file to hdfs' )   
+                    ssh_stream_to__hadoop("hduser", cluster['master_IP'], 
+                                          self.opts['source'], self.opts['destination'])
+
+                    logging.log(SUMMARY, ' File uploaded to Hadoop filesystem' )
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
