@@ -281,7 +281,7 @@ class HadoopCluster(object):
             logging.error(' You can download files from active clusters only.')
             exit(error_fatal)               
         try:
-            """ Copying """
+            """ Copying 
             filename = self.opts['source'].split("/")
             filename = filename[len(filename)-1]
             check = os.system("ssh hduser@" + cluster['master_IP'] + " \"/usr/local/hadoop/bin/hdfs dfs -test -e " + self.opts['source'] + "\"")
@@ -302,27 +302,33 @@ class HadoopCluster(object):
                     logging.log(SUMMARY, ' File downloaded from Hadoop filesystem.')
                 else:
                     logging.error(' Error while downloading from Hadoop filesystem.')
-            
-            """ Streaming 
+            """
+            """ Streaming """
             filename = self.opts['source'].split("/")
             filename = filename[len(filename)-1] 
             logging.log(SUMMARY, ' Checking if \"' + filename + '\" exist in Hadoop filesystem.' )
             check = os.system("ssh hduser@" + cluster['master_IP'] + " \"/usr/local/hadoop/bin/hdfs dfs -test -e " + self.opts['source'] + "\"")
+            # If file exists, hdfs dfs -test -e returns 0 
             if check != 0:
                 logging.error(' File does not exist.')
                 exit(error_fatal)
             else:
                 logging.log(SUMMARY, ' Start downloading file from hdfs')
                 os.system("STDOUT=$(ssh hduser@" + cluster['master_IP'] + " /usr/local/hadoop/bin/hdfs dfs -cat " 
-                          + self.opts['source'] + ")")
-                os.system("ssh hduser@" + cluster['master_IP'] 
-                          + " /usr/local/hadoop/bin/hdfs dfs -get -ignoreCrc -crc $STDOUT " + self.opts['destination']
-                          + "/" + filename)                          
-                if os.path.isfile(self.opts['destination'] + filename):
+                          + self.opts['source'] + ") && ssh hduser@" + cluster['master_IP'] 
+                          + " /usr/local/hadoop/bin/hdfs dfs -get -ignoreCrc -crc " + self.opts['source'] + "|echo $STDOUT " 
+                          + self.opts['destination'] + "/" + filename)
+                
+                os.system("ssh hduser@" + cluster['master_IP'] + " \"cat /home/hduser/" + filename + "\" | > " 
+                          + self.opts['destination'] + "/" + filename)
+                os.system("STREAM=$(ssh hduser@" + cluster['master_IP'] + " \"cat /home/hduser/" + filename + "\") && ssh hduser@" 
+                          + cluster['master_IP'] + " echo $STREAM > " + self.opts['destination'] + "/" + filename)
+                
+                if os.path.isfile(self.opts['destination'] + "/" + filename):
                     logging.log(SUMMARY, ' File downloaded from Hadoop filesystem.')
                 else:
                     logging.error(' Error while downloading from Hadoop filesystem.')
-            """
+
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
