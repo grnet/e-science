@@ -32,11 +32,26 @@ class HdfsRequest(object):
         self.ssh_client = establish_connect(self.opts['master_IP'], 'hduser', '',
                                    MASTER_SSH_PORT)
 
-    def check_file(self):
+    def check_file_zero_size(self):
+        """
+        Check if file is zero size.
+        """
+        check_cmd = HADOOP_HOME + 'hadoop fs -test -z ' + self.opts['dest']
+        try:
+            status = exec_command(self.ssh_client, check_cmd)
+        except RuntimeError, e:
+            if e.args[1] == 1:
+                return 0
+        if status == 0:
+            msg = ' Transfer of file %s failed. ' % self.opts['dest']
+            raise RuntimeError(msg)
+
+
+    def check_file_exist(self):
         """
         Check if file exists in hdfs
         """
-        check_cmd = HADOOP_HOME + 'hadoop fs -ls ' + self.opts['dest']
+        check_cmd = HADOOP_HOME + 'hadoop fs -test -e ' + self.opts['dest']
         try:
             status = exec_command(self.ssh_client, check_cmd)
         except RuntimeError, e:
@@ -55,8 +70,9 @@ class HdfsRequest(object):
             # -c to resume download, -b to background
             put_cmd = ' wget --user=' + self.opts['user'] + ' --password=' + self.opts['password'] + ' ' +\
                       self.opts['source'] + ' -O - |' + HADOOP_HOME + 'hadoop fs -put - ' + self.opts['dest']
-            status = exec_command(self.ssh_client, put_cmd, command_state='celery_task')
-            return status
+            put_cmd_status = exec_command(self.ssh_client, put_cmd, command_state='celery_task')
+            self.check_file_zero_size()
+            return put_cmd_status
         finally:
             self.ssh_client.close()
 

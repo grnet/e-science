@@ -87,33 +87,24 @@ def task_message(task_id, escience_token, wait_timer, cli_message=' Waiting for 
     """
     payload = {"job":{"task_id": task_id}}
     yarn_cluster_logger = ClusterRequest(escience_token, payload, action='job')
-    previous_response = ''
-    i = 0
+    previous_response = {'job':{'state':'placeholder'}}
     response = yarn_cluster_logger.retrieve()
-    while response:
-        i+=1
-        if response != previous_response:
-            if 'success' in response['job']:
-                print i
-                return response['job']['success']
 
-            elif 'error' in response['job']:
-                logging.error(response['job']['error'])
-                print i
-                exit(error_fatal)
-
-            elif 'state' in response['job']:
-                #logging.log(SUMMARY, response['job']['state'])
-                #print '{0}\r'.format(response['job']['state']),
-                print i
-                previous_response = response
-                #print '{0}\r'.format(cli_message)
-                response = yarn_cluster_logger.retrieve()
-
+    while 'state' in response['job']:
+        if response['job']['state'].split('%',1)[0].replace('\r','') != previous_response['job']['state'].split('%',1)[0].replace('\r',''):
+            sys.stdout.write('{0}\r'.format(response['job']['state']))
+            previous_response = response
         else:
-            print 'inside sleep'
             sleep(wait_timer)
-            response = yarn_cluster_logger.retrieve()
+        response = yarn_cluster_logger.retrieve()
+        sys.stdout.flush()
+
+    if 'success' in response['job']:
+        return response['job']['success']
+
+    elif 'error' in response['job']:
+        logging.error(response['job']['error'])
+        exit(error_fatal)
 
 
 
@@ -221,8 +212,8 @@ class HadoopCluster(object):
             exit(error_fatal)
         try:
             # hard-coded for testing the file transfer
-            #self.opts['source']='https://dumps.wikimedia.org/elwiki/latest/elwiki-latest-pages-meta-current.xml.bz2'
-            #self.opts['destination']='hadoopwiki'
+            self.opts['source']='https://dumps.wikimedia.org/elwiki/latest/elwiki-latest-pages-meta-current.xml.bz2'
+            self.opts['destination']='hadoopwiki'
             payload = {"hdfs":{"id": self.opts['cluster_id'], "source": self.opts['source'],
                                         "dest": self.opts['destination'], "user": self.opts['user'],
                                         "password": self.opts['password']}}
