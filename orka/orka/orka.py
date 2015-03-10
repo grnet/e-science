@@ -13,9 +13,9 @@ from argparse import ArgumentParser, ArgumentTypeError
 from version import __version__
 from utils import ClusterRequest, ConnectionError, authenticate_escience, \
     get_user_clusters, custom_sort_factory, custom_date_format, \
-    ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to__hadoop
+    ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to__hadoop, \
+    read_replication_factor
 from time import sleep
-
 
 class _ArgCheck(object):
     """
@@ -244,9 +244,11 @@ class HadoopCluster(object):
                         tokens = line.split(' ')
                         dfs_remaining = tokens[2]
                         break
-                
+                # read replication factor
+                replication_factor = read_replication_factor("hduser", cluster['master_IP'])
+
                 # check if file can be uploaded to hdfs
-                if file_size > int(dfs_remaining):
+                if file_size * replication_factor > int(dfs_remaining):
                     logging.log(SUMMARY, ' File too big to be uploaded' )
                     exit()
                 else:
@@ -266,7 +268,7 @@ class HadoopCluster(object):
                     ssh_stream_to__hadoop("hduser", cluster['master_IP'], 
                                           self.opts['source'], self.opts['destination'])
 
-                    logging.log(SUMMARY, ' File uploaded to Hadoop filesystem' )
+                    logging.log(SUMMARY, ' File uploaded to Hadoop filesystem' )                    
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)

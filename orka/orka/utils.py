@@ -13,6 +13,7 @@ import re
 from collections import OrderedDict
 from datetime import datetime
 import subprocess
+import xml.etree.ElementTree as ET
 
 def get_api_urls(action):
     """ Return api url from .kamakirc file"""
@@ -193,3 +194,23 @@ def ssh_stream_to__hadoop(user, master_IP, source_file, dest_dir):
                                     + "/" + filename[len(filename)-1], stderr=FNULL, shell=True)
 
     return response
+
+def read_replication_factor(user, master_IP):
+    """
+        SSH to master VM
+        and read the replication factor
+        from the hdfs-site.xml 
+    """
+    hdfs_xml = subprocess.check_output("ssh " + user + "@" + master_IP 
+                                            + " \"" + "cat /usr/local/hadoop/etc/hadoop/hdfs-site.xml\"", 
+                                            shell=True)
+
+    doc = ET.ElementTree(ET.fromstring(hdfs_xml))
+    root = doc.getroot()
+    for child in root.iter("property"):
+        name = child.find("name").text
+        if name == "dfs.replication":
+            replication_factor = int(child.find("value").text)
+            break
+
+    return replication_factor
