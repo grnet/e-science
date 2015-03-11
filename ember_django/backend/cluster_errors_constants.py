@@ -68,6 +68,7 @@ const_cluster_status_pending = "2"
 const_hadoop_status_stopped = "0"
 const_hadoop_status_started = "1"
 const_hadoop_status_format = "2"
+const_hadoop_status_pending = const_hadoop_status_format
 const_hadoop_status_mkhdusr = "3"
 const_truncate_limit = 350
 const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"

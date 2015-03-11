@@ -121,7 +121,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserInfo
-        fields = ('id', 'user_id', 'user_theme', 'cluster', 'master_vm_password', 'escience_token', 'clusters')
+        fields = ('id', 'user_id', 'user_name', 'user_theme', 'cluster', 'master_vm_password', 'escience_token', 'clusters')
 
     def number_of_clusters(self, obj):
         """
