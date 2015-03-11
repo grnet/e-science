@@ -6,6 +6,7 @@ This module contains the definitions of returned errors and package constants.
 
 @author: Ioannis Stenos, Nick Vrionis
 """
+import os
 
 # Definitions of return value errors
 error_syntax_clustersize = -1
@@ -58,3 +59,5 @@ job_endpoint = '/api/jobs'
 hdfs_endpoint = '/api/hdfs'
 wait_timer_create = 30
 wait_timer_delete = 5
+HADOOP_PATH='/usr/local/hadoop/bin/hdfs'
+FNULL = open(os.devnull, 'w')

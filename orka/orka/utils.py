@@ -13,6 +13,8 @@ import re
 from collections import OrderedDict
 from operator import itemgetter, attrgetter, methodcaller
 from datetime import datetime
+import subprocess
+import xml.etree.ElementTree as ET
 
 def get_from_kamaki_conf(section, option, action=None):
     """ 
@@ -225,4 +227,57 @@ def compose(inner_func, *outer_funcs):
      if not outer_funcs:
          return inner_func
      outer_func = compose(*outer_funcs)
-     return lambda *args, **kwargs: outer_func(inner_func(*args, **kwargs))   
+     return lambda *args, **kwargs: outer_func(inner_func(*args, **kwargs))
+
+def ssh_call_hadoop(user, master_IP, func_arg):
+    """
+        SSH to master VM
+        and make Hadoop calls
+    """
+    response = subprocess.call( "ssh " + user + "@" + master_IP + " \"" + HADOOP_PATH 
+                     + func_arg + "\"", stderr=FNULL, shell=True)
+    
+    return response
+
+def ssh_check_output_hadoop(user, master_IP, func_arg):
+    """
+        SSH to master VM
+        and check output of Hadoop calls
+    """
+    response = subprocess.check_output( "ssh " + user + "@" + master_IP + " \"" + HADOOP_PATH 
+                     + func_arg + "\"", stderr=FNULL, shell=True).splitlines()
+    
+    return response
+
+def ssh_stream_to__hadoop(user, master_IP, source_file, dest_dir):
+    """
+        SSH to master VM
+        and stream files to hadoop
+    """
+    filename = source_file.split("/")
+    response = subprocess.call("cat " + source_file
+                                    + " | ssh " + user + "@" + master_IP 
+                                    + " " + HADOOP_PATH + " dfs -put - " + dest_dir
+                                    + "/" + filename[len(filename)-1], stderr=FNULL, shell=True)
+
+    return response
+
+def read_replication_factor(user, master_IP):
+    """
+        SSH to master VM
+        and read the replication factor
+        from the hdfs-site.xml 
+    """
+    hdfs_xml = subprocess.check_output("ssh " + user + "@" + master_IP 
+                                            + " \"" + "cat /usr/local/hadoop/etc/hadoop/hdfs-site.xml\"", 
+                                            shell=True)
+
+    doc = ET.ElementTree(ET.fromstring(hdfs_xml))
+    root = doc.getroot()
+    for child in root.iter("property"):
+        name = child.find("name").text
+        if name == "dfs.replication":
+            replication_factor = int(child.find("value").text)
+            break
+
+    return replication_factor

@@ -1,15 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
 """orka.orka: provides entry point main()."""
 import logging
+import os
+import subprocess
 from sys import argv
 from kamaki.clients import ClientError
 from cluster_errors_constants import *
 from argparse import ArgumentParser, ArgumentTypeError 
 from version import __version__
 from utils import ClusterRequest, ConnectionError, authenticate_escience, get_user_clusters, \
-    custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf
+    custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf, \
+ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to__hadoop, \
+    read_replication_factor
 from time import sleep
 import sys
 
@@ -79,8 +84,6 @@ class _ArgCheck(object):
         else:
             raise ArgumentTypeError(" %s must containt at least one letter." % val)
 
-
-# if response['job']['state'].split('%',1)[0].replace('\r','') != previous_response['job']['state'].split('%',1)[0].replace('\r',''):
 
 def task_message(task_id, escience_token, wait_timer, task='not_progress_bar'):
     """
@@ -233,6 +236,76 @@ class HadoopCluster(object):
             if result == 0:
                 sys.stdout.flush()
                 logging.log(SUMMARY, ' Transfered file to Hadoop filesystem')
+        except Exception, e:
+            logging.error(' Error:' + str(e.args[0]))
+            exit(error_fatal)
+
+def put(self):
+        """ Method for putting files to Hadoop clusters in~okeanos."""
+        
+        token = self.opts['token']
+        try:
+            escience_token = authenticate_escience(token)
+        except TypeError:
+            msg = ' Authentication error with token: ' + token
+            raise ClientError(msg, error_authentication)
+        except Exception,e:
+            print ' ' + str(e.args[0])
+    
+        clusters = get_user_clusters(token)
+        for cluster in clusters:
+            if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == '1':
+                break
+        else:
+            logging.error(' You can upload files to active clusters only.')
+            exit(error_fatal)
+        try:
+            FNULL = open(os.devnull, 'w')
+            filename = self.opts['source'].split("/")
+            
+            # check if file already exists in hdfs, 0: exists, 1: doesn't exist
+            file_exists = ssh_call_hadoop("hduser", cluster['master_IP'], 
+                                      " dfs -test -e " + self.opts['destination'] + filename[len(filename)-1])
+
+            if file_exists==0:
+                logging.log(SUMMARY, ' File already exists. Aborting upload.' )
+                exit()
+            else:
+                # size of file to be uploaded (in bytes)
+                file_size = os.path.getsize(self.opts['source'])
+
+                # check available free space in hdfs
+                report = ssh_check_output_hadoop("hduser", cluster['master_IP'], " dfsadmin -report / ")
+                for line in report:
+                    if line.startswith('DFS Remaining'):
+                        tokens = line.split(' ')
+                        dfs_remaining = tokens[2]
+                        break
+                # read replication factor
+                replication_factor = read_replication_factor("hduser", cluster['master_IP'])
+
+                # check if file can be uploaded to hdfs
+                if file_size * replication_factor > int(dfs_remaining):
+                    logging.log(SUMMARY, ' File too big to be uploaded' )
+                    exit()
+                else:
+                    # check if directory exists
+                    dir_exists = ssh_call_hadoop("hduser", cluster['master_IP'], 
+                                                 " dfs -test -e " + self.opts['destination'])
+
+                    if dir_exists==0:
+                        logging.log(SUMMARY, ' Target directory already exists' )
+                    else:
+                        logging.log(SUMMARY, ' Creating target directory to hdfs' )
+                        ssh_call_hadoop("hduser", cluster['master_IP'],
+                                        " dfs -mkdir " + self.opts['destination'])
+                
+                    """ Streaming """                
+                    logging.log(SUMMARY, ' Start uploading file to hdfs' )   
+                    ssh_stream_to__hadoop("hduser", cluster['master_IP'], 
+                                          self.opts['source'], self.opts['destination'])
+
+                    logging.log(SUMMARY, ' File uploaded to Hadoop filesystem' )                    
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)
