@@ -18,25 +18,22 @@ from cluster_errors_constants import *
 from celery import current_task
 from django_db_after_login import db_cluster_update, get_user_id
 from backend.models import UserInfo, ClusterInfo
-# Global constants
-MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 
 
 
 def retrieve_pending_clusters(token, project_name):
     """Retrieve pending cluster info"""
     uuid = get_user_id(token)
-    pending_quota = {"VMs": 0, "Cpus": 0, "Ram": 0, "Disk": 0, "Ip": 0,
-                     "Network": 0}
+    pending_quota = {"VMs": 0, "Cpus": 0, "Ram": 0, "Disk": 0, 
+                     "Ip": 0, "Network": 0}
     user = UserInfo.objects.get(uuid=uuid)
     # Get clusters with pending status
     pending_clusters = ClusterInfo.objects.filter(user_id=user,
                                                   project_name=project_name,
-                                                  cluster_status="2")
+                                                  cluster_status=const_cluster_status_pending)
     if pending_clusters:
         # Get all pending resources
-        # excluding ip and network (always zero pending as a convention
-        # for the time being)
+        # excluding ip and network (always zero pending as a convention for the time being)
         vm_sum, vm_cpu, vm_ram, vm_disk = 0, 0, 0, 0
         for cluster in pending_clusters:
             vm_sum = vm_sum + cluster.cluster_size
@@ -44,9 +41,8 @@ def retrieve_pending_clusters(token, project_name):
             vm_ram = vm_ram + cluster.ram_master + cluster.ram_slaves*(cluster.cluster_size - 1)
             vm_disk = vm_disk + cluster.disk_master + cluster.disk_slaves*(cluster.cluster_size - 1)
 
-        pending_quota = {"VMs": vm_sum, "Cpus": vm_cpu, "Ram": vm_ram,
-                         "Disk": vm_disk, "Ip": 0,
-                         "Network": 0}
+        pending_quota = {"VMs": vm_sum, "Cpus": vm_cpu, "Ram": vm_ram, "Disk": vm_disk, 
+                         "Ip": 0, "Network": 0}
 
     return pending_quota
 
@@ -57,8 +53,8 @@ def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', 
     """
     logging.log(SUMMARY, state)
     db_cluster_update(token, status, cluster_id, master_IP, state=state, password=password)
-    if len(state) > 349:
-        state = state[:348] + '..'
+    if len(state) >= const_truncate_limit:
+        state = state[:(const_truncate_limit-2)] + '..'
     current_task.update_state(state=state)
 
 
@@ -351,11 +347,11 @@ def check_images(token, project_id):
     available_images = []
     for image in list_current_images:
         # owner of image will be checked based on the uuid
-        if image['owner'] == "ec567bea-4fa2-433d-9935-261a0867ec60":
+        if image['owner'] == const_escience_uuid:
             image_properties = image['properties']
             if image_properties.has_key('hadoopconf'):
                 available_images.append(image['name'])
-        elif image['owner'] == "25ecced9-bf53-4145-91ee-cf47377e9fb2" and image['name'] == "Debian Base":
+        elif image['owner'] == const_system_uuid and image['name'] == "Debian Base":
             available_images.append(image['name'])
                 
     return available_images

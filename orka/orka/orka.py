@@ -116,8 +116,8 @@ class HadoopCluster(object):
         except ConnectionError:
             logging.error(' e-science server unreachable or down.')
             exit(error_fatal)
-        except ClientError:
-            logging.error(' Authentication error with token: ' + self.opts['token'])
+        except ClientError, e:
+            logging.error(e.message)
             exit(error_fatal)
         
 
@@ -152,7 +152,7 @@ class HadoopCluster(object):
         """ Method for deleting Hadoop clusters in~okeanos."""
         clusters = get_user_clusters(self.opts['token'])
         for cluster in clusters:
-            if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == '1':
+            if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == const_cluster_status_active:
                 break
         else:
             logging.error(' Only active clusters can be destroyed.')
@@ -177,16 +177,16 @@ class HadoopCluster(object):
         for cluster in clusters:
             if (cluster['id'] == self.opts['cluster_id']):
                 active_cluster = cluster
-                if cluster['cluster_status'] == '1':
+                if cluster['cluster_status'] == const_cluster_status_active:
                     break
         else:
             logging.error(' Hadoop can only be managed for an active cluster.')
             exit(error_fatal)
         if active_cluster:            
-            if (active_cluster['hadoop_status'] == "1" and action == "start"):
+            if (active_cluster['hadoop_status'] == const_hadoop_status_started and action == "start"):
                 logging.error(' Hadoop already started.')
                 exit(error_fatal)
-            elif (active_cluster['hadoop_status'] == "0" and action == "stop"):
+            elif (active_cluster['hadoop_status'] == const_hadoop_status_stopped and action == "stop"):
                 logging.error(' Hadoop already stopped.')
                 exit(error_fatal)
         try:
@@ -261,6 +261,8 @@ class UserClusterInfo(object):
                 for key in sorted_cluster:
                     if (opt_short and not self.cluster_short_list.has_key(key)) or self.cluster_skip_list.has_key(key):
                         continue
+                    # using string.format spec mini-language to create a hanging indent 
+                    # https://docs.python.org/2/library/string.html#formatstrings
                     if key == 'cluster_name':
                         fmt_string = '{:<5}' + key + ': {' + key + '}'
                     elif key == 'cluster_status':
@@ -301,114 +303,111 @@ def main():
                                             ' create or destroy')
     parser.add_argument("-V", "--version", action='version',
                         version=('orka %s' % __version__))
-    parser_c = subparsers.add_parser('create',
+    parser_create = subparsers.add_parser('create',
                                      help='Create a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
-    parser_d = subparsers.add_parser('destroy',
+    parser_destroy = subparsers.add_parser('destroy',
                                      help='Destroy a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
-    parser_i = subparsers.add_parser('list',
+    parser_list = subparsers.add_parser('list',
                                      help='List user clusters.')
-    parser_n = subparsers.add_parser('info',
+    parser_info = subparsers.add_parser('info',
                                      help='Information for a specific Hadoop-Yarn cluster.')    
-    parser_h = subparsers.add_parser('hadoop', 
+    parser_hadoop = subparsers.add_parser('hadoop', 
                                      help='Start or Stop a Hadoop-Yarn cluster.')
 
     
     if len(argv) > 1:
 
-        parser_c.add_argument("name", help='The specified name of the cluster.'
+        parser_create.add_argument("name", help='The specified name of the cluster.'
                               ' Will be prefixed by [orka]', type=checker.a_string_is)
-        parser_c.add_argument("cluster_size", help='Total number of cluster nodes',
+        parser_create.add_argument("cluster_size", help='Total number of cluster nodes',
                               type=checker.two_or_larger_is)
-        parser_c.add_argument("cpu_master", help='Number of CPU cores for the master node',
+        parser_create.add_argument("cpu_master", help='Number of CPU cores for the master node',
                               type=checker.positive_num_is)
-        parser_c.add_argument("ram_master", help='Size of RAM (MB) for the master node',
+        parser_create.add_argument("ram_master", help='Size of RAM (MB) for the master node',
                               type=checker.positive_num_is)
-        parser_c.add_argument("disk_master", help='Disk size (GB) for the master node',
+        parser_create.add_argument("disk_master", help='Disk size (GB) for the master node',
                               type=checker.five_or_larger_is)
-        parser_c.add_argument("cpu_slave", help='Number of CPU cores for the slave node(s)',
+        parser_create.add_argument("cpu_slave", help='Number of CPU cores for the slave node(s)',
                               type=checker.positive_num_is)
-        parser_c.add_argument("ram_slave", help='Size of RAM (MB) for the slave node(s)',
+        parser_create.add_argument("ram_slave", help='Size of RAM (MB) for the slave node(s)',
                               type=checker.positive_num_is)
-        parser_c.add_argument("disk_slave", help='Disk size (GB) for the slave node(s)',
+        parser_create.add_argument("disk_slave", help='Disk size (GB) for the slave node(s)',
                               type=checker.five_or_larger_is)
-        parser_c.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
+        parser_create.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
                               metavar='disk_template', choices=['Standard', 'Archipelago'], 
                               type=str.capitalize)
-        parser_c.add_argument("project_name", help='~okeanos project name'
+        parser_create.add_argument("project_name", help='~okeanos project name'
                               ' to request resources from ', type=checker.a_string_is)
-        parser_c.add_argument("--image", help='OS for the cluster.'
+        parser_create.add_argument("--image", help='OS for the cluster.'
                               ' Default is "Debian Base"', metavar='image',
                               default=default_image)
-        parser_c.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
+        parser_create.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
                               ' Default is HadoopImage (overrides image selection)',
                               nargs='?', metavar='hadoop_image_name', default=None,
                               const='Hadoop-2.5.2')
-        parser_c.add_argument("--auth_url", metavar='auth_url', default=auth_url,
+        parser_create.add_argument("--auth_url", metavar='auth_url', default=auth_url,
                               help='Synnefo authentication url. Default is ' +
                               auth_url)       
-        parser_c.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+        parser_create.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
                               help='Synnefo authentication token. Default read from .kamakirc')
 
 
-        parser_d.add_argument('cluster_id',
+        parser_destroy.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
-        parser_d.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+        parser_destroy.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
                               help='Synnefo authentication token. Default read from .kamakirc')
 
        
-        parser_i.add_argument('--status', help='Filter by status ({%(choices)s})'
+        parser_list.add_argument('--status', help='Filter by status ({%(choices)s})'
                               ' Default is all: no filtering.', type=str.upper,
                               metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
-        parser_i.add_argument('--verbose', help='List extra cluster details.',
+        parser_list.add_argument('--verbose', help='List extra cluster details.',
                               action="store_true")
-        parser_i.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+        parser_list.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
                               help='Synnefo authentication token. Default read from .kamakirc')         
         
         
-        parser_h.add_argument('hadoop_status', 
+        parser_hadoop.add_argument('hadoop_status', 
                               help='Hadoop status (choices: {%(choices)s})', type=str.lower,
                               metavar='hadoop_status', choices=['start', 'format', 'stop'])
-        parser_h.add_argument('cluster_id',
+        parser_hadoop.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
-        parser_h.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+        parser_hadoop.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
                               help='Synnefo authentication token. Default read from .kamakirc')
         
         
-        parser_n.add_argument('cluster_id',
+        parser_info.add_argument('cluster_id',
                                  help='The id of the Hadoop cluster', type=checker.positive_num_is)
-        parser_n.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+        parser_info.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
                               help='Synnefo authentication token. Default read from .kamakirc')
 
 
         opts = vars(parser.parse_args(argv[1:]))
+        c_hadoopcluster = HadoopCluster(opts)
+        c_userclusters = UserClusterInfo(opts)
+        
         verb = argv[1]
         if verb == 'create':
             if opts['use_hadoop_image']:
                 opts['image'] = opts['use_hadoop_image']
-        elif verb == 'info':
-            opts['verbose'] = True
-            opts['status'] = None
+            c_hadoopcluster.create()
+        elif verb == 'destroy':
+            c_hadoopcluster.destroy()
+        elif verb == 'list' or verb == 'info':
+            if verb == 'info':
+                opts['verbose'] = True
+                opts['status'] = None
+            c_userclusters.list()        
+        elif verb == 'hadoop':
+            c_hadoopcluster.hadoop_action()
 
     else:
         logging.error('No arguments were given')
         parser.parse_args(' -h'.split())
         exit(error_no_arguments)
-    c_hadoopcluster = HadoopCluster(opts)
-    c_userclusters = UserClusterInfo(opts)
-    if verb == 'create':
-        c_hadoopcluster.create()
-
-    elif verb == 'destroy':
-        c_hadoopcluster.destroy()
-        
-    elif verb == 'list' or verb == 'info':
-        c_userclusters.list()
-        
-    elif verb == 'hadoop':
-        c_hadoopcluster.hadoop_action()
-
+         
 
 if __name__ == "__main__":
     main()
