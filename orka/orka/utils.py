@@ -12,6 +12,7 @@ import json
 import re
 from collections import OrderedDict
 from datetime import datetime
+import subprocess
 
 def get_api_urls(action):
     """ Return api url from .kamakirc file"""
@@ -172,3 +173,48 @@ def custom_sort_factory(order_list):
             return [sorter(x) for x in stuff]
         return stuff
     return sorter
+
+def ssh_call_hadoop(user, master_IP, func_arg):
+    """
+        SSH to master VM
+        and make Hadoop calls
+    """
+    response = subprocess.call( "ssh " + user + "@" + master_IP + " \"" + HADOOP_PATH 
+                     + func_arg + "\"", stderr=FNULL, shell=True)
+    
+    return response
+
+def ssh_check_output_hadoop(user, master_IP, func_arg):
+    """
+        SSH to master VM
+        and check output of Hadoop calls
+    """
+    response = subprocess.check_output( "ssh " + user + "@" + master_IP + " \"" + HADOOP_PATH 
+                     + func_arg + "\"", stderr=FNULL, shell=True).splitlines()
+    
+    return response
+
+def ssh_stream_to__hadoop(user, master_IP, source_file, dest_dir):
+    """
+        SSH to master VM
+        and stream files to hadoop
+    """
+    filename = source_file.split("/")
+    response = subprocess.call("cat " + source_file
+                                    + " | ssh " + user + "@" + master_IP 
+                                    + " " + HADOOP_PATH + " dfs -put - " + dest_dir
+                                    + "/" + filename[len(filename)-1], stderr=FNULL, shell=True)
+
+    return response
+
+def ssh_stream_from__hadoop(user, master_IP, source_file, dest_dir, filename):
+    """
+        SSH to master VM and
+        stream files from hadoop to local
+    """
+    response = subprocess.call("ssh " + user + "@"
+                                    + master_IP + " \"" + HADOOP_PATH 
+                                    + " dfs -text " + source_file + "\""
+                                    + " | tee " + dest_dir + "/" + filename, stderr=FNULL, stdout=FNULL, shell=True)
+    
+    return response
