@@ -28,10 +28,10 @@ def get_from_kamaki_conf(section, option, action=None):
     try:
         option_value = parser.get(section,option)
     except NoSectionError:
-        msg = ' Did not find a section {0} in .kamakirc'.format(section)
+        msg = ' Could not find section \'{0}\' in .kamakirc'.format(section)
         raise ClientError(msg, error_syntax_auth_token)
     except NoOptionError:
-        msg = ' Did not find an option {0} in section {1} in .kamakirc'.format(option,section)
+        msg = ' Could not find option \'{0}\' in section \'{1}\' in .kamakirc'.format(option,section)
         raise ClientError(msg, error_syntax_auth_token)
     
     if option_value:
@@ -124,7 +124,10 @@ def authenticate_escience(token):
     """
     payload = {"user": {"token": token}}
     headers = {'content-type': 'application/json'}
-    url_login = get_from_kamaki_conf('orka','base_url',action='login')
+    try:
+        url_login = get_from_kamaki_conf('orka','base_url',action='login')
+    except ClientError, e:
+        raise e
     r = requests.post(url_login, data=json.dumps(payload), headers=headers)
     response = json.loads(r.text)
     try:

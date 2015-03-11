@@ -155,7 +155,7 @@
 	            <h4 id = "vm_flavors_Master" class="btn-group">Predefined VM Flavors: </h4>
                 <div class="btn-group">
 	                {{#each item in project_current.vm_flavors_choices}}
-		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_Master"
+		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_master"
 		            class="btn btn-primary btn-sm" disabled = false}}
 		            {{item}}{{/view}}
 		            {{/each}}
@@ -178,8 +178,8 @@
             <div class="col col-sm-4">
                 <h4 id="master_ram_summary">RAM: {{this.master_ram_selection}} </h4>
                 <div class="btn-group">
-                    {{#each item in project_current.mem_choices}}
-                    {{#view App.MEMSelButView value=item name="master_ram_button"
+                    {{#each item in project_current.ram_choices}}
+                    {{#view App.RAMSelButView value=item name="master_ram_button"
                     class="btn btn-primary btn-sm" disabled=master_ram_Not_Allow}}
                     {{item}}{{/view}}
                     {{/each}}
@@ -214,7 +214,7 @@
                 CPUs ({{this.cpu_available}} available)
             </div>
             <div class="col col-sm-4">
-                Memory size ({{this.ram_available}} MB available)
+                RAM size ({{this.ram_available}} MB available)
             </div>
             <div class="col col-sm-4">
                 Disk size ({{this.disk_available}} GB available)
@@ -234,7 +234,7 @@
 	            <h4 id = "vm_flavors_Slave" class="btn-group">Predefined VM Flavors: </h4>
                 <div class="btn-group">
 	                {{#each item in project_current.vm_flavors_choices}}
-		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_Slave"
+		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_slaves"
 		            class="btn btn-primary btn-sm" disabled = false}}
 		            {{item}}{{/view}}
 		            {{/each}}
@@ -256,8 +256,8 @@
             <div class="col col-sm-4">
                 <h4 id="slaves_ram_summary">RAM each: {{this.slaves_ram_selection}}</h4>
                 <div class="btn-group">
-                    {{#each item in project_current.mem_choices}}
-                    {{#view App.MEMSelButView value=item name="slaves_ram_button" class="btn btn-primary btn-sm" disabled=slaves_ram_Not_Allow}}{{item}}{{/view}}
+                    {{#each item in project_current.ram_choices}}
+                    {{#view App.RAMSelButView value=item name="slaves_ram_button" class="btn btn-primary btn-sm" disabled=slaves_ram_Not_Allow}}{{item}}{{/view}}
                     {{/each}}
                 </div>
             </div>
@@ -290,7 +290,7 @@
                 CPUs ({{this.cpu_available}} available)
             </div>
             <div class="col col-sm-4">
-                Memory size ({{this.ram_available}} MB available)
+                RAM size ({{this.ram_available}} MB available)
             </div>
             <div class="col col-sm-4">
                 Disk size ({{this.disk_available}} GB available)

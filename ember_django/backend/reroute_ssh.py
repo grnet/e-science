@@ -129,6 +129,12 @@ def get_ready_for_reroute(hostname_master, password):
                                  '--out-interface eth2 -j MASQUERADE')
         exec_command(ssh_client, 'iptables --append FORWARD --in-interface '
                                  'eth2 -j ACCEPT')
+        # iptables commands to route Hdfs 9000 port traffic from master_VM public ip to
+        # 192.168.0.2, which is the ip used in core-site.xml configuration.
+        exec_command(ssh_client, 'iptables -t nat -A PREROUTING -p tcp --dport 9000'
+                                 ' -j DNAT --to-destination 192.168.0.2:9000')
+        exec_command(ssh_client, 'iptables -t nat -A POSTROUTING -p tcp -d 192.168.0.2 --dport 9000'
+                                 ' -j SNAT --to-source ' + hostname_master)
     finally:
         ssh_client.close()
 
