@@ -46,6 +46,9 @@ error_multiple_entries = -72
 error_project_quota = -73
 error_authentication = -99
 
+# Hadoop test command error return status
+error_hdfs_test_exit_status = 1
+
 # Package constants
 ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
 REPORT = 25  # Define logging level of REPORT

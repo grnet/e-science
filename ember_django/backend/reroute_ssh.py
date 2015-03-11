@@ -13,6 +13,7 @@ import paramiko
 from time import sleep
 import select
 from celery import current_task
+from cluster_errors_constants import error_hdfs_test_exit_status
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ssh_client, REPORT, \
@@ -26,52 +27,49 @@ HADOOP_HOME = '/usr/local/hadoop/bin/'
 
 
 class HdfsRequest(object):
-
+    """
+    Class with the required methods for performing ftp/http file transfer to hdfs and checking for errors.
+    """
     def __init__(self, opts):
         self.opts = opts
         self.ssh_client = establish_connect(self.opts['master_IP'], 'hduser', '',
                                    MASTER_SSH_PORT)
 
-    def check_file_zero_size(self):
+
+    def check_file(self, check=''):
         """
-        Check if file is zero size.
+        Checks, depending on the value of check arg, if file exists in hdfs or has zero size.
         """
-        check_cmd = HADOOP_HOME + 'hadoop fs -test -z ' + self.opts['dest']
+        if check == 'exist':
+            check_arg = ' -e '
+            error_msg = ' Path or file %s already exists' % self.opts['dest']
+        elif check == 'zero_size':
+            check_arg = ' -z '
+            error_msg = ' Transfer of file %s failed. ' % self.opts['dest']
+
+        check_cmd = HADOOP_HOME + 'hadoop fs -test' + check_arg + self.opts['dest']
         try:
             status = exec_command(self.ssh_client, check_cmd)
         except RuntimeError, e:
-            if e.args[1] == 1:
+            if e.args[1] == error_hdfs_test_exit_status:
                 return 0
         if status == 0:
-            msg = ' Transfer of file %s failed. ' % self.opts['dest']
-            raise RuntimeError(msg)
-
-
-    def check_file_exist(self):
-        """
-        Check if file exists in hdfs
-        """
-        check_cmd = HADOOP_HOME + 'hadoop fs -test -e ' + self.opts['dest']
-        try:
-            status = exec_command(self.ssh_client, check_cmd)
-        except RuntimeError, e:
-            if e.args[1] == 1:
-                return 0
-        if status == 0:
-            msg = ' Path or file %s already exists' % self.opts['dest']
-            raise RuntimeError(msg)
+            if check == 'zero_size':
+                rm_cmd = HADOOP_HOME + 'hadoop fs -rm ' + self.opts['dest']
+                exec_command(self.ssh_client, rm_cmd)
+            raise RuntimeError(error_msg)
 
     def put_file_hdfs(self):
         """
-        Put a file from ftp to hdfs
+        Put a file from ftp/hhtp to hdfs
         """
 
         try:
-            # -c to resume download, -b to background
+            # -c to resume download
             put_cmd = ' wget --user=' + self.opts['user'] + ' --password=' + self.opts['password'] + ' ' +\
                       self.opts['source'] + ' -O - |' + HADOOP_HOME + 'hadoop fs -put - ' + self.opts['dest']
             put_cmd_status = exec_command(self.ssh_client, put_cmd, command_state='celery_task')
-            self.check_file_zero_size()
+            self.check_file(check='zero_size')
             return put_cmd_status
         finally:
             self.ssh_client.close()
