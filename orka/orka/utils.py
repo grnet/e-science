@@ -215,6 +215,6 @@ def ssh_stream_from__hadoop(user, master_IP, source_file, dest_dir, filename):
     response = subprocess.call("ssh " + user + "@"
                                     + master_IP + " \"" + HADOOP_PATH 
                                     + " dfs -text " + source_file + "\""
-                                    + " | tee " + dest_dir + "/" + filename, stderr=FNULL, stdout=FNULL, shell=True)
+                                    + " | tee 1>>" + dest_dir + "/" + filename, stderr=FNULL, shell=True)
     
     return response
