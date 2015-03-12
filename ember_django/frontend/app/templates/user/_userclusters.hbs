@@ -35,7 +35,7 @@ Grid should be sort-able by status & size -->
                             <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
                             	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
                             </td>
-                            <td><i {{bind-attr class="usercluster.cluster_hadoop_status_class"}}></i>{{usercluster.hadoop_status_verbose}}</td>
+                            <td><i {{bind-attr id='usercluster.hadoop_status_id' class="usercluster.cluster_hadoop_status_class"}}></i>{{usercluster.hadoop_status_verbose}}</td>
                             <td>{{usercluster.cluster_size}}</td>
                             {{#if usercluster.hadoop_status_active}}
                             	<td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
@@ -51,14 +51,14 @@ Grid should be sort-able by status & size -->
 							</div>
                             {{else}}
                             <div class='btn-group btn-block'>
-                            	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY CLUSTER' ><button class="btn btn-xs btn-default"{{action 'confirmAction' usercluster 'cluster_delete'}}>
-                            		<b {{bind-attr id='usercluster.cluster_destroy_id' class='usercluster.cluster_status_class_destroy'}}></b> </button></div>
-                            	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='START HADOOP'><button class="btn btn-xs btn-default" {{action 'confirmAction' usercluster 'hadoop_start'}}{{bind-attr disabled=usercluster.hadoop_action_start_disabled}}> 
-                            		<b {{bind-attr id='usercluster.hadoop_start_id' class='usercluster.hadoop_status_class_start'}}></b> </button></div>
-                            	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='STOP HADOOP'><button class="btn btn-xs btn-default" {{action 'confirmAction' usercluster 'hadoop_stop'}}{{bind-attr disabled=usercluster.hadoop_action_stop_disabled}}> 
-                            		<b {{bind-attr id='usercluster.hadoop_stop_id' class='usercluster.hadoop_status_class_stop'}}></b> </button></div>
-                            	<div class="pull-left"  data-toggle="tooltip" data-placement="top" data-title='FORMAT HDFS'> <button class="btn btn-xs btn-default" {{action 'confirmAction' usercluster 'hadoop_format'}}{{bind-attr disabled=usercluster.hadoop_action_format_disabled}}> 
-                            		<b {{bind-attr id='usercluster.hadoop_format_id' class='usercluster.hadoop_status_class_format'}}></b> </button></div>
+                            	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY CLUSTER'><button {{bind-attr id='usercluster.cluster_destroy_id'}} class="btn btn-xs btn-default"{{action 'confirmAction' usercluster 'cluster_delete'}}>
+                            		<b {{bind-attr class='usercluster.cluster_status_class_destroy'}}></b> </button></div>
+                            	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='START HADOOP'><button {{bind-attr id='usercluster.hadoop_start_id'}} class="btn btn-xs btn-default" {{action 'confirmAction' usercluster 'hadoop_start'}}{{bind-attr disabled=usercluster.hadoop_action_start_disabled}}> 
+                            		<b {{bind-attr class='usercluster.hadoop_status_class_start'}}></b> </button></div>
+                            	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='STOP HADOOP'><button {{bind-attr id='usercluster.hadoop_stop_id'}} class="btn btn-xs btn-default" {{action 'confirmAction' usercluster 'hadoop_stop'}}{{bind-attr disabled=usercluster.hadoop_action_stop_disabled}}> 
+                            		<b {{bind-attr class='usercluster.hadoop_status_class_stop'}}></b> </button></div>
+                            	<div class="pull-left"  data-toggle="tooltip" data-placement="top" data-title='FORMAT HDFS'> <button {{bind-attr id='usercluster.hadoop_format_id'}} class="btn btn-xs btn-default" {{action 'confirmAction' usercluster 'hadoop_format'}}{{bind-attr disabled=usercluster.hadoop_action_format_disabled}}> 
+                            		<b {{bind-attr class='usercluster.hadoop_status_class_format'}}></b> </button></div>
                             </div>
                             {{/if}}	
                             {{/if}}
@@ -77,7 +77,7 @@ Grid should be sort-able by status & size -->
                             <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
                             	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
                             </td>
-                            <td><i {{bind-attr class="usercluster.cluster_hadoop_status_class"}}></i>{{usercluster.hadoop_status_verbose}}</td>
+                            <td><i {{bind-attr id='usercluster.hadoop_status_id' class="usercluster.cluster_hadoop_status_class"}}></i>{{usercluster.hadoop_status_verbose}}</td>
                             <td>{{usercluster.cluster_size}}</td>
                             {{#if usercluster.hadoop_status_active}}
                             	<td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
@@ -93,14 +93,14 @@ Grid should be sort-able by status & size -->
 							</div>
                             {{else}}
                             <div class='btn-group btn-block'>
-                            	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY CLUSTER' ><button class="btn btn-xs btn-default"{{action 'confirmAction' usercluster 'cluster_delete'}}>
-                            		<b {{bind-attr id='usercluster.cluster_destroy_id' class='usercluster.cluster_status_class_destroy'}}></b> </button></div>
-                            	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='START HADOOP'><button class="btn btn-xs btn-default" {{action 'confirmAction' usercluster 'hadoop_start'}}{{bind-attr disabled=usercluster.hadoop_action_start_disabled}}> 
-                            		<b {{bind-attr id='usercluster.hadoop_start_id' class='usercluster.hadoop_status_class_start'}}></b> </button></div>
-                            	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='STOP HADOOP'><button class="btn btn-xs btn-default" {{action 'confirmAction' usercluster 'hadoop_stop'}}{{bind-attr disabled=usercluster.hadoop_action_stop_disabled}}> 
-                            		<b {{bind-attr id='usercluster.hadoop_stop_id' class='usercluster.hadoop_status_class_stop'}}></b> </button></div>
-                            	<div class="pull-left"  data-toggle="tooltip" data-placement="top" data-title='FORMAT HDFS'> <button class="btn btn-xs btn-default" {{action 'confirmAction' usercluster 'hadoop_format'}}{{bind-attr disabled=usercluster.hadoop_action_format_disabled}}> 
-                            		<b {{bind-attr id='usercluster.hadoop_format_id' class='usercluster.hadoop_status_class_format'}}></b> </button></div>
+                            	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY CLUSTER' ><button {{bind-attr id='usercluster.cluster_destroy_id'}} class="btn btn-xs btn-default"{{action 'confirmAction' usercluster 'cluster_delete'}}>
+                            		<b {{bind-attr class='usercluster.cluster_status_class_destroy'}}></b> </button></div>
+                            	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='START HADOOP'><button {{bind-attr id='usercluster.hadoop_start_id'}} class="btn btn-xs btn-default" {{action 'confirmAction' usercluster 'hadoop_start'}}{{bind-attr disabled=usercluster.hadoop_action_start_disabled}}> 
+                            		<b {{bind-attr class='usercluster.hadoop_status_class_start'}}></b> </button></div>
+                            	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='STOP HADOOP'><button {{bind-attr id='usercluster.hadoop_stop_id'}} class="btn btn-xs btn-default" {{action 'confirmAction' usercluster 'hadoop_stop'}}{{bind-attr disabled=usercluster.hadoop_action_stop_disabled}}> 
+                            		<b {{bind-attr class='usercluster.hadoop_status_class_stop'}}></b> </button></div>
+                            	<div class="pull-left"  data-toggle="tooltip" data-placement="top" data-title='FORMAT HDFS'> <button {{bind-attr id='usercluster.hadoop_format_id'}} class="btn btn-xs btn-default" {{action 'confirmAction' usercluster 'hadoop_format'}}{{bind-attr disabled=usercluster.hadoop_action_format_disabled}}> 
+                            		<b {{bind-attr class='usercluster.hadoop_status_class_format'}}></b> </button></div>
                             </div>
                             {{/if}}	
                             {{/if}}

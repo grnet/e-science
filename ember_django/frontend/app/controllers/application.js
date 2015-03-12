@@ -1,5 +1,5 @@
 // Main application controller
-// loggedIn, homeURL, STATIC_URL
+// loggedIn, homeURL, adminURL, STATIC_URL
 App.ApplicationController = Ember.Controller.extend({
 	needs : 'userWelcome',
 	loggedIn : false,
@@ -10,6 +10,10 @@ App.ApplicationController = Ember.Controller.extend({
 			return "#/";
 		}
 	}.property('loggedIn'),
+	adminURL : function() {
+		var admin_url = window.location.origin + "/admin";
+		return admin_url;
+	}.property(),
 	STATIC_URL : DJANGO_STATIC_URL,
 
 	userTheme : user_themes,

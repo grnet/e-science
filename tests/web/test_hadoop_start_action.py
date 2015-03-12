@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 '''
-This script is a test generator and checks that the cluster size responds when flavor buttons are pressed
+This script is a test for hadoop start action it creates a cluster and then stops haoop
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
 from selenium import webdriver
 import sys, os
 from os.path import join, dirname, abspath
+from ansible.runner.filter_plugins.core import success
 sys.path.append(join(dirname(abspath(__file__)), '../../ember_django'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from selenium.webdriver.common.by import By
@@ -23,7 +24,7 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class test_buttons_availability_respond_to_cluster_size_change(unittest.TestCase):
+class test_hadoop_start_action(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -54,7 +55,7 @@ class test_buttons_availability_respond_to_cluster_size_change(unittest.TestCase
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     
-    def test_buttons_availability_respond_to_cluster_size_change(self):
+    def test_hadoop_start_action(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_id("id_login").click()     
@@ -76,68 +77,88 @@ class test_buttons_availability_respond_to_cluster_size_change(unittest.TestCase
         driver.find_element_by_id("id_services_dd").click()
         driver.find_element_by_id("id_create_cluster").click()        
         try:
-            element = WebDriverWait(driver, 30).until(
+            element = WebDriverWait(driver, 60).until(
                 EC.presence_of_element_located((By.ID, "id_title_cluster_create_route"))
             ) 
-        except: self.fail("time out")      
+        except: self.fail("time out")
         auth = check_credentials(self.token)
         try:
             list_of_projects = auth.get_projects(state='active')
         except Exception:
             self.assertTrue(False,'Could not get list of projects')
         kamaki_flavors = get_flavor_id(self.token)
-        for project in list_of_projects:
-            user_quota = check_quota(self.token, project['id']) 
-            if project['name'] == 'system:' + project['id']:
-                project_name = 'system'
-            else:
-                project_name = project['name'] 
-            list = Select(driver.find_element_by_id("project_id")).options
-            no_project = True
-            for index in range(0,len(list)):
-                if re.match(project_name, list[index].text):
-                    Select(driver.find_element_by_id("project_id")).select_by_visible_text(list[index].text)  
-                    no_project = False
-                    break
-            if no_project:
-                   self.assertTrue(False,'No project found with given project name')                    
-            driver.find_element_by_id("cluster_name").clear()
-            cluster_name = 'test_cluster' + str(randint(0,9999))
-            driver.find_element_by_id("cluster_name").send_keys(cluster_name)
-            hadoop_image = 'Hadoop-2.5.2'                           
-            Select(driver.find_element_by_id("os_systems")).select_by_visible_text(hadoop_image)            
-            flag = False
-            cluster_sizes = driver.find_element_by_id("size_of_cluster").text
+        user_quota = check_quota(self.token, self.project_id)
+        list = Select(driver.find_element_by_id("project_id")).options
+        no_project = True
+        for index in range(0,len(list)):
+            if re.match(self.project_name, list[index].text):
+                Select(driver.find_element_by_id("project_id")).select_by_visible_text(list[index].text)  
+                no_project = False
+                break
+        if no_project:
+               self.assertTrue(False,'No project found with given project name')                    
+        driver.find_element_by_id("cluster_name").clear()
+        cluster_name = 'test_cluster' + str(randint(0,9999))
+        driver.find_element_by_id("cluster_name").send_keys(cluster_name)
+        hadoop_image = 'Hadoop-2.5.2'                           
+        Select(driver.find_element_by_id("os_systems")).select_by_visible_text(hadoop_image)
+        Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text('2')
+        for role in ['master' , 'slaves']:
+            for flavor in ['cpus' , 'ram' , 'disk']:
+                button_id = role + '_' + flavor + '_' + str(kamaki_flavors[flavor][0])
+                driver.find_element_by_id(button_id).click()
+        self.assert_(True , 'ok')
+        driver.find_element_by_id("next").click()
+        print 'Creating cluster...'
+        for i in range(1500): 
+            # wait for cluster create to finish
             try:
-                current_cluster_size = int(cluster_sizes.rsplit('\n', 1)[-1])
-                print ('Project '+ project_name +' has enough vms to run the test')
-                for cluster_size_selection in range(3,user_quota['cluster_size']['available']):
-                    for flavor in ['cpus' , 'ram' , 'disk']:
-                        for master in kamaki_flavors[flavor]:
-                            for slaves in reversed(kamaki_flavors[flavor]):
-                                if (((user_quota[flavor]['available'] - (master + slaves)) >= 0) and ((user_quota[flavor]['available'] - (master + (cluster_size_selection-1)*slaves)) < 0)):
-                                    initial_cluster_size = driver.find_element_by_id("size_of_cluster").text
-                                    button_id = 'master' + '_' + flavor + '_' + str(master)
-                                    driver.find_element_by_id(button_id).click()
-                                    button_id = 'slaves' + '_' + flavor + '_' + str(master)
-                                    driver.find_element_by_id(button_id).click()
-                                    current_cluster_sizes = driver.find_element_by_id("size_of_cluster").text
-                                    try: self.assertNotEqual(initial_cluster_size, driver.find_element_by_id("size_of_cluster").text)
-                                    except AssertionError as e: self.verificationErrors.append(str(e))
-                                    flag = True
-                                    break
-                                if flag: break
-                            if flag: break
-                        if flag: break
-                    if flag: break
-                if not flag:
-                    self.assertTrue(False,'Not enought vms to see a change in cluster size')
-            except:
-                flag = True
-                #   self.assertTrue(False,'Not enought vms to run the test')
-                print ('Project '+ project_name +' has not enough vms to run the test')
-            
+                if "glyphicon glyphicon-play text-success" == driver.find_element_by_id('id_hadoop_status_'+cluster_name).get_attribute("class"): 
+                    break
+                elif "glyphicon glyphicon-remove text-danger" == driver.find_element_by_id('id_cluster_status_'+cluster_name).get_attribute("class"):
+                    self.assertTrue(False,'Cluster destoryed')
+                    break
+                else:
+                    pass
+            except: pass
+            time.sleep(1)
+        driver.find_element_by_id('id_hadoop_stop_'+cluster_name).click()
+        time.sleep(5)
+        driver.find_element_by_id('id_confirm_' + cluster_name).click()
+        success =False
+        for i in range(180): 
+            # wait for cluster create to finish
+            try:
+                if "glyphicon glyphicon-stop text-danger" == driver.find_element_by_id('id_hadoop_status_'+cluster_name).get_attribute("class"): 
+                    success = True
+                    break
+                else:
+                    pass
+            except: pass
+            time.sleep(1)
+        #check that cluster url is up and page is running
+        if not success:
+            self.assertTrue(False,'hadoop status did not stop')
+        driver.find_element_by_id('id_hadoop_start_'+cluster_name).click()
+        time.sleep(5)
+        driver.find_element_by_id('id_confirm_' + cluster_name).click()
+        success =False
+        for i in range(300): 
+            # wait for cluster create to finish
+            try:
+                if "glyphicon glyphicon-play text-success" == driver.find_element_by_id('id_hadoop_status_'+cluster_name).get_attribute("class"): 
+                    self.assertTrue(True, "ok")
+                    success = True
+                    break
+                else:
+                    pass
+            except: pass
+            time.sleep(1)
+        #check that cluster url is up and page is running
+        if not success:
+            self.assertTrue(False,'hadoop status did not start')
 
+    
     def is_element_present(self, how, what):
         try: self.driver.find_element(by=how, value=what)
         except NoSuchElementException, e: return False
@@ -161,6 +182,8 @@ class test_buttons_availability_respond_to_cluster_size_change(unittest.TestCase
     
     def tearDown(self):
         self.driver.quit()
+        self.assertEqual([], self.verificationErrors)
 
 if __name__ == "__main__":
     unittest.main()
+

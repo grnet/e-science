@@ -1,20 +1,96 @@
 ---
   - name: Install passlib
     pip: name=passlib
-    tags: setuporkaadmin
+    tags: preimage
 
   - name: create orka group
     group: name=orkagroup state=present
-    tags: setuporkaadmin
+    tags: postimage
 
   - name: create orka_admin user
     user: name=orka_admin groups="orkagroup,sudo" generate_ssh_key=yes shell=/bin/bash update_password=always password=$1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20 state=present
-    tags: setuporkaadmin
+    tags: postimage
 
   - name: create server root user ssh key
     user: name=root generate_ssh_key=yes shell=/bin/bash state=present
-    tags: setuprootssh
+    tags: postimage
 
   - name: copy local box master ssh key to orka_admin
-    tags: setuporkaadmin
+    tags: postimage
     authorized_key: user=orka_admin key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+  - name: Install curl
+    apt: name=curl
+    tags: preimage
+
+  - name: Get rabbitmq-server latest version
+    tags: preimage
+    get_url: url=https://www.rabbitmq.com/releases/rabbitmq-server/v3.4.3/rabbitmq-server_3.4.3-1_all.deb dest=./
+
+  - name: Install apt keys
+    apt_key: "url={{item.url}}"
+    with_items:
+      - { url: 'http://nginx.org/keys/nginx_signing.key' }
+      - { url: 'http://packages.erlang-solutions.com/debian/erlang_solutions.asc' }
+    tags: preimage
+
+  - name: Adding repos
+    apt_repository: repo='{{item}}' state=present update_cache=yes
+    with_items:
+      - deb http://ftp.debian.org/debian/ jessie-updates main contrib
+      - deb http://nginx.org/packages/debian/ wheezy nginx
+      - deb-src http://nginx.org/packages/debian/ wheezy nginx
+      - deb http://packages.erlang-solutions.com/debian wheezy contrib
+    tags: preimage
+
+  - name: Copy my_preferences file
+    copy: src={{path_to_pref}} dest=/etc/apt/preferences.d/
+    tags: preimage
+
+  - name: Assert that no old version of rabbitmq is on webserver
+    tags: preimage
+    apt: name=rabbitmq-server purge=yes state=absent force=yes
+
+  - name: Install RabbitMQ broker, PostgreSQL and needed dependencies
+    tags: preimage
+    apt: "name={{item}}"
+    with_items:
+      - erlang
+      - postgresql
+      - postgresql-client
+      - python-psycopg2
+      - libpq-dev
+      - python-dev
+      - git
+      - python-flup
+      - nginx
+      - sshpass
+
+  - name: Install rabbitmq-server latest version
+    tags: preimage
+    apt: deb=rabbitmq-server_3.4.3-1_all.deb
+
+  - name: Install Celery, Django and Django rest framework
+    tags: preimage
+    pip: "name={{item.name}}"
+    with_items:
+      - { name: 'celery' }
+      - { name: 'Django' }
+      - { name: 'rest_framework_ember' }
+      - { name: 'djangorestframework==2.4.3' }
+      - { name: 'markdown' }
+      - { name: 'django-filter' }
+      - { name: 'djorm-pgarray' }
+      - { name: 'paramiko' }
+      - { name: 'uwsgi' }
+      - { name: 'requests' }
+      - { name: 'django-celery' }
+      - { name: 'flower' }
+
+  - name: Rabbitmq-server vhost configuration
+    tags: postimage
+    rabbitmq_vhost: name=/escience_tasks state=present
+
+  - name: Rabbitmq-server user configuration
+    tags: postimage
+    rabbitmq_user: user=orkarbmq password=orkapass vhost=/escience_tasks configure_priv=.* read_priv=.* write_priv=.* state=present

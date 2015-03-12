@@ -18,35 +18,31 @@ from cluster_errors_constants import *
 from celery import current_task
 from django_db_after_login import db_cluster_update, get_user_id
 from backend.models import UserInfo, ClusterInfo
-# Global constants
-MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 
 
 
 def retrieve_pending_clusters(token, project_name):
     """Retrieve pending cluster info"""
     uuid = get_user_id(token)
-    pending_quota = {"VMs": 0, "Cpus": 0, "Ram": 0, "Disk": 0, "Ip": 0,
-                     "Network": 0}
+    pending_quota = {"VMs": 0, "Cpus": 0, "Ram": 0, "Disk": 0, 
+                     "Ip": 0, "Network": 0}
     user = UserInfo.objects.get(uuid=uuid)
     # Get clusters with pending status
     pending_clusters = ClusterInfo.objects.filter(user_id=user,
                                                   project_name=project_name,
-                                                  cluster_status="2")
+                                                  cluster_status=const_cluster_status_pending)
     if pending_clusters:
         # Get all pending resources
-        # excluding ip and network (always zero pending as a convention
-        # for the time being)
+        # excluding ip and network (always zero pending as a convention for the time being)
         vm_sum, vm_cpu, vm_ram, vm_disk = 0, 0, 0, 0
         for cluster in pending_clusters:
             vm_sum = vm_sum + cluster.cluster_size
             vm_cpu = vm_cpu + cluster.cpu_master + cluster.cpu_slaves*(cluster.cluster_size - 1)
-            vm_ram = vm_ram + cluster.mem_master + cluster.mem_slaves*(cluster.cluster_size - 1)
+            vm_ram = vm_ram + cluster.ram_master + cluster.ram_slaves*(cluster.cluster_size - 1)
             vm_disk = vm_disk + cluster.disk_master + cluster.disk_slaves*(cluster.cluster_size - 1)
 
-        pending_quota = {"VMs": vm_sum, "Cpus": vm_cpu, "Ram": vm_ram,
-                         "Disk": vm_disk, "Ip": 0,
-                         "Network": 0}
+        pending_quota = {"VMs": vm_sum, "Cpus": vm_cpu, "Ram": vm_ram, "Disk": vm_disk, 
+                         "Ip": 0, "Network": 0}
 
     return pending_quota
 
@@ -57,8 +53,8 @@ def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', 
     """
     logging.log(SUMMARY, state)
     db_cluster_update(token, status, cluster_id, master_IP, state=state, password=password)
-    if len(state) > 349:
-        state = state[:348] + '..'
+    if len(state) >= const_truncate_limit:
+        state = state[:(const_truncate_limit-2)] + '..'
     current_task.update_state(state=state)
 
 
@@ -259,6 +255,8 @@ def check_quota(token, project_id):
     auth = check_credentials(token)
     dict_quotas = get_user_quota(auth)
     project_name = auth.get_project(project_id)['name']
+    endpoints, user_id = endpoints_and_user_id(auth)
+    net_client = init_cyclades_netclient(endpoints['network'],token)
     # Get pending quota for given project id
     pending_quota = retrieve_pending_clusters(token, project_name)
 
@@ -301,13 +299,38 @@ def check_quota(token, project_id):
     if (available_vm > (project_limit_vm - project_usage_vm)):
         available_vm = project_limit_vm - project_usage_vm
     available_vm = available_vm - pending_vm
-
+    
+    pending_net = pending_quota['Network']
+    limit_net = dict_quotas[project_id]['cyclades.network.private']['limit']
+    usage_net = dict_quotas[project_id]['cyclades.network.private']['usage']
+    project_limit_net = dict_quotas[project_id]['cyclades.network.private']['project_limit']
+    project_usage_net = dict_quotas[project_id]['cyclades.network.private']['project_usage']
+    available_networks = limit_net - usage_net
+    if (available_networks > (project_limit_net - project_usage_net)):
+        available_networks = project_limit_net - project_usage_net
+    available_networks -= pending_net
+    
+    list_float_ips = net_client.list_floatingips()
+    pending_ips = pending_quota['Ip']
+    limit_ips = dict_quotas[project_id]['cyclades.floating_ip']['limit']
+    usage_ips = dict_quotas[project_id]['cyclades.floating_ip']['usage']
+    project_limit_ips = dict_quotas[project_id]['cyclades.floating_ip']['project_limit']
+    project_usage_ips = dict_quotas[project_id]['cyclades.floating_ip']['project_usage']
+    available_ips = limit_ips-usage_ips
+    if (available_ips > (project_limit_ips - project_usage_ips)):
+        available_ips = project_limit_ips - project_usage_ips
+    available_ips -= pending_ips
+    for d in list_float_ips:
+        if d['instance_id'] is None and d['port_id'] is None:
+            available_ips += 1
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
               'ram': {'limit': limit_ram, 'available': available_ram},
               'disk': {'limit': limit_cd,
                        'available': available_cyclades_disk_GB},
-              'cluster_size': {'limit': limit_vm, 'available': available_vm}}
+              'cluster_size': {'limit': limit_vm, 'available': available_vm},
+              'network': {'available': available_networks},
+              'float_ips': {'available': available_ips}}
     return quotas
 
 
@@ -324,9 +347,11 @@ def check_images(token, project_id):
     available_images = []
     for image in list_current_images:
         # owner of image will be checked based on the uuid
-        if image['owner'] == "ec567bea-4fa2-433d-9935-261a0867ec60":
-            available_images.append(image['name'])
-        elif image['owner'] == "25ecced9-bf53-4145-91ee-cf47377e9fb2" and image['name'] == "Debian Base":
+        if image['owner'] == const_escience_uuid:
+            image_properties = image['properties']
+            if image_properties.has_key('hadoopconf'):
+                available_images.append(image['name'])
+        elif image['owner'] == const_system_uuid and image['name'] == "Debian Base":
             available_images.append(image['name'])
                 
     return available_images

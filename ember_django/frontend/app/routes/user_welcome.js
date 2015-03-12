@@ -60,6 +60,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		willTransition : function(transition) {
 			// leaving this route
 			this.controller.send('timer', false);
+			this.controller.send('removeMessage',1,true);
 		},
 		didTransition : function() {
 			// arrived at this route
@@ -68,9 +69,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 				this.controller.set('count', 10);
 				this.controller.send('timer', true, this.store);
 			}
-            else {
-                this.controller.set('output_message', '');
-            }
 			return true;
 		},
 		takeAction : function(cluster) {
@@ -88,7 +86,10 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 					self.controller.send('timer', true, store);
 				}, function(reason) {
 					console.log(reason.message);
-					self.controller.set('output_message', reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
 				});
 				break;
 			case 'hadoop_start':
@@ -101,7 +102,10 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 					self.controller.send('timer', true, store);
 				},function(reason){
 					console.log(reason.message);
-					self.controller.set('output_message', reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
 				});
 				break;
 			case 'hadoop_stop':
@@ -114,7 +118,10 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 					self.controller.send('timer', true, store);
 				},function(reason){
 					console.log(reason.message);
-					self.controller.set('output_message', reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
 				});
 				break;
 			case 'hadoop_format':
@@ -127,13 +134,18 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 					self.controller.send('timer', true, store);
 				},function(reason){
 					console.log(reason.message);
-					self.controller.set('output_message', reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
 				});
 				break;
 			}
 		},
 		confirmAction : function(cluster, value) {
 			cluster.set('cluster_confirm_action', value);
+			// remove following line comment for easy message panel debug
+			// this.controller.send('addMessage',{'msg_type':'info','msg_text':'Lorem ipsum dolor sit amet.'+ String(Math.floor(Math.random() * 11))});
 		},
 		error : function(err) {
 			// to catch errors

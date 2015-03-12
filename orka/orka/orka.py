@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-
 """orka.orka: provides entry point main()."""
 import logging
 from sys import argv
@@ -9,8 +8,8 @@ from kamaki.clients import ClientError
 from cluster_errors_constants import *
 from argparse import ArgumentParser, ArgumentTypeError 
 from version import __version__
-from utils import ClusterRequest, ConnectionError, authenticate_escience, \
-    get_user_clusters, custom_sort_factory, custom_date_format
+from utils import ClusterRequest, ConnectionError, authenticate_escience, get_user_clusters, \
+    custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf
 from time import sleep
 
 
@@ -117,8 +116,8 @@ class HadoopCluster(object):
         except ConnectionError:
             logging.error(' e-science server unreachable or down.')
             exit(error_fatal)
-        except ClientError:
-            logging.error(' Authentication error with token: ' + self.opts['token'])
+        except ClientError, e:
+            logging.error(e.message)
             exit(error_fatal)
         
 
@@ -127,9 +126,9 @@ class HadoopCluster(object):
         try:
             payload = {"clusterchoice":{"project_name": self.opts['project_name'], "cluster_name": self.opts['name'],
                                         "cluster_size": self.opts['cluster_size'],
-                                        "cpu_master": self.opts['cpu_master'], "mem_master": self.opts['ram_master'],
+                                        "cpu_master": self.opts['cpu_master'], "ram_master": self.opts['ram_master'],
                                         "disk_master": self.opts['disk_master'], "cpu_slaves": self.opts['cpu_slave'],
-                                        "mem_slaves": self.opts['ram_slave'], "disk_slaves": self.opts['disk_slave'],
+                                        "ram_slaves": self.opts['ram_slave'], "disk_slaves": self.opts['disk_slave'],
                                         "disk_template": self.opts['disk_template'], "os_choice": self.opts['image']}}
             yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
             response = yarn_cluster_req.create_cluster()
@@ -153,7 +152,7 @@ class HadoopCluster(object):
         """ Method for deleting Hadoop clusters in~okeanos."""
         clusters = get_user_clusters(self.opts['token'])
         for cluster in clusters:
-            if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == '1':
+            if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == const_cluster_status_active:
                 break
         else:
             logging.error(' Only active clusters can be destroyed.')
@@ -170,24 +169,24 @@ class HadoopCluster(object):
             exit(error_fatal)
             
 
-    def hadoop_action(self, action):
+    def hadoop_action(self):
         """ Method for applying an action to a Hadoop cluster"""
-        action = str.lower(action)
+        action = str.lower(self.opts['hadoop_status'])
         clusters = get_user_clusters(self.opts['token'])
         active_cluster = None
         for cluster in clusters:
             if (cluster['id'] == self.opts['cluster_id']):
                 active_cluster = cluster
-                if cluster['cluster_status'] == '1':
+                if cluster['cluster_status'] == const_cluster_status_active:
                     break
         else:
             logging.error(' Hadoop can only be managed for an active cluster.')
             exit(error_fatal)
         if active_cluster:            
-            if (active_cluster['hadoop_status'] == "1" and action == "start"):
+            if (active_cluster['hadoop_status'] == const_hadoop_status_started and action == "start"):
                 logging.error(' Hadoop already started.')
                 exit(error_fatal)
-            elif (active_cluster['hadoop_status'] == "0" and action == "stop"):
+            elif (active_cluster['hadoop_status'] == const_hadoop_status_stopped and action == "stop"):
                 logging.error(' Hadoop already stopped.')
                 exit(error_fatal)
         try:
@@ -205,27 +204,33 @@ class HadoopCluster(object):
 
 class UserClusterInfo(object):
     """ Class holding user cluster info
-    sort: input clusters output cluster keys sorted according to spec
+    sortdict: input a cluster dictionary, output cluster with keys sorted according to order
+    sortlist: input a clusters list of cluster dictionaries, output a clusters list sorted according to cluster key
     list: pretty printer
     """
     def __init__(self, opts):
         self.opts = opts
         self.data = list()
-        self.order_list = [['cluster_name','id','action_date','cluster_size','cluster_status','hadoop_status',
+        self.cluster_list_order = [['cluster_name','id','action_date','cluster_size','cluster_status','hadoop_status',
                             'master_IP','project_name','os_image','disk_template',
-                            'cpu_master','mem_master','disk_master',
-                            'cpu_slaves','mem_slaves','disk_slaves']]
-        self.sort_func = custom_sort_factory(self.order_list)
-        self.short_list = {'id':True, 'cluster_name':True, 'action_date':True, 'cluster_size':True, 'cluster_status':True, 'hadoop_status':True, 'master_IP':True}
-        self.skip_list = {'task_id':True, 'state':True}
+                            'cpu_master','ram_master','disk_master',
+                            'cpu_slaves','ram_slaves','disk_slaves']]
+        self.sort_cluster_func = custom_sort_factory(self.cluster_list_order)
+        self.cluster_short_list = {'id':True, 'cluster_name':True, 'action_date':True, 'cluster_size':True,
+                                   'cluster_status':True, 'hadoop_status':True, 'master_IP':True}
+        self.cluster_skip_list = {'task_id':True, 'state':True}
         self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0'}
         self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED'}
         self.hdp_status_id_to_status_desc = {'0':'STOPPED','1':'STARTED','2':'FORMAT'}
         self.hdp_status_desc_to_status_id = {'STOPPED':'0','STARTED':'1','FORMAT':'2'}
         self.disk_template_to_label = {'ext_vlmc':'Archipelago', 'drbd':'Standard'}
-        
-    def sort(self, clusters):
-        return self.sort_func(clusters)
+        self.clusters_list_order = ['id']
+
+    def sortdict(self, cluster):
+        return self.sort_cluster_func(cluster)
+    
+    def sortlist(self, clusters, keys):
+        return custom_sort_list(clusters, keys)
     
     def list(self):
         try:
@@ -239,19 +244,27 @@ class UserClusterInfo(object):
         
         opt_short = not self.opts['verbose']
         opt_status = False
+        opt_cluster_id = self.opts.get('cluster_id',False)
+        cluster_count = 0
         if self.opts['status']:
             opt_status = self.status_desc_to_status_id[self.opts['status'].upper()]
         
         if len(self.data) > 0:
-            for cluster in self.data:
+            sorted_cluster_list = self.sortlist(self.data, self.clusters_list_order)
+            for cluster in sorted_cluster_list:
                 if opt_status and cluster['cluster_status'] != opt_status:
                     continue
-                sorted_cluster = self.sort(cluster)
+                if opt_cluster_id and cluster['id'] != opt_cluster_id:
+                    continue
+                cluster_count += 1
+                sorted_cluster = self.sortdict(cluster)
                 for key in sorted_cluster:
-                    if (opt_short and not self.short_list.has_key(key)) or self.skip_list.has_key(key):
+                    if (opt_short and not self.cluster_short_list.has_key(key)) or self.cluster_skip_list.has_key(key):
                         continue
+                    # using string.format spec mini-language to create a hanging indent 
+                    # https://docs.python.org/2/library/string.html#formatstrings
                     if key == 'cluster_name':
-                        fmt_string = '{:<5}' + key + ': {' + key + '}'
+                        fmt_string = u'{:<5}' + key + ': {' + key + '}'
                     elif key == 'cluster_status':
                         fmt_string = '{:<10}' + key + ': ' + self.status_id_to_status_desc[sorted_cluster[key]]
                     elif key == 'hadoop_status':
@@ -264,8 +277,10 @@ class UserClusterInfo(object):
                         fmt_string = '{:<10}' + key + ': {' + key + '}'
                     print fmt_string.format('',**sorted_cluster)
                 print ''
+            if cluster_count == 0:
+                print 'No cluster(s) found matching those options.'
         else:
-            print 'User has no Cluster Information available.'
+            print 'No user cluster Information available.'
 
 def main():
     """
@@ -275,122 +290,124 @@ def main():
     parser = ArgumentParser(description='Create or Destroy a Hadoop-Yarn'
                                         ' cluster in ~okeanos')
     checker = _ArgCheck()
+    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
+                                level=checker.logging_levels['summary'],
+                                datefmt='%H:%M:%S')
+    try:
+        kamaki_token = get_from_kamaki_conf('cloud "~okeanos"', 'token')
+    except ClientError, e:
+        kamaki_token = ' '
+        logging.warning(e.message)
+    
     subparsers = parser.add_subparsers(help='Choose Hadoop cluster action'
                                             ' create or destroy')
     parser.add_argument("-V", "--version", action='version',
                         version=('orka %s' % __version__))
-    parser_c = subparsers.add_parser('create',
+    parser_create = subparsers.add_parser('create',
                                      help='Create a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
-    parser_d = subparsers.add_parser('destroy',
+    parser_destroy = subparsers.add_parser('destroy',
                                      help='Destroy a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
-    parser_i = subparsers.add_parser('list',
+    parser_list = subparsers.add_parser('list',
                                      help='List user clusters.')
-    parser_h = subparsers.add_parser('hadoop', 
-                                     help='Start or Stop a Hadoop-Yarn cluster')
+    parser_info = subparsers.add_parser('info',
+                                     help='Information for a specific Hadoop-Yarn cluster.')    
+    parser_hadoop = subparsers.add_parser('hadoop', 
+                                     help='Start, Stop or Format a Hadoop-Yarn cluster.')
+
     
     if len(argv) > 1:
 
-        parser_c.add_argument("name", help='The specified name of the cluster.'
+        parser_create.add_argument("name", help='The specified name of the cluster.'
                               ' Will be prefixed by [orka]', type=checker.a_string_is)
-
-        parser_c.add_argument("cluster_size", help='Total number of cluster nodes',
+        parser_create.add_argument("cluster_size", help='Total number of cluster nodes',
                               type=checker.two_or_larger_is)
-
-        parser_c.add_argument("cpu_master", help='Number of CPU cores for the master node',
+        parser_create.add_argument("cpu_master", help='Number of CPU cores for the master node',
                               type=checker.positive_num_is)
-
-        parser_c.add_argument("ram_master", help='Size of RAM (MB) for the master node',
+        parser_create.add_argument("ram_master", help='Size of RAM (MB) for the master node',
                               type=checker.positive_num_is)
-
-        parser_c.add_argument("disk_master", help='Disk size (GB) for the master node',
+        parser_create.add_argument("disk_master", help='Disk size (GB) for the master node',
                               type=checker.five_or_larger_is)
-
-        parser_c.add_argument("cpu_slave", help='Number of CPU cores for the slave node(s)',
+        parser_create.add_argument("cpu_slave", help='Number of CPU cores for the slave node(s)',
                               type=checker.positive_num_is)
-
-        parser_c.add_argument("ram_slave", help='Size of RAM (MB) for the slave node(s)',
+        parser_create.add_argument("ram_slave", help='Size of RAM (MB) for the slave node(s)',
                               type=checker.positive_num_is)
-
-        parser_c.add_argument("disk_slave", help='Disk size (GB) for the slave node(s)',
+        parser_create.add_argument("disk_slave", help='Disk size (GB) for the slave node(s)',
                               type=checker.five_or_larger_is)
-
-        parser_c.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
+        parser_create.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
                               metavar='disk_template', choices=['Standard', 'Archipelago'], 
                               type=str.capitalize)
-
-        parser_c.add_argument("token", help='Synnefo authentication token', type=checker.a_string_is)
-
-        parser_c.add_argument("project_name", help='~okeanos project name'
+        parser_create.add_argument("project_name", help='~okeanos project name'
                               ' to request resources from ', type=checker.a_string_is)
-
-        parser_c.add_argument("--image", help='OS for the cluster.'
+        parser_create.add_argument("--image", help='OS for the cluster.'
                               ' Default is "Debian Base"', metavar='image',
                               default=default_image)
-
-        parser_c.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
+        parser_create.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
                               ' Default is HadoopImage (overrides image selection)',
                               nargs='?', metavar='hadoop_image_name', default=None,
                               const='Hadoop-2.5.2')
-
-        parser_c.add_argument("--auth_url", metavar='auth_url', default=auth_url,
+        parser_create.add_argument("--auth_url", metavar='auth_url', default=auth_url,
                               help='Synnefo authentication url. Default is ' +
-                              auth_url)
+                              auth_url)       
+        parser_create.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+                              help='Synnefo authentication token. Default read from .kamakirc')
 
 
-        parser_d.add_argument('cluster_id',
+        parser_destroy.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
-        parser_d.add_argument('token',
-                              help='Synnefo authentication token', type=checker.a_string_is)
-        
-        parser_i.add_argument('token',
-                              help='Synnefo authentication token', type=checker.a_string_is)
-        
-        parser_i.add_argument('--status', help='Filter by status ({%(choices)s})'
+        parser_destroy.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+                              help='Synnefo authentication token. Default read from .kamakirc')
+
+       
+        parser_list.add_argument('--status', help='Filter by status ({%(choices)s})'
                               ' Default is all: no filtering.', type=str.upper,
                               metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
-        
-        parser_i.add_argument('--verbose', help='List extra cluster details.',
+        parser_list.add_argument('--verbose', help='List extra cluster details.',
                               action="store_true")
+        parser_list.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+                              help='Synnefo authentication token. Default read from .kamakirc')         
         
         
-        parser_h.add_argument('hadoop_status', 
+        parser_hadoop.add_argument('hadoop_status', 
                               help='Hadoop status (choices: {%(choices)s})', type=str.lower,
                               metavar='hadoop_status', choices=['start', 'format', 'stop'])
-        parser_h.add_argument('cluster_id',
+        parser_hadoop.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
-        parser_h.add_argument('token',
-                              help='Synnefo authentication token', type=checker.a_string_is)
+        parser_hadoop.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+                              help='Synnefo authentication token. Default read from .kamakirc')
+        
+        
+        parser_info.add_argument('cluster_id',
+                                 help='The id of the Hadoop cluster', type=checker.positive_num_is)
+        parser_info.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+                              help='Synnefo authentication token. Default read from .kamakirc')
+
 
         opts = vars(parser.parse_args(argv[1:]))
-        if argv[1] == 'create':
+        c_hadoopcluster = HadoopCluster(opts)
+        c_userclusters = UserClusterInfo(opts)
+        
+        verb = argv[1]
+        if verb == 'create':
             if opts['use_hadoop_image']:
                 opts['image'] = opts['use_hadoop_image']
-     
-
-        logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
-                                level=checker.logging_levels['summary'],
-                                datefmt='%H:%M:%S')
+            c_hadoopcluster.create()
+        elif verb == 'destroy':
+            c_hadoopcluster.destroy()
+        elif verb == 'list' or verb == 'info':
+            if verb == 'info':
+                opts['verbose'] = True
+                opts['status'] = None
+            c_userclusters.list()        
+        elif verb == 'hadoop':
+            c_hadoopcluster.hadoop_action()
 
     else:
         logging.error('No arguments were given')
         parser.parse_args(' -h'.split())
         exit(error_no_arguments)
-    c_hadoopcluster = HadoopCluster(opts)
-    if argv[1] == 'create':
-        c_hadoopcluster.create()
-
-    elif argv[1] == 'destroy':
-        c_hadoopcluster.destroy()
-        
-    elif argv[1] == 'list':
-        c_userclusters = UserClusterInfo(opts)
-        c_userclusters.list()
-        
-    elif argv[1] == 'hadoop':
-        c_hadoopcluster.hadoop_action(argv[2])
-
+         
 
 if __name__ == "__main__":
     main()
