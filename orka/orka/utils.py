@@ -257,11 +257,9 @@ def ssh_stream_to__hadoop(user, master_IP, source_file, dest_dir):
         SSH to master VM
         and stream files to hadoop
     """
-    filename = source_file.split("/")
     response = subprocess.call("cat " + source_file
                                     + " | ssh " + user + "@" + master_IP 
-                                    + " " + HADOOP_PATH + " dfs -put - " + dest_dir
-                                    + "/" + filename[len(filename)-1], stderr=FNULL, shell=True)
+                                    + " " + HADOOP_PATH + " dfs -put - " + dest_dir, stderr=FNULL, shell=True)
 
     return response
 
@@ -291,8 +289,18 @@ def ssh_stream_from__hadoop(user, master_IP, source_file, dest_dir, filename):
         stream files from hadoop to local
     """
     response = subprocess.call("ssh " + user + "@"
-                                    + master_IP + " \"" + HADOOP_PATH 
+                                    + master_IP + " \"" + HADOOP_PATH
                                     + " dfs -text " + source_file + "\""
                                     + " | tee 1>>" + dest_dir + "/" + filename, stderr=FNULL, shell=True)
     
     return response
+
+def parse_hdfs_dest(regex, path):
+    """
+    Parses remote hdfs directory for the orka put command to check if directory exists.
+    """
+    parsed_path = re.match(regex, path)
+    if parsed_path:
+        return parsed_path.group(1)
+    else:
+        return parsed_path
