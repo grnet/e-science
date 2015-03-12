@@ -1,0 +1,20 @@
+---
+  - name: Install passlib
+    pip: name=passlib
+    tags: setuporkaadmin
+
+  - name: create orka group
+    group: name=orkagroup state=present
+    tags: setuporkaadmin
+
+  - name: create orka_admin user
+    user: name=orka_admin groups="orkagroup,sudo" generate_ssh_key=yes shell=/bin/bash update_password=always password=$1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20 state=present
+    tags: setuporkaadmin
+
+  - name: create server root user ssh key
+    user: name=root generate_ssh_key=yes shell=/bin/bash state=present
+    tags: setuprootssh
+
+  - name: copy local box master ssh key to orka_admin
+    tags: setuporkaadmin
+    authorized_key: user=orka_admin key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"

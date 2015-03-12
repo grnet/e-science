@@ -1,5 +1,6 @@
 attr = App.attr;
-// Model used for retrieving cluster creation information based on user's quota and kamaki flavors
+// Model used for retrieving cluster creation information 
+// based on user's quota and kamaki flavors
 App.Cluster = DS.Model.extend({
 	project_name : attr(),		    // name of the project
 	vms_max : attr('number'),    	// maximum (limit) number of VMs
@@ -14,14 +15,16 @@ App.Cluster = DS.Model.extend({
 	mem_choices : attr(),        	// memory choices
 	disk_choices : attr(),       	// disk choices
 	disk_template : attr(),      	// storage choices
-	os_choices : attr()          	// Operating System choices
+	os_choices : attr(),          	// Operating System choices
+	vm_flavors_choices : ['Small', 'Medium', 'Large'],  //Predefined VM Flavors
+	ssh_keys_names : attr()          	// ssh key's names
 });
 
 // For Fixtures
 /*App.Cluster.reopenClass({
-  FIXTURES: [
-    { 
-	id: 1, 
+FIXTURES: [
+    {
+	id: 1,
 	project_name : 'system',
 	vms_max : 16,
 	vms_av : [2,4,8,16],
@@ -35,10 +38,10 @@ App.Cluster = DS.Model.extend({
 	mem_choices : [128, 256,512],
 	disk_choices : [20,40,60,80,100],
 	disk_template : ['disk1','disk2'],
-	os_choices : ['os1','os2'] 
+	os_choices : ['os1','os2']
     },
-    { 
-	id: 2, 
+    {
+	id: 2,
 	project_name : 'escience.grnet.gr',
 	vms_max : 32,
 	vms_av : [8,16],
@@ -52,8 +55,7 @@ App.Cluster = DS.Model.extend({
 	mem_choices : [256,512],
 	disk_choices : [50,100],
 	disk_template : ['disk3','disk4'],
-	os_choices : ['os3','os4'] 
+	os_choices : ['os3','os4']
     }
-  ]
-});
-*/
+]
+});*/

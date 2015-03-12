@@ -2,21 +2,21 @@
 
 """ Functionality related to unit tests with un-managed resources mocked. """
 # setup testing framework
-from unittest import TestCase, main
+from unittest import TestCase, main, expectedFailure, skip
 from mock import patch
 from ConfigParser import RawConfigParser, NoSectionError
 
 # get relative path references so imports will work,
 # even if __init__.py is missing (/tests is a simple directory not a module)
 import sys
+import os
 from os.path import join, dirname, abspath
 
-sys.path.append(join(dirname(abspath(__file__)), '..'))
-
+sys.path.append(join(dirname(abspath(__file__)), '../ember_django'))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 # import objects we aim to test
-# from create_bare_cluster import create_cluster
-from create_cluster import YarnCluster, ClientError
-from cluster_errors_constants import error_quotas_cluster_size, error_quotas_network, \
+from backend.create_cluster import YarnCluster, ClientError, current_task, retrieve_pending_clusters
+from backend.cluster_errors_constants import error_quotas_cluster_size, error_quotas_network, \
     error_get_ip, error_quotas_cpu, error_quotas_ram, error_quotas_cyclades_disk
 
 def mock_createcluster(*args):
@@ -26,6 +26,21 @@ def mock_createcluster(*args):
     fake_vm_dict = [{'name': 'f_vm', 'adminPass': 'blabla'}, {'name': 'f_2 vm', 'adminPass': 'blabla2'}]
     return fake_master_ip, fake_vm_dict
 
+def mock_createclusterdb(*args):
+    """ no implementation needed """
+    print 'in mock create cluster db'
+
+class MockCurrentTask():
+    """ support class for faking celery state functions """
+    def update_state(self, state):
+        return 'STARTED'
+    
+def mock_current_task(*args):
+    """ no implementation needed """
+    print 'in mock current task'
+    curr_task = MockCurrentTask()
+    return curr_task
+    
 def mock_createpassfile(*args):
     print 'create PLACEHOLDER password file'
 
@@ -77,8 +92,6 @@ def mock_init_cyclades(*args):
     print 'in mock cyclades' 
     return 'https://cyclades.okeanos.grnet.gr/compute/v2.0'
 
- 
-
 
 def mock_get_flavorid(*args):
     """ :return valid static flavor id. Arguments ignored. """
@@ -86,9 +99,10 @@ def mock_get_flavorid(*args):
     return 1
 
 
-def mock_check_quota(*args):
+def mock_retrieve_pending_clusters(*args):
     """ No implementation, just declaration. """
-    print 'in mock check quota'
+    print 'in mock retrieve pending clusters'
+    return {"VMs": 0, "Cpus": 0, "Ram": 0, "Disk": 0, "Ip": 0, "Network": 0}
 
 
 class MockPlankton():
@@ -112,9 +126,6 @@ class MockCycladesNetClient():
     def list_floatingips(self):
         return [{'instance_id': '604863', 'port_id': '1743733'}, {'instance_id': None, 'port_id': None},
                 {'instance_id': '615302', 'port_id': '1773954'}]
-        # [{'floating_network_id': '6783', 'user_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'deleted': False, 'tenant_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'instance_id': '604863', 'fixed_ip_address': None, 'floating_ip_address': '83.212.123.218', 'port_id': '1743733', 'id': '527909'},
-        # {'floating_network_id': '6783', 'user_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'deleted': False, 'tenant_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'instance_id': None, 'fixed_ip_address': None, 'floating_ip_address': '83.212.123.253', 'port_id': None, 'id': '570931'},
-        # {'floating_network_id': '2216', 'user_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'deleted': False, 'tenant_id': 'ec567bea-4fa2-433d-9935-261a0867ec60', 'instance_id': '615302', 'fixed_ip_address': None, 'floating_ip_address': '83.212.118.250', 'port_id': '1773954', 'id': '572851'}]
 
 
 def mock_init_cyclades_netclient(*args):
@@ -134,21 +145,24 @@ def mock_install_yarn(*args):
     print 'in mock install yarn'
 
 def mock_get_project_id(*args):
+    print 'in mock get project id'
     return 'some_project_id'
 
 # replace unmanaged calls with fakes
-@patch('create_cluster.Cluster.create', mock_createcluster)
-@patch('create_cluster.check_credentials', mock_checkcredentials)
-@patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
-@patch('create_cluster.init_cyclades', mock_init_cyclades)
-@patch('create_cluster.YarnCluster.get_flavor_id_master', mock_get_flavorid)
-@patch('create_cluster.YarnCluster.get_flavor_id_slave', mock_get_flavorid)
-@patch('create_cluster.get_project_id', mock_get_project_id)
-@patch('create_cluster.init_plankton', mock_init_plankton)
-@patch('create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
-@patch('create_cluster.reroute_ssh_prep', mock_reroute_ssh_prep)
-@patch('create_cluster.install_yarn', mock_install_yarn)
-@patch('create_cluster.sleep', mock_sleep)
+@patch('backend.create_cluster.Cluster.create', mock_createcluster)
+@patch('backend.create_cluster.check_credentials', mock_checkcredentials)
+@patch('backend.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+@patch('backend.create_cluster.init_cyclades', mock_init_cyclades)
+@patch('backend.create_cluster.YarnCluster.get_flavor_id_master', mock_get_flavorid)
+@patch('backend.create_cluster.YarnCluster.get_flavor_id_slave', mock_get_flavorid)
+@patch('backend.create_cluster.retrieve_pending_clusters', mock_retrieve_pending_clusters)
+@patch('backend.create_cluster.current_task', mock_current_task)
+@patch('backend.create_cluster.get_project_id', mock_get_project_id)
+@patch('backend.create_cluster.init_plankton', mock_init_plankton)
+@patch('backend.create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
+@patch('backend.create_cluster.reroute_ssh_prep', mock_reroute_ssh_prep)
+@patch('backend.create_cluster.install_yarn', mock_install_yarn)
+@patch('backend.create_cluster.sleep', mock_sleep)
 class TestCreateCluster(TestCase):
     """ Test cases with separate un-managed resources mocked. """
     # initialize objects common to all tests in this test case
@@ -161,9 +175,9 @@ class TestCreateCluster(TestCase):
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
             self.project_name = parser.get('project', 'name')
             self.opts = {'name': 'Test', 'cluster_size': 2, 'cpu_master': 2,
-                'ram_master': 4096, 'disk_master': 5, 'cpu_slave': 2,
-                'ram_slave': 2048, 'disk_slave': 5, 'token': self.token,
-                'disk_template': 'ext_vlmc', 'image': 'ubuntu',
+                'mem_master': 4096, 'disk_master': 5, 'cpu_slaves': 2,
+                'mem_slaves': 2048, 'disk_slaves': 5, 'token': self.token,
+                'disk_template': 'Archipelago', 'os_choice': 'ubuntu',
                 'auth_url': self.auth_url, 'project_name': self.project_name}
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
@@ -172,21 +186,22 @@ class TestCreateCluster(TestCase):
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
 
     # @patch('create_cluster.init_plankton', mock_init_plankton)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)  
-    @patch('create_cluster.YarnCluster.create_password_file', mock_createpassfile)
+    @patch('backend.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('backend.create_cluster.current_task', mock_current_task)
+    @skip('not supported with celery tasks')
     def test_create_yarn_cluster(self):
         # arrange
         expected_masterip = '127.0.0.1'
         expected_vm_dict = [{'name': 'f_vm', 'adminPass': 'blabla'}, {'name': 'f_2 vm', 'adminPass': 'blabla2'}]
         c_yarn_cluster = YarnCluster(self.opts)
-
+ 
         # act
         returned_masterip, returned_vm_dict = c_yarn_cluster.create_yarn_cluster()
         # assert
         self.assertTupleEqual((expected_masterip, expected_vm_dict), (returned_masterip, returned_vm_dict))
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('backend.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_clustersize_quotas_sufficient(self):
         # arrange
         prev_clustersize = self.opts['cluster_size']
@@ -200,8 +215,8 @@ class TestCreateCluster(TestCase):
         self.assertEqual(expected, returned)
 
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('backend.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_clustersize_quotas_exceeded(self):
         # arrange
         prev_clustersize = self.opts['cluster_size']
@@ -216,8 +231,8 @@ class TestCreateCluster(TestCase):
         the_exception = context.exception
         self.assertEqual(expected, the_exception.status)
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('backend.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_network_quotas_sufficient(self):
         # arrange
         c_yarn_cluster = YarnCluster(self.opts)
@@ -227,28 +242,30 @@ class TestCreateCluster(TestCase):
         # assert
         self.assertEqual(expected, returned)
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('backend.create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
+    @patch('backend.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_ip_quotas_sufficient(self):
         # arrange
-        pass
+        
         # act
 
         # assert
+        pass
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('backend.create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
+    @patch('backend.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_ip_quotas_exceeded(self):
         # arrange
-        pass
+        
         # act
 
         # assert
+        pass
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('backend.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_cpu_valid_sufficient(self):
         # arrange
         prev_clustersize = self.opts['cluster_size']
@@ -261,8 +278,8 @@ class TestCreateCluster(TestCase):
         # assert
         self.assertEqual(expected, returned)
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('backend.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_cpu_valid_exceeded(self):
         # arrange
         prev_clustersize = self.opts['cluster_size']
@@ -277,41 +294,59 @@ class TestCreateCluster(TestCase):
         the_exception = context.exception
         self.assertEqual(expected, the_exception.status)
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
+    @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
     def test_check_ram_valid_sufficient(self):
         # arrange
-        pass
+        c_yarn_cluster = YarnCluster(self.opts)
+        expected = 0
         # act
-
+        returned = c_yarn_cluster.check_ram_valid()
         # assert
+        self.assertEqual(expected, returned)
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
+    @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
     def test_check_ram_valid_exceeded(self):
         # arrange
-        pass
+        prev_clustersize = self.opts['cluster_size']
+        self.opts['cluster_size'] = 30
+        c_yarn_cluster = YarnCluster(self.opts)
+        expected = error_quotas_ram
         # act
-
+        with self.assertRaises(ClientError) as context:
+            c_yarn_cluster.check_ram_valid()
+        self.opts['cluster_size'] = prev_clustersize
         # assert
+        the_exception = context.exception
+        self.assertEqual(expected, the_exception.status)
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
+    @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
     def test_check_disk_valid_sufficient(self):
         # arrange
-        pass
+        c_yarn_cluster = YarnCluster(self.opts)
+        expected = 0
         # act
-
+        returned = c_yarn_cluster.check_disk_valid()
         # assert
+        self.assertEqual(expected, returned)
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
+    @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
     def test_check_disk_valid_exceeded(self):
         # arrange
-        pass
+        prev_clustersize = self.opts['cluster_size']
+        self.opts['cluster_size'] = 100
+        c_yarn_cluster = YarnCluster(self.opts)
+        expected = error_quotas_cyclades_disk
         # act
-
+        with self.assertRaises(ClientError) as context:
+            c_yarn_cluster.check_disk_valid()
+        self.opts['cluster_size'] = prev_clustersize
         # assert
+        the_exception = context.exception
+        self.assertEqual(expected, the_exception.status)
 
-    @patch('create_cluster.check_credentials', mock_checkcredentials)
-    @patch('create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
-    @patch('create_cluster.endpoints_and_user_id', mock_endpoints_userid)
+    @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
+    @patch('backend.create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
+    @patch('backend.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
     def test_check_all_resources(self):
         # arrange
         c_yarn_cluster = YarnCluster(self.opts)

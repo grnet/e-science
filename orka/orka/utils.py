@@ -1,0 +1,216 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import logging
+from os.path import abspath, dirname, join, expanduser
+from cluster_errors_constants import *
+from kamaki.clients import ClientError
+from ConfigParser import RawConfigParser, NoSectionError
+import requests
+from requests import ConnectionError
+import json
+import re
+from collections import OrderedDict
+from datetime import datetime
+import subprocess
+import xml.etree.ElementTree as ET
+
+def get_api_urls(action):
+    """ Return api url from .kamakirc file"""
+    parser = RawConfigParser()
+    user_home = expanduser('~')
+    config_file = join(user_home, ".kamakirc")
+    parser.read(config_file)
+    try:
+        base_url = parser.get('orka', 'base_url')
+        if action == 'login':
+            url_login = '{0}{1}'.format(base_url, login_endpoint)
+            return url_login
+        if action == 'cluster':
+            url_cluster = '{0}{1}'.format(base_url, cluster_endpoint)
+            return url_cluster
+        if action == 'job':
+            url_job = '{0}{1}'.format(base_url, job_endpoint)
+            return url_job
+        else:
+            logging.log(SUMMARY, ' Url to be returned from config file not specified')
+            return 0
+    except NoSectionError:
+        msg = 'Did not find a valid orka api base_url in .kamakirc'
+        raise NoSectionError(msg)
+
+
+class ClusterRequest(object):
+    """Class for REST requests to application server."""
+    def __init__(self, escience_token, payload, action='login'):
+        """
+        Initialize escience token used for token authentication, payload
+        and appropriate headers for the request.
+        """
+        self.escience_token = escience_token
+        self.payload = payload
+        self.url = get_api_urls(action)
+        self.headers = {'Accept': 'application/json','content-type': 'application/json',
+                        'Authorization': 'Token ' + self.escience_token}
+
+    def create_cluster(self):
+        """Request to create a Hadoop Cluster in ~okeanos."""
+        r = requests.put(self.url, data=json.dumps(self.payload),
+                         headers=self.headers)
+        response = json.loads(r.text)
+        return response
+
+    def delete_cluster(self):
+        """Request to delete a Hadoop Cluster in ~okeanos."""
+        r = requests.delete(self.url, data=json.dumps(self.payload),
+                            headers=self.headers)
+        response = json.loads(r.text)
+        return response
+
+    def retrieve(self):
+        """Request to retrieve info from an endpoint."""
+        r = requests.get(self.url, data=json.dumps(self.payload),
+                         headers=self.headers)
+        response = json.loads(r.text)
+        return response
+        
+
+
+def get_user_clusters(token):
+    """
+    Get the clusters of the user
+    """
+    try:
+        escience_token = authenticate_escience(token)
+    except TypeError:
+        msg = ' Authentication error with token: ' + token
+        raise ClientError(msg, error_authentication)
+    except Exception,e:
+        print ' ' + str(e.args[0])
+
+    payload = {"user": {"id": 1}}
+    orka_request = ClusterRequest(escience_token, payload, action='login')
+    user_data = orka_request.retrieve()
+    user_clusters = user_data['user']['clusters']
+    return user_clusters
+
+
+def authenticate_escience(token):
+    """
+    Authenticate with escience database and retrieve escience token
+    for Token Authentication
+    """
+    payload = {"user": {"token": token}}
+    headers = {'content-type': 'application/json'}
+    url_login = get_api_urls(action='login')
+    r = requests.post(url_login, data=json.dumps(payload), headers=headers)
+    response = json.loads(r.text)
+    try:
+        escience_token = response['user']['escience_token']
+    except TypeError:
+        msg = ' Authentication error with token: ' + token
+        raise ClientError(msg, error_authentication)
+    logging.log(REPORT, ' Authenticated with escience database')
+    return escience_token
+
+
+def custom_date_format(datestring, fmt='shortdatetime'):
+    """
+    Format a utc date time to human friendly date time.
+    Both input and output are string representations of datetime
+    If the passed in datetime string representation can't be reformatted return it unaltered
+    strptime expects microseconds so we try to capture both with and w/o microsecond utc format 
+    and right-pad the milisecond segment to microseconds.
+    """
+    datestring_microsec = datestring
+    datestring_microsec = re.sub(':(\d+)Z$', lambda m: ':{0}.000000Z'.format(m.group(1)), datestring_microsec)
+    datestring_microsec = re.sub('\.(\d+)Z$', lambda m: '.{:0<6}Z'.format(m.group(1)), datestring_microsec)
+    date_formats = {'shortdate':'%Y-%m-%d', 'shortdatetime':'%a, %d %b %Y %H:%M:%S'}
+    date_fmt = date_formats.has_key(fmt) and date_formats[fmt] or date_formats['shortdatetime']
+    try:
+        date_in = datetime.strptime(datestring_microsec, '%Y-%m-%dT%H:%M:%S.%fZ')
+        return date_in.strftime(date_fmt)
+    except ValueError:
+        return datestring
+    
+
+def custom_sort_factory(order_list):
+    """
+    function factory: gets a list of lists with order keys
+    and returns a function that will produce an OrderedDict
+    with the specified order.
+    Keys not present in the sort list are returned at the end.
+    Example:
+        fruits = {'apple': 'red', 'orange': 'orange', 'lemon': 'yellow', 'banana': 'yellow'}
+        order_list = [['lemon','orange','banana','apple']]
+        sort_function = custom_sort_factory(order_list)
+        sorted_fruits = sort_function(fruits)
+        print fruits
+        print sorted_fruits
+    """
+    order_list = [{k: -i for (i, k) in enumerate(reversed(order), 1)} for order in order_list]
+    def sorter(stuff):
+        if isinstance(stuff, dict):
+            l = [(k, sorter(v)) for (k, v) in stuff.iteritems()]
+            keys = set(stuff)
+            for order in order_list:
+                if keys.issuperset(order):
+                    return OrderedDict(sorted(l, key=lambda x: order.get(x[0], 0)))
+            return OrderedDict(sorted(l))
+        if isinstance(stuff, list):
+            return [sorter(x) for x in stuff]
+        return stuff
+    return sorter
+
+def ssh_call_hadoop(user, master_IP, func_arg):
+    """
+        SSH to master VM
+        and make Hadoop calls
+    """
+    response = subprocess.call( "ssh " + user + "@" + master_IP + " \"" + HADOOP_PATH 
+                     + func_arg + "\"", stderr=FNULL, shell=True)
+    
+    return response
+
+def ssh_check_output_hadoop(user, master_IP, func_arg):
+    """
+        SSH to master VM
+        and check output of Hadoop calls
+    """
+    response = subprocess.check_output( "ssh " + user + "@" + master_IP + " \"" + HADOOP_PATH 
+                     + func_arg + "\"", stderr=FNULL, shell=True).splitlines()
+    
+    return response
+
+def ssh_stream_to__hadoop(user, master_IP, source_file, dest_dir):
+    """
+        SSH to master VM
+        and stream files to hadoop
+    """
+    filename = source_file.split("/")
+    response = subprocess.call("cat " + source_file
+                                    + " | ssh " + user + "@" + master_IP 
+                                    + " " + HADOOP_PATH + " dfs -put - " + dest_dir
+                                    + "/" + filename[len(filename)-1], stderr=FNULL, shell=True)
+
+    return response
+
+def read_replication_factor(user, master_IP):
+    """
+        SSH to master VM
+        and read the replication factor
+        from the hdfs-site.xml 
+    """
+    hdfs_xml = subprocess.check_output("ssh " + user + "@" + master_IP 
+                                            + " \"" + "cat /usr/local/hadoop/etc/hadoop/hdfs-site.xml\"", 
+                                            shell=True)
+
+    doc = ET.ElementTree(ET.fromstring(hdfs_xml))
+    root = doc.getroot()
+    for child in root.iter("property"):
+        name = child.find("name").text
+        if name == "dfs.replication":
+            replication_factor = int(child.find("value").text)
+            break
+
+    return replication_factor

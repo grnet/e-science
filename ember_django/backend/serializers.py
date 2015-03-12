@@ -37,13 +37,14 @@ class ClusterCreationParamsSerializer(serializers.ModelSerializer):
     disk_choices = PGArrayField(required=False)
     disk_template = PGArrayField(required=False)
     os_choices = PGArrayField(required=False)
-
+    ssh_keys_names = PGArrayField(required=False)
+    
     class Meta:
         model = ClusterCreationParams
         fields = ('id', 'user_id', 'project_name', 'vms_max', 'vms_av',
                   'cpu_max', 'cpu_av', 'mem_max', 'mem_av', 'disk_max',
                   'disk_av', 'cpu_choices', 'mem_choices', 'disk_choices',
-                  'disk_template', 'os_choices')
+                  'disk_template', 'os_choices', 'ssh_keys_names')
 
 
 class OkeanosTokenSerializer(serializers.Serializer):
@@ -51,41 +52,61 @@ class OkeanosTokenSerializer(serializers.Serializer):
     token = serializers.CharField()
 
 
+class TaskSerializer(serializers.Serializer):
+    """Serializer for the celery task id."""
+    task_id = serializers.CharField()
+
+
+class DeleteClusterSerializer(serializers.Serializer):
+    """ Serializer for master vm ip """
+    master_IP = serializers.CharField(required=False)
+    id = serializers.IntegerField()
+
+
 class ClusterchoicesSerializer(serializers.Serializer):
     """
     Serializer for ember request with user's
     choices for cluster creation.
     """
-    cluster_name = serializers.CharField()
+    cluster_name = serializers.CharField(required=False)
 
-    cluster_size = serializers.IntegerField()
+    id = serializers.CharField(required=False)
 
-    cpu_master = serializers.IntegerField()
+    cluster_size = serializers.IntegerField(required=False)
 
-    mem_master = serializers.IntegerField()
+    cpu_master = serializers.IntegerField(required=False)
 
-    disk_master = serializers.IntegerField()
+    mem_master = serializers.IntegerField(required=False)
 
-    cpu_slaves = serializers.IntegerField()
+    disk_master = serializers.IntegerField(required=False)
 
-    mem_slaves = serializers.IntegerField()
+    cpu_slaves = serializers.IntegerField(required=False)
 
-    disk_slaves = serializers.IntegerField()
+    mem_slaves = serializers.IntegerField(required=False)
 
-    disk_template = serializers.CharField()
+    disk_slaves = serializers.IntegerField(required=False)
 
-    os_choice = serializers.CharField()
+    disk_template = serializers.CharField(required=False)
 
-    project_name = serializers.CharField()
+    os_choice = serializers.CharField(required=False)
+
+    project_name = serializers.CharField(required=False)
+    
+    ssh_key_selection = serializers.CharField(required=False)
+
+    task_id = serializers.CharField(required=False)
+    
+    hadoop_status = serializers.CharField(required=False)
 
 
 class ClusterInfoSerializer(serializers.ModelSerializer):
     """ Serializer for ember request with user's available clusters."""
     class Meta:
         model = ClusterInfo
-        fields = ('id', 'cluster_name', 'cluster_status', 'cluster_size', 'cpu_master',
-                  'mem_master', 'disk_master', 'cpu_slaves', 'mem_slaves',
-                  'disk_slaves', 'disk_template', 'os_image', 'master_IP', 'project_name')
+        fields = ('id', 'cluster_name', 'action_date', 'cluster_status', 'cluster_size',
+                   'cpu_master', 'mem_master', 'disk_master', 'cpu_slaves',
+                   'mem_slaves', 'disk_slaves', 'disk_template', 'os_image',
+                   'master_IP', 'project_name', 'task_id', 'state', 'hadoop_status')
 
 
 class UserInfoSerializer(serializers.ModelSerializer):
@@ -100,7 +121,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserInfo
-        fields = ('id', 'user_id', 'cluster', 'escience_token', 'clusters')
+        fields = ('id', 'user_id', 'user_theme', 'cluster', 'master_vm_password', 'escience_token', 'clusters')
 
     def number_of_clusters(self, obj):
         """
@@ -113,3 +134,11 @@ class UserInfoSerializer(serializers.ModelSerializer):
     def get_ember_id(self, obj):
         """"Always returns id 1 for ember.js"""
         return 1
+
+
+class UserThemeSerializer(serializers.Serializer):
+    """
+    Serializer for ember request with user's
+    choices for theme.
+    """
+    user_theme = serializers.CharField(required=False)

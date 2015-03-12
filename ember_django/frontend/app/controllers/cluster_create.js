@@ -1,70 +1,140 @@
-// Cluster/create controller
+// Cluster Create controller
 App.ClusterCreateController = Ember.Controller.extend({
 
 	needs : 'userWelcome',
-
-	// Initialization phase
-	project_index : 0, // index (position in the array) of the project
-	project_current : '', // current project
-	project_name : '', // name of the project
-	cluster_size : 0, // Initial cluster size
-	cluster_size_var : 0, // Initial cluster size keeper variable
-	master_cpu_selection : 0, // Initial master_cpu_selection, appears in master cpu summary
-	slaves_cpu_selection : 0, // Initial slaves_cpu_selection, appears in slaves cpu summary
-	master_ram_selection : 0, // Initial master_ram_selection, appears in master ram summary
-	slaves_ram_selection : 0, // Initial slaves_ram_selection, appears in slaves ram summary
-	master_disk_selection : 0, // Initial master_disk_selection, appears in master disk summary
-	slaves_disk_selection : 0, // Initial slaves_disk_selection, appears in slaves disk summary
-	cluster_name : '', // Initial cluster name, null
-	operating_system : 'Debian Base', // Preselected OS
-	disk_temp : 'ext_vlmc', // Initial storage selection, common for master and slaves
-	cluster_size_zero : false, // for checking the available VMs, cluster size
+	project_index : 0, 		// index (position in the array) of the project
+	project_current : '', 		// current project
+	project_name : '', 		// name of the project
+	cluster_size : 0, 		// Initial cluster size
+	cluster_size_var : 0, 		// Initial cluster size keeper variable
+	master_cpu_selection : 0, 	// Initial master_cpu_selection, appears in master cpu summary
+	slaves_cpu_selection : 0, 	// Initial slaves_cpu_selection, appears in slaves cpu summary
+	master_ram_selection : 0, 	// Initial master_ram_selection, appears in master ram summary
+	slaves_ram_selection : 0, 	// Initial slaves_ram_selection, appears in slaves ram summary
+	master_disk_selection : 0,	// Initial master_disk_selection, appears in master disk summary
+	slaves_disk_selection : 0, 	// Initial slaves_disk_selection, appears in slaves disk summary
+	cluster_name : '', 		// Initial cluster name, null
+	operating_system : '', // Preselected OS
+	disk_temp : 'Archipelago', 	// Initial storage selection, common for master and slaves friendly to  user name
+	cluster_size_zero : false, 	// for checking the available VMs, cluster size
 	create_cluster_disabled : true, // flag to disable create cluster button when project is not selected
-	message : '', // message when user presses the create cluster button
-	alert_mes_master_cpu : '', // alert message for master cpu buttons (if none selected)
-	alert_mes_master_ram : '', // alert message for master ram buttons (if none selected)
-	alert_mes_master_disk : '', // alert message for master disk buttons (if none selected)
-	alert_mes_slaves_cpu : '', // alert message for slaves cpu buttons (if none selected)
-	alert_mes_slaves_ram : '', // alert message for slaves ram buttons (if none selected)
-	alert_mes_slaves_disk : '', // alert message for slaves disk buttons (if none selected)
-	alert_mes_cluster_name : '', // alert message for cluster name (if none selected)
-	alert_mes_cluster_size : '', // alert message for cluster size (if none selected)
-	project_details : '', // project details: name and quota(Vms cpus ram disk)
-	name_of_project : '', // variable to set name of project as part of project details string helps parsing sytem project name
-
-	// for projects
+	message : '', 			// message when user presses the create cluster button
+	alert_mes_master_cpu : '', 	// alert message for master cpu buttons (if none selected)
+	alert_mes_master_ram : '', 	// alert message for master ram buttons (if none selected)
+	alert_mes_master_disk : '', 	// alert message for master disk buttons (if none selected)
+	alert_mes_slaves_cpu : '', 	// alert message for slaves cpu buttons (if none selected)
+	alert_mes_slaves_ram : '', 	// alert message for slaves ram buttons (if none selected)
+	alert_mes_slaves_disk : '', 	// alert message for slaves disk buttons (if none selected)
+	alert_mes_cluster_name : '', 	// alert message for cluster name (if none selected)
+	alert_mes_cluster_size : '', 	// alert message for cluster size (if none selected)
+	project_details : '', 		// project details: name and quota(Vms cpus ram disk)
+	name_of_project : '', 		// variable to set name of project as part of project details string helps parsing system project name
+	ssh_key_selection : '',		// variable for selected public ssh_key to use upon cluster creation
+	vm_flavor_selection_Master : '', // Initial vm_flavor_selection_Master
+	vm_flavor_selection_Slave : '', // Initial vm_flavor_selection_Slave
+	// Global variables for handling restrictions on master settings
+	vm_flav_master_Small_disabled : false,  
+	vm_flav_master_Medium_disabled : false, 
+	vm_flav_master_Large_disabled : false, 
+	// Global variable for handling restrictions on slaves settings
+	vm_flav_slave_Small_disabled : false, 
+	vm_flav_slave_Medium_disabled : false, 
+	vm_flav_slave_Large_disabled : false,
+	last_cluster_conf_checked: false,	// flag for last cluster configuration (when it is selected)
+	last_conf_message : '',			// last configuration in message to be displayed on screen
+	// selected project, image, cluster size, storage, from last configuration 
+	// (to be displayed for the user)
+	selected_project : '',	
+	selected_image : '',
+	selected_storage : '',
+	alert_mes_last_conf : '',	// alert message when resources are not enough to apply last configuration
+	flavor_settings : {'Small': {'cpu': 2, 'ram': 2048, 'disk': 10}, 'Medium': {'cpu': 4, 'ram': 2048, 'disk': 20}, 'Large': {'cpu': 4, 'ram': 4096, 'disk': 40}}, // Small Medium and Large predefined flavors	
+	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
+	
+	// utility function takes String 'pattern' and numeric count 
+	// and returns 'pattern' concatenated 'count' times.
+	str_repeat : function (pattern, count) {
+	    if (count < 1) return '';
+	    var result = '';
+	    while (count > 1) {
+	        if (count & 1) result += pattern;
+	        count >>= 1, pattern += pattern;
+	    }
+	    return result + pattern;
+	},
+	// utility function, uses a hidden span element to copy all text related attributes of an element
+	// and do pixel arithmetic for computing string width.
+	str_pixel_width : function(pattern, element_id) {
+		var pixelcounter = $('#string_pixel_count');
+		var element = $('#'+element_id);
+		var style_attrs = ['font-family','font-size','font-size-adjust','font-stretch','font-style','font-variant','font-weight','height','line-height'];
+		for (var i = 0; i < style_attrs.length ; i++ ){
+			var attr = style_attrs[i];
+			pixelcounter.css(attr, element.css(attr));
+		}
+		pixelcounter.text(pattern);
+		return pixelcounter.width();
+	},	
+	   
+	// reads available ssh_keys
+	// displays ssh_keys names in the drop-down list
+	ssh_keys_av : function(){
+		this.set('ssh_key_selection','');
+		var keys =[];
+		keys = this.get('content').objectAt(0).get('ssh_keys_names');
+		return keys.sort();
+	}.property('project_details'),
+	
+	
+	// reads available projects
+	// displays projects and available resources in the drop-down list
+	// (spaces inserted just for alignment of projects-resources)
 	projects_av : function() {
 		this.reset_variables();
 		this.set('project_current', '');
 		this.set('project_name', '');
+		var model = this.get('content');
 		var projects = [];
+		var projects_data = [];
 		var length = this.get('content.length');
 		var regular_exp_project_id = /system:[a-z,0-9]{8}(-[a-z,0-9]{4}){3}-[a-z,0-9]{12}/;
+		var space_separate_project_name_and_quota = this.str_repeat(String.fromCharCode(160), 3);
+		var space_between_quota = this.str_repeat(String.fromCharCode(160), 2);
 		for (var i = 0; i < length; i++) {
-			if (regular_exp_project_id.test(this.get('content').objectAt(i).get('project_name'))) {
+			if (regular_exp_project_id.test(model.objectAt(i).get('project_name'))) {
 				this.set('name_of_project', 'system');
 			} else {
-				this.set('name_of_project', this.get('content').objectAt(i).get('project_name'));
+				this.set('name_of_project', model.objectAt(i).get('project_name'));
 			}
-			projects[i] = this.get('name_of_project') + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
-			String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 
-			'VMs:' + this.get('content').objectAt(i).get('vms_av').length + String.fromCharCode(160) + String.fromCharCode(160) + 
-			'Cpus:' + this.get('content').objectAt(i).get('cpu_av') + String.fromCharCode(160) + String.fromCharCode(160) + 
-			'Ram:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + String.fromCharCode(160) + String.fromCharCode(160) + 
-			'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB';
+			var project = {};
+			project['name'] = this.get('name_of_project');
+			project['quotas'] = space_separate_project_name_and_quota + 
+				'VMs:' + model.objectAt(i).get('vms_av').length + space_between_quota +
+				'CPUs:' + model.objectAt(i).get('cpu_av') + space_between_quota +
+				'RAM:' + model.objectAt(i).get('mem_av') + 'MB' + space_between_quota +
+				'Disk:' + model.objectAt(i).get('disk_av') + 'GB';
+			projects_data[i] = project;
+			projects[i] = projects_data[i]['name'] + projects_data[i]['quotas'];
+			var pixel_width = this.str_pixel_width(projects[i],'project_id');
+			// 320px is the phone portrait breakpoint
+			if (pixel_width && (pixel_width < 320)){
+				var spc_width = this.str_pixel_width(String.fromCharCode(160),'project_id');
+				if (spc_width){
+					var pad = Math.floor(((320 - pixel_width)/spc_width)+0.5);
+					projects[i] = projects_data[i]['name'] + this.str_repeat(String.fromCharCode(160),pad) + projects_data[i]['quotas'];
+				}
+			}
 		}
-		this.set('name_of_project', '');
 		for (var i = 0; i < length; i++) {
-			if (regular_exp_project_id.test(this.get('content').objectAt(i).get('project_name'))) {
-				this.set('name_of_project', 'system');
-			} else {
-				this.set('name_of_project', this.get('content').objectAt(i).get('project_name'));
-			}
-			if ((this.get('name_of_project') + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + String.fromCharCode(160) + 'VMs:' + this.get('content').objectAt(i).get('vms_av').length + String.fromCharCode(160) + String.fromCharCode(160) + 'Cpus:' + this.get('content').objectAt(i).get('cpu_av') + String.fromCharCode(160) + String.fromCharCode(160) + 'Ram:' + this.get('content').objectAt(i).get('mem_av')  + 'MB' + String.fromCharCode(160) + String.fromCharCode(160) + 'Disk:' + this.get('content').objectAt(i).get('disk_av') + 'GB') === this.get('project_details')) {
+			if ((projects[i]) === this.get('project_details'))
+			{ 
+				if(this.get('last_cluster_conf_checked') == false)
+				{
+					this.set('alert_mes_last_conf', '');
+				}
 				this.set('create_cluster_disabled', false);
-				console.log(true);
-				this.set('project_current', this.get('content').objectAt(i));
-				this.set('project_name', this.get('content').objectAt(i).get('project_name'));
+				this.set('project_current', model.objectAt(i));
+				this.set('project_name', model.objectAt(i).get('project_name'));
 				this.set('project_index', i);
 				break;
 			}
@@ -75,46 +145,34 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// The total cpus selected for the cluster
 	total_cpu_selection : function() {
 		return (this.get('master_cpu_selection') + this.get('slaves_cpu_selection') * (this.size_of_cluster() - 1));
-	}.property('master_cpu_selection', 'slaves_cpu_selection', 'project_name', 'cluster_size_var'),
+	}.property('master_cpu_selection', 'slaves_cpu_selection', 'project_details', 'cluster_size_var'),
 
 	// Computes the available cpu each time total_cpu_selection changes
 	cpu_available : function() {
 		var cpu_avail = this.get('content').objectAt(this.get('project_index')).get('cpu_av') - this.get('total_cpu_selection');
-		if (cpu_avail < 0) {
-			alert('The cluster size you selected with the current cpu choices exceed the cpu quota. You should lower the clustersize, change cpu values and select the clustersize again');
-		} else {
-			return cpu_avail;
-		}
+		return cpu_avail;
 	}.property('total_cpu_selection'),
 
 	// The total memory selected for the cluster
 	total_ram_selection : function() {
 		return (this.get('master_ram_selection') + this.get('slaves_ram_selection') * (this.size_of_cluster() - 1));
-	}.property('master_ram_selection', 'slaves_ram_selection', 'project_name', 'cluster_size_var'),
+	}.property('master_ram_selection', 'slaves_ram_selection', 'project_details', 'cluster_size_var'),
 
 	// Computes the available memory each time total_mem_selection changes
 	ram_available : function() {
 		ram_avail = this.get('content').objectAt(this.get('project_index')).get('mem_av') - this.get('total_ram_selection');
-		if (ram_avail < 0) {
-			alert('The cluster size you selected with the current ram choices exceed the ram quota. You should lower the clustersize, change ram values and select the clustersize again');
-		} else {
-			return ram_avail;
-		}
+		return ram_avail;
 	}.property('total_ram_selection'),
 
 	// The total disk selected for the cluster
 	total_disk_selection : function() {
 		return (this.get('master_disk_selection') + this.get('slaves_disk_selection') * (this.size_of_cluster() - 1));
-	}.property('master_disk_selection', 'slaves_disk_selection', 'project_name', 'cluster_size_var'),
+	}.property('master_disk_selection', 'slaves_disk_selection', 'project_details', 'cluster_size_var'),
 
 	// Computes the available disk each time total_disk_selection changes
 	disk_available : function() {
 		disk_avail = this.get('content').objectAt(this.get('project_index')).get('disk_av') - this.get('total_disk_selection');
-		if (disk_avail < 0) {
-			alert('The cluster size you selected with the current disk choices exceed the disk quota. You should lower the clustersize, change disk values and select the clustersize again');
-		} else {
-			return disk_avail;
-		}
+		return disk_avail;
 	}.property('total_disk_selection'),
 
 	// Computes the maximum VMs that can be build with current flavor choices and return this to the drop down menu on index
@@ -163,8 +221,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 		if (length == 0) {
 			if (this.get('project_name') != '') {
 				this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
-				alert(String(this));
-				alert(String(this.get('project_name')));
 			}
 			cluster_size_zero = true;
 			return max_cluster_size_limited_by_current_cpus;
@@ -221,6 +277,126 @@ App.ClusterCreateController = Ember.Controller.extend({
 		return max_cluster_size_limited_by_current_disks;
 	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size_var', 'cluster_size', 'project_details'),
 
+
+	// Function to set master and slaves vm_flavor_selection
+ 	vm_flavor_buttons_response: function (){
+		if ((this.flavor_settings['Small']['cpu']==this.get('master_cpu_selection')) && (this.flavor_settings['Small']['ram']==this.get('master_ram_selection')) && (this.flavor_settings['Small']['disk']==this.get('master_disk_selection'))){
+			this.set('vm_flavor_selection_Master', 'Small');
+		}
+		if ((this.flavor_settings['Medium']['cpu']==this.get('master_cpu_selection')) && (this.flavor_settings['Medium']['ram']==this.get('master_ram_selection')) && (this.flavor_settings['Medium']['disk']==this.get('master_disk_selection'))){
+			this.set('vm_flavor_selection_Master', 'Medium');
+		}
+		if ((this.flavor_settings['Large']['cpu']==this.get('master_cpu_selection')) && (this.flavor_settings['Large']['ram']==this.get('master_ram_selection')) && (this.flavor_settings['Large']['disk']==this.get('master_disk_selection'))){
+			this.set('vm_flavor_selection_Master', 'Large');
+		}
+		if ((this.flavor_settings['Small']['cpu']==this.get('slaves_cpu_selection')) && (this.flavor_settings['Small']['ram']==this.get('slaves_ram_selection')) && (this.flavor_settings['Small']['disk']==this.get('slaves_disk_selection'))){
+			this.set('vm_flavor_selection_Slave', 'Small');
+		}
+		if ((this.flavor_settings['Medium']['cpu']==this.get('slaves_cpu_selection')) && (this.flavor_settings['Medium']['ram']==this.get('slaves_ram_selection')) && (this.flavor_settings['Medium']['disk']==this.get('slaves_disk_selection'))){
+			this.set('vm_flavor_selection_Slave', 'Medium');
+		}
+		if ((this.flavor_settings['Large']['cpu']==this.get('slaves_cpu_selection')) && (this.flavor_settings['Large']['ram']==this.get('slaves_ram_selection')) && (this.flavor_settings['Large']['disk']==this.get('slaves_disk_selection'))){
+			this.set('vm_flavor_selection_Slave', 'Large');
+		}
+	},
+
+    // Functionality about coloring of the vm_flavor buttons and enable-disable responding to user events
+	// First, remove colors from all vm_flavor buttons and then color the role's(master/slaves) selection
+    vm_flavor_buttons : function() {
+    	var elements = document.getElementsByName("vm_flavor_button_Master");
+		var length = elements.length;
+		var vm_flavors = this.get('content').objectAt(this.get('project_index')).get('vm_flavors_choices');
+		
+		this.vm_flavor_buttons_response();
+		for (var i = 0; i < length; i++) {
+			elements[i].style.color = "initial";
+			if (this.get('vm_flav_master_Small_disabled')) {
+				elements[0].disabled = true;
+			} else {
+				elements[0].disabled = false;
+			}
+			if (this.get('vm_flav_master_Medium_disabled')) {
+				elements[1].disabled = true;
+			} else {
+				elements[1].disabled = false;
+			}
+			if (this.get('vm_flav_master_Large_disabled')) {
+				elements[2].disabled = true;
+			} else {
+				elements[2].disabled = false;
+			}
+			if ((this.get('vm_flavor_selection_Master') !== undefined) && (this.get('vm_flavor_selection_Master') !== null) && (this.get('vm_flavor_selection_Master') !== '')) {
+				var choice = document.getElementById("master_vm_flavors_".concat(this.get('vm_flavor_selection_Master')));
+				if ((this.get('master_cpu_selection') == this.flavor_settings['Small']['cpu'])
+					&&(this.get('master_ram_selection') == this.flavor_settings['Small']['ram'])
+					&&(this.get('master_disk_selection') == this.flavor_settings['Small']['disk'])) {
+					vm_flavor_newMaster_Id = "master_vm_flavors_Small";
+					choice = document.getElementById(vm_flavor_newMaster_Id);
+					choice.style.color = "white";
+				} 
+				if ((this.get('master_cpu_selection') == this.flavor_settings['Medium']['cpu'])
+					&&(this.get('master_ram_selection') == this.flavor_settings['Medium']['ram'])
+					&&(this.get('master_disk_selection') == this.flavor_settings['Medium']['disk'])) {
+					vm_flavor_newMaster_Id = "master_vm_flavors_Medium";
+					choice = document.getElementById(vm_flavor_newMaster_Id);
+					choice.style.color = "white";					
+				}
+				if ((this.get('master_cpu_selection') == this.flavor_settings['Large']['cpu'])
+					&&(this.get('master_ram_selection') == this.flavor_settings['Large']['ram'])
+					&&(this.get('master_disk_selection') == this.flavor_settings['Large']['disk'])) {
+					vm_flavor_newMaster_Id = "master_vm_flavors_Large";
+					choice = document.getElementById(vm_flavor_newMaster_Id);
+					choice.style.color = "white";
+				}								
+			}
+		}
+		var elements = document.getElementsByName("vm_flavor_button_Slave");
+		var length = elements.length;
+		var vm_flavors = this.get('content').objectAt(this.get('project_index')).get('vm_flavors_choices');
+		for (var i = 0; i < length; i++) {
+			elements[i].style.color = "initial";
+			if (this.get('vm_flav_slave_Small_disabled')) {
+				elements[0].disabled = true;
+			} else {
+				elements[0].disabled = false;
+			}
+			if (this.get('vm_flav_slave_Medium_disabled')) {
+				elements[1].disabled = true;
+			} else {
+				elements[1].disabled = false;
+			}
+			if (this.get('vm_flav_slave_Large_disabled')) {
+				elements[2].disabled = true;
+			} else {
+				elements[2].disabled = false;
+			}
+			if ((this.get('vm_flavor_selection_Slave') !== undefined) && (this.get('vm_flavor_selection_Slave') !== null) && (this.get('vm_flavor_selection_Slave') !== '')) {
+				var choice = document.getElementById("slave_vm_flavors_".concat(this.get('vm_flavor_selection_Slave')));
+				if ((this.get('slaves_cpu_selection') == this.flavor_settings['Small']['cpu'])
+					&&(this.get('slaves_ram_selection') == this.flavor_settings['Small']['ram'])
+					&&(this.get('slaves_disk_selection') == this.flavor_settings['Small']['disk'])) {
+					vm_flavor_newSlave_Id = "slave_vm_flavors_Small";
+					choice = document.getElementById(vm_flavor_newSlave_Id);
+					choice.style.color = "white";
+				} 
+				if ((this.get('slaves_cpu_selection') == this.flavor_settings['Medium']['cpu'])
+					&&(this.get('slaves_ram_selection') == this.flavor_settings['Medium']['ram'])
+					&&(this.get('slaves_disk_selection') == this.flavor_settings['Medium']['disk'])) {
+					vm_flavor_newSlave_Id = "slave_vm_flavors_Medium";
+					choice = document.getElementById(vm_flavor_newSlave_Id);
+					choice.style.color = "white";					
+				}
+				if ((this.get('slaves_cpu_selection') == this.flavor_settings['Large']['cpu'])
+					&&(this.get('slaves_ram_selection') == this.flavor_settings['Large']['ram'])
+					&&(this.get('slaves_disk_selection') == this.flavor_settings['Large']['disk'])) {
+					vm_flavor_newSlave_Id = "slave_vm_flavors_Large";
+					choice = document.getElementById(vm_flavor_newSlave_Id);
+					choice.style.color = "white";
+				}							
+			}
+		}
+	},
+
 	// Functionality about coloring of the cpu buttons and enable-disable responding to user events
 	// First, remove colors from all cpu buttons and then color the role's(master/slaves) selection
 	// Check all the possible combinations of selected role buttons with the unselected role's selection
@@ -247,6 +423,20 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = false;
 			}
 		}
+		if (length != 0){			
+			if (elements[1].disabled == true) {
+				this.set('vm_flav_master_Small_disabled', true);
+			} else {
+				this.set('vm_flav_master_Small_disabled', false);
+			}
+			if (elements[2].disabled == true) {
+				this.set('vm_flav_master_Medium_disabled', true);
+				this.set('vm_flav_master_Large_disabled', true);
+			} else {
+				this.set('vm_flav_master_Medium_disabled', false);
+				this.set('vm_flav_master_Large_disabled', false);
+			}
+		}
 
 		var elements = document.getElementsByName("slaves_cpus_button");
 		var length = elements.length;
@@ -267,6 +457,20 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = true;
 			} else {
 				elements[i].disabled = false;
+			}
+		}
+		if (length != 0){
+			if (elements[1].disabled == true) {
+				this.set('vm_flav_slave_Small_disabled', true);
+			} else {
+				this.set('vm_flav_slave_Small_disabled', false);
+			}
+			if (elements[2].disabled == true) {
+				this.set('vm_flav_slave_Medium_disabled', true);
+				this.set('vm_flav_slave_Large_disabled', true);
+			} else {
+				this.set('vm_flav_slave_Medium_disabled', false);
+				this.set('vm_flav_slave_Large_disabled', false);
 			}
 		}
 	},
@@ -299,6 +503,15 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = false;
 			}
 		}
+		if (length != 0){
+			if (elements[2].disabled == true) {
+				this.set('vm_flav_master_Small_disabled', true);
+				this.set('vm_flav_master_Medium_disabled', true);
+			}
+			if (elements[3].disabled == true) {
+				this.set('vm_flav_master_Large_disabled', true);
+			}		
+		}
 
 		var elements = document.getElementsByName("slaves_ram_button");
 		var length = elements.length;
@@ -320,6 +533,15 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				elements[i].disabled = false;
 			}
+		}
+		if (length != 0){
+			if (elements[2].disabled == true) {
+				this.set('vm_flav_slave_Small_disabled', true);
+				this.set('vm_flav_slave_Medium_disabled', true);
+			}
+			if (elements[3].disabled == true) {
+				this.set('vm_flav_slave_Large_disabled', true);
+			}	
 		}
 	},
 
@@ -350,6 +572,17 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = false;
 			}
 		}
+		if (length != 0){
+			if (elements[1].disabled == true) {
+				this.set('vm_flav_master_Small_disabled', true);
+			}
+			if (elements[2].disabled == true) {
+				this.set('vm_flav_master_Medium_disabled', true);
+			}
+			if (elements[3].disabled == true) {
+				this.set('vm_flav_master_Large_disabled', true);
+			}
+		}
 
 		var elements = document.getElementsByName("slaves_disk_button");
 		var length = elements.length;
@@ -370,6 +603,17 @@ App.ClusterCreateController = Ember.Controller.extend({
 				elements[i].disabled = true;
 			} else {
 				elements[i].disabled = false;
+			}
+		}
+		if (length != 0){
+			if (elements[1].disabled == true) {
+				this.set('vm_flav_slave_Small_disabled', true);
+			}
+			if (elements[2].disabled == true) {
+				this.set('vm_flav_slave_Medium_disabled', true);
+			}
+			if (elements[3].disabled == true) {
+				this.set('vm_flav_slave_Large_disabled', true);
 			}
 		}
 	},
@@ -398,17 +642,20 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.memory_buttons();
 		this.disk_buttons();
 		this.storage_buttons();
+		this.vm_flavor_buttons();
 	},
+	
+	// Function which make the size of cluster equal or greater than minimum cluster
 	size_of_cluster : function() {
 		if ((this.get('cluster_size') === null) || (this.get('cluster_size') === undefined) || (this.get('cluster_size') === 0)) {
 			this.set('cluster_size_var', 2);
-			return this.get('cluster_size_var');
 		} else {
 			this.set('cluster_size_var', this.get('cluster_size'));
-			return this.get('cluster_size_var');
 		}
+		return this.get('cluster_size_var');
 	},
-	// reset project variables
+	
+	// Reset project variables
 	reset_project : function() {
 		this.set('project_index', 0);
 		this.set('project_current', '');
@@ -416,6 +663,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('project_details', '');
 		
 	},
+	
 	// Reset variables after logout
 	reset_variables : function() {
 		this.set('cluster_size', 0);
@@ -427,8 +675,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('master_disk_selection', 0);
 		this.set('slaves_disk_selection', 0);
 		this.set('cluster_name', '');
-		this.set('operating_system', 'Debian Base');
-		this.set('disk_temp', 'ext_vlmc');
+		this.set('operating_system', '');
+		this.set('disk_temp', 'Archipelago');
+		this.set('vm_flavor_selection_Master', '');
+		this.set('vm_flavor_selection_Slave', '');
 		this.set('message', '');
 		this.init_alerts();
 	},
@@ -443,7 +693,143 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('alert_mes_cluster_name', '');
 		this.set('alert_mes_cluster_size', '');
 	},
+	
 	actions : {
+		// action to apply last cluster configuration
+		// trigger when the corresponding button is pressed
+		applyLastCluster : function() {					
+			if (!Ember.isEmpty(this.get('last_cluster'))){
+				// find and select the last project
+				var projects = [];
+				projects = this.get('projects_av');
+				var length = projects.length;
+				for (var i = 0; i < length; i++) {
+					// check based on the name of the project (at screen we have both project name and quotas)
+					if (projects.objectAt(i).lastIndexOf(clusterdata.project_name, 0) === 0) {
+						this.set('selected_project', projects.objectAt(i));
+						break;
+					}
+				}
+				// select/set the remaining of the last configurations						
+				var self = this;
+				Ember.run.later (function() {	
+					self.set('last_cluster_conf_checked', true);	
+					if ((clusterdata.cluster_size <= (self.get('max_cluster_size_av').length+1)) 
+					&& ((clusterdata.cpu_master+(clusterdata.cpu_slaves*(clusterdata.cluster_size-1)))
+						<= self.get('cpu_available')+self.get('master_cpu_selection')+self.get('slaves_cpu_selection')*(self.size_of_cluster()-1)) 
+					&& ((clusterdata.mem_master+(clusterdata.mem_slaves*(clusterdata.cluster_size-1)))
+						<= self.get('ram_available')+self.get('master_ram_selection')+self.get('slaves_ram_selection')*(self.size_of_cluster()-1))
+					&& ((clusterdata.disk_master+(clusterdata.disk_slaves*(clusterdata.cluster_size-1)))
+						<= self.get('disk_available')+self.get('master_disk_selection')+self.get('slaves_disk_selection')*(self.size_of_cluster()-1)))
+					{
+						self.set('alert_mes_last_conf', '');
+						self.set('selected_image', clusterdata.os_image);
+						self.set('cluster_size', clusterdata.cluster_size);
+						self.set('disk_template_selection', self.get('reverse_storage_lookup')[clusterdata.disk_template], "storage_button");
+						self.set('master_cpu_selection', clusterdata.cpu_master);
+						self.set('slaves_cpu_selection', clusterdata.cpu_slaves);
+						self.set('master_ram_selection', clusterdata.mem_master);
+						self.set('slaves_ram_selection', clusterdata.mem_slaves);
+						self.set('master_disk_selection', clusterdata.disk_master);
+						self.set('slaves_disk_selection', clusterdata.disk_slaves);	
+					}
+					else{
+						self.set('alert_mes_last_conf', 'Lack of available resources.');
+						self.reset_variables();
+						self.reset_project();
+						self.set('last_cluster_conf_checked', false);
+					}				
+				}, 1000);
+			}			
+		
+		},
+		// action triggered when entering the create cluster
+		// find last cluster configuration for this user
+		findLastCluster : function() {
+			this.set('alert_mes_last_conf', '');
+			this.set('last_conf_message', '');
+			this.set('last_cluster', '');
+			
+			var self = this;
+			var store = this.store;
+			store.fetch('user', 1).then(function(user) {
+				
+				var clusters = user.get('clusters');
+				var length = clusters.get('length');
+				if (length > 0) {
+					var last_date = clusters.objectAt(0).get('action_date');
+					if ((clusters.objectAt(0).get('cluster_status') == 1) || (clusters.objectAt(0).get('cluster_status') == 2)) {
+						self.set('last_cluster', clusters.objectAt(0));
+					}
+					for (var i = 1; i < length; i++) {
+						if ((clusters.objectAt(i).get('cluster_status') == 1) || (clusters.objectAt(i).get('cluster_status') == 2)) {
+							if (clusters.objectAt(i).get('action_date') > last_date) {
+								last_date = clusters.objectAt(i).get('action_date');
+								self.set('last_cluster', clusters.objectAt(i));
+							}
+						}
+					}
+				}
+				
+				if (!Ember.isEmpty(self.get('last_cluster'))){
+					clusterdata = self.get('last_cluster').get('data');
+					var label = '<b>Projects</b>: <span class="text text-info">' + clusterdata.project_name + '</span>'
+					+ '<br><b>Available Images</b>: <span class="text text-info">' + clusterdata.os_image + '</span>'
+					+ '<br><b>Cluster Size</b>: <span class="text text-info">' + clusterdata.cluster_size + '</span>'
+					+ '<br><b>Storage</b>: <span class="text text-info">' + self.get('reverse_storage_lookup')[clusterdata.disk_template] + '</span>'
+					+ '<br><b>Master CPUs</b>: <span class="text text-info">' + clusterdata.cpu_master + '</span>'
+					+ '<br><b>Master RAM</b>: <span class="text text-info">' + clusterdata.mem_master + '</span>'
+					+ '<br><b>Master Disk Size</b>: <span class="text text-info">' + clusterdata.disk_master + '</span>'
+					+ '<br><b>Slaves CPUs</b>: <span class="text text-info">' + clusterdata.cpu_slaves + '</span>'
+					+ '<br><b>Slaves RAM</b>: <span class="text text-info">' + clusterdata.mem_slaves + '</span>'
+					+ '<br><b>Slaves Disk Size</b>: <span class="text text-info">' + clusterdata.disk_slaves + '</span>';
+	
+					self.set('last_conf_message', label);
+				}
+			}, function(reason) {
+				console.log(reason.message);
+			});
+		},	
+		vm_flavor_selection : function(value, name) {
+			if (name == "vm_flavor_button_Master") {
+				this.set('vm_flavor_selection_Master', value);
+				if (value == "Small") {
+					this.set('master_cpu_selection', this.flavor_settings['Small']['cpu']);
+				    this.set('master_ram_selection', this.flavor_settings['Small']['ram']);
+				    this.set('master_disk_selection', this.flavor_settings['Small']['disk']);
+				} 				
+				if (value == "Medium") {
+					this.set('master_cpu_selection', this.flavor_settings['Medium']['cpu']);
+				    this.set('master_ram_selection', this.flavor_settings['Medium']['ram']);
+				    this.set('master_disk_selection', this.flavor_settings['Medium']['disk']);
+				}
+				if (value == "Large") {
+					this.set('master_cpu_selection', this.flavor_settings['Large']['cpu']);
+					this.set('master_ram_selection', this.flavor_settings['Large']['ram']);
+					this.set('master_disk_selection', this.flavor_settings['Large']['disk']);
+					this.send('disk_template_selection', 'Archipelago', "storage_button");
+				}
+			}
+			if (name == "vm_flavor_button_Slave") {
+				this.set('vm_flavor_selection_Slave', value);
+				if (value == "Small") {
+					this.set('slaves_cpu_selection', this.flavor_settings['Small']['cpu']);
+					this.set('slaves_ram_selection', this.flavor_settings['Small']['ram']);
+					this.set('slaves_disk_selection', this.flavor_settings['Small']['disk']);
+				}
+				if (value == "Medium") {
+					this.set('slaves_cpu_selection', this.flavor_settings['Medium']['cpu']);
+					this.set('slaves_ram_selection', this.flavor_settings['Medium']['ram']);
+					this.set('slaves_disk_selection', this.flavor_settings['Medium']['disk']);
+				}
+				if (value == "Large") {				
+					this.set('slaves_cpu_selection', this.flavor_settings['Large']['cpu']);				
+					this.set('slaves_ram_selection', this.flavor_settings['Large']['ram']);				
+					this.set('slaves_disk_selection', this.flavor_settings['Large']['disk']);
+					this.send('disk_template_selection', 'Archipelago', "storage_button");	
+				}
+			}			
+		},
 
 		// When a cpu button is clicked, the selected role's cpu selection takes the corresponding value
 		cpu_selection : function(value, name) {
@@ -504,7 +890,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 		// When a disk button is clicked, the selected role's disk selection takes the corresponding value
 		disk_selection : function(value, name) {
-
+			// if the selected disk size is >20 GB
+			// then select 'Archipelago'
+			if(value > 20)
+			{
+				this.send('disk_template_selection', 'Archipelago', "storage_button");
+			}
+			
 			if (this.get('master_disk_selection') == 0) {
 				var master_disk = this.get('content').objectAt(this.get('project_index')).get('disk_choices')[0];
 			} else {
@@ -535,6 +927,45 @@ App.ClusterCreateController = Ember.Controller.extend({
 		// When a storage button is clicked, the selected role's storage selection takes the corresponding value
 		disk_template_selection : function(value, name) {
 			this.set('disk_temp', value);
+
+			// if "Standard" is selected, check disk sizes 
+			// disk sizes for master/slaves should be <=20
+			if(value == 'Standard')
+			{
+				var length = this.get('content').objectAt(this.get('project_index'))
+								.get('disk_choices').length;
+												
+				// if master disk selection invalid
+				if(this.get('master_disk_selection') > 20)
+				{
+					// then select the highest allowed value
+					for (var i = length-1; i >= 0; i--) {
+						var value = this.get('content').objectAt(this.get('project_index'))
+						.get('disk_choices')[i];
+						
+						if( value <= 20)
+						{
+							this.send('disk_selection', value, "master_disk_button");
+							break;
+						}					
+					}	
+				}
+				// if slaves disk selection invalid
+				if(this.get('slaves_disk_selection') > 20)
+				{
+					// then select the highest allowed value
+					for (var i = length-1; i >= 0; i--) {
+						var value = this.get('content').objectAt(this.get('project_index'))
+						.get('disk_choices')[i];
+						
+						if( value <= 20)
+						{
+							this.send('disk_selection', value, "slaves_disk_button");
+							break;
+						}					
+					}	
+				}				
+			}
 		},
 		// Cancel action when in create cluster -> redirect to user's welcome screen
 		cancel : function() {
@@ -549,13 +980,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 		// go_to_create action is triggered
 		go_to_create : function() {
 			$options = {
-				title : 'Redirect to welcome page and start building cluster...',
+				title : 'Redirect to welcome page and start building cluster',
 				fontColor : false,
 				bgColor : 'transparent',
 				size : 32,
 				isOnly : true,
 				bgOpacity : 1.0,
-				imgUrl : "/frontend/app/images/loading[size].gif",
+				imgUrl : DJANGO_STATIC_URL + "images/loading[size].gif",
 				onShow : function() {
 					$.loader.shown = true;
 					$('.loading_wrp').find('span').addClass('text-info strong');
@@ -612,10 +1043,15 @@ App.ClusterCreateController = Ember.Controller.extend({
 				$.loader.open($options);
 				//body
 				// check if everything is allowed
-				if ((this.get('total_cpu_selection') <= this.get('content').objectAt(this.get('project_index')).get('cpu_av')) && (this.get('total_ram_selection') <= this.get('content').objectAt(this.get('project_index')).get('mem_av')) && (this.get('total_disk_selection') <= this.get('content').objectAt(this.get('project_index')).get('disk_av'))) {
+				if ((this.get('total_cpu_selection') <= this.get('content').objectAt(this.get('project_index')).get('cpu_av')) 
+					&& (this.get('total_ram_selection') <= this.get('content').objectAt(this.get('project_index')).get('mem_av')) 
+					&& (this.get('total_disk_selection') <= this.get('content').objectAt(this.get('project_index')).get('disk_av'))) {
 					var self = this;
 					// PUT request
-					var cluster_selection = this.store.update('clusterchoice', {
+					if ((this.get('ssh_key_selection')=='') || (this.get('ssh_key_selection')==null)){
+						this.set('ssh_key_selection', 'no_ssh_key_selected');
+					}
+					var cluster_selection = this.store.push('clusterchoice', {
 						// set the clusterchoice model with the user choices
 						'id' : 1,
 						'project_name' : self.get('project_name'),
@@ -628,34 +1064,37 @@ App.ClusterCreateController = Ember.Controller.extend({
 						'mem_slaves' : self.get('slaves_ram_selection'),
 						'disk_slaves' : self.get('slaves_disk_selection'),
 						'disk_template' : self.get('disk_temp'),
-						'os_choice' : self.get('operating_system')
+						'os_choice' : self.get('operating_system'),
+						'ssh_key_selection' : self.get('ssh_key_selection')
 					}).save();
 
-					cluster_selection.then(function(data) {
+					cluster_selection.then(function(clusterchoice) {
 						// Set the response to user's create cluster click when put succeeds.
 						$.loader.close(true);
-						self.set('message', data._data.message);
-						self.set('controllers.userWelcome.output_message', data._data.message);
-						self.set('controllers.userWelcome.create_cluster_start', false);
-						self.store.fetch('user', 1);
-					}, function() {
+                        var message = clusterchoice.get('data').message || "";
+                        self.set('message', message);
+                        if (!Ember.isBlank(message)){
+                        	var msg = {'msg_type':'danger','msg_text':message};
+                        	self.get('controllers.userWelcome').send('addMessage',msg);
+                        }
+						self.set('controllers.userWelcome.create_cluster_start', true);
+						self.store.fetch('user', 1).then(function(user){
+							self.transitionToRoute('user.welcome');
+						},function(reason){
+							console.log(reason.message);
+						});
+					}, function(reason) {
 						// Set the response to user's create cluster click when put fails.
+						console.log(reason.message);
 						$.loader.close(true);
-						self.set('message', 'A problem occured during your request. Please check your cluster parameters and try again');
-						self.set('controllers.userWelcome.output_message', 'A problem occured during your request. Please check your cluster parameters and try again');
+						self.set('message', reason.message);
+						if (!Ember.isBlank(reason.message)){
+							var msg = {'msg_type':'danger','msg_text':reason.message};
+                        	self.get('controllers.userWelcome').send('addMessage',msg);
+						}
 						self.set('controllers.userWelcome.create_cluster_start', false);
 						self.store.fetch('user', 1);
 					});
-					if (this.get('message') == "") {
-						// after ten seconds goes to welcome route
-						setTimeout(function() {
-							self.set('controllers.userWelcome.create_cluster_start', true);
-							self.transitionToRoute('user.welcome');
-						}, 10000);
-					} else {
-						self.set('controllers.userWelcome.create_cluster_start', true);
-						this.transitionToRoute('user.welcome');
-					}
 				} else {
 					alert('Requested resources unavailable!');
 					$.loader.close(true);

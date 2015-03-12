@@ -1,9 +1,4 @@
-// Redirect to login screen when user press start in homepage
+// Home Page controller
 App.HomepageController = Ember.Controller.extend({
-	actions: {
-		start : function() {
-			this.transitionToRoute('user.login');
-		}
-	},
-	STATIC_URL : '/frontend/app/',
+	STATIC_URL : DJANGO_STATIC_URL
 });
