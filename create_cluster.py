@@ -320,8 +320,8 @@ class YarnCluster(object):
         return error_project_quota
 
     def create_bare_cluster(self):
-        """Creates a bare ~okeanos cluster."""
-        # Finds user public ssh key
+        """Creates a bare ~okeanos cluster."""	 
+       # Finds user public ssh key
         USER_HOME = expanduser('~')
         chosen_image = {}
         pub_keys_path = join(USER_HOME, ".ssh/id_rsa.pub")
@@ -378,7 +378,13 @@ class YarnCluster(object):
     def create_yarn_cluster(self):
         """Create Yarn cluster"""
         self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
-        logging.log(SUMMARY, ' Creating Yarn cluster')
+
+	db_cluster_update(self.opts['token'], "Active", self.opts['name'],
+                              self.HOSTNAME_MASTER_IP),
+	self.destroy()
+	return
+        
+	logging.log(SUMMARY, ' Creating Yarn cluster')
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
                                              self.HOSTNAME_MASTER_IP)
