@@ -264,7 +264,7 @@ class UserClusterInfo(object):
                     # using string.format spec mini-language to create a hanging indent 
                     # https://docs.python.org/2/library/string.html#formatstrings
                     if key == 'cluster_name':
-                        fmt_string = '{:<5}' + key + ': {' + key + '}'
+                        fmt_string = u'{:<5}' + key + ': {' + key + '}'
                     elif key == 'cluster_status':
                         fmt_string = '{:<10}' + key + ': ' + self.status_id_to_status_desc[sorted_cluster[key]]
                     elif key == 'hadoop_status':
@@ -314,7 +314,7 @@ def main():
     parser_info = subparsers.add_parser('info',
                                      help='Information for a specific Hadoop-Yarn cluster.')    
     parser_hadoop = subparsers.add_parser('hadoop', 
-                                     help='Start or Stop a Hadoop-Yarn cluster.')
+                                     help='Start, Stop or Format a Hadoop-Yarn cluster.')
 
     
     if len(argv) > 1:

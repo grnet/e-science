@@ -93,7 +93,7 @@ def get_user_clusters(token):
     try:
         escience_token = authenticate_escience(token)
     except TypeError:
-        msg = ' Authentication error with token: ' + token
+        msg = ' Authentication error: Invalid Token'
         raise ClientError(msg, error_authentication)
     except Exception,e:
         print ' ' + str(e.args[0])
@@ -121,7 +121,7 @@ def authenticate_escience(token):
     try:
         escience_token = response['user']['escience_token']
     except TypeError:
-        msg = ' Authentication error with token: ' + token
+        msg = ' Authentication error: Invalid Token'
         raise ClientError(msg, error_authentication)
     logging.log(REPORT, ' Authenticated with escience database')
     return escience_token
