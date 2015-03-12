@@ -14,7 +14,7 @@ from version import __version__
 from utils import ClusterRequest, ConnectionError, authenticate_escience, get_user_clusters, \
     custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf, \
 ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to__hadoop, \
-    read_replication_factor
+    read_replication_factor, ssh_stream_from__hadoop
 from time import sleep
 import sys
 
@@ -304,6 +304,53 @@ class HadoopCluster(object):
             sys.stdout.flush()
             logging.log(SUMMARY, ' Transfered file to Hadoop filesystem')
 
+    def get(self):
+        """ Method for getting files from Hadoop clusters in ~okeanos to local filesystem."""
+        clusters = get_user_clusters(self.opts['token'])
+        active_cluster = None
+        for cluster in clusters:
+            if (cluster['id'] == self.opts['cluster_id']):
+                active_cluster = cluster
+                if cluster['cluster_status'] == const_cluster_status_active:
+                    break
+        else:
+            logging.error(' You can download files from active clusters only.')
+            exit(error_fatal)
+        try:
+            filename = self.opts['source'].split("/")
+            filename = filename[len(filename)-1] 
+            
+            if os.path.exists(self.opts['destination'] + "/" + filename):
+                logging.log(SUMMARY, ' File "' + filename + '" already exists in this destination.')
+                exit(error_fatal)
+            
+            if not os.path.exists(self.opts['destination']):
+                try:
+                    os.makedirs(self.opts['destination'])
+                    logging.log(SUMMARY, ' Destination path-directory created.')
+                except OSError:
+                    logging.error(' Choose another destination path-directory.')
+                    exit(error_fatal)
+            
+            logging.log(SUMMARY, ' Checking if \"' + filename + '\" exists in Hadoop filesystem.' )
+            file_exists = ssh_call_hadoop("hduser", active_cluster['master_IP'],
+                                      " dfs -test -e " + self.opts['source'])
+            if file_exists == 0:
+                logging.log(SUMMARY, ' Start downloading file from hdfs')
+                ssh_stream_from__hadoop("hduser", active_cluster['master_IP'],
+                                  self.opts['source'], self.opts['destination'], filename)
+            else:
+                logging.error(' File does not exist.')
+                exit(error_fatal) 
+
+            if os.path.exists(self.opts['destination'] + "/" + filename):
+                logging.log(SUMMARY, ' File downloaded from Hadoop filesystem.')
+            else:
+                logging.error(' Error while downloading from Hadoop filesystem.')
+        except Exception, e:
+            logging.error(' Error:' + str(e.args[0]))
+            exit(error_fatal)
+
 
 class UserClusterInfo(object):
     """ Class holding user cluster info
@@ -417,9 +464,11 @@ def main():
     parser_info = subparsers.add_parser('info',
                                      help='Information for a specific Hadoop-Yarn cluster.')    
     parser_hadoop = subparsers.add_parser('hadoop', 
-                                     help='Start or Stop a Hadoop-Yarn cluster.')
+                                     help='Start, Stop or Format a Hadoop-Yarn cluster.')
     parser_put = subparsers.add_parser('put',
                                      help='Put/Upload a file on a Hadoop-Yarn filesystem')
+    parser_get = subparsers.add_parser('get',
+                                     help='Get/Download a file from a Hadoop-Yarn filesystem')
     
     if len(argv) > 1:
 
@@ -499,6 +548,14 @@ def main():
                               help='Ftp-Http remote user')
         parser_put.add_argument('--password',
                               help='ftp-http password')
+        parser_get.add_argument('cluster_id',
+                              help='The id of the Hadoop cluster', type=checker.positive_num_is)
+        parser_get.add_argument('source',
+                              help='The file to be downloaded')
+        parser_get.add_argument('destination',
+                              help='Destination in Local filesystem')
+        parser_get.add_argument("--token", metavar='token', default=kamaki_token, type=checker.a_string_is,
+                              help='Synnefo authentication token. Default read from .kamakirc')
                 
         opts = vars(parser.parse_args(argv[1:]))
         c_hadoopcluster = HadoopCluster(opts)
@@ -520,6 +577,8 @@ def main():
             c_hadoopcluster.hadoop_action()
         elif verb == 'put':
             c_hadoopcluster.put()
+        elif verb == 'get':
+            c_hadoopcluster.get()
 
     else:
         logging.error('No arguments were given')

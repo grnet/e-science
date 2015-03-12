@@ -284,3 +284,15 @@ def read_replication_factor(user, master_IP):
             break
 
     return replication_factor
+
+def ssh_stream_from__hadoop(user, master_IP, source_file, dest_dir, filename):
+    """
+        SSH to master VM and
+        stream files from hadoop to local
+    """
+    response = subprocess.call("ssh " + user + "@"
+                                    + master_IP + " \"" + HADOOP_PATH 
+                                    + " dfs -text " + source_file + "\""
+                                    + " | tee 1>>" + dest_dir + "/" + filename, stderr=FNULL, shell=True)
+    
+    return response
