@@ -24,6 +24,17 @@ class PGArrayField(serializers.WritableField):
         return obj
 
 
+class HdfsSerializer(serializers.Serializer):
+    """
+    Serializer for put files in hdfs from ftp-http
+    """
+    id = serializers.CharField()
+    source = serializers.CharField()
+    dest = serializers.CharField()
+    user = serializers.CharField(required=False)
+    password = serializers.CharField(required=False)
+
+
 class ClusterCreationParamsSerializer(serializers.ModelSerializer):
     """
     Serializer for ClusterCreationParams model.
@@ -121,7 +132,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserInfo
-        fields = ('id', 'user_id', 'user_theme', 'cluster', 'master_vm_password', 'escience_token', 'clusters')
+        fields = ('id', 'user_id', 'user_name', 'user_theme', 'cluster', 'master_vm_password', 'escience_token', 'clusters')
 
     def number_of_clusters(self, obj):
         """

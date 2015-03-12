@@ -11,6 +11,9 @@ import os
 import logging
 import paramiko
 from time import sleep
+import select
+from celery import current_task
+from cluster_errors_constants import error_hdfs_test_exit_status
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ssh_client, REPORT, \
@@ -18,8 +21,59 @@ from cluster_errors_constants import error_ssh_client, REPORT, \
 
 # Global constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
-CHAN_TIMEOUT = 360  # Paramiko channel timeout
+CHAN_TIMEOUT = 3600  # Paramiko channel timeout
 CONNECTION_TRIES = 9    # Max number(+1) of connection attempts to a VM
+HADOOP_HOME = '/usr/local/hadoop/bin/'
+
+
+class HdfsRequest(object):
+    """
+    Class with the required methods for performing ftp/http file transfer to hdfs and checking for errors.
+    """
+    def __init__(self, opts):
+        self.opts = opts
+        self.ssh_client = establish_connect(self.opts['master_IP'], 'hduser', '',
+                                   MASTER_SSH_PORT)
+
+
+    def check_file(self, check=''):
+        """
+        Checks, depending on the value of check arg, if file exists in hdfs or has zero size.
+        """
+        if check == 'exist':
+            check_arg = ' -e '
+            error_msg = ' Path or file %s already exists' % self.opts['dest']
+        elif check == 'zero_size':
+            check_arg = ' -z '
+            error_msg = ' Transfer of file %s failed. ' % self.opts['dest']
+
+        check_cmd = HADOOP_HOME + 'hadoop fs -test' + check_arg + self.opts['dest']
+        try:
+            status = exec_command(self.ssh_client, check_cmd)
+        except RuntimeError, e:
+            if e.args[1] == error_hdfs_test_exit_status:
+                return 0
+        if status == 0:
+            if check == 'zero_size':
+                rm_cmd = HADOOP_HOME + 'hadoop fs -rm ' + self.opts['dest']
+                exec_command(self.ssh_client, rm_cmd)
+            raise RuntimeError(error_msg)
+
+    def put_file_hdfs(self):
+        """
+        Put a file from ftp/hhtp to hdfs
+        """
+
+        try:
+            # -c to resume download
+            put_cmd = ' wget --user=' + self.opts['user'] + ' --password=' + self.opts['password'] + ' ' +\
+                      self.opts['source'] + ' -O - |' + HADOOP_HOME + 'hadoop fs -put - ' + self.opts['dest']
+            put_cmd_status = exec_command(self.ssh_client, put_cmd, command_state='celery_task')
+            self.check_file(check='zero_size')
+            return put_cmd_status
+        finally:
+            self.ssh_client.close()
+
 
 
 def reroute_ssh_prep(server, master_ip):
@@ -75,27 +129,44 @@ def get_ready_for_reroute(hostname_master, password):
                                  '--out-interface eth2 -j MASQUERADE')
         exec_command(ssh_client, 'iptables --append FORWARD --in-interface '
                                  'eth2 -j ACCEPT')
+        # iptables commands to route Hdfs 9000 port traffic from master_VM public ip to
+        # 192.168.0.2, which is the ip used in core-site.xml configuration.
+        exec_command(ssh_client, 'iptables -t nat -A PREROUTING -p tcp --dport 9000'
+                                 ' -j DNAT --to-destination 192.168.0.2:9000')
+        exec_command(ssh_client, 'iptables -t nat -A POSTROUTING -p tcp -d 192.168.0.2 --dport 9000'
+                                 ' -j SNAT --to-source ' + hostname_master)
     finally:
         ssh_client.close()
 
 
-def exec_command(ssh, command):
+def exec_command(ssh, command, command_state=''):
     """
     Calls overloaded exec_command function of the ssh object given
     as argument. Command is the second argument and its a string.
-    check_command_id is used for commands that need additional input after
-    exec_command, e.g. ssh-_after_hadoop needs yes[enter].
+    Command_state argument is used when running celery tasks and
+    feedback is needed.
     """
     try:
         stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
     except Exception, e:
         logging.exception(e.args)
         raise
+    if command_state == 'celery_task':
+        # Wait for the command to terminate
+        while not stdout.channel.exit_status_ready():
+            # Only update celery task state if there is data to read in the channel
+            if stdout.channel.recv_ready():
+                rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
+                if len(rl) > 0:
+                    state = stdout.channel.recv(1024)
+                    if len(state) > 349:
+                        state = state[:348] + '..'
+                    current_task.update_state(state=state)
 
-    logging.debug('%s %s', stdout.read(), stderr.read())
     # get exit status of command executed and check it with check_command
     ex_status = stdout.channel.recv_exit_status()
     check_command_exit_status(ex_status, command)
+    return ex_status
 
 
 class mySSHClient(paramiko.SSHClient):

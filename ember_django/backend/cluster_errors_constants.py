@@ -46,10 +46,14 @@ error_multiple_entries = -72
 error_project_quota = -73
 error_authentication = -99
 
+# Hadoop test command error return status
+error_hdfs_test_exit_status = 1
+
 # Package constants
 ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
 REPORT = 25  # Define logging level of REPORT
 SUMMARY = 29  # Define logging level of SUMMARY
+MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
 Mbytes_to_GB = 1024  # Global to convert megabytes to gigabytes
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
@@ -61,9 +65,21 @@ default_logging = 'summary'
 login_endpoint = '/api/users'
 cluster_endpoint = '/api/clusterchoices'
 job_endpoint = '/api/jobs'
+hdfs_endpoint = '/api/hdfs'
+const_cluster_status_destroyed = "0"
+const_cluster_status_active = "1"
+const_cluster_status_pending = "2"
+const_hadoop_status_stopped = "0"
+const_hadoop_status_started = "1"
+const_hadoop_status_format = "2"
+const_hadoop_status_pending = const_hadoop_status_format
+const_hadoop_status_mkhdusr = "3"
+const_truncate_limit = 350
+const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
+const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
 HADOOP_STATUS_ACTIONS = {"stop": ["0","Stopping","stopped"],
                          "start": ["1","Starting","started"],
                          "format": ["2","Formatting","formatted"],
-                         "makehduser": ["3", "Creating /user/hduser in HDFS", "Created /user/hduser"]}
+                         "HDFSMkdir": ["3", "Creating /user/hduser in HDFS", "Created /user/hduser"]}
 
 REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}

@@ -1,8 +1,8 @@
 ---  
   - name: Configure locales problem
-    tags: preconfig
+    tags: preimage
     locale_gen: name=en_GB.UTF-8 state=present
     
   - name: Install Sudo
-    tags: preconfig
+    tags: preimage
     apt: name=sudo force=yes

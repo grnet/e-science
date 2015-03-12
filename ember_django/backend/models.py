@@ -18,6 +18,8 @@ class UserInfo(models.Model):
     """Definition of a User object model."""
     user_id = models.AutoField("User ID", primary_key=True, null=False,
                                help_text="Auto-increment user id")
+    user_name = models.CharField("User Name", max_length=255, blank=True,
+                                 help_text="Name or email linked to ~okeanos token")    
     user_theme = models.CharField("User Theme", blank=True, max_length=255)
     uuid = models.CharField("UUID", null=False, blank=False, unique=True,
                             default="", max_length=255,
@@ -26,7 +28,6 @@ class UserInfo(models.Model):
     okeanos_token = models.CharField('Okeanos Token', max_length=64,
                                      null=True, blank=True, unique=True,
                                      help_text="Okeanos Authentication Token ")
-
     master_vm_password = models.CharField("Master VM Password", max_length=255,
                                blank=True, help_text="Root password of master VM")
 

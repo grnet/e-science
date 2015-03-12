@@ -4,6 +4,7 @@ App.User = DS.Model.extend({
 	token : attr('string'), 			// okeanos token
 	user_id : attr('number'), 			// user_id in backend database
 	// may have more than one clusters
+	user_name : attr('string'),          // user name or email
 	user_theme : attr('string'),        // user's theme in backend database
 	clusters : DS.hasMany('usercluster', {
 		async : true,

@@ -10,6 +10,7 @@ from celery.task import task
 from create_cluster import YarnCluster
 from okeanos_utils import destroy_cluster
 from run_ansible_playbooks import ansible_manage_cluster
+from reroute_ssh import HdfsRequest
 
 
 @task()
@@ -39,4 +40,14 @@ def hadoop_cluster_action_async(cluster_id, action):
     Asynchronous start, stop or format Hadoop cluster task.
     """
     result = ansible_manage_cluster(cluster_id, action)
+    return result
+
+
+@task()
+def put_hdfs_async(opts):
+    """
+    Asynchronous task to put a file in hdfs.
+    """
+    put_file_request = HdfsRequest(opts)
+    result = put_file_request.put_file_hdfs()
     return result

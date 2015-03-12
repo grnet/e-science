@@ -224,7 +224,9 @@ class YarnCluster(object):
         Returns zero if everything available.
         """
         for checker in [func for (order, func) in sorted(self._DispatchCheckers.items())]:
+            # for k, checker in self._DispatchCheckers.iteritems():
             retval = checker()
+            # print checker.__name__ + ":" + str(retval) #debug
         return retval
 
     def get_flavor_id_master(self, cyclades_client):

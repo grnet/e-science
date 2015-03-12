@@ -4,12 +4,17 @@
  db_password: escience
  db_name: escience
  db_host: 127.0.0.1
+ choose_role: webserver
 
+ # setup_orka_admin variables
+ orka_admin_password: $1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20
+ create_orka_admin: False
  # Django admin variables
  django_admin_name: orka_admin
  django_admin_email: orka@example.com
  django_admin_password: lalakia
  ansible_sudo_pass: lalakia
+ path_to_pref: roles/webserver/files/my_preferences
  
  # Django project variables
  user_home: /home/orka_admin

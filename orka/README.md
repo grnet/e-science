@@ -1,31 +1,24 @@
 Orka
 =====
 
+###Overview
 
-Overview
---------
+orka is a command-line tool, and also a client development library, for creating and deleting Hadoop (YARN) clusters of virtual machines in ~okeanos IaaS.
 
-orka is a command-line tool, and also a
-client development library for creating and deleting Hadoop-Yarn clusters of virtual machines
-in ~okeanos.
+##Setup user environment to run orka (Debian)
 
-Setup user environment to run orka
---------------------------------
     sudo apt-get update
     sudo apt-get install -y git
     sudo apt-get install -y python python-dev python-pip
 
-Important info    
---------------
-    
-User should open ~/.kamakirc and add these two lines:
-    
-[orka]                                                              
-base_url = **< e-science -IP- or -url address- >**
+##Adding [orka]      section to kamaki config file
 
-Virtual environment
--------
+User should open ~/.kamakirc and append these two lines:
+    
+    [orka]                                                              
+    base_url = **< e-science -IP- or -url address- >**
 
+###Virtual environment
 
 Optional but highly recommended is to install and use the orka package in a virtual environment:
  
@@ -36,7 +29,7 @@ Optional but highly recommended is to install and use the orka package in a virt
     . ../.virtualenvs/orkaenv/bin/activate
     (with deactivate from command line you exit the virtual env)
     
-Following commands are common for installation in virtual environment or not:
+Following commands download and install orka (either directly or in virtual environment):
 
     [sudo if not using virtualenv] pip install ansible==1.7.2
     cd
@@ -44,20 +37,13 @@ Following commands are common for installation in virtual environment or not:
     cd to <project_name>/orka
     [sudo if not using virtualenv] python setup.py install
  
-  Now orka commands are usable from anywhere .
+  Now orka commands are usable from anywhere.
 
+##How to run orka commands
 
+$ orka [command] "arguments"
 
-
-
-
-
-How to run orka commands
-------------------------
-orka [command] "arguments"
-
-"create" command
------------
+## "create" command
 
 Required positional arguments for create command:
          
@@ -74,20 +60,16 @@ Required positional arguments for create command:
     
 Optional arguments for create command:
 
-    --image="Operating System (Default Value=Debian Base)",
-    --auth_url="authentication url (Default Value=https://accounts.okeanos.grnet.gr/identity/v2.0)",
-    --token="an ~okeanos token (Default Value read from ~/.kamakirc)",
-    --use_hadoop_image="name of a hadoop image. Overrides image value (Default value=HadoopImage)"
+    --image="Operating System (default value='Debian Base')",
+    --auth_url="authentication url (default value='https://accounts.okeanos.grnet.gr/identity/v2.0')",
+    --token="an ~okeanos token (default value read from ~/.kamakirc)",
+    --use_hadoop_image="name of a Hadoop image. Overrides image value (default value='HadoopImage')"
 
-Create Hadoop cluster from a pre-configured image
-----------------------------------
+### Create Hadoop cluster from a pre-configured image
 
-Using the --use_hadoop_image argument creates the Hadoop cluster much faster because it utilises a specially
-created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest
-stable YARN version will be installed (but at the cost of lower speed).
+Using the --use_hadoop_image argument creates the Hadoop cluster much faster because it utilises a specially created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest stable YARN version will be installed (but at the cost of lower speed).
 
-{orka create} command examples
----------------------------
+###{orka create} command examples
 
 example for create cluster with default optionals (not hadoop_image):
 
@@ -101,8 +83,7 @@ example for create cluster with a different hadoop image:
 
     orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <project_name> --use_hadoop_image=hadoop_image_name
 
-"list" command
-----------------
+##"list" command
 
 Optional arguments for list command:
 
@@ -110,15 +91,13 @@ Optional arguments for list command:
     --token="an ~okeanos token (Default Value read from ~/.kamakirc)",
     --verbose (outputs full cluster details. Default off)
     
-{orka list} command example
----------------------------    
+###{orka list} command example
 
 example for list user clusters:
 
     orka list --status=active --verbose
     
-"info" command
-----------------
+##"info" command
 
 Required positional arguments for info command:
 
@@ -127,30 +106,27 @@ Required positional arguments for info command:
 
 Optional arguments for info command:
 
-    --token="an ~okeanos token (Default Value read from ~/.kamakirc)",
+    --token="an ~okeanos token (default value read from ~/.kamakirc)",
 
-{orka info} command example
----------------------------
+###{orka info} command example
 
 example for cluster info:
 
     orka info <cluster_id>
 
-"hadoop" command
-----------------
+##"hadoop" command
 
 Required positional arguments for hadoop command:
 
-    hadoop_status: "One of:START, FORMAT, STOP (case insensitive, takes the action on the cluster with id of cluster_id)"
+    hadoop_status: "START | FORMAT | STOP (case insensitive)"
     cluster_id: "Cluster id in e-science database" 
 (cluster_id can be found with **orka list** command)
 
 Optional arguments for hadoop command:
 
-    --token="an ~okeanos token (Default Value read from ~/.kamakirc)",
+    --token="an ~okeanos token (default value read from ~/.kamakirc)",
 
-{orka hadoop} command examples
----------------------------
+### {orka hadoop} command examples
 
 example for hadoop start:
 
@@ -160,8 +136,7 @@ example for hadoop stop:
 
     orka hadoop stop <cluster_id>
 
-"destroy" command
-----------------
+##"destroy" command
 
 Required positional arguments for destroy command:
 
@@ -170,25 +145,21 @@ Required positional arguments for destroy command:
 
 Optional arguments for destroy command:
 
-    --token="an ~okeanos token (Default Value read from ~/.kamakirc)",
+    --token="an ~okeanos token (default value read from ~/.kamakirc)",
 
-{orka destroy} command example
----------------------------
+###{orka destroy} command example
 
 example for destroy cluster:
 
     orka destroy <cluster_id>
 
 
+## Getting help
 
 Also, with
 
     orka -h
-    orka create -h
-    orka destroy -h
-    orka list -h
-    orka info -h
-    orka hadoop -h
+    orka { create | destroy | list | info | hadoop } -h
 
 helpful information about the orka CLI is depicted and
 
@@ -196,5 +167,3 @@ helpful information about the orka CLI is depicted and
     orka --version
     
 prints current version.
-
-

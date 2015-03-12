@@ -13,6 +13,8 @@ import re
 from collections import OrderedDict
 from operator import itemgetter, attrgetter, methodcaller
 from datetime import datetime
+import subprocess
+import xml.etree.ElementTree as ET
 
 def get_from_kamaki_conf(section, option, action=None):
     """ 
@@ -26,10 +28,10 @@ def get_from_kamaki_conf(section, option, action=None):
     try:
         option_value = parser.get(section,option)
     except NoSectionError:
-        msg = ' Did not find a section {0} in .kamakirc'.format(section)
+        msg = ' Could not find section \'{0}\' in .kamakirc'.format(section)
         raise ClientError(msg, error_syntax_auth_token)
     except NoOptionError:
-        msg = ' Did not find an option {0} in section {1} in .kamakirc'.format(option,section)
+        msg = ' Could not find option \'{0}\' in section \'{1}\' in .kamakirc'.format(option,section)
         raise ClientError(msg, error_syntax_auth_token)
     
     if option_value:
@@ -45,6 +47,9 @@ def get_from_kamaki_conf(section, option, action=None):
             if action == 'job':
                 url_job = '{0}{1}'.format(option_value, job_endpoint)
                 return url_job
+            if action == 'hdfs':
+                url_hdfs = '{0}{1}'.format(option_value, hdfs_endpoint)
+                return url_hdfs
             else:
                 logging.log(SUMMARY, ' Url to be returned from .kamakirc not specified')
                 return 0
@@ -83,6 +88,13 @@ class ClusterRequest(object):
                          headers=self.headers)
         response = json.loads(r.text)
         return response
+
+    def post(self):
+        """POST request to server"""
+        r = requests.post(self.url, data=json.dumps(self.payload),
+                         headers=self.headers)
+        response = json.loads(r.text)
+        return response
         
 
 
@@ -112,7 +124,10 @@ def authenticate_escience(token):
     """
     payload = {"user": {"token": token}}
     headers = {'content-type': 'application/json'}
-    url_login = get_from_kamaki_conf('orka','base_url',action='login')
+    try:
+        url_login = get_from_kamaki_conf('orka','base_url',action='login')
+    except ClientError, e:
+        raise e
     r = requests.post(url_login, data=json.dumps(payload), headers=headers)
     response = json.loads(r.text)
     try:
@@ -215,4 +230,69 @@ def compose(inner_func, *outer_funcs):
      if not outer_funcs:
          return inner_func
      outer_func = compose(*outer_funcs)
-     return lambda *args, **kwargs: outer_func(inner_func(*args, **kwargs))   
+     return lambda *args, **kwargs: outer_func(inner_func(*args, **kwargs))
+
+def ssh_call_hadoop(user, master_IP, func_arg):
+    """
+        SSH to master VM
+        and make Hadoop calls
+    """
+    response = subprocess.call( "ssh " + user + "@" + master_IP + " \"" + HADOOP_PATH 
+                     + func_arg + "\"", stderr=FNULL, shell=True)
+    
+    return response
+
+def ssh_check_output_hadoop(user, master_IP, func_arg):
+    """
+        SSH to master VM
+        and check output of Hadoop calls
+    """
+    response = subprocess.check_output( "ssh " + user + "@" + master_IP + " \"" + HADOOP_PATH 
+                     + func_arg + "\"", stderr=FNULL, shell=True).splitlines()
+    
+    return response
+
+def ssh_stream_to__hadoop(user, master_IP, source_file, dest_dir):
+    """
+        SSH to master VM
+        and stream files to hadoop
+    """
+    filename = source_file.split("/")
+    response = subprocess.call("cat " + source_file
+                                    + " | ssh " + user + "@" + master_IP 
+                                    + " " + HADOOP_PATH + " dfs -put - " + dest_dir
+                                    + "/" + filename[len(filename)-1], stderr=FNULL, shell=True)
+
+    return response
+
+def read_replication_factor(user, master_IP):
+    """
+        SSH to master VM
+        and read the replication factor
+        from the hdfs-site.xml 
+    """
+    hdfs_xml = subprocess.check_output("ssh " + user + "@" + master_IP 
+                                            + " \"" + "cat /usr/local/hadoop/etc/hadoop/hdfs-site.xml\"", 
+                                            shell=True)
+
+    doc = ET.ElementTree(ET.fromstring(hdfs_xml))
+    root = doc.getroot()
+    for child in root.iter("property"):
+        name = child.find("name").text
+        if name == "dfs.replication":
+            replication_factor = int(child.find("value").text)
+            break
+
+    return replication_factor
+
+def ssh_stream_from__hadoop(user, master_IP, source_file, dest_dir, filename):
+    """
+        SSH to master VM and
+        stream files from hadoop to local
+    """
+    response = subprocess.call("ssh " + user + "@"
+                                    + master_IP + " \"" + HADOOP_PATH 
+                                    + " dfs -text " + source_file + "\""
+                                    + " | tee 1>>" + dest_dir + "/" + filename, stderr=FNULL, shell=True)
+    
+    return response

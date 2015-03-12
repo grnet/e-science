@@ -49,9 +49,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 	alert_mes_last_conf : '',	// alert message when resources are not enough to apply last configuration
 	flavor_settings : {'Small': {'cpu': 2, 'ram': 2048, 'disk': 10}, 'Medium': {'cpu': 4, 'ram': 2048, 'disk': 20}, 'Large': {'cpu': 4, 'ram': 4096, 'disk': 40}}, // Small Medium and Large predefined flavors	
 	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
-	list_of_flavors : ['cpu', 'ram', 'disk'], // List of flavors from kamaki exept storage space
+	list_of_flavors : ['cpu', 'ram', 'disk'], // List of flavors from kamaki except storage space
 	number_of_flavors : 3,
-	list_of_flavor_sizes : ['Small', 'Medium', 'Large'], // List of sizes of the predifened falvors
+	list_of_flavor_sizes : ['Small', 'Medium', 'Large'], // List of sizes of the predefined falvors
 	number_of_flavor_sizes : 3,
 	list_of_roles : ['master', 'slaves'], // Possible roles for vms
 	number_of_roles : 2,
@@ -149,6 +149,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 	// For alerting the user if they have no project selected
 	no_project_selected : function(){		
 		var no_project = Ember.isBlank(this.get('project_name'));
+		if (no_project){
+			this.reset_project();
+		}
 		return no_project;
 	}.property('project_name'),
 	
@@ -159,9 +162,12 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 	// Computes the available cpu each time total_cpu_selection changes
 	cpu_available : function() {
+		if (this.get('no_project_selected')){
+			return 0;
+		}
 		var cpu_avail = this.get('content').objectAt(this.get('project_index')).get('cpu_av') - this.get('total_cpu_selection');
 		return cpu_avail;
-	}.property('total_cpu_selection'),
+	}.property('total_cpu_selection', 'no_project_selected'),
 
 	// The total ram selected for the cluster
 	total_ram_selection : function() {
@@ -170,9 +176,12 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 	// Computes the available ram each time total_ram_selection changes
 	ram_available : function() {
+		if (this.get('no_project_selected')){
+			return 0;
+		}
 		ram_avail = this.get('content').objectAt(this.get('project_index')).get('ram_av') - this.get('total_ram_selection');
 		return ram_avail;
-	}.property('total_ram_selection'),
+	}.property('total_ram_selection', 'no_project_selected'),
 
 	// The total disk selected for the cluster
 	total_disk_selection : function() {
@@ -181,15 +190,19 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 	// Computes the available disk each time total_disk_selection changes
 	disk_available : function() {
+		if (this.get('no_project_selected')){
+			return 0;
+		}
 		disk_avail = this.get('content').objectAt(this.get('project_index')).get('disk_av') - this.get('total_disk_selection');
 		return disk_avail;
-	}.property('total_disk_selection'),
+	}.property('total_disk_selection', 'no_project_selected'),
 	
 	// alert if no available networks
 	alert_mes_network : function(){
 		net_av = this.get('content').objectAt(this.get('project_index')).get('net_av');
 		var project_name = this.get('project_name');
 		if (Number(net_av) <= 0 && !Ember.isBlank(project_name)){
+			// this.get('disable_controls')(true);
 			return 'No Networks available for this project.';
 		}
 	}.property('project_details'),
@@ -199,6 +212,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		float_ip_av = this.get('content').objectAt(this.get('project_index')).get('floatip_av');
 		var project_name = this.get('project_name');
 		if (Number(float_ip_av) <= 0 && !Ember.isBlank(project_name)){
+			// this.get('disable_controls')(true);
 			return 'No Floating IPs available for this project.';
 		}
 	}.property('project_details'),
@@ -236,7 +250,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('alert_mes_cluster_size', 'Your VM quota are not enough to build the minimum cluster');
 			}
 
-			this.set('cluster_size_zero', true);
+			this.set('cluster_size_zero',true);
 			return this.get('content').objectAt(this.get('project_index')).get('vms_av');
 		}
 		for (var i = 1; i < length; i++) {
@@ -263,7 +277,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			if (this.get('project_name') != '') {
 				this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
 			}
-			this.set('cluster_size_zero', true);
+			this.set('cluster_size_zero',true);
 			return max_cluster_size_limited_by_current_cpus;
 		}
 		for ( i = 0; i < length; i++) {
@@ -313,7 +327,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		}
 		if (max_cluster_size_limited_by_current_disks.length == 0) {
 			this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
-			this.set('cluster_size_zero', true);
+			this.set('cluster_size_zero',true);
 		}
 		return max_cluster_size_limited_by_current_disks;
 	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size_var', 'cluster_size', 'project_details'),
@@ -803,13 +817,14 @@ App.ClusterCreateController = Ember.Controller.extend({
 				var clusters = user.get('clusters');
 				var length = clusters.get('length');
 				if (length > 0) {
-					var last_date = clusters.objectAt(0).get('action_date');
+					var last_date = null;
 					if ((clusters.objectAt(0).get('cluster_status') == 1) || (clusters.objectAt(0).get('cluster_status') == 2)) {
+						last_date = clusters.objectAt(0).get('action_date');
 						self.set('last_cluster', clusters.objectAt(0));
 					}
 					for (var i = 1; i < length; i++) {
 						if ((clusters.objectAt(i).get('cluster_status') == 1) || (clusters.objectAt(i).get('cluster_status') == 2)) {
-							if (clusters.objectAt(i).get('action_date') > last_date) {
+							if ((last_date==null) || (clusters.objectAt(i).get('action_date') > last_date)) {
 								last_date = clusters.objectAt(i).get('action_date');
 								self.set('last_cluster', clusters.objectAt(i));
 							}
