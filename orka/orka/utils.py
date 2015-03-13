@@ -252,7 +252,7 @@ def ssh_check_output_hadoop(user, master_IP, func_arg):
     
     return response
 
-def ssh_stream_to__hadoop(user, master_IP, source_file, dest_dir):
+def ssh_stream_to_hadoop(user, master_IP, source_file, dest_dir):
     """
         SSH to master VM
         and stream files to hadoop
@@ -283,7 +283,7 @@ def read_replication_factor(user, master_IP):
 
     return replication_factor
 
-def ssh_stream_from__hadoop(user, master_IP, source_file, dest_dir, filename):
+def ssh_stream_from_hadoop(user, master_IP, source_file, dest_dir, filename):
     """
         SSH to master VM and
         stream files from hadoop to local
@@ -304,3 +304,47 @@ def parse_hdfs_dest(regex, path):
         return parsed_path.group(1)
     else:
         return parsed_path
+    
+def get_file_protocol(filespec, fileaction="fileput", direction="source"):
+    """ 
+    Method to determine the file protocol (http/ftp, file, pithos etc)
+    :input filespec, ['fileput|fileget'], ['source'|'destination']
+    :output 'http-ftp|pithos|file|unknown', ['path_without_protocol']
+    """
+    if fileaction=="fileput": # put <source> file to Hadoop FS.
+        if direction=="source":
+            # matches http:// https:// ftp:// ftps://
+            remote_regex = re.compile("(?iu)((?:^ht|^f)+?tps?://)(.+)")
+            # matches pithos://
+            pithos_regex = re.compile("(?iu)((?:^pithos)+?://)(.+)")
+            # reject filespecs with a trailing slash /, still needs to be checked with os.path
+            local_regex = re.compile("(?iu)(.+)(?<!/)$")
+            result = remote_regex.match(filespec)
+            if result:
+                return "http-ftp", result.group(1)
+            result = pithos_regex.match(filespec)
+            if result:
+                return "pithos", result.group(1)
+            result = local_regex.match(filespec)
+            if result:
+                return "file", result.group(0)
+            return "unknown"
+        elif direction=="destination":
+            return "unkown"
+    elif fileaction=="fileget": # get <source> file from Hadoop FS to <destination>
+        if direction=="destination":
+            pithos_regex = re.compile("(?iu)((?:^pithos)+?://)(.+)")
+            result = pithos_regex.match(filespec)
+            if result:
+                return "pithos", result.group(1)
+            local_regex = re.compile("(?iu)(.+)(?<!/)$")
+            result = local_regex.match(filespec)
+            if result:
+                return "file", result.group(0)
+            return "unknown"
+        elif direction=="source":
+            return "unknown"
+    
+    
+    
+    

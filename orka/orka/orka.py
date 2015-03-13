@@ -10,8 +10,8 @@ from argparse import ArgumentParser, ArgumentTypeError, SUPPRESS
 from version import __version__
 from utils import ClusterRequest, ConnectionError, authenticate_escience, get_user_clusters, \
     custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf, \
-    ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to__hadoop, \
-    read_replication_factor, ssh_stream_from__hadoop, parse_hdfs_dest
+    ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to_hadoop, \
+    read_replication_factor, ssh_stream_from_hadoop, parse_hdfs_dest, get_file_protocol
 from time import sleep
 
 
@@ -227,21 +227,40 @@ class HadoopCluster(object):
                 exit(error_fatal)              
             if opt_fileput==True:
                 try:
-                    if (any(y in self.opts['source'][:8] for y in prefix_list_ftp_http)):
+                    file_protocol, remain = get_file_protocol(self.opts['source'],'fileput','source')
+                    if file_protocol=='http-ftp':
                         self.put_from_server()
+                    elif file_protocol=='file':
+                        self.put_from_local(active_cluster)
+                    elif file_protocol=='pithos':
+                        self.put_from_pithos(active_cluster)
                     else:
-                        self.put_from_local(active_cluster)   
+                        logging.error(' Error: Unrecognized source filespec.')
+                        exit(error_fatal)
                 except Exception, e:
                     logging.error(' Error:' + str(e.args[0]))
                     exit(error_fatal)
             elif opt_fileget==True:
-                self.get_from_hadoop_to_local(active_cluster)
+                try:
+                    file_protocol, remain = get_file_protocol(self.opts['destination'],'fileget','destination')
+                    if file_protocol=='pithos':
+                        self.get_from_hadoop_to_pithos(active_cluster)
+                    elif file_protocol=='file':
+                        self.get_from_hadoop_to_local(active_cluster)
+                    else:
+                        logging.error(' Error: Unrecognized destination filespec.')
+                        exit(error_fatal)
+                except Exception, e:
+                    logging.error(' Error:' + str(e.args[0]))
             
                 
     def list_pithos_files(self):
         """ Method for listing pithos+ files available to the user """
         print 'in list_pithos_files'
-
+    
+    def put_from_pithos(self):
+        """ Method for transferring pithos+ files to Hadoop filesystem """
+        print 'put pithos file to hdfs'
 
     def check_hdfs_path(self, master_IP, dest, option):
         """
@@ -296,7 +315,7 @@ class HadoopCluster(object):
         else:
             """ Streaming """
             logging.log(SUMMARY, ' Start uploading file to hdfs' )
-            ssh_stream_to__hadoop("hduser", cluster['master_IP'],
+            ssh_stream_to_hadoop("hduser", cluster['master_IP'],
                                   self.opts['source'], self.opts['destination'])
 
             logging.log(SUMMARY, ' Local file uploaded to Hadoop filesystem' )
@@ -323,7 +342,11 @@ class HadoopCluster(object):
         if result == 0:
             stdout.flush()
             logging.log(SUMMARY, ' Transfered file to Hadoop filesystem')
-
+    
+    def get_from_hadoop_to_pithos(self, cluster):
+        """ Method for getting files from Hadoop clusters in ~okeanos to local filesystem."""
+        print 'get file from hadoop to pithos'
+    
     def get_from_hadoop_to_local(self, cluster):
         """ Method for getting files from Hadoop clusters in ~okeanos to local filesystem."""
         try:
@@ -347,7 +370,7 @@ class HadoopCluster(object):
                                       " dfs -test -e " + self.opts['source'])
             if file_exists == 0:
                 logging.log(SUMMARY, ' Start downloading file from hdfs')
-                ssh_stream_from__hadoop("hduser", cluster['master_IP'],
+                ssh_stream_from_hadoop("hduser", cluster['master_IP'],
                                   self.opts['source'], self.opts['destination'], filename)
             else:
                 logging.error(' File does not exist.')
