@@ -11,7 +11,8 @@ from version import __version__
 from utils import ClusterRequest, ConnectionError, authenticate_escience, get_user_clusters, \
     custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf, \
     ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to_hadoop, \
-    read_replication_factor, ssh_stream_from_hadoop, parse_hdfs_dest, get_file_protocol
+    read_replication_factor, ssh_stream_from_hadoop, parse_hdfs_dest, get_file_protocol, \
+    ssh_kamaki_stream_to_hadoop
 from time import sleep
 
 
@@ -233,7 +234,8 @@ class HadoopCluster(object):
                     elif file_protocol=='file':
                         self.put_from_local(active_cluster)
                     elif file_protocol=='pithos':
-                        self.put_from_pithos(active_cluster)
+                        kamaki_filespec = remain
+                        self.put_from_pithos(active_cluster,kamaki_filespec)
                     else:
                         logging.error(' Error: Unrecognized source filespec.')
                         exit(error_fatal)
@@ -258,15 +260,32 @@ class HadoopCluster(object):
         """ Method for listing pithos+ files available to the user """
         print 'in list_pithos_files'
     
-    def put_from_pithos(self):
-        """ Method for transferring pithos+ files to Hadoop filesystem """
-        print 'put pithos file to hdfs'
+    def put_from_pithos(self, cluster, sourcefile):
+        """ Method for transferring pithos+ files to Hadoop filesystem """        
+        parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['destination'])
+        if parsed_path:
+            # if directory path ends with filename, checking if both exist
+            self.check_hdfs_path(cluster['master_IP'], parsed_path, '-d')
+            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
+        elif self.opts['destination'].endswith("/"):
+            # if only directory is given
+            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
+            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'] + filename[len(filename)-1], '-e')
+        # if destination is default directory /user/hduser, check if file exists in /user/hduser.
+        else:
+            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'],'-e')
+        """ Streaming """
+        logging.log(SUMMARY, ' Start transferring file to hdfs' )
+        ssh_kamaki_stream_to_hadoop("hduser", cluster['master_IP'],
+                              sourcefile, self.opts['destination'])
+
+        logging.log(SUMMARY, ' Pithos+ file uploaded to Hadoop filesystem' )
 
     def check_hdfs_path(self, master_IP, dest, option):
         """
         Check if a path exists in Hdfs 0: exists, 1: doesn't exist
         """
-        path_exists = ssh_call_hadoop("hduser", master_IP, " dfs -test " + option + " " + dest)
+        path_exists = ssh_call_hadoop("hduser", master_IP, " dfs -test " + option + " " + "\'" + dest + "\'")
         if option == '-e' and path_exists == 0:
             logging.error(' File already exists. Aborting upload.' )
             exit(error_fatal)

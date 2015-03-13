@@ -14,7 +14,9 @@ from collections import OrderedDict
 from operator import itemgetter, attrgetter, methodcaller
 from datetime import datetime
 import subprocess
+from pipes import quote
 import xml.etree.ElementTree as ET
+
 
 def get_from_kamaki_conf(section, option, action=None):
     """ 
@@ -257,11 +259,27 @@ def ssh_stream_to_hadoop(user, master_IP, source_file, dest_dir):
         SSH to master VM
         and stream files to hadoop
     """
-    response = subprocess.call("cat " + source_file
-                                    + " | ssh " + user + "@" + master_IP 
-                                    + " " + HADOOP_PATH + " dfs -put - " + dest_dir, stderr=FNULL, shell=True)
+    response = subprocess.call("cat " + "\"" + source_file + "\""
+                          + " | ssh " + user + "@" + master_IP 
+                          + " " + "\"" + HADOOP_PATH + " dfs -put - " + "'" + dest_dir + "'" + "\"", stderr=FNULL, shell=True)
 
     return response
+
+def ssh_kamaki_stream_to_hadoop(user, master_IP, source_file, dest_dir):
+    """
+        SSH to master VM
+        and stream files to hadoop
+    """
+    str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " \
+    + "{0}@{1} ".format(user,master_IP) \
+    + "\'kamaki file cat " + "\"{0}\"".format(quote(source_file)) \
+    + " - | " + "\"{0}\"".format(HADOOP_PATH) \
+    + " dfs -put - " + "\"{0}\"".format(quote(dest_dir)) + "\'"
+    
+    response = subprocess.call(str_command, stderr=FNULL, shell=True)
+    
+    return response
+    
 
 def read_replication_factor(user, master_IP):
     """
@@ -324,7 +342,7 @@ def get_file_protocol(filespec, fileaction="fileput", direction="source"):
                 return "http-ftp", result.group(1)
             result = pithos_regex.match(filespec)
             if result:
-                return "pithos", result.group(1)
+                return "pithos", result.group(2)
             result = local_regex.match(filespec)
             if result:
                 return "file", result.group(0)
