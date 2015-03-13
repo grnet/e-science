@@ -67,7 +67,7 @@ class HdfsView(APIView):
             user_args = serializer.data.copy()
             user_args.update({'master_IP': cluster.master_IP})
             try:
-                 HdfsRequest(user_args).check_file(check='exist')
+                 HdfsRequest(user_args).check_file()
             except Exception, e:
                  return Response({"message": str(e.args[0])})
             hdfs_task = put_hdfs_async.delay(user_args)

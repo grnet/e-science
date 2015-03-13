@@ -18,6 +18,7 @@ from cluster_errors_constants import *
 from celery import current_task
 from django_db_after_login import db_cluster_update, get_user_id
 from backend.models import UserInfo, ClusterInfo
+import re
 
 
 
@@ -56,6 +57,17 @@ def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', 
     if len(state) >= const_truncate_limit:
         state = state[:(const_truncate_limit-2)] + '..'
     current_task.update_state(state=state)
+
+
+def parse_hdfs_dest(regex, path):
+    """
+    Parses remote hdfs directory for the orka put command to check if directory exists.
+    """
+    parsed_path = re.match(regex, path)
+    if parsed_path:
+        return parsed_path.group(1)
+    else:
+        return parsed_path
 
 
 def get_project_id(token, project_name):

@@ -13,7 +13,8 @@ import paramiko
 from time import sleep
 import select
 from celery import current_task
-from cluster_errors_constants import error_hdfs_test_exit_status
+from cluster_errors_constants import error_hdfs_test_exit_status, const_truncate_limit, error_fatal
+from okeanos_utils import parse_hdfs_dest
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ssh_client, REPORT, \
@@ -32,32 +33,71 @@ class HdfsRequest(object):
     """
     def __init__(self, opts):
         self.opts = opts
+        self.full_path = self.opts['dest']
         self.ssh_client = establish_connect(self.opts['master_IP'], 'hduser', '',
                                    MASTER_SSH_PORT)
 
+    def check_hdfs_path(self, dest, option):
+        """
+        Check if a path exists in Hdfs 0: exists, 1: doesn't exist
+        """
+        path_exists = self.exec_hadoop_command(dest, option)
+        if option == ' -e ' and path_exists == 0:
+            msg = ' File already exists. Aborting upload.'
+            raise RuntimeError(msg)
+        elif option == ' -d ' and path_exists != 0:
+            return 1
+        return path_exists
 
-    def check_file(self, check=''):
+    def check_file(self):
         """
         Checks, depending on the value of check arg, if file exists in hdfs or has zero size.
         """
-        if check == 'exist':
-            check_arg = ' -e '
-            error_msg = ' Path or file %s already exists' % self.opts['dest']
-        elif check == 'zero_size':
-            check_arg = ' -z '
-            error_msg = ' Transfer of file %s failed. ' % self.opts['dest']
+        filename = self.opts['source'].split("/")
+        parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['dest'])
 
-        check_cmd = HADOOP_HOME + 'hadoop fs -test' + check_arg + self.opts['dest']
+        # if destination is directory, check if directory exists in hdfs,
+        if parsed_path:
+            # if directory path ends with filename, checking if both exist
+            if self.check_hdfs_path(parsed_path, ' -d ') == 1:
+                msg = ' Target directory does not exist. Aborting upload'
+                raise RuntimeError(msg)
+            if self.check_hdfs_path(self.opts['dest'], ' -d ') == 0:
+                self.full_path += '/' + filename[len(filename)-1]
+                return 0
+            else:
+                self.check_hdfs_path(self.opts['dest'], ' -e ')
+        elif self.opts['dest'].endswith("/") and not self.opts['dest'].startswith("/"):
+            # if only directory is given
+            if self.check_hdfs_path(self.opts['dest'], ' -d ') == 1:
+                msg = ' Target directory does not exist. Aborting upload'
+                raise RuntimeError(msg)
+            self.check_hdfs_path(self.opts['dest'] + filename[len(filename)-1], ' -e' )
+            self.full_path += filename[len(filename)-1]
+        # if destination is default directory /user/hduser, check if file exists in /user/hduser.
+        else:
+            self.check_hdfs_path(self.opts['dest'],' -e ')
+
+
+    def exec_hadoop_command(self, dest, option, check=''):
+        """
+
+        :return: status of paramiko executed command.
+        """
+        check_cmd = HADOOP_HOME + 'hadoop fs -test' + option + dest
         try:
             status = exec_command(self.ssh_client, check_cmd)
         except RuntimeError, e:
             if e.args[1] == error_hdfs_test_exit_status:
-                return 0
+                return 1
         if status == 0:
             if check == 'zero_size':
-                rm_cmd = HADOOP_HOME + 'hadoop fs -rm ' + self.opts['dest']
+                rm_cmd = HADOOP_HOME + 'hadoop fs -rm ' + dest
                 exec_command(self.ssh_client, rm_cmd)
-            raise RuntimeError(error_msg)
+                msg = ' Transfer to destination %s failed. ' % dest
+                raise RuntimeError(msg)
+            else:
+                return 0
 
     def put_file_hdfs(self):
         """
@@ -68,7 +108,7 @@ class HdfsRequest(object):
             put_cmd = ' wget --user=' + self.opts['user'] + ' --password=' + self.opts['password'] + ' ' +\
                       self.opts['source'] + ' -O - |' + HADOOP_HOME + 'hadoop fs -put - ' + self.opts['dest']
             put_cmd_status = exec_command(self.ssh_client, put_cmd, command_state='celery_task')
-            self.check_file(check='zero_size')
+            self.exec_hadoop_command(self.full_path, ' -z ', check='zero_size')
             return put_cmd_status
         finally:
             self.ssh_client.close()
@@ -158,8 +198,8 @@ def exec_command(ssh, command, command_state=''):
                 rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
                 if len(rl) > 0:
                     state = stdout.channel.recv(1024)
-                    if len(state) > 349:
-                        state = state[:348] + '..'
+                    if len(state) >= const_truncate_limit:
+                        state = state[:(const_truncate_limit-2)] + '..'
                     current_task.update_state(state=state)
 
     # get exit status of command executed and check it with check_command

@@ -105,7 +105,7 @@ def get_user_clusters(token):
     try:
         escience_token = authenticate_escience(token)
     except TypeError:
-        msg = ' Authentication error with token: ' + token
+        msg = ' Authentication error: Invalid Token'
         raise ClientError(msg, error_authentication)
     except Exception,e:
         print ' ' + str(e.args[0])
@@ -133,7 +133,7 @@ def authenticate_escience(token):
     try:
         escience_token = response['user']['escience_token']
     except TypeError:
-        msg = ' Authentication error with token: ' + token
+        msg = ' Authentication error: Invalid Token'
         raise ClientError(msg, error_authentication)
     logging.log(REPORT, ' Authenticated with escience database')
     return escience_token
@@ -259,7 +259,7 @@ def ssh_stream_to__hadoop(user, master_IP, source_file, dest_dir):
     """
     response = subprocess.call("cat " + source_file
                                     + " | ssh " + user + "@" + master_IP 
-                                    + " " + HADOOP_PATH + " dfs -put - " + dest_dir, stderr=FNULL, shell=True)
+                                    + " " + HADOOP_PATH + " dfs -put - " + "\'"+dest_dir+"\"", stderr=FNULL, shell=True)
 
     return response
 
@@ -294,6 +294,7 @@ def ssh_stream_from__hadoop(user, master_IP, source_file, dest_dir, filename):
                                     + " | tee 1>>" + dest_dir + "/" + filename, stderr=FNULL, shell=True)
     
     return response
+
 
 def parse_hdfs_dest(regex, path):
     """
