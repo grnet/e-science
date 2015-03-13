@@ -14,7 +14,7 @@ from version import __version__
 from utils import ClusterRequest, ConnectionError, authenticate_escience, get_user_clusters, \
     custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf, \
 ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to__hadoop, \
-    read_replication_factor, ssh_stream_from__hadoop
+    read_replication_factor, ssh_stream_from__hadoop, from_hdfs_to_pithos
 from time import sleep
 import sys
 
@@ -317,38 +317,17 @@ class HadoopCluster(object):
             logging.error(' You can download files from active clusters only.')
             exit(error_fatal)
         try:
-            filename = self.opts['source'].split("/")
-            filename = filename[len(filename)-1] 
-            
-            if os.path.exists(self.opts['destination'] + "/" + filename):
-                logging.log(SUMMARY, ' File "' + filename + '" already exists in this destination.')
-                exit(error_fatal)
-            
-            if not os.path.exists(self.opts['destination']):
-                try:
-                    os.makedirs(self.opts['destination'])
-                    logging.log(SUMMARY, ' Destination path-directory created.')
-                except OSError:
-                    logging.error(' Choose another destination path-directory.')
-                    exit(error_fatal)
-            
-            logging.log(SUMMARY, ' Checking if \"' + filename + '\" exists in Hadoop filesystem.' )
             file_exists = ssh_call_hadoop("hduser", active_cluster['master_IP'],
                                       " dfs -test -e " + self.opts['source'])
             if file_exists == 0:
                 logging.log(SUMMARY, ' Start downloading file from hdfs')
-                ssh_stream_from__hadoop("hduser", active_cluster['master_IP'],
-                                  self.opts['source'], self.opts['destination'], filename)
+                from_hdfs_to_pithos("hduser", active_cluster['master_IP'],
+                                  self.opts['source'], self.opts['destination'])
             else:
                 logging.error(' File does not exist.')
                 exit(error_fatal) 
-
-            if os.path.exists(self.opts['destination'] + "/" + filename):
-                logging.log(SUMMARY, ' File downloaded from Hadoop filesystem.')
-            else:
-                logging.error(' Error while downloading from Hadoop filesystem.')
         except Exception, e:
-            logging.error(' Error:' + str(e.args[0]))
+            logging.error(' Error:' + str(e))
             exit(error_fatal)
 
 

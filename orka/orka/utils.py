@@ -15,6 +15,8 @@ from operator import itemgetter, attrgetter, methodcaller
 from datetime import datetime
 import subprocess
 import xml.etree.ElementTree as ET
+from __builtin__ import str
+from _ast import Str
 
 def get_from_kamaki_conf(section, option, action=None):
     """ 
@@ -296,3 +298,70 @@ def ssh_stream_from__hadoop(user, master_IP, source_file, dest_dir, filename):
                                     + " | tee 1>>" + dest_dir + "/" + filename, stderr=FNULL, shell=True)
     
     return response
+
+def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
+    """
+        SSH to master VM and 
+        stream file from hdfs to pithos block by block
+    """  
+    containers = subprocess.check_output("ssh " + user + "@"
+                                         + master_IP + " kamaki container list --output-format json", shell=True)
+    list_of_pithos_containers = json.loads(containers)  
+    container_exists = False
+    if dest_path[0] == "/":
+        container_name = dest_path.split('/')[1]
+    else:
+        container_name = 'pithos'
+    for item in list_of_pithos_containers:
+        if item["name"] == container_name:  # check if container exists in pithos
+            container_exists = True
+            container_project = item["x_container_policy"]["project"]
+    if not container_exists:
+        return -1       
+    quota = subprocess.check_output("ssh " + user + "@"
+                                    + master_IP + " kamaki quota list --project-id " + container_project +" --output-format json --resource pithos.diskspace", shell=True)
+    container_quota_list =json.loads(quota)
+    size_of_file = subprocess.check_output("ssh " + user + "@"
+                                    + master_IP + " " + HADOOP_PATH 
+                                    + " dfs -du " + hdfs_path , shell=True).split()[0]
+    file_size = int(size_of_file)   
+    limit_pithos = container_quota_list[container_project]['pithos.diskspace']['limit']
+    usage_pithos = container_quota_list[container_project]['pithos.diskspace']['usage']
+    project_limit_pithos = container_quota_list[container_project]['pithos.diskspace']['project_limit']
+    project_usage_pithos = container_quota_list[container_project]['pithos.diskspace']['project_usage']
+    available_pithos = limit_pithos-usage_pithos
+    if (available_pithos > (project_limit_pithos - project_usage_pithos)):
+        available_pithos = project_limit_pithos - project_usage_vmpithos
+    if file_size > available_pithos: # check pithos quota for file upload
+        return -2
+    subprocess.call("kamaki file create " + dest_path , shell=True)   
+    if file_size < block_size:
+        response_save_temp_file_1 = subprocess.call("ssh " + user + "@"
+                                    + master_IP + " " + HADOOP_PATH 
+                                    + " dfs -get " + hdfs_path +  " temp_file" , shell=True )
+        response_append_to_pithos_1 = subprocess.call("ssh " + user + "@"
+                                    + master_IP +" kamaki file append temp_file " + dest_path , shell=True)
+    else:
+        file_left = file_size % block_size
+        counter = 0
+        response_save_temp_file_2 = subprocess.call("ssh " + user + "@"
+                                        + master_IP + " " + HADOOP_PATH 
+                                        + " dfs -cat " + hdfs_path + " | dd bs=1 skip=\"" + str(counter * block_size) + "\" count=\"" 
+                                        + str(block_size) + "\" > temp_file" , shell=True )
+        response_append_to_pithos_2 = subprocess.call("kamaki file append temp_file " + dest_path , shell=True)
+        counter +=1 
+        while ((counter+1) * block_size) < file_size :
+            response_save_temp_file_3 = subprocess.call("ssh " + user + "@"
+                                        + master_IP + " " + HADOOP_PATH 
+                                        + " dfs -cat " + hdfs_path + " | dd bs=" + str(counter * block_size) + " skip=1 iflag=fullblock | dd \"bs=" 
+                                        + str(block_size) + "\" count=1 > temp_file" , shell=True )
+            response_append_to_pithos_3 = subprocess.call("kamaki file append temp_file " + dest_path , shell=True)
+            counter +=1 
+        if file_left !=0:
+            response_save_temp_file_4 = subprocess.call("ssh " + user + "@"
+                                        + master_IP + " " + HADOOP_PATH 
+                                        + " dfs -cat " + hdfs_path + " | dd bs=1 skip=\"" + str(counter * block_size) + "\" count=\"" 
+                                        + str(file_left) + "\" > temp_file" , shell=True )
+            response_append_to_pithos_4 = subprocess.call("kamaki file append temp_file " + dest_path , shell=True)
+    response_delete_temp = subprocess.call("rm temp_file ", shell=True)
+    return   

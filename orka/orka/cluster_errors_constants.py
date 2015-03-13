@@ -67,3 +67,4 @@ const_hadoop_status_stopped = "0"
 prefix_list_ftp_http = ['ftp://', 'http://', 'https://']
 HADOOP_PATH = '/usr/local/hadoop/bin/hdfs'
 FNULL = open(os.devnull, 'w')
+block_size =  67108864 # block size in bytes which files from hdfs to pithos are divided for transfer
