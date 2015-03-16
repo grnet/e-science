@@ -270,20 +270,38 @@ def ssh_stream_to_hadoop(user, master_IP, source_file, dest_dir):
 
     return response
 
-def ssh_pithos_stream_to_hadoop(user, master_IP, source_file, dest_dir):
+def ssh_pithos_stream_to_hadoop(user, master_IP, source_file, dest_dir, pub=True):
     """
         SSH to master VM
         and stream files to hadoop
     """
-    str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " \
-    + "{0}@{1} ".format(user,master_IP) \
-    + "\'kamaki file cat " + "\"{0}\"".format(source_file) \
-    + " | " + "{0}".format(HADOOP_PATH) \
-    + " dfs -put - " + "\"{0}\"".format(dest_dir) + "\'"
+    # keep this around for when we have streaming from kamaki
+#     str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " \
+#     + "{0}@{1} ".format(user,master_IP) \
+#     + "\'kamaki file cat " + "\"{0}\"".format(source_file) \
+#     + " | " + "{0}".format(HADOOP_PATH) \
+#     + " dfs -put - " + "\"{0}\"".format(dest_dir) + "\'"
+#     response = subprocess.call(str_command, stderr=FNULL, shell=True)
+#     return response
     
-    response = subprocess.call(str_command, stderr=FNULL, shell=True)
-     
-    return response
+    # until then let's piggyback on ioannis server > hadoop streaming
+    if pub==False:
+        str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + \
+        "{0}@{1} ".format(user, master_IP) + \
+        "\"kamaki file unpublish \'{0}\'\"".format(source_file)
+        response = subprocess.call(str_command, stderr=FNULL, stdout=FNULL, shell=True)
+        return response
+    
+    str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + \
+    "{0}@{1} ".format(user,master_IP) + \
+    "\"kamaki file publish \'{0}\'\"".format(source_file)
+    str_link = subprocess.check_output(str_command, stderr=FNULL, shell=True)
+    remote_regex = re.compile("(?iu)((?:^ht|^f)+?tps?://)(.+)")
+    result = remote_regex.match(str_link)
+    if result:
+        return result.group(0)
+    else:
+        return None
     
 
 def read_replication_factor(user, master_IP):

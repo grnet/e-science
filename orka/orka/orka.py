@@ -295,10 +295,19 @@ class HadoopCluster(object):
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'],'-e')
         """ Streaming """
         logging.log(SUMMARY, ' Start transferring pithos file to hdfs' )
-        ssh_pithos_stream_to_hadoop("hduser", cluster['master_IP'],
+        pithos_url = ssh_pithos_stream_to_hadoop("hduser", cluster['master_IP'],
                               sourcefile, self.opts['destination'])
+        if pithos_url:
+            self.opts['source'] = pithos_url
+            result = self.put_from_server()
+            if result == 0:
+                logging.log(SUMMARY, ' Pithos+ file uploaded to Hadoop filesystem' )
+            else:
+                logging.log(SUMMARY, ' There was a problem uploading to Hadoop')
+            # cleanup
+            ssh_pithos_stream_to_hadoop("hduser", cluster['master_IP'],
+                              sourcefile, self.opts['destination'], False)
 
-        logging.log(SUMMARY, ' Pithos+ file uploaded to Hadoop filesystem' )
 
     def check_hdfs_path(self, master_IP, dest, option):
         """
@@ -380,6 +389,7 @@ class HadoopCluster(object):
         if result == 0:
             stdout.flush()
             logging.log(SUMMARY, ' Transfered file to Hadoop filesystem')
+            return result
     
     def get_from_hadoop_to_pithos(self, cluster, destinationpath):
         """ Method for getting files from Hadoop clusters in ~okeanos to pithos filesystem."""
