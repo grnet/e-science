@@ -248,7 +248,7 @@ class HadoopCluster(object):
                 try:
                     file_protocol, remain = get_file_protocol(self.opts['destination'],'fileget','destination')
                     if file_protocol=='pithos':
-                        self.get_from_hadoop_to_pithos(active_cluster)
+                        self.get_from_hadoop_to_pithos(active_cluster, remain)
                     elif file_protocol=='file':
                         self.get_from_hadoop_to_local(active_cluster)
                     else:
@@ -385,7 +385,7 @@ class HadoopCluster(object):
             stdout.flush()
             logging.log(SUMMARY, ' Transfered file to Hadoop filesystem')
     
-    def get_from_hadoop_to_pithos(self, cluster):
+    def get_from_hadoop_to_pithos(self, cluster, destinationpath):
         """ Method for getting files from Hadoop clusters in ~okeanos to pithos filesystem."""
         try:
             file_exists = ssh_call_hadoop("hduser", cluster['master_IP'],
@@ -393,7 +393,7 @@ class HadoopCluster(object):
             if file_exists == 0:
                 logging.log(SUMMARY, ' Start downloading file from hdfs')
                 from_hdfs_to_pithos("hduser", cluster['master_IP'],
-                                  self.opts['source'], self.opts['destination'])
+                                  self.opts['source'], destinationpath)
             else:
                 logging.error(' File does not exist.')
                 exit(error_fatal) 
