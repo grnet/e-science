@@ -13,8 +13,10 @@ import paramiko
 from time import sleep
 import select
 from celery import current_task
-from cluster_errors_constants import error_hdfs_test_exit_status, const_truncate_limit, error_fatal
-from okeanos_utils import parse_hdfs_dest
+from cluster_errors_constants import error_hdfs_test_exit_status, const_truncate_limit, error_fatal, FNULL
+from okeanos_utils import parse_hdfs_dest, read_replication_factor, get_remote_server_file_size
+import xml.etree.ElementTree as ET
+import subprocess
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ssh_client, REPORT, \
@@ -37,6 +39,31 @@ class HdfsRequest(object):
         self.ssh_client = establish_connect(self.opts['master_IP'], 'hduser', '',
                                    MASTER_SSH_PORT)
 
+    def check_size(self):
+        """
+        Checks file size in remote server and compares it with Hdfs available space.
+        """
+        report = subprocess.check_output( "ssh " + "hduser@" + self.opts['master_IP'] + " \"" + HADOOP_HOME + 'hdfs'
+                     + " dfsadmin -report /" + "\"", stderr=FNULL, shell=True).splitlines()
+        for line in report:
+            if line.startswith('DFS Remaining'):
+                tokens = line.split(' ')
+                dfs_remaining = tokens[2]
+                break
+        hdfs_xml = subprocess.check_output("ssh " + "hduser@" + self.opts['master_IP']
+                                            + " \"" + "cat /usr/local/hadoop/etc/hadoop/hdfs-site.xml\"",
+                                            shell=True)
+
+        document = ET.ElementTree(ET.fromstring(hdfs_xml))
+        replication_factor = read_replication_factor(document)
+        # check if file can be uploaded to hdfs
+        file_size = get_remote_server_file_size(self.opts['source'], user=self.opts['user'], password=self.opts['password'])
+        if file_size * replication_factor > int(dfs_remaining):
+            msg = ' File too big to be uploaded'
+            raise RuntimeError(msg)
+        return 0
+
+
     def check_hdfs_path(self, dest, option):
         """
         Check if a path exists in Hdfs 0: exists, 1: doesn't exist
@@ -53,6 +80,7 @@ class HdfsRequest(object):
         """
         Checks, depending on the value of check arg, if file exists in hdfs or has zero size.
         """
+        self.check_size()
         filename = self.opts['source'].split("/")
         parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['dest'])
 

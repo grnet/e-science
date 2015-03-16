@@ -19,6 +19,7 @@ from celery import current_task
 from django_db_after_login import db_cluster_update, get_user_id
 from backend.models import UserInfo, ClusterInfo
 import re
+import subprocess
 
 
 
@@ -678,3 +679,34 @@ class Cluster(object):
             if attachment['OS-EXT-IPS:type'] == 'floating':
                         hostname_master = attachment['ipv4']
         return hostname_master, servers
+
+
+def read_replication_factor(document):
+    """
+    Returns default replication factor from Hadoop xml config file.
+    """
+    root = document.getroot()
+    for child in root.iter("property"):
+        name = child.find("name").text
+        if name == "dfs.replication":
+            replication_factor = int(child.find("value").text)
+            break
+
+    return replication_factor
+
+
+def get_remote_server_file_size(url, user='', password=''):
+    """
+    Returns the file size of a given remote server.
+    First it recreates the remote server url with the username and password
+    given or empty if not given. Then does a HEAD request for the
+    content-length header which is the file size in bytes.
+    """
+    url_in_list = url.split("://", 1)
+    url_in_list.insert(1, "://" + user + ':' + password + '@')
+    new_url = ''.join(url_in_list)
+
+    r = subprocess.call("curl -sI " + new_url +
+                                " | grep -i content-length | awk \'{print $2}\' | tr -d '\r\n'", shell=True)
+
+    return int(r)
