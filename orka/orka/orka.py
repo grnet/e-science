@@ -5,13 +5,16 @@
 import logging
 from sys import argv, stdout
 from kamaki.clients import ClientError
+from kamaki.clients.pithos import PithosClient
+from kamaki.clients.astakos import AstakosClient
 from cluster_errors_constants import *
 from argparse import ArgumentParser, ArgumentTypeError, SUPPRESS
 from version import __version__
 from utils import ClusterRequest, ConnectionError, authenticate_escience, get_user_clusters, \
     custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf, \
-    ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to__hadoop, \
-    read_replication_factor, ssh_stream_from__hadoop, parse_hdfs_dest
+    ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to_hadoop, \
+    read_replication_factor, ssh_stream_from_hadoop, parse_hdfs_dest, get_file_protocol, \
+    ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos
 from time import sleep
 
 
@@ -209,9 +212,9 @@ class HadoopCluster(object):
     def file_action(self):
         """ Method for taking actions to and from Hadoop filesystem """
         # safe getters, defaults to False if the option is not set
-        opt_filelist = self.opts.get('filelist',False)
-        opt_fileput = self.opts.get('fileput',False)
-        opt_fileget = self.opts.get('fileget',False)
+        opt_filelist = self.opts.get('filelist', False)
+        opt_fileput = self.opts.get('fileput', False)
+        opt_fileget = self.opts.get('fileget', False)
         if opt_filelist==True:
             self.list_pithos_files()
         else:
@@ -227,27 +230,81 @@ class HadoopCluster(object):
                 exit(error_fatal)              
             if opt_fileput==True:
                 try:
-                    if (any(y in self.opts['source'][:8] for y in prefix_list_ftp_http)):
+                    file_protocol, remain = get_file_protocol(self.opts['source'],'fileput','source')
+                    if file_protocol=='http-ftp':
                         self.put_from_server()
+                    elif file_protocol=='file':
+                        self.put_from_local(active_cluster)
+                    elif file_protocol=='pithos':
+                        kamaki_filespec = remain
+                        self.put_from_pithos(active_cluster,kamaki_filespec)
                     else:
-                        self.put_from_local(active_cluster)   
+                        logging.error(' Error: Unrecognized source filespec.')
+                        exit(error_fatal)
                 except Exception, e:
                     logging.error(' Error:' + str(e.args[0]))
                     exit(error_fatal)
             elif opt_fileget==True:
-                self.get_from_hadoop_to_local(active_cluster)
+                try:
+                    file_protocol, remain = get_file_protocol(self.opts['destination'],'fileget','destination')
+                    if file_protocol=='pithos':
+                        self.get_from_hadoop_to_pithos(active_cluster)
+                    elif file_protocol=='file':
+                        self.get_from_hadoop_to_local(active_cluster)
+                    else:
+                        logging.error(' Error: Unrecognized destination filespec.')
+                        exit(error_fatal)
+                except Exception, e:
+                    logging.error(' Error:' + str(e.args[0]))
             
                 
     def list_pithos_files(self):
         """ Method for listing pithos+ files available to the user """
-        print 'in list_pithos_files'
+        auth_url = self.opts['auth_url']
+        token = self.opts['token']
+        try:
+            auth = AstakosClient(auth_url, token)
+            auth.authenticate()
+        except ClientError:
+            msg = ' Authentication error: Invalid Token'
+            logging.error(msg)
+            exit(error_fatal)
+        pithos_endpoint = auth.get_endpoint_url('object-store')
+        pithos_container = self.opts.get('pithos_container','pithos')
+        user_id = auth.user_info['id']
+        pithos_client = PithosClient(pithos_endpoint,self.opts['token'],user_id,pithos_container)
+        objects = pithos_client.list_objects()
+        for object in objects:
+            is_dir = 'application/directory' in object.get('content_type', object.get('content-type', ''))
+            if not is_dir:
+                print u"{:>12s} \"pithos:/{:s}/{:s}\"".format(bytes_to_shorthand(object['bytes']),pithos_container,object['name'])
+    
+    def put_from_pithos(self, cluster, sourcefile):
+        """ Method for transferring pithos+ files to Hadoop filesystem """        
+        parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['destination'])
+        if parsed_path:
+            # if directory path ends with filename, checking if both exist
+            self.check_hdfs_path(cluster['master_IP'], parsed_path, '-d')
+            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
+        elif self.opts['destination'].endswith("/"):
+            # if only directory is given
+            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
+            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'] + filename[len(filename)-1], '-e')
+        # if destination is default directory /user/hduser, check if file exists in /user/hduser.
+        else:
+            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'],'-e')
+        """ Streaming """
+        logging.log(SUMMARY, ' Start transferring pithos file to hdfs' )
+        ssh_pithos_stream_to_hadoop("hduser", cluster['master_IP'],
+                              sourcefile, self.opts['destination'])
 
+        logging.log(SUMMARY, ' Pithos+ file uploaded to Hadoop filesystem' )
 
     def check_hdfs_path(self, master_IP, dest, option):
         """
         Check if a path exists in Hdfs 0: exists, 1: doesn't exist
         """
-        path_exists = ssh_call_hadoop("hduser", master_IP, " dfs -test " + option + " " + dest)
+        path_exists = ssh_call_hadoop("hduser", master_IP, " dfs -test " + option + " " + "\'" + dest + "\'")
         if option == '-e' and path_exists == 0:
             logging.error(' File already exists. Aborting upload.' )
             exit(error_fatal)
@@ -300,7 +357,7 @@ class HadoopCluster(object):
         else:
             """ Streaming """
             logging.log(SUMMARY, ' Start uploading file to hdfs' )
-            ssh_stream_to__hadoop("hduser", cluster['master_IP'],
+            ssh_stream_to_hadoop("hduser", cluster['master_IP'],
                                   self.opts['source'], self.opts['destination'])
 
             logging.log(SUMMARY, ' Local file uploaded to Hadoop filesystem' )
@@ -327,7 +384,23 @@ class HadoopCluster(object):
         if result == 0:
             stdout.flush()
             logging.log(SUMMARY, ' Transfered file to Hadoop filesystem')
-
+    
+    def get_from_hadoop_to_pithos(self, cluster):
+        """ Method for getting files from Hadoop clusters in ~okeanos to pithos filesystem."""
+        try:
+            file_exists = ssh_call_hadoop("hduser", cluster['master_IP'],
+                                      " dfs -test -e " + "\'{0}\'".format(self.opts['source']))
+            if file_exists == 0:
+                logging.log(SUMMARY, ' Start downloading file from hdfs')
+                from_hdfs_to_pithos("hduser", cluster['master_IP'],
+                                  self.opts['source'], self.opts['destination'])
+            else:
+                logging.error(' File does not exist.')
+                exit(error_fatal) 
+        except Exception, e:
+            logging.error(' Error:' + str(e.args[0]))
+            exit(error_fatal)
+    
     def get_from_hadoop_to_local(self, cluster):
         """ Method for getting files from Hadoop clusters in ~okeanos to local filesystem."""
         try:
@@ -348,10 +421,10 @@ class HadoopCluster(object):
             
             logging.log(SUMMARY, ' Checking if \"' + filename + '\" exists in Hadoop filesystem.' )
             file_exists = ssh_call_hadoop("hduser", cluster['master_IP'],
-                                      " dfs -test -e " + self.opts['source'])
+                                      " dfs -test -e " + "\'{0}\'".format(self.opts['source']))
             if file_exists == 0:
                 logging.log(SUMMARY, ' Start downloading file from hdfs')
-                ssh_stream_from__hadoop("hduser", cluster['master_IP'],
+                ssh_stream_from_hadoop("hduser", cluster['master_IP'],
                                   self.opts['source'], self.opts['destination'], filename)
             else:
                 logging.error(' File does not exist.')
@@ -578,6 +651,8 @@ def main():
         # by simply invoking parser_file_list without arguments 'orka file list'
         # orka file list command runs against pithos+ so doesn't need cluster info
         parser_file_list.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='filelist')
+        parser_file_list.add_argument('--container', metavar='container', default='/pithos', dest='pithos_container',
+                                      help='Pithos+ container name. Default is "pithos". (kamaki container list)')
                 
         opts = vars(orka_parser.parse_args(argv[1:]))
         c_hadoopcluster = HadoopCluster(opts)
