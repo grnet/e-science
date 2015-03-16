@@ -251,6 +251,7 @@ def ssh_check_output_hadoop(user, master_IP, func_arg):
         SSH to master VM
         and check output of Hadoop calls
     """
+    print func_arg
     response = subprocess.check_output( "ssh " + user + "@" + master_IP + " \"" + HADOOP_PATH 
                      + func_arg + "\"", stderr=FNULL, shell=True).splitlines()
     
