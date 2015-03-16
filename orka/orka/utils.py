@@ -311,6 +311,7 @@ def ssh_stream_from_hadoop(user, master_IP, source_file, dest_dir, filename):
         SSH to master VM and
         stream files from hadoop to local
     """
+    ''' gtzelepis: needs fix for filenames with spaces or hyphens etc '''
     response = subprocess.call("ssh " + user + "@"
                                     + master_IP + " \"" + HADOOP_PATH
                                     + " dfs -text " + source_file + "\""

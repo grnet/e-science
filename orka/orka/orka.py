@@ -385,7 +385,7 @@ class HadoopCluster(object):
         """ Method for getting files from Hadoop clusters in ~okeanos to pithos filesystem."""
         try:
             file_exists = ssh_call_hadoop("hduser", cluster['master_IP'],
-                                      " dfs -test -e " + self.opts['source'])
+                                      " dfs -test -e " + "\'{0}\'".format(self.opts['source']))
             if file_exists == 0:
                 logging.log(SUMMARY, ' Start downloading file from hdfs')
                 from_hdfs_to_pithos("hduser", cluster['master_IP'],
@@ -417,7 +417,7 @@ class HadoopCluster(object):
             
             logging.log(SUMMARY, ' Checking if \"' + filename + '\" exists in Hadoop filesystem.' )
             file_exists = ssh_call_hadoop("hduser", cluster['master_IP'],
-                                      " dfs -test -e " + self.opts['source'])
+                                      " dfs -test -e " + "\'{0}\'".format(self.opts['source']))
             if file_exists == 0:
                 logging.log(SUMMARY, ' Start downloading file from hdfs')
                 ssh_stream_from_hadoop("hduser", cluster['master_IP'],
