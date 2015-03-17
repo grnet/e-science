@@ -119,7 +119,7 @@ public class PithosObject {
 				// - Stream the data for each block by adding the Block Hash and
 				// the block length
 				for (int i = 0; i < objectBlocks.length; i++) {
-					out.writeLong(objectBlocks[i].getBlockHash());
+					// out.writeLong(objectBlocks[i].getBlockHash());
 					out.writeLong(objectBlocks[i].getBlockLength());
 				}
 			}
@@ -150,12 +150,14 @@ public class PithosObject {
 			return null;
 		}
 
-		// - Create data input stream for the deseralization of data from the input stream
+		// - Create data input stream for the deseralization of data from the
+		// input stream
 		DataInputStream objectData = new DataInputStream(inputStreamForObject);
 
 		// - Get the file type of the received input stream that corresponds to
 		// a Pithos Object
-		PithosFileType pithosfileType = PithosObject.FILE_TYPES[objectData.readByte()];
+		PithosFileType pithosfileType = PithosObject.FILE_TYPES[objectData
+				.readByte()];
 
 		// - Perform the corresponding action based on the type of the received
 		// object
@@ -164,9 +166,9 @@ public class PithosObject {
 		case CONTAINER:
 			inputStreamForObject.close();
 			return PithosObject.PITHOS_CONTAINER;
-			
-		// - Return the pithos object by composing it through the received
-		// blocks from the input stream
+
+			// - Return the pithos object by composing it through the received
+			// blocks from the input stream
 		case OBJECT:
 			// - Get the number of blocks that compose the object
 			int numBlocks = objectData.readInt();
@@ -181,13 +183,14 @@ public class PithosObject {
 				long blockLength = objectData.readLong();
 				// - Create and add new block of the pithos object into the
 				// array of blocks for the current object
-				blocks[i] = new PithosObjectBlock(blockHash, blockLength);
+				// blocks[i] = new PithosObjectBlock(blockHash, blockLength,
+				// "");
 			}
 
 			// - Close the stream
 			inputStreamForObject.close();
-			
-			//- Return the structured object
+
+			// - Return the structured object
 			return new PithosObject(pithosfileType, blocks);
 		default:
 			throw new IllegalArgumentException(

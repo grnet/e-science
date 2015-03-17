@@ -2,16 +2,17 @@ package org.apache.hadoop.fs.pithos;
 
 
 public class PithosObjectBlock {
-  private long blockHash;
-
+  private String blockHash;
   private long blockLength;
-
-  public PithosObjectBlock(long _blockHash, long _blockLength) {
+  private byte[] blockData;
+  
+  public PithosObjectBlock(String _blockHash, long _blockLength, byte [] _blockData) {
     this.blockHash = _blockHash;
     this.blockLength = _blockLength;
+    this.blockData = _blockData;
   }
 
-  public long getBlockHash() {
+  public String getBlockHash() {
     return blockHash;
   }
 
@@ -19,6 +20,10 @@ public class PithosObjectBlock {
     return blockLength;
   }
 
+  public byte[] getBlockData(){
+	  return blockData;
+  }
+  
   @Override
   public String toString() {
     return "ObjectBlock[" + getBlockHash() + ", " + getBlockLength() + "]";

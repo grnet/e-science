@@ -26,25 +26,33 @@ import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 
-
 public interface PithosSystemStore {
-  
-  void initialize(URI uri, Configuration conf) throws IOException;
-  String getVersion() throws IOException;
 
-  void storePithosNode(Path path, PithosObject pithosNode) throws IOException;
-  void storePithosBlock(PithosObjectBlock pithosBlock, File file) throws IOException;
-  
-  boolean inodeExists(Path path) throws IOException;
-  boolean blockExists(long blockId) throws IOException;
+	void initialize(URI uri, Configuration conf) throws IOException;
 
-  PithosObject retrievePithosNode(Path path) throws IOException;
-  File retrievePithosBlock(PithosObjectBlock pithosBlock, long byteRangeStart) throws IOException;
+	String getVersion() throws IOException;
 
-  void deleteINode(Path path) throws IOException;
-  void deleteBlock(PithosObjectBlock pithosBlock) throws IOException;
+	void storePithosObject(Path path, PithosObject pithosNode)
+			throws IOException;
 
-  Set<Path> listSubPaths(Path path) throws IOException;
-  Set<Path> listDeepSubPaths(Path path) throws IOException;
+	void storePithosObjectBlock(PithosObjectBlock pithosBlock, File file)
+			throws IOException;
+
+	boolean pithosObjectExists(Path path) throws IOException;
+
+	boolean pithosObjectBlockExists(long blockHash) throws IOException;
+
+	PithosObject retrievePithosObject(Path path) throws IOException;
+
+	File retrievePithosBlock(PithosObjectBlock pithosBlock, long byteRangeStart)
+			throws IOException;
+
+	void deletePithosObject(Path path) throws IOException;
+
+	void deletePithosBlock(PithosObjectBlock pithosBlock) throws IOException;
+
+	Set<Path> listSubPaths(Path path) throws IOException;
+
+	Set<Path> listDeepSubPaths(Path path) throws IOException;
 
 }

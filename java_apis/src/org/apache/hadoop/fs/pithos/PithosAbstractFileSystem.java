@@ -107,14 +107,18 @@ public class PithosAbstractFileSystem extends AbstractFileSystem {
 			throws AccessControlException, FileAlreadyExistsException,
 			FileNotFoundException, UnresolvedLinkException, IOException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
+	/**
+	 * @param arg0: refers to the path on the file system
+	 * @parma arg1: refers to the bufferSize of the input stream
+	 */
 	public FSDataInputStream open(Path arg0, int arg1)
 			throws AccessControlException, FileNotFoundException,
 			UnresolvedLinkException, IOException {
-		// TODO Auto-generated method stub
+		// TODO
 		return null;
 	}
 
@@ -124,7 +128,7 @@ public class PithosAbstractFileSystem extends AbstractFileSystem {
 			FileNotFoundException, ParentNotDirectoryException,
 			UnresolvedLinkException, IOException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -132,7 +136,7 @@ public class PithosAbstractFileSystem extends AbstractFileSystem {
 			throws AccessControlException, FileNotFoundException,
 			UnresolvedLinkException, IOException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -140,7 +144,7 @@ public class PithosAbstractFileSystem extends AbstractFileSystem {
 			throws AccessControlException, FileNotFoundException,
 			UnresolvedLinkException, IOException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -156,14 +160,14 @@ public class PithosAbstractFileSystem extends AbstractFileSystem {
 			throws AccessControlException, FileNotFoundException,
 			UnresolvedLinkException, IOException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void setVerifyChecksum(boolean arg0) throws AccessControlException,
 			IOException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }
