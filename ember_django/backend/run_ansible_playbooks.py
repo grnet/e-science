@@ -25,7 +25,7 @@ ansible_verbosity = ' -vvvv'
 
 
 
-def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
+def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_file, replication_factor, dfs_blocksize):
     """
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn.
@@ -40,7 +40,7 @@ def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_f
         hosts_filename = create_ansible_hosts(cluster_name, list_of_hosts,
                                          hostname_master)
         # Run Ansible playbook
-        ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file)
+        ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, replication_factor, dfs_blocksize)
         # Format and start Hadoop cluster
         set_cluster_state(token, cluster_id,
                           ' Yarn Cluster is active', status='Active',
@@ -84,7 +84,6 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
             target.write(' ansible_ssh_host='+ hostname_master +'\n')
     return hosts_filename
 
-
 def ansible_manage_cluster(cluster_id, action):
     """
     Start,stop or format a hadoop cluster, depending on the action arg.
@@ -116,7 +115,7 @@ def ansible_manage_cluster(cluster_id, action):
         raise RuntimeError(msg)
 
 
-def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file):
+def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, replication_factor, dfs_blocksize):
     """
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
@@ -136,7 +135,7 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file)
 
 
     # Create command that executes ansible playbook
-    ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -f ' + str(cluster_size) + ' -e "choose_role=yarn ssh_file_name=' + ssh_file
+    ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -f ' + str(cluster_size) + ' -e "choose_role=yarn ssh_file_name=' + ssh_file + ' dfs_blocksize=' + dfs_blocksize + 'm dfs_replication=' + replication_factor
 
     # hadoop_image flag(true/false)
     if hadoop_image:
