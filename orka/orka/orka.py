@@ -333,7 +333,7 @@ class HadoopCluster(object):
             # if directory path ends with filename, checking if both exist
             self.check_hdfs_path(cluster['master_IP'], parsed_path, '-d')
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
-        elif self.opts['destination'].endswith("/"):
+        elif self.opts['destination'].endswith("/") and not self.opts['destination'].startswith("/"):
             # if only directory is given
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'] + filename[len(filename)-1], '-e')
@@ -342,7 +342,11 @@ class HadoopCluster(object):
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'],'-e')
 
         # size of file to be uploaded (in bytes)
-        file_size = os.path.getsize(self.opts['source'])
+        if os.path.isfile(self.opts['source']):
+            file_size = os.path.getsize(self.opts['source'])
+        else:
+            msg = 'File {0} does not exist'.format(self.opts['source'])
+            raise IOError(msg)
 
         # check available free space in hdfs
         report = ssh_check_output_hadoop("hduser", cluster['master_IP'], " dfsadmin -report / ")

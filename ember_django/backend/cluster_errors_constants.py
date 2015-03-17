@@ -6,6 +6,7 @@ This module contains the definitions of returned errors and package constants.
 
 @author: Ioannis Stenos, Nick Vrionis
 """
+import os
 
 # Definitions of return value errors
 error_syntax_clustersize = -1
@@ -45,7 +46,7 @@ error_proj_id = -71
 error_multiple_entries = -72
 error_project_quota = -73
 error_authentication = -99
-
+FNULL = open(os.devnull, 'w')
 # Hadoop test command error return status
 error_hdfs_test_exit_status = 1
 
