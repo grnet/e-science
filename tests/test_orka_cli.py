@@ -125,6 +125,19 @@ class OrkaTest(unittest.TestCase):
         self.assertEqual(exist_check_status, 0) and self.assertEqual(zero_check_status, 1)
         #self.addCleanup(self.delete_hadoop_files, self.opts['destination'])
 
+    '''def test_put_from_pithos(self):
+        """
+        put file from pithos escience account to hdfs and check that file now exists in hdfs and
+        is not zero size
+        """
+    def test_get_from_hdfs_to_local(self):
+
+    def test_get_from_hdfs_to_pithos(self):
+
+    def test_file_size(self):'''
+
+
+
 
     def delete_hadoop_files(self, file_to_delete):
         """
