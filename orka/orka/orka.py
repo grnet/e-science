@@ -249,7 +249,7 @@ class HadoopCluster(object):
                     file_protocol, remain = get_file_protocol(self.opts['destination'],'fileget','destination')
                     if file_protocol=='pithos':
                         self.get_from_hadoop_to_pithos(active_cluster, remain)
-                    elif file_protocol=='file':
+                    elif file_protocol=='file' or file_protocol=="folder":
                         self.get_from_hadoop_to_local(active_cluster)
                     else:
                         logging.error(' Error: Unrecognized destination filespec.')
@@ -295,10 +295,19 @@ class HadoopCluster(object):
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'],'-e')
         """ Streaming """
         logging.log(SUMMARY, ' Start transferring pithos file to hdfs' )
-        ssh_pithos_stream_to_hadoop("hduser", cluster['master_IP'],
+        pithos_url = ssh_pithos_stream_to_hadoop("hduser", cluster['master_IP'],
                               sourcefile, self.opts['destination'])
+        if pithos_url:
+            self.opts['source'] = pithos_url
+            result = self.put_from_server()
+            if result == 0:
+                logging.log(SUMMARY, ' Pithos+ file uploaded to Hadoop filesystem' )
+            else:
+                logging.log(SUMMARY, ' There was a problem uploading to Hadoop')
+            # cleanup
+            ssh_pithos_stream_to_hadoop("hduser", cluster['master_IP'],
+                              sourcefile, self.opts['destination'], False)
 
-        logging.log(SUMMARY, ' Pithos+ file uploaded to Hadoop filesystem' )
 
     def check_hdfs_path(self, master_IP, dest, option):
         """
@@ -384,6 +393,7 @@ class HadoopCluster(object):
         if result == 0:
             stdout.flush()
             logging.log(SUMMARY, ' Transfered file to Hadoop filesystem')
+            return result
     
     def get_from_hadoop_to_pithos(self, cluster, destination_path):
         """ Method for getting files from Hadoop clusters in ~okeanos to pithos filesystem."""
@@ -403,37 +413,53 @@ class HadoopCluster(object):
     
     def get_from_hadoop_to_local(self, cluster):
         """ Method for getting files from Hadoop clusters in ~okeanos to local filesystem."""
+        source = self.opts['source']
+        destination = self.opts['destination']
         try:
-            filename = self.opts['source'].split("/")
-            filename = filename[len(filename)-1] 
+            logging.log(SUMMARY, " Checking if \'{0}\' exists in Hadoop filesystem.".format(source))
+            src_file_exists = ssh_call_hadoop("hduser", cluster['master_IP'],
+                                      " dfs -test -e " + "\'{0}\'".format(source))
             
-            if os.path.exists(self.opts['destination'] + "/" + filename):
-                logging.log(SUMMARY, ' File "' + filename + '" already exists in this destination.')
-                exit(error_fatal)
-            
-            if not os.path.exists(self.opts['destination']):
-                try:
-                    os.makedirs(self.opts['destination'])
-                    logging.log(SUMMARY, ' Destination path-directory created.')
-                except OSError:
-                    logging.error(' Choose another destination path-directory.')
-                    exit(error_fatal)
-            
-            logging.log(SUMMARY, ' Checking if \"' + filename + '\" exists in Hadoop filesystem.' )
-            file_exists = ssh_call_hadoop("hduser", cluster['master_IP'],
-                                      " dfs -test -e " + "\'{0}\'".format(self.opts['source']))
-            if file_exists == 0:
+            if src_file_exists == 0:
+                src_base_folder, src_file = os.path.split(source)
+                dest_base_folder, dest_top_file_or_folder = os.path.split(destination)
+                if os.path.exists(destination):
+                    if os.path.isfile(destination):
+                        logging.log(SUMMARY, " \'{0}\' already exists.".format(destination))
+                        exit(error_fatal)
+                    elif os.path.isdir(destination):
+                        destination = os.path.join(destination,src_file)
+                        if os.path.exists(destination):
+                            logging.log(SUMMARY, " \'{0}\' already exists.".format(destination))
+                            exit(error_fatal)
+                else:
+                    try:
+                        if dest_base_folder:
+                            if not os.path.exists(dest_base_folder):
+                                os.makedirs(dest_base_folder)
+                            destination = os.path.join(dest_base_folder,src_file)
+                        else:
+                            if dest_top_file_or_folder.endswith("/"):
+                                destination = os.path.join(dest_top_file_or_folder,src_file)
+                            else:
+                                destination = dest_top_file_or_folder
+                    except OSError:
+                        logging.error(' Choose another destination path-directory.')
+                        exit(error_fatal)
+                
                 logging.log(SUMMARY, ' Start downloading file from hdfs')
                 ssh_stream_from_hadoop("hduser", cluster['master_IP'],
-                                  self.opts['source'], self.opts['destination'], filename)
+                                       source, destination)
+                
             else:
-                logging.error(' File does not exist.')
+                logging.error(' Source file does not exist.')
                 exit(error_fatal) 
 
-            if os.path.exists(self.opts['destination'] + "/" + filename):
+            if os.path.exists(destination):
                 logging.log(SUMMARY, ' File downloaded from Hadoop filesystem.')
             else:
                 logging.error(' Error while downloading from Hadoop filesystem.')
+        
         except Exception, e:
             logging.error(' Error:' + str(e.args[0]))
             exit(error_fatal)

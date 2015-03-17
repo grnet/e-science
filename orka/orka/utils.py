@@ -271,20 +271,38 @@ def ssh_stream_to_hadoop(user, master_IP, source_file, dest_dir):
 
     return response
 
-def ssh_pithos_stream_to_hadoop(user, master_IP, source_file, dest_dir):
+def ssh_pithos_stream_to_hadoop(user, master_IP, source_file, dest_dir, pub=True):
     """
         SSH to master VM
         and stream files to hadoop
     """
-    str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " \
-    + "{0}@{1} ".format(user,master_IP) \
-    + "\'kamaki file cat " + "\"{0}\"".format(source_file) \
-    + " | " + "{0}".format(HADOOP_PATH) \
-    + " dfs -put - " + "\"{0}\"".format(dest_dir) + "\'"
+    # keep this around for when we have streaming from kamaki
+#     str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " \
+#     + "{0}@{1} ".format(user,master_IP) \
+#     + "\'kamaki file cat " + "\"{0}\"".format(source_file) \
+#     + " | " + "{0}".format(HADOOP_PATH) \
+#     + " dfs -put - " + "\"{0}\"".format(dest_dir) + "\'"
+#     response = subprocess.call(str_command, stderr=FNULL, shell=True)
+#     return response
     
-    response = subprocess.call(str_command, stderr=FNULL, shell=True)
-     
-    return response
+    # until then let's piggyback on ioannis server > hadoop streaming
+    if pub==False:
+        str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + \
+        "{0}@{1} ".format(user, master_IP) + \
+        "\"kamaki file unpublish \'{0}\'\"".format(source_file)
+        response = subprocess.call(str_command, stderr=FNULL, stdout=FNULL, shell=True)
+        return response
+    
+    str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + \
+    "{0}@{1} ".format(user,master_IP) + \
+    "\"kamaki file publish \'{0}\'\"".format(source_file)
+    str_link = subprocess.check_output(str_command, stderr=FNULL, shell=True)
+    remote_regex = re.compile("(?iu)((?:^ht|^f)+?tps?://)(.+)")
+    result = remote_regex.match(str_link)
+    if result:
+        return result.group(0)
+    else:
+        return None
     
 
 def read_replication_factor(user, master_IP):
@@ -307,17 +325,17 @@ def read_replication_factor(user, master_IP):
 
     return replication_factor
 
-def ssh_stream_from_hadoop(user, master_IP, source_file, dest_dir, filename):
+def ssh_stream_from_hadoop(user, master_IP, source_file, dest_dir):
     """
         SSH to master VM and
         stream files from hadoop to local
     """
-    ''' gtzelepis: needs fix for filenames with spaces or hyphens etc '''
-    response = subprocess.call("ssh " + user + "@"
-                                    + master_IP + " \"" + HADOOP_PATH
-                                    + " dfs -text " + source_file + "\""
-                                    + " | tee 1>>" + dest_dir + "/" + filename, stderr=FNULL, shell=True)
-    
+    str_command = "ssh {0}@{1} ".format(user, master_IP) + \
+    "\"{0} dfs -text ".format(HADOOP_PATH) + \
+    "\'{0}\'\"".format(source_file) + \
+    " > \'{0}\'".format(dest_dir)
+    response = subprocess.call(str_command, stderr=FNULL, shell=True)
+
     return response
 
 def parse_hdfs_dest(regex, path):
@@ -353,22 +371,26 @@ def get_file_protocol(filespec, fileaction="fileput", direction="source"):
             result = local_regex.match(filespec)
             if result:
                 return "file", result.group(0)
-            return "unknown"
+            return "unknown", None
         elif direction=="destination":
-            return "unknown"
+            return "unknown", None
     elif fileaction=="fileget": # get <source> file from Hadoop FS to <destination> FS
         if direction=="destination":
             pithos_regex = re.compile("(?iu)((?:^pithos)+?://)(.+)")
             result = pithos_regex.match(filespec)
             if result:
                 return "pithos", result.group(2)
-            local_regex = re.compile("(?iu)(.+)(?<!/)$")
-            result = local_regex.match(filespec)
+            local_file_regex = re.compile("(?iu)(.+)(?<!/)$")
+            result = local_file_regex.match(filespec)
             if result:
                 return "file", result.group(0)
-            return "unknown"
+            local_folder_regex = re.compile("(?iu)(^/{1}[^/].+[^/]/{1}$)")
+            result = local_folder_regex.match(filespec)
+            if result:
+                return "folder", result.group(0)
+            return "unknown", None
         elif direction=="source":
-            return "unknown"
+            return "unknown", None
     
 def bytes_to_shorthand(num_bytes):
     """ 
