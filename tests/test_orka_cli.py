@@ -2,14 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os
+import inspect
 from ConfigParser import RawConfigParser, NoSectionError
 from os.path import join, dirname, abspath
-from orka.orka.utils import get_user_clusters, ssh_check_output_hadoop
+from orka.orka.utils import get_user_clusters, ssh_call_hadoop
 from orka.orka.orka import HadoopCluster
 import unittest, time, re
 from orka.orka.cluster_errors_constants import error_fatal, const_hadoop_status_started
 SOURCE_ERROR_FILE = 'file_that_does_not_exist_hopefully'
-SOURCE_FILE = 'README.md'
+SOURCE_LOCAL_FILE = 'unit_test_file.txt'
+DEST_LOCAL_FILE = 'unit_test_file_hdfs.txt'
 SOURCE_REMOTE_FILE = 'https://dumps.wikimedia.org/elwiki/latest/elwiki-latest-pages-meta-current.xml.bz2'
 DEST_REMOTE_FILE = 'elwiki-latest-pages-meta-current.xml.bz2'
 DEST_FILE = 'destination_hdfs_file_non_existant'
@@ -102,12 +105,13 @@ class OrkaTest(unittest.TestCase):
         unit test to put file from local to hdfs and check that file now exists in hdfs and
         is not zero size.
         """
-        self.opts.update({'source':'.travis.yml', 'destination': 'travisfile'})
+        os.system('echo "this is a unit test file for local to hdfs put" > ' + SOURCE_LOCAL_FILE)
+        self.opts.update({'source':SOURCE_LOCAL_FILE, 'destination': DEST_LOCAL_FILE})
         HadoopCluster(self.opts).put_from_local(self.active_cluster)
-        exist_check_status = ssh_check_output_hadoop('hduser', self.master_IP, ' dfs -test -e ' + self.opts['destination'])
-        zero_check_status = ssh_check_output_hadoop('hduser', self.master_IP, ' dfs -test -z ' + self.opts['destination'])
+        exist_check_status = ssh_call_hadoop('hduser', self.master_IP, ' dfs -test -e ' + self.opts['destination'])
+        zero_check_status = ssh_call_hadoop('hduser', self.master_IP, ' dfs -test -z ' + self.opts['destination'])
         self.assertEqual(exist_check_status, 0) and self.assertEqual(zero_check_status, 1)
-        #self.addCleanup(self.delete_hadoop_files, self.opts['destination'])
+        self.addCleanup(self.delete_hadoop_files, self.opts['destination'])
 
     def test_put_from_remote(self):
         """
@@ -116,8 +120,8 @@ class OrkaTest(unittest.TestCase):
         """
         self.opts.update({'source': SOURCE_REMOTE_FILE, 'destination': DEST_REMOTE_FILE, 'user': '', 'password': ''})
         HadoopCluster(self.opts).put_from_server()
-        exist_check_status = ssh_check_output_hadoop('hduser', self.master_IP, ' dfs -test -e ' + self.opts['destination'])
-        zero_check_status = ssh_check_output_hadoop('hduser', self.master_IP, ' dfs -test -z ' + self.opts['destination'])
+        exist_check_status = ssh_call_hadoop('hduser', self.master_IP, ' dfs -test -e ' + self.opts['destination'])
+        zero_check_status = ssh_call_hadoop('hduser', self.master_IP, ' dfs -test -z ' + self.opts['destination'])
         self.assertEqual(exist_check_status, 0) and self.assertEqual(zero_check_status, 1)
         #self.addCleanup(self.delete_hadoop_files, self.opts['destination'])
 
@@ -126,7 +130,18 @@ class OrkaTest(unittest.TestCase):
         """
         Delete hdfs files after test.
         """
-        ssh_check_output_hadoop('hduser', self.master_IP, ' dfs -rm ' + file_to_delete)
+        ssh_call_hadoop('hduser', self.master_IP, ' dfs -rm ' + file_to_delete)
+
+    def tearDown (self):
+        """
+        tearDown method for unit test class.
+        """
+        self.logPoint()
+
+    def logPoint(self):
+        currentTest = self.id().split('.')[-1]
+        callingFunction = inspect.stack()[1][3]
+        print 'in %s - %s()' % (currentTest, callingFunction)
 
 
 
