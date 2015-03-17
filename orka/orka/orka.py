@@ -377,9 +377,10 @@ class HadoopCluster(object):
         Put files from ftp/http server to Hdfs. Send a POST request to orka app server to
         copy the ftp/http file to the requested
         """
-        payload = {"hdfs":{"id": self.opts['cluster_id'], "source": self.opts['source'],
-                                        "dest": self.opts['destination'], "user": self.opts['user'],
+        payload = {"hdfs":{"id": self.opts['cluster_id'], "source": "\'{0}\'".format(self.opts['source']),
+                                        "dest": "\'{0}\'".format(self.opts['destination']), "user": self.opts['user'],
                                         "password": self.opts['password']}}
+
         yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='hdfs')
         response = yarn_cluster_req.post()
         if 'task_id' in response['hdfs']:
