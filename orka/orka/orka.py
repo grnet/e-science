@@ -672,7 +672,7 @@ def main():
         parser_file_get.add_argument('source',
                               help='The file to be downloaded')
         parser_file_get.add_argument('destination',
-                              help='Destination in Local filesystem')
+                              help='Destination in Local or Pithos+ filesystem')
         
         # add a hidden argument with default value so we can set opts['filelist'] 
         # by simply invoking parser_file_list without arguments 'orka file list'
