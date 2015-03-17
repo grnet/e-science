@@ -16,7 +16,7 @@ orka is a command-line tool, and also a client development library, for creating
 User should open ~/.kamakirc and append these two lines:
     
     [orka]                                                              
-    base_url = **< e-science -IP- or -url address- >**
+    base_url = < e-science -IP- or -url address- >
 
 ###Virtual environment
 
@@ -43,6 +43,11 @@ Following commands download and install orka (either directly or in virtual envi
 
 $ orka [command] "arguments"
 
+Optional arguments for all orka commands:
+    
+    --auth_url="authentication url (default value='https://accounts.okeanos.grnet.gr/identity/v2.0')",
+    --token="an ~okeanos token (default value read from ~/.kamakirc)",
+
 ## "create" command
 
 Required positional arguments for create command:
@@ -61,8 +66,6 @@ Required positional arguments for create command:
 Optional arguments for create command:
 
     --image="Operating System (default value='Debian Base')",
-    --auth_url="authentication url (default value='https://accounts.okeanos.grnet.gr/identity/v2.0')",
-    --token="an ~okeanos token (default value read from ~/.kamakirc)",
     --use_hadoop_image="name of a Hadoop image. Overrides image value (default value='HadoopImage')"
 
 ### Create Hadoop cluster from a pre-configured image
@@ -88,7 +91,6 @@ example for create cluster with a different hadoop image:
 Optional arguments for list command:
 
     --status="One of:ACTIVE, PENDING, DESTROYED (case insensitive, shows only clusters of that status)"
-    --token="an ~okeanos token (Default Value read from ~/.kamakirc)",
     --verbose (outputs full cluster details. Default off)
     
 ###{orka list} command example
@@ -104,10 +106,6 @@ Required positional arguments for info command:
     cluster_id: "Cluster id in e-science database" 
 (cluster_id can be found with **orka list** command)
 
-Optional arguments for info command:
-
-    --token="an ~okeanos token (default value read from ~/.kamakirc)",
-
 ###{orka info} command example
 
 example for cluster info:
@@ -121,10 +119,6 @@ Required positional arguments for hadoop command:
     hadoop_status: "START | FORMAT | STOP (case insensitive)"
     cluster_id: "Cluster id in e-science database" 
 (cluster_id can be found with **orka list** command)
-
-Optional arguments for hadoop command:
-
-    --token="an ~okeanos token (default value read from ~/.kamakirc)",
 
 ### {orka hadoop} command examples
 
@@ -153,13 +147,72 @@ example for destroy cluster:
 
     orka destroy <cluster_id>
 
+##"file" command
+
+orka file command provides sub-commands for puting files to Hadoop filesystem from local, ftp/http and pithos sources, as well getting files from Hadoop filesystem to local and pithos destinations.  
+As well a list sub-command for listing pithos files in the URI format expected by orka CLI.
+
+###"file list" command
+
+orka file list is used for returning pithos+ object paths in the format expected by the **source** parameter of **orka file put**.
+
+Optional arguments for file list command:
+
+    --container="a pithos+ container descriptor"
+    
+####{orka file list} command example
+
+    orka file list --container=/<container_name>
+    
+###"file get" command
+
+Required positional arguments for file get command:
+
+    cluster_id: "Cluster id in e-science database"
+    source: "Hadoop Filesystem object"
+    destination: "Local or Pithos+ path"
+Pithos destination is differentiated by prepending "pithos://" to the object descriptor
+
+####{orka file get} command examples
+
+    orka file get <hdfs_file_path> <local_file_path>
+    
+    orka file get <hdfs_file_path> pithos://<pithos_file_path>
+    
+###"file put" command
+
+Required positional arguments for file put command:
+
+    cluster_id: "Cluster id in e-science database"
+    source: "Local or ftp/http or pithos+ path"
+    destination: "Hadoop Filesystem object"
+    
+Optional arguments for file put command:
+
+    --user="remote user for ftp/http authentication if required"
+    --password="remote user password"
+
+####{orka file put} command examples
+
+example for pithos source:
+
+    orka file put pithos://<pithos_file_path> <hdfs_file_path>
+(Properly formatted source can be returned by **orka file list** command)
+
+example for remote server source:
+
+    orka file put <remote_http_or_ftp_url> <hdfs_file_path>
+    
+example for local filesystem source:
+
+    orka file put <local_file_path> <hdfs_file_path>
 
 ## Getting help
 
 Also, with
 
     orka -h
-    orka { create | destroy | list | info | hadoop } -h
+    orka { create | destroy | list | info | hadoop | file } -h
 
 helpful information about the orka CLI is depicted and
 
