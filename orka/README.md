@@ -137,10 +137,6 @@ Required positional arguments for destroy command:
     cluster_id: "Cluster id in e-science database" 
 (cluster_id can be found with **orka list** command)
 
-Optional arguments for destroy command:
-
-    --token="an ~okeanos token (default value read from ~/.kamakirc)",
-
 ###{orka destroy} command example
 
 example for destroy cluster:
@@ -149,7 +145,7 @@ example for destroy cluster:
 
 ##"file" command
 
-orka file command provides sub-commands for puting files to Hadoop filesystem from local, ftp/http and pithos sources, as well getting files from Hadoop filesystem to local and pithos destinations.  
+orka file command provides sub-commands for puting files to Hadoop filesystem from local, ftp/http and pithos sources, and getting files from Hadoop filesystem to local and pithos destinations.  
 As well a list sub-command for listing pithos files in the URI format expected by orka CLI.
 
 ###"file list" command
