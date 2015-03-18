@@ -6,20 +6,21 @@ App.ClusterCreateRoute = App.RestrictedRoute.extend({
 		$.loader.close(true);
 		return this.store.find('cluster');
 	},
-	afterModel : function() {
-		// resets variables every time you go to the create cluster
-		this.controllerFor('clusterCreate').reset_variables();
-		this.controllerFor('clusterCreate').reset_project();
-	},
 	actions: {
 		error: function(err) {
 			// to catch errors
 			// for example 401 responses
+			console.log(err.TypeError);
 			this.transitionTo('user.logout');
     	},
     	didTransition: function(transition) {
+			// resets variables every time you go to the create cluster
+			this.controllerFor('clusterCreate').reset_variables();
+			this.controllerFor('clusterCreate').reset_project();
+			// last cluster config
 			this.controllerFor('clusterCreate').set('last_cluster_conf_checked', false);
-			this.controllerFor('clusterCreate').send('findLastCluster');		
+			this.controllerFor('clusterCreate').send('findLastCluster'); 
+		
     	}
 	}
 });

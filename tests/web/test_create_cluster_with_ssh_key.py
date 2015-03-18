@@ -114,8 +114,15 @@ class test_create_cluster_with_ssh_key(unittest.TestCase):
             self.assertTrue(False,'Could not get list of projects')
         kamaki_flavors = get_flavor_id(self.token)
         user_quota = check_quota(self.token, self.project_id)
-        project_details = self.project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'CPUs:' + str(user_quota['cpus']['available']) + '  ' + 'RAM:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
-        Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)                           
+        list = Select(driver.find_element_by_id("project_id")).options
+        no_project = True
+        for index in range(0,len(list)):
+            if re.match(self.project_name, list[index].text):
+                Select(driver.find_element_by_id("project_id")).select_by_visible_text(list[index].text)  
+                no_project = False
+                break
+        if no_project:
+               self.assertTrue(False,'No project found with given project name')                    
         driver.find_element_by_id("cluster_name").clear()
         cluster_name = 'test_cluster' + str(randint(0,9999))
         driver.find_element_by_id("cluster_name").send_keys(cluster_name)
@@ -134,22 +141,25 @@ class test_create_cluster_with_ssh_key(unittest.TestCase):
                 driver.find_element_by_id(button_id).click()
         driver.find_element_by_id("next").click()
         print 'Creating cluster...'
-        for i in range(1000): 
+        for i in range(1500): 
             # wait for cluster create to finish
             try:
-                if "" != driver.find_element_by_id('id_output_message').text: break
+                if "glyphicon glyphicon-play text-success" == driver.find_element_by_id('id_hadoop_status_'+cluster_name).get_attribute("class"): 
+                    break
+                elif "glyphicon glyphicon-remove text-danger" == driver.find_element_by_id('id_cluster_status_'+cluster_name).get_attribute("class"):
+                    self.assertTrue(False,'Cluster destoryed')
+                    break
+                else:
+                    pass
             except: pass
             time.sleep(1)
-        message =  driver.find_element_by_id('id_output_message').text
-        if message.rsplit(':', 1)[-1] == '8088/cluster':         
-            cluster_url = message.rsplit(' ', 1)[-1]
-            driver.get(cluster_url)
-            print message
-            #check that cluster url is up and page is running
-            try: self.assertEqual("All Applications", driver.find_element_by_css_selector("h1").text)
-            except AssertionError as e: self.verificationErrors.append(str(e))
-        else:
-            self.assertTrue(False, message)
+        cluster_url = str(driver.find_element_by_id("id_ip_"+cluster_name).get_attribute("href"))
+        time.sleep(30)
+        driver.get(cluster_url)
+        #check that cluster url is up and page is running
+        try: self.assertEqual("All Applications", driver.find_element_by_css_selector("h1").text)
+        except AssertionError as e: self.verificationErrors.append(str(e))
+
 
     
     def is_element_present(self, how, what):

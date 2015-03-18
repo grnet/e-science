@@ -16,7 +16,6 @@ import unittest, time, re, logging
 from kamaki.clients import ClientError
 from okeanos_utils import check_credentials, endpoints_and_user_id, init_cyclades_netclient, get_project_id
 from ClusterTest import ClusterTest
-from random import randint
 
 error_get_ip = -30
 
@@ -36,9 +35,6 @@ class TestClusterIps(ClusterTest):
             # causes later the server to respond with an error message to
             # user's create cluster request
             float_ids, port_ids, net_client = self.bind_okeanos_resources()
-            driver.find_element_by_id("cluster_name").clear()
-            cluster_name = 'test_cluster' + str(randint(0,9999))
-            driver.find_element_by_id("cluster_name").send_keys(cluster_name)
             time.sleep(1)
             driver.find_element_by_id("master_cpus_1").click()
             time.sleep(1)

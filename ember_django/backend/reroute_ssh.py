@@ -11,6 +11,12 @@ import os
 import logging
 import paramiko
 from time import sleep
+import select
+from celery import current_task
+from cluster_errors_constants import error_hdfs_test_exit_status, const_truncate_limit, error_fatal, FNULL
+from okeanos_utils import parse_hdfs_dest, read_replication_factor, get_remote_server_file_size
+import xml.etree.ElementTree as ET
+import subprocess
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ssh_client, REPORT, \
@@ -18,8 +24,123 @@ from cluster_errors_constants import error_ssh_client, REPORT, \
 
 # Global constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
-CHAN_TIMEOUT = 360  # Paramiko channel timeout
+CHAN_TIMEOUT = 3600  # Paramiko channel timeout
 CONNECTION_TRIES = 9    # Max number(+1) of connection attempts to a VM
+HADOOP_HOME = '/usr/local/hadoop/bin/'
+
+
+class HdfsRequest(object):
+    """
+    Class with the required methods for performing ftp/http file transfer to hdfs and checking for errors.
+    """
+    def __init__(self, opts):
+        self.opts = opts
+        self.full_path = self.opts['dest']
+        self.ssh_client = establish_connect(self.opts['master_IP'], 'hduser', '',
+                                   MASTER_SSH_PORT)
+
+    def check_size(self):
+        """
+        Checks file size in remote server and compares it with Hdfs available space.
+        """
+        report = subprocess.check_output( "ssh " + "hduser@" + self.opts['master_IP'] + " \"" + HADOOP_HOME + 'hdfs'
+                     + " dfsadmin -report /" + "\"", stderr=FNULL, shell=True).splitlines()
+        for line in report:
+            if line.startswith('DFS Remaining'):
+                tokens = line.split(' ')
+                dfs_remaining = tokens[2]
+                break
+        hdfs_xml = subprocess.check_output("ssh " + "hduser@" + self.opts['master_IP']
+                                            + " \"" + "cat /usr/local/hadoop/etc/hadoop/hdfs-site.xml\"",
+                                            shell=True)
+
+        document = ET.ElementTree(ET.fromstring(hdfs_xml))
+        replication_factor = read_replication_factor(document)
+        # check if file can be uploaded to hdfs
+        file_size = get_remote_server_file_size(self.opts['source'], user=self.opts['user'], password=self.opts['password'])
+        if file_size * replication_factor > int(dfs_remaining):
+            msg = ' File too big to be uploaded'
+            raise RuntimeError(msg)
+        return 0
+
+
+    def check_hdfs_path(self, dest, option):
+        """
+        Check if a path exists in Hdfs 0: exists, 1: doesn't exist
+        """
+        path_exists = self.exec_hadoop_command(dest, option)
+        if option == ' -e ' and path_exists == 0:
+            msg = ' File already exists. Aborting upload.'
+            raise RuntimeError(msg)
+        elif option == ' -d ' and path_exists != 0:
+            return 1
+        return path_exists
+
+    def check_file(self):
+        """
+        Checks, depending on the value of check arg, if file exists in hdfs or has zero size.
+        """
+        self.check_size()
+        filename = self.opts['source'].split("/")
+        parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['dest'])
+
+        # if destination is directory, check if directory exists in hdfs,
+        if parsed_path:
+            # if directory path ends with filename, checking if both exist
+            if self.check_hdfs_path(parsed_path, ' -d ') == 1:
+                msg = ' Target directory does not exist. Aborting upload'
+                raise RuntimeError(msg)
+            if self.check_hdfs_path(self.opts['dest'], ' -d ') == 0:
+                self.full_path += '/' + filename[len(filename)-1]
+                return 0
+            else:
+                self.check_hdfs_path(self.opts['dest'], ' -e ')
+        elif self.opts['dest'].endswith("/") and not self.opts['dest'].startswith("/"):
+            # if only directory is given
+            if self.check_hdfs_path(self.opts['dest'], ' -d ') == 1:
+                msg = ' Target directory does not exist. Aborting upload'
+                raise RuntimeError(msg)
+            self.check_hdfs_path(self.opts['dest'] + filename[len(filename)-1], ' -e' )
+            self.full_path += filename[len(filename)-1]
+        # if destination is default directory /user/hduser, check if file exists in /user/hduser.
+        else:
+            self.check_hdfs_path(self.opts['dest'],' -e ')
+
+
+    def exec_hadoop_command(self, dest, option, check=''):
+        """
+
+        :return: status of paramiko executed command.
+        """
+        check_cmd = HADOOP_HOME + 'hadoop fs -test' + option + dest
+        try:
+            status = exec_command(self.ssh_client, check_cmd)
+        except RuntimeError, e:
+            if e.args[1] == error_hdfs_test_exit_status:
+                return 1
+        if status == 0:
+            if check == 'zero_size':
+                rm_cmd = HADOOP_HOME + 'hadoop fs -rm ' + dest
+                exec_command(self.ssh_client, rm_cmd)
+                msg = ' Transfer to destination %s failed. ' % dest
+                raise RuntimeError(msg)
+            else:
+                return 0
+
+    def put_file_hdfs(self):
+        """
+        Put a file from ftp/hhtp to hdfs
+        """
+
+        try:
+            put_cmd = ' wget --user=' + self.opts['user'] + ' --password=' + self.opts['password'] + ' ' +\
+                      self.opts['source'] + ' -O - |' + HADOOP_HOME + 'hadoop fs -put - ' + self.opts['dest']
+            put_cmd_status = exec_command(self.ssh_client, put_cmd, command_state='celery_task')
+            self.exec_hadoop_command(self.full_path, ' -z ', check='zero_size')
+            return put_cmd_status
+        finally:
+            self.ssh_client.close()
+
 
 
 def reroute_ssh_prep(server, master_ip):
@@ -75,27 +196,44 @@ def get_ready_for_reroute(hostname_master, password):
                                  '--out-interface eth2 -j MASQUERADE')
         exec_command(ssh_client, 'iptables --append FORWARD --in-interface '
                                  'eth2 -j ACCEPT')
+        # iptables commands to route Hdfs 9000 port traffic from master_VM public ip to
+        # 192.168.0.2, which is the ip used in core-site.xml configuration.
+        exec_command(ssh_client, 'iptables -t nat -A PREROUTING -p tcp --dport 9000'
+                                 ' -j DNAT --to-destination 192.168.0.2:9000')
+        exec_command(ssh_client, 'iptables -t nat -A POSTROUTING -p tcp -d 192.168.0.2 --dport 9000'
+                                 ' -j SNAT --to-source ' + hostname_master)
     finally:
         ssh_client.close()
 
 
-def exec_command(ssh, command):
+def exec_command(ssh, command, command_state=''):
     """
     Calls overloaded exec_command function of the ssh object given
     as argument. Command is the second argument and its a string.
-    check_command_id is used for commands that need additional input after
-    exec_command, e.g. ssh-_after_hadoop needs yes[enter].
+    Command_state argument is used when running celery tasks and
+    feedback is needed.
     """
     try:
         stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
     except Exception, e:
         logging.exception(e.args)
         raise
+    if command_state == 'celery_task':
+        # Wait for the command to terminate
+        while not stdout.channel.exit_status_ready():
+            # Only update celery task state if there is data to read in the channel
+            if stdout.channel.recv_ready():
+                rl, wl, xl = select.select([stdout.channel], [], [], 0.0)
+                if len(rl) > 0:
+                    state = stdout.channel.recv(1024)
+                    if len(state) >= const_truncate_limit:
+                        state = state[:(const_truncate_limit-2)] + '..'
+                    current_task.update_state(state=state)
 
-    logging.debug('%s %s', stdout.read(), stderr.read())
     # get exit status of command executed and check it with check_command
     ex_status = stdout.channel.recv_exit_status()
     check_command_exit_status(ex_status, command)
+    return ex_status
 
 
 class mySSHClient(paramiko.SSHClient):
