@@ -280,7 +280,8 @@ class HadoopCluster(object):
                 print u"{:>12s} \"pithos:/{:s}/{:s}\"".format(bytes_to_shorthand(object['bytes']),pithos_container,object['name'])
     
     def put_from_pithos(self, cluster, sourcefile):
-        """ Method for transferring pithos+ files to Hadoop filesystem """        
+        """ Method for transferring pithos+ files to Hadoop filesystem """
+        filename = self.opts['source'].split("/")
         parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['destination'])
         if parsed_path:
             # if directory path ends with filename, checking if both exist

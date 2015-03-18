@@ -284,7 +284,7 @@ def ssh_pithos_stream_to_hadoop(user, master_IP, source_file, dest_dir, pub=True
 #     response = subprocess.call(str_command, stderr=FNULL, shell=True)
 #     return response
     
-    # until then let's piggyback on ioannis server > hadoop streaming
+    # until then let's piggyback on put from server > hadoop streaming
     if pub==False:
         str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + \
         "{0}@{1} ".format(user, master_IP) + \
