@@ -7,8 +7,8 @@ import org.orka.hadoop.hdfs.OrkaHdfsClient;
 @SuppressWarnings("unused")
 public class TestHdfsClient {
 
-	private static final String SOURCE_FILE = "";	
-	private static final String DESTINATION_FILE = "";
+	private static final String SOURCE_FILE = "";
+	private static final String DESTINATION_FILE = "/user/hdfs/file_name";
 	private static final String DIR_NAME = "";
 
 	/**

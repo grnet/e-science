@@ -65,13 +65,21 @@ public class Configurator {
 	public static void main(String [] args){
 		//- Create Settings Object
 		Settings obj = new Settings();
-			//- Add General Parameters
+			//- Hadoop General Parameters
 			obj.getHadoopGeneralConfiguration().put("fs.defaultFS", "hdfs://83.212.112.5:9000");
-			obj.getHadoopGeneralConfiguration().put("fs.orka.default.config.path", "/usr/local/hadoop/etc/hadoop/");
 			
-			//- Add Serial Port parameters
+			//- Hadoop user
 			obj.getHadoopUser().put("hadoop.job.ugi", "hduser");
 			
+			//- Pithos FS Configuration
+			obj.getPithosFSConfiguration().put("fs.defaultFS","pithos://<IP>:<PORT>");
+			obj.getPithosFSConfiguration().put("fs.file.impl","org.apache.hadoop.fs.pithos");
+			obj.getPithosFSConfiguration().put("fs.pithos.block.size","4194304");
+			
+			//- Pithos FS Configuration
+			obj.getPithosUser().put("url", "https://pithos.okeanos.grnet.gr/v1");
+			obj.getPithosUser().put("username", "353ec5f5-8f17-4508-8084-020f78ae82cf");
+			obj.getPithosUser().put("token", "ygVkUyRNWsSZo7GM39QtxOAkU5sySmkEHa4arwqY_2U");
 		
 		//- Generate the json file	
 		Configurator.create("hadoopPithosConfiguration.json", obj);
