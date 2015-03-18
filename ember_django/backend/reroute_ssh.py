@@ -56,7 +56,7 @@ class HdfsRequest(object):
 
         document = ET.ElementTree(ET.fromstring(hdfs_xml))
         replication_factor = read_replication_factor(document)
-        # check if file can be uploaded to hdfs
+        # check if file can be uploaded to Hdfs
         file_size = get_remote_server_file_size(self.opts['source'], user=self.opts['user'], password=self.opts['password'])
         if file_size * replication_factor > int(dfs_remaining):
             msg = ' File too big to be uploaded'
@@ -78,13 +78,13 @@ class HdfsRequest(object):
 
     def check_file(self):
         """
-        Checks, depending on the value of check arg, if file exists in hdfs or has zero size.
+        Initiates all mandatory checks for the file to be uploaded.
         """
         self.check_size()
         filename = self.opts['source'].split("/")
         parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['dest'])
 
-        # if destination is directory, check if directory exists in hdfs,
+        # if destination is directory, check if directory exists in Hdfs,
         if parsed_path:
             # if directory path ends with filename, checking if both exist
             if self.check_hdfs_path(parsed_path, ' -d ') == 1:
@@ -109,8 +109,7 @@ class HdfsRequest(object):
 
     def exec_hadoop_command(self, dest, option, check=''):
         """
-
-        :return: status of paramiko executed command.
+        Execute a Hdfs test command depending on args given.
         """
         check_cmd = HADOOP_HOME + 'hadoop fs -test' + option + dest
         try:
@@ -129,9 +128,8 @@ class HdfsRequest(object):
 
     def put_file_hdfs(self):
         """
-        Put a file from ftp/hhtp to hdfs
+        Put a file from ftp/http/https/Pithos to Hdfs
         """
-
         try:
             put_cmd = ' wget --user=' + self.opts['user'] + ' --password=' + self.opts['password'] + ' ' +\
                       self.opts['source'] + ' -O - |' + HADOOP_HOME + 'hadoop fs -put - ' + self.opts['dest']

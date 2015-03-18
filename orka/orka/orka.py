@@ -89,9 +89,9 @@ def task_message(task_id, escience_token, wait_timer, task='not_progress_bar'):
     Function to check create and destroy celery tasks running from orka-CLI
     and log task state messages.
     """
-    payload = {"job":{"task_id": task_id}}
+    payload = {"job": {"task_id": task_id}}
     yarn_cluster_logger = ClusterRequest(escience_token, payload, action='job')
-    previous_response = {'job':{'state':'placeholder'}}
+    previous_response = {'job': {'state': 'placeholder'}}
     response = yarn_cluster_logger.retrieve()
     while 'state' in response['job']:
         if response['job']['state'].replace('\r','') != previous_response['job']['state'].replace('\r',''):
@@ -215,7 +215,7 @@ class HadoopCluster(object):
         opt_filelist = self.opts.get('filelist', False)
         opt_fileput = self.opts.get('fileput', False)
         opt_fileget = self.opts.get('fileget', False)
-        if opt_filelist==True:
+        if opt_filelist == True:
             self.list_pithos_files()
         else:
             clusters = get_user_clusters(self.opts['token'])
@@ -228,14 +228,14 @@ class HadoopCluster(object):
             else:
                 logging.error(' You can take file actions on active clusters with started hadoop only.')
                 exit(error_fatal)              
-            if opt_fileput==True:
+            if opt_fileput == True:
                 try:
                     file_protocol, remain = get_file_protocol(self.opts['source'],'fileput','source')
-                    if file_protocol=='http-ftp':
+                    if file_protocol == 'http-ftp':
                         self.put_from_server()
-                    elif file_protocol=='file':
+                    elif file_protocol == 'file':
                         self.put_from_local(active_cluster)
-                    elif file_protocol=='pithos':
+                    elif file_protocol == 'pithos':
                         kamaki_filespec = remain
                         self.put_from_pithos(active_cluster,kamaki_filespec)
                     else:
@@ -244,12 +244,12 @@ class HadoopCluster(object):
                 except Exception, e:
                     logging.error(' Error:' + str(e.args[0]))
                     exit(error_fatal)
-            elif opt_fileget==True:
+            elif opt_fileget == True:
                 try:
-                    file_protocol, remain = get_file_protocol(self.opts['destination'],'fileget','destination')
-                    if file_protocol=='pithos':
+                    file_protocol, remain = get_file_protocol(self.opts['destination'], 'fileget', 'destination')
+                    if file_protocol == 'pithos':
                         self.get_from_hadoop_to_pithos(active_cluster, remain)
-                    elif file_protocol=='file' or file_protocol=="folder":
+                    elif file_protocol == 'file' or file_protocol == "folder":
                         self.get_from_hadoop_to_local(active_cluster)
                     else:
                         logging.error(' Error: Unrecognized destination filespec.')

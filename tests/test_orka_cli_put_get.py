@@ -3,13 +3,15 @@
 
 import logging
 import os
+from os.path import join, dirname, abspath
 import subprocess
 from ConfigParser import RawConfigParser, NoSectionError
-from os.path import join, dirname, abspath
 from orka.orka.utils import get_user_clusters, ssh_call_hadoop
 from orka.orka.orka import HadoopCluster
 import unittest
+from mock import patch
 from orka.orka.cluster_errors_constants import error_fatal, const_hadoop_status_started, FNULL
+
 
 # File names for the unit tests
 INVALID_SOURCE_FILE = 'file_that_does_not_exist_hopefully'
@@ -42,6 +44,14 @@ DEST_HDFS_TO_PITHOS_FILE = 'test_file_pithos_from_hdfs.txt'
 BASE_DIR = join(dirname(abspath(__file__)), "../")
 
 
+# mock function for file size checking test.
+def mock_get_dfs_remaining(*args):
+    """
+    mock ssh_check_output_hadoop for dfsadmin report, returning dfs remaining
+    """
+    return ['Configured Capacity: 9001 (over 9000 GB)', 'DFS Remaining: 0 (0 GB)']
+
+
 class OrkaTest(unittest.TestCase):
     """
     A Test suite for orka-cli put/get command.
@@ -72,14 +82,6 @@ class OrkaTest(unittest.TestCase):
                 exit(error_fatal)
             self.opts = {'source': '', 'destination': '', 'token': self.token, 'cluster_id': self.active_cluster['id'],
                          'auth_url': self.auth_url, 'user': '', 'password': ''}
-            # auth = check_credentials(self.token)
-            # try:
-            #     list_of_projects = auth.get_projects(state='active')
-            # except Exception:
-            #     self.assertTrue(False,'Could not get list of projects')
-            # for project in list_of_projects:
-            #     if project['name'] == self.project_name:
-            #         self.project_id = project['id']
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
@@ -198,15 +200,6 @@ class OrkaTest(unittest.TestCase):
         self.addCleanup(self.delete_local_files, self.opts['destination'])
         self.addCleanup(self.hadoop_local_fs_action, 'rm {0}'.format(SOURCE_HDFS_TO_LOCAL_FILE))
 
-    # def test_file_size(self):
-    #     """
-    #     Test that put_from_pithos to hdfs raises correct exception when size of pithos file is bigger than
-    #     hdfs aavailable space.
-    #     """
-    #     self.opts.update({'destination': DEST_FOR_PITHOS_SIZE_FILE })
-    #     t_hadoopcluster = HadoopCluster(self.opts)
-    #     self.assertRaises(SystemExit, t_hadoopcluster.put_from_pithos, self.active_cluster, PITHOS_SIZE_FILE)
-
     def delete_hdfs_files(self, file_to_delete):
         """
         Helper method to delete files transfered to hdfs filesystem after test.
@@ -248,6 +241,18 @@ class OrkaTest(unittest.TestCase):
         """
         print 'Cleaning up temp files'
 
+    @patch('orka.orka.orka.ssh_check_output_hadoop', mock_get_dfs_remaining)
+    def test_file_size_put_from_local(self):
+        """
+        Testing, using mock, if the put from Local to Hdfs method raises correct exception when file is bigger than
+        available space.
+        """
+        subprocess.call('echo "this is a unit test file for local to hdfs orka-cli put." > {0}'.format(SOURCE_LOCAL_TO_HDFS_FILE),
+                        stderr=FNULL, shell=True)
+        self.opts.update({'source': SOURCE_LOCAL_TO_HDFS_FILE, 'destination': DEST_LOCAL_TO_HDFS_FILE})
+        t_hadoopcluster = HadoopCluster(self.opts)
+        self.assertRaises(SystemExit, t_hadoopcluster.put_from_local, self.active_cluster)
+        self.addCleanup(self.delete_local_files, self.opts['source'])
 
 if __name__ == '__main__':
     unittest.main()
