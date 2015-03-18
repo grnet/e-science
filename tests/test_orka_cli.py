@@ -126,11 +126,14 @@ class OrkaTest(unittest.TestCase):
         """
         functional test to put file from local to hdfs and check that file now exists in hdfs and is not zero size.
         """
-        os.system('echo "this is a unit test file for local to hdfs orka-cli put." > ' + SOURCE_LOCAL_TO_HDFS_FILE)
+        subprocess.call('echo "this is a unit test file for local to hdfs orka-cli put." > {0}'.format(SOURCE_LOCAL_TO_HDFS_FILE),
+                        stderr=FNULL, shell=True)
         self.opts.update({'source': SOURCE_LOCAL_TO_HDFS_FILE, 'destination': DEST_LOCAL_TO_HDFS_FILE})
         HadoopCluster(self.opts).put_from_local(self.active_cluster)
-        exist_check_status = ssh_call_hadoop('hduser', self.master_IP, ' dfs -test -e ' + self.opts['destination'])
-        zero_check_status = ssh_call_hadoop('hduser', self.master_IP, ' dfs -test -z ' + self.opts['destination'])
+        exist_check_status = ssh_call_hadoop('hduser', self.master_IP,
+                                             ' dfs -test -e {0}'.format(self.opts['destination']))
+        zero_check_status = ssh_call_hadoop('hduser', self.master_IP,
+                                            ' dfs -test -z {0}'.format(self.opts['destination']))
         self.assertEqual(exist_check_status, 0) and self.assertEqual(zero_check_status, 1)
         self.addCleanup(self.delete_hdfs_files, self.opts['destination'])
         self.addCleanup(self.delete_local_files, self.opts['source'])
@@ -146,7 +149,7 @@ class OrkaTest(unittest.TestCase):
         self.assertEqual(exist_check_status, 0)
         self.addCleanup(self.delete_pithos_files, self.opts['destination'])
         self.addCleanup(self.delete_hdfs_files, self.opts['source'])
-        self.addCleanup(self.hadoop_local_fs_action, 'rm ' + SOURCE_HDFS_TO_PITHOS_FILE)
+        self.addCleanup(self.hadoop_local_fs_action, 'rm {0}'.format(SOURCE_HDFS_TO_PITHOS_FILE))
 
     def test_put_from_remote(self):
         """
@@ -156,8 +159,10 @@ class OrkaTest(unittest.TestCase):
         self.opts.update({'source': SOURCE_REMOTE_TO_HDFS_FILE, 'destination': DEST_REMOTE_TO_HDFS_FILE, 'user': '',
                           'password': ''})
         HadoopCluster(self.opts).put_from_server()
-        exist_check_status = ssh_call_hadoop('hduser', self.master_IP, ' dfs -test -e ' + self.opts['destination'])
-        zero_check_status = ssh_call_hadoop('hduser', self.master_IP, ' dfs -test -z ' + self.opts['destination'])
+        exist_check_status = ssh_call_hadoop('hduser', self.master_IP,
+                                             ' dfs -test -e {0}'.format(self.opts['destination']))
+        zero_check_status = ssh_call_hadoop('hduser', self.master_IP,
+                                            ' dfs -test -z {0}'.format(self.opts['destination']))
         self.assertEqual(exist_check_status, 0) and self.assertEqual(zero_check_status, 1)
         self.addCleanup(self.delete_hdfs_files, self.opts['destination'])
 
@@ -166,12 +171,15 @@ class OrkaTest(unittest.TestCase):
         functional test to put file from Pithos to Hdfs and check that file now exists in Hdfs and
         is not zero size.
         """
-        os.system('echo "this is a test file for pithos to hdfs orka-cli put" > ' + SOURCE_PITHOS_TO_HDFS_FILE)
-        os.system('kamaki file upload {}'.format(SOURCE_PITHOS_TO_HDFS_FILE))
+        subprocess.call('echo "this is a test file for pithos to hdfs orka-cli put" > {0}'.format(SOURCE_PITHOS_TO_HDFS_FILE),
+                        stderr=FNULL, shell=True)
+        subprocess.call('kamaki file upload {0}'.format(SOURCE_PITHOS_TO_HDFS_FILE), stderr=FNULL, shell=True)
         self.opts.update({'destination': DEST_PITHOS_TO_HDFS_FILE})
         HadoopCluster(self.opts).put_from_pithos(self.active_cluster, SOURCE_PITHOS_TO_HDFS_FILE)
-        exist_check_status = ssh_call_hadoop('hduser', self.master_IP, ' dfs -test -e ' + self.opts['destination'])
-        zero_check_status = ssh_call_hadoop('hduser', self.master_IP, ' dfs -test -z ' + self.opts['destination'])
+        exist_check_status = ssh_call_hadoop('hduser', self.master_IP,
+                                             ' dfs -test -e {0}'.format(self.opts['destination']))
+        zero_check_status = ssh_call_hadoop('hduser', self.master_IP,
+                                            ' dfs -test -z {0}'.format(self.opts['destination']))
         self.assertEqual(exist_check_status, 0) and self.assertEqual(zero_check_status, 1)
         self.addCleanup(self.delete_hdfs_files, self.opts['destination'])
         self.addCleanup(self.delete_pithos_files, SOURCE_PITHOS_TO_HDFS_FILE)
@@ -188,7 +196,7 @@ class OrkaTest(unittest.TestCase):
         self.assertEqual(exist_check_status, 0)
         self.addCleanup(self.delete_hdfs_files, self.opts['source'])
         self.addCleanup(self.delete_local_files, self.opts['destination'])
-        self.addCleanup(self.hadoop_local_fs_action, 'rm ' + SOURCE_HDFS_TO_LOCAL_FILE)
+        self.addCleanup(self.hadoop_local_fs_action, 'rm {0}'.format(SOURCE_HDFS_TO_LOCAL_FILE))
 
     # def test_file_size(self):
     #     """
@@ -203,7 +211,7 @@ class OrkaTest(unittest.TestCase):
         """
         Helper method to delete files transfered to hdfs filesystem after test.
         """
-        ssh_call_hadoop('hduser', self.master_IP, ' dfs -rm ' + file_to_delete)
+        ssh_call_hadoop('hduser', self.master_IP, ' dfs -rm {0}'.format(file_to_delete))
 
     def delete_local_files(self, file_to_delete):
         """
@@ -212,35 +220,33 @@ class OrkaTest(unittest.TestCase):
         if os.path.isfile(file_to_delete):
             os.remove(file_to_delete)
         else:
-            print("Error: %s test file not found" % file_to_delete)
+            print("Error: {0} test file not found".format(file_to_delete))
 
     def delete_pithos_files(self, file_to_delete):
         """
         Helper method to delete files transfered to pithos filesystem after test.
         """
-        os.system('kamaki file delete --yes {}'.format(file_to_delete))
+        subprocess.call('kamaki file delete --yes {}'.format(file_to_delete), stderr=FNULL, shell=True)
 
     def put_file_to_hdfs(self, file_to_create):
         """
         Helper method to create file in Hdfs before test.
         """
-        self.hadoop_local_fs_action('echo "test file for hdfs" > ' + file_to_create)
-        # subprocess.call( "ssh hduser@" + self.master_IP + " \"" +  +
-        #                  "\"", stderr=FNULL, shell=True)
-        ssh_call_hadoop('hduser', self.master_IP, ' dfs -put ' + file_to_create)
+        self.hadoop_local_fs_action('echo "test file for hdfs" > {0}'.format(file_to_create))
+        ssh_call_hadoop('hduser', self.master_IP, ' dfs -put {0}'.format(file_to_create))
 
     def hadoop_local_fs_action(self, action):
         """
         Helper method to perform action given on local filesystem of a master VM.
         """
-        subprocess.call( "ssh hduser@" + self.master_IP + " \"" + action +
-                         "\"", stderr=FNULL, shell=True)
+        subprocess.call("ssh hduser@" + self.master_IP + " \"" + action +
+                        "\"", stderr=FNULL, shell=True)
 
     def tearDown(self):
         """
         tearDown method for unit test class.
         """
-        print 'cleaning up test files'
+        print 'Cleaning up temp files'
 
 
 if __name__ == '__main__':
