@@ -3,6 +3,8 @@ App.UserWelcomeController = Ember.Controller.extend({
 
 	needs : 'clusterCreate',
 	user_messages : [],
+	// blacklist user messages explicitly removed during polling
+	blacklist_messages : {},
 	// flag to see if the transition is from create cluster button
 	create_cluster_start : false,
 	count : 0,
@@ -83,41 +85,63 @@ App.UserWelcomeController = Ember.Controller.extend({
 		addMessage : function(obj){
 			// routes/controllers > controller.send('addMessage',{'msg_type':'default|info|success|warning|danger', 'msg_text':'Lorem ipsum dolor sit amet, consectetur adipisicing elit'})
 			// templates > {{#each message in user_messages}}{{message.msg_text}}{{/each}}
+			var self = this;
 			var store = this.store;
 			var messages = store.all('usermessages');
-			var arrMessages = messages.toArray();
+			var aryMessages = messages.toArray();
 			var count = messages.get('length') || 0;
-			// cap at 10 items for now
-			if (count > 9){
-				var record = messages.get('firstObject');
-				if (!Ember.isEmpty(record)){
-					store.deleteRecord(record);
-					messages.compact();
+			var aryBlacklist = self.get('blacklist_messages');
+			var bBlacklist_or_Dupe = false;
+			var inc_message = String(obj['msg_text']);
+			$.each(aryMessages,function(i, message){
+				var old_message = message.get('msg_text');
+				if (inc_message == old_message){
+					bBlacklist_or_Dupe = true;
+					return false;
 				}
+			});
+			if (aryBlacklist[inc_message]){
+				bBlacklist_or_Dupe = true;
 			}
-			for (i=0;i<count;i++){
-				if (arrMessages[i].get('msg_text')==obj['msg_text']){
-					return;
+			if (!bBlacklist_or_Dupe) {
+				// cap at 10 items for now
+				if (count > 9){
+					var record = messages.get('firstObject');
+					if (!Ember.isEmpty(record)){
+						store.deleteRecord(record);
+						messages.compact();
+					}
+				}			
+				var message = {msg_type: obj['msg_type'], msg_text: inc_message};
+				while (store.hasRecordForId('usermessages',count)){
+					count+=1;
 				}
+				message['id']=count;
+				store.createRecord('usermessages', message);
+				this.set('user_messages', messages);				
 			}
-			var message = {msg_type: obj['msg_type'], msg_text: obj['msg_text']};
-			while (store.hasRecordForId('usermessages',count)){
-				count+=1;
-			}
-			message['id']=count;
-			store.createRecord('usermessages', message);
-			this.set('user_messages', messages);
 		},
 		removeMessage : function(id, all){
 			// routes/controllers > controller.send('removeMessage', id, [all=false]) optional 3rd parameter to true will clear all messages
 			// templates > {{action 'removeMessage' message_id}} / {{action 'removeMessage' 1 true}}
+			var self = this;
 			var store = this.store;
 			var messages = store.all('usermessages');
+			var aryMessages = messages.toArray();
+			var count = messages.get('length') || 0;
+			var aryBlacklist = self.get('blacklist_messages');
 			if (all===true){
+				$.each(aryMessages,function(i,message){
+					var old_message = message.get('msg_text');
+					aryBlacklist[old_message] = true;
+				});
 				store.unloadAll('usermessages');
+				messages.compact();
 			}else{
 				var record = store.getById('usermessages', id);
 				if (!Ember.isEmpty(record)){
+					var message = String(record.get('msg_text'));
+					aryBlacklist[message] = true;
 					store.deleteRecord(record);
 					messages.compact();
 				}

@@ -1,0 +1,19 @@
+{
+  "hdfsConfiguration": {
+    "fs.defaultFS": "hdfs://83.212.96.14:9000"
+  },
+  "hadoopUser": {
+    "hadoop.job.ugi": "hduser"
+  },
+  "pithosFSConfiguration":{
+  	"fs.defaultFS": "pithos://<IP>:<PORT>",
+  	"fs.file.impl":"org.apache.hadoop.fs.pithos",
+  	"fs.pithos.block.size": "4194304"
+  },  
+  "pithosUser":{
+  	"url":"https://pithos.okeanos.grnet.gr/v1",
+  	"username":"fc1bd1b1-9691-4142-b759-12a12a1e6fe3",
+  	"token":"ZQqGt9rNhKib9zAaQWFhIVO7mhDjOd6-oliNlv4JnAc"
+  }
+  
+}

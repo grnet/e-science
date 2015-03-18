@@ -5,8 +5,6 @@ App.UserLogoutRoute = Ember.Route.extend({
 	redirect : function() {
 		// clear data store cache for 'cluster'
 		this.store.unloadAll('cluster');
-		// reset variables in create cluste
-		this.controllerFor('clusterCreate').set('create_cluster_disabled', true);
 		// reset variables in create cluster
 		this.controllerFor('clusterCreate').reset_variables();
 		// reset variables in create cluster

@@ -18,6 +18,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
 from backend.okeanos_utils import check_quota, get_flavor_id, check_credentials
+from random import randint
 import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
@@ -36,10 +37,20 @@ class test_buttons_availability_respond_to_cluster_size_change(unittest.TestCase
             self.token = parser.get('cloud \"~okeanos\"', 'token')
             self.auth_url = parser.get('cloud \"~okeanos\"', 'url')
             self.base_url = parser.get('deploy', 'url')
+            self.project_name = parser.get('project', 'name')
+            auth = check_credentials(self.token)
+            try:
+                list_of_projects = auth.get_projects(state='active')
+            except Exception:
+                self.assertTrue(False,'Could not get list of projects')
+            for project in list_of_projects:
+                if project['name'] == self.project_name:
+                    self.project_id = project['id']
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
             self.base_url = "INVALID_APP_URL"
+            self.project_name = "INVALID_PROJECT_NAME"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     
@@ -81,8 +92,20 @@ class test_buttons_availability_respond_to_cluster_size_change(unittest.TestCase
                 project_name = 'system'
             else:
                 project_name = project['name'] 
-            project_details = project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'CPUs:' + str(user_quota['cpus']['available']) + '  ' + 'RAM:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
-            Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)            
+            list = Select(driver.find_element_by_id("project_id")).options
+            no_project = True
+            for index in range(0,len(list)):
+                if re.match(project_name, list[index].text):
+                    Select(driver.find_element_by_id("project_id")).select_by_visible_text(list[index].text)  
+                    no_project = False
+                    break
+            if no_project:
+                   self.assertTrue(False,'No project found with given project name')                    
+            driver.find_element_by_id("cluster_name").clear()
+            cluster_name = 'test_cluster' + str(randint(0,9999))
+            driver.find_element_by_id("cluster_name").send_keys(cluster_name)
+            hadoop_image = 'Hadoop-2.5.2'                           
+            Select(driver.find_element_by_id("os_systems")).select_by_visible_text(hadoop_image)            
             flag = False
             cluster_sizes = driver.find_element_by_id("size_of_cluster").text
             try:

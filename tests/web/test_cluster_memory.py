@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Selenium test for the memory limit error message in cluster/create screen
+Selenium test for the ram limit error message in cluster/create screen
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -19,11 +19,10 @@ import unittest, time, re
 from okeanos_utils import check_quota, get_flavor_id, destroy_cluster
 from create_cluster import YarnCluster
 from ClusterTest import ClusterTest
-from random import randint
 
 
 class TestClusterMemory(ClusterTest):
-    '''Test Class for the memory limit error message'''
+    '''Test Class for the ram limit error message'''
     def test_cluster(self):
 
         driver = self.login()
@@ -45,9 +44,6 @@ class TestClusterMemory(ClusterTest):
             self.assertTrue(False,'Not enough vms to run the test')
         
         time.sleep(1)
-        driver.find_element_by_id("cluster_name").clear()
-        cluster_name = 'test_cluster' + str(randint(0,9999))
-        driver.find_element_by_id("cluster_name").send_keys(cluster_name)
         try:
             # Call the bind function that creates ~okeanos vms and 
             # causes later the server to respond with an error message to
@@ -68,12 +64,12 @@ class TestClusterMemory(ClusterTest):
             driver.find_element_by_id("next").click()
             for i in range(60):
                 try:
-                    if "Ram selection exceeded cyclades memory limit" == driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text: break
+                    if "Ram selection exceeded cyclades ram limit" == driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text: break
                 except: pass
                 time.sleep(1)
             else: self.fail("time out")
             time.sleep(3)
-            self.assertEqual("Ram selection exceeded cyclades memory limit",
+            self.assertEqual("Ram selection exceeded cyclades ram limit",
                              driver.find_element_by_css_selector("div.col.col-sm-6 > h4").text)
         finally:
             os.system('rm *_root_password')

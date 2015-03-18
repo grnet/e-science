@@ -7,9 +7,13 @@ env:
   - secure: K+JlJYjqHmO/5bRvkKSJoh6YfZGYf9/kyqM/j3HNUG0o5gvTa6zTcI2kjxpnnYvEpz64n58YcinusNTimUM4Y1eIaoxcKlCW0MyWkQcBAg8jB8mxttH3Igw0dSblo8XZcxLBMFr7mm6I9Z0cbRRyrDr+ebp6t/+m7xf/3hMozh4=
   - secure: X6F9qYcVNhPYHSHF15WnTmOgR3GToC0DISFhCyTD0Lb3qsoxu4PuNWA3X6LazQ57U5we/7keZuwVJAhJzy3JiVUYPOIM6AnYmG/qqdmvuTwyzqqXR9E0ULBWPTtA4HKaz/3P3RjkAyQ3WjcD2dHbRaGA+cFvXoTRAzsUmWYBTx8=
 addons:
-- postgresql: "9.1"
+- postgresql: '9.1'
 before_install:
+<<<<<<< HEAD
 - openssl aes-256-cbc -K $encrypted_26ec65b631b7_key -iv $encrypted_26ec65b631b7_iv
+=======
+- openssl aes-256-cbc -K $encrypted_67c9cddb9f0e_key -iv $encrypted_67c9cddb9f0e_iv 
+>>>>>>> 64967fbf457edd1345fda5869fe7f9478be6b475
   -in .private/.config.txt.enc -out .private/.config.txt -d
 install:
 - pip install kamaki==0.13.1
@@ -37,6 +41,6 @@ before_script:
 - npm install testem -g
 - export DISPLAY=:99.0
 - sh -e /etc/init.d/xvfb start
-- nohup bash -c "webdriver-manager start 2>&1 &"
+- nohup bash -c 'webdriver-manager start 2>&1 &'
 script:
 - nosetests -sv tests/test_create_cluster.py
