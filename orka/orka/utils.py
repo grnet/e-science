@@ -531,3 +531,12 @@ def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
     response_delete_temp = subprocess.call("ssh {0}@{1} \"rm temp_file\"".format(user,master_IP), shell=True)
     return
 
+
+def isPeriod(checked_string):
+    """
+    Check if a string is a period.
+    """
+    if len(checked_string) == 1 and  checked_string == '.':
+        return True
+    else:
+        return False

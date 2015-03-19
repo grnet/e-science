@@ -87,7 +87,8 @@
     tags: postconfig
     authorized_key: user=hduser key="{{ item }}"
     with_file:
-      - "{{ path | expanduser }}"
+      - /home/orka_admin/.ssh/id_rsa.pub
+      - /root/.ssh/id_rsa.pub
 
   - name: create master vm root user ssh key
     user: name=root generate_ssh_key=yes shell=/bin/bash state=present

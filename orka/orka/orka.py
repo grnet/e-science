@@ -14,7 +14,7 @@ from utils import ClusterRequest, ConnectionError, authenticate_escience, get_us
     custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf, \
     ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to_hadoop, \
     read_replication_factor, ssh_stream_from_hadoop, parse_hdfs_dest, get_file_protocol, \
-    ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos
+    ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, isPeriod
 from time import sleep
 
 
@@ -227,9 +227,13 @@ class HadoopCluster(object):
                         break
             else:
                 logging.error(' You can take file actions on active clusters with started hadoop only.')
-                exit(error_fatal)              
+                exit(error_fatal)
+            source_path = self.opts['source'].split("/")
+            self.source_filename = source_path[len(source_path)-1]
             if opt_fileput == True:
                 try:
+                    if isPeriod(self.opts['destination']):
+                        self.opts['destination'] = self.source_filename
                     file_protocol, remain = get_file_protocol(self.opts['source'],'fileput','source')
                     if file_protocol == 'http-ftp':
                         self.put_from_server()
@@ -246,6 +250,8 @@ class HadoopCluster(object):
                     exit(error_fatal)
             elif opt_fileget == True:
                 try:
+                    if isPeriod(self.opts['destination']):
+                        self.opts['destination'] = os.getcwd()
                     file_protocol, remain = get_file_protocol(self.opts['destination'], 'fileget', 'destination')
                     if file_protocol == 'pithos':
                         self.get_from_hadoop_to_pithos(active_cluster, remain)
@@ -281,7 +287,6 @@ class HadoopCluster(object):
     
     def put_from_pithos(self, cluster, sourcefile):
         """ Method for transferring pithos+ files to Hadoop filesystem """
-        filename = self.opts['source'].split("/")
         parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['destination'])
         if parsed_path:
             # if directory path ends with filename, checking if both exist
@@ -290,7 +295,7 @@ class HadoopCluster(object):
         elif self.opts['destination'].endswith("/"):
             # if only directory is given
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
-            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'] + filename[len(filename)-1], '-e')
+            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'] + self.source_filename, '-e')
         # if destination is default directory /user/hduser, check if file exists in /user/hduser.
         else:
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'],'-e')
@@ -326,7 +331,6 @@ class HadoopCluster(object):
 
     def put_from_local(self, cluster):
         """ Put local files to Hdfs."""
-        filename = self.opts['source'].split("/")
         parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['destination'])
 
         # if destination is directory, check if directory exists in hdfs,
@@ -337,7 +341,7 @@ class HadoopCluster(object):
         elif self.opts['destination'].endswith("/") and not self.opts['destination'].startswith("/"):
             # if only directory is given
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
-            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'] + filename[len(filename)-1], '-e')
+            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'] + self.source_filename, '-e')
         # if destination is default directory /user/hduser, check if file exists in /user/hduser.
         else:
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'],'-e')
