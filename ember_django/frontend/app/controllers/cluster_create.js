@@ -30,6 +30,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 	alert_mes_slaves_disk : '', 	// alert message for slaves disk buttons (if none selected)
 	alert_mes_cluster_name : '', 	// alert message for cluster name (if none selected)
 	alert_mes_cluster_size : '', 	// alert message for cluster size (if none selected)
+	alert_mes_replication_factor: '', // alert message for replication factor (if not integer or greater than cluster size)
+	alert_mes_dfs_blocksize: '',	// alert message for cdfs blocksize (if not integer)
 	project_details : '', 		// project details: name and quota(Vms cpus ram disk)
 	name_of_project : '', 		// variable to set name of project as part of project details string helps parsing system project name
 	ssh_key_selection : '',		// variable for selected public ssh_key to use upon cluster creation
@@ -754,6 +756,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('alert_mes_slaves_disk', '');
 		this.set('alert_mes_cluster_name', '');
 		this.set('alert_mes_cluster_size', '');
+		this.set('alert_mes_replication_factor', '');
+		this.set('alert_mes_dfs_blocksize', '');
+		
 	},
 	
 	actions : {
@@ -1112,7 +1117,31 @@ App.ClusterCreateController = Ember.Controller.extend({
 				// scroll to message
 				var elem = document.getElementById("common_settings");
 				window.scrollTo(elem.offsetLeft, elem.offsetTop);
-			} else {
+			}
+			else if ((this.get('replication_factor')=='') || (this.get('replication_factor')==null)){
+				this.set('replication_factor', this.get('default_replication_factor'));
+			}
+			else if (isNaN(parseInt(this.get('replication_factor')))){
+				this.set('alert_mes_replication_factor', 'Replication_factor is an integer');
+				var elem = document.getElementById("hdfs_configuration");
+				window.scrollTo(elem.offsetLeft, elem.offsetTop);
+			}
+			else if (parseInt(this.get('replication_factor')) > this.get('cluster_size')){
+				if (parseInt(this.get('replication_factor')) > this.get('cluster_size')){
+					this.set('alert_mes_replication_factor', 'Replication_factor must not be greater than cluster size');
+					var elem = document.getElementById("hdfs_configuration");
+				window.scrollTo(elem.offsetLeft, elem.offsetTop);					
+				}
+			}
+			else if ((this.get('dfs_blocksize')=='') || (this.get('dfs_blocksize')==null)){
+				this.set('dfs_blocksize', this.get('default_dfs_blocksize'));
+			}
+			else if (isNaN(parseInt(this.get('dfs_blocksize')))){
+				this.set('alert_mes_dfs_blocksize', 'Blocksize is an integer');
+				var elem = document.getElementById("hdfs_configuration");
+				window.scrollTo(elem.offsetLeft, elem.offsetTop);
+			} 		
+			else {
 				$.loader.open($options);
 				//body
 				// check if everything is allowed
@@ -1126,13 +1155,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 					if ((this.get('ssh_key_selection')=='') || (this.get('ssh_key_selection')==null)){
 						this.set('ssh_key_selection', 'no_ssh_key_selected');
 					}
-					if ((this.get('replication_factor')=='') || (this.get('replication_factor')==null)){
-						this.set('replication_factor', this.get('default_replication_factor'));
-					}
-					if ((this.get('dfs_blocksize')=='') || (this.get('dfs_blocksize')==null)){
-						this.set('dfs_blocksize', this.get('default_dfs_blocksize'));
-					}
-
 					var cluster_selection = this.store.push('clusterchoice', {
 						// set the clusterchoice model with the user choices
 						'id' : 1,
