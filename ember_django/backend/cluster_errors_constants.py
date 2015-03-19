@@ -77,7 +77,7 @@ const_hadoop_status_pending = const_hadoop_status_format
 const_hadoop_status_mkhdusr = "3"
 const_truncate_limit = 350
 const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
-const_system_uuid = "5ea34246-d5a9-4f38-8903-da4c284fdd5d"
+const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
 HADOOP_STATUS_ACTIONS = {"stop": ["0","Stopping","stopped"],
                          "start": ["1","Starting","started"],
                          "format": ["2","Formatting","formatted"],
