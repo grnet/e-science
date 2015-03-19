@@ -131,6 +131,7 @@ class HdfsRequest(object):
         Put a file from ftp/http/https/Pithos to Hdfs
         """
         try:
+            self.check_file()
             put_cmd = ' wget --user=' + self.opts['user'] + ' --password=' + self.opts['password'] + ' ' +\
                       self.opts['source'] + ' -O - |' + HADOOP_HOME + 'hadoop fs -put - ' + self.opts['dest']
             put_cmd_status = exec_command(self.ssh_client, put_cmd, command_state='celery_task')
