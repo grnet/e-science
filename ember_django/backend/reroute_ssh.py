@@ -43,16 +43,17 @@ class HdfsRequest(object):
         """
         Checks file size in remote server and compares it with Hdfs available space.
         """
-        report = subprocess.check_output( "ssh " + "hduser@" + self.opts['master_IP'] + " \"" + HADOOP_HOME + 'hdfs'
-                     + " dfsadmin -report /" + "\"", stderr=FNULL, shell=True).splitlines()
+        report = subprocess.check_output("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no hduser@"
+                                          + self.opts['master_IP'] + " \"" + HADOOP_HOME + 'hdfs' +
+                                          " dfsadmin -report /" + "\"", stderr=FNULL, shell=True).splitlines()
         for line in report:
             if line.startswith('DFS Remaining'):
                 tokens = line.split(' ')
                 dfs_remaining = tokens[2]
                 break
-        hdfs_xml = subprocess.check_output("ssh " + "hduser@" + self.opts['master_IP']
-                                            + " \"" + "cat /usr/local/hadoop/etc/hadoop/hdfs-site.xml\"",
-                                            shell=True)
+        hdfs_xml = subprocess.check_output("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no hduser@"
+                                           + self.opts['master_IP'] + " \"" +
+                                           "cat /usr/local/hadoop/etc/hadoop/hdfs-site.xml\"", shell=True)
 
         document = ET.ElementTree(ET.fromstring(hdfs_xml))
         replication_factor = read_replication_factor(document)
