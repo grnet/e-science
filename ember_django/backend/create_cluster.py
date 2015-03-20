@@ -413,14 +413,14 @@ class YarnCluster(object):
                           ' Installing and configuring Yarn (3/3)')
 
             install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
-                         self.cluster_name_postfix_id, self.hadoop_image, self.ssh_file)
+                         self.cluster_name_postfix_id, self.hadoop_image, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'])
 
         except Exception, e:
             logging.error(' Fatal error:' + str(e.args[0]))
             logging.error(' Created cluster and resources will be deleted')
             # If error in Yarn cluster, update cluster status as destroyed
             set_cluster_state(self.opts['token'], self.cluster_id, 'Error')
-            self.destroy()
+            #self.destroy()
             raise
 
         finally:

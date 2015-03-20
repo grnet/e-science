@@ -24,9 +24,14 @@
 <property>
    <name>dfs.namenode.name.dir</name>
    <value>file:/app/hadoop/tmp/namenode</value>
- </property>
- <property>
+</property>
+<property>
    <name>dfs.datanode.data.dir</name>
    <value>file:/app/hadoop/tmp/datanode</value>
- </property>
+</property>
+<property> 
+	<name>dfs.blocksize</name> 
+	<value>{{ dfs_blocksize }}</value> 
+	<description>Block size</description> 
+</property>
 </configuration>

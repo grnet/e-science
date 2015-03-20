@@ -17,6 +17,7 @@ from cluster_errors_constants import error_hdfs_test_exit_status, const_truncate
 from okeanos_utils import parse_hdfs_dest, read_replication_factor, get_remote_server_file_size
 import xml.etree.ElementTree as ET
 import subprocess
+XML_FILE = '/home/developer/workspace/testhub/ember_django/backend/ansible/roles/yarn/templates/hdfs-site.j2'
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ssh_client, REPORT, \
@@ -189,6 +190,7 @@ def get_ready_for_reroute(hostname_master, password):
     try:
         exec_command(ssh_client, 'apt-get update')
         exec_command(ssh_client, 'apt-get -y install python-pip')
+        create_hadoop_tmp_xml_file(ssh_client, 'hdfs-site.xml')
         exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv4/ip_forward')
         exec_command(ssh_client, 'iptables --table nat --append POSTROUTING '
                                  '--out-interface eth1 -j MASQUERADE')
@@ -294,6 +296,7 @@ def reroute_ssh_to_slaves(dport, slave_ip, hostname_master, password, master_VM_
         exec_command(ssh_client, 'route add default gw 192.168.0.2')
         exec_command(ssh_client, 'apt-get update')
         exec_command(ssh_client, 'apt-get -y install python-pip')
+        create_hadoop_tmp_xml_file(ssh_client, 'hdfs-site.xml')
 
     finally:
         ssh_client.close()
@@ -344,3 +347,21 @@ def establish_connect(hostname, name, passwd, port):
     msg = " Failed connecting as %s to %s:%s" % \
         (name, hostname, str(port))
     raise RuntimeError(msg, error_ssh_client)
+
+
+def create_hadoop_tmp_xml_file(ssh_client, filename):
+    """
+    Creates a tmp xml file in master VM local filesystem, will be copied to hadoop xml directory.
+    """
+    xml = read_xml(XML_FILE)
+    cluster_id = '10'
+    tmp_filename = '{0}{1}'.format(filename, cluster_id)
+    for i in range(0, len(xml)):
+        cmd = 'echo "{0}" >> {1}'.format(xml[i], tmp_filename)
+        exec_command(ssh_client, cmd)
+
+
+def read_xml(file):
+
+    with open(file, 'r') as f:
+        return f.read().splitlines()
