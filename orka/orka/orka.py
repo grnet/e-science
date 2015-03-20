@@ -14,7 +14,7 @@ from utils import ClusterRequest, ConnectionError, authenticate_escience, get_us
     custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf, \
     ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to_hadoop, \
     read_replication_factor, ssh_stream_from_hadoop, parse_hdfs_dest, get_file_protocol, \
-    ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, isPeriod
+    ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, is_period, is_default_dir
 from time import sleep
 
 
@@ -232,7 +232,7 @@ class HadoopCluster(object):
             self.source_filename = source_path[len(source_path)-1]
             if opt_fileput == True:
                 try:
-                    if isPeriod(self.opts['destination']):
+                    if is_period(self.opts['destination']) or is_default_dir(self.opts['destination']):
                         self.opts['destination'] = self.source_filename
                     file_protocol, remain = get_file_protocol(self.opts['source'],'fileput','source')
                     if file_protocol == 'http-ftp':
@@ -250,7 +250,7 @@ class HadoopCluster(object):
                     exit(error_fatal)
             elif opt_fileget == True:
                 try:
-                    if isPeriod(self.opts['destination']):
+                    if is_period(self.opts['destination']):
                         self.opts['destination'] = os.getcwd()
                     file_protocol, remain = get_file_protocol(self.opts['destination'], 'fileget', 'destination')
                     if file_protocol == 'pithos':
@@ -291,11 +291,17 @@ class HadoopCluster(object):
         if parsed_path:
             # if directory path ends with filename, checking if both exist
             self.check_hdfs_path(cluster['master_IP'], parsed_path, '-d')
-            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
-        elif self.opts['destination'].endswith("/"):
+            try:
+                self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
+                self.opts['destination'] += '/{0}'.format(self.source_filename)
+                self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
+            except SystemExit:
+                self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
+        elif self.opts['destination'].endswith("/") and len(self.opts['destination']) > 1:
             # if only directory is given
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'] + self.source_filename, '-e')
+            self.opts['destination'] += self.source_filename
         # if destination is default directory /user/hduser, check if file exists in /user/hduser.
         else:
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'],'-e')
@@ -332,19 +338,23 @@ class HadoopCluster(object):
     def put_from_local(self, cluster):
         """ Put local files to Hdfs."""
         parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['destination'])
-
         # if destination is directory, check if directory exists in hdfs,
         if parsed_path:
             # if directory path ends with filename, checking if both exist
             self.check_hdfs_path(cluster['master_IP'], parsed_path, '-d')
-            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
-        elif self.opts['destination'].endswith("/") and not self.opts['destination'].startswith("/"):
+            try:
+                self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
+                self.opts['destination'] += '/{0}'.format(self.source_filename)
+            except SystemExit:
+                self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
+        elif self.opts['destination'].endswith("/") and len(self.opts['destination']) > 1:
             # if only directory is given
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'] + self.source_filename, '-e')
+            self.opts['destination'] += self.source_filename
         # if destination is default directory /user/hduser, check if file exists in /user/hduser.
         else:
-            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'],'-e')
+            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
 
         # size of file to be uploaded (in bytes)
         if os.path.isfile(self.opts['source']):

@@ -93,15 +93,16 @@ class HdfsRequest(object):
                 raise RuntimeError(msg)
             if self.check_hdfs_path(self.opts['dest'], ' -d ') == 0:
                 self.full_path += '/' + filename[len(filename)-1]
+                self.check_hdfs_path(self.full_path, ' -e ')
                 return 0
             else:
                 self.check_hdfs_path(self.opts['dest'], ' -e ')
-        elif self.opts['dest'].endswith("/") and not self.opts['dest'].startswith("/"):
+        elif self.opts['dest'].endswith("/") and len(self.opts['dest']) > 1:
             # if only directory is given
             if self.check_hdfs_path(self.opts['dest'], ' -d ') == 1:
                 msg = ' Target directory does not exist. Aborting upload'
                 raise RuntimeError(msg)
-            self.check_hdfs_path(self.opts['dest'] + filename[len(filename)-1], ' -e' )
+            self.check_hdfs_path(self.opts['dest'] + filename[len(filename)-1], ' -e')
             self.full_path += filename[len(filename)-1]
         # if destination is default directory /user/hduser, check if file exists in /user/hduser.
         else:
