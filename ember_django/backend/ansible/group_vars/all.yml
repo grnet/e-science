@@ -10,6 +10,7 @@
   start_yarn: False
   is_master: False
   is_slave: False
+  token: placeholder
   dfs_replication: 2
   dfs_blocksize: 128
   filename: /home/hduser/.ssh/id_rsa

@@ -411,6 +411,7 @@ class YarnCluster(object):
                                              self.HOSTNAME_MASTER_IP)
             set_cluster_state(self.opts['token'], self.cluster_id,
                           ' Installing and configuring Yarn (3/3)')
+
             install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.cluster_name_postfix_id, self.hadoop_image, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'])
 
