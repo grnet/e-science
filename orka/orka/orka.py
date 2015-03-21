@@ -174,7 +174,7 @@ class HadoopCluster(object):
             result = task_message(task_id, self.escience_token, wait_timer_delete)
             logging.log(SUMMARY, ' Cluster with name "%s" and all its resources deleted' %(result))
         except Exception, e:
-            logging.error(' Error:' + str(e.args[0]))
+            logging.error(str(e.args[0]))
             exit(error_fatal)
             
 
@@ -206,7 +206,7 @@ class HadoopCluster(object):
             result = task_message(task_id, self.escience_token, wait_timer_delete)
             logging.log(SUMMARY, result)
         except Exception, e:
-            logging.error(' Error:' + str(e.args[0]))
+            logging.error(str(e.args[0]))
             exit(error_fatal)
     
     def file_action(self):
@@ -234,7 +234,8 @@ class HadoopCluster(object):
                 try:
                     if is_period(self.opts['destination']) or is_default_dir(self.opts['destination']):
                         self.opts['destination'] = self.source_filename
-                    file_protocol, remain = get_file_protocol(self.opts['source'],'fileput','source')
+                    file_protocol, remain = get_file_protocol(self.opts['source'], 'fileput', 'source')
+                    self.check_hdfs_destination(active_cluster)
                     if file_protocol == 'http-ftp':
                         self.put_from_server()
                     elif file_protocol == 'file':
@@ -246,7 +247,7 @@ class HadoopCluster(object):
                         logging.error(' Error: Unrecognized source filespec.')
                         exit(error_fatal)
                 except Exception, e:
-                    logging.error(' Error:' + str(e.args[0]))
+                    logging.error(str(e.args[0]))
                     exit(error_fatal)
             elif opt_fileget == True:
                 try:
@@ -261,7 +262,7 @@ class HadoopCluster(object):
                         logging.error(' Error: Unrecognized destination filespec.')
                         exit(error_fatal)
                 except Exception, e:
-                    logging.error(' Error:' + str(e.args[0]))
+                    logging.error(str(e.args[0]))
             
                 
     def list_pithos_files(self):
@@ -278,33 +279,50 @@ class HadoopCluster(object):
         pithos_endpoint = auth.get_endpoint_url('object-store')
         pithos_container = self.opts.get('pithos_container','pithos')
         user_id = auth.user_info['id']
-        pithos_client = PithosClient(pithos_endpoint,self.opts['token'],user_id,pithos_container)
+        pithos_client = PithosClient(pithos_endpoint,self.opts['token'], user_id, pithos_container)
         objects = pithos_client.list_objects()
         for object in objects:
             is_dir = 'application/directory' in object.get('content_type', object.get('content-type', ''))
             if not is_dir:
-                print u"{:>12s} \"pithos:/{:s}/{:s}\"".format(bytes_to_shorthand(object['bytes']),pithos_container,object['name'])
-    
-    def put_from_pithos(self, cluster, sourcefile):
-        """ Method for transferring pithos+ files to Hadoop filesystem """
+                print u"{:>12s} \"pithos:/{:s}/{:s}\"".format(bytes_to_shorthand(object['bytes']),
+                                                              pithos_container,object['name'])
+
+    def check_hdfs_destination(self, cluster):
+        """
+        Method checking the Hdfs destination argument for existence and type (directory or file).
+        """
         parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['destination'])
         if parsed_path:
             # if directory path ends with filename, checking if both exist
-            self.check_hdfs_path(cluster['master_IP'], parsed_path, '-d')
+            try:
+                self.check_hdfs_path(cluster['master_IP'], parsed_path, '-d')
+            except SystemExit:
+                msg = ' Target directory does not exist. Aborting upload'
+                raise RuntimeError(msg)
             try:
                 self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
-                self.opts['destination'] += '/{0}'.format(self.source_filename)
-                self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
             except SystemExit:
                 self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
+                return 0
+
+            self.opts['destination'] += '/{0}'.format(self.source_filename)
+            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
         elif self.opts['destination'].endswith("/") and len(self.opts['destination']) > 1:
             # if only directory is given
-            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
+            try:
+                self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
+            except SystemExit:
+                msg = ' Target directory does not exist. Aborting upload'
+                raise RuntimeError(msg)
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'] + self.source_filename, '-e')
             self.opts['destination'] += self.source_filename
         # if destination is default directory /user/hduser, check if file exists in /user/hduser.
         else:
-            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'],'-e')
+            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
+
+
+    def put_from_pithos(self, cluster, sourcefile):
+        """ Method for transferring pithos+ files to Hadoop filesystem """
         """ Streaming """
         logging.log(SUMMARY, ' Start transferring pithos file to hdfs' )
         pithos_url = ssh_pithos_stream_to_hadoop("hduser", cluster['master_IP'],
@@ -327,36 +345,14 @@ class HadoopCluster(object):
         """
         path_exists = ssh_call_hadoop("hduser", master_IP, " dfs -test " + option + " " + "\'" + dest + "\'")
         if option == '-e' and path_exists == 0:
-            logging.error(' File already exists. Aborting upload.' )
+            logging.error(' File already exists. Aborting upload.')
             exit(error_fatal)
         elif option == '-d' and path_exists != 0:
-            logging.error(' Target directory does not exist. Aborting upload')
             exit(error_fatal)
         return path_exists
 
-
     def put_from_local(self, cluster):
         """ Put local files to Hdfs."""
-        parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['destination'])
-        # if destination is directory, check if directory exists in hdfs,
-        if parsed_path:
-            # if directory path ends with filename, checking if both exist
-            self.check_hdfs_path(cluster['master_IP'], parsed_path, '-d')
-            try:
-                self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
-                self.opts['destination'] += '/{0}'.format(self.source_filename)
-            except SystemExit:
-                self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
-        elif self.opts['destination'].endswith("/") and len(self.opts['destination']) > 1:
-            # if only directory is given
-            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
-            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'] + self.source_filename, '-e')
-            self.opts['destination'] += self.source_filename
-        # if destination is default directory /user/hduser, check if file exists in /user/hduser.
-        else:
-            self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
-
-        # size of file to be uploaded (in bytes)
         if os.path.isfile(self.opts['source']):
             file_size = os.path.getsize(self.opts['source'])
         else:
@@ -424,7 +420,7 @@ class HadoopCluster(object):
                 logging.error(' File does not exist.')
                 exit(error_fatal) 
         except Exception, e:
-            logging.error(' Error:' + str(e.args[0]))
+            logging.error(str(e.args[0]))
             exit(error_fatal)
     
     def get_from_hadoop_to_local(self, cluster):
@@ -477,7 +473,7 @@ class HadoopCluster(object):
                 logging.error(' Error while downloading from Hadoop filesystem.')
         
         except Exception, e:
-            logging.error(' Error:' + str(e.args[0]))
+            logging.error(str(e.args[0]))
             exit(error_fatal)
 
 

@@ -13,8 +13,8 @@ import paramiko
 from time import sleep
 import select
 from celery import current_task
-from cluster_errors_constants import error_hdfs_test_exit_status, const_truncate_limit, error_fatal, FNULL
-from okeanos_utils import parse_hdfs_dest, read_replication_factor, get_remote_server_file_size
+from cluster_errors_constants import error_hdfs_test_exit_status, const_truncate_limit, FNULL
+from okeanos_utils import read_replication_factor, get_remote_server_file_size
 import xml.etree.ElementTree as ET
 import subprocess
 
@@ -35,7 +35,6 @@ class HdfsRequest(object):
     """
     def __init__(self, opts):
         self.opts = opts
-        self.full_path = self.opts['dest']
         self.ssh_client = establish_connect(self.opts['master_IP'], 'hduser', '',
                                    MASTER_SSH_PORT)
 
@@ -65,50 +64,6 @@ class HdfsRequest(object):
         return 0
 
 
-    def check_hdfs_path(self, dest, option):
-        """
-        Check if a path exists in Hdfs 0: exists, 1: doesn't exist
-        """
-        path_exists = self.exec_hadoop_command(dest, option)
-        if option == ' -e ' and path_exists == 0:
-            msg = ' File already exists. Aborting upload.'
-            raise RuntimeError(msg)
-        elif option == ' -d ' and path_exists != 0:
-            return 1
-        return path_exists
-
-    def check_file(self):
-        """
-        Initiates all mandatory checks for the file to be uploaded.
-        """
-        self.check_size()
-        filename = self.opts['source'].split("/")
-        parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['dest'])
-
-        # if destination is directory, check if directory exists in Hdfs,
-        if parsed_path:
-            # if directory path ends with filename, checking if both exist
-            if self.check_hdfs_path(parsed_path, ' -d ') == 1:
-                msg = ' Target directory does not exist. Aborting upload'
-                raise RuntimeError(msg)
-            if self.check_hdfs_path(self.opts['dest'], ' -d ') == 0:
-                self.full_path += '/' + filename[len(filename)-1]
-                self.check_hdfs_path(self.full_path, ' -e ')
-                return 0
-            else:
-                self.check_hdfs_path(self.opts['dest'], ' -e ')
-        elif self.opts['dest'].endswith("/") and len(self.opts['dest']) > 1:
-            # if only directory is given
-            if self.check_hdfs_path(self.opts['dest'], ' -d ') == 1:
-                msg = ' Target directory does not exist. Aborting upload'
-                raise RuntimeError(msg)
-            self.check_hdfs_path(self.opts['dest'] + filename[len(filename)-1], ' -e')
-            self.full_path += filename[len(filename)-1]
-        # if destination is default directory /user/hduser, check if file exists in /user/hduser.
-        else:
-            self.check_hdfs_path(self.opts['dest'],' -e ')
-
-
     def exec_hadoop_command(self, dest, option, check=''):
         """
         Execute a Hdfs test command depending on args given.
@@ -133,11 +88,11 @@ class HdfsRequest(object):
         Put a file from ftp/http/https/Pithos to Hdfs
         """
         try:
-            self.check_file()
+            self.check_size()
             put_cmd = ' wget --user=' + self.opts['user'] + ' --password=' + self.opts['password'] + ' ' +\
                       self.opts['source'] + ' -O - |' + HADOOP_HOME + 'hadoop fs -put - ' + self.opts['dest']
             put_cmd_status = exec_command(self.ssh_client, put_cmd, command_state='celery_task')
-            self.exec_hadoop_command(self.full_path, ' -z ', check='zero_size')
+            self.exec_hadoop_command(self.opts['dest'], ' -z ', check='zero_size')
             return put_cmd_status
         finally:
             self.ssh_client.close()
