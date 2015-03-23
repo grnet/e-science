@@ -65,5 +65,6 @@ const_cluster_status_pending = "2"
 const_hadoop_status_started = "1"
 const_hadoop_status_stopped = "0"
 HADOOP_PATH = '/usr/local/hadoop/bin/hdfs'
+DEFAULT_HDFS_DIR = ['/user/hduser', '/user/hduser/']
 FNULL = open(os.devnull, 'w')
 block_size = 67108864 # block size in bytes,used in division when transfering files from hdfs to pithos
