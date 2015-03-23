@@ -6,6 +6,7 @@ This module contains the definitions of returned errors and package constants.
 
 @author: Ioannis Stenos, Nick Vrionis
 """
+import os
 
 # Definitions of return value errors
 error_syntax_clustersize = -1
@@ -45,6 +46,9 @@ error_proj_id = -71
 error_multiple_entries = -72
 error_project_quota = -73
 error_authentication = -99
+FNULL = open(os.devnull, 'w')
+# Hadoop test command error return status
+error_hdfs_test_exit_status = 1
 
 # Package constants
 ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
@@ -62,6 +66,7 @@ default_logging = 'summary'
 login_endpoint = '/api/users'
 cluster_endpoint = '/api/clusterchoices'
 job_endpoint = '/api/jobs'
+hdfs_endpoint = '/api/hdfs'
 const_cluster_status_destroyed = "0"
 const_cluster_status_active = "1"
 const_cluster_status_pending = "2"
@@ -76,6 +81,6 @@ const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
 HADOOP_STATUS_ACTIONS = {"stop": ["0","Stopping","stopped"],
                          "start": ["1","Starting","started"],
                          "format": ["2","Formatting","formatted"],
-                         "makehduser": ["3", "Creating /user/hduser in HDFS", "Created /user/hduser"]}
+                         "HDFSMkdir": ["3", "Creating /user/hduser in HDFS", "Created /user/hduser"]}
 
 REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}

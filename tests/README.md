@@ -12,10 +12,9 @@ To run the test you need:
         [cloud "~okeanos"]
         url = https://accounts.okeanos.grnet.gr/identity/v2.0
         token = <YOUR TOKEN>
-        project_id = the e-science project id, needed for the ember_django application to run
 
         [cluster]
-        master_ip = x.x.x.x  (to be used in run_pi_yarn on an existing cluster)
+        master_ip = xx.xxx.xxx.xxx  (e.g. 83.212.111.222, to be used in run_pi_yarn and test_orka_cli_put_get on an existing cluster)
 
         [deploy]
         url = your web server base url (eg for localhost http://127.0.0.1:8000/, not necessary for testing) 
@@ -24,7 +23,11 @@ To run the test you need:
         name = the name of the ~okeanos project you want to run your tests into
 
 
-Run mock test with either with `nosetests`, or  with `python test_create_cluster.py`
+Unit and functional tests in **test_orka_cli_put_get.py** require an active hadoop cluster with **.kamakirc** file in master VM's /home/hduser path and orka-cli user's ssh pub key copied in hduser's
+authorized_keys file. It is created automatically with latest orka build, no need for any orka-cli user additional action. Run them with `nosetests test_orka_cli_put_get.py`
+
+
+The mock **test_create_cluster** can be run either with `nosetests test_create_cluster.py`, or  with `python test_create_cluster.py`
 
 orka wrapper test in bare VM
 ----------------------------

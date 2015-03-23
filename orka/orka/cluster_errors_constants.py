@@ -6,6 +6,7 @@ This module contains the definitions of returned errors and package constants.
 
 @author: Ioannis Stenos, Nick Vrionis
 """
+import os
 
 # Definitions of return value errors
 error_syntax_clustersize = -1
@@ -55,6 +56,7 @@ default_logging = 'summary'
 login_endpoint = '/api/users'
 cluster_endpoint = '/api/clusterchoices'
 job_endpoint = '/api/jobs'
+hdfs_endpoint = '/api/hdfs'
 wait_timer_create = 30
 wait_timer_delete = 5
 const_cluster_status_destroyed = "0"
@@ -62,3 +64,7 @@ const_cluster_status_active = "1"
 const_cluster_status_pending = "2"
 const_hadoop_status_started = "1"
 const_hadoop_status_stopped = "0"
+HADOOP_PATH = '/usr/local/hadoop/bin/hdfs'
+DEFAULT_HDFS_DIR = ['/user/hduser', '/user/hduser/']
+FNULL = open(os.devnull, 'w')
+block_size = 67108864 # block size in bytes,used in division when transfering files from hdfs to pithos

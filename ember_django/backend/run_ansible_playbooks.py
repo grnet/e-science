@@ -40,14 +40,14 @@ def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_f
         hosts_filename = create_ansible_hosts(cluster_name, list_of_hosts,
                                          hostname_master)
         # Run Ansible playbook
-        ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file)
+        ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, token)
         # Format and start Hadoop cluster
         set_cluster_state(token, cluster_id,
                           ' Yarn Cluster is active', status='Active',
                           master_IP=master_ip)
         ansible_manage_cluster(cluster_id, 'format')
         ansible_manage_cluster(cluster_id, 'start')
-        ansible_manage_cluster(cluster_id, 'makehduser')
+        ansible_manage_cluster(cluster_id, 'HDFSMkdir')
     except Exception, e:
         msg = 'Error while running Ansible '
         raise RuntimeError(msg, error_ansible_playbook)
@@ -91,7 +91,7 @@ def ansible_manage_cluster(cluster_id, action):
     Updates database only when starting or stopping a cluster.
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
-    if action == 'format' or action == 'makehduser':
+    if action == 'format' or action == 'HDFSMkdir':
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
         current_hadoop_status = action
@@ -116,7 +116,7 @@ def ansible_manage_cluster(cluster_id, action):
         raise RuntimeError(msg)
 
 
-def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file):
+def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, token):
     """
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
@@ -136,7 +136,8 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file)
 
 
     # Create command that executes ansible playbook
-    ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -f ' + str(cluster_size) + ' -e "choose_role=yarn ssh_file_name=' + ssh_file
+    ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -f '\
+                   + str(cluster_size) + ' -e "choose_role=yarn ssh_file_name=' + ssh_file + ' token=' + token
 
     # hadoop_image flag(true/false)
     if hadoop_image:

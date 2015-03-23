@@ -22,6 +22,11 @@
        - oracle-java8-set-default
     tags: preconfig
 
+  - name: Install kamaki
+    tags: installations
+    pip: name=kamaki version=0.13.1 state=present
+    tags: preconfig
+
   - name: Disable ipv6
     sysctl: "name={{item.name}} value={{item.value}} state={{item.state}}"
     tags: preconfig
@@ -71,12 +76,18 @@
     register: p
     delegate_to: 127.0.0.1
 
-  - name: copy authorized_keys to hduser .ssh directory
+  - name: copy app user authorized_keys to hduser .ssh directory
     tags: postconfig
     authorized_key: user=hduser key="{{ item }}"
     with_file:
       - "{{ ssh_file_name }}"
     when: p.stat.exists
+
+  - name: copy server authorized_keys to hduser .ssh directory
+    tags: postconfig
+    authorized_key: user=hduser key="{{ item }}"
+    with_file:
+      - "{{ path | expanduser }}"
 
   - name: create master vm root user ssh key
     user: name=root generate_ssh_key=yes shell=/bin/bash state=present
@@ -153,7 +164,7 @@
       - chown hduser:hadoop /app/hadoop/tmp
       - chmod 750 /app/hadoop/tmp
 
-  - name: copy yarn configuration xml files in every node
+  - name: copy yarn configuration xml and kamakirc files in every node
     tags: postconfig
     template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
     with_items: 
@@ -161,6 +172,7 @@
       - { src: 'mapred-site.j2', dest: '/usr/local/hadoop/etc/hadoop/mapred-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'hdfs-site.j2', dest: '/usr/local/hadoop/etc/hadoop/hdfs-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'yarn-site.j2', dest: '/usr/local/hadoop/etc/hadoop/yarn-site.xml', owner: 'hduser', group: 'hadoop' }
+      - { src: 'kamakirc.j2', dest: '/home/hduser/.kamakirc', owner: 'hduser', group: 'hadoop' }
  
   - name: create masters and slaves files in hadoop-yarn master node
     tags: postconfig
