@@ -22,7 +22,7 @@ playbook = 'site.yml'
 ansible_playbook = dirname(abspath(__file__)) + '/ansible/' + playbook
 ansible_hosts_prefix = 'ansible_hosts_'
 ansible_verbosity = ' -vvvv'
-
+XML_FILE = '/home/developer/workspace/testhub/ember_django/backend/ansible/roles/yarn/templates/hdfs-site.j2'
 
 
 def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_file, replication_factor, dfs_blocksize):
@@ -161,3 +161,27 @@ def execute_ansible_playbook(ansible_command):
         raise RuntimeError(msg, exit_status)
 
     return 0
+
+
+'''def create_hadoop_tmp_xml_file(ssh_client, filename):
+    """
+    Creates a tmp xml file in master VM local filesystem, will be copied to hadoop xml directory.
+    """
+    xml = read_xml(XML_FILE)
+    cluster_id = '10'
+    tmp_filename = '{0}{1}'.format(filename, cluster_id)
+    for i in range(0, len(xml)):
+        cmd = 'echo "{0}" >> {1}'.format(xml[i], tmp_filename)
+        exec_command(ssh_client, cmd)
+
+
+def read_xml(xml_file):
+
+    with open(xml_file, 'r') as f:
+        return f.read() #.splitlines()
+
+
+def write_xml(xml_var, file_to_write):
+
+    with open(file_to_write, 'w') as f:
+        f.write(xml_var)'''
