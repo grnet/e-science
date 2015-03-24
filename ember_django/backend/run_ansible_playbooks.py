@@ -14,6 +14,7 @@ from django_db_after_login import db_hadoop_update
 from celery import current_task
 from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS
 from okeanos_utils import set_cluster_state
+import StringIO
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
@@ -22,10 +23,10 @@ playbook = 'site.yml'
 ansible_playbook = dirname(abspath(__file__)) + '/ansible/' + playbook
 ansible_hosts_prefix = 'ansible_hosts_'
 ansible_verbosity = ' -vvvv'
+XML_FILE = '/home/developer/workspace/hdfs-site.xml'
 
 
-
-def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
+def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_file, replication_factor, dfs_blocksize):
     """
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn.
@@ -40,7 +41,8 @@ def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_f
         hosts_filename = create_ansible_hosts(cluster_name, list_of_hosts,
                                          hostname_master)
         # Run Ansible playbook
-        ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, token)
+        ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, token, replication_factor,
+                               dfs_blocksize, cluster_id)
         # Format and start Hadoop cluster
         set_cluster_state(token, cluster_id,
                           ' Yarn Cluster is active', status='Active',
@@ -116,7 +118,8 @@ def ansible_manage_cluster(cluster_id, action):
         raise RuntimeError(msg)
 
 
-def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, token):
+def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, token, replication_factor,
+                           dfs_blocksize, cluster_id):
     """
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
@@ -134,10 +137,16 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
     # find ansible playbook (site.yml)
 
-
     # Create command that executes ansible playbook
-    ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -f '\
-                   + str(cluster_size) + ' -e "choose_role=yarn ssh_file_name=' + ssh_file + ' token=' + token
+    ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
+    '-f {0} -e "choose_role=yarn ssh_file_name={1} token={2} '.format(str(cluster_size), ssh_file, token) + \
+    'dfs_blocksize={0}m dfs_replication={1}'.format(dfs_blocksize, replication_factor)
+
+    list_of_xml_files, list_of_ansible_xml_args = check_user_hadoop_config_xml(cluster_id)
+
+    if list_of_xml_files:
+        list_of_ansible_xml_args.insert(0, ansible_code)
+        ansible_code = ' '.join(list_of_ansible_xml_args)
 
     # hadoop_image flag(true/false)
     if hadoop_image:
@@ -146,8 +155,13 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     else:
         # false -> use a bare VM
         ansible_code += '"' + ansible_log
+
     # Execute ansible
-    execute_ansible_playbook(ansible_code)
+    try:
+        execute_ansible_playbook(ansible_code)
+    finally:
+        for file in list_of_xml_files:
+            os.remove(file)
 
 
 def execute_ansible_playbook(ansible_command):
@@ -160,3 +174,58 @@ def execute_ansible_playbook(ansible_command):
         raise RuntimeError(msg, exit_status)
 
     return 0
+
+
+def check_user_hadoop_config_xml(cluster_id):
+    """
+    Check database if an existing Hadoop xml configuration file exists.
+    Currenty no such a field in database, to be added after integration with
+    frontend.
+    """
+    cluster = ClusterInfo.objects.get(id=cluster_id)
+    list_of_xml_files = []
+    list_of_ansible_xml_args = []
+
+    if cluster.core_file:
+        core_filename = '{0}-core-site.xml'.format(str(cluster_id))
+        create_hadoop_tmp_xml_file(cluster.core_file, core_filename)
+        list_of_xml_files.append(core_filename)
+        list_of_ansible_xml_args.append('core_file={0}'.format(core_filename))
+
+    if cluster.mapred_file:
+        mapred_filename = '{0}-mapred-site.xml'.format(str(cluster_id))
+        create_hadoop_tmp_xml_file(cluster.mapred_file, mapred_filename)
+        list_of_xml_files.append(mapred_filename)
+        list_of_ansible_xml_args.append('mapred_file={0}'.format(mapred_filename))
+
+    if cluster.hdfs_file:
+        hdfs_filename = '{0}-hdfs-site.xml'.format(str(cluster_id))
+        create_hadoop_tmp_xml_file(cluster.hdfs_file, hdfs_filename)
+        list_of_xml_files.append(hdfs_filename)
+        list_of_ansible_xml_args.append('hdfs_file={0}'.format(hdfs_filename))
+
+    if cluster.yarn_file:
+        yarn_filename = '{0}-yarn-site.xml'.format(str(cluster_id))
+        create_hadoop_tmp_xml_file(cluster.yarn_file, yarn_filename)
+        list_of_xml_files.append(yarn_filename)
+        list_of_ansible_xml_args.append('yarn_file={0}'.format(yarn_filename))
+
+    return list_of_xml_files, list_of_ansible_xml_args
+
+
+def create_hadoop_tmp_xml_file(xml_var, file_to_write):
+    """
+    Creates a tmp xml file in server's local filesystem. File will be copied to master VM hadoop xml directory.
+    """
+    output = StringIO.StringIO()
+    output.write(xml_var)
+    write_xml(output.getvalue(), file_to_write)
+    output.close()
+
+
+def write_xml(xml_var, file_to_write):
+    """
+    Write an xml_var to a file.
+    """
+    with open(file_to_write, 'w') as f:
+        f.write(xml_var)

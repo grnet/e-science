@@ -104,6 +104,10 @@ class ClusterchoicesSerializer(serializers.Serializer):
     project_name = serializers.CharField(required=False)
     
     ssh_key_selection = serializers.CharField(required=False)
+    
+    replication_factor = serializers.CharField(required=False)
+    
+    dfs_blocksize = serializers.CharField(required=False)
 
     task_id = serializers.CharField(required=False)
     
@@ -117,7 +121,7 @@ class ClusterInfoSerializer(serializers.ModelSerializer):
         fields = ('id', 'cluster_name', 'action_date', 'cluster_status', 'cluster_size',
                    'cpu_master', 'ram_master', 'disk_master', 'cpu_slaves',
                    'ram_slaves', 'disk_slaves', 'disk_template', 'os_image',
-                   'master_IP', 'project_name', 'task_id', 'state', 'hadoop_status')
+                   'master_IP', 'project_name', 'replication_factor', 'dfs_blocksize', 'task_id', 'state', 'hadoop_status')
 
 
 class UserInfoSerializer(serializers.ModelSerializer):
