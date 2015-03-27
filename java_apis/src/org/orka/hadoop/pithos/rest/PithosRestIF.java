@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Collection;
 
-import org.apache.hadoop.fs.pithos.PithosObjectBlock;
+import org.apache.hadoop.fs.FSDataInputStream;
+
+import gr.grnet.escience.fs.pithos.PithosObjectBlock;
 
 public interface PithosRestIF {
 
@@ -210,7 +212,7 @@ public interface PithosRestIF {
 	 *            : the location of the object, that it is requested to be read,
 	 *            in Pithos
 	 */
-	public InputStream readPithosObject(String pithos_container,
+	public FSDataInputStream readPithosObject(String pithos_container,
 			String object_location);
 
 	/**

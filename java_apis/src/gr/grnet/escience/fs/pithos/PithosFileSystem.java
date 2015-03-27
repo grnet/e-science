@@ -1,5 +1,6 @@
-package org.apache.hadoop.fs.pithos;
+package gr.grnet.escience.fs.pithos;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
@@ -12,6 +13,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
+import org.orka.hadoop.pithos.rest.HadoopPithosRestConnector;
 
 
 /**
@@ -32,6 +34,21 @@ public class PithosFileSystem extends FileSystem {
 
 	public PithosFileSystem() {
 		// Initialize it by implementing the interface PithosSystemStore
+	}
+	
+	public void configurations(Path f) throws IOException {
+		Configuration conf = new Configuration();
+		conf.get("fs.defaultFS");
+		FileSystem fs = FileSystem.get(conf);
+		System.out.println("fs.defaultFS --> : " + conf.get("fs.defaultFS"));
+		System.out.println("fs.pithos.access.key --> : " + conf.get("fs.pithos.access.key"));
+		System.out.println("fs.pithos.secret.key --> : " + conf.get("fs.pithos.secret.key"));
+		System.out.println("fs.pithos.impl --> : " + conf.get("fs.pithos.impl"));
+		System.out.println("fs.pithos.url --> : " + conf.get("fs.pithos.url"));
+		System.out.println("fs.default.name --> : " + conf.get("fs.default.name"));
+		HadoopPithosRestConnector conn = new HadoopPithosRestConnector(conf.get("fs.pithos.url"), conf.get("fs.pithos.secret.key"), conf.get("fs.pithos.access.key"));
+		String container = f.getParent().toString();
+		conn.getPithosObject(container, f.toString(), "/home/hduser");
 	}
 
 	@Override
@@ -110,10 +127,35 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	@Override
-	public FileStatus[] listStatus(Path arg0) throws FileNotFoundException,
+	public FileStatus[] listStatus(Path f) throws FileNotFoundException,
 			IOException {
+		FileStatus fstat = this.getFileStatus(f);
+		Configuration conf = new Configuration();
+//		conf.get("fs.defaultFS");
+//		conf.get("fs.orka.default.config.path");
+//		conf.get("fs.pithos.impl");
+		//conf.addResource(new Path("/home/developer/core-site.xml"));
+		//conf.set("fs.defaultFS", "hdfs://83.212.96.14:9000");
+		conf.get("fs.defaultFS");
+//		conf.set("fs.defaultFS", "hdfs://83.212.96.14:9000");
+//		conf.set("fs.pithos.impl", "gr.grnet.escience.fs.pithos.PithosFileSystem");
+		//- Add Serial Port parameters
+		//conf.set("hadoop.job.ugi", "hduser");
+//		HadoopPithosRestConnector conn = new HadoopPithosRestConnector();
+//		String container = f.getParent().toString();
+//		FSDataInputStream fsdis = conn.readPithosObject(container, f.toString());
+		FileSystem fs = FileSystem.get(conf);
+		//HadoopPithosRestConnector conn = new HadoopPithosRestConnector();
+		String container = f.getParent().toString();
+		//File pithosActualObject = conn.getPithosObject(container, f.toString(), "/user/hduser");
+		//System.out.println("File name: " + pithosActualObject.getName());
+//		FileStatus[] status = fs.listStatus(f);
+//        for(int i=0;i<status.length;i++){
+//            System.out.println(status[i].getPath());
+//            System.out.println(conf.get("fs.defaultFS"));
+//        }
+        return null;
 		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

@@ -1,5 +1,6 @@
 package org.orka.hadoop.pithos.rest;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -10,7 +11,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.hadoop.fs.pithos.PithosObjectBlock;
+import gr.grnet.escience.fs.pithos.PithosObjectBlock;
+
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.grnet.client.PithosRESTAPI;
 import org.orka.hadoop.commons.Configurator;
 import org.orka.hadoop.commons.Settings;
@@ -35,21 +38,18 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 		PithosRestIF {
 
 	private static final long serialVersionUID = 1L;
-	private static final String CONFIGURATION_FILE = "hadoopPithosConfiguration.json";
-	private static final Settings hadoopConfiguration = Configurator
-			.load(CONFIGURATION_FILE);
+//	private static final String CONFIGURATION_FILE = "hadoopPithosConfiguration.json";
+//	private static final Settings hadoopConfiguration = Configurator
+//			.load(CONFIGURATION_FILE);
 	private PithosRequest request;
 	private PithosResponse response;
 
 	/*****
 	 * Constructor
 	 */
-	public HadoopPithosRestConnector() {
+	public HadoopPithosRestConnector(String url, String token, String username) {
 		// - implement aPithos RESTAPI instance
-		super(hadoopConfiguration.getPithosUser().get("url"),// pithos auth-url
-				hadoopConfiguration.getPithosUser().get("token"),// user-token
-				hadoopConfiguration.getPithosUser().get("username"));// username
-
+		super(url, token, username); //auth-url, user-token, username
 	}
 
 	/***
@@ -524,7 +524,7 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public InputStream readPithosObject(String pithos_container,
+	public FSDataInputStream readPithosObject(String pithos_container,
 			String object_location) {
 		// - Get the file object from pithos
 		File pithosObject = getPithosObject(pithos_container,
@@ -533,8 +533,11 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 		// - Create input stream for pithos
 		try {
 			// - Add File data to the input stream
-			InputStream pithosFileInputStream = new FileInputStream(
-					pithosObject);
+			//FSDataInputStream pithosFileInputStream = new FSDataInputStream(new FileInputStream(pithosObject));
+			//FileInputStream fis = new FileInputStream(pithosObject);
+			InputStream in = new BufferedInputStream(new FileInputStream(pithosObject));
+			//PositionedInputStream(in);
+			FSDataInputStream pithosFileInputStream = new FSDataInputStream(in);
 
 			// - Return the input stream wrapped into a FSDataINputStream
 			return pithosFileInputStream;
