@@ -16,7 +16,7 @@
         <file path="/java_apis/java_apis.jardesc"/>
         <file path="/java_apis/hadoopPithosConfiguration.json"/>
         <javaElement handleIdentifier="=java_apis/src&lt;gr.grnet.escience.pithos.rest"/>
-        <javaElement handleIdentifier="=java_apis/src&lt;gr.grnet.hadoop.pithos.rest"/>
+        <javaElement handleIdentifier="=java_apis/src&lt;gr.grnet.escience.pithos.restapi"/>
         <javaElement handleIdentifier="=java_apis/src&lt;gr.grnet.escience.commons"/>
     </selectedElements>
 </jardesc>

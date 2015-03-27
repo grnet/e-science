@@ -1,4 +1,4 @@
-package gr.grnet.hadoop.pithos.rest;
+package gr.grnet.escience.pithos.rest;
 
 import gr.grnet.escience.fs.pithos.PithosObjectBlock;
 

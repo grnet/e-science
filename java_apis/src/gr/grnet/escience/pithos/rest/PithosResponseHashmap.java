@@ -1,4 +1,4 @@
-package gr.grnet.hadoop.pithos.rest;
+package gr.grnet.escience.pithos.rest;
 
 import java.util.Collection;
 

@@ -1,9 +1,9 @@
-package gr.grnet.hadoop.pithos.rest;
+package gr.grnet.escience.pithos.rest;
 
 import gr.grnet.escience.commons.Configurator;
 import gr.grnet.escience.commons.Settings;
 import gr.grnet.escience.fs.pithos.PithosObjectBlock;
-import gr.grnet.escience.pithos.rest.PithosRESTAPI;
+import gr.grnet.escience.pithos.restapi.PithosRESTAPI;
 
 import java.io.File;
 import java.io.FileInputStream;

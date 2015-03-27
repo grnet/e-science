@@ -1,4 +1,4 @@
-package gr.grnet.escience.pithos.rest;
+package gr.grnet.escience.pithos.restapi;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;

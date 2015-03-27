@@ -1,9 +1,9 @@
 package tests;
 
 import gr.grnet.escience.fs.pithos.PithosObjectBlock;
-import gr.grnet.hadoop.pithos.rest.HadoopPithosRestConnector;
-import gr.grnet.hadoop.pithos.rest.PithosResponse;
-import gr.grnet.hadoop.pithos.rest.PithosResponseFormat;
+import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
+import gr.grnet.escience.pithos.rest.PithosResponse;
+import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 import java.io.File;
 import java.io.IOException;
