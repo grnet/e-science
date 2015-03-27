@@ -1,4 +1,4 @@
-package org.orka.hadoop.pithos.rest;
+package gr.grnet.hadoop.pithos.rest;
 
 import java.util.HashMap;
 import java.util.List;

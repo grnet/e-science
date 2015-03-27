@@ -1,4 +1,4 @@
-package org.orka.hadoop.commons;
+package gr.grnet.escience.commons;
 
 import java.util.HashMap;
 import java.util.Map;

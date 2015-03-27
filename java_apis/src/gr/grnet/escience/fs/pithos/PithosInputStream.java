@@ -1,4 +1,4 @@
-package org.apache.hadoop.fs.pithos;
+package gr.grnet.escience.fs.pithos;
 
 import java.io.DataInputStream;
 import java.io.File;

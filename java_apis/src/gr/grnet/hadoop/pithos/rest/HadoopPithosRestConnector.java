@@ -1,4 +1,9 @@
-package org.orka.hadoop.pithos.rest;
+package gr.grnet.hadoop.pithos.rest;
+
+import gr.grnet.escience.commons.Configurator;
+import gr.grnet.escience.commons.Settings;
+import gr.grnet.escience.fs.pithos.PithosObjectBlock;
+import gr.grnet.escience.pithos.rest.PithosRESTAPI;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,11 +14,6 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.hadoop.fs.pithos.PithosObjectBlock;
-import org.grnet.client.PithosRESTAPI;
-import org.orka.hadoop.commons.Configurator;
-import org.orka.hadoop.commons.Settings;
 
 import com.google.gson.Gson;
 

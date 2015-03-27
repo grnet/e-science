@@ -1,4 +1,4 @@
-package org.grnet.client;
+package gr.grnet.escience.pithos.rest;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;

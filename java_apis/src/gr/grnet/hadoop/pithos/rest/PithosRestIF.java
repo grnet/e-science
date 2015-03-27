@@ -1,10 +1,10 @@
-package org.orka.hadoop.pithos.rest;
+package gr.grnet.hadoop.pithos.rest;
+
+import gr.grnet.escience.fs.pithos.PithosObjectBlock;
 
 import java.io.File;
 import java.io.InputStream;
 import java.util.Collection;
-
-import org.apache.hadoop.fs.pithos.PithosObjectBlock;
 
 public interface PithosRestIF {
 

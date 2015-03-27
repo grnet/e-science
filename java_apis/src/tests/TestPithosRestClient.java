@@ -1,16 +1,17 @@
 package tests;
 
+import gr.grnet.escience.fs.pithos.PithosObjectBlock;
+import gr.grnet.hadoop.pithos.rest.HadoopPithosRestConnector;
+import gr.grnet.hadoop.pithos.rest.PithosResponse;
+import gr.grnet.hadoop.pithos.rest.PithosResponseFormat;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 
-import org.apache.hadoop.fs.pithos.PithosObjectBlock;
 import org.junit.Before;
 import org.junit.Test;
-import org.orka.hadoop.pithos.rest.HadoopPithosRestConnector;
-import org.orka.hadoop.pithos.rest.PithosResponse;
-import org.orka.hadoop.pithos.rest.PithosResponseFormat;
 
 public class TestPithosRestClient {
 	private static final String PITHOS_CONTAINER = "";
