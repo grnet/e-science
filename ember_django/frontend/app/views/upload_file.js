@@ -15,8 +15,9 @@ App.TextFileUpload = Ember.TextField.extend({
     	 return function(e) {
           // Render thumbnail.
           alert('File output is in console.');
-          core_site = e.target.result;
-          console.log(core_site);
+          uploadFile = e.target.result;
+          console.log(uploadFile);
+		//return theFile.sendAction('action', uploadFile);
         };
       })(file);
     return reader.readAsText(file);

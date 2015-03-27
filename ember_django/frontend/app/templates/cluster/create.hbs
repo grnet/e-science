@@ -343,9 +343,13 @@
                 {{alert_mes_dfs_blocksize}}
             </div>
         </div>
-        <div class="row text-center text-danger">
-        	<div class="col col-sm-6">
-				{{#view App.TextFileUpload id="upload" action="upload_file" class="btn btn-primary btn-sm"}} Upload {{/view}}
+        <div class="row text-center text">
+        	<div class="control-label col-sm-1">
+				Core site:
+			</div>
+        	<div class="col col-sm-3">
+				{{#view App.TextFileUpload id="upload" action="upload_file" class="input-sm form-control"
+                        placeholder="core-site"}} Upload {{/view}}
 			</div>
 		</div>
 	</div>
@@ -361,7 +365,7 @@
     </div>
     <div class="col col-sm-6">
         {{#view App.CreateClusterButView id="next"
-        class="input-sm form-control"}}
+        class="next btn btn-success btn-md btn-block"}}
         Create Cluster
         {{/view}}
         <h4>{{message}}</h4>
