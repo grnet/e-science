@@ -1,9 +1,12 @@
-package org.apache.hadoop.fs.pithos;
+package gr.grnet.escience.fs.pithos;
 
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.net.Socket;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

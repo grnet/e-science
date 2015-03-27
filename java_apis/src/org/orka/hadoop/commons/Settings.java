@@ -11,6 +11,7 @@ import java.util.Map;
 public class Settings {
 
 	private Map<String, String> hadoopGeneralConfiguration = new HashMap<String, String>();
+	private Map<String, String> pithosFSConfiguration = new HashMap<String, String>();
 	private Map<String, String> hadoopUser = new HashMap<String, String>();
 	private Map<String, String> pithosUser = new HashMap<String, String>();
 	
@@ -21,6 +22,9 @@ public class Settings {
 		return hadoopGeneralConfiguration;
 	}
 	
+	public Map<String, String> getpithosFSConfiguration() {
+		return pithosFSConfiguration;
+	}
 	
 	/**
 	 * Hadoop user (on hdfs) parameters

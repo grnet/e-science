@@ -1,7 +1,10 @@
 package org.orka.hadoop.commons;
 
+import gr.grnet.escience.fs.pithos.PithosFileSystem;
+
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -9,6 +12,8 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+
+import org.apache.hadoop.fs.Path;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -61,20 +66,35 @@ public class Configurator {
 		} 
 	}
 	
-	/** Test it **/
-	public static void main(String [] args){
+	/** Test it 
+	 * @throws IOException 
+	 * @throws IllegalArgumentException 
+	 * @throws FileNotFoundException **/
+	public static void main(String [] args) throws FileNotFoundException, IllegalArgumentException, IOException{
 		//- Create Settings Object
 		Settings obj = new Settings();
 			//- Add General Parameters
-			obj.getHadoopGeneralConfiguration().put("fs.defaultFS", "hdfs://83.212.112.5:9000");
+//			obj.getHadoopGeneralConfiguration().put("fs.defaultFS", "hdfs://83.212.96.14:9000");
+//			obj.getHadoopGeneralConfiguration().put("fs.orka.default.config.path", "/usr/local/hadoop/etc/hadoop/");
+			
+			obj.getHadoopGeneralConfiguration().put("fs.defaultFS", "hdfs://83.212.96.14:9000");
 			obj.getHadoopGeneralConfiguration().put("fs.orka.default.config.path", "/usr/local/hadoop/etc/hadoop/");
 			
 			//- Add Serial Port parameters
 			obj.getHadoopUser().put("hadoop.job.ugi", "hduser");
 			
+			obj.getpithosFSConfiguration().put("fs.pithos.block.size", "4194304");
+			obj.getpithosFSConfiguration().put("fs.defaultFS", "hdfs://83.212.96.14:9000");
+			obj.getpithosFSConfiguration().put("fs.pithos.impl", "gr.grnet.escience.fs.pithos.PithosFileSystem");
+			
+			obj.getPithosUser().put("url", "https://pithos.okeanos.grnet.gr/v1");
+			obj.getPithosUser().put("username", "fc1bd1b1-9691-4142-b759-12a12a1e6fe3");
+			obj.getPithosUser().put("token", "juUVEDtgTftG24r-JA4pAvaU9c-UB2353op42-D0REQ");
 		
 		//- Generate the json file	
 		Configurator.create("hadoopPithosConfiguration.json", obj);
+		PithosFileSystem pfs = new PithosFileSystem();
+    	pfs.listStatus(new Path("/user"));
 	}
 	
 }

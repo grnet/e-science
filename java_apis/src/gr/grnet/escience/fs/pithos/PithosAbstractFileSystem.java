@@ -1,11 +1,16 @@
-package org.apache.hadoop.fs.pithos;
+package gr.grnet.escience.fs.pithos;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.EnumSet;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.AbstractFileSystem;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.CreateFlag;
@@ -14,6 +19,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileAlreadyExistsException;
 import org.apache.hadoop.fs.FileChecksum;
 import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FsServerDefaults;
 import org.apache.hadoop.fs.FsStatus;
 import org.apache.hadoop.fs.Options.ChecksumOpt;
@@ -24,6 +30,7 @@ import org.apache.hadoop.fs.UnsupportedFileSystemException;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.util.Progressable;
+import org.orka.hadoop.pithos.rest.HadoopPithosRestConnector;
 
 public class PithosAbstractFileSystem extends AbstractFileSystem {
 
@@ -94,10 +101,56 @@ public class PithosAbstractFileSystem extends AbstractFileSystem {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+	
+//	public static AbstractFileSystem createFileSystem(URI uri, Configuration conf) throws UnsupportedFileSystemException {
+//
+//	     Class<?> clazz = conf.getClass("fs.AbstractFileSystem." + uri.getScheme() + ".impl", null);
+//	     if (clazz == null) {
+//	    	 throw new UnsupportedFileSystemException(
+//	    			 "No AbstractFileSystem for scheme: " + uri.getScheme());
+//	     }
+//	     return (AbstractFileSystem) newInstance(clazz, uri, conf);
+//	}
+//	
+//	   /** 
+//	   * Create an object for the given class and initialize it from conf.
+//	   * @param theClass class of which an object is created
+//	   * @param conf Configuration
+//	   * @return a new object
+//	   */
+//	  @SuppressWarnings("unchecked")
+//	  static <T> T newInstance(Class<T> theClass,
+//	    URI uri, Configuration conf) {
+//	    T result;
+//	    try {
+//	      Constructor<T> meth = (Constructor<T>) CONSTRUCTOR_CACHE.get(theClass);
+//	      if (meth == null) {
+//	        meth = theClass.getDeclaredConstructor(URI_CONFIG_ARGS);
+//	        meth.setAccessible(true);
+//	        CONSTRUCTOR_CACHE.put(theClass, meth);
+//	      }
+//	      result = meth.newInstance(uri, conf);
+//	    } catch (Exception e) {
+//	      throw new RuntimeException(e);
+//	    }
+//	    return result;
+//	  }
+
 
 	@Override
-	public FileStatus[] listStatus(Path arg0) throws AccessControlException,
+	public FileStatus[] listStatus(Path path) throws AccessControlException,
 			FileNotFoundException, UnresolvedLinkException, IOException {
+		System.out.println("list status: " + super.getUri() + " ...");
+		Configuration conf = new Configuration();
+		conf.set("fs.defaultFS", super.getUri().toString());
+		conf.set("fs.AbstractFileSystem.pithos.impl", "gr.grnet.escience.fs.pithos.PithosAbstractFileSystem");
+		conf.set("hadoop.job.ugi", "hduser");
+		AbstractFileSystem afs = AbstractFileSystem.get(super.getUri(), conf);
+		
+		FileStatus[] status = afs.listStatus(path);
+	    for(int i=0;i<status.length;i++){
+	        System.out.println(status[i].getPath());
+	    }
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -115,11 +168,24 @@ public class PithosAbstractFileSystem extends AbstractFileSystem {
 	 * @param arg0: refers to the path on the file system
 	 * @parma arg1: refers to the bufferSize of the input stream
 	 */
-	public FSDataInputStream open(Path arg0, int arg1)
+	public FSDataInputStream open(Path path, int bufferSize)
 			throws AccessControlException, FileNotFoundException,
 			UnresolvedLinkException, IOException {
+		System.out.println("open " + super.getUri());
+		Configuration conf = new Configuration();
+		conf.set("fs.defaultFS", super.getUri().toString());
+		conf.set("fs.AbstractFileSystem.pithos.impl", "gr.grnet.escience.fs.pithos.PithosAbstractFileSystem");
+		conf.set("hadoop.job.ugi", "hduser");
+		AbstractFileSystem afs = AbstractFileSystem.get(super.getUri(), conf);
+		
+		FSDataInputStream fsdis = afs.open(path);
+		
+		//HadoopPithosRestConnector conn = new HadoopPithosRestConnector();
+		String container = path.getParent().toString();		
+		//FSDataInputStream fsdis = conn.readPithosObject(container, path.toString()); 
+		//FSDataInputStream ffsdis = new FSDataInputStream(fsdis);
 		// TODO
-		return null;
+		return fsdis;
 	}
 
 	@Override

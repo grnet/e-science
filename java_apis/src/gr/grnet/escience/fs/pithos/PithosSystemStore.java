@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.fs.pithos;
+package gr.grnet.escience.fs.pithos;
 
 import java.io.File;
 import java.io.IOException;

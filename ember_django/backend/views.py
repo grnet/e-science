@@ -45,7 +45,7 @@ main_page = MainPageView.as_view()
 
 class HdfsView(APIView):
     """
-    View for handling request for hdfs file transfer.
+    View for handling requests for file transfer to Hdfs.
     """
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticated, )
@@ -54,7 +54,7 @@ class HdfsView(APIView):
 
     def post(self, request, *args, **kwargs):
         """
-        Put file in hdfs from ftp or pithos.
+        Put file in Hdfs from Ftp,Http,Https or Pithos.
         """
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
