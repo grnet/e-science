@@ -45,7 +45,7 @@ main_page = MainPageView.as_view()
 
 class HdfsView(APIView):
     """
-    View for handling requests for file transfer to Hdfs.
+    View for handling request for hdfs file transfer.
     """
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticated, )
@@ -54,7 +54,7 @@ class HdfsView(APIView):
 
     def post(self, request, *args, **kwargs):
         """
-        Put file in Hdfs from Ftp,Http,Https or Pithos.
+        Put file in hdfs from ftp or pithos.
         """
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
@@ -66,6 +66,10 @@ class HdfsView(APIView):
             user_args = dict()
             user_args = serializer.data.copy()
             user_args.update({'master_IP': cluster.master_IP})
+            try:
+                HdfsRequest(user_args).check_file()
+            except Exception, e:
+                return Response({"message": str(e.args[0])})
             hdfs_task = put_hdfs_async.delay(user_args)
             task_id = hdfs_task.id
             return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)

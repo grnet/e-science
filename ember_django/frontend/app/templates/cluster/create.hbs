@@ -305,11 +305,11 @@
     </div>
     <div class="panel-body">
     	<div class="row">
-	    	<div class="col col-sm-5 text-left">
+	    	<div class="col col-sm-4 text-left">
 	            <div class="form-horizontal">
 	                <div class="form-group">
-	                    <label for="replication_factor" class="control-label col-sm-6">Replication Factor</label>
-	                    <div class="col col-sm-6">
+	                    <label for="replication_factor" class="control-label col-sm-7">Replication Factor</label>
+	                    <div class="col col-sm-5">
 	                        {{view Ember.TextField valueBinding="replication_factor"
 	                        id="replication_factor" class="input-sm form-control"
 	                        placeholder="2 (default)"}}
@@ -317,11 +317,11 @@
 	                </div>
 				</div>
 			</div>
-			<div class="col col-sm-5">
+			<div class="col col-sm-4 text-left">
 	            <div class="form-horizontal">
 	                <div class="form-group">
-	                    <label for="dfs_blocksize" class="control-label col-sm-6">Hdfs blocksize in MB</label>
-	                    <div class="col col-sm-6">
+	                    <label for="dfs_blocksize" class="control-label col-sm-7">Hdfs blocksize in MB</label>
+	                    <div class="col col-sm-5">
 	                        {{view Ember.TextField valueBinding="dfs_blocksize"
 	                        id="dfs_blocksize" class="input-sm form-control"
 	                        placeholder="128 (default)"}}
@@ -329,7 +329,7 @@
 	                </div>
 				</div>
 			</div>
-			<div class="col col-sm-2">
+			<div class="col col-sm-4 text-left">
 				<button class="btn btn-primary btn-sm" id = id_hdfs_configuration {{action "default_hdfs_configuration"}} >
 					Default HDFS Configuration
 				</button>
@@ -343,11 +343,19 @@
                 {{alert_mes_dfs_blocksize}}
             </div>
         </div>
+        <div class="row text-center text">
+        	<div class="control-label col-sm-1">
+				Core site:
+			</div>
+        	<div class="col col-sm-3">
+				{{#view App.TextFileUpload id="upload" action="upload_file" class="input-sm form-control"
+                        placeholder="core-site"}} Upload {{/view}}
+			</div>
+		</div>
 	</div>
     	
     </div>
 </div>
-
 <div class="row">
     <div class="col col-sm-2"></div>
     <div class="col col-sm-2">

@@ -532,21 +532,11 @@ def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
     return
 
 
-def is_period(checked_string):
+def isPeriod(checked_string):
     """
     Check if a string is a period.
     """
-    if len(checked_string) == 1 and checked_string == '.':
-        return True
-    else:
-        return False
-
-
-def is_default_dir(checked_string):
-    """
-    Check if string is default Hdfs directory
-    """
-    if checked_string in DEFAULT_HDFS_DIR:
+    if len(checked_string) == 1 and  checked_string == '.':
         return True
     else:
         return False

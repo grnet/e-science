@@ -168,10 +168,10 @@
     tags: postconfig
     template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
     with_items: 
-      - { src: "{{ core_file | default('core-site.j2') }}", dest: '/usr/local/hadoop/etc/hadoop/core-site.xml', owner: 'hduser', group: 'hadoop' }
-      - { src: "{{ mapred_file | default('mapred-site.j2') }}", dest: '/usr/local/hadoop/etc/hadoop/mapred-site.xml', owner: 'hduser', group: 'hadoop' }
-      - { src: "{{ hdfs_file | default('hdfs-site.j2') }}", dest: '/usr/local/hadoop/etc/hadoop/hdfs-site.xml', owner: 'hduser', group: 'hadoop' }
-      - { src: "{{ yarn_file | default('yarn-site.j2') }}", dest: '/usr/local/hadoop/etc/hadoop/yarn-site.xml', owner: 'hduser', group: 'hadoop' }
+      - { src: 'core-site.j2', dest: '/usr/local/hadoop/etc/hadoop/core-site.xml', owner: 'hduser', group: 'hadoop' }
+      - { src: 'mapred-site.j2', dest: '/usr/local/hadoop/etc/hadoop/mapred-site.xml', owner: 'hduser', group: 'hadoop' }
+      - { src: 'hdfs-site.j2', dest: '/usr/local/hadoop/etc/hadoop/hdfs-site.xml', owner: 'hduser', group: 'hadoop' }
+      - { src: 'yarn-site.j2', dest: '/usr/local/hadoop/etc/hadoop/yarn-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'kamakirc.j2', dest: '/home/hduser/.kamakirc', owner: 'hduser', group: 'hadoop' }
  
   - name: create masters and slaves files in hadoop-yarn master node
