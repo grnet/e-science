@@ -16,7 +16,8 @@ public class Configuration {
 
 	public static void main(String[] args) throws URISyntaxException, AccessControlException, FileNotFoundException, UnresolvedLinkException, IllegalArgumentException, IOException {
 		PithosFileSystem pfs = new PithosFileSystem();
-		pfs.configurations(new Path("pithosFile.txt"));
+		//pfs.configurations();
+		//pfs.configurations(new Path("pithosFile.txt"));
 		
 //		conf.set("fs.defaultFS", "hdfs://83.212.96.49");
 //		conf.set("fs.AbstractFileSystem.pithos.impl", "gr.grnet.escience.fs.pithos.PithosAbstractFileSystem");

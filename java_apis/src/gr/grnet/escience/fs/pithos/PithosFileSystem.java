@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -11,7 +12,9 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.UnresolvedLinkException;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.util.Progressable;
 import org.orka.hadoop.pithos.rest.HadoopPithosRestConnector;
 
@@ -36,35 +39,28 @@ public class PithosFileSystem extends FileSystem {
 		// Initialize it by implementing the interface PithosSystemStore
 	}
 	
-	public void configurations(Path f) throws IOException {
+	public String getConfig(String param){
 		Configuration conf = new Configuration();
-		conf.get("fs.defaultFS");
-		FileSystem fs = FileSystem.get(conf);
-		System.out.println("fs.defaultFS --> : " + conf.get("fs.defaultFS"));
-		System.out.println("fs.pithos.access.key --> : " + conf.get("fs.pithos.access.key"));
-		System.out.println("fs.pithos.secret.key --> : " + conf.get("fs.pithos.secret.key"));
-		System.out.println("fs.pithos.impl --> : " + conf.get("fs.pithos.impl"));
-		System.out.println("fs.pithos.url --> : " + conf.get("fs.pithos.url"));
-		System.out.println("fs.default.name --> : " + conf.get("fs.default.name"));
-		HadoopPithosRestConnector conn = new HadoopPithosRestConnector(conf.get("fs.pithos.url"), conf.get("fs.pithos.secret.key"), conf.get("fs.pithos.access.key"));
-		String container = f.getParent().toString();
-		conn.getPithosObject(container, f.toString(), "/home/hduser");
+		String result = conf.get(param);
+		return result;
 	}
 
 	@Override
 	public String getScheme() {
+		System.out.println("getScheme!");
 		return "pithos";
 	}
 
 	@Override
 	public URI getUri() {
+		System.out.println("GetUri!");
 		return uri;
 	}
 
 	@Override
 	public void initialize(URI uri, Configuration conf) throws IOException {
 		super.initialize(uri, conf);
-
+		System.out.println("Initialize!");
 		setConf(conf);
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 		this.workingDir = new Path("/user", System.getProperty("user.name"));
@@ -72,11 +68,13 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public Path getWorkingDirectory() {
+		System.out.println("getWorkingDirectory!");
 		return workingDir;
 	}
 
 	@Override
 	public void setWorkingDirectory(Path dir) {
+		System.out.println("SetWorkingDirectory!");
 		workingDir = makeAbsolute(dir);
 	}
 
@@ -91,17 +89,20 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public FSDataOutputStream append(Path f, int bufferSize,
 			Progressable progress) throws IOException {
+		System.out.println("append!");
 		throw new IOException("Not supported");
 	}
 
 
 	@Override
 	public long getDefaultBlockSize() {
+		System.out.println("blockSize!");
 		return getConf().getLong("fs.pithos.block.size", 4 * 1024 * 1024);
 	}
 
 	@Override
 	public String getCanonicalServiceName() {
+		System.out.println("getcanonicalservicename!");
 		// Does not support Token
 		return null;
 	}
@@ -110,43 +111,40 @@ public class PithosFileSystem extends FileSystem {
 	public FSDataOutputStream create(Path arg0, FsPermission arg1,
 			boolean arg2, int arg3, short arg4, long arg5, Progressable arg6)
 			throws IOException {
+		System.out.println("create!");
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean delete(Path arg0, boolean arg1) throws IOException {
+		System.out.println("deelete!");
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public FileStatus getFileStatus(Path arg0) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		System.out.println("here in getFileStatus BEFORE!");
+		System.out.println(arg0.toString());
+		FileStatus pithos_file_status = new FileStatus(363448, false,0, this.getDefaultBlockSize(),0,
+				0, null, null, null, arg0);
+		System.out.println("here in getFileStatus AFTER!");
+		return pithos_file_status;
 	}
 
 	@Override
 	public FileStatus[] listStatus(Path f) throws FileNotFoundException,
 			IOException {
-		FileStatus fstat = this.getFileStatus(f);
-		Configuration conf = new Configuration();
-//		conf.get("fs.defaultFS");
-//		conf.get("fs.orka.default.config.path");
-//		conf.get("fs.pithos.impl");
-		//conf.addResource(new Path("/home/developer/core-site.xml"));
-		//conf.set("fs.defaultFS", "hdfs://83.212.96.14:9000");
-		conf.get("fs.defaultFS");
-//		conf.set("fs.defaultFS", "hdfs://83.212.96.14:9000");
-//		conf.set("fs.pithos.impl", "gr.grnet.escience.fs.pithos.PithosFileSystem");
+		System.out.println("list Status!");		
 		//- Add Serial Port parameters
 		//conf.set("hadoop.job.ugi", "hduser");
 //		HadoopPithosRestConnector conn = new HadoopPithosRestConnector();
 //		String container = f.getParent().toString();
 //		FSDataInputStream fsdis = conn.readPithosObject(container, f.toString());
-		FileSystem fs = FileSystem.get(conf);
+//		FileSystem fs = FileSystem.get(conf);
 		//HadoopPithosRestConnector conn = new HadoopPithosRestConnector();
-		String container = f.getParent().toString();
+//		String container = f.getParent().toString();
 		//File pithosActualObject = conn.getPithosObject(container, f.toString(), "/user/hduser");
 		//System.out.println("File name: " + pithosActualObject.getName());
 //		FileStatus[] status = fs.listStatus(f);
@@ -160,18 +158,21 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public boolean mkdirs(Path arg0, FsPermission arg1) throws IOException {
+		System.out.println("Make dirs!");
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public FSDataInputStream open(Path arg0, int arg1) throws IOException {
+		System.out.println("Open!");
 		// TODO: Get data from Pithos by using Hadoop Pithos Connector
 		return null;
 	}
 
 	@Override
 	public boolean rename(Path arg0, Path arg1) throws IOException {
+		System.out.println("rename!");
 		// TODO Auto-generated method stub
 		return false;
 	}
