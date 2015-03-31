@@ -13,10 +13,8 @@
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <javaElement handleIdentifier="=java_apis/src&lt;gr.grnet.escience.fs.pithos"/>
         <file path="/java_apis/.classpath"/>
-        <file path="/java_apis/java_apis.jardesc"/>
-        <file path="/java_apis/hadoopPithosConfiguration.json"/>
         <javaElement handleIdentifier="=java_apis/src&lt;gr.grnet.escience.pithos.rest"/>
-        <javaElement handleIdentifier="=java_apis/src&lt;gr.grnet.escience.pithos.restapi"/>
         <javaElement handleIdentifier="=java_apis/src&lt;gr.grnet.escience.commons"/>
+        <javaElement handleIdentifier="=java_apis/src&lt;gr.grnet.escience.pithos.restapi"/>
     </selectedElements>
 </jardesc>

@@ -93,7 +93,7 @@ public class PithosOutputStream extends FSDataOutputStream {
 	private PithosObjectBlock nextBlock;
 
 	/**
-	 * method for creating backup file of 64mb for buffering
+	 * method for creating backup file of 4mb for buffering
 	 * before streaming to pithos
 	 * 
 	 * @return File
