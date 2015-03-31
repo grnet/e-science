@@ -329,7 +329,8 @@
 	                </div>
 				</div>
 			</div>
-			<div class="col col-sm-4 text-left">
+			<div class="col col-sm-1"></div>
+			<div class="col col-sm-3 text-left">
 				<button class="btn btn-primary btn-sm" id = id_hdfs_configuration {{action "default_hdfs_configuration"}} >
 					Default HDFS Configuration
 				</button>
@@ -343,15 +344,6 @@
                 {{alert_mes_dfs_blocksize}}
             </div>
         </div>
-        <div class="row text-center text">
-        	<div class="control-label col-sm-1">
-				Core site:
-			</div>
-        	<div class="col col-sm-3">
-				{{#view App.TextFileUpload id="upload" action="upload_file" class="input-sm form-control"
-                        placeholder="core-site"}} Upload {{/view}}
-			</div>
-		</div>
 	</div>
     	
     </div>

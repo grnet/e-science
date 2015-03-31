@@ -1073,7 +1073,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 			};
 			//$('#next').loader($options); // on $('selector')
 
-			this.init_alerts();
+			this.init_alerts();	
+			if ((this.get('replication_factor')=='') || (this.get('replication_factor')==null)){
+				this.set('replication_factor', this.get('default_replication_factor'));
+			}
+			if ((this.get('dfs_blocksize')=='') || (this.get('dfs_blocksize')==null)){
+				this.set('dfs_blocksize', this.get('default_dfs_blocksize'));
+			}
 			if (!Ember.isBlank(this.get('alert_mes_network')) || !Ember.isBlank(this.get('alert_mes_float_ip'))){
 				var elem = $('#id_project_selection');
 				window.scrollTo(elem.offsetLeft, elem.offsetTop);
@@ -1118,9 +1124,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 				var elem = document.getElementById("common_settings");
 				window.scrollTo(elem.offsetLeft, elem.offsetTop);
 			}
-			else if ((this.get('replication_factor')=='') || (this.get('replication_factor')==null)){
-				this.set('replication_factor', this.get('default_replication_factor'));
-			}
 			else if (isNaN(parseInt(this.get('replication_factor')))){
 				this.set('alert_mes_replication_factor', 'Replication_factor is an integer');
 				var elem = document.getElementById("hdfs_configuration");
@@ -1130,9 +1133,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('alert_mes_replication_factor', 'Replication_factor must be positive and not greater than cluster size');
 				var elem = document.getElementById("hdfs_configuration");
 				window.scrollTo(elem.offsetLeft, elem.offsetTop);					
-			}
-			else if ((this.get('dfs_blocksize')=='') || (this.get('dfs_blocksize')==null)){
-				this.set('dfs_blocksize', this.get('default_dfs_blocksize'));
 			}
 			else if (isNaN(parseInt(this.get('dfs_blocksize')))){
 				this.set('alert_mes_dfs_blocksize', 'Blocksize is an integer');
