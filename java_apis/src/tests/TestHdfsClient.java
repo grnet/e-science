@@ -1,14 +1,14 @@
 package tests;
 
-import gr.grnet.escience.hdfs.client.OrkaHdfsClient;
-
 import java.io.IOException;
+
+import gr.grnet.escience.hdfs.client.OrkaHdfsClient;
 
 @SuppressWarnings("unused")
 public class TestHdfsClient {
 
-	private static final String SOURCE_FILE = "";
-	private static final String DESTINATION_FILE = "/user/hdfs/file_name";
+	private static final String SOURCE_FILE = "file.txt";	
+	private static final String DESTINATION_FILE = "/user/hduser";
 	private static final String DIR_NAME = "";
 
 	/**
@@ -22,8 +22,8 @@ public class TestHdfsClient {
 		//- Create client instance
 		OrkaHdfsClient hdfsClient = new OrkaHdfsClient();
 		
-		// -1: COPY FROM LOCAL --> HDFS  
-//		hdfsClient.copyFromLocalToHdfs(SOURCE_FILE, DESTINATION_FILE);
+//		 -1: COPY FROM LOCAL --> HDFS  
+		hdfsClient.copyFromLocalToHdfs(SOURCE_FILE, DESTINATION_FILE);
 
 		// -2: COPY FROM HDFS --> LOCAL
 //		hdfsClient.downloadFromHdfs(SOURCE_FILE, DESTINATION_FILE);

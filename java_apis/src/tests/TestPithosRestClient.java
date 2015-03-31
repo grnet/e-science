@@ -1,33 +1,32 @@
 package tests;
 
-import gr.grnet.escience.fs.pithos.PithosObjectBlock;
-import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
-import gr.grnet.escience.pithos.rest.PithosResponse;
-import gr.grnet.escience.pithos.rest.PithosResponseFormat;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 
+import gr.grnet.escience.fs.pithos.PithosObjectBlock;
 import org.junit.Before;
 import org.junit.Test;
+import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
+import gr.grnet.escience.pithos.rest.PithosResponse;
+import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 public class TestPithosRestClient {
 	private static final String PITHOS_CONTAINER = "";
-	private static final String PITHOS_FILE = "test/testdata.txt";
+	private static final String PITHOS_FILE = "file.txt";
 	private static PithosResponse pithosResponse;
 	private static Collection<String> object_block_hashes;
 	private static HadoopPithosRestConnector hdconnector;
 
 	@Before
-	public void createHdConnector() {
+	public static void createHdConnector() {
 		// - CREATE HADOOP CONNECTOR INSTANCE
-		hdconnector = new HadoopPithosRestConnector();
+		//hdconnector = new HadoopPithosRestConnector();
 	}
 
 	@Test
-	public void testGet_Container_Info() {
+	public static void testGet_Container_Info() {
 		// - GET CONTAINER INFORMATION
 		System.out
 				.println("---------------------------------------------------------------------\n");
@@ -62,7 +61,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object() {
+	public static void testGet_Pithos_Object() {
 		// - GET AND STORE THE ACTUAL OBJECT AS A FILE
 		System.out
 				.println("---------------------------------------------------------------------\n");
@@ -126,7 +125,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Block() {
+	public static void testGet_Pithos_Object_Block() {
 		// - GET OBJECT BLOCK BY HASH
 		// - Get a block hash of the previously requested object
 		System.out
@@ -169,7 +168,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testRead_Pithos_Object() throws IOException {
+	public static void testRead_Pithos_Object() throws IOException {
 		// - READ PITHOS OBJECT: ESSENTIALLY CREATES INPUTSTREAM FOR A PITHOS
 		// OBJECT
 		System.out
@@ -214,7 +213,10 @@ public class TestPithosRestClient {
 	 * 
 	 */
 	public static void main(String[] args) throws IOException {
-		// TODO: call the required method from above, so as to execute it		
+		// TODO: call the required method from above, so as to execute it	
+		createHdConnector();
+		//testRead_Pithos_Object();
+		testGet_Pithos_Object();
 	}
 
 }
