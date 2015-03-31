@@ -1,5 +1,0 @@
-bin/
-lib/
-*.json
-dist/
-deploy_jar.sh
