@@ -22,7 +22,7 @@ public class TestPithosRestClient {
 	@Before
 	public static void createHdConnector() {
 		// - CREATE HADOOP CONNECTOR INSTANCE
-		//hdconnector = new HadoopPithosRestConnector();
+		hdconnector = new HadoopPithosRestConnector("https://pithos.okeanos.grnet.gr/v1", "juUVEDtgTftG24r-JA4pAvaU9c-UB2353op42-D0REQ", "fc1bd1b1-9691-4142-b759-12a12a1e6fe3");
 	}
 
 	@Test
@@ -37,7 +37,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Metadata() {
+	public static void testGet_Pithos_Object_Metadata() {
 		// - GET METADATA OF A SPECIFIC OBJECT
 		System.out
 				.println("---------------------------------------------------------------------\n");
@@ -49,7 +49,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Size() {
+	public static void testGet_Pithos_Object_Size() {
 		// - GET OBJECT ACTUAL SIZE
 		System.out
 				.println("---------------------------------------------------------------------\n");
@@ -216,7 +216,10 @@ public class TestPithosRestClient {
 		// TODO: call the required method from above, so as to execute it	
 		createHdConnector();
 		//testRead_Pithos_Object();
-		testGet_Pithos_Object();
+		//testGet_Pithos_Object();
+		testGet_Pithos_Object_Size();
+		//testGet_Pithos_Object_Metadata();
+//		testGet_Container_Info();
 	}
 
 }

@@ -59,11 +59,12 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public void initialize(URI uri, Configuration conf) throws IOException {
-		super.initialize(uri, conf);
+		super.initialize(uri, conf);		
 		System.out.println("Initialize!");
 		setConf(conf);
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
-		this.workingDir = new Path("/user", System.getProperty("user.name"));
+		//this.workingDir = new Path("/user", System.getProperty("user.name"));
+		System.out.println("URI: "+ this.uri);
 	}
 
 	@Override
@@ -126,9 +127,10 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public FileStatus getFileStatus(Path arg0) throws IOException {
 		System.out.println("here in getFileStatus BEFORE!");
-		System.out.println(arg0.toString());
-		FileStatus pithos_file_status = new FileStatus(363448, false,0, this.getDefaultBlockSize(),0,
-				0, null, null, null, arg0);
+		System.out.println("Path: "+arg0.toString());
+		//HadoopPithosRestConnector conn = new HadoopPithosRestConnector(getConfig("fs.pithos.url"), getConfig("auth.pithos.token"), getConfig("auth.pithos.uuid"));
+		FileStatus pithos_file_status = new FileStatus(12345, false,0, this.getDefaultBlockSize(),121212,
+				0, null, null, null, arg0);	
 		System.out.println("here in getFileStatus AFTER!");
 		return pithos_file_status;
 	}
