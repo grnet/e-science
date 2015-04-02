@@ -6,6 +6,10 @@ import java.io.InputStream;
 import java.util.Collection;
 
 import gr.grnet.escience.fs.pithos.PithosObjectBlock;
+
+import org.apache.hadoop.fs.Path;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
@@ -16,13 +20,25 @@ public class TestPithosRestClient {
 	private static final String PITHOS_CONTAINER = "";
 	private static final String PITHOS_FILE = "file.txt";
 	private static PithosResponse pithosResponse;
+	private static String pithosListResponse;
 	private static Collection<String> object_block_hashes;
 	private static HadoopPithosRestConnector hdconnector;
 
 	@Before
 	public static void createHdConnector() {
 		// - CREATE HADOOP CONNECTOR INSTANCE
-		//hdconnector = new HadoopPithosRestConnector();
+		hdconnector = new HadoopPithosRestConnector("https://pithos.okeanos.grnet.gr/v1", "juUVEDtgTftG24r-JA4pAvaU9c-UB2353op42-D0REQ", "fc1bd1b1-9691-4142-b759-12a12a1e6fe3");
+	}
+	
+	@Test
+	public static void testgetContainerList() {
+		// - GET CONTAINER INFORMATION
+		System.out
+				.println("---------------------------------------------------------------------\n");
+		pithosListResponse = hdconnector.getContainerList(PITHOS_CONTAINER);
+		System.out.println(pithosListResponse);
+		System.out
+				.println("---------------------------------------------------------------------\n");
 	}
 
 	@Test
@@ -31,19 +47,31 @@ public class TestPithosRestClient {
 		System.out
 				.println("---------------------------------------------------------------------\n");
 		pithosResponse = hdconnector.getContainerInfo(PITHOS_CONTAINER);
-		System.out.println(pithosResponse.toString());
+		System.out.println(pithosResponse);
 		System.out
 				.println("---------------------------------------------------------------------\n");
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Metadata() {
+	public static void testGet_Pithos_Object_Metadata() {
 		// - GET METADATA OF A SPECIFIC OBJECT
 		System.out
 				.println("---------------------------------------------------------------------\n");
 		pithosResponse = hdconnector.getPithosObjectMetaData(PITHOS_CONTAINER,
 				PITHOS_FILE, PithosResponseFormat.JSON);
 		System.out.println(pithosResponse.toString());
+		try {
+			JSONObject obj = new JSONObject(pithosResponse.toString());
+			String contentLength = obj.getJSONObject("pithosResponse").getString("Content-Length");
+			int left = contentLength.indexOf("[\"");
+			int right = contentLength.indexOf("\"]");
+			String objlength = contentLength.substring(left+2, right);
+			long length = Long.parseLong(objlength);
+			System.out.println(length);
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		System.out
 				.println("---------------------------------------------------------------------\n");
 	}
@@ -111,7 +139,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Block_Size() {
+	public static void testGet_Pithos_Object_Block_Size() {
 		// - GET OBJECT CURRENT BLOCK SIZE, IN CASE IT IS STORED WITH DIFFERENT
 		// POLICIES THAT THE DEFAULTS
 		System.out
@@ -216,7 +244,23 @@ public class TestPithosRestClient {
 		// TODO: call the required method from above, so as to execute it	
 		createHdConnector();
 		//testRead_Pithos_Object();
-		testGet_Pithos_Object();
+		//testGet_Pithos_Object();
+		//testgetContainerList();
+		testGet_Pithos_Object_Metadata();
+//		Path arg0 = new Path("pithos://pithos/pithosFile.txt") ;
+//		String container = arg0.getParent().toString();
+//		container = container.substring(container.lastIndexOf(container) + 9);
+//		System.out.println("Container: " + container);
+//		String conList = hdconnector.getContainerList(container);
+//		System.out.println("Container List: \n" + conList);
+//		String filename = arg0.toString().substring(arg0.toString().lastIndexOf('/') + 1,
+//				arg0.toString().length());
+//		System.out.println(filename);
+//		if (conList.contains(filename)){
+//			System.out.println("exists");
+//		}else{
+//			System.out.println("does not exist");
+//		}
 	}
 
 }

@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -16,7 +18,12 @@ import org.apache.hadoop.fs.UnresolvedLinkException;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.util.Progressable;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+
 import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
+import gr.grnet.escience.pithos.rest.PithosResponse;
+import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 
 /**
@@ -34,6 +41,7 @@ public class PithosFileSystem extends FileSystem {
 	private URI uri;
 
 	private Path workingDir;
+	public static final Log LOG = LogFactory.getLog(PithosFileSystem.class);
 
 	public PithosFileSystem() {
 		// Initialize it by implementing the interface PithosSystemStore
@@ -63,6 +71,8 @@ public class PithosFileSystem extends FileSystem {
 		System.out.println("Initialize!");
 		setConf(conf);
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
+		workingDir = new Path("/user", System.getProperty("user.name")).makeQualified(this.uri,
+				this.getWorkingDirectory());
 		//this.workingDir = new Path("/user", System.getProperty("user.name"));
 	}
 
@@ -124,11 +134,54 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	@Override
-	public FileStatus getFileStatus(Path arg0) throws IOException {
+	public PithosFileStatus getFileStatus(Path arg0) throws IOException {
+		boolean exist = false;
+		long length = 0;
+		PithosFileStatus pithos_file_status = null;
 		System.out.println("here in getFileStatus BEFORE!");
 		System.out.println(arg0.toString());
-		FileStatus pithos_file_status = new FileStatus(363448, false,0, this.getDefaultBlockSize(),0,
-				0, null, null, null, arg0);
+//		long length = conn.getPithosObjectBlockSize("pithos", arg0.toString());
+//		System.out.println("length: " + length);
+//		FileStatus pithos_file_status = new FileStatus(12345, false,0, this.getDefaultBlockSize(),0,
+//				0, null, null, null, arg0);
+//		int x = conn.readPithosObject("", "pithosFile.txt").available();
+//		System.out.println(x);
+//		System.out.println("X = " + x);
+		HadoopPithosRestConnector conn = new HadoopPithosRestConnector(getConfig("fs.pithos.url"), getConfig("auth.pithos.token"), getConfig("auth.pithos.uuid"));
+		/*---Check if file exist in pithos------------------------------------*/
+		String container = arg0.getParent().toString();
+		container = container.substring(container.lastIndexOf(container) + 9);
+		System.out.println("Container: " + container);
+		String conList = conn.getContainerList(container);
+		System.out.println("Container List: \n" + conList);
+		String filename = arg0.toString().substring(arg0.toString().lastIndexOf('/') + 1,
+				arg0.toString().length());
+		System.out.println(filename);
+		if (conList.contains(filename)){
+//			System.out.println("exists");
+			exist = true;
+		}else{
+			System.out.println("File does not exist in Pithos FS.");
+			return null;
+		}		
+		/*---------------------------------------------------------*/
+		if (exist){
+			PithosResponse metadata = conn.getPithosObjectMetaData(container, filename, PithosResponseFormat.JSON);
+			try {
+				System.out.println("metadata: " + metadata.toString());
+				JSONObject obj = new JSONObject(metadata.toString());
+				String contentLength = obj.getJSONObject("pithosResponse").getString("Content-Length");
+				int left = contentLength.indexOf("[\"");
+				int right = contentLength.indexOf("\"]");
+				String objlength = contentLength.substring(left+2, right);
+				length = Long.parseLong(objlength);
+				System.out.println(length);
+				pithos_file_status = new PithosFileStatus(length, 1265140799, arg0);
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}				
 		System.out.println("here in getFileStatus AFTER!");
 		return pithos_file_status;
 	}

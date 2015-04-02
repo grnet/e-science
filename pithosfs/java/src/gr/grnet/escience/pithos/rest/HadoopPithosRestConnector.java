@@ -12,12 +12,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.fs.FSDataInputStream;
+
+import com.google.gson.Gson;
+
 import gr.grnet.escience.pithos.restapi.PithosRESTAPI;
 import gr.grnet.escience.commons.Configurator;
 import gr.grnet.escience.commons.Settings;
 import gr.grnet.escience.fs.pithos.PithosObjectBlock;
 
-import com.google.gson.Gson;
 
 /***
  * This class extends Pithos REST API that is implemented by grnet and supports
@@ -183,6 +185,38 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	public String getContainerList(String pithos_container) {
+		// - Create Pithos request
+		setPithosRequest(new PithosRequest());
+
+		// - Create Response instance
+		setPithosResponse(new PithosResponse());
+		String response_data = "";
+		// - Read meta-data and add the data on the Pithos Response
+		try {
+			// - If container argument is empty the initialize it with the
+			// default value
+			if (pithos_container.equals("")) {
+				pithos_container = "pithos";
+			}
+
+			// - Perform action by using Pithos REST API method
+			response_data = list_container_objects(
+					pithos_container,
+					getPithosRequest().getRequestParameters(),
+					getPithosRequest().getRequestHeaders());
+
+//			// - Add data from pithos response on the corresponding java object
+//			getPithosResponse().setResponseData(response_data);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		// - Return the response data as String
+		return response_data;
 	}
 
 	@Override
