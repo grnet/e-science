@@ -4,9 +4,6 @@ import gr.grnet.escience.fs.pithos.PithosFileSystem;
 
 import java.security.PrivilegedExceptionAction;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
 
@@ -20,7 +17,8 @@ public class KouKou {
 
             ugi.doAs(new PrivilegedExceptionAction<Void>() {
 
-                public Void run() throws Exception {
+                @Override
+				public Void run() throws Exception {
                 	
                 	PithosFileSystem pfs = new PithosFileSystem();
                 	pfs.listStatus(new Path("/user"));

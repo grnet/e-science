@@ -2,20 +2,12 @@ package tests;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.UnresolvedLinkException;
 import org.apache.hadoop.security.AccessControlException;
-import org.apache.hadoop.security.authentication.client.AuthenticationException;
-
-import gr.grnet.escience.commons.Configurator;
-import gr.grnet.escience.commons.Settings;
-import gr.grnet.escience.fs.pithos.PithosAbstractFileSystem;
 import gr.grnet.escience.fs.pithos.PithosFileSystem;
 
 public class Test {

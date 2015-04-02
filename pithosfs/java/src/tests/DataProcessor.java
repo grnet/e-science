@@ -27,7 +27,8 @@ public class DataProcessor {
       //4. Open a OutputStream to write the data, this can be obtained from the FileSytem
       OutputStream outputStream = hdfs.create(new Path("/home/hduser/hello/output.txt"),
       new Progressable() {  
-              public void progress() {
+              @Override
+			public void progress() {
          System.out.println("....");
               }
                     });

@@ -12,10 +12,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.fs.FSDataInputStream;
+
 import gr.grnet.escience.pithos.restapi.PithosRESTAPI;
-import gr.grnet.escience.commons.Configurator;
-import gr.grnet.escience.commons.Settings;
+import gr.grnet.escience.fs.pithos.PithosObject;
 import gr.grnet.escience.fs.pithos.PithosObjectBlock;
+import gr.grnet.escience.fs.pithos.PithosInputStream;
+
+
 
 import com.google.gson.Gson;
 
@@ -534,13 +537,14 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 			// - Add File data to the input stream
 			//FSDataInputStream pithosFileInputStream = new FSDataInputStream(new FileInputStream(pithosObject));
 			//FileInputStream fis = new FileInputStream(pithosObject);
-			InputStream in = new BufferedInputStream(new FileInputStream(pithosObject));
+			//InputStream in = new BufferedInputStream(new FileInputStream(pithosObject));
 			//PositionedInputStream(in);
-			FSDataInputStream pithosFileInputStream = new FSDataInputStream(in);
+			
+			FSDataInputStream pithosFileInputStream = new FSDataInputStream(new PithosInputStream(this));
 
 			// - Return the input stream wrapped into a FSDataINputStream
 			return pithosFileInputStream;
-		} catch (FileNotFoundException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
@@ -583,5 +587,7 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 		// TODO Auto-generated method stub
 
 	}
+	
+	
 
 }

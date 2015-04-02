@@ -1,12 +1,17 @@
 package gr.grnet.escience.fs.pithos;
 
+
+import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
+
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
-import java.net.Socket;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,11 +29,13 @@ import org.apache.hadoop.fs.FileSystem;
  * @version 0.1
  * 
  */
-class PithosInputStream extends FSInputStream {
+public class PithosInputStream extends FSInputStream {
 
-	private PithosSystemStore store;
+	//private PithosSystemStore store;
 
 	private PithosObjectBlock[] blocks;
+	
+	private HadoopPithosRestConnector pithos_conn;
 
 	private boolean closed;
 
@@ -47,15 +54,18 @@ class PithosInputStream extends FSInputStream {
 	private static final Log LOG = LogFactory.getLog(PithosInputStream.class
 			.getName());
 
-	public PithosInputStream(Configuration conf, PithosSystemStore pithosStore,
-			PithosObject pithosObj) {
-		this(conf, pithosStore, pithosObj, null);
+	public PithosInputStream(HadoopPithosRestConnector pithos_conn) {
+		this.pithos_conn = pithos_conn;
+		this.blocks = this.pithos_conn.getPithosObjectBlockAll("pithos", "server.txt");
+		for (PithosObjectBlock block : blocks) {
+			this.fileLength += block.getBlockLength();
+		}
 	}
 
 	public PithosInputStream(Configuration conf, PithosSystemStore pithosStore,
 			PithosObject pithosObj, FileSystem.Statistics stats) {
 
-		this.store = pithosStore;
+		//this.store = pithosStore;
 		this.stats = stats;
 		this.blocks = pithosObj.getPithosObjectBlocks();
 
@@ -120,7 +130,7 @@ class PithosInputStream extends FSInputStream {
 			if (pos > blockEnd) {
 				blockSeekTo(pos);
 			}
-			int realLen = (int) Math.min((long) len, (blockEnd - pos + 1L));
+			int realLen = (int) Math.min(len, (blockEnd - pos + 1L));
 			int result = blockStream.read(buf, off, realLen);
 			if (result >= 0) {
 				pos += result;
@@ -159,15 +169,58 @@ class PithosInputStream extends FSInputStream {
 		long offsetIntoBlock = target - targetBlockStart;
 
 		// read block blocks[targetBlock] from position offsetIntoBlock
-
-		this.blockFile = store.retrievePithosBlock(blocks[targetBlock],
-				offsetIntoBlock);
+        
+		PithosObjectBlock p_file_block = this.pithos_conn.getPithosObjectBlock("pithos", "server.txt", blocks[targetBlock].getBlockHash());
+		this.blockFile = retrieveBlock(p_file_block, offsetIntoBlock);
 
 		this.pos = target;
 		this.blockEnd = targetBlockEnd;
 		this.blockStream = new DataInputStream(new FileInputStream(blockFile));
 
 	}
+	
+	private File retrieveBlock(PithosObjectBlock pithosobjectblock, long offsetIntoBlock) throws IOException{
+		
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutput out = null;
+		try {
+		  out = new ObjectOutputStream(bos);
+		  System.out.println(pithosobjectblock.toString());
+		  out.writeObject(pithosobjectblock.getBlockData());
+		  byte[] yourBytes = bos.toByteArray();
+		  
+		  FileOutputStream fileOuputStream;
+		  Integer i = (int)(long)offsetIntoBlock;
+		  long block_len = pithosobjectblock.getBlockLength();
+		  Integer j= (int)(long)(block_len - offsetIntoBlock);
+		  
+		  File block = new File("block");
+			// - Create output stream with data to the file
+			fileOuputStream = new FileOutputStream(block);
+			fileOuputStream.write(yourBytes, i, j);
+			fileOuputStream.close();
+			// - return the file
+			return block;
+
+		} finally {
+		  try {
+		    if (out != null) {
+		      out.close();
+		    }
+		  } catch (IOException ex) {
+		    // ignore close exception
+		  }
+		  try {
+		    bos.close();
+		  } catch (IOException ex) {
+		    // ignore close exception
+		  }
+		}
+		// convert array of bytes into file
+		
+	}
+	
+	
 
 	@Override
 	public void close() throws IOException {

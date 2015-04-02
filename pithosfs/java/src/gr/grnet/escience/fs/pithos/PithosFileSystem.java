@@ -1,6 +1,5 @@
 package gr.grnet.escience.fs.pithos;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
@@ -12,10 +11,9 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.UnresolvedLinkException;
 import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.util.Progressable;
+
 import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
 
 
@@ -64,6 +62,12 @@ public class PithosFileSystem extends FileSystem {
 		setConf(conf);
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 		this.workingDir = new Path("/user", System.getProperty("user.name"));
+		try{
+		    test_something();
+		}
+		catch (URISyntaxException e){
+			System.out.println("mlkies");
+		}
 	}
 
 	@Override
@@ -122,15 +126,31 @@ public class PithosFileSystem extends FileSystem {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
+	
+    public void test_something() throws URISyntaxException{
+    	
+    	PithosPath p_test = new PithosPath(new URI("server.txt"));
+    	System.out.println(p_test.toString());
+    }
+    
 	@Override
 	public FileStatus getFileStatus(Path arg0) throws IOException {
 		System.out.println("here in getFileStatus BEFORE!");
-		System.out.println(arg0.toString());
-		FileStatus pithos_file_status = new FileStatus(363448, false,0, this.getDefaultBlockSize(),0,
-				0, null, null, null, arg0);
-		System.out.println("here in getFileStatus AFTER!");
-		return pithos_file_status;
+		
+		HadoopPithosRestConnector p_con = new HadoopPithosRestConnector(getConfig("fs.pithos.url"), getConfig("auth.pithos.token"), getConfig("auth.pithos.uuid"));
+		long pf_size = p_con.getPithosObjectSize("pithos", "server.txt");
+        long pf_bsize = p_con.getPithosObjectBlockSize("pithos", "server.txt");
+        
+        try {
+		    FileStatus pithos_file_status = new FileStatus(pf_size, false, 1, pf_bsize,
+				    0, new PithosPath(new URI("pithos://server.txt")));
+		    System.out.println("here in getFileStatus AFTER!");
+			return pithos_file_status;
+        }
+        catch (URISyntaxException e){
+        	System.out.println("URI exception thrown");
+        	return null;
+        }	
 	}
 
 	@Override
@@ -166,8 +186,9 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public FSDataInputStream open(Path arg0, int arg1) throws IOException {
 		System.out.println("Open!");
-		// TODO: Get data from Pithos by using Hadoop Pithos Connector
-		return null;
+		HadoopPithosRestConnector p_con = new HadoopPithosRestConnector(getConfig("fs.pithos.url"), getConfig("auth.pithos.token"), getConfig("auth.pithos.uuid"));
+        //String pithos_path = server.txt	
+		return p_con.readPithosObject("pithos", "server.txt");
 	}
 
 	@Override

@@ -110,6 +110,7 @@ public class PithosOutputStream extends FSDataOutputStream {
 		return result;
 	}
 
+	@Override
 	public long getPos() throws IOException {
 		return filePos;
 	}
