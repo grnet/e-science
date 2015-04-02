@@ -1,4 +1,4 @@
-package org.apache.hadoop.fs.pithos;
+package gr.grnet.escience.fs.pithos;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -27,9 +27,15 @@ import org.apache.hadoop.util.Progressable;
 
 public class PithosAbstractFileSystem extends AbstractFileSystem {
 
+	//private URI uri;
+
+	//private Path workingDir;
+	
 	public PithosAbstractFileSystem(URI uri, String supportedScheme,
 			boolean authorityNeeded, int defaultPort) throws URISyntaxException {
-		super(uri, supportedScheme, authorityNeeded, defaultPort);
+		
+		super( URI.create(uri.getScheme() + "://" + uri.getAuthority()), "pithos", false, 10000);
+		
 		// TODO Auto-generated constructor stub
 	}
 
@@ -91,7 +97,7 @@ public class PithosAbstractFileSystem extends AbstractFileSystem {
 
 	@Override
 	public int getUriDefaultPort() {
-		// TODO Auto-generated method stub
+		// TODO
 		return 0;
 	}
 
@@ -115,11 +121,20 @@ public class PithosAbstractFileSystem extends AbstractFileSystem {
 	 * @param arg0: refers to the path on the file system
 	 * @parma arg1: refers to the bufferSize of the input stream
 	 */
-	public FSDataInputStream open(Path arg0, int arg1)
+	public FSDataInputStream open(Path path, int arg1)
 			throws AccessControlException, FileNotFoundException,
 			UnresolvedLinkException, IOException {
-		// TODO
 		return null;
+		// TODO
+		
+//		HadoopPithosRestConnector conn = new HadoopPithosRestConnector();
+//		
+//		String pithos_container = path.getParent().toString();
+//		String pithos_object = path.getName();
+//	
+//		
+//		
+//		return (FSDataInputStream) conn.readPithosObject(pithos_container, pithos_object);
 	}
 
 	@Override

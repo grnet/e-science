@@ -1,4 +1,4 @@
-package org.orka.hadoop.pithos.rest;
+package gr.grnet.escience.pithos.rest;
 
 public enum PithosResponseFormat {
 	JSON

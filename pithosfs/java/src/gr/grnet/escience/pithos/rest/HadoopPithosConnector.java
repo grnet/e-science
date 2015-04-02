@@ -1,4 +1,12 @@
-package org.orka.hadoop.pithos.rest;
+package gr.grnet.escience.pithos.rest;
+
+import gr.grnet.escience.commons.Configurator;
+import gr.grnet.escience.commons.Settings;
+import gr.grnet.escience.fs.pithos.PithosBlock;
+import gr.grnet.escience.fs.pithos.PithosFileType;
+import gr.grnet.escience.fs.pithos.PithosObject;
+import gr.grnet.escience.fs.pithos.PithosSystemStore;
+import gr.grnet.escience.pithos.restapi.PithosRESTAPI;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,10 +18,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.hadoop.fs.pithos.PithosObjectBlock;
-import org.grnet.client.PithosRESTAPI;
-import org.orka.hadoop.commons.Configurator;
-import org.orka.hadoop.commons.Settings;
+import org.apache.hadoop.fs.FSDataOutputStream;
 
 import com.google.gson.Gson;
 
@@ -31,8 +36,8 @@ import com.google.gson.Gson;
  * @since March, 2015
  */
 
-public class HadoopPithosRestConnector extends PithosRESTAPI implements
-		PithosRestIF {
+public class HadoopPithosConnector extends PithosRESTAPI implements
+		PithosSystemStore {
 
 	private static final long serialVersionUID = 1L;
 	private static final String CONFIGURATION_FILE = "hadoopPithosConfiguration.json";
@@ -40,11 +45,21 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 			.load(CONFIGURATION_FILE);
 	private PithosRequest request;
 	private PithosResponse response;
+	private File srcFile2bUploaded;
+	private File tmpFile2bUploaded;
+	private File destfile2bUploaded;
+	private File pithosBlockAsFile;
+	private String fileExtension;
+	private int fileExtensionPointer;
 
+	/********************************************************
+	 * (PITHOS <--> HADOOP): ANSTRACT METHODS THAT SUPPORT THE INTRERACTION
+	 * BETWEEN PITHOS AND HADOOP
+	 ********************************************************/
 	/*****
 	 * Constructor
 	 */
-	public HadoopPithosRestConnector() {
+	public HadoopPithosConnector() {
 		// - implement aPithos RESTAPI instance
 		super(hadoopConfiguration.getPithosUser().get("url"),// pithos auth-url
 				hadoopConfiguration.getPithosUser().get("token"),// user-token
@@ -186,6 +201,9 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 		}
 	}
 
+	/********************************************************
+	 * (PITHOS --> HADOOP): GET / STREAM DATA FROM PITHOS
+	 ********************************************************/
 	@Override
 	public PithosResponse getContainerInfo(String pithos_container) {
 		// - Create Pithos request
@@ -220,21 +238,7 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public void createPithosObject(String pithos_container,
-			String source_file, String pithos_object_location) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void uploadPithosObject(String pithos_container,
-			String source_file, String destination_file) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public File getPithosObject(String pithos_container,
+	public File retrievePithosObject(String pithos_container,
 			String object_location, String destination_file) {
 		// - Create Pithos request
 		setPithosRequest(new PithosRequest());
@@ -256,7 +260,8 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public long getPithosObjectSize(String pithos_container, String object_location) {
+	public long getPithosObjectSize(String pithos_container,
+			String object_location) {
 		// - Create Pithos request
 		setPithosRequest(new PithosRequest());
 
@@ -286,15 +291,16 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public PithosObjectBlock getPithosObjectBlock(String pithos_container,
+	public PithosBlock retrievePithosBlock(String pithos_container,
 			String object_location, String block_hash) {
 
 		// - Get required info for the object and the block
 		long object_total_size = getPithosObjectSize(pithos_container,
 				object_location);
-		long block_size = getPithosObjectBlockSize(pithos_container, object_location);
-		int object_blocks_number = getPithosObjectBlocksNumber(pithos_container,
+		long block_size = getPithosObjectBlockSize(pithos_container,
 				object_location);
+		int object_blocks_number = getPithosObjectBlocksNumber(
+				pithos_container, object_location);
 
 		Collection<String> object_block_hashes = getPithosObjectBlockHashes(
 				pithos_container, object_location);
@@ -345,8 +351,8 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 					getPithosRequest().getRequestHeaders());
 
 			// - Return the created pithos object
-			return (new PithosObjectBlock(block_hash, block_data.length(),
-					serializeFile(block_data)));
+			return new PithosBlock(block_hash, block_data.length(),
+					serializeFile(block_data));
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
@@ -385,8 +391,8 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public Collection<String> getPithosObjectBlockHashes(String pithos_container,
-			String object_location) {
+	public Collection<String> getPithosObjectBlockHashes(
+			String pithos_container, String object_location) {
 		// - Create Pithos request
 		setPithosRequest(new PithosRequest());
 
@@ -414,22 +420,22 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public PithosObjectBlock[] getPithosObjectBlockAll(
-			String pithos_container, String object_location) {
+	public PithosBlock[] retrievePithosObjectBlocks(String pithos_container,
+			String object_location) {
 		// - Create local blocks Array
-		PithosObjectBlock[] blocks = null;
+		PithosBlock[] blocks = null;
 
 		// - Get the hashes of the blocks for the requested object
 		Collection<String> block_hashes = getPithosObjectBlockHashes(
 				pithos_container, object_location);
 
 		// - Initialize the local blocks array
-		blocks = new PithosObjectBlock[block_hashes.size()];
+		blocks = new PithosBlock[block_hashes.size()];
 
 		// - Get and store on array all the available blocks
 		int block_counter = 0;
 		for (String hash : block_hashes) {
-			blocks[block_counter] = getPithosObjectBlock(pithos_container,
+			blocks[block_counter] = retrievePithosBlock(pithos_container,
 					object_location, hash);
 
 			// - Next block
@@ -437,6 +443,66 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 		}
 
 		return blocks;
+	}
+
+	@Override
+	public File seekPithosBlock(PithosBlock pithos_block,
+			long offsetIntoPithosBlock) {
+
+//		 // - Get the Range of the byte for the requested block
+//		 long[] block_bytes_range = bytesRange(object_total_size, block_size,
+//		 object_blocks_number, block_location_pointer);
+//		
+//		 // - Create byte array for the object
+//		 // - Create Pithos request
+//		 setPithosRequest(new PithosRequest());
+//		
+//		 // - Request Parameters
+//		 // - JSON Format
+//		 getPithosRequest().getRequestParameters().put("format", "json");
+//		 // - Add requested parameter for the range
+//		 // - If it is not requested the last block, the add specific range
+//		 if (block_bytes_range[1] != object_total_size) {
+//		 getPithosRequest().getRequestHeaders().put(
+//		 "Range",
+//		 "bytes=" + block_bytes_range[0] + "-"
+//		 + block_bytes_range[1]);
+//		 } else {
+//		 getPithosRequest().getRequestHeaders().put("Range",
+//		 "bytes=" + block_bytes_range[0] + "-");
+//		 }
+//		
+//		 // - Read data object
+//		 try {
+//		 // - Get the chunk of the pithos object as a file
+//		 File block_data = (File) read_object_data(object_location,
+//		 pithos_container,
+//		 getPithosRequest().getRequestParameters(),
+//		 getPithosRequest().getRequestHeaders());
+//		
+//		 // - Return the created pithos object
+//		 return new PithosBlock(block_hash, block_data.length(),
+//		 serializeFile(block_data));
+//		 } catch (IOException e) {
+//		 e.printStackTrace();
+//		 return null;
+//		 }
+
+		// FileOutputStream fout;
+		//
+		// Integer i = (int) (long) offsetIntoPithosBlock;
+		//
+		// long block_len = pithos_block.getBlockLength();
+		// // Integer j = (int) (long) (block_len - offsetIntoPithosBlock);
+		//
+		//
+		//
+		//
+		// // - return the file
+		// return block;
+		//
+		// // convert array of bytes into file
+		return null;
 	}
 
 	@Override
@@ -473,7 +539,7 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public long getPithosObjectBlockDefaultSize(String pithos_container) {
+	public long getPithosBlockDefaultSize(String pithos_container) {
 		// - Create response object
 		PithosResponse resp = (new Gson()).fromJson(
 				(new Gson()).toJson(getContainerInfo(pithos_container)),
@@ -496,7 +562,7 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 		if (format.equals(PithosResponseFormat.JSON)) {
 			getPithosRequest().getRequestParameters().put("format", "json");
 		} else {
-			// TODO: for others supported formats such as XML
+			getPithosRequest().getRequestParameters().put("format", "xml");
 		}
 		// - Get the actual object
 		getPithosRequest().getRequestParameters().put("hashmap", "True");
@@ -524,10 +590,10 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public InputStream readPithosObject(String pithos_container,
+	public InputStream pithosObjectInputStream(String pithos_container,
 			String object_location) {
 		// - Get the file object from pithos
-		File pithosObject = getPithosObject(pithos_container,
+		File pithosObject = retrievePithosObject(pithos_container,
 				object_location, null);
 
 		// - Create input stream for pithos
@@ -546,12 +612,12 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public InputStream readPithosObjectBlock(String pithos_container,
+	public InputStream pithosBlockInputStream(String pithos_container,
 			String object_location, String block_hash) {
 
 		// - Get the file object from pithos
-		PithosObjectBlock pithosBlock = getPithosObjectBlock(
-				pithos_container, object_location, block_hash);
+		PithosBlock pithosBlock = retrievePithosBlock(pithos_container,
+				object_location, block_hash);
 
 		// - Create input stream for pithos
 		try {
@@ -577,9 +643,152 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public void mmkdirOnPithos(String pithos_container, String directory_name) {
+	public void deletePithosBlock(String block_hash) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public boolean pithosObjectExists(String pithos_container,
+			String pithos_object_name) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean pithosObjectBlockExists(String blockHash) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	/********************************************************
+	 * (HADOOP --> PITHOS): POST/PUT STREAM DATA TO PITHOS
+	 ********************************************************/
+	@Override
+	public String storePithosObject(String pithos_container,
+			String object_name, PithosObject pithos_object) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String storeFileToPithos(String pithos_container, String source_file) {
+		// - Create Pithos request
+		setPithosRequest(new PithosRequest());
+
+		// - Header Parameters
+		// - Format of the uploaded file
+		getPithosRequest().getRequestHeaders()
+				.put("Content-Type", "text/plain");
+
+		try {
+			// - Convert hadoop output file to java file that is compatible with
+			// Pithos
+			srcFile2bUploaded = new File(source_file);
+
+			// - If there is successful renaming of the object into the required
+			// name
+			// - Post data and get the response
+			return upload_file(srcFile2bUploaded, null, pithos_container,
+					getPithosRequest().getRequestParameters(),
+					getPithosRequest().getRequestHeaders());
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+	}
+
+	@Override
+	public String storePithosBlock(String pithos_container,
+			String target_object, PithosBlock pithos_block) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String pithosFSDataOutputStream(String pithos_container,
+			PithosFileType file_type, FSDataOutputStream fs_output_stream) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String pithosOutputStream(String pithos_container, String file_name,
+			PithosFileType file_type, byte[] data) {
+		// - Create Pithos request
+		setPithosRequest(new PithosRequest());
+
+		// - Check the file type that is going to be uploaded
+		if (file_type.equals(PithosFileType.BLOCK)) {
+			// - TODO: Append block on object not write new object
+			// - Header Parameters
+			// - Format of the uploaded file
+			getPithosRequest().getRequestHeaders().put("Content-Type",
+					"application/octet-stream");
+
+			return null;
+		} else {
+			// - Header Parameters
+			// - Format of the uploaded file
+			getPithosRequest().getRequestHeaders().put("Content-Type",
+					"text/plain");
+
+			try {
+				// - Convert hadoop output bytes to java file that is compatible
+				// with Pithos
+				srcFile2bUploaded = deserializeFile(data);
+				// - Get the extension of the hadoop output file
+				fileExtensionPointer = srcFile2bUploaded.getAbsolutePath()
+						.lastIndexOf(".") + 1;
+				fileExtension = srcFile2bUploaded.getAbsolutePath().substring(
+						fileExtensionPointer);
+
+				// - Rename the hadoop output file and keep the extension as it
+				// was exported by hadoop so as to be stored as unchanged file
+				tmpFile2bUploaded = srcFile2bUploaded;
+
+				destfile2bUploaded = new File(file_name.concat(".").concat(
+						fileExtension));
+
+				// - If there is successful renaming of the object into the
+				// required
+				// name
+				if (tmpFile2bUploaded.renameTo(destfile2bUploaded)) {
+					// - Post data and get the response
+					return upload_file(destfile2bUploaded, null,
+							pithos_container, getPithosRequest()
+									.getRequestParameters(), getPithosRequest()
+									.getRequestHeaders());
+				} else {
+					return null;
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+	}
+
+	@Override
+	public String pithosFileOutputStream(String pithos_container,
+			String object_name, File file) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String pithosObjectOutputStream(String pithos_container,
+			String object_name, PithosObject pithos_object) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String pithosBlockOutputStream(String pithos_container,
+			String block_hash, PithosBlock pithos_block) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -1,4 +1,6 @@
-package org.apache.hadoop.fs.pithos;
+package gr.grnet.escience.fs.pithos;
+
+import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -21,12 +23,13 @@ import org.apache.hadoop.fs.FileSystem;
  * @version 0.1
  * 
  */
-class PithosInputStream extends FSInputStream {
+public class PithosInputStream extends FSInputStream {
 
-	private PithosSystemStore store;
-	//hello
+	// private PithosSystemStore store;
 
-	private PithosObjectBlock[] blocks;
+	private PithosBlock[] blocks;
+
+	private HadoopPithosConnector pithos_conn;
 
 	private boolean closed;
 
@@ -45,19 +48,26 @@ class PithosInputStream extends FSInputStream {
 	private static final Log LOG = LogFactory.getLog(PithosInputStream.class
 			.getName());
 
-	public PithosInputStream(Configuration conf, PithosSystemStore pithosStore,
-			PithosObject pithosObj) {
-		this(conf, pithosStore, pithosObj, null);
+	private static final String TEST_FILE_FROM_PITHOS = "testOutput.txt";
+
+	public PithosInputStream(HadoopPithosConnector pithos_conn) {
+		this.pithos_conn = pithos_conn;
+
+		this.blocks = this.pithos_conn.retrievePithosObjectBlocks("",
+				TEST_FILE_FROM_PITHOS);
+		for (PithosBlock block : blocks) {
+			this.fileLength += block.getBlockLength();
+		}
 	}
 
 	public PithosInputStream(Configuration conf, PithosSystemStore pithosStore,
 			PithosObject pithosObj, FileSystem.Statistics stats) {
 
-		this.store = pithosStore;
+		// this.store = pithosStore;
 		this.stats = stats;
 		this.blocks = pithosObj.getPithosObjectBlocks();
 
-		for (PithosObjectBlock block : blocks) {
+		for (PithosBlock block : blocks) {
 			this.fileLength += block.getBlockLength();
 		}
 	}
@@ -118,7 +128,7 @@ class PithosInputStream extends FSInputStream {
 			if (pos > blockEnd) {
 				blockSeekTo(pos);
 			}
-			int realLen = (int) Math.min((long) len, (blockEnd - pos + 1L));
+			int realLen = (int) Math.min(len, (blockEnd - pos + 1L));
 			int result = blockStream.read(buf, off, realLen);
 			if (result >= 0) {
 				pos += result;
@@ -132,12 +142,10 @@ class PithosInputStream extends FSInputStream {
 	}
 
 	private synchronized void blockSeekTo(long target) throws IOException {
-		//
-		// Compute desired block
-		//
 		int targetBlock = -1;
 		long targetBlockStart = 0;
 		long targetBlockEnd = 0;
+
 		for (int i = 0; i < blocks.length; i++) {
 			long blockLength = blocks[i].getBlockLength();
 			targetBlockEnd = targetBlockStart + blockLength - 1;
@@ -158,7 +166,9 @@ class PithosInputStream extends FSInputStream {
 
 		// read block blocks[targetBlock] from position offsetIntoBlock
 
-		this.blockFile = store.retrievePithosBlock(blocks[targetBlock],
+		PithosBlock p_file_block = this.pithos_conn.retrievePithosBlock("",
+				"testOutput.txt", blocks[targetBlock].getBlockHash());
+		this.blockFile = pithos_conn.seekPithosBlock(p_file_block,
 				offsetIntoBlock);
 
 		this.pos = target;

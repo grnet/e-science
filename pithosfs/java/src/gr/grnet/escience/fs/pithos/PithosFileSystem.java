@@ -1,4 +1,4 @@
-package org.apache.hadoop.fs.pithos;
+package gr.grnet.escience.fs.pithos;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -133,5 +133,10 @@ public class PithosFileSystem extends FileSystem {
 		// TODO Auto-generated method stub
 		return false;
 	}
+	
+	public static void main(String[] args) {
+		// Stub so we can create a 'runnable jar' export for packing dependencies
+		System.out.println("Pithos FileSystem Connector loaded.");
+	}	
 	
 }

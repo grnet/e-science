@@ -1,14 +1,15 @@
 package tests;
 
+import gr.grnet.escience.hdfs.client.OrkaHdfsClient;
+
 import java.io.IOException;
 
-import org.orka.hadoop.hdfs.OrkaHdfsClient;
 
 @SuppressWarnings("unused")
 public class TestHdfsClient {
 
-	private static final String SOURCE_FILE = "";	
-	private static final String DESTINATION_FILE = "";
+	private static final String SOURCE_FILE = "";
+	private static final String DESTINATION_FILE = "/user/hdfs/file_name";
 	private static final String DIR_NAME = "";
 
 	/**
