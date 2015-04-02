@@ -151,12 +151,14 @@ public class PithosFileSystem extends FileSystem {
 		/*---Check if file exist in pithos------------------------------------*/
 		String container = arg0.getParent().toString();
 		container = container.substring(container.lastIndexOf(container) + 9);
+		container = container.substring(0, container.length() - 1);
 		System.out.println("Container: " + container);
 		String conList = conn.getContainerList(container);
 		System.out.println("Container List: \n" + conList);
 		String filename = arg0.toString().substring(arg0.toString().lastIndexOf('/') + 1,
 				arg0.toString().length());
 		System.out.println(filename);
+		
 		if (conList.contains(filename)){
 //			System.out.println("exists");
 			exist = true;
@@ -170,6 +172,11 @@ public class PithosFileSystem extends FileSystem {
 			try {
 				System.out.println("metadata: " + metadata.toString());
 				JSONObject obj = new JSONObject(metadata.toString());
+				String objExist = obj.getJSONObject("pithosResponse").getString("null");
+				if (objExist.contains("404")){
+					System.out.println("File does not exist in Pithos FS.");
+					return null;
+				}
 				String contentLength = obj.getJSONObject("pithosResponse").getString("Content-Length");
 				int left = contentLength.indexOf("[\"");
 				int right = contentLength.indexOf("\"]");

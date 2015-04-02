@@ -526,11 +526,7 @@ public class HadoopPithosRestConnector extends PithosRESTAPI implements
 
 		// - Request Parameters
 		// JSON Format
-		if (format.equals(PithosResponseFormat.JSON)) {
-			getPithosRequest().getRequestParameters().put("format", "json");
-		} else {
-			// TODO: for others supported formats such as XML
-		}
+		getPithosRequest().getRequestParameters().put("format", "json");
 		// - Get the actual object
 		getPithosRequest().getRequestParameters().put("hashmap", "True");
 

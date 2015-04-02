@@ -250,6 +250,7 @@ public class TestPithosRestClient {
 //		Path arg0 = new Path("pithos://pithos/pithosFile.txt") ;
 //		String container = arg0.getParent().toString();
 //		container = container.substring(container.lastIndexOf(container) + 9);
+//		container = container.substring(0, container.length() - 1);
 //		System.out.println("Container: " + container);
 //		String conList = hdconnector.getContainerList(container);
 //		System.out.println("Container List: \n" + conList);
