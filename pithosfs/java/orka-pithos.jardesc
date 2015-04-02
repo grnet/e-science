@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <jardesc>
-    <jar path="e-science_develop/pithosfs/java/dist/orka-pithos.jar"/>
-    <options buildIfNeeded="true" compress="true" descriptionLocation="/pithosFS/orka-pithos.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <jar path="nvrionis/pithosfs/java/dist/orka-pithos.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/pithosFS/orka-pithos.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
     <manifest generateManifest="true" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
@@ -11,7 +11,6 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <file path="/pithosFS/hadoopPithosConfiguration.json"/>
         <javaElement handleIdentifier="=pithosFS/src&lt;gr.grnet.escience.pithos.restapi"/>
         <javaElement handleIdentifier="=pithosFS/src&lt;gr.grnet.escience.commons"/>
         <javaElement handleIdentifier="=pithosFS/src&lt;gr.grnet.escience.pithos.rest"/>

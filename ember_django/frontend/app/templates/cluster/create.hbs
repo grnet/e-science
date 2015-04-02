@@ -304,6 +304,15 @@
         <h3 class="panel-title">Hdfs Configuration</h3>
     </div>
     <div class="panel-body">
+    	<div class="row text-center text-warning">
+	            <div id = "replication_factor_change" class="col col-sm-4">
+	                {{replication_factor_change}}
+	            </div>
+	            <div id = "dfs_blocksize_change" class="col col-sm-4">
+	                {{dfs_blocksize_change}}
+	            </div>
+	            <div class="col col-sm-4"></div>
+        	</div>
     	<div class="row">
 	    	<div class="col col-sm-4 text-left">
 	            <div class="form-horizontal">
@@ -337,12 +346,13 @@
 			</div>
 		</div>
 		<div class="row text-center text-danger">
-            <div id = "alert_mes_replication_factor" class="col col-sm-5">
+            <div id = "alert_mes_replication_factor" class="col col-sm-4">
                 {{alert_mes_replication_factor}}
             </div>
-            <div id = "alert_mes_dfs_blocksize" class="col col-sm-5">
+            <div id = "alert_mes_dfs_blocksize" class="col col-sm-4">
                 {{alert_mes_dfs_blocksize}}
             </div>
+            <div class="col col-sm-4"></div>
         </div>
 	</div>
     	
