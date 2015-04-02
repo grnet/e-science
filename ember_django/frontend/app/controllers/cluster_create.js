@@ -766,7 +766,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	},
 	
 	replication_factor_change : function(){
-		if ((this.get('replication_factor') == this.get('default_replication_factor')) || ((this.get('replication_factor') == '1') && (this.get('cluster_size') == 2)) || (this.get('replication_factor')=='')){
+		if (((this.get('replication_factor') == this.get('default_replication_factor'))&&(this.get('cluster_size') != 2)) || ((this.get('replication_factor') == '1') && (this.get('cluster_size') == 2)) || (this.get('replication_factor')=='')){
 			this.set('warning_mes_replication_factor', '');
 			return this.get('warning_mes_replication_factor');
 		}
