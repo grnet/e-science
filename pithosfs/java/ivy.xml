@@ -16,7 +16,7 @@
 		<dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
 		
 		<!-- JUnit dependencies -->
-		<dependency org="junit" name="junit" rev="4.4"/>
+		<dependency org="junit" name="junit" rev="4.11"/>
 				
 	</dependencies>
 </ivy-module>
