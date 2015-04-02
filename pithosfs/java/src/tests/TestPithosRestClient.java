@@ -14,7 +14,7 @@ import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 public class TestPithosRestClient {
 	private static final String PITHOS_CONTAINER = "";
-	private static final String PITHOS_FILE = "file.txt";
+	private static final String PITHOS_FILE = "README.md";
 	private static PithosResponse pithosResponse;
 	private static Collection<String> object_block_hashes;
 	private static HadoopPithosRestConnector hdconnector;
@@ -22,7 +22,9 @@ public class TestPithosRestClient {
 	@Before
 	public static void createHdConnector() {
 		// - CREATE HADOOP CONNECTOR INSTANCE
-		//hdconnector = new HadoopPithosRestConnector();
+		hdconnector = new HadoopPithosRestConnector("https://pithos.okeanos.grnet.gr/v1",
+				"-zUSHn99XWBaziJ8DcaX_5EFaefxsKm1eL2yNiC8leA",
+				"6f1c1202-31ae-47b7-9dc5-3f8f854a63b9");
 	}
 
 	@Test
@@ -37,7 +39,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Metadata() {
+	public static void testGet_Pithos_Object_Metadata() {
 		// - GET METADATA OF A SPECIFIC OBJECT
 		System.out
 				.println("---------------------------------------------------------------------\n");
@@ -49,7 +51,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Size() {
+	public static void testGet_Pithos_Object_Size() {
 		// - GET OBJECT ACTUAL SIZE
 		System.out
 				.println("---------------------------------------------------------------------\n");
@@ -216,7 +218,8 @@ public class TestPithosRestClient {
 		// TODO: call the required method from above, so as to execute it	
 		createHdConnector();
 		//testRead_Pithos_Object();
-		testGet_Pithos_Object();
+		testGet_Pithos_Object_Size();
+		testGet_Pithos_Object_Metadata();
 	}
 
 }

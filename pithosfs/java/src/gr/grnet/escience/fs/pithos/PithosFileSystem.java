@@ -1,10 +1,13 @@
 package gr.grnet.escience.fs.pithos;
 
+import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
+import gr.grnet.escience.pithos.rest.PithosResponse;
+import gr.grnet.escience.pithos.rest.PithosResponseFormat;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -12,11 +15,8 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.UnresolvedLinkException;
 import org.apache.hadoop.fs.permission.FsPermission;
-import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.util.Progressable;
-import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
 
 
 /**
@@ -31,6 +31,8 @@ import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
  */
 public class PithosFileSystem extends FileSystem {
 
+	private HadoopPithosRestConnector hdconnector;
+	
 	private URI uri;
 
 	private Path workingDir;
@@ -62,8 +64,14 @@ public class PithosFileSystem extends FileSystem {
 		super.initialize(uri, conf);
 		System.out.println("Initialize!");
 		setConf(conf);
+
+		hdconnector = new HadoopPithosRestConnector(
+				conf.get("fs.pithos.url"),
+				conf.get("auth.pithos.token"),
+				conf.get("auth.pithos.uuid"));
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
-		this.workingDir = new Path("/user", System.getProperty("user.name"));
+		this.workingDir = new Path(conf.get("fs.pithos.url"));
+		
 	}
 
 	@Override
@@ -79,10 +87,12 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	private Path makeAbsolute(Path path) {
-		if (path.isAbsolute()) {
-			return path;
-		}
-		return new Path(workingDir, path);
+		 String pth = path.toUri().getPath();
+		 System.out.println("=== " + pth);
+		 if (pth.startsWith(workingDir.toUri().getPath())) {
+			 return path;
+		 }
+		 return new Path(pth);
 	}
 
 	/** This optional operation is not yet supported. */
@@ -127,11 +137,40 @@ public class PithosFileSystem extends FileSystem {
 	public FileStatus getFileStatus(Path arg0) throws IOException {
 		System.out.println("here in getFileStatus BEFORE!");
 		System.out.println(arg0.toString());
-		FileStatus pithos_file_status = new FileStatus(363448, false,0, this.getDefaultBlockSize(),0,
-				0, null, null, null, arg0);
+
+		FileStatus pithos_file_status;
+		PithosResponse pithosResponse  = hdconnector.getPithosObjectMetaData
+				("", "README.md",  PithosResponseFormat.JSON);
+		System.out.println("---> " + pithosResponse.toString());
+		
+		long blockSize = hdconnector.getPithosObjectSize("", "README.md");
+		pithos_file_status = new FileStatus(blockSize, false,0, this.getDefaultBlockSize(),0,
+				0, null, null, null, arg0);	
+
+		
+/*		System.out.println("---> " + isDirectory(arg0));	
+		// if it is a file
+		if(isFile(arg0))
+		{
+			pithos_file_status = new FileStatus(blockSize, false,0, this.getDefaultBlockSize(),0,
+					0, null, null, null, arg0);		
+		}*/
+		
+		
+		
 		System.out.println("here in getFileStatus AFTER!");
 		return pithos_file_status;
 	}
+	
+	 @Deprecated
+	 public boolean isDirectory (Path path) throws IOException {
+		 Path absolute = makeAbsolute(path);
+		 File f = new File(absolute.toUri().getPath());
+		 return f.isDirectory();
+	 }
+	 public boolean isFile (Path path) throws IOException {
+		 return !isDirectory(path);
+	 }	
 
 	@Override
 	public FileStatus[] listStatus(Path f) throws FileNotFoundException,
