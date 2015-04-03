@@ -56,7 +56,7 @@ public class PithosInputStream extends FSInputStream {
 
 	public PithosInputStream(HadoopPithosRestConnector pithos_conn) {
 		this.pithos_conn = pithos_conn;
-		this.blocks = this.pithos_conn.getPithosObjectBlockAll("pithos", "server.txt");
+		this.blocks = this.pithos_conn.getPithosObjectBlockAll("pithos", "elwiki-latest-pages-meta-current.xml.bz2");
 		for (PithosObjectBlock block : blocks) {
 			this.fileLength += block.getBlockLength();
 		}
@@ -170,7 +170,7 @@ public class PithosInputStream extends FSInputStream {
 
 		// read block blocks[targetBlock] from position offsetIntoBlock
         
-		PithosObjectBlock p_file_block = this.pithos_conn.getPithosObjectBlock("pithos", "server.txt", blocks[targetBlock].getBlockHash());
+		PithosObjectBlock p_file_block = this.pithos_conn.getPithosObjectBlock("pithos", "elwiki-latest-pages-meta-current.xml.bz2", blocks[targetBlock].getBlockHash());
 		this.blockFile = retrieveBlock(p_file_block, offsetIntoBlock);
 
 		this.pos = target;
