@@ -62,7 +62,12 @@ public class PithosFileSystem extends FileSystem {
 		super.initialize(uri, conf);
 		System.out.println("Initialize!");
 		setConf(conf);
-		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
+		String authority = uri.getAuthority();
+		if (authority == null){
+			System.out.println("null authority");
+			authority = "pithos";
+		} 
+		this.uri = URI.create(uri.getScheme() + "://" + authority);
 		this.workingDir = new Path("/user", System.getProperty("user.name"));
 	}
 
