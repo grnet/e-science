@@ -4,7 +4,6 @@ import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.Collection;
 
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -207,7 +206,7 @@ public interface PithosSystemStore {
 	 *            : the size in bytes of the object chunk that will be
 	 *            downloaded and stored on the destination
 	 */
-	public InputStream pithosBlockInputStream(String pithos_container,
+	public FSDataInputStream pithosBlockInputStream(String pithos_container,
 			String object_location, String block_hash);
 
 	/**

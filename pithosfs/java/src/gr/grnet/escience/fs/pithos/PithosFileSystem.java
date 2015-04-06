@@ -1,9 +1,10 @@
 package gr.grnet.escience.fs.pithos;
 
+import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -14,16 +15,14 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
 
-import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
-
-
 /**
- * This class implements a custom file system based on FIleSystem class of Hadoop 2.6.0.
- * Essentially the main idea here, respects to the development of a custom File System 
- * that will be able to allow the interaction between hadoop and pithos storage system.
+ * This class implements a custom file system based on FIleSystem class of
+ * Hadoop 2.6.0. Essentially the main idea here, respects to the development of
+ * a custom File System that will be able to allow the interaction between
+ * hadoop and pithos storage system.
  * 
  * @since March, 2015
- * @author Dimitris G. Kelaidonis (kelaidonis@gmail.com)
+ * @author Dimitris G. Kelaidonis & Ioannis Stenos
  * @version 0.1
  * 
  */
@@ -33,14 +32,30 @@ public class PithosFileSystem extends FileSystem {
 
 	private Path workingDir;
 
+	private static HadoopPithosConnector hadoopPithosConnector;
+
 	public PithosFileSystem() {
-		// Initialize it by implementing the interface PithosSystemStore
 	}
-	
-	public String getConfig(String param){
+
+	public String getConfig(String param) {
 		Configuration conf = new Configuration();
 		String result = conf.get(param);
 		return result;
+	}
+
+	/**
+	 * @return the instance of hadoop - pithos connector
+	 */
+	public static HadoopPithosConnector getHadoopPithosConnector() {
+		return hadoopPithosConnector;
+	}
+
+	/**
+	 * Set thes instance of hadoop - pithos connector
+	 */
+	public static void setHadoopPithosConnector(
+			HadoopPithosConnector hadoopPithosConnector) {
+		PithosFileSystem.hadoopPithosConnector = hadoopPithosConnector;
 	}
 
 	@Override
@@ -64,6 +79,13 @@ public class PithosFileSystem extends FileSystem {
 		System.out.println(this.uri.toString());
 		this.workingDir = new Path("/user", System.getProperty("user.name"));
 		System.out.println(this.workingDir.toString());
+		System.out.println("Create System Store connector");
+
+		// - Create instance of Hadoop connector
+		setHadoopPithosConnector(new HadoopPithosConnector(
+				getConfig("fs.pithos.url"), getConfig("auth.pithos.token"),
+				getConfig("auth.pithos.uuid")));
+
 	}
 
 	@Override
@@ -93,7 +115,6 @@ public class PithosFileSystem extends FileSystem {
 		throw new IOException("Not supported");
 	}
 
-
 	@Override
 	public long getDefaultBlockSize() {
 		System.out.println("blockSize!");
@@ -108,65 +129,46 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	@Override
+	public FileStatus getFileStatus(Path arg0) throws IOException {
+		System.out.println("here in getFileStatus BEFORE!");
+
+		long pf_size = getHadoopPithosConnector().getPithosObjectSize("pithos",
+				"server.txt");
+		long pf_bsize = getHadoopPithosConnector().getPithosObjectBlockSize(
+				"pithos", "server.txt");
+
+		try {
+			FileStatus pithos_file_status = new FileStatus(pf_size, false, 1,
+					pf_bsize, 0, arg0);
+			System.out.println("here in getFileStatus AFTER!");
+			return pithos_file_status;
+		} catch (Exception e) {
+			System.out.println("URI exception thrown");
+			return null;
+		}
+	}
+
+	@Override
+	public FileStatus[] listStatus(Path f) throws FileNotFoundException,
+			IOException {
+		System.out.println("list Status!");
+		return null;
+	}
+
+	@Override
 	public FSDataOutputStream create(Path arg0, FsPermission arg1,
 			boolean arg2, int arg3, short arg4, long arg5, Progressable arg6)
 			throws IOException {
-		System.out.println("create!");
+		System.out.println("Create!");
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean delete(Path arg0, boolean arg1) throws IOException {
-		System.out.println("deelete!");
+		System.out.println("Delete!");
 		// TODO Auto-generated method stub
 		return false;
-	}
-	
-
-	@Override
-	public FileStatus getFileStatus(Path arg0) throws IOException {
-		System.out.println("here in getFileStatus BEFORE!");
-		
-		HadoopPithosConnector p_con = new HadoopPithosConnector(getConfig("fs.pithos.url"), getConfig("auth.pithos.token"), getConfig("auth.pithos.uuid"));
-		long pf_size = p_con.getPithosObjectSize("pithos", "server.txt");
-        long pf_bsize = p_con.getPithosObjectBlockSize("pithos", "server.txt");
-        
-        try {
-		    //FileStatus pithos_file_status = new FileStatus(pf_size, false, 1, pf_bsize,
-				    //0, new PithosPath(new URI("pithos://server.txt")));
-        	FileStatus pithos_file_status = new FileStatus(pf_size, false, 1, pf_bsize,
-				    0, arg0);
-		    System.out.println("here in getFileStatus AFTER!");
-			return pithos_file_status;
-        }
-        catch (Exception e){
-        	System.out.println("URI exception thrown");
-        	return null;
-        }	
-	}
-
-	@Override
-	public FileStatus[] listStatus(Path f) throws FileNotFoundException,
-			IOException {
-		System.out.println("list Status!");		
-		//- Add Serial Port parameters
-		//conf.set("hadoop.job.ugi", "hduser");
-//		HadoopPithosRestConnector conn = new HadoopPithosRestConnector();
-//		String container = f.getParent().toString();
-//		FSDataInputStream fsdis = conn.readPithosObject(container, f.toString());
-//		FileSystem fs = FileSystem.get(conf);
-		//HadoopPithosRestConnector conn = new HadoopPithosRestConnector();
-//		String container = f.getParent().toString();
-		//File pithosActualObject = conn.getPithosObject(container, f.toString(), "/user/hduser");
-		//System.out.println("File name: " + pithosActualObject.getName());
-//		FileStatus[] status = fs.listStatus(f);
-//        for(int i=0;i<status.length;i++){
-//            System.out.println(status[i].getPath());
-//            System.out.println(conf.get("fs.defaultFS"));
-//        }
-        return null;
-		// TODO Auto-generated method stub
 	}
 
 	@Override
@@ -178,9 +180,9 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public FSDataInputStream open(Path arg0, int arg1) throws IOException {
-		HadoopPithosConnector p_con = new HadoopPithosConnector(getConfig("fs.pithos.url"), getConfig("auth.pithos.token"), getConfig("auth.pithos.uuid"));
-        //String pithos_path = server.txt	
-		return p_con.pithosObjectInputStream("pithos", arg0.toString());
+		// TODO: parse the container
+		return getHadoopPithosConnector().pithosObjectInputStream("pithos",
+				arg0.toString());
 	}
 
 	@Override
@@ -189,10 +191,15 @@ public class PithosFileSystem extends FileSystem {
 		// TODO Auto-generated method stub
 		return false;
 	}
-	
+
+	/**
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args) {
-		// Stub so we can create a 'runnable jar' export for packing depencencies
+		// Stub so we can create a 'runnable jar' export for packing
+		// dependencies
 		System.out.println("Pithos FileSystem Connector loaded.");
 	}
-	
+
 }

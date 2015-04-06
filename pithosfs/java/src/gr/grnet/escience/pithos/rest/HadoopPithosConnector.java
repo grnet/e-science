@@ -551,8 +551,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 		// - Create Pithos request
 		setPithosRequest(new PithosRequest());
 
-		// - Request Parameters
-		// JSON Format
+		// - Request Parameters JSON Format
 		if (format.equals(PithosResponseFormat.JSON)) {
 			getPithosRequest().getRequestParameters().put("format", "json");
 		} else {
@@ -586,42 +585,12 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	@Override
 	public FSDataInputStream pithosObjectInputStream(String pithos_container,
 			String object_location) {
-		// // - Get the file object from pithos
-		// File pithosObject = retrievePithosObject(pithos_container,
-		// object_location, null);
-		//
-		// // - Create input stream for pithos
-		// try {
-		// // - Add File data to the input stream
-		// InputStream pithosFileInputStream = new FileInputStream(
-		// pithosObject);
-		//
-		// // - Return the input stream wrapped into a FSDataINputStream
-		// return pithosFileInputStream;
-		// } catch (FileNotFoundException e) {
-		// e.printStackTrace();
-		// return null;
-		// }
-
-		// - Get the file object from pithos
-//		File pithosObject = retrievePithosObject(pithos_container,
-//				object_location, null);
 
 		// - Create input stream for pithos
 		try {
-			// - Add File data to the input stream
-			// FSDataInputStream pithosFileInputStream = new
-			// FSDataInputStream(new FileInputStream(pithosObject));
-			// FileInputStream fis = new FileInputStream(pithosObject);
-			// InputStream in = new BufferedInputStream(new
-			// FileInputStream(pithosObject));
-			// PositionedInputStream(in);
-
-			FSDataInputStream pithosFileInputStream = new FSDataInputStream(
-					new PithosInputStream(this));
-
 			// - Return the input stream wrapped into a FSDataINputStream
-			return pithosFileInputStream;
+			return new FSDataInputStream(new PithosInputStream(
+					pithos_container, object_location));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -630,22 +599,25 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public InputStream pithosBlockInputStream(String pithos_container,
+	public FSDataInputStream pithosBlockInputStream(String pithos_container,
 			String object_location, String block_hash) {
 
 		// - Get the file object from pithos
 		PithosBlock pithosBlock = retrievePithosBlock(pithos_container,
 				object_location, block_hash);
 
-		// - Create input stream for pithos
+		// - Create input stream for Pithos
 		try {
 			// - Add File data to the input stream
 			File pithosBlockData = deserializeFile(pithosBlock.getBlockData());
+
+			// - Create File input stream
 			InputStream pithosFileInputStream = new FileInputStream(
 					pithosBlockData);
 
 			// - Return the input stream wrapped into a FSDataINputStream
-			return pithosFileInputStream;
+			// return pithosFileInputStream;
+			return new FSDataInputStream(pithosFileInputStream);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return null;
