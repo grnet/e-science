@@ -1,17 +1,11 @@
 package gr.grnet.escience.fs.pithos;
 
+import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 
-import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
-
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,11 +25,11 @@ import org.apache.hadoop.fs.FileSystem;
  */
 public class PithosInputStream extends FSInputStream {
 
-	//private PithosSystemStore store;
+	// private PithosSystemStore store;
 
-	private PithosObjectBlock[] blocks;
-	
-	private HadoopPithosRestConnector pithos_conn;
+	private PithosBlock[] blocks;
+
+	private HadoopPithosConnector pithos_conn;
 
 	private boolean closed;
 
@@ -54,10 +48,14 @@ public class PithosInputStream extends FSInputStream {
 	private static final Log LOG = LogFactory.getLog(PithosInputStream.class
 			.getName());
 
-	public PithosInputStream(HadoopPithosRestConnector pithos_conn) {
+	private static final String TEST_FILE_FROM_PITHOS = "server.txt";
+
+	public PithosInputStream(HadoopPithosConnector pithos_conn) {
 		this.pithos_conn = pithos_conn;
-		this.blocks = this.pithos_conn.getPithosObjectBlockAll("pithos", "elwiki-latest-pages-meta-current.xml.bz2");
-		for (PithosObjectBlock block : blocks) {
+
+		this.blocks = this.pithos_conn.retrievePithosObjectBlocks("",
+				TEST_FILE_FROM_PITHOS);
+		for (PithosBlock block : blocks) {
 			this.fileLength += block.getBlockLength();
 		}
 	}
@@ -65,11 +63,11 @@ public class PithosInputStream extends FSInputStream {
 	public PithosInputStream(Configuration conf, PithosSystemStore pithosStore,
 			PithosObject pithosObj, FileSystem.Statistics stats) {
 
-		//this.store = pithosStore;
+		// this.store = pithosStore;
 		this.stats = stats;
 		this.blocks = pithosObj.getPithosObjectBlocks();
 
-		for (PithosObjectBlock block : blocks) {
+		for (PithosBlock block : blocks) {
 			this.fileLength += block.getBlockLength();
 		}
 	}
@@ -144,12 +142,10 @@ public class PithosInputStream extends FSInputStream {
 	}
 
 	private synchronized void blockSeekTo(long target) throws IOException {
-		//
-		// Compute desired block
-		//
 		int targetBlock = -1;
 		long targetBlockStart = 0;
 		long targetBlockEnd = 0;
+
 		for (int i = 0; i < blocks.length; i++) {
 			long blockLength = blocks[i].getBlockLength();
 			targetBlockEnd = targetBlockStart + blockLength - 1;
@@ -169,58 +165,17 @@ public class PithosInputStream extends FSInputStream {
 		long offsetIntoBlock = target - targetBlockStart;
 
 		// read block blocks[targetBlock] from position offsetIntoBlock
-        
-		PithosObjectBlock p_file_block = this.pithos_conn.getPithosObjectBlock("pithos", "elwiki-latest-pages-meta-current.xml.bz2", blocks[targetBlock].getBlockHash());
-		this.blockFile = retrieveBlock(p_file_block, offsetIntoBlock);
+
+		PithosBlock p_file_block = this.pithos_conn.retrievePithosBlock("",
+				"server.txt", blocks[targetBlock].getBlockHash());
+		this.blockFile = pithos_conn.seekPithosBlock(p_file_block,
+				offsetIntoBlock);
 
 		this.pos = target;
 		this.blockEnd = targetBlockEnd;
 		this.blockStream = new DataInputStream(new FileInputStream(blockFile));
 
 	}
-	
-	private File retrieveBlock(PithosObjectBlock pithosobjectblock, long offsetIntoBlock) throws IOException{
-		
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		ObjectOutput out = null;
-		try {
-		  out = new ObjectOutputStream(bos);
-		  System.out.println(pithosobjectblock.toString());
-		  out.writeObject(pithosobjectblock.getBlockData());
-		  byte[] yourBytes = bos.toByteArray();
-		  
-		  FileOutputStream fileOuputStream;
-		  Integer i = (int)(long)offsetIntoBlock;
-		  long block_len = pithosobjectblock.getBlockLength();
-		  Integer j= (int)(long)(block_len - offsetIntoBlock);
-		  
-		  File block = new File("block");
-			// - Create output stream with data to the file
-			fileOuputStream = new FileOutputStream(block);
-			fileOuputStream.write(yourBytes, i, j);
-			fileOuputStream.close();
-			// - return the file
-			return block;
-
-		} finally {
-		  try {
-		    if (out != null) {
-		      out.close();
-		    }
-		  } catch (IOException ex) {
-		    // ignore close exception
-		  }
-		  try {
-		    bos.close();
-		  } catch (IOException ex) {
-		    // ignore close exception
-		  }
-		}
-		// convert array of bytes into file
-		
-	}
-	
-	
 
 	@Override
 	public void close() throws IOException {

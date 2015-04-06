@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * @author kostas vogias
  * @version v1.0
- *
+ * 
  */
 public class PithosRESTAPI implements Serializable {
 
@@ -1158,6 +1158,7 @@ public class PithosRESTAPI implements Serializable {
 	 * 	   to the storage system does not match the (optionally) supplied ETag value
 	 * </pre>
 	 */
+	@SuppressWarnings("unused")
 	public String upload_file(Object file2upload, String contentLength,
 			String container, HashMap<String, String> parameters,
 			HashMap<String, String> headers) throws IOException {
@@ -1605,7 +1606,9 @@ public class PithosRESTAPI implements Serializable {
 	 * 16.<strong>X-Object-Meta-*</strong>.Optional user defined metadata
 	 * </pre>
 	 * 
-	 * @example <strong>Add object metadata:</strong><pre>
+	 * @example <strong>Add object metadata:</strong>
+	 * 
+	 *          <pre>
 	 * PithosRESTAPI client = new PithosRESTAPI(url, token, username);
 	 * HashMap<String, String> parameters = new HashMap<String, String>();
 	 * HashMap<String, String> headers = new HashMap<String, String>();

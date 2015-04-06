@@ -14,7 +14,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
 
-import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
+import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 
 
 /**
@@ -61,13 +61,9 @@ public class PithosFileSystem extends FileSystem {
 		System.out.println("Initialize!");
 		setConf(conf);
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
+		System.out.println(this.uri.toString());
 		this.workingDir = new Path("/user", System.getProperty("user.name"));
-		try{
-		    test_something();
-		}
-		catch (URISyntaxException e){
-			System.out.println("mlkies");
-		}
+		System.out.println(this.workingDir.toString());
 	}
 
 	@Override
@@ -127,27 +123,24 @@ public class PithosFileSystem extends FileSystem {
 		return false;
 	}
 	
-    public void test_something() throws URISyntaxException{
-    	
-    	PithosPath p_test = new PithosPath(new URI("elwiki-latest-pages-meta-current.xml.bz2"));
-    	System.out.println(p_test.toString());
-    }
-    
+
 	@Override
 	public FileStatus getFileStatus(Path arg0) throws IOException {
 		System.out.println("here in getFileStatus BEFORE!");
 		
-		HadoopPithosRestConnector p_con = new HadoopPithosRestConnector(getConfig("fs.pithos.url"), getConfig("auth.pithos.token"), getConfig("auth.pithos.uuid"));
-		long pf_size = p_con.getPithosObjectSize("pithos", "elwiki-latest-pages-meta-current.xml.bz2");
-        long pf_bsize = p_con.getPithosObjectBlockSize("pithos", "elwiki-latest-pages-meta-current.xml.bz2");
+		HadoopPithosConnector p_con = new HadoopPithosConnector(getConfig("fs.pithos.url"), getConfig("auth.pithos.token"), getConfig("auth.pithos.uuid"));
+		long pf_size = p_con.getPithosObjectSize("pithos", "server.txt");
+        long pf_bsize = p_con.getPithosObjectBlockSize("pithos", "server.txt");
         
         try {
-		    FileStatus pithos_file_status = new FileStatus(pf_size, false, 1, pf_bsize,
-				    0, new PithosPath(new URI("pithos://elwiki-latest-pages-meta-current.xml.bz2")));
+		    //FileStatus pithos_file_status = new FileStatus(pf_size, false, 1, pf_bsize,
+				    //0, new PithosPath(new URI("pithos://server.txt")));
+        	FileStatus pithos_file_status = new FileStatus(pf_size, false, 1, pf_bsize,
+				    0, arg0);
 		    System.out.println("here in getFileStatus AFTER!");
 			return pithos_file_status;
         }
-        catch (URISyntaxException e){
+        catch (Exception e){
         	System.out.println("URI exception thrown");
         	return null;
         }	
@@ -185,10 +178,9 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public FSDataInputStream open(Path arg0, int arg1) throws IOException {
-		System.out.println("Open!");
-		HadoopPithosRestConnector p_con = new HadoopPithosRestConnector(getConfig("fs.pithos.url"), getConfig("auth.pithos.token"), getConfig("auth.pithos.uuid"));
-        //String pithos_path = elwiki-latest-pages-meta-current.xml.bz2	
-		return p_con.readPithosObject("pithos", "elwiki-latest-pages-meta-current.xml.bz2");
+		HadoopPithosConnector p_con = new HadoopPithosConnector(getConfig("fs.pithos.url"), getConfig("auth.pithos.token"), getConfig("auth.pithos.uuid"));
+        //String pithos_path = server.txt	
+		return p_con.pithosObjectInputStream("pithos", arg0.toString());
 	}
 
 	@Override
