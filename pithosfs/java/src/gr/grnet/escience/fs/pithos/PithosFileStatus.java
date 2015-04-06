@@ -8,37 +8,41 @@ import org.apache.hadoop.fs.permission.FsPermission;
 
 public class PithosFileStatus extends FileStatus {
 
-	public PithosFileStatus() {
-		// TODO Auto-generated constructor stub
-	}
+  private boolean isEmptyDirectory;
 
-	public PithosFileStatus(FileStatus other) throws IOException {
-		super(other);
-		// TODO Auto-generated constructor stub
-	}
+  // Directories
+  public PithosFileStatus(boolean isdir, boolean isemptydir, Path path) {
+    super(0, isdir, 1, 0, 0, path);
+    isEmptyDirectory = isemptydir;
+  }
 
-	public PithosFileStatus(long length, boolean isdir, int block_replication,
-			long blocksize, long modification_time, Path path) {
-		super(length, isdir, block_replication, blocksize, modification_time,
-				path);
-		// TODO Auto-generated constructor stub
-	}
+  // Files
+  public PithosFileStatus(long length, long modification_time, Path path) {
+    super(length, false, 1, 0, modification_time, path);
+    isEmptyDirectory = false;
+  }
 
-	public PithosFileStatus(long length, boolean isdir, int block_replication,
-			long blocksize, long modification_time, long access_time,
-			FsPermission permission, String owner, String group, Path path) {
-		super(length, isdir, block_replication, blocksize, modification_time,
-				access_time, permission, owner, group, path);
-		// TODO Auto-generated constructor stub
-	}
-
-	public PithosFileStatus(long length, boolean isdir, int block_replication,
-			long blocksize, long modification_time, long access_time,
-			FsPermission permission, String owner, String group, Path symlink,
-			Path path) {
-		super(length, isdir, block_replication, blocksize, modification_time,
-				access_time, permission, owner, group, symlink, path);
-		// TODO Auto-generated constructor stub
-	}
-
+  public boolean isEmptyDirectory() {
+    return isEmptyDirectory;
+  }
+  
+  /** Compare if this object is equal to another object
+   * @param   o the object to be compared.
+   * @return  true if two file status has the same path name; false if not.
+   */
+  @Override
+  public boolean equals(Object o) {
+    return super.equals(o);
+  }
+  
+  /**
+   * Returns a hash code value for the object, which is defined as
+   * the hash code of the path name.
+   *
+   * @return  a hash code value for the path name.
+   */
+  @Override
+  public int hashCode() {
+    return super.hashCode();
+  }
 }
