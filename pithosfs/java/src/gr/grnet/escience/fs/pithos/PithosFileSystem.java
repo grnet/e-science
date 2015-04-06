@@ -1,11 +1,16 @@
 package gr.grnet.escience.fs.pithos;
 
 import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
+import gr.grnet.escience.pithos.rest.PithosResponse;
+import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -17,7 +22,7 @@ import org.apache.hadoop.util.Progressable;
 
 /**
  * This class implements a custom file system based on FIleSystem class of
- * Hadoop 2.6.0. Essentially the main idea here, respects to the development of
+ * Hadoop 2.5.2. Essentially the main idea here, respects to the development of
  * a custom File System that will be able to allow the interaction between
  * hadoop and pithos storage system.
  * 
@@ -29,10 +34,16 @@ import org.apache.hadoop.util.Progressable;
 public class PithosFileSystem extends FileSystem {
 
 	private URI uri;
-
-	private Path workingDir;
-
 	private static HadoopPithosConnector hadoopPithosConnector;
+	private Path workingDir;
+	private String pathToString;
+	private String container;
+	private String[] filesList;
+	private boolean exist = true;
+	private boolean isDir = false;
+	private long length = 0;
+	private PithosFileStatus pithos_file_status;
+	public static final Log LOG = LogFactory.getLog(PithosFileSystem.class);
 
 	public PithosFileSystem() {
 	}
@@ -78,6 +89,8 @@ public class PithosFileSystem extends FileSystem {
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 		System.out.println(this.uri.toString());
 		this.workingDir = new Path("/user", System.getProperty("user.name"));
+		this.workingDir = new Path("/user", System.getProperty("user.name"))
+				.makeQualified(this.uri, this.getWorkingDirectory());
 		System.out.println(this.workingDir.toString());
 		System.out.println("Create System Store connector");
 
@@ -129,33 +142,6 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	@Override
-	public FileStatus getFileStatus(Path arg0) throws IOException {
-		System.out.println("here in getFileStatus BEFORE!");
-
-		long pf_size = getHadoopPithosConnector().getPithosObjectSize("pithos",
-				"server.txt");
-		long pf_bsize = getHadoopPithosConnector().getPithosObjectBlockSize(
-				"pithos", "server.txt");
-
-		try {
-			FileStatus pithos_file_status = new FileStatus(pf_size, false, 1,
-					pf_bsize, 0, arg0);
-			System.out.println("here in getFileStatus AFTER!");
-			return pithos_file_status;
-		} catch (Exception e) {
-			System.out.println("URI exception thrown");
-			return null;
-		}
-	}
-
-	@Override
-	public FileStatus[] listStatus(Path f) throws FileNotFoundException,
-			IOException {
-		System.out.println("list Status!");
-		return null;
-	}
-
-	@Override
 	public FSDataOutputStream create(Path arg0, FsPermission arg1,
 			boolean arg2, int arg3, short arg4, long arg5, Progressable arg6)
 			throws IOException {
@@ -172,6 +158,120 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	@Override
+	public PithosFileStatus getFileStatus(Path targetPath) throws IOException {
+
+		System.out.println("here in getFileStatus BEFORE!");
+		System.out.println("Path: " + targetPath.toString());
+
+		// -Check if file exist in pithos
+		String pathStr = targetPath.toString();
+
+		pathStr = pathStr.substring(pathStr.lastIndexOf(pathStr) + 9);
+
+		String pathSplit[] = pathStr.split("/");
+		String container = pathSplit[0];
+		System.out.println("Container: " + container);
+		String filename = pathSplit[pathSplit.length - 1];
+		int count = 2;
+		while (pathSplit[pathSplit.length - count] != container) {
+			filename = pathSplit[pathSplit.length - count] + "/" + filename;
+			count++;
+		}
+
+		PithosResponse metadata = getHadoopPithosConnector()
+				.getPithosObjectMetaData(container, filename,
+						PithosResponseFormat.JSON);
+		if (metadata.toString().contains("404")) {
+			System.out.println("File does not exist in Pithos FS.");
+			exist = false;
+		}
+		/*---------------------------------------------------------*/
+		if (exist) {
+			for (String obj : metadata.getResponseData().keySet()) {
+				if (obj != null) {
+					if (obj.matches("Content-Type")) {
+						for (String fileType : metadata.getResponseData().get(
+								obj)) {
+							if (fileType.contains("application/directory")) {
+								isDir = true;
+								break;
+							} else {
+								isDir = false;
+							}
+						}
+					}
+
+				}
+			}
+
+			if (isDir) {
+				pithos_file_status = new PithosFileStatus(true, false,
+						targetPath); // arg0.makeQualified(this.uri,
+				// this.workingDir));
+			} else {
+				for (String obj : metadata.getResponseData().keySet()) {
+					if (obj != null) {
+						if (obj.matches("Content-Length")) {
+							for (String lengthStr : metadata.getResponseData()
+									.get(obj)) {
+								length = Long.parseLong(lengthStr);
+							}
+						}
+
+					}
+				}
+				pithos_file_status = new PithosFileStatus(length, 123,
+						targetPath);
+			}
+		}
+
+		System.out.println("here in getFileStatus AFTER!");
+		return pithos_file_status;
+	}
+
+	@Override
+	public FileStatus[] listStatus(Path f) {
+		System.out.println("\n--->  List Status Method!");
+
+		pathToString = f.toString();
+
+		pathToString = pathToString.substring(this.getScheme().toString()
+				.concat("://").length());
+
+		filesList = pathToString.split("/");
+		container = filesList[0];
+
+		String conList = getHadoopPithosConnector().getFileList(container);
+		String targetFolder = filesList[filesList.length - 1];
+
+		final List<FileStatus> result = new ArrayList<FileStatus>();
+		FileStatus fileStatus;
+		String files[] = conList.split("\\r?\\n");
+
+		// - Iterate on available files in the container
+		for (int i = 0; i < files.length; i++) {
+			if (files[i].contains(targetFolder + "/")) {
+				Path path = new Path(this.getScheme() + "://" + container + "/"
+						+ files[i]);
+				try {
+					fileStatus = getFileStatus(path);
+					System.out.println(files[i]);
+					result.add(fileStatus);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}// end for
+
+		// - Return the list of the available files
+		if (!result.isEmpty()) {
+			return result.toArray(new FileStatus[result.size()]);
+		} else {
+			return null;
+		}
+	}
+
+	@Override
 	public boolean mkdirs(Path arg0, FsPermission arg1) throws IOException {
 		System.out.println("Make dirs!");
 		// TODO Auto-generated method stub
@@ -179,10 +279,10 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	@Override
-	public FSDataInputStream open(Path arg0, int arg1) throws IOException {
+	public FSDataInputStream open(Path target_file, int buffer_size) throws IOException {
 		// TODO: parse the container
 		return getHadoopPithosConnector().pithosObjectInputStream("pithos",
-				arg0.toString());
+				"server.txt");
 	}
 
 	@Override

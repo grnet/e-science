@@ -68,7 +68,7 @@ public class PithosObject {
 	/***
 	 * Deserialize a Pithos Object that is received by the pithos dfs
 	 * 
-	 * @param {inputStreamForObject: the inputstream that correspnds to
+	 * @param {inputStreamForObject: the inputstream that corresponds to
 	 *        PithosObject bytes}
 	 * @return
 	 * @throws IOException

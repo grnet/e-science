@@ -1,7 +1,5 @@
 package gr.grnet.escience.pithos.rest;
 
-import gr.grnet.escience.commons.Configurator;
-import gr.grnet.escience.commons.Settings;
 import gr.grnet.escience.fs.pithos.PithosBlock;
 import gr.grnet.escience.fs.pithos.PithosFileType;
 import gr.grnet.escience.fs.pithos.PithosInputStream;
@@ -42,9 +40,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 		PithosSystemStore {
 
 	private static final long serialVersionUID = 1L;
-	private static final String CONFIGURATION_FILE = "hadoopPithosConfiguration.json";
-	private static final Settings hadoopConfiguration = Configurator
-			.load(CONFIGURATION_FILE);
 	private PithosRequest request;
 	private PithosResponse response;
 	private File srcFile2bUploaded;
@@ -61,14 +56,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	/*****
 	 * Constructor
 	 */
-	public HadoopPithosConnector() {
-		// - implement aPithos RESTAPI instance
-		super(hadoopConfiguration.getPithosUser().get("url"),// pithos auth-url
-				hadoopConfiguration.getPithosUser().get("token"),// user-token
-				hadoopConfiguration.getPithosUser().get("username"));// username
-
-	}
-
 	public HadoopPithosConnector(String pithosUrl, String pithosToken,
 			String uuid) {
 		// - implement aPithos RESTAPI instance
@@ -243,6 +230,28 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
 		// - Return the response data as String
 		return getPithosResponse();
+	}
+
+	@Override
+	public String getFileList(String pithos_container) {
+		// - Create Pithos request
+		setPithosRequest(new PithosRequest());
+
+		// - Create Response instance
+		setPithosResponse(new PithosResponse());
+		String response_data = "";
+		// - Read meta-data and add the data on the Pithos Response
+		try {
+			// - Perform action by using Pithos REST API method
+			response_data = list_container_objects(pithos_container,
+					getPithosRequest().getRequestParameters(),
+					getPithosRequest().getRequestHeaders());
+			// - Return the response data as String
+			return response_data;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	@Override
