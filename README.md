@@ -1,3 +1,4 @@
+![alt text](http://grnet.github.io/grnet-media-pack/grnet/logos/grnet_logo_en.svg "GRNET Logo")
 # GRNET eScience
 eScience is a cloud-based integrated service platform for big data analytics offered by GRNET and the associated [~okeanos](http://okeanos.grnet.gr) IaaS.
 
