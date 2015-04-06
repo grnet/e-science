@@ -1,9 +1,19 @@
 <p></p>
 <div class="well well-lg text-center v-center">
-    <h3 id = 'id_title_cluster_create_route'>Hadoop Cluster Configuration</h3>
+	<div class="row">
+	<h3 id = 'id_title_cluster_create_route'>Hadoop Cluster Configuration</h3>
+	<div class="col col-sm-3"></div>
+	{{#if no_project_selected}}
+	<div id="id_alert_noproject" class="alert alert-dismissable alert-warning col-sm-6">
+		<button type="button" class="close" data-dismiss="alert">×</button>
+		Please <a href="#" {{action 'focus_project_selection'}}>select</a> a project.
+	</div>
+	{{/if}}
+	<div class="col col-sm-3"></div>
+	</div>    
 </div>
 <div class="panel panel-primary">
-    <div class="panel-heading text-center v-center">
+    <div id="id_project_selection" class="panel-heading text-center v-center">
         <h3 class="panel-title">~Okeanos Project Selection</h3>
     </div>
     <div class="panel-body">
@@ -19,8 +29,11 @@
                     </div>
                 </div>                
             </div>
-	    	<div class="text-center">
-	    	    ***Select your project first
+	    	<div class="text-center text-danger">
+	    	    {{alert_mes_network}}
+	    	</div>
+	    	<div class="text-center text-danger">
+	    		{{alert_mes_float_ip}}
 	    	</div>
         </div>        
         <div class="col col-lg-4 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">
@@ -135,22 +148,22 @@
         <h3 class="panel-title">Master Settings</h3>
     </div>
     <div class="panel-body text-center">
-	    <div class="horizontal">
+	    <div class="row horizontal">
 	        <div class="col col-sm-3">
 	        </div>	
 	        <div class="col col-sm-5">
 	            <h4 id = "vm_flavors_Master" class="btn-group">Predefined VM Flavors: </h4>
                 <div class="btn-group">
 	                {{#each item in project_current.vm_flavors_choices}}
-		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_Master"
+		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_master"
 		            class="btn btn-primary btn-sm" disabled = false}}
 		            {{item}}{{/view}}
 		            {{/each}}
                     </div>
 	        </div>
+	        <div class="col col-sm-4">
+	        </div>
         </div>
-    </div>
-    <div class="panel-body text-center">
         <div class="row">
             <div class="col col-sm-4">
                 <h4 id = "master_cpu_summary">CPUs: {{this.master_cpu_selection}} </h4>
@@ -165,8 +178,8 @@
             <div class="col col-sm-4">
                 <h4 id="master_ram_summary">RAM: {{this.master_ram_selection}} </h4>
                 <div class="btn-group">
-                    {{#each item in project_current.mem_choices}}
-                    {{#view App.MEMSelButView value=item name="master_ram_button"
+                    {{#each item in project_current.ram_choices}}
+                    {{#view App.RAMSelButView value=item name="master_ram_button"
                     class="btn btn-primary btn-sm" disabled=master_ram_Not_Allow}}
                     {{item}}{{/view}}
                     {{/each}}
@@ -201,7 +214,7 @@
                 CPUs ({{this.cpu_available}} available)
             </div>
             <div class="col col-sm-4">
-                Memory size ({{this.ram_available}} MB available)
+                RAM size ({{this.ram_available}} MB available)
             </div>
             <div class="col col-sm-4">
                 Disk size ({{this.disk_available}} GB available)
@@ -215,22 +228,20 @@
         <h3 class="panel-title">Slaves Settings</h3>
     </div>
     <div class="panel-body text-center">
-	    <div class="horizontal">
-	        <div class="col col-sm-3">
-	        </div>	
+	    <div class="row horizontal">
+	        <div class="col col-sm-3"></div>	
 	        <div class="col col-sm-5">
 	            <h4 id = "vm_flavors_Slave" class="btn-group">Predefined VM Flavors: </h4>
                 <div class="btn-group">
 	                {{#each item in project_current.vm_flavors_choices}}
-		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_Slave"
+		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_slaves"
 		            class="btn btn-primary btn-sm" disabled = false}}
 		            {{item}}{{/view}}
 		            {{/each}}
                 </div>
 	        </div>
+	        <div class="col col-sm-4"></div>
         </div>
-    </div>
-    <div class="panel-body text-center">
         <div class="row">
             <div class="col col-sm-4">
                 <h4 id = "slaves_cpu_summary">CPUs each: {{this.slaves_cpu_selection}}</h4>
@@ -245,8 +256,8 @@
             <div class="col col-sm-4">
                 <h4 id="slaves_ram_summary">RAM each: {{this.slaves_ram_selection}}</h4>
                 <div class="btn-group">
-                    {{#each item in project_current.mem_choices}}
-                    {{#view App.MEMSelButView value=item name="slaves_ram_button" class="btn btn-primary btn-sm" disabled=slaves_ram_Not_Allow}}{{item}}{{/view}}
+                    {{#each item in project_current.ram_choices}}
+                    {{#view App.RAMSelButView value=item name="slaves_ram_button" class="btn btn-primary btn-sm" disabled=slaves_ram_Not_Allow}}{{item}}{{/view}}
                     {{/each}}
                 </div>
             </div>
@@ -279,7 +290,7 @@
                 CPUs ({{this.cpu_available}} available)
             </div>
             <div class="col col-sm-4">
-                Memory size ({{this.ram_available}} MB available)
+                RAM size ({{this.ram_available}} MB available)
             </div>
             <div class="col col-sm-4">
                 Disk size ({{this.disk_available}} GB available)
@@ -296,7 +307,7 @@
     </div>
     <div class="col col-sm-6">
         {{#view App.CreateClusterButView id="next"
-        class="next btn btn-success btn-md btn-block" disabled=create_cluster_disabled}}
+        class="next btn btn-success btn-md btn-block"}}
         Create Cluster
         {{/view}}
         <h4>{{message}}</h4>

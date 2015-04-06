@@ -95,7 +95,7 @@
   - name: Install orka as a python package
     tags: setupproject
     sudo: yes
-    pip: name={{project_path}}/{{orka_version}} chdir={{project_path}}
+    pip: name={{project_path}}/orka chdir={{project_path}}
 
   - name: Copy package.json to webserver
     tags: setupproject

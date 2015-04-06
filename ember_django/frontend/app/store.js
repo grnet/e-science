@@ -26,7 +26,6 @@ App.UserclusterAdapter = DS.ActiveModelAdapter.extend({
 		var data = this.serialize(record, {
 			includeId : true
 		});
-
 		var url = 'api/clusterchoices';
 		var headers = this.get('headers');
 
@@ -46,6 +45,29 @@ App.UserclusterAdapter = DS.ActiveModelAdapter.extend({
 			});
 		});
 	},
+	updateRecord: function(store, type, record) {
+		var data = this.serialize(record, {
+			includeId : true
+		});
+		var url = 'api/clusterchoices';
+		var headers = this.get('headers');
+
+		return new Ember.RSVP.Promise(function(resolve, reject) {
+			jQuery.ajax({
+				type : 'PUT',
+				headers : headers,
+				url : url,
+				dataType : 'json',
+				data : data
+			}).then(function(data) {
+				Ember.run(null, resolve, data);
+			}, function(jqXHR) {
+				jqXHR.then = null;
+				// tame jQuery's ill mannered promises
+				Ember.run(null, reject, jqXHR);
+			});
+		});
+	}
 });
 
 App.UserclusterSerializer = DS.RESTSerializer.extend({
@@ -56,10 +78,10 @@ App.UserclusterSerializer = DS.RESTSerializer.extend({
 		cluster_size : {serialize: false},
 		cluster_status : {serialize: false},
 		cpu_master : {serialize: false},
-		mem_master : {serialize: false},
+		ram_master : {serialize: false},
 		disk_master : {serialize: false},
 		cpu_slaves : {serialize: false},
-		mem_slaves : {serialize: false},
+		ram_slaves : {serialize: false},
 		disk_slaves : {serialize: false},
 		disk_template : {serialize: false},
 		os_image : {serialize: false},

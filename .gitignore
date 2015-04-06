@@ -8,6 +8,7 @@
 *.log
 *_root_password
 ansible_hosts*
+*_rebuild.sh
 .settings/
 bower_components/
 node_modules/

@@ -18,6 +18,8 @@ class UserInfo(models.Model):
     """Definition of a User object model."""
     user_id = models.AutoField("User ID", primary_key=True, null=False,
                                help_text="Auto-increment user id")
+    user_name = models.CharField("User Name", max_length=255, blank=True,
+                                 help_text="Name or email linked to ~okeanos token")    
     user_theme = models.CharField("User Theme", blank=True, max_length=255)
     uuid = models.CharField("UUID", null=False, blank=False, unique=True,
                             default="", max_length=255,
@@ -26,7 +28,6 @@ class UserInfo(models.Model):
     okeanos_token = models.CharField('Okeanos Token', max_length=64,
                                      null=True, blank=True, unique=True,
                                      help_text="Okeanos Authentication Token ")
-
     master_vm_password = models.CharField("Master VM Password", max_length=255,
                                blank=True, help_text="Root password of master VM")
 
@@ -74,11 +75,11 @@ class ClusterCreationParams(models.Model):
     # Available cpus
     cpu_av = models.IntegerField("Available Cpus", null=True,
                                  help_text="Available Cpus")
-    # Maximum allowed memory
-    mem_max = models.IntegerField("Max Ram", null=True,
+    # Maximum allowed ram
+    ram_max = models.IntegerField("Max Ram", null=True,
                                   help_text="Maximum Allowed Ram")
-    # Available memory
-    mem_av = models.IntegerField("Available Ram", null=True,
+    # Available ram
+    ram_av = models.IntegerField("Available Ram", null=True,
                                  help_text="Available Ram")
     # Maximum allowed disk size
     disk_max = models.IntegerField("Max disk size", null=True,
@@ -86,10 +87,16 @@ class ClusterCreationParams(models.Model):
     # Available disk size
     disk_av = models.IntegerField("Available disk size", null=True,
                                   help_text="Available disk size")
+    # network
+    net_av = models.IntegerField("Available Networks", null=True,
+                                 help_text="Available Networks")
+    # floating ips
+    floatip_av = models.IntegerField("Available floating IPs", null=True,
+                                     help_text="Available floating IPs")
     # Cpu choices
     cpu_choices = IntegerArrayField()  # ArrayField
-    # Memory choices
-    mem_choices = IntegerArrayField()  # ArrayField
+    # Ram choices
+    ram_choices = IntegerArrayField()  # ArrayField
     # Disk size choices
     disk_choices = IntegerArrayField()  # ArrayField
     # Disk template choices
@@ -170,11 +177,11 @@ CLUSTER_STATUS_CHOICES = (
     ("2", "Pending"),
 )
 
-# HADOOP_STATUS_CHOICES = (
-#     ("0", "Stop"),
-#     ("1", "Start"),
-#     ("2", "Format"),
-# )
+HADOOP_STATUS_CHOICES = (
+     ("0", "Stopped"),
+     ("1", "Started"),
+     ("2", "Pending"),
+ )
 
 class ClusterInfo(models.Model):
     """Definition of a Hadoop Cluster object model."""
@@ -193,7 +200,7 @@ class ClusterInfo(models.Model):
     cpu_master = models.IntegerField("Master Cpu", null=False,
                                      help_text="Cpu number of master VM")
 
-    mem_master = models.IntegerField("Master Ram", null=False,
+    ram_master = models.IntegerField("Master Ram", null=False,
                                      help_text="Ram of master VM")
 
     disk_master = models.IntegerField("Master Disksize", null=False,
@@ -202,7 +209,7 @@ class ClusterInfo(models.Model):
     cpu_slaves = models.IntegerField("Slaves Cpu", null=False,
                                      help_text="Cpu number of Slave VMs")
 
-    mem_slaves = models.IntegerField("Slaves Ram", null=False,
+    ram_slaves = models.IntegerField("Slaves Ram", null=False,
                                      help_text="Ram of slave VMs")
 
     disk_slaves = models.IntegerField("Slaves Disksize", null=False,
@@ -229,17 +236,16 @@ class ClusterInfo(models.Model):
     state = models.CharField("Task State", max_length=255,
                                blank=True, help_text="Celery task state")
     
-#     hadoop_status = models.CharField("Hadoop Status", max_length=1,
-#                                     choices=HADOOP_STATUS_CHOICES,
-#                                       null=False, help_text="Stop/Start/Format"
-#                                       " hadoop status on the cluster")
+    hadoop_status = models.CharField("Hadoop Status", max_length=1,
+                                     choices=HADOOP_STATUS_CHOICES,
+                                       blank=False, help_text="Stopped/Started/Pending"
+                                       " hadoop status on the cluster")
 
     class Meta:
         verbose_name = "Cluster"
         app_label = 'backend'
 
     def __unicode__(self):
-        return ("%d, %s, %d, %s") % (self.id, self.cluster_name, self.cluster_size,
-                                 self.cluster_status)
-#         return ("%d, %s, %d, %s , %s") % (self.id, self.cluster_name, self.cluster_size,
-#                                  self.cluster_status, self.hadoop_status)
+
+        return ("%d, %s, %d, %s , %s") % (self.id, self.cluster_name, self.cluster_size,
+                                          self.cluster_status, self.hadoop_status)

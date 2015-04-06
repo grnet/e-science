@@ -24,15 +24,26 @@ class PGArrayField(serializers.WritableField):
         return obj
 
 
+class HdfsSerializer(serializers.Serializer):
+    """
+    Serializer for put files in hdfs from ftp-http
+    """
+    id = serializers.CharField()
+    source = serializers.CharField()
+    dest = serializers.CharField()
+    user = serializers.CharField(required=False)
+    password = serializers.CharField(required=False)
+
+
 class ClusterCreationParamsSerializer(serializers.ModelSerializer):
     """
     Serializer for ClusterCreationParams model.
-    Custom fields are cpu_choices, mem_choices, vms_av, disk_choices,
+    Custom fields are cpu_choices, ram_choices, vms_av, disk_choices,
     disk_template and os_choices. They are custom because their model
     counterparts are arrays.
     """
     cpu_choices = PGArrayField(required=False)
-    mem_choices = PGArrayField(required=False)
+    ram_choices = PGArrayField(required=False)
     vms_av = PGArrayField(required=False)
     disk_choices = PGArrayField(required=False)
     disk_template = PGArrayField(required=False)
@@ -42,8 +53,8 @@ class ClusterCreationParamsSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClusterCreationParams
         fields = ('id', 'user_id', 'project_name', 'vms_max', 'vms_av',
-                  'cpu_max', 'cpu_av', 'mem_max', 'mem_av', 'disk_max',
-                  'disk_av', 'cpu_choices', 'mem_choices', 'disk_choices',
+                  'cpu_max', 'cpu_av', 'net_av', 'floatip_av', 'ram_max', 'ram_av', 
+                  'disk_max', 'disk_av', 'cpu_choices', 'ram_choices', 'disk_choices',
                   'disk_template', 'os_choices', 'ssh_keys_names')
 
 
@@ -68,31 +79,35 @@ class ClusterchoicesSerializer(serializers.Serializer):
     Serializer for ember request with user's
     choices for cluster creation.
     """
-    cluster_name = serializers.CharField()
+    cluster_name = serializers.CharField(required=False)
 
-    cluster_size = serializers.IntegerField()
+    id = serializers.CharField(required=False)
 
-    cpu_master = serializers.IntegerField()
+    cluster_size = serializers.IntegerField(required=False)
 
-    mem_master = serializers.IntegerField()
+    cpu_master = serializers.IntegerField(required=False)
 
-    disk_master = serializers.IntegerField()
+    ram_master = serializers.IntegerField(required=False)
 
-    cpu_slaves = serializers.IntegerField()
+    disk_master = serializers.IntegerField(required=False)
 
-    mem_slaves = serializers.IntegerField()
+    cpu_slaves = serializers.IntegerField(required=False)
 
-    disk_slaves = serializers.IntegerField()
+    ram_slaves = serializers.IntegerField(required=False)
 
-    disk_template = serializers.CharField()
+    disk_slaves = serializers.IntegerField(required=False)
 
-    os_choice = serializers.CharField()
+    disk_template = serializers.CharField(required=False)
 
-    project_name = serializers.CharField()
+    os_choice = serializers.CharField(required=False)
+
+    project_name = serializers.CharField(required=False)
     
     ssh_key_selection = serializers.CharField(required=False)
 
     task_id = serializers.CharField(required=False)
+    
+    hadoop_status = serializers.CharField(required=False)
 
 
 class ClusterInfoSerializer(serializers.ModelSerializer):
@@ -100,9 +115,9 @@ class ClusterInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClusterInfo
         fields = ('id', 'cluster_name', 'action_date', 'cluster_status', 'cluster_size',
-                  'cpu_master', 'mem_master', 'disk_master', 'cpu_slaves',
-                  'mem_slaves', 'disk_slaves', 'disk_template', 'os_image',
-                  'master_IP', 'project_name', 'task_id', 'state')
+                   'cpu_master', 'ram_master', 'disk_master', 'cpu_slaves',
+                   'ram_slaves', 'disk_slaves', 'disk_template', 'os_image',
+                   'master_IP', 'project_name', 'task_id', 'state', 'hadoop_status')
 
 
 class UserInfoSerializer(serializers.ModelSerializer):
@@ -117,7 +132,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserInfo
-        fields = ('id', 'user_id', 'user_theme', 'cluster', 'master_vm_password', 'escience_token', 'clusters')
+        fields = ('id', 'user_id', 'user_name', 'user_theme', 'cluster', 'master_vm_password', 'escience_token', 'clusters')
 
     def number_of_clusters(self, obj):
         """

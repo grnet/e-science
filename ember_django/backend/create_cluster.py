@@ -155,6 +155,7 @@ class YarnCluster(object):
             if d['instance_id'] is None and d['port_id'] is None:
                 available_ips += 1
         if available_ips > 0:
+            logging.log(REPORT, ' Floating IP quota is ok')
             return 0
         else:
             msg = 'Floating IP not available in project: ' + self.opts['project_name']
@@ -190,8 +191,8 @@ class YarnCluster(object):
         limit_ram = dict_quotas[self.project_id]['cyclades.ram']['limit']
         usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
         available_ram = (limit_ram - usage_ram) / Bytes_to_MB - pending_ram
-        ram_req = self.opts['mem_master'] + \
-            self.opts['mem_slaves'] * (self.opts['cluster_size'] - 1)
+        ram_req = self.opts['ram_master'] + \
+            self.opts['ram_slaves'] * (self.opts['cluster_size'] - 1)
         if available_ram < ram_req:
             msg = 'Cyclades ram out of limit'
             raise ClientError(msg, error_quotas_ram)
@@ -225,6 +226,7 @@ class YarnCluster(object):
         for checker in [func for (order, func) in sorted(self._DispatchCheckers.items())]:
             # for k, checker in self._DispatchCheckers.iteritems():
             retval = checker()
+            # print checker.__name__ + ":" + str(retval) #debug
         return retval
 
     def get_flavor_id_master(self, cyclades_client):
@@ -239,7 +241,7 @@ class YarnCluster(object):
             raise ClientError(msg, error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
-            if flavor['ram'] == self.opts['mem_master'] and \
+            if flavor['ram'] == self.opts['ram_master'] and \
                                 flavor['SNF:disk_template'] == self.opts['disk_template'] and \
                                 flavor['vcpus'] == self.opts['cpu_master'] and \
                                 flavor['disk'] == self.opts['disk_master']:
@@ -259,7 +261,7 @@ class YarnCluster(object):
             raise ClientError(msg, error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
-            if flavor['ram'] == self.opts['mem_slaves'] and \
+            if flavor['ram'] == self.opts['ram_slaves'] and \
                                 flavor['SNF:disk_template'] == self.opts['disk_template'] and \
                                 flavor['vcpus'] == self.opts['cpu_slaves'] and \
                                 flavor['disk'] == self.opts['disk_slaves']:
@@ -343,6 +345,8 @@ class YarnCluster(object):
 
     def create_bare_cluster(self):
         """Creates a bare ~okeanos cluster."""
+        server_home_path = expanduser('~')
+        server_ssh_keys = join(server_home_path, ".ssh/id_rsa.pub")
         pub_keys_path = ''
         logging.log(SUMMARY, ' Authentication verified')
         current_task.update_state(state="Authenticated")
@@ -377,7 +381,7 @@ class YarnCluster(object):
             set_cluster_state(self.opts['token'], self.cluster_id, " Creating ~okeanos cluster (1/3)")
 
             self.HOSTNAME_MASTER_IP, self.server_dict = \
-                cluster.create('', pub_keys_path, '')
+                cluster.create(server_ssh_keys, pub_keys_path, '')
             sleep(15)
         except Exception:
             # If error in bare cluster, update cluster status as destroyed
@@ -408,13 +412,8 @@ class YarnCluster(object):
             set_cluster_state(self.opts['token'], self.cluster_id,
                           ' Installing and configuring Yarn (3/3)')
 
-            install_yarn(list_of_hosts, self.HOSTNAME_MASTER_IP,
+            install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.cluster_name_postfix_id, self.hadoop_image, self.ssh_file)
-
-            # If Yarn cluster is build, update cluster status as active
-            set_cluster_state(self.opts['token'], self.cluster_id,
-                              ' Yarn Cluster is active', status='Active',
-                              master_IP=self.HOSTNAME_MASTER_IP)
 
         except Exception, e:
             logging.error(' Fatal error:' + str(e.args[0]))
@@ -425,7 +424,8 @@ class YarnCluster(object):
             raise
 
         finally:
-            os.system('rm ' + self.ssh_file)
+            if self.ssh_file != 'no_ssh_key_selected':
+                os.system('rm ' + self.ssh_file)
 
         return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass
 

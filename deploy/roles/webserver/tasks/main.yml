@@ -1,197 +1,109 @@
 ---
-  - name: Install curl
-    apt: name=curl
-    sudo: yes
-    tags: installations
-
-  - name: Get rabbitmq-server latest version
-    tags: installations
-    sudo: yes
-    get_url: url=https://www.rabbitmq.com/releases/rabbitmq-server/v3.4.3/rabbitmq-server_3.4.3-1_all.deb dest=./
-
-  - name: Install apt keys
-    apt_key: "url={{item.url}}"
-    sudo: yes
-    with_items:
-      - { url: 'http://nginx.org/keys/nginx_signing.key' }
-      - { url: 'http://packages.erlang-solutions.com/debian/erlang_solutions.asc' }
-    tags: installations
-
-  - name: Adding repos
-    apt_repository: repo='{{item}}' state=present update_cache=yes
-    sudo: yes
-    with_items:
-      - deb http://ftp.debian.org/debian testing main contrib
-      - deb http://ftp.debian.org/debian/ jessie-updates main contrib
-      - deb http://nginx.org/packages/debian/ wheezy nginx
-      - deb-src http://nginx.org/packages/debian/ wheezy nginx
-      - deb http://packages.erlang-solutions.com/debian wheezy contrib
-    tags: installations
-
-  - name: Copy my_preferences file
-    sudo: yes
-    copy: src=my_preferences dest=/etc/apt/preferences.d/
-    tags: installations
-
-  - name: Assert that no old version of rabbitmq is on webserver
-    sudo: yes
-    tags: instalaltions
-    apt: name=rabbitmq-server purge=yes state=absent force=yes
-
-  - name: Install RabbitMQ broker, PostgreSQL and needed dependencies
-    tags: installations
-    sudo: yes
-    apt: "name={{item}}"
-    with_items:
-      - erlang
-      - postgresql
-      - postgresql-client
-      - python-psycopg2
-      - libpq-dev
-      - python-dev
-      - git
-      - python-flup
-      - nginx
-      - sshpass
-
-  - name: Install rabbitmq-server latest version
-    tags: installations
-    sudo: yes
-    apt: deb=rabbitmq-server_3.4.3-1_all.deb
-
-  - name: Install Celery, Django and Django rest framework
-    tags: installations
-    sudo: yes
-    pip: "name={{item.name}}"
-    with_items:
-      - { name: 'celery' }
-      - { name: 'Django' }
-      - { name: 'rest_framework_ember' }
-      - { name: 'djangorestframework==2.4.3' }
-      - { name: 'markdown' }
-      - { name: 'django-filter' }
-      - { name: 'djorm-pgarray' }
-      - { name: 'paramiko' }
-      - { name: 'uwsgi' }
-      - { name: 'requests' }
-      - { name: 'django-celery' }
-      - { name: 'flower' }
-
-  - name: Rabbitmq-server vhost configuration
-    tags: installations
-    sudo: yes
-    rabbitmq_vhost: name=/escience_tasks state=present
-
-  - name: Rabbitmq-server user configuration
-    tags: installations
-    sudo: yes
-    rabbitmq_user: user=orkarbmq password=orkapass vhost=/escience_tasks configure_priv=.* read_priv=.* write_priv=.* state=present
-
   - name: create directory for projects
-    tags: setupproject
+    tags: postimage
     file: path={{my_project_dir}} state=directory
 
   - name: Git clone e-science project in the git directory
-    tags: setupproject
+    tags: postimage
     git: repo={{escience_repo}} dest={{my_project_dir}}/{{my_project_name}} version={{escience_version|default(origin)}}
 
   - name: Install orka as a python package
-    tags: setupproject
+    tags: postimage
     sudo: yes
-    pip: name={{project_path}}/{{orka_version}} chdir={{project_path}}
+    pip: name={{project_path}}/orka chdir={{project_path}}
 
   - name: Change owner of conf and logs
     file: path={{user_home}}/{{item}} recurse=yes state=directory
-    tags: nginxsetup
+    tags: postimage
     with_items:
       - conf
       - logs
 
   - name: Copy settings.j2 file
-    tags: djangosetup
+    tags: postimage
     template: src=settings.j2 owner=orka_admin mode=0744 dest={{settings_path}}/settings.py
 
   - name: Edit pg_hba.conf
     sudo: yes
     lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
-    tags: postgres
+    tags: postimage
 
   - name: Restart PostgreSql service
     sudo: yes
     service: name=postgresql state=restarted
-    tags: postgres
+    tags: postimage
 
   - name: Create PostgreSql user
     sudo: yes
     postgresql_user: name={{db_user}} password={{db_password}} role_attr_flags=CREATEDB,NOSUPERUSER,NOCREATEROLE
-    tags: postgres
+    tags: postimage
 
   - name: Create PostgreSql database
     sudo: yes
     postgresql_db: name={{db_name}} owner={{db_user}}
-    tags: postgres
+    tags: postimage
 
   - name: Django project syncdb
     django_manage: command=syncdb app_path={{project_path}}/{{ember_django_dir}}
-    tags: djangosetup
+    tags: postimage
 
   - name: Django project migrate
     django_manage: command=migrate app_path={{project_path}}/{{ember_django_dir}}
-    tags: djangosetup
+    tags: postimage
 
   - name: Revert pg_hba.conf to default
     sudo: yes
     lineinfile: line="local\tall\t\tpostgres\t\t\t\tpeer" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=trust)" backrefs=yes
-    tags: postgres
+    tags: postimage
 
   - name: Restart PostgreSql service
     sudo: yes
     service: name=postgresql state=restarted
-    tags: postgres
+    tags: postimage
 
   - name: Create Django superuser
     shell: echo "from django.contrib.auth.models import User; User.objects.create_superuser('{{django_admin_name}}', '{{django_admin_email}}', '{{django_admin_password}}')" | python manage.py shell chdir={{my_project_dir}}/{{my_project_name}}/{{ember_django_dir}}
-    tags: djangosetup
+    tags: postimage
 
   - name: Copy uwsgi.ini file
-    tags: nginxsetup
+    tags: postimage
     copy: src=uwsgi.ini dest=./conf owner=orka_admin mode=0744
 
   - name: Copy nginx.conf file
-    tags: nginxsetup
+    tags: postimage
     template: src=nginx.j2 dest=./conf owner=orka_admin
 
   - name: Rename nginx.j2 template to nginx.conf
-    tags: nginxsetup
+    tags: postimage
     command: mv nginx.j2 nginx.conf chdir=./conf
   
   - name: Edit ngnix.conf in /etc/nginx
     sudo: yes
     lineinfile: line="include {{user_home}}/conf/nginx.conf;" insertafter="http {" dest="/etc/nginx/nginx.conf"
-    tags: nginxsetup
+    tags: postimage
 
   - name: Restart Nginx service
     sudo: yes
     service: name=nginx state=restarted
-    tags: nginxsetup
+    tags: postimage
 
   - name: Install uwsgi-plugin-python
     apt: name=uwsgi-plugin-python state=present
     sudo: yes
-    tags: nginxsetup
+    tags: postimage
 
   - name: Start uWSGI service
-    tags: nginxsetup
+    tags: postimage
     command: uwsgi --ini {{user_home}}/conf/uwsgi.ini
     args:
       chdir: "{{project_path}}/{{ember_django_dir}}"
 
   - name: Run collectstatic command
-    tags: nginxsetup
+    tags: postimage
     django_manage: command=collectstatic app_path={{project_path}}/{{ember_django_dir}}
 
   - name: Run celery as a daemon
-    tags: celerystart
+    tags: postimage
     command: celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%h.log
     args:
       chdir: "{{project_path}}/{{ember_django_dir}}"

@@ -21,7 +21,6 @@
     apt_repository: repo='{{item}}' state=present update_cache=yes
     sudo: yes
     with_items:
-      - deb http://ftp.debian.org/debian testing main contrib
       - deb http://ftp.debian.org/debian/ jessie-updates main contrib
       - deb http://nginx.org/packages/debian/ wheezy nginx
       - deb-src http://nginx.org/packages/debian/ wheezy nginx
@@ -102,7 +101,7 @@
   - name: Install orka as a python package
     tags: setupproject
     sudo: yes
-    pip: name={{project_path}}/{{orka_version}} chdir={{project_path}}
+    pip: name={{project_path}}/orka chdir={{project_path}}
 
   - name: Copy package.json to webserver
     tags: setupproject

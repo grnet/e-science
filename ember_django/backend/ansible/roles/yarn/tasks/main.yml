@@ -22,6 +22,11 @@
        - oracle-java8-set-default
     tags: preconfig
 
+  - name: Install kamaki
+    tags: installations
+    pip: name=kamaki version=0.13.1 state=present
+    tags: preconfig
+
   - name: Disable ipv6
     sysctl: "name={{item.name}} value={{item.value}} state={{item.state}}"
     tags: preconfig
@@ -71,12 +76,23 @@
     register: p
     delegate_to: 127.0.0.1
 
-  - name: copy authorized_keys to hduser .ssh directory
+  - name: copy app user authorized_keys to hduser .ssh directory
     tags: postconfig
     authorized_key: user=hduser key="{{ item }}"
     with_file:
       - "{{ ssh_file_name }}"
     when: p.stat.exists
+
+  - name: copy server authorized_keys to hduser .ssh directory
+    tags: postconfig
+    authorized_key: user=hduser key="{{ item }}"
+    with_file:
+      - "{{ path | expanduser }}"
+
+  - name: create master vm root user ssh key
+    user: name=root generate_ssh_key=yes shell=/bin/bash state=present
+    tags: postconfig
+    when: is_master
 
   - name: change owner of hduser auth keys file
     tags: postconfig
@@ -88,16 +104,28 @@
     shell: sudo -u hduser cat {{hadoopuser_path}}/.ssh/id_rsa.pub >> {{hadoopuser_path}}/.ssh/authorized_keys
     when: is_master
 
-  - name: copy master public ssh key to local box
+  - name: copy master hduser public ssh key to local box
     tags: postconfig
-    fetch: src={{hadoopuser_path}}/.ssh/id_rsa.pub dest=/tmp/{{master_key}} flat=yes
+    fetch: src={{hadoopuser_path}}/.ssh/id_rsa.pub dest=/tmp/{{master_key_hduser}} flat=yes
     when: is_master
 
-  - name: copy local box master ssh key to hduser
+  - name: copy master root public ssh key to local box
+    tags: postconfig
+    fetch: src=/root/.ssh/id_rsa.pub dest=/tmp/{{master_key_root}} flat=yes
+    when: is_master
+
+  - name: copy local box master hduser ssh key to hduser
     tags: postconfig
     authorized_key: user=hduser key="{{ item }}"
     with_file:
-      - /tmp/{{master_key}}
+      - /tmp/{{master_key_hduser}}
+    when: is_slave
+
+  - name: copy local box master root ssh key to root every VM
+    tags: postconfig
+    authorized_key: user=root key="{{ item }}"
+    with_file:
+      - /tmp/{{master_key_root}}
     when: is_slave
 
   - name: chown hadoop-src from root to hadoop group
@@ -136,7 +164,7 @@
       - chown hduser:hadoop /app/hadoop/tmp
       - chmod 750 /app/hadoop/tmp
 
-  - name: copy yarn configuration xml files in every node
+  - name: copy yarn configuration xml and kamakirc files in every node
     tags: postconfig
     template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
     with_items: 
@@ -144,6 +172,7 @@
       - { src: 'mapred-site.j2', dest: '/usr/local/hadoop/etc/hadoop/mapred-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'hdfs-site.j2', dest: '/usr/local/hadoop/etc/hadoop/hdfs-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'yarn-site.j2', dest: '/usr/local/hadoop/etc/hadoop/yarn-site.xml', owner: 'hduser', group: 'hadoop' }
+      - { src: 'kamakirc.j2', dest: '/home/hduser/.kamakirc', owner: 'hduser', group: 'hadoop' }
  
   - name: create masters and slaves files in hadoop-yarn master node
     tags: postconfig

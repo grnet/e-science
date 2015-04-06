@@ -22,7 +22,9 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
 from backend.okeanos_utils import check_quota, check_credentials
+from random import randint
 import unittest, time, re
+
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
@@ -35,7 +37,6 @@ class ClusterTest(unittest.TestCase):
     '''
     def setUp(self):
         self.driver = webdriver.Firefox()
-        self.driver.maximize_window()
         self.driver.implicitly_wait(30)
         self.verificationErrors = []
         self.accept_next_alert = True
@@ -95,8 +96,20 @@ class ClusterTest(unittest.TestCase):
             ) 
         except: self.fail("time out")                 
         user_quota = check_quota(self.token, self.project_id)
-        project_details = self.project_name + '        ' + 'VMs:' + str(user_quota['cluster_size']['available']) + '  ' + 'CPUs:' + str(user_quota['cpus']['available']) + '  ' + 'RAM:' + str(user_quota['ram']['available']) + 'MB' + '  ' + 'Disk:' + str(user_quota['disk']['available']) + 'GB'                            
-        Select(driver.find_element_by_id("project_id")).select_by_visible_text(project_details)
+        list = Select(driver.find_element_by_id("project_id")).options
+        no_project = True
+        for index in range(0,len(list)):
+            if re.match(self.project_name, list[index].text):
+                Select(driver.find_element_by_id("project_id")).select_by_visible_text(list[index].text)  
+                no_project = False
+                break
+        if no_project:
+               self.assertTrue(False,'No project found with given project name')                    
+        driver.find_element_by_id("cluster_name").clear()
+        cluster_name = 'test_cluster' + str(randint(0,9999))
+        driver.find_element_by_id("cluster_name").send_keys(cluster_name)
+        hadoop_image = 'Hadoop-2.5.2'                           
+        Select(driver.find_element_by_id("os_systems")).select_by_visible_text(hadoop_image)
         return driver
 
     def is_element_present(self, how, what):

@@ -4,6 +4,7 @@ App.User = DS.Model.extend({
 	token : attr('string'), 			// okeanos token
 	user_id : attr('number'), 			// user_id in backend database
 	// may have more than one clusters
+	user_name : attr('string'),          // user name or email
 	user_theme : attr('string'),        // user's theme in backend database
 	clusters : DS.hasMany('usercluster', {
 		async : true,
@@ -22,16 +23,17 @@ App.Usercluster = DS.Model.extend({
 	cluster_status : attr('string'),
 	master_IP : attr('string'),
 	cpu_master : attr(),
-	mem_master : attr(),
+	ram_master : attr(),
 	disk_master : attr(),
 	cpu_slaves : attr(),
-	mem_slaves : attr(),
+	ram_slaves : attr(),
 	disk_slaves : attr(),
 	disk_template : attr(),
 	os_image : attr(),
 	project_name : attr(),
 	task_id : attr(),
 	state : attr(),
+	hadoop_status : attr(),
 	// user that created the cluster
 	user : DS.belongsTo('user', {
 		inverse : 'clusters'
@@ -64,17 +66,7 @@ App.Usercluster = DS.Model.extend({
 			return "glyphicon glyphicon-time text-warning";
 
 		default:
-			return "glyphicon glyphicon glyphicon-question-sign text-muted";
-		}
-	}.property('cluster_status'),
-	cluster_hadoop_status_class : function()
-	{
-		var status = this.get('cluster_status');
-		switch (status){
-		case "1":
-			return "glyphicon glyphicon-play text-success";
-		default:
-			return "glyphicon glyphicon-stop text-danger";
+			return "glyphicon glyphicon-question-sign text-muted";
 		}
 	}.property('cluster_status'),
 	cluster_status_pending : function(){
@@ -100,11 +92,108 @@ App.Usercluster = DS.Model.extend({
 		}else{
 			return '';
 		}
-	}.property('cluster_status_active'),
+	}.property('cluster_status_active'),	
+	cluster_hadoop_status_class : function()
+	{
+		var status = this.get('hadoop_status');
+		var cluster_status = this.get('cluster_status');
+		if (cluster_status !== "1"){
+			status = "0";
+		}
+		switch (status){
+		case "0":
+			return "glyphicon glyphicon-stop text-danger";
+		case "1":
+			return "glyphicon glyphicon-play text-success";
+		case "2":
+			return "glyphicon glyphicon-hourglass text-warning";
+		default:
+			return "glyphicon glyphicon-question-sign text-muted";
+		}
+	}.property('hadoop_status','cluster_status'),
+	hadoop_status_verbose : function(){
+		var cluster_status = this.get('cluster_status');
+		var hadoop_status = this.get('hadoop_status');
+		var state = this.get('state');
+		if (cluster_status == '1' && hadoop_status == '2'){
+			return state;
+		}else
+		{
+			return '';
+		}
+	}.property('hadoop_status', 'cluster_status'),
+	hadoop_action_start_disabled : function(){
+		var status = this.get('hadoop_status');
+		var cluster_status = this.get('cluster_status');
+		if (cluster_status !== "1"){
+			status = "0";
+		}
+		switch (status){
+		case "0":
+			return false;
+		default:
+			return true;
+		}
+	}.property('hadoop_status','cluster_status'),
+	hadoop_action_stop_disabled : function(){
+		var status = this.get('hadoop_status');
+		var cluster_status = this.get('cluster_status');
+		if (cluster_status !== "1"){
+			status = "0";
+		}
+		switch (status){
+		case "1":
+			return false;
+		default:
+			return true;
+		}
+	}.property('hadoop_status','cluster_status'),
+	hadoop_action_format_disabled : function(){
+		var status = this.get('hadoop_status');
+		var cluster_status = this.get('cluster_status');
+		if (cluster_status !== "1"){
+			status = "0";
+		}
+		switch (status){
+		case "0":
+			return false;
+		case "1":
+			return false;
+		default:
+			return true;
+		}
+	}.property('hadoop_status','cluster_status'),
+	hadoop_status_active : function(){
+		var status = this.get('hadoop_status');
+		var cluster_status = this.get('cluster_status');
+		if (cluster_status !== "1"){
+			status = "0";
+		}
+		switch (status){
+		case "1":
+			return true;
+		default:
+			return false;
+		}
+	}.property('hadoop_status','cluster_status'),
+	hadoop_status_class_start : function(){
+		return "glyphicon glyphicon-play text-success";
+	}.property(),
+	hadoop_status_class_stop : function(){
+		return "glyphicon glyphicon-stop text-danger";
+	}.property(),
+	hadoop_status_class_format : function(){
+		return "glyphicon glyphicon-erase text-warning";
+	}.property(),
 	cluster_status_id : function (){
 		var cluster_name_sort = this.get('cluster_name').slice(7);
-		var status_id = "id_".concat("status_",cluster_name_sort);
-		return status_id;	
+		var cluster_status_id = "id_".concat("cluster_status_",cluster_name_sort);
+		return cluster_status_id;	
+	}.property('cluster_name'),
+	hadoop_status_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var hadoop_status_id = "id_".concat("hadoop_status_",cluster_name_sort);
+		return hadoop_status_id;	
 	}.property('cluster_name'),
 	cluster_ip_id : function (){
 		var cluster_name_sort = this.get('cluster_name').slice(7);
@@ -116,15 +205,62 @@ App.Usercluster = DS.Model.extend({
 		var destroy_id = "id_".concat("destroy_",cluster_name_sort);
 		return destroy_id;	
 	}.property('cluster_name'),
+	hadoop_start_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var start_id = "id_".concat("hadoop_start_",cluster_name_sort);
+		return start_id;	
+	}.property('cluster_name'),
+	hadoop_stop_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var stop_id = "id_".concat("hadoop_stop_",cluster_name_sort);
+		return stop_id;	
+	}.property('cluster_name'),
+	hadoop_format_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var format_id = "id_".concat("hadoop_format_",cluster_name_sort);
+		return format_id;	
+	}.property('cluster_name'),
 	cluster_confirm_id : function (){
 		var cluster_name_sort = this.get('cluster_name').slice(7);
 		var confirm_id = "id_".concat("confirm_",cluster_name_sort);
 		return confirm_id;	
 	}.property('cluster_name'),
-	cluster_confirm_delete : function(key, value){
-		this.set('confirm_delete', value);
-		return this.get('confirm_delete');
-	}.property()
+	cluster_confirm_action : function(key, value){
+		this.set('confirm_action', value);
+		return this.get('confirm_action');
+	}.property(),
+	cluster_confirm_action_verbose : function(key, value){
+		var confirm_action = this.get('cluster_confirm_action');
+		switch(confirm_action){
+		case 'cluster_delete':
+			return 'Destroy Cluster';
+		case 'hadoop_start':
+			return 'Start Hadoop';
+		case 'hadoop_stop':
+			return 'Stop Hadoop';
+		case 'hadoop_format':
+			return 'Format HDFS';
+		default:
+			return 'Confirm';
+		}
+	}.property('cluster_confirm_action')
+});
+
+App.Usermessages = DS.Model.extend({
+	// msg_types: 'default', 'primary', 'info', 'success', 'warning', 'danger'
+	msg_type : attr('string'),
+	msg_text : attr('string'),
+	inc: function(){
+		return Number(this.get('id'))+1;
+	}.property(),
+	msg_type_to_list_style : function(){
+		var base_type = this.get('msg_type');
+		return 'list-group-item-'+base_type+' spacious';
+	}.property('msg_type'),
+	msg_type_to_text_style : function(){
+		var base_type = this.get('msg_type');
+		return 'text-'+base_type;
+	}.property('msg_type'),
 });
 
 // App.User.reopenClass({
