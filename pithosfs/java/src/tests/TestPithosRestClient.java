@@ -18,7 +18,7 @@ import org.junit.Test;
 
 public class TestPithosRestClient {
 	private static final String PITHOS_CONTAINER = "";
-	private static final String PITHOS_FILE = "test/Stage.rar";
+	private static final String PITHOS_FILE = "testOutput.txt";
 	private static final String LOCAL_SOURCE_FILE = "testOutput.txt";
 	private static final String LOCAL_STREAMED_FILE = "testStreamData.txt";
 	private static final String PITHOS_OBJECT_NAME = "uploadedFile";
@@ -315,7 +315,7 @@ public class TestPithosRestClient {
 
 		client.createHdConnector();
 		// client.testGet_Container_Info();
-		// client.testGet_Pithos_Object_Metadata();
+		client.testGet_Pithos_Object_Metadata();
 		// client.testGet_Pithos_Object_Size();
 		// client.testGet_Pithos_Object();
 		// client.testGet_Pithos_Object_Block_Hashes();
@@ -325,7 +325,7 @@ public class TestPithosRestClient {
 		// client.testGet_Pithos_Object_Block_All();
 		// client.testRead_Pithos_Object();
 		// client.testRead_Pithos_Object_Block();
-		client.testPithos_Output_Stream();
+		// client.testPithos_Output_Stream();
 	}
 
 }

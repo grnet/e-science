@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Collection;
 
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 
 public interface PithosSystemStore {
@@ -69,13 +70,21 @@ public interface PithosSystemStore {
 
 	/**
 	 * 
-	 * @param ptihos_block
-	 *            : gets
+	 * @param pithos_container
+	 *            : the Pithos container on which the action will be performed.
+	 *            Leave it blank so as to refer to the default container that
+	 *            corresponds to 'Pithos
+	 * @param target_object
+	 *            : the object on which the seek method will seek on its blocks
+	 * @param target_block_hash
+	 *            : the hash of the selected block
 	 * @param offsetIntoPithosBlock
-	 * @return
+	 *            : the starting point of the range for the retrieved data
+	 * @return a file that includes the data of the requested chunk og data
+	 *         based on the defined offset
 	 */
-	public File seekPithosBlock(PithosBlock pithos_block,
-			long offsetIntoPithosBlock);
+	public File seekPithosBlock(String pithos_container, String target_object,
+			String target_block_hash, long offsetIntoPithosBlock);
 
 	/**
 	 * Get the hashes of all blocks that comprise the requested object
@@ -178,7 +187,7 @@ public interface PithosSystemStore {
 	 *            : the location of the object, that it is requested to be read,
 	 *            in Pithos
 	 */
-	public InputStream pithosObjectInputStream(String pithos_container,
+	public FSDataInputStream pithosObjectInputStream(String pithos_container,
 			String object_location);
 
 	/**

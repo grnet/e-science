@@ -4,6 +4,7 @@ import gr.grnet.escience.commons.Configurator;
 import gr.grnet.escience.commons.Settings;
 import gr.grnet.escience.fs.pithos.PithosBlock;
 import gr.grnet.escience.fs.pithos.PithosFileType;
+import gr.grnet.escience.fs.pithos.PithosInputStream;
 import gr.grnet.escience.fs.pithos.PithosObject;
 import gr.grnet.escience.fs.pithos.PithosSystemStore;
 import gr.grnet.escience.pithos.restapi.PithosRESTAPI;
@@ -18,6 +19,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 
 import com.google.gson.Gson;
@@ -48,7 +50,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	private File srcFile2bUploaded;
 	private File tmpFile2bUploaded;
 	private File destfile2bUploaded;
-	private File pithosBlockAsFile;
+	private File pithosBlockAsFile = new File("block");
 	private String fileExtension;
 	private int fileExtensionPointer;
 
@@ -65,6 +67,12 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 				hadoopConfiguration.getPithosUser().get("token"),// user-token
 				hadoopConfiguration.getPithosUser().get("username"));// username
 
+	}
+
+	public HadoopPithosConnector(String pithosUrl, String pithosToken,
+			String uuid) {
+		// - implement aPithos RESTAPI instance
+		super(pithosUrl, pithosToken, uuid);
 	}
 
 	/***
@@ -446,63 +454,49 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public File seekPithosBlock(PithosBlock pithos_block,
-			long offsetIntoPithosBlock) {
+	public File seekPithosBlock(String pithos_container, String target_object,
+			String target_block_hash, long offsetIntoPithosBlock) {
 
-//		 // - Get the Range of the byte for the requested block
-//		 long[] block_bytes_range = bytesRange(object_total_size, block_size,
-//		 object_blocks_number, block_location_pointer);
-//		
-//		 // - Create byte array for the object
-//		 // - Create Pithos request
-//		 setPithosRequest(new PithosRequest());
-//		
-//		 // - Request Parameters
-//		 // - JSON Format
-//		 getPithosRequest().getRequestParameters().put("format", "json");
-//		 // - Add requested parameter for the range
-//		 // - If it is not requested the last block, the add specific range
-//		 if (block_bytes_range[1] != object_total_size) {
-//		 getPithosRequest().getRequestHeaders().put(
-//		 "Range",
-//		 "bytes=" + block_bytes_range[0] + "-"
-//		 + block_bytes_range[1]);
-//		 } else {
-//		 getPithosRequest().getRequestHeaders().put("Range",
-//		 "bytes=" + block_bytes_range[0] + "-");
-//		 }
-//		
-//		 // - Read data object
-//		 try {
-//		 // - Get the chunk of the pithos object as a file
-//		 File block_data = (File) read_object_data(object_location,
-//		 pithos_container,
-//		 getPithosRequest().getRequestParameters(),
-//		 getPithosRequest().getRequestHeaders());
-//		
-//		 // - Return the created pithos object
-//		 return new PithosBlock(block_hash, block_data.length(),
-//		 serializeFile(block_data));
-//		 } catch (IOException e) {
-//		 e.printStackTrace();
-//		 return null;
-//		 }
+		// - Get required info for the object and the block
+		long object_total_size = getPithosObjectSize(pithos_container,
+				target_object);
+		long block_size = getPithosObjectBlockSize(pithos_container,
+				target_object);
 
-		// FileOutputStream fout;
-		//
-		// Integer i = (int) (long) offsetIntoPithosBlock;
-		//
-		// long block_len = pithos_block.getBlockLength();
-		// // Integer j = (int) (long) (block_len - offsetIntoPithosBlock);
-		//
-		//
-		//
-		//
-		// // - return the file
-		// return block;
-		//
-		// // convert array of bytes into file
-		return null;
+		// - Check if the requested offset if valid
+		if ((offsetIntoPithosBlock < object_total_size)
+				&& (offsetIntoPithosBlock < block_size)) {
+			// - Check if the requested offset is not larger than the total
+			// block size
+			// - Create byte array for the object
+			// - Create Pithos request
+			setPithosRequest(new PithosRequest());
+
+			// - Request Parameters
+			// - JSON Format
+			getPithosRequest().getRequestParameters().put("format", "json");
+
+			// - Add requested parameter for the range
+			getPithosRequest().getRequestHeaders().put("Range",
+					"bytes=" + offsetIntoPithosBlock + "-");
+		} else {
+			return null;
+		}
+
+		// - Read data object
+		try {
+			// - Get the chunk of the pithos object as a file
+			pithosBlockAsFile = (File) read_object_data(target_object,
+					pithos_container,
+					getPithosRequest().getRequestParameters(),
+					getPithosRequest().getRequestHeaders());
+
+			return pithosBlockAsFile;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	@Override
@@ -590,21 +584,45 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public InputStream pithosObjectInputStream(String pithos_container,
+	public FSDataInputStream pithosObjectInputStream(String pithos_container,
 			String object_location) {
+		// // - Get the file object from pithos
+		// File pithosObject = retrievePithosObject(pithos_container,
+		// object_location, null);
+		//
+		// // - Create input stream for pithos
+		// try {
+		// // - Add File data to the input stream
+		// InputStream pithosFileInputStream = new FileInputStream(
+		// pithosObject);
+		//
+		// // - Return the input stream wrapped into a FSDataINputStream
+		// return pithosFileInputStream;
+		// } catch (FileNotFoundException e) {
+		// e.printStackTrace();
+		// return null;
+		// }
+
 		// - Get the file object from pithos
-		File pithosObject = retrievePithosObject(pithos_container,
-				object_location, null);
+//		File pithosObject = retrievePithosObject(pithos_container,
+//				object_location, null);
 
 		// - Create input stream for pithos
 		try {
 			// - Add File data to the input stream
-			InputStream pithosFileInputStream = new FileInputStream(
-					pithosObject);
+			// FSDataInputStream pithosFileInputStream = new
+			// FSDataInputStream(new FileInputStream(pithosObject));
+			// FileInputStream fis = new FileInputStream(pithosObject);
+			// InputStream in = new BufferedInputStream(new
+			// FileInputStream(pithosObject));
+			// PositionedInputStream(in);
+
+			FSDataInputStream pithosFileInputStream = new FSDataInputStream(
+					new PithosInputStream(this));
 
 			// - Return the input stream wrapped into a FSDataINputStream
 			return pithosFileInputStream;
-		} catch (FileNotFoundException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}

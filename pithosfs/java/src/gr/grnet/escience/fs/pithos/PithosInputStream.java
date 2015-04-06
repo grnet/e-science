@@ -19,7 +19,7 @@ import org.apache.hadoop.fs.FileSystem;
  * structure of the corresponding one in the Amazon S3 API
  * 
  * @since March, 2015
- * @author Dimitris G. Kelaidonis (kelaidonis@gmail.com)
+ * @author Dimitris G. Kelaidonis (kelaidonis@gmail.com) & Ioannis Stenos (johnstenos83@gmail.com)
  * @version 0.1
  * 
  */
@@ -48,7 +48,7 @@ public class PithosInputStream extends FSInputStream {
 	private static final Log LOG = LogFactory.getLog(PithosInputStream.class
 			.getName());
 
-	private static final String TEST_FILE_FROM_PITHOS = "testOutput.txt";
+	private static final String TEST_FILE_FROM_PITHOS = "server.txt";
 
 	public PithosInputStream(HadoopPithosConnector pithos_conn) {
 		this.pithos_conn = pithos_conn;
@@ -164,12 +164,13 @@ public class PithosInputStream extends FSInputStream {
 		}
 		long offsetIntoBlock = target - targetBlockStart;
 
-		// read block blocks[targetBlock] from position offsetIntoBlock
-
+		// - Read block blocks[targetBlock] from position offsetIntoBlock
 		PithosBlock p_file_block = this.pithos_conn.retrievePithosBlock("",
-				"testOutput.txt", blocks[targetBlock].getBlockHash());
-		this.blockFile = pithos_conn.seekPithosBlock(p_file_block,
-				offsetIntoBlock);
+				TEST_FILE_FROM_PITHOS, blocks[targetBlock].getBlockHash());
+
+		// - Create block file
+		this.blockFile = pithos_conn.seekPithosBlock("", TEST_FILE_FROM_PITHOS,
+				p_file_block.getBlockHash(), offsetIntoBlock);
 
 		this.pos = target;
 		this.blockEnd = targetBlockEnd;
