@@ -1,4 +1,4 @@
-package org.orka.hadoop.commons;
+package gr.grnet.escience.commons;
 
 import java.io.BufferedWriter;
 import java.io.File;

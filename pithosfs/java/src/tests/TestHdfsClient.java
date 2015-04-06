@@ -1,8 +1,8 @@
 package tests;
 
-import java.io.IOException;
+import gr.grnet.escience.hdfs.client.OrkaHdfsClient;
 
-import org.orka.hadoop.hdfs.OrkaHdfsClient;
+import java.io.IOException;
 
 @SuppressWarnings("unused")
 public class TestHdfsClient {
