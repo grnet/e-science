@@ -182,7 +182,7 @@ public class PithosFileSystem extends FileSystem {
 	public FSDataInputStream open(Path arg0, int arg1) throws IOException {
 		// TODO: parse the container
 		return getHadoopPithosConnector().pithosObjectInputStream("pithos",
-				arg0.toString());
+				"server.txt");
 	}
 
 	@Override

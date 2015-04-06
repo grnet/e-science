@@ -42,9 +42,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 		PithosSystemStore {
 
 	private static final long serialVersionUID = 1L;
-	private static final String CONFIGURATION_FILE = "hadoopPithosConfiguration.json";
-	private static final Settings hadoopConfiguration = Configurator
-			.load(CONFIGURATION_FILE);
 	private PithosRequest request;
 	private PithosResponse response;
 	private File srcFile2bUploaded;
@@ -61,14 +58,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	/*****
 	 * Constructor
 	 */
-	public HadoopPithosConnector() {
-		// - implement aPithos RESTAPI instance
-		super(hadoopConfiguration.getPithosUser().get("url"),// pithos auth-url
-				hadoopConfiguration.getPithosUser().get("token"),// user-token
-				hadoopConfiguration.getPithosUser().get("username"));// username
-
-	}
-
 	public HadoopPithosConnector(String pithosUrl, String pithosToken,
 			String uuid) {
 		// - implement aPithos RESTAPI instance
