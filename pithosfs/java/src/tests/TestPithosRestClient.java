@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 
+import gr.grnet.escience.fs.pithos.PithosFileStatus;
 import gr.grnet.escience.fs.pithos.PithosObjectBlock;
 
 import org.apache.hadoop.fs.Path;
@@ -18,7 +19,7 @@ import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 public class TestPithosRestClient {
 	private static final String PITHOS_CONTAINER = "";
-	private static final String PITHOS_FILE = "file.txt";
+	private static final String PITHOS_FILE = "uUSer";
 	private static PithosResponse pithosResponse;
 	private static String pithosListResponse;
 	private static Collection<String> object_block_hashes;
@@ -60,15 +61,58 @@ public class TestPithosRestClient {
 		pithosResponse = hdconnector.getPithosObjectMetaData(PITHOS_CONTAINER,
 				PITHOS_FILE, PithosResponseFormat.JSON);
 		System.out.println(pithosResponse.toString());
+//		try {
+//			JSONObject obj = new JSONObject(pithosResponse.toString());
+//			String contentLength = obj.getJSONObject("pithosResponse").getString("Content-Length");
+//			int left = contentLength.indexOf("[\"");
+//			int right = contentLength.indexOf("\"]");
+//			String objlength = contentLength.substring(left+2, right);
+//			long length = Long.parseLong(objlength);
+//			System.out.println(length);
+//		} catch (JSONException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		PithosResponse metadata = hdconnector.getPithosObjectMetaData(PITHOS_CONTAINER, PITHOS_FILE, PithosResponseFormat.JSON);
 		try {
-			JSONObject obj = new JSONObject(pithosResponse.toString());
-			String contentLength = obj.getJSONObject("pithosResponse").getString("Content-Length");
-			int left = contentLength.indexOf("[\"");
-			int right = contentLength.indexOf("\"]");
-			String objlength = contentLength.substring(left+2, right);
-			long length = Long.parseLong(objlength);
-			System.out.println(length);
-		} catch (JSONException e) {
+			System.out.println("metadata: " + metadata.toString());
+			JSONObject obj = new JSONObject(metadata.toString());
+			String objExist = obj.getJSONObject("pithosResponse").getString("null");
+			boolean exist = true;
+			if (objExist.contains("404")){
+				System.out.println("File does not exist in Pithos FS.");
+				exist = false;
+			}		
+			/*---------------------------------------------------------*/
+			if (exist){		
+				String getContentType = obj.getJSONObject("pithosResponse").getString("Content-Type");
+				int left0 = getContentType.indexOf("[\"");
+				int right0 = getContentType.indexOf("\"]");
+				String isDirOrFile = getContentType.substring(left0+2, right0);
+				boolean isDir = false;
+				if (isDirOrFile.contains("directory")){
+					isDir = true;
+				}
+				
+				String lastMod = obj.getJSONObject("pithosResponse").getString("Last-Modified");
+				int left1 = lastMod.indexOf("[\"");
+				int right1 = lastMod.indexOf("\"]");
+				String lastModified = lastMod.substring(left1+2, right1);
+				System.out.println("modification date : " + lastModified);
+				
+				if (isDir){
+					System.out.println("DIRECTORY");
+				}else{
+					System.out.println("NOT DIRECTORY");
+					String contentLength = obj.getJSONObject("pithosResponse").getString("Content-Length");
+					int left = contentLength.indexOf("[\"");
+					int right = contentLength.indexOf("\"]");
+					String objlength = contentLength.substring(left+2, right);
+					long length = Long.parseLong(objlength);
+					System.out.println("object length: " + length);
+				}
+			}
+		}catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -246,22 +290,68 @@ public class TestPithosRestClient {
 		//testRead_Pithos_Object();
 		//testGet_Pithos_Object();
 		//testgetContainerList();
-		testGet_Pithos_Object_Metadata();
-//		Path arg0 = new Path("pithos://pithos/pithosFile.txt") ;
-//		String container = arg0.getParent().toString();
-//		container = container.substring(container.lastIndexOf(container) + 9);
-//		container = container.substring(0, container.length() - 1);
-//		System.out.println("Container: " + container);
+		//testGet_Pithos_Object_Metadata();
+//		Path f = new Path("pithos://pithos/folder/subfolder/pithosFile2.txt");
+		Path f = new Path("pithos://pithos/folder");
+		String pathStr = f.toString();
+		pathStr = pathStr.substring(pathStr.lastIndexOf(pathStr) + 9);
+		String pathSplit[] = pathStr.split("/");
+		String container = pathSplit[0];
+		String conList = hdconnector.getContainerList(container);
+		
+		String targetFolder = pathSplit[pathSplit.length-1];
+		pathStr = pathStr.substring(pathStr.lastIndexOf(pathStr) + 9);
+		String files[] = conList.split("\\r?\\n");
+		for (int i = 0; i < files.length; i++) {
+			if (files[i].contains(targetFolder + "/")) {
+//			if (files[i] == ) {
+				Path path = new Path("pithos://"+container+"/"+files[i]);
+				System.out.println("PATH!!:  " + path);
+			}
+		}
+//		String pathSplit[] = pathStr.split("/");
+//		String container = pathSplit[0];
+		//System.out.println("Container: " + container);
+//		String filename = f.toString().substring(
+//				f.toString().lastIndexOf('/') + 1, f.toString().length());
+		String filename = pathSplit[pathSplit.length-1];
+		int count = 2;
+		while (pathSplit[pathSplit.length-count] != container){
+			filename = pathSplit[pathSplit.length-count]+"/"+filename;
+			count ++;
+		}
+		System.out.println(filename);
+
+//		PithosResponse metadata = hdconnector.getPithosObjectMetaData(container,
+//				filename, PithosResponseFormat.JSON);
+//		System.out.println(metadata);
+		
 //		String conList = hdconnector.getContainerList(container);
-//		System.out.println("Container List: \n" + conList);
-//		String filename = arg0.toString().substring(arg0.toString().lastIndexOf('/') + 1,
-//				arg0.toString().length());
-//		System.out.println(filename);
-//		if (conList.contains(filename)){
-//			System.out.println("exists");
-//		}else{
-//			System.out.println("does not exist");
+//		System.out.println(conList);
+//		String folder = f.toString().substring(f.toString().lastIndexOf('/') + 1,
+//				f.toString().length());
+//		System.out.println("Folder: " + folder);
+//		
+//		String files[] = conList.split("\\r?\\n");
+//		for (int i=0; i < files.length; i++){
+//			int prevIndex = files[i].lastIndexOf('/', files[i].length() - 1);
+//			String dir = files[i].substring(prevIndex + 1);
+//			System.out.println("\nDIR: " + dir);
+//			if (folder.equals(dir)){
+//				String Index = f.toString().substring(f.toString().lastIndexOf('/') + 1,
+//					f.toString().length());
+//				System.out.println("Subfolds: "+Index);
+//			}
 //		}
+////		System.out.println("Container List: \n" + conList);
+////		String filename = arg0.toString().substring(arg0.toString().lastIndexOf('/') + 1,
+////				arg0.toString().length());
+////		System.out.println(filename);
+////		if (conList.contains(filename)){
+////			System.out.println("exists");
+////		}else{
+////			System.out.println("does not exist");
+////		}
 	}
 
 }
