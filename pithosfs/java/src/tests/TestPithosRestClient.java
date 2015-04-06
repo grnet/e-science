@@ -8,7 +8,7 @@ import java.util.Collection;
 import gr.grnet.escience.fs.pithos.PithosObjectBlock;
 import org.junit.Before;
 import org.junit.Test;
-import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
+import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
@@ -17,7 +17,7 @@ public class TestPithosRestClient {
 	private static final String PITHOS_FILE = "file.txt";
 	private static PithosResponse pithosResponse;
 	private static Collection<String> object_block_hashes;
-	private static HadoopPithosRestConnector hdconnector;
+	private static HadoopPithosConnector hdconnector;
 
 	@Before
 	public static void createHdConnector() {
