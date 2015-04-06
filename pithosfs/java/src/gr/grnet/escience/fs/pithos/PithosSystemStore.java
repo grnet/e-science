@@ -4,11 +4,11 @@ import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.Collection;
 
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
+
 public interface PithosSystemStore {
 
 	/**************************
@@ -69,10 +69,18 @@ public interface PithosSystemStore {
 
 	/**
 	 * 
-	 * @param ptihos_block
-	 *            : gets
+	 * @param pithos_container
+	 *            : the Pithos container on which the action will be performed.
+	 *            Leave it blank so as to refer to the default container that
+	 *            corresponds to 'Pithos
+	 * @param target_object
+	 *            : the object on which the seek method will seek on its blocks
+	 * @param target_block_hash
+	 *            : the hash of the selected block
 	 * @param offsetIntoPithosBlock
-	 * @return
+	 *            : the starting point of the range for the retrieved data
+	 * @return a file that includes the data of the requested chunk og data
+	 *         based on the defined offset
 	 */
 	public File seekPithosBlock(String pithos_container, String target_object,
 			String target_block_hash, long offsetIntoPithosBlock);
@@ -198,7 +206,7 @@ public interface PithosSystemStore {
 	 *            : the size in bytes of the object chunk that will be
 	 *            downloaded and stored on the destination
 	 */
-	public InputStream pithosBlockInputStream(String pithos_container,
+	public FSDataInputStream pithosBlockInputStream(String pithos_container,
 			String object_location, String block_hash);
 
 	/**
@@ -388,6 +396,5 @@ public interface PithosSystemStore {
 	 * @return <b>true</b> if the block exists and <b>false</b> if not
 	 */
 	public boolean pithosObjectBlockExists(String blockHash);
-	
 
 }

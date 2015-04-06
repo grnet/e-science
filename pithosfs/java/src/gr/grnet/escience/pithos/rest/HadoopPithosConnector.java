@@ -1,5 +1,7 @@
 package gr.grnet.escience.pithos.rest;
 
+import gr.grnet.escience.commons.Configurator;
+import gr.grnet.escience.commons.Settings;
 import gr.grnet.escience.fs.pithos.PithosBlock;
 import gr.grnet.escience.fs.pithos.PithosFileType;
 import gr.grnet.escience.fs.pithos.PithosInputStream;
@@ -7,7 +9,6 @@ import gr.grnet.escience.fs.pithos.PithosObject;
 import gr.grnet.escience.fs.pithos.PithosSystemStore;
 import gr.grnet.escience.pithos.restapi.PithosRESTAPI;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -41,6 +42,9 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 		PithosSystemStore {
 
 	private static final long serialVersionUID = 1L;
+	private static final String CONFIGURATION_FILE = "hadoopPithosConfiguration.json";
+	private static final Settings hadoopConfiguration = Configurator
+			.load(CONFIGURATION_FILE);
 	private PithosRequest request;
 	private PithosResponse response;
 	private File srcFile2bUploaded;
@@ -57,9 +61,18 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	/*****
 	 * Constructor
 	 */
-	public HadoopPithosConnector(String url, String token, String username) {
+	public HadoopPithosConnector() {
 		// - implement aPithos RESTAPI instance
-		super(url, token, username); //auth-url, user-token, username
+		super(hadoopConfiguration.getPithosUser().get("url"),// pithos auth-url
+				hadoopConfiguration.getPithosUser().get("token"),// user-token
+				hadoopConfiguration.getPithosUser().get("username"));// username
+
+	}
+
+	public HadoopPithosConnector(String pithosUrl, String pithosToken,
+			String uuid) {
+		// - implement aPithos RESTAPI instance
+		super(pithosUrl, pithosToken, uuid);
 	}
 
 	/***
@@ -538,8 +551,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 		// - Create Pithos request
 		setPithosRequest(new PithosRequest());
 
-		// - Request Parameters
-		// JSON Format
+		// - Request Parameters JSON Format
 		if (format.equals(PithosResponseFormat.JSON)) {
 			getPithosRequest().getRequestParameters().put("format", "json");
 		} else {
@@ -573,42 +585,12 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	@Override
 	public FSDataInputStream pithosObjectInputStream(String pithos_container,
 			String object_location) {
-		// // - Get the file object from pithos
-		// File pithosObject = retrievePithosObject(pithos_container,
-		// object_location, null);
-		//
-		// // - Create input stream for pithos
-		// try {
-		// // - Add File data to the input stream
-		// InputStream pithosFileInputStream = new FileInputStream(
-		// pithosObject);
-		//
-		// // - Return the input stream wrapped into a FSDataINputStream
-		// return pithosFileInputStream;
-		// } catch (FileNotFoundException e) {
-		// e.printStackTrace();
-		// return null;
-		// }
-
-		// - Get the file object from pithos
-//		File pithosObject = retrievePithosObject(pithos_container,
-//				object_location, null);
 
 		// - Create input stream for pithos
 		try {
-			// - Add File data to the input stream
-			// FSDataInputStream pithosFileInputStream = new
-			// FSDataInputStream(new FileInputStream(pithosObject));
-			// FileInputStream fis = new FileInputStream(pithosObject);
-			// InputStream in = new BufferedInputStream(new
-			// FileInputStream(pithosObject));
-			// PositionedInputStream(in);
-
-			FSDataInputStream pithosFileInputStream = new FSDataInputStream(
-					new PithosInputStream(this));
-
 			// - Return the input stream wrapped into a FSDataINputStream
-			return pithosFileInputStream;
+			return new FSDataInputStream(new PithosInputStream(
+					pithos_container, object_location));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -617,22 +599,25 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public InputStream pithosBlockInputStream(String pithos_container,
+	public FSDataInputStream pithosBlockInputStream(String pithos_container,
 			String object_location, String block_hash) {
 
 		// - Get the file object from pithos
 		PithosBlock pithosBlock = retrievePithosBlock(pithos_container,
 				object_location, block_hash);
 
-		// - Create input stream for pithos
+		// - Create input stream for Pithos
 		try {
 			// - Add File data to the input stream
 			File pithosBlockData = deserializeFile(pithosBlock.getBlockData());
+
+			// - Create File input stream
 			InputStream pithosFileInputStream = new FileInputStream(
 					pithosBlockData);
 
 			// - Return the input stream wrapped into a FSDataINputStream
-			return pithosFileInputStream;
+			// return pithosFileInputStream;
+			return new FSDataInputStream(pithosFileInputStream);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return null;

@@ -6,17 +6,14 @@ import java.net.URISyntaxException;
 import org.apache.hadoop.fs.Path;
 
 public class PithosPath extends Path {
-    
-	private URI uri;
-	
-	public PithosPath(String pathString) throws IllegalArgumentException, URISyntaxException {
+
+	public PithosPath(String pathString) throws IllegalArgumentException,
+			URISyntaxException {
 		super(pathString);
 	}
 
 	public PithosPath(URI aUri) {
 		super(aUri);
-		//this.uri = aUri;
-		// TODO Auto-generated constructor stub
 	}
 
 	public PithosPath(String parent, String child) {

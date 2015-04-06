@@ -1,7 +1,5 @@
 package gr.grnet.escience.fs.pithos;
 
-import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
-
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,7 +7,6 @@ import java.io.IOException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSInputStream;
 import org.apache.hadoop.fs.FileSystem;
 
@@ -19,17 +16,14 @@ import org.apache.hadoop.fs.FileSystem;
  * structure of the corresponding one in the Amazon S3 API
  * 
  * @since March, 2015
- * @author Dimitris G. Kelaidonis (kelaidonis@gmail.com)
+ * @author Dimitris G. Kelaidonis (kelaidonis@gmail.com) & Ioannis Stenos
+ *         (johnstenos83@gmail.com)
  * @version 0.1
  * 
  */
 public class PithosInputStream extends FSInputStream {
 
-	// private PithosSystemStore store;
-
 	private PithosBlock[] blocks;
-
-	private HadoopPithosConnector pithos_conn;
 
 	private boolean closed;
 
@@ -41,6 +35,10 @@ public class PithosInputStream extends FSInputStream {
 
 	private DataInputStream blockStream;
 
+	private String _pithos_container;
+
+	private String _pithos_object;
+
 	private long blockEnd = -1;
 
 	private FileSystem.Statistics stats;
@@ -48,28 +46,78 @@ public class PithosInputStream extends FSInputStream {
 	private static final Log LOG = LogFactory.getLog(PithosInputStream.class
 			.getName());
 
-	private static final String TEST_FILE_FROM_PITHOS = "server.txt";
+	// private static final String TEST_FILE_FROM_PITHOS = "server.txt";
 
-	public PithosInputStream(HadoopPithosConnector pithos_conn) {
-		this.pithos_conn = pithos_conn;
+	public PithosInputStream() {
+	}
 
-		this.blocks = this.pithos_conn.retrievePithosObjectBlocks("",
-				TEST_FILE_FROM_PITHOS);
-		for (PithosBlock block : blocks) {
+	public PithosInputStream(String pithos_container, String pithos_object) {
+
+		// - Initialize local variables
+		this._pithos_container = pithos_container;
+		this._pithos_object = pithos_object;
+
+		// - Get Object Blocks
+		this.blocks = PithosFileSystem.getHadoopPithosConnector()
+				.retrievePithosObjectBlocks(getRequestedContainer(),
+						getRequestedObject());
+
+		// - Iterate on available blocks of the selected object
+		for (PithosBlock block : getAvailableBlocks()) {
 			this.fileLength += block.getBlockLength();
 		}
 	}
 
-	public PithosInputStream(Configuration conf, PithosSystemStore pithosStore,
-			PithosObject pithosObj, FileSystem.Statistics stats) {
+	private PithosBlock[] getAvailableBlocks() {
+		return blocks;
+	}
 
-		// this.store = pithosStore;
-		this.stats = stats;
-		this.blocks = pithosObj.getPithosObjectBlocks();
+	private String getRequestedContainer() {
+		return _pithos_container;
+	}
 
-		for (PithosBlock block : blocks) {
-			this.fileLength += block.getBlockLength();
+	private String getRequestedObject() {
+		return _pithos_object;
+	}
+
+	private synchronized void blockSeekTo(long target) throws IOException {
+		int targetBlock = -1;
+		long targetBlockStart = 0;
+		long targetBlockEnd = 0;
+
+		for (int i = 0; i < getAvailableBlocks().length; i++) {
+			long blockLength = getAvailableBlocks()[i].getBlockLength();
+			targetBlockEnd = targetBlockStart + blockLength - 1;
+
+			if (target >= targetBlockStart && target <= targetBlockEnd) {
+				targetBlock = i;
+				break;
+			} else {
+				targetBlockStart = targetBlockEnd + 1;
+			}
 		}
+		if (targetBlock < 0) {
+			throw new IOException(
+					"Impossible situation: could not find target position "
+							+ target);
+		}
+		long offsetIntoBlock = target - targetBlockStart;
+
+		// - Read block blocks[targetBlock] from position offsetIntoBlock
+		PithosBlock p_file_block = PithosFileSystem.getHadoopPithosConnector()
+				.retrievePithosBlock(getRequestedContainer(),
+						getRequestedObject(),
+						getAvailableBlocks()[targetBlock].getBlockHash());
+
+		// - Create block file
+		this.blockFile = PithosFileSystem.getHadoopPithosConnector()
+				.seekPithosBlock(getRequestedContainer(), getRequestedObject(),
+						p_file_block.getBlockHash(), offsetIntoBlock);
+
+		this.pos = target;
+		this.blockEnd = targetBlockEnd;
+		this.blockStream = new DataInputStream(new FileInputStream(blockFile));
+
 	}
 
 	@Override
@@ -139,42 +187,6 @@ public class PithosInputStream extends FSInputStream {
 			return result;
 		}
 		return -1;
-	}
-
-	private synchronized void blockSeekTo(long target) throws IOException {
-		int targetBlock = -1;
-		long targetBlockStart = 0;
-		long targetBlockEnd = 0;
-
-		for (int i = 0; i < blocks.length; i++) {
-			long blockLength = blocks[i].getBlockLength();
-			targetBlockEnd = targetBlockStart + blockLength - 1;
-
-			if (target >= targetBlockStart && target <= targetBlockEnd) {
-				targetBlock = i;
-				break;
-			} else {
-				targetBlockStart = targetBlockEnd + 1;
-			}
-		}
-		if (targetBlock < 0) {
-			throw new IOException(
-					"Impossible situation: could not find target position "
-							+ target);
-		}
-		long offsetIntoBlock = target - targetBlockStart;
-
-		// read block blocks[targetBlock] from position offsetIntoBlock
-
-		PithosBlock p_file_block = this.pithos_conn.retrievePithosBlock("",
-				"server.txt", blocks[targetBlock].getBlockHash());
-		this.blockFile = pithos_conn.seekPithosBlock(p_file_block,
-				offsetIntoBlock);
-
-		this.pos = target;
-		this.blockEnd = targetBlockEnd;
-		this.blockStream = new DataInputStream(new FileInputStream(blockFile));
-
 	}
 
 	@Override
