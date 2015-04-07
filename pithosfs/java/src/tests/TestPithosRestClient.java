@@ -7,13 +7,14 @@ import java.util.Collection;
 
 import gr.grnet.escience.fs.pithos.PithosFileStatus;
 import gr.grnet.escience.fs.pithos.PithosObjectBlock;
+import gr.grnet.escience.fs.pithos.PithosPath;
 
 import org.apache.hadoop.fs.Path;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
-import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
+import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
@@ -23,24 +24,24 @@ public class TestPithosRestClient {
 	private static PithosResponse pithosResponse;
 	private static String pithosListResponse;
 	private static Collection<String> object_block_hashes;
-	private static HadoopPithosRestConnector hdconnector;
+	private static HadoopPithosConnector hdconnector;
 
 	@Before
 	public static void createHdConnector() {
 		// - CREATE HADOOP CONNECTOR INSTANCE
-		hdconnector = new HadoopPithosRestConnector("https://pithos.okeanos.grnet.gr/v1", "juUVEDtgTftG24r-JA4pAvaU9c-UB2353op42-D0REQ", "fc1bd1b1-9691-4142-b759-12a12a1e6fe3");
+		hdconnector = new HadoopPithosConnector("https://pithos.okeanos.grnet.gr/v1", "juUVEDtgTftG24r-JA4pAvaU9c-UB2353op42-D0REQ", "fc1bd1b1-9691-4142-b759-12a12a1e6fe3");
 	}
 	
-	@Test
-	public static void testgetContainerList() {
-		// - GET CONTAINER INFORMATION
-		System.out
-				.println("---------------------------------------------------------------------\n");
-		pithosListResponse = hdconnector.getContainerList(PITHOS_CONTAINER);
-		System.out.println(pithosListResponse);
-		System.out
-				.println("---------------------------------------------------------------------\n");
-	}
+//	@Test
+//	public static void testgetContainerList() {
+//		// - GET CONTAINER INFORMATION
+//		System.out
+//				.println("---------------------------------------------------------------------\n");
+//		pithosListResponse = hdconnector.getContainerList(PITHOS_CONTAINER);
+//		System.out.println(pithosListResponse);
+//		System.out
+//				.println("---------------------------------------------------------------------\n");
+//	}
 
 	@Test
 	public static void testGet_Container_Info() {
@@ -132,17 +133,17 @@ public class TestPithosRestClient {
 				.println("---------------------------------------------------------------------\n");
 	}
 
-	@Test
-	public static void testGet_Pithos_Object() {
-		// - GET AND STORE THE ACTUAL OBJECT AS A FILE
-		System.out
-				.println("---------------------------------------------------------------------\n");
-		File pithosActualObject = hdconnector.getPithosObject(PITHOS_CONTAINER,
-				PITHOS_FILE, "data");
-		System.out.println("File name: " + pithosActualObject.getName());
-		System.out
-				.println("---------------------------------------------------------------------\n");
-	}
+//	@Test
+//	public static void testGet_Pithos_Object() {
+//		// - GET AND STORE THE ACTUAL OBJECT AS A FILE
+//		System.out
+//				.println("---------------------------------------------------------------------\n");
+//		File pithosActualObject = hdconnector.getPithosObject(PITHOS_CONTAINER,
+//				PITHOS_FILE, "data");
+//		System.out.println("File name: " + pithosActualObject.getName());
+//		System.out
+//				.println("---------------------------------------------------------------------\n");
+//	}
 
 	@Test
 	public void testGet_Pithos_Object_Block_Hashes() {
@@ -156,18 +157,18 @@ public class TestPithosRestClient {
 				.println("---------------------------------------------------------------------\n");
 	}
 
-	@Test
-	public void testGet_Pithos_Object_Block_Default_Size() {
-		// -GET BLOCK DEFAULT SIZE
-		System.out
-				.println("---------------------------------------------------------------------\n");
-		long blocksDefaultSize = hdconnector
-				.getPithosObjectBlockDefaultSize(PITHOS_CONTAINER);
-		System.out.println("Container block defaut size: " + blocksDefaultSize
-				+ " Bytes");
-		System.out
-				.println("---------------------------------------------------------------------\n");
-	}
+//	@Test
+//	public void testGet_Pithos_Object_Block_Default_Size() {
+//		// -GET BLOCK DEFAULT SIZE
+//		System.out
+//				.println("---------------------------------------------------------------------\n");
+//		long blocksDefaultSize = hdconnector
+//				.getPithosObjectBlockDefaultSize(PITHOS_CONTAINER);
+//		System.out.println("Container block defaut size: " + blocksDefaultSize
+//				+ " Bytes");
+//		System.out
+//				.println("---------------------------------------------------------------------\n");
+//	}
 
 	@Test
 	public void testGet_Pithos_Object_Blocks_Number() {
@@ -195,65 +196,65 @@ public class TestPithosRestClient {
 		System.out
 				.println("---------------------------------------------------------------------\n");
 	}
+//
+//	@Test
+//	public static void testGet_Pithos_Object_Block() {
+//		// - GET OBJECT BLOCK BY HASH
+//		// - Get a block hash of the previously requested object
+//		System.out
+//				.println("---------------------------------------------------------------------\n");
+//		String block_hash = "";
+//		int block_counter = 1;
+//		// - local loop to get the corresponding hash
+//		for (String hash : object_block_hashes) {
+//			// - Get the hash of the second block
+//			if (block_counter == 1) {
+//				block_hash = hash;
+//				break;
+//			}
+//			block_counter++;
+//		}
+//
+//		// - Get the pithos block
+//		PithosObjectBlock block = hdconnector.getPithosObjectBlock(
+//				PITHOS_CONTAINER, PITHOS_FILE, block_hash);
+//		System.out.println(block.toString());
+//		System.out
+//				.println("---------------------------------------------------------------------\n");
+//	}
+//
+//	@Test
+//	public void testGet_Pithos_Object_Block_All() {
+//		// - GET OBJECT ALL BLOCKS
+//		System.out
+//				.println("---------------------------------------------------------------------\n");
+//		PithosObjectBlock[] blocks = hdconnector.getPithosObjectBlockAll(
+//				PITHOS_CONTAINER, PITHOS_FILE);
+//		System.out.println("Object <" + PITHOS_FILE + "> is comprised by '"
+//				+ blocks.length + "' blocks:\n");
+//		// - Iterate on blocks
+//		for (int blockCounter = 0; blockCounter < blocks.length; blockCounter++) {
+//			System.out.println("\t- " + blocks[blockCounter].toString());
+//		}
+//		System.out
+//				.println("---------------------------------------------------------------------\n");
+//	}
 
 	@Test
-	public static void testGet_Pithos_Object_Block() {
-		// - GET OBJECT BLOCK BY HASH
-		// - Get a block hash of the previously requested object
-		System.out
-				.println("---------------------------------------------------------------------\n");
-		String block_hash = "";
-		int block_counter = 1;
-		// - local loop to get the corresponding hash
-		for (String hash : object_block_hashes) {
-			// - Get the hash of the second block
-			if (block_counter == 1) {
-				block_hash = hash;
-				break;
-			}
-			block_counter++;
-		}
-
-		// - Get the pithos block
-		PithosObjectBlock block = hdconnector.getPithosObjectBlock(
-				PITHOS_CONTAINER, PITHOS_FILE, block_hash);
-		System.out.println(block.toString());
-		System.out
-				.println("---------------------------------------------------------------------\n");
-	}
-
-	@Test
-	public void testGet_Pithos_Object_Block_All() {
-		// - GET OBJECT ALL BLOCKS
-		System.out
-				.println("---------------------------------------------------------------------\n");
-		PithosObjectBlock[] blocks = hdconnector.getPithosObjectBlockAll(
-				PITHOS_CONTAINER, PITHOS_FILE);
-		System.out.println("Object <" + PITHOS_FILE + "> is comprised by '"
-				+ blocks.length + "' blocks:\n");
-		// - Iterate on blocks
-		for (int blockCounter = 0; blockCounter < blocks.length; blockCounter++) {
-			System.out.println("\t- " + blocks[blockCounter].toString());
-		}
-		System.out
-				.println("---------------------------------------------------------------------\n");
-	}
-
-	@Test
-	public static void testRead_Pithos_Object() throws IOException {
-		// - READ PITHOS OBJECT: ESSENTIALLY CREATES INPUTSTREAM FOR A PITHOS
+//	public static void testRead_Pithos_Object() throws IOException {
+//		// - READ PITHOS OBJECT: ESSENTIALLY CREATES INPUTSTREAM FOR A PITHOS
 		// OBJECT
-		System.out
-				.println("---------------------------------------------------------------------\n");
-		InputStream objectInputStream = hdconnector.readPithosObject(
-				PITHOS_CONTAINER, PITHOS_FILE);
-		System.out.println("Available data in object inputstream : "
-				+ objectInputStream.available() + " Bytes");
-		System.out
-				.println("---------------------------------------------------------------------\n");
-	}
-
-	@Test
+//		System.out
+//				.println("---------------------------------------------------------------------\n");
+//		InputStream objectInputStream = hdconnector.readPithosObject(
+//				PITHOS_CONTAINER, PITHOS_FILE);
+//		System.out.println("Available data in object inputstream : "
+//				+ objectInputStream.available() + " Bytes");
+//		System.out
+//				.println("---------------------------------------------------------------------\n");
+//	}
+//
+//	@Test
 	public void testRead_Pithos_Object_Block() throws IOException {
 		// - READ PITHOS OBJECT BLOCK: ESSENTIALLY CREATES INPUTSTREAM FOR A
 		// PITHOS OBJECT BLOCK REQUESTED BY IT'S HASH
@@ -271,10 +272,10 @@ public class TestPithosRestClient {
 			}
 			r_block_counter++;
 		}
-		InputStream objectBlockInputStream = hdconnector.readPithosObjectBlock(
-				"", PITHOS_FILE, r_block_hash);
-		System.out.println("Available data in block inputstream : "
-				+ objectBlockInputStream.available() + " Bytes");
+//		InputStream objectBlockInputStream = hdconnector.readPithosObjectBlock(
+//				"", PITHOS_FILE, r_block_hash);
+//		System.out.println("Available data in block inputstream : "
+//				+ objectBlockInputStream.available() + " Bytes");
 		System.out
 				.println("---------------------------------------------------------------------\n");
 	}
@@ -292,35 +293,52 @@ public class TestPithosRestClient {
 		//testgetContainerList();
 		//testGet_Pithos_Object_Metadata();
 //		Path f = new Path("pithos://pithos/folder/subfolder/pithosFile2.txt");
-		Path f = new Path("pithos://pithos/folder");
-		String pathStr = f.toString();
-		pathStr = pathStr.substring(pathStr.lastIndexOf(pathStr) + 9);
-		String pathSplit[] = pathStr.split("/");
-		String container = pathSplit[0];
-		String conList = hdconnector.getContainerList(container);
 		
-		String targetFolder = pathSplit[pathSplit.length-1];
-		pathStr = pathStr.substring(pathStr.lastIndexOf(pathStr) + 9);
-		String files[] = conList.split("\\r?\\n");
-		for (int i = 0; i < files.length; i++) {
-			String lsPathSplit[] = files[i].split("/");
-			for (int j=0; j<lsPathSplit.length;j++){
-				if (targetFolder.equals(lsPathSplit[j])){
-					String containedFiles;
-					try {						
-						if (j+2 < lsPathSplit.length) {
-							continue;
-						}
-						containedFiles = lsPathSplit[j+1];	
-						Path path = new Path("folder/"+containedFiles);
-						System.out.println("PATH!!:  " + path);
-						PITHOS_FILE = "pithos/";
-						testGet_Pithos_Object_Metadata();
-					} catch (Exception ArrayIndexOutOfBoundsException) {
-						continue;
-					}
-				}
-			}
+		PithosPath pithosPath;
+		String pathToString;
+		String[] filesList;
+		
+		Path f = new Path("pithos://pithos/folder/subfol");
+		pithosPath = new PithosPath(f);
+		pathToString = pithosPath.toString();
+
+		pathToString = pathToString.substring("pithos".concat("://").length());
+
+		filesList = pathToString.split("/");
+		String conList = hdconnector.getFileList(pithosPath.getContainer());
+		String targetFolder = filesList[filesList.length - 1];
+		
+		System.out.println(targetFolder);
+		
+		
+//			String pathStr = f.toString();
+//			pathStr = pathStr.substring(pathStr.lastIndexOf(pathStr) + 9);
+//			String pathSplit[] = pathStr.split("/");
+//			String container = pathSplit[0];
+//			String conList = hdconnector.getFileList(container);
+//			
+//			String targetFolder = pathSplit[pathSplit.length-1];
+//			pathStr = pathStr.substring(pathStr.lastIndexOf(pathStr) + 9);
+//			String files[] = conList.split("\\r?\\n");
+//			for (int i = 0; i < files.length; i++) {
+//				String lsPathSplit[] = files[i].split("/");
+//				for (int j=0; j<lsPathSplit.length;j++){
+//					if (targetFolder.equals(lsPathSplit[j])){
+//						String containedFiles;
+//						try {						
+//							if (j+2 < lsPathSplit.length) {
+//								continue;
+//							}
+//							containedFiles = lsPathSplit[j+1];	
+//							Path path = new Path("folder/"+containedFiles);
+//							System.out.println("PATH!!:  " + path);
+//							PITHOS_FILE = "pithos/";
+//							testGet_Pithos_Object_Metadata();
+//						} catch (Exception ArrayIndexOutOfBoundsException) {
+//							continue;
+//						}
+//					}
+//				}
 			
 //			if (files[i] == pathSplit[i]) {
 ////			if (files[i] == ) {
@@ -333,13 +351,13 @@ public class TestPithosRestClient {
 		//System.out.println("Container: " + container);
 //		String filename = f.toString().substring(
 //				f.toString().lastIndexOf('/') + 1, f.toString().length());
-		String filename = pathSplit[pathSplit.length-1];
-		int count = 2;
-		while (pathSplit[pathSplit.length-count] != container){
-			filename = pathSplit[pathSplit.length-count]+"/"+filename;
-			count ++;
-		}
-		System.out.println(filename);
+	//		String filename = pathSplit[pathSplit.length-1];
+	//		int count = 2;
+	//		while (pathSplit[pathSplit.length-count] != container){
+	//			filename = pathSplit[pathSplit.length-count]+"/"+filename;
+	//			count ++;
+	//		}
+	//		System.out.println(filename);
 
 //		PithosResponse metadata = hdconnector.getPithosObjectMetaData(container,
 //				filename, PithosResponseFormat.JSON);
@@ -371,6 +389,6 @@ public class TestPithosRestClient {
 ////		}else{
 ////			System.out.println("does not exist");
 ////		}
-	}
+//	}
 
 }

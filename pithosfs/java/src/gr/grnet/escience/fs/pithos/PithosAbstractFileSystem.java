@@ -30,7 +30,7 @@ import org.apache.hadoop.fs.UnsupportedFileSystemException;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.util.Progressable;
-import gr.grnet.escience.pithos.rest.HadoopPithosRestConnector;
+import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 
 public class PithosAbstractFileSystem extends AbstractFileSystem {
 

@@ -19,7 +19,7 @@ public class PithosResponse {
 
 	/**
 	 * Set the response structure based on the identified structure in the
-	 * coressponding Pithos API
+	 * corresponding Pithos API
 	 * 
 	 * @param _response
 	 *            : structured data based on the structure of the Pithos

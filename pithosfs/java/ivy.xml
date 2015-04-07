@@ -10,13 +10,13 @@
 	</configurations>
 	<dependencies defaultconf="default" defaultconfmapping="default->default">
 		<!-- The core server part of Vaadin -->
-		<dependency org="org.apache.hadoop" name="hadoop-client" rev="2.6.0"/>
+		<dependency org="org.apache.hadoop" name="hadoop-client" rev="2.5.2"/>
 
 		<!-- Gson dependencies -->
 		<dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
 		
 		<!-- JUnit dependencies -->
-		<dependency org="junit" name="junit" rev="4.4"/>
+		<dependency org="junit" name="junit" rev="4.11"/>
 				
 	</dependencies>
 </ivy-module>
