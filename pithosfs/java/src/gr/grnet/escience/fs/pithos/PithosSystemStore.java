@@ -264,10 +264,12 @@ public interface PithosSystemStore {
 	 * @param pithos_block
 	 *            : the actual Pithos Block that will be stored on Pithos
 	 *            storage system
+	 * @param backup_file
+	 *            : the temporary file storing the block data to be streamed
 	 * @return
 	 */
 	public String storePithosBlock(String pithos_container,
-			String target_object, PithosBlock pithos_block);
+			String target_object, PithosBlock pithos_block, File backup_file);
 
 	/**
 	 * 

@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Random;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem.Statistics;
 
@@ -35,7 +34,7 @@ public class PithosOutputStream extends FSDataOutputStream {
 	/**
 	 * Destination path
 	 */
-	private Path path;
+	private PithosPath path;
 
 	/**
 	 * size of block
@@ -85,12 +84,12 @@ public class PithosOutputStream extends FSDataOutputStream {
 	/**
 	 * blocks of file
 	 */
-	private List<PithosObjectBlock> blocks = new ArrayList<PithosObjectBlock>();
+	private List<PithosBlock> blocks = new ArrayList<PithosBlock>();
 
 	/**
 	 * current block to store to pithos
 	 */
-	private PithosObjectBlock nextBlock;
+	private PithosBlock nextBlock;
 
 	/**
 	 * method for creating backup file of 4mb for buffering
@@ -201,8 +200,10 @@ public class PithosOutputStream extends FSDataOutputStream {
 
 		//
 		// Send it to pithos
+		String pithos_container = "pithos"; //TODO: get from destination path
+		String target_object = "test_out";
 		nextBlockOutputStream();
-		store.storePithosObjectBlock(nextBlock, backupFile);
+		store.storePithosBlock(pithos_container,target_object, nextBlock, backupFile);
 //		internalClose();
 
 		//
@@ -221,12 +222,12 @@ public class PithosOutputStream extends FSDataOutputStream {
 	 */
 	private synchronized void nextBlockOutputStream() throws IOException {
 		long blockId = r.nextLong();
-		while (store.pithosObjectBlockExists(blockId)) {
+		String strBlock = Long.toString(blockId); // TODO: Refactor to pithos block hash check / generation
+		while (store.pithosObjectBlockExists(strBlock)) {
 			blockId = r.nextLong();
 		}
 		byte[] blockData = null; // TODO: serialize the buffer file
-		String sblockId = Long.toString(blockId);
-		nextBlock = new PithosObjectBlock(sblockId, bytesWrittenToBlock, blockData);
+		nextBlock = new PithosBlock(strBlock, bytesWrittenToBlock, blockData);
 		blocks.add(nextBlock);
 		bytesWrittenToBlock = 0;
 	}
@@ -275,7 +276,7 @@ public class PithosOutputStream extends FSDataOutputStream {
 	 * @throws IOException
 	 */
 	public PithosOutputStream(OutputStream out, Statistics stats,
-			Configuration conf, PithosSystemStore store, Path path,
+			Configuration conf, PithosSystemStore store, PithosPath path,
 			long blockSize, int buffersize) throws IOException {
 		super(out, stats);
 		this.conf = conf;
