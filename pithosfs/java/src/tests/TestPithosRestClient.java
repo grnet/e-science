@@ -19,7 +19,7 @@ import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 public class TestPithosRestClient {
 	private static final String PITHOS_CONTAINER = "";
-	private static final String PITHOS_FILE = "uUSer";
+	private static String PITHOS_FILE = "uUSer";
 	private static PithosResponse pithosResponse;
 	private static String pithosListResponse;
 	private static Collection<String> object_block_hashes;
@@ -303,11 +303,30 @@ public class TestPithosRestClient {
 		pathStr = pathStr.substring(pathStr.lastIndexOf(pathStr) + 9);
 		String files[] = conList.split("\\r?\\n");
 		for (int i = 0; i < files.length; i++) {
-			if (files[i].contains(targetFolder + "/")) {
-//			if (files[i] == ) {
-				Path path = new Path("pithos://"+container+"/"+files[i]);
-				System.out.println("PATH!!:  " + path);
+			String lsPathSplit[] = files[i].split("/");
+			for (int j=0; j<lsPathSplit.length;j++){
+				if (targetFolder.equals(lsPathSplit[j])){
+					String containedFiles;
+					try {						
+						if (j+2 < lsPathSplit.length) {
+							continue;
+						}
+						containedFiles = lsPathSplit[j+1];	
+						Path path = new Path("folder/"+containedFiles);
+						System.out.println("PATH!!:  " + path);
+						PITHOS_FILE = "pithos/";
+						testGet_Pithos_Object_Metadata();
+					} catch (Exception ArrayIndexOutOfBoundsException) {
+						continue;
+					}
+				}
 			}
+			
+//			if (files[i] == pathSplit[i]) {
+////			if (files[i] == ) {
+//				Path path = new Path("pithos://"+container+"/"+files[i]);
+//				System.out.println("PATH!!:  " + path);
+//			}
 		}
 //		String pathSplit[] = pathStr.split("/");
 //		String container = pathSplit[0];

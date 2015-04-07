@@ -33,6 +33,8 @@ import org.apache.hadoop.util.Progressable;
  * 
  */
 public class PithosFileSystem extends FileSystem {
+	
+	private final int PITHOS_PROTOCOL = 9;
 
 	private URI uri;
 
@@ -149,7 +151,7 @@ public class PithosFileSystem extends FileSystem {
 				getConfig("auth.pithos.uuid"));
 		/*---Check if file exist in pithos------------------------------------*/
 		String pathStr = arg0.toString();
-		pathStr = pathStr.substring(pathStr.lastIndexOf(pathStr) + 9);
+		pathStr = pathStr.substring(pathStr.lastIndexOf(pathStr) + PITHOS_PROTOCOL);
 		String pathSplit[] = pathStr.split("/");
 		String container = pathSplit[0];
 		System.out.println("Container: " + container);
@@ -257,10 +259,10 @@ public class PithosFileSystem extends FileSystem {
 				getConfig("auth.pithos.uuid"));
 		/*----List from pithos rest communication-----*/
 //		String container = f.getParent().toString();
-//		container = container.substring(container.lastIndexOf(container) + 9);
+//		container = container.substring(container.lastIndexOf(container) + PITHOS_PROTOCOL);
 //		container = container.substring(0, container.length() - 1);
 		String pathStr = f.toString();
-		pathStr = pathStr.substring(pathStr.lastIndexOf(pathStr) + 9);
+		pathStr = pathStr.substring(pathStr.lastIndexOf(pathStr) + PITHOS_PROTOCOL);
 		String pathSplit[] = pathStr.split("/");
 		String container = pathSplit[0];
 		String conList = conn.getContainerList(container);
@@ -276,12 +278,23 @@ public class PithosFileSystem extends FileSystem {
 		
 		String files[] = conList.split("\\r?\\n");
 		for (int i = 0; i < files.length; i++) {
-			if (files[i].contains(targetFolder + "/")) {
-//			if (files[i] == ) {
-				Path path = new Path(this.getScheme()+"://"+container+"/"+files[i]);
-				fileStatus = getFileStatus(path);
-				System.out.println(files[i]);
-				result.add(fileStatus);
+			String lsPathSplit[] = files[i].split("/");
+			for (int j=0; j<lsPathSplit.length;j++){
+				if (targetFolder.equals(lsPathSplit[j])){
+					String containedFiles;
+					try {						
+						if (j+2 < lsPathSplit.length) {
+							continue;
+						}
+						containedFiles = lsPathSplit[j+1];			
+					} catch (Exception ArrayIndexOutOfBoundsException) {
+						continue;
+					}
+					Path path = new Path("pithos://"+container+"/"+containedFiles);
+					fileStatus = getFileStatus(path);
+					result.add(fileStatus);
+					System.out.println("PATH!!:  " + path);
+				}
 			}
 		}
 
