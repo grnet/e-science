@@ -1,9 +1,12 @@
 package gr.grnet.escience.fs.pithos;
 
+import gr.grnet.escience.commons.Utils;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -52,9 +55,9 @@ public class PithosOutputStream extends FSDataOutputStream {
 	private OutputStream backupStream;
 
 	/**
-	 * random for generating next id for block
+	 * Utils instance for computing hashes
 	 */
-	private Random r = new Random();
+	private Utils utils;
 
 	/**
 	 * flag if stream closed
@@ -201,9 +204,9 @@ public class PithosOutputStream extends FSDataOutputStream {
 		//
 		// Send it to pithos
 		String pithos_container = "pithos"; //TODO: get from destination path
-		String target_object = "test_out";
+		String target_object = "test_out"; //TODO: get from destination path
 		nextBlockOutputStream();
-		store.storePithosBlock(pithos_container,target_object, nextBlock, backupFile);
+		store.storePithosBlock(pithos_container, target_object, nextBlock, backupFile);
 //		internalClose();
 
 		//
@@ -221,15 +224,19 @@ public class PithosOutputStream extends FSDataOutputStream {
 	 * @throws IOException
 	 */
 	private synchronized void nextBlockOutputStream() throws IOException {
-		long blockId = r.nextLong();
-		String strBlock = Long.toString(blockId); // TODO: Refactor to pithos block hash check / generation
-		while (store.pithosObjectBlockExists(strBlock)) {
-			blockId = r.nextLong();
-		}
 		byte[] blockData = null; // TODO: serialize the buffer file
-		nextBlock = new PithosBlock(strBlock, bytesWrittenToBlock, blockData);
-		blocks.add(nextBlock);
-		bytesWrittenToBlock = 0;
+		String blockHash = null;
+		try {
+			blockHash = utils.computeHash(blockData, "SHA-256");
+			if (!store.pithosObjectBlockExists(blockHash)){
+				nextBlock = new PithosBlock(blockHash, bytesWrittenToBlock, blockData);
+				blocks.add(nextBlock);
+				bytesWrittenToBlock = 0;
+			}
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} //TODO: Get hash algorithm from the pithos container metadata
 	}
 
 //	/**
@@ -283,6 +290,7 @@ public class PithosOutputStream extends FSDataOutputStream {
 		this.store = store;
 		this.path = path;
 		this.blockSize = blockSize;
+		this.utils = new Utils();
 		this.backupFile = newBackupFile();
 		this.backupStream = new FileOutputStream(backupFile);
 		this.bufferSize = buffersize;
