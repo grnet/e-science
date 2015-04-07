@@ -768,37 +768,24 @@ App.ClusterCreateController = Ember.Controller.extend({
 	replication_factor_change : function(){
 		if (((this.get('replication_factor') == this.get('default_replication_factor'))&&(this.get('cluster_size') != 2)) || ((this.get('replication_factor') == '1') && (this.get('cluster_size') == 2)) || (this.get('replication_factor')=='')){
 			this.set('warning_mes_replication_factor', '');
-			return this.get('warning_mes_replication_factor');
 		}
 		else {
-			if (this.get('alert_mes_replication_factor') !=  ''){
-				this.set('warning_mes_replication_factor', '');
-				return this.get('warning_mes_replication_factor');
-			}
 			this.set('warning_mes_replication_factor', 'Replication factor has changed from default value');
-			return this.get('warning_mes_replication_factor');
 		}
-	}.property('replication_factor','cluster_size', 'alert_mes_replication_factor'),
+		return this.get('warning_mes_replication_factor');
+	}.property('replication_factor','cluster_size'),
 	
 
 	dfs_blocksize_change : function(){
 		if ((this.get('dfs_blocksize') == this.get('default_dfs_blocksize')) || (this.get('dfs_blocksize')=='')){
 			this.set('warning_mes_dfs_blocksize', '');
-			return this.get('warning_mes_dfs_blocksize');
 		}
 		else {
-			if (this.get('alert_mes_dfs_blocksize') !=  ''){
-				this.set('warning_mes_dfs_blocksize', '');
-				return this.get('warning_mes_dfs_blocksize');
-			}
-			this.set('warning_mes_dfs_blocksize', 'Dfs blocksize has changed from default value');
-			return this.get('warning_mes_dfs_blocksize');
+			this.set('warning_mes_dfs_blocksize', 'Dfs blocksize has changed from default value');	
 		}
-	}.property('dfs_blocksize','alert_mes_dfs_blocksize'),
-	
-	
+		return this.get('warning_mes_dfs_blocksize');
+	}.property('dfs_blocksize'),
 
-	
 	actions : {
 		// action to focus project selection view
 		focus_project_selection : function(){
