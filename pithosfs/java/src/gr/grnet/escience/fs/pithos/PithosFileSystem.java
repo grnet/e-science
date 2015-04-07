@@ -251,37 +251,29 @@ public class PithosFileSystem extends FileSystem {
 		filesList = pathToString.split("/");
 		filename = filesList[filesList.length - 1];
 		int count = 2;
-		while (filesList[filesList.length-count] != pithosPath.getContainer()){
+		while (!filesList[filesList.length-count].equals(pithosPath.getContainer())){
 			filename = filesList[filesList.length-count]+"/"+filename;
+			System.out.println("filename: " + filename);
 			count ++;
 		}
-//		String targetFolder = filesList[filesList.length - 1];
-
+		
 		final List<FileStatus> result = new ArrayList<FileStatus>();
 		FileStatus fileStatus; 
-
+		
+		String files[] = getHadoopPithosConnector().getFileList(pithosPath.getContainer()).split("\\r?\\n");
 		// - Iterate on available files in the container
-		for (int i = 0; i < filesList.length; i++) {
-			String lsPathSplit[] = filesList[i].split("/");
-			for (int j=0; j<lsPathSplit.length;j++){
-				if (filename.equals(lsPathSplit[j])){
-					String containedFiles;
-					try {						
-						if (j+2 < lsPathSplit.length) {
-							continue;
-						}
-						containedFiles = lsPathSplit[j+1];			
-					} catch (Exception ArrayIndexOutOfBoundsException) {
-						continue;
-					}
-					Path path = new Path("pithos://"+pithosPath.getContainer()+"/"+containedFiles);
-					fileStatus = getFileStatus(path);
-					result.add(fileStatus);
-					System.out.println("PATH!!:  " + path);
-				}
+		for (int i = 0; i < files.length; i++) {
+			String file = files[i].substring(files[i].lastIndexOf("/")+1);
+			files[i] = files[i].substring(0, (files[i].length() - file.length()));
+			if ((filename + "/").equals(files[i])) {
+				Path path = new Path("pithos://"+pithosPath.getContainer()+"/"+filename + "/" + file);
+				System.out.println("PATH!!:  " + path);
+				fileStatus = getFileStatus(path);
+				result.add(fileStatus);
+				System.out.println("PATH!!:  " + path);
 			}
-		}// end for
-
+		}
+		
 		// - Return the list of the available files
 		if (!result.isEmpty()) {
 			return result.toArray(new FileStatus[result.size()]);

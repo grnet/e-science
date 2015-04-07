@@ -19,6 +19,7 @@ import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 public class TestPithosRestClient {
+	static String filename;
 	private static final String PITHOS_CONTAINER = "";
 	private static String PITHOS_FILE = "uUSer";
 	private static PithosResponse pithosResponse;
@@ -298,17 +299,50 @@ public class TestPithosRestClient {
 		String pathToString;
 		String[] filesList;
 		
-		Path f = new Path("pithos://pithos/folder/subfol");
+		Path f = new Path("pithos://pithos/folder/subfolder");
 		pithosPath = new PithosPath(f);
 		pathToString = pithosPath.toString();
 
 		pathToString = pathToString.substring("pithos".concat("://").length());
 
 		filesList = pathToString.split("/");
-		String conList = hdconnector.getFileList(pithosPath.getContainer());
-		String targetFolder = filesList[filesList.length - 1];
+		filename = filesList[filesList.length - 1];
+		int count = 2;
+		while (!filesList[filesList.length-count].equals(pithosPath.getContainer())){
+			filename = filesList[filesList.length-count]+"/"+filename;
+			System.out.println("filename: " + filename);
+			count ++;
+		}
 		
-		System.out.println(targetFolder);
+		String files[] = hdconnector.getFileList(pithosPath.getContainer()).split("\\r?\\n");
+		// - Iterate on available files in the container
+		for (int i = 0; i < files.length; i++) {
+			String file = files[i].substring(files[i].lastIndexOf("/")+1);
+			files[i] = files[i].substring(0, (files[i].length() - file.length()));
+			if ((filename + "/").equals(files[i])) {
+				Path path = new Path("pithos://"+pithosPath.getContainer()+"/"+filename + "/" + file);
+				System.out.println("PATH!!:  " + path);
+			}
+			
+//			String lsPathSplit[] = files[i].split("/");
+//			for (int j=0; j<lsPathSplit.length;j++){
+//				System.out.println("pathsplit: "+lsPathSplit[j]);
+//				if (filename.equals(lsPathSplit[j])){
+//					String containedFiles;
+//					try {						
+//						if (j+2 >= lsPathSplit.length) {
+//							continue;
+//						}
+//						containedFiles = lsPathSplit[j] + "/" + lsPathSplit[j+1];	
+//						System.out.println("confil: " + containedFiles);
+//					} catch (Exception ArrayIndexOutOfBoundsException) {
+//						continue;
+//					}
+//					Path path = new Path("pithos://"+pithosPath.getContainer()+"/"+containedFiles);
+//					System.out.println("PATH!!:  " + path);
+//				}
+//			}
+		}// end for
 		
 		
 //			String pathStr = f.toString();
