@@ -480,7 +480,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
 			pithosBlockAsFile = pithosBlockInputStream(pithos_container,
 					target_object, target_block_hash, offsetIntoPithosBlock);
-            System.out.println("Block Hash = "+target_block_hash+" | Size = "+ pithosBlockAsFile.length() +" Bytes");
 			return pithosBlockAsFile;
 //		} else {
 //			return null;

@@ -136,7 +136,8 @@ public class PithosFileSystem extends FileSystem {
 	public long getDefaultBlockSize() {
 		System.out.println("blockSize!");
 		//pithosPath = new PithosPath(new Path(getUri().toString()));
-		return getHadoopPithosConnector().getPithosBlockDefaultSize("");
+		//return getHadoopPithosConnector().getPithosBlockDefaultSize("");
+		return 128 * 1024 * 1024;
 	}
 
 	@Override
@@ -276,8 +277,9 @@ public class PithosFileSystem extends FileSystem {
 	public FSDataInputStream open(Path target_file, int buffer_size)
 			throws IOException {
 		// TODO: parse the container
-		return getHadoopPithosConnector().pithosObjectInputStream("pithos",
-				"elwiki-latest-pages-meta-current.xml.bz2");
+		pithosPath = new PithosPath(target_file);
+		return getHadoopPithosConnector().pithosObjectInputStream(pithosPath.getContainer(),
+				pithosPath.getObjectPath());
 	}
 
 	@Override

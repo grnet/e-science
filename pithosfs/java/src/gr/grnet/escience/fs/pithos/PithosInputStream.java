@@ -131,13 +131,13 @@ public class PithosInputStream extends FSInputStream {
 		
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ObjectOutput out = null;
+		FileOutputStream fileOuputStream = null;
 		try {
 		  out = new ObjectOutputStream(bos);
-		  System.out.println(pithosobjectblock.toString());
 		  out.writeObject(pithosobjectblock.getBlockData());
 		  byte[] yourBytes = bos.toByteArray();
 		  
-		  FileOutputStream fileOuputStream;
+		  
 		  Integer i = (int)(long)offsetIntoBlock;
 		  long block_len = pithosobjectblock.getBlockLength();
 		  Integer j= (int)(long)(block_len - offsetIntoBlock);
@@ -146,7 +146,7 @@ public class PithosInputStream extends FSInputStream {
 			// - Create output stream with data to the file
 			fileOuputStream = new FileOutputStream(block);
 			fileOuputStream.write(yourBytes, i, j);
-			fileOuputStream.close();
+			//fileOuputStream.close();
 			// - return the file
 			return block;
 
@@ -154,6 +154,7 @@ public class PithosInputStream extends FSInputStream {
 		  try {
 		    if (out != null) {
 		      out.close();
+		      fileOuputStream.close();
 		    }
 		  } catch (IOException ex) {
 		    // ignore close exception
@@ -164,7 +165,7 @@ public class PithosInputStream extends FSInputStream {
 		    // ignore close exception
 		  }
 		}
-		// convert array of bytes into file
+		
 		
 	}
 	@Override
