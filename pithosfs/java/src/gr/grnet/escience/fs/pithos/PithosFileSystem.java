@@ -1,11 +1,14 @@
 package gr.grnet.escience.fs.pithos;
 
+import gr.grnet.escience.commons.Utils;
 import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -293,7 +296,18 @@ public class PithosFileSystem extends FileSystem {
 	public static void main(String[] args) {
 		// Stub so we can create a 'runnable jar' export for packing
 		// dependencies
-		System.out.println("Pithos FileSystem Connector loaded.");
+		Utils util = new Utils();
+		String out = null;
+		try {
+			out = util.computeHash("Lorem ipsum dolor sit amet.", "SHA-256");
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("Pithos FileSystem Connector loaded." + out);
 	}
 
 }
