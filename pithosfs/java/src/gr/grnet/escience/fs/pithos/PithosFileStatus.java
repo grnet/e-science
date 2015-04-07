@@ -8,8 +8,8 @@ public class PithosFileStatus extends FileStatus {
 	private boolean isEmptyDirectory;
 
 	// Directories
-	public PithosFileStatus(boolean isdir, boolean isemptydir, Path path) {
-		super(0, isdir, 1, 0, 0, path);
+	public PithosFileStatus(boolean isdir, long blockSize, boolean isemptydir, Path path) {
+		super(0, isdir, 1, blockSize, 0, path);
 		isEmptyDirectory = isemptydir;
 	}
 

@@ -1,9 +1,13 @@
 package gr.grnet.escience.fs.pithos;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -110,16 +114,59 @@ public class PithosInputStream extends FSInputStream {
 						getAvailableBlocks()[targetBlock].getBlockHash());
 
 		// - Create block file
-		this.blockFile = PithosFileSystem.getHadoopPithosConnector()
-				.seekPithosBlock(getRequestedContainer(), getRequestedObject(),
-						p_file_block.getBlockHash(), offsetIntoBlock);
+		System.out.println("Current Block->" + p_file_block + "Offset=" + offsetIntoBlock);
+		//this.blockFile = PithosFileSystem.getHadoopPithosConnector()
+				//.seekPithosBlock(getRequestedContainer(), getRequestedObject(),
+						//p_file_block.getBlockHash(), offsetIntoBlock);
+		//PithosBlock p_file_block = this.pithos_conn.getPithosObjectBlock("pithos", "server.txt", blocks[targetBlock].getBlockHash());
+		
+		this.blockFile = retrieveBlock(p_file_block, offsetIntoBlock);
 
 		this.pos = target;
 		this.blockEnd = targetBlockEnd;
 		this.blockStream = new DataInputStream(new FileInputStream(blockFile));
 
 	}
+    private File retrieveBlock(PithosBlock pithosobjectblock, long offsetIntoBlock) throws IOException{
+		
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ObjectOutput out = null;
+		try {
+		  out = new ObjectOutputStream(bos);
+		  System.out.println(pithosobjectblock.toString());
+		  out.writeObject(pithosobjectblock.getBlockData());
+		  byte[] yourBytes = bos.toByteArray();
+		  
+		  FileOutputStream fileOuputStream;
+		  Integer i = (int)(long)offsetIntoBlock;
+		  long block_len = pithosobjectblock.getBlockLength();
+		  Integer j= (int)(long)(block_len - offsetIntoBlock);
+		  
+		  File block = new File("block");
+			// - Create output stream with data to the file
+			fileOuputStream = new FileOutputStream(block);
+			fileOuputStream.write(yourBytes, i, j);
+			fileOuputStream.close();
+			// - return the file
+			return block;
 
+		} finally {
+		  try {
+		    if (out != null) {
+		      out.close();
+		    }
+		  } catch (IOException ex) {
+		    // ignore close exception
+		  }
+		  try {
+		    bos.close();
+		  } catch (IOException ex) {
+		    // ignore close exception
+		  }
+		}
+		// convert array of bytes into file
+		
+	}
 	@Override
 	public synchronized long getPos() throws IOException {
 		return pos;
