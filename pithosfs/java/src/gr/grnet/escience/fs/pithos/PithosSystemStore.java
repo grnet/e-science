@@ -204,12 +204,35 @@ public interface PithosSystemStore {
 	 * @param object_location
 	 *            : the location of the object, that it is requested to be read,
 	 *            in Pithos
-	 * @param object_size
-	 *            : the size in bytes of the object chunk that will be
-	 *            downloaded and stored on the destination
+	 * @param block_hash
+	 *            : the hash code of the requested block
+	 * @return The input stream of the block data as FSDataInputStream
 	 */
 	public FSDataInputStream pithosBlockInputStream(String pithos_container,
 			String object_location, String block_hash);
+
+	/**
+	 * Read the data of an object chunk that is available in Pithos, by using an
+	 * InputStream, without the need to store the data on the local system where
+	 * the Hadoop ecosystem is running. Essentially it feeds directly Hadoop
+	 * with data from the object
+	 * 
+	 * @param pithos_container
+	 *            : the Pithos container on which the action will be performed.
+	 *            Leave it blank so as to refer to the default container that
+	 *            corresponds to 'Pithos'
+	 * @param object_location
+	 *            : the location of the object, that it is requested to be read,
+	 *            in Pithos
+	 * @param block_hash
+	 *            : the hash code of the requested block
+	 * @param offsetIntoPithosBlock
+	 *            : the starting point of the range for the retrieved data
+	 * @return The input stream of the block data as FSDataInputStream
+	 */
+	public File pithosBlockInputStream(String pithos_container,
+			String object_location, String block_hash,
+			long offsetIntoPithosBlock);
 
 	/**
 	 * Delete the defined object from Pithos container
