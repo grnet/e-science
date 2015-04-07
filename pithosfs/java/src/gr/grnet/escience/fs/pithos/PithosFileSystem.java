@@ -93,8 +93,8 @@ public class PithosFileSystem extends FileSystem {
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 		System.out.println(this.uri.toString());
 		this.workingDir = new Path("/user", System.getProperty("user.name"));
-//		this.workingDir = new Path("/user", System.getProperty("user.name"))
-//				.makeQualified(this.uri, this.getWorkingDirectory());
+		//this.workingDir = new Path("/user", System.getProperty("user.name"))
+				//.makeQualified(this.uri, this.getWorkingDirectory());
 		System.out.println(this.workingDir.toString());
 		System.out.println("Create System Store connector");
 
@@ -135,9 +135,8 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public long getDefaultBlockSize() {
 		System.out.println("blockSize!");
-		pithosPath = new PithosPath(new Path(getUri().toString()));
-		return getHadoopPithosConnector().getPithosBlockDefaultSize(
-				pithosPath.getContainer());
+		//pithosPath = new PithosPath(new Path(getUri().toString()));
+		return getHadoopPithosConnector().getPithosBlockDefaultSize("");
 	}
 
 	@Override
@@ -199,8 +198,9 @@ public class PithosFileSystem extends FileSystem {
 			}
 
 			if (isDir) {
-				pithos_file_status = new PithosFileStatus(true, false,
-						targetPath);
+				pithos_file_status = new PithosFileStatus(true, getDefaultBlockSize(), false,
+						targetPath); // arg0.makeQualified(this.uri,
+				// this.workingDir));
 			} else {
 				for (String obj : metadata.getResponseData().keySet()) {
 					if (obj != null) {
@@ -213,7 +213,7 @@ public class PithosFileSystem extends FileSystem {
 
 					}
 				}
-				pithos_file_status = new PithosFileStatus(length, 123,
+				pithos_file_status = new PithosFileStatus(length, getDefaultBlockSize(), 123,
 						targetPath);
 			}
 		}
@@ -292,8 +292,6 @@ public class PithosFileSystem extends FileSystem {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// Stub so we can create a 'runnable jar' export for packing
-		// dependencies
 		System.out.println("Pithos FileSystem Connector loaded.");
 	}
 

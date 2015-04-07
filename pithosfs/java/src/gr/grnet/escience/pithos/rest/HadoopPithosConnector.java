@@ -153,7 +153,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	 *            : tha file that should be serialized into bytes array
 	 * @return a File as bytes []
 	 */
-	private byte[] serializeFile(File inputFile) {
+	@Override
+	public byte[] serializeFile(File inputFile) {
 		// - Convert File in bytes []
 		byte[] block_data_bytes = new byte[(int) inputFile.length()];
 
@@ -180,7 +181,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	 * @return return a File that actually constitutes the bytes that were
 	 *         deserialized
 	 */
-	private File deserializeFile(byte[] data) {
+	@Override
+	public File deserializeFile(byte[] data) {
 		// convert array of bytes into file
 		FileOutputStream fileOuputStream;
 		try {
@@ -475,16 +477,17 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 				target_object);
 
 		// - Check if the requested offset if valid
-		if ((offsetIntoPithosBlock < object_total_size)
-				&& (offsetIntoPithosBlock < block_size)) {
+		// if ((offsetIntoPithosBlock < object_total_size)
+		// && (offsetIntoPithosBlock < block_size)) {
 
-			pithosBlockAsFile = pithosBlockInputStream(pithos_container,
-					target_object, target_block_hash, offsetIntoPithosBlock);
-
-			return pithosBlockAsFile;
-		} else {
-			return null;
-		}
+		pithosBlockAsFile = pithosBlockInputStream(pithos_container,
+				target_object, target_block_hash, offsetIntoPithosBlock);
+		System.out.println("Block Hash = " + target_block_hash + " | Size = "
+				+ pithosBlockAsFile.length() + " Bytes");
+		return pithosBlockAsFile;
+		// } else {
+		// return null;
+		// }
 
 	}
 
@@ -770,7 +773,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
 	@Override
 	public String storePithosBlock(String pithos_container,
-			String target_object, PithosBlock pithos_block) {
+			String target_object, PithosBlock pithos_block, File backup_file) {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -287,10 +287,12 @@ public interface PithosSystemStore {
 	 * @param pithos_block
 	 *            : the actual Pithos Block that will be stored on Pithos
 	 *            storage system
+	 * @param backup_file
+	 *            : the temporary file storing the block data to be streamed
 	 * @return
 	 */
 	public String storePithosBlock(String pithos_container,
-			String target_object, PithosBlock pithos_block);
+			String target_object, PithosBlock pithos_block, File backup_file);
 
 	/**
 	 * 
@@ -421,5 +423,24 @@ public interface PithosSystemStore {
 	 * @return <b>true</b> if the block exists and <b>false</b> if not
 	 */
 	public boolean pithosObjectBlockExists(String blockHash);
+
+	/**
+	 * Serialize a file into bytes array
+	 * 
+	 * @param inputFile
+	 *            : tha file that should be serialized into bytes array
+	 * @return a File as bytes []
+	 */
+	public byte[] serializeFile(File inputFile);
+
+	/**
+	 * Deserialize a byte array into File
+	 * 
+	 * @param data
+	 *            the byte array that should be desirialized int File
+	 * @return return a File that actually constitutes the bytes that were
+	 *         deserialized
+	 */
+	public File deserializeFile(byte[] data);
 
 }
