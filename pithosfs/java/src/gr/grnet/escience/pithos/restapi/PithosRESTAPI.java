@@ -604,7 +604,6 @@ public class PithosRESTAPI implements Serializable {
 
 				while ((inputLine = in.readLine()) != null) {
 					response.append(inputLine);
-					response.append(System.lineSeparator());
 				}
 				in.close();
 				System.out.println(getConnection().getHeaderFields());
