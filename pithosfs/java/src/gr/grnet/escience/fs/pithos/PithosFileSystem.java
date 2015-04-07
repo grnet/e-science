@@ -212,7 +212,7 @@ public class PithosFileSystem extends FileSystem {
 
 					}
 				}
-				pithos_file_status = new PithosFileStatus(length, 123,
+				pithos_file_status = new PithosFileStatus(length, getDefaultBlockSize(), 123,
 						targetPath);
 			}
 		}
