@@ -17,6 +17,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class TestPithosRestClient {
+	private static final String PITHOS_STORAGE_SYSTEM_URL = "https://pithos.okeanos.grnet.gr/v1";
+	private static final String UUID = "353ec5f5-8f17-4508-8084-020f78ae82cf";
+	private static final String TOKEN = "ygVkUyRNWsSZo7GM39QtxOAkU5sySmkEHa4arwqY_2U";
 	private static final String PITHOS_CONTAINER = "";
 	private static final String PITHOS_FILE = "testOutput.txt";
 	private static final String LOCAL_SOURCE_FILE = "testOutput.txt";
@@ -29,7 +32,8 @@ public class TestPithosRestClient {
 	@Before
 	public void createHdConnector() {
 		// - CREATE HADOOP CONNECTOR INSTANCE
-		hdconnector = new HadoopPithosConnector();
+		hdconnector = new HadoopPithosConnector(PITHOS_STORAGE_SYSTEM_URL,
+				TOKEN, UUID);
 	}
 
 	@Test
@@ -42,6 +46,20 @@ public class TestPithosRestClient {
 				.println("---------------------------------------------------------------------");
 		pithosResponse = hdconnector.getContainerInfo(PITHOS_CONTAINER);
 		System.out.println(pithosResponse.toString());
+		System.out
+				.println("---------------------------------------------------------------------\n");
+	}
+
+	@Test
+	public void testGet_Container_File_List() {
+		// - GET THE FILE STATUS OF A SELECTED CONTAINER
+		System.out
+				.println("---------------------------------------------------------------------");
+		System.out.println("GET FILE LIST OF THE CONTAINER: [CONTAINER:<"
+				+ PITHOS_CONTAINER + ">]");
+		System.out
+				.println("---------------------------------------------------------------------");
+		System.out.println(hdconnector.getFileList(PITHOS_CONTAINER));
 		System.out
 				.println("---------------------------------------------------------------------\n");
 	}
@@ -315,7 +333,8 @@ public class TestPithosRestClient {
 
 		client.createHdConnector();
 		// client.testGet_Container_Info();
-		client.testGet_Pithos_Object_Metadata();
+		client.testGet_Container_File_List();
+		//client.testGet_Pithos_Object_Metadata();
 		// client.testGet_Pithos_Object_Size();
 		// client.testGet_Pithos_Object();
 		// client.testGet_Pithos_Object_Block_Hashes();

@@ -16,6 +16,8 @@ public interface PithosSystemStore {
 	 **************************/
 	public PithosResponse getContainerInfo(String pithos_container);
 
+	public String getFileList(String pithos_container);
+
 	/**************************
 	 * PITHOS OBJECT LEVEL
 	 **************************/

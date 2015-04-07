@@ -1,5 +1,8 @@
 package gr.grnet.escience.hdfs.client;
 
+import gr.grnet.escience.commons.Configurator;
+import gr.grnet.escience.commons.Settings;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -18,8 +21,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.UserGroupInformation;
-import gr.grnet.escience.commons.Configurator;
-import gr.grnet.escience.commons.Settings;
 
 /**
  * This class implements a java-based HDFS Client that can perform actions such
@@ -83,7 +84,6 @@ public class OrkaHdfsClient {
 			throws IOException, InterruptedException {
 		/** Perform the action as the user in the defined hadoop user group **/
 		getUserGroupInformation().doAs(new PrivilegedExceptionAction<Void>() {
-			@Override
 			public Void run() throws Exception {
 				// - Create instance for the FS
 				FileSystem fileSystem = FileSystem.get(getConfiguration());
@@ -152,7 +152,6 @@ public class OrkaHdfsClient {
 			InterruptedException {
 		/** Perform the action as the user in the defined hadoop user group **/
 		getUserGroupInformation().doAs(new PrivilegedExceptionAction<Void>() {
-			@Override
 			public Void run() throws Exception {
 				// - Create instance for the FS
 				FileSystem fileSystem = FileSystem.get(getConfiguration());
@@ -204,7 +203,6 @@ public class OrkaHdfsClient {
 			InterruptedException {
 		/** Perform the action as the user in the defined hadoop user group **/
 		getUserGroupInformation().doAs(new PrivilegedExceptionAction<Void>() {
-			@Override
 			public Void run() throws Exception {
 				// - Create instance for the FS
 				FileSystem fileSystem = FileSystem.get(getConfiguration());
@@ -239,7 +237,6 @@ public class OrkaHdfsClient {
 			InterruptedException {
 		/** Perform the action as the user in the defined hadoop user group **/
 		getUserGroupInformation().doAs(new PrivilegedExceptionAction<Void>() {
-			@Override
 			public Void run() throws Exception {
 				// - Create instance for the FS
 				FileSystem fileSystem = FileSystem.get(getConfiguration());
@@ -275,7 +272,6 @@ public class OrkaHdfsClient {
 			throws IOException, InterruptedException {
 		/** Perform the action as the user in the defined hadoop user group **/
 		getUserGroupInformation().doAs(new PrivilegedExceptionAction<Void>() {
-			@Override
 			public Void run() throws Exception {
 				// - Create instance for the FS
 				FileSystem fileSystem = FileSystem.get(getConfiguration());
@@ -327,7 +323,6 @@ public class OrkaHdfsClient {
 			throws IOException, InterruptedException {
 		/** Perform the action as the user in the defined hadoop user group **/
 		getUserGroupInformation().doAs(new PrivilegedExceptionAction<Void>() {
-			@Override
 			public Void run() throws Exception {
 				// - Create instance for the FS
 				FileSystem fileSystem = FileSystem.get(getConfiguration());
@@ -380,7 +375,6 @@ public class OrkaHdfsClient {
 			throws IOException, InterruptedException {
 		/** Perform the action as the user in the defined hadoop user group **/
 		getUserGroupInformation().doAs(new PrivilegedExceptionAction<Void>() {
-			@Override
 			public Void run() throws Exception {
 				// - Create instance for the FS
 				FileSystem fileSystem = FileSystem.get(getConfiguration());
@@ -428,7 +422,6 @@ public class OrkaHdfsClient {
 			InterruptedException {
 		/** Perform the action as the user in the defined hadoop user group **/
 		getUserGroupInformation().doAs(new PrivilegedExceptionAction<Void>() {
-			@Override
 			public Void run() throws Exception {
 				// - Create instance for the FS
 				FileSystem fileSystem = FileSystem.get(getConfiguration());
