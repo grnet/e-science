@@ -156,14 +156,14 @@ public class PithosFileSystem extends FileSystem {
 	public FSDataOutputStream create(Path arg0, FsPermission arg1,
 			boolean arg2, int arg3, short arg4, long arg5, Progressable arg6)
 			throws IOException {
-		System.out.println("create!");
+		System.out.println("Create!");
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean delete(Path arg0, boolean arg1) throws IOException {
-		System.out.println("deelete!");
+		System.out.println("Delete!");
 		// TODO Auto-generated method stub
 		return false;
 	}
@@ -173,8 +173,6 @@ public class PithosFileSystem extends FileSystem {
 		boolean exist = true, isDir = false;
 		long length = 0;
 		System.out.println("here in getFileStatus BEFORE!");
-		System.out.println("Path: " + targetPath.toString());
-		/*---Check if file exist in pithos------------------------------------*/
 
 		// - Process the given path
 		pithosPath = new PithosPath(targetPath);
@@ -186,7 +184,7 @@ public class PithosFileSystem extends FileSystem {
 			System.out.println("File does not exist in Pithos FS.");
 			exist = false;
 		}
-		/*---------------------------------------------------------*/
+		
 		if (exist) {
 			for (String obj : metadata.getResponseData().keySet()) {
 				if (obj != null) {
@@ -206,17 +204,8 @@ public class PithosFileSystem extends FileSystem {
 			}
 
 			if (isDir) {
-				pithos_file_status = new PithosFileStatus(true, false, targetPath); // arg0.makeQualified(this.uri,
-																				// this.workingDir));
-			} else {
-//					String contentLength = obj.getJSONObject("pithosResponse")
-//							.getString("Content-Length");
-//					int left = contentLength.indexOf("[\"");
-//					int right = contentLength.indexOf("\"]");
-//					String objlength = contentLength.substring(left + 2, right);
-//					length = Long.parseLong(objlength);
-//					System.out.println("object length: " + length);
-				
+				pithos_file_status = new PithosFileStatus(true, false, targetPath); 
+			} else {				
 				for (String obj : metadata.getResponseData().keySet()) {
 					if (obj != null) {
 						if (obj.matches("Content-Length")) {
@@ -253,7 +242,6 @@ public class PithosFileSystem extends FileSystem {
 		int count = 2;
 		while (!filesList[filesList.length-count].equals(pithosPath.getContainer())){
 			filename = filesList[filesList.length-count]+"/"+filename;
-			System.out.println("filename: " + filename);
 			count ++;
 		}
 		
@@ -267,10 +255,8 @@ public class PithosFileSystem extends FileSystem {
 			files[i] = files[i].substring(0, (files[i].length() - file.length()));
 			if ((filename + "/").equals(files[i])) {
 				Path path = new Path("pithos://"+pithosPath.getContainer()+"/"+filename + "/" + file);
-				System.out.println("PATH!!:  " + path);
 				fileStatus = getFileStatus(path);
 				result.add(fileStatus);
-				System.out.println("PATH!!:  " + path);
 			}
 		}
 		

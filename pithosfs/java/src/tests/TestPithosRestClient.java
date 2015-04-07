@@ -299,7 +299,7 @@ public class TestPithosRestClient {
 		String pathToString;
 		String[] filesList;
 		
-		Path f = new Path("pithos://pithos/folder/subfolder");
+		Path f = new Path("pithos://pithos/folder");
 		pithosPath = new PithosPath(f);
 		pathToString = pithosPath.toString();
 
@@ -307,10 +307,10 @@ public class TestPithosRestClient {
 
 		filesList = pathToString.split("/");
 		filename = filesList[filesList.length - 1];
+		System.out.println(filename);
 		int count = 2;
 		while (!filesList[filesList.length-count].equals(pithosPath.getContainer())){
 			filename = filesList[filesList.length-count]+"/"+filename;
-			System.out.println("filename: " + filename);
 			count ++;
 		}
 		
