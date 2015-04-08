@@ -21,7 +21,9 @@ public class TestPithosRestClient {
 	private static final String UUID = "353ec5f5-8f17-4508-8084-020f78ae82cf";
 	private static final String TOKEN = "ygVkUyRNWsSZo7GM39QtxOAkU5sySmkEHa4arwqY_2U";
 	private static final String PITHOS_CONTAINER = "";
-	private static final String PITHOS_FILE = "testOutput.txt";
+	private static final String PITHOS_FILE = "test/Stage.rar";
+	private static final String BLOCK_HASH = "65e71d1c0c2952a04baa9acfd2ba078a5134fb31aec6fc48dc96af0a5b9e53ba";
+	private static final long OFFSET = 5194305;
 	private static final String LOCAL_SOURCE_FILE = "testOutput.txt";
 	private static final String LOCAL_STREAMED_FILE = "testStreamData.txt";
 	private static final String PITHOS_OBJECT_NAME = "uploadedFile";
@@ -283,6 +285,26 @@ public class TestPithosRestClient {
 		System.out
 				.println("---------------------------------------------------------------------\n");
 	}
+	
+	@Test
+	public void testPithos_Object_Block_InputStream_With_Offset() throws IOException {
+		// - READ PITHOS OBJECT BLOCK: ESSENTIALLY CREATES INPUTSTREAM FOR A
+		// PITHOS OBJECT BLOCK REQUESTED BY IT'S HASH
+		// - Get a block hash of the previously requested object
+		System.out
+		.println("---------------------------------------------------------------------");
+		System.out.println("SEEK INTO PITHOS BLOCK DATA: [BLOCK PART OF OBJECT:<"
+				+ PITHOS_FILE + ">]");
+		System.out
+		.println("---------------------------------------------------------------------");
+		
+		File objectBlockInputStream = hdconnector
+				.pithosBlockInputStream("", PITHOS_FILE, BLOCK_HASH, OFFSET);
+		System.out.println("Available data in block inputstream : "
+				+ objectBlockInputStream.length() + " Bytes");
+		System.out
+		.println("---------------------------------------------------------------------\n");
+	}
 
 	@Test
 	public void testStore_File_To_Pithos() throws IOException {
@@ -333,7 +355,7 @@ public class TestPithosRestClient {
 
 		client.createHdConnector();
 		// client.testGet_Container_Info();
-		client.testGet_Container_File_List();
+		//client.testGet_Container_File_List();
 		//client.testGet_Pithos_Object_Metadata();
 		// client.testGet_Pithos_Object_Size();
 		// client.testGet_Pithos_Object();
@@ -345,6 +367,7 @@ public class TestPithosRestClient {
 		// client.testRead_Pithos_Object();
 		// client.testRead_Pithos_Object_Block();
 		// client.testPithos_Output_Stream();
+		client.testPithos_Object_Block_InputStream_With_Offset();
 	}
 
 }
