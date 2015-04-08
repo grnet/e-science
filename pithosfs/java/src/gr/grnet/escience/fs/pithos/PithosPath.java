@@ -32,6 +32,11 @@ public class PithosPath {
 
 		pathParts = fsPathStr.split("/");
 
+//		if (this.container dhladh pathParts[0] exist){
+//			this.container = pathParts[0];
+//		} else {
+//			System.err.println("The container " + pathParts[0] + " does not exist.");
+//		}
 		this.container = pathParts[0];
 		this.object_path = fsPathStr.substring(getContainer().length() + 1);
 	}

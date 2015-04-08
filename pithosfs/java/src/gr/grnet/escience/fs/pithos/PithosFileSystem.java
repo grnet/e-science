@@ -34,8 +34,6 @@ import org.apache.hadoop.util.Progressable;
  */
 public class PithosFileSystem extends FileSystem {
 	
-	private final int PITHOS_PROTOCOL = 9;
-
 	private URI uri;
 	private static HadoopPithosConnector hadoopPithosConnector;
 	private Path workingDir;
@@ -142,7 +140,7 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public long getDefaultBlockSize() {
 		System.out.println("blockSize!");
-		return getConf().getLong("fs.pithos.block.size", 4 * 1024 * 1024);
+		return getConf().getLong("dfs.blocksize", 4 * 1024 * 1024);
 	}
 
 	@Override
@@ -170,8 +168,6 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public PithosFileStatus getFileStatus(Path targetPath) throws IOException {
-		boolean exist = true, isDir = false;
-		long length = 0;
 		System.out.println("here in getFileStatus BEFORE!");
 
 		// - Process the given path
@@ -204,7 +200,7 @@ public class PithosFileSystem extends FileSystem {
 			}
 
 			if (isDir) {
-				pithos_file_status = new PithosFileStatus(true, false, targetPath); 
+				pithos_file_status = new PithosFileStatus(true, getDefaultBlockSize(), false, targetPath); 
 			} else {				
 				for (String obj : metadata.getResponseData().keySet()) {
 					if (obj != null) {
@@ -217,7 +213,7 @@ public class PithosFileSystem extends FileSystem {
 
 					}
 				}
-				pithos_file_status = new PithosFileStatus(length, 123, targetPath);
+				pithos_file_status = new PithosFileStatus(length, getDefaultBlockSize(), 123, targetPath);
 			}
 		}
 

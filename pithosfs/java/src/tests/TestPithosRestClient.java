@@ -21,7 +21,7 @@ import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 public class TestPithosRestClient {
 	static String filename;
 	private static final String PITHOS_CONTAINER = "";
-	private static String PITHOS_FILE = "uUSer";
+	private static String PITHOS_FILE = "file.txt";
 	private static PithosResponse pithosResponse;
 	private static String pithosListResponse;
 	private static Collection<String> object_block_hashes;
@@ -293,36 +293,38 @@ public class TestPithosRestClient {
 		//testGet_Pithos_Object();
 		//testgetContainerList();
 		//testGet_Pithos_Object_Metadata();
+		testGet_Container_Info();
 //		Path f = new Path("pithos://pithos/folder/subfolder/pithosFile2.txt");
-		
-		PithosPath pithosPath;
-		String pathToString;
-		String[] filesList;
-		
-		Path f = new Path("pithos://pithos/folder");
-		pithosPath = new PithosPath(f);
-		pathToString = pithosPath.toString();
-
-		pathToString = pathToString.substring("pithos".concat("://").length());
-
-		filesList = pathToString.split("/");
-		filename = filesList[filesList.length - 1];
-		System.out.println(filename);
-		int count = 2;
-		while (!filesList[filesList.length-count].equals(pithosPath.getContainer())){
-			filename = filesList[filesList.length-count]+"/"+filename;
-			count ++;
-		}
-		
-		String files[] = hdconnector.getFileList(pithosPath.getContainer()).split("\\r?\\n");
-		// - Iterate on available files in the container
-		for (int i = 0; i < files.length; i++) {
-			String file = files[i].substring(files[i].lastIndexOf("/")+1);
-			files[i] = files[i].substring(0, (files[i].length() - file.length()));
-			if ((filename + "/").equals(files[i])) {
-				Path path = new Path("pithos://"+pithosPath.getContainer()+"/"+filename + "/" + file);
-				System.out.println("PATH!!:  " + path);
-			}
+	}
+}
+//		PithosPath pithosPath;
+//		String pathToString;
+//		String[] filesList;
+//		
+//		Path f = new Path("pithos://pithos/folder");
+//		pithosPath = new PithosPath(f);
+//		pathToString = pithosPath.toString();
+//
+//		pathToString = pathToString.substring("pithos".concat("://").length());
+//
+//		filesList = pathToString.split("/");
+//		filename = filesList[filesList.length - 1];
+//		System.out.println(filename);
+//		int count = 2;
+//		while (!filesList[filesList.length-count].equals(pithosPath.getContainer())){
+//			filename = filesList[filesList.length-count]+"/"+filename;
+//			count ++;
+//		}
+//		
+//		String files[] = hdconnector.getFileList(pithosPath.getContainer()).split("\\r?\\n");
+//		// - Iterate on available files in the container
+//		for (int i = 0; i < files.length; i++) {
+//			String file = files[i].substring(files[i].lastIndexOf("/")+1);
+//			files[i] = files[i].substring(0, (files[i].length() - file.length()));
+//			if ((filename + "/").equals(files[i])) {
+//				Path path = new Path("pithos://"+pithosPath.getContainer()+"/"+filename + "/" + file);
+//				System.out.println("PATH!!:  " + path);
+//			}
 			
 //			String lsPathSplit[] = files[i].split("/");
 //			for (int j=0; j<lsPathSplit.length;j++){
@@ -342,7 +344,7 @@ public class TestPithosRestClient {
 //					System.out.println("PATH!!:  " + path);
 //				}
 //			}
-		}// end for
+//		}// end for
 		
 		
 //			String pathStr = f.toString();
@@ -379,7 +381,7 @@ public class TestPithosRestClient {
 //				Path path = new Path("pithos://"+container+"/"+files[i]);
 //				System.out.println("PATH!!:  " + path);
 //			}
-		}
+//		}
 //		String pathSplit[] = pathStr.split("/");
 //		String container = pathSplit[0];
 		//System.out.println("Container: " + container);
@@ -425,4 +427,4 @@ public class TestPithosRestClient {
 ////		}
 //	}
 
-}
+//}
