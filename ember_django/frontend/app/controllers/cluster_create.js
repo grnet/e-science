@@ -14,6 +14,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 	master_disk_selection : 0,	// Initial master_disk_selection, appears in master disk summary
 	slaves_disk_selection : 0, 	// Initial slaves_disk_selection, appears in slaves disk summary
 	cluster_name : '', 		// Initial cluster name, null
+	replication_factor : '', 		// Replication_factor for hdfs
+	default_replication_factor: '2', // Deafault replication_factor for hdfs
+	dfs_blocksize : '', 		// Hadoop dfs_blocksize
+	default_dfs_blocksize: '128', // Deafault dfs_blocksize for hdfs  is 128MB
 	operating_system : '', // Preselected OS
 	disk_temp : 'Archipelago', 	// Initial storage selection, common for master and slaves friendly to  user name
 	cluster_size_zero : false, 	// for checking the available VMs, cluster size
@@ -26,6 +30,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 	alert_mes_slaves_disk : '', 	// alert message for slaves disk buttons (if none selected)
 	alert_mes_cluster_name : '', 	// alert message for cluster name (if none selected)
 	alert_mes_cluster_size : '', 	// alert message for cluster size (if none selected)
+	alert_mes_replication_factor: '', // alert message for replication factor (if not integer or greater than cluster size)
+	alert_mes_dfs_blocksize: '',	// alert message for cdfs blocksize (if not integer)
 	project_details : '', 		// project details: name and quota(Vms cpus ram disk)
 	name_of_project : '', 		// variable to set name of project as part of project details string helps parsing system project name
 	ssh_key_selection : '',		// variable for selected public ssh_key to use upon cluster creation
@@ -223,7 +229,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		aryButtons.each(function(i, button){
 			button.disabled = flag;
 		});
-		var aryControlIDs = ['os_systems','size_of_cluster','cluster_name','ssh_key'];
+		var aryControlIDs = ['os_systems','size_of_cluster','cluster_name','ssh_key','replication_factor','dfs_blocksize'];
 		$.each(aryControlIDs,function(i, elementID){
 			var element = $('#'+elementID);
 			element.prop('disabled',flag);
@@ -736,6 +742,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('vm_flavor_selection_master', '');
 		this.set('vm_flavor_selection_slaves', '');
 		this.set('message', '');
+		this.set('replication_factor', '');		
+		this.set('dfs_blocksize', '');
 		this.init_alerts();
 	},
 	// initialize alert messages
@@ -748,12 +756,20 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('alert_mes_slaves_disk', '');
 		this.set('alert_mes_cluster_name', '');
 		this.set('alert_mes_cluster_size', '');
+		this.set('alert_mes_replication_factor', '');
+		this.set('alert_mes_dfs_blocksize', '');
+		
 	},
 	
 	actions : {
 		// action to focus project selection view
 		focus_project_selection : function(){
 			$('#project_id').focus();
+		},
+		// action to reset hdfs configuration parameters in default values
+		default_hdfs_configuration : function(){
+			this.set('replication_factor', this.get('default_replication_factor'));
+			this.set('dfs_blocksize', this.get('default_dfs_blocksize'));
 		},
 		// action to apply last cluster configuration
 		// trigger when the corresponding button is pressed
@@ -1101,7 +1117,34 @@ App.ClusterCreateController = Ember.Controller.extend({
 				// scroll to message
 				var elem = document.getElementById("common_settings");
 				window.scrollTo(elem.offsetLeft, elem.offsetTop);
-			} else {
+			}
+			else if ((this.get('replication_factor')=='') || (this.get('replication_factor')==null)){
+				this.set('replication_factor', this.get('default_replication_factor'));
+			}
+			else if (isNaN(parseInt(this.get('replication_factor')))){
+				this.set('alert_mes_replication_factor', 'Replication_factor is an integer');
+				var elem = document.getElementById("hdfs_configuration");
+				window.scrollTo(elem.offsetLeft, elem.offsetTop);
+			}
+			else if ((parseInt(this.get('replication_factor')) > this.get('cluster_size')) || (parseInt(this.get('replication_factor')) <= 0)){
+				this.set('alert_mes_replication_factor', 'Replication_factor must be positive and not greater than cluster size');
+				var elem = document.getElementById("hdfs_configuration");
+				window.scrollTo(elem.offsetLeft, elem.offsetTop);					
+			}
+			else if ((this.get('dfs_blocksize')=='') || (this.get('dfs_blocksize')==null)){
+				this.set('dfs_blocksize', this.get('default_dfs_blocksize'));
+			}
+			else if (isNaN(parseInt(this.get('dfs_blocksize')))){
+				this.set('alert_mes_dfs_blocksize', 'Blocksize is an integer');
+				var elem = document.getElementById("hdfs_configuration");
+				window.scrollTo(elem.offsetLeft, elem.offsetTop);
+			}
+			else if (parseInt(this.get('dfs_blocksize')) <= 0){
+				this.set('alert_mes_dfs_blocksize', 'Blocksize must be positive');
+				var elem = document.getElementById("hdfs_configuration");
+				window.scrollTo(elem.offsetLeft, elem.offsetTop);					
+			}		
+			else {
 				$.loader.open($options);
 				//body
 				// check if everything is allowed
@@ -1129,7 +1172,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 						'disk_slaves' : self.get('slaves_disk_selection'),
 						'disk_template' : self.get('disk_temp'),
 						'os_choice' : self.get('operating_system'),
-						'ssh_key_selection' : self.get('ssh_key_selection')
+						'ssh_key_selection' : self.get('ssh_key_selection'),
+						'replication_factor' : self.get('replication_factor'),
+						'dfs_blocksize': self.get('dfs_blocksize')
 					}).save();
 
 					cluster_selection.then(function(clusterchoice) {

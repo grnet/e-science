@@ -1,7 +1,5 @@
 package gr.grnet.escience.commons;
 
-import gr.grnet.escience.fs.pithos.PithosFileSystem;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -87,6 +85,7 @@ public class Configurator {
 			obj.getpithosFSConfiguration().put("fs.defaultFS", "hdfs://83.212.96.14:9000");
 			obj.getpithosFSConfiguration().put("fs.pithos.impl", "gr.grnet.escience.fs.pithos.PithosFileSystem");
 			
+			//- Pithos FS Configuration
 			obj.getPithosUser().put("url", "https://pithos.okeanos.grnet.gr/v1");
 			obj.getPithosUser().put("username", "fc1bd1b1-9691-4142-b759-12a12a1e6fe3");
 			obj.getPithosUser().put("token", "juUVEDtgTftG24r-JA4pAvaU9c-UB2353op42-D0REQ");

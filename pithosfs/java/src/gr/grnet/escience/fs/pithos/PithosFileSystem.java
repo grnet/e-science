@@ -1,12 +1,15 @@
 package gr.grnet.escience.fs.pithos;
 
+import gr.grnet.escience.commons.Utils;
 import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,17 +26,17 @@ import org.apache.hadoop.util.Progressable;
 
 /**
  * This class implements a custom file system based on FIleSystem class of
- * Hadoop 2.6.0. Essentially the main idea here, respects to the development of
+ * Hadoop 2.5.2. Essentially the main idea here, respects to the development of
  * a custom File System that will be able to allow the interaction between
  * hadoop and pithos storage system.
  * 
  * @since March, 2015
- * @author Dimitris G. Kelaidonis (kelaidonis@gmail.com)
+ * @author Dimitris G. Kelaidonis & Ioannis Stenos
  * @version 0.1
  * 
  */
 public class PithosFileSystem extends FileSystem {
-	
+
 	private URI uri;
 	private static HadoopPithosConnector hadoopPithosConnector;
 	private Path workingDir;
@@ -51,7 +54,6 @@ public class PithosFileSystem extends FileSystem {
 	public static final Log LOG = LogFactory.getLog(PithosFileSystem.class);
 
 	public PithosFileSystem() {
-		// Initialize it by implementing the interface PithosSystemStore
 	}
 
 	public String getConfig(String param) {
@@ -84,7 +86,6 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public URI getUri() {
 		System.out.println("GetUri!");
-		getConfig("fs.pithos.impl");
 		return uri;
 	}
 
@@ -178,7 +179,7 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public PithosFileStatus getFileStatus(Path targetPath) throws IOException {
 		System.out.println("here in getFileStatus BEFORE!");
-
+		System.out.println("Path: " + targetPath.toString());
 		// - Process the given path
 		pithosPath = new PithosPath(targetPath);
 
@@ -277,8 +278,9 @@ public class PithosFileSystem extends FileSystem {
 	public FSDataInputStream open(Path target_file, int buffer_size)
 			throws IOException {
 		// TODO: parse the container
-		return getHadoopPithosConnector().pithosObjectInputStream("pithos",
-				"server.txt");
+		pithosPath = new PithosPath(target_file);
+		return getHadoopPithosConnector().pithosObjectInputStream(pithosPath.getContainer(),
+				pithosPath.getObjectPath());
 	}
 
 	@Override
@@ -295,7 +297,19 @@ public class PithosFileSystem extends FileSystem {
 	public static void main(String[] args) {
 		// Stub so we can create a 'runnable jar' export for packing
 		// dependencies
+		Utils util = new Utils();
+		String out = null;
+		try {
+			out = util.computeHash("Lorem ipsum dolor sit amet.", "SHA-256");
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		System.out.println("Pithos FileSystem Connector loaded.");
+		System.out.println("Test hashing: " + out);
 	}
 
 }

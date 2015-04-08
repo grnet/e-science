@@ -12,7 +12,6 @@ from os.path import abspath
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
-from kamaki.clients.compute import ComputeClient
 from kamaki.clients.cyclades import CycladesClient, CycladesNetworkClient
 from time import sleep
 from cluster_errors_constants import *
