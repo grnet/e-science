@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 '''
-This script is a test for hadoop start action it creates a cluster and then stops haoop
+This script is a test for cluster creation via GUI end to end with celery
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
 from selenium import webdriver
 import sys, os
 from os.path import join, dirname, abspath
-from ansible.runner.filter_plugins.core import success
 sys.path.append(join(dirname(abspath(__file__)), '../../ember_django'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from selenium.webdriver.common.by import By
@@ -24,7 +23,7 @@ import unittest, time, re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../..")
 
-class test_hadoop_start_action(unittest.TestCase):
+class test_hdfs_configuration_dfs_blocksize(unittest.TestCase):
     def setUp(self):
         self.driver = webdriver.Firefox()
         self.driver.implicitly_wait(30)
@@ -55,7 +54,7 @@ class test_hadoop_start_action(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
     
-    def test_hadoop_start_action(self):
+    def test_hdfs_configuration_dfs_blocksize(self):
         driver = self.driver
         driver.get(self.base_url + "#/homepage")
         driver.find_element_by_id("id_login").click()     
@@ -107,8 +106,11 @@ class test_hadoop_start_action(unittest.TestCase):
             for flavor in ['cpus' , 'ram' , 'disk']:
                 button_id = role + '_' + flavor + '_' + str(kamaki_flavors[flavor][0])
                 driver.find_element_by_id(button_id).click()
-        self.assert_(True , 'ok')
-        time.sleep(5)
+        driver.find_element_by_id("dfs_blocksize").clear()
+        dfs_blocksize = '64'
+        driver.find_element_by_id("dfs_blocksize").send_keys(dfs_blocksize)
+        time.sleep(3)
+        driver.find_element_by_id("next").click()
         driver.find_element_by_id("next").click()
         print 'Creating cluster...'
         for i in range(1500): 
@@ -123,41 +125,13 @@ class test_hadoop_start_action(unittest.TestCase):
                     pass
             except: pass
             time.sleep(1)
-        driver.find_element_by_id('id_hadoop_stop_'+cluster_name).click()
-        time.sleep(5)
-        driver.find_element_by_id('id_confirm_' + cluster_name).click()
-        success =False
-        for i in range(180): 
-            # wait for cluster create to finish
-            try:
-                if "glyphicon glyphicon-stop text-danger" == driver.find_element_by_id('id_hadoop_status_'+cluster_name).get_attribute("class"): 
-                    success = True
-                    break
-                else:
-                    pass
-            except: pass
-            time.sleep(1)
+        config_url = str(driver.find_element_by_id("id_ip_"+cluster_name).get_attribute("href"))
+        time.sleep(30)
+        driver.get(config_url)
         #check that cluster url is up and page is running
-        if not success:
-            self.assertTrue(False,'hadoop status did not stop')
-        driver.find_element_by_id('id_hadoop_start_'+cluster_name).click()
-        time.sleep(5)
-        driver.find_element_by_id('id_confirm_' + cluster_name).click()
-        success =False
-        for i in range(300): 
-            # wait for cluster create to finish
-            try:
-                if "glyphicon glyphicon-play text-success" == driver.find_element_by_id('id_hadoop_status_'+cluster_name).get_attribute("class"): 
-                    self.assertTrue(True, "ok")
-                    success = True
-                    break
-                else:
-                    pass
-            except: pass
-            time.sleep(1)
-        #check that cluster url is up and page is running
-        if not success:
-            self.assertTrue(False,'hadoop status did not start')
+        try: self.assertTrue(True, 'Check ok')
+        except AssertionError as e: self.verificationErrors.append(str(e))
+
 
     
     def is_element_present(self, how, what):

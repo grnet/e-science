@@ -111,7 +111,7 @@ def get_user_clusters(token):
     except TypeError:
         msg = ' Authentication error: Invalid Token'
         raise ClientError(msg, error_authentication)
-    except Exception,e:
+    except Exception, e:
         print ' ' + str(e.args[0])
 
     payload = {"user": {"id": 1}}
@@ -191,6 +191,7 @@ def custom_sort_factory(order_list):
         return stuff
     return sorter
 
+
 def custom_sort_list(input_list, keys, functions={}, getter=itemgetter):
     """
     Sort a list of dictionary objects or objects by multiple keys ascending/descending.
@@ -223,6 +224,7 @@ def custom_sort_list(input_list, keys, functions={}, getter=itemgetter):
             return 0
     return sorted(input_list, cmp=comparer)
 
+
 def compose(inner_func, *outer_funcs):
      """
      function factory: gets a list of unary functions and combines them in a single function
@@ -236,6 +238,7 @@ def compose(inner_func, *outer_funcs):
      outer_func = compose(*outer_funcs)
      return lambda *args, **kwargs: outer_func(inner_func(*args, **kwargs))
 
+
 def ssh_call_hadoop(user, master_IP, func_arg):
     """
         SSH to master VM
@@ -246,6 +249,7 @@ def ssh_call_hadoop(user, master_IP, func_arg):
     
     return response
 
+
 def ssh_check_output_hadoop(user, master_IP, func_arg):
     """
         SSH to master VM
@@ -255,6 +259,7 @@ def ssh_check_output_hadoop(user, master_IP, func_arg):
                      + func_arg + "\"", stderr=FNULL, shell=True).splitlines()
     
     return response
+
 
 def ssh_stream_to_hadoop(user, master_IP, source_file, dest_dir):
     """
@@ -270,6 +275,7 @@ def ssh_stream_to_hadoop(user, master_IP, source_file, dest_dir):
 
     return response
 
+
 def ssh_pithos_stream_to_hadoop(user, master_IP, source_file, dest_dir, pub=True):
     """
         SSH to master VM
@@ -284,7 +290,7 @@ def ssh_pithos_stream_to_hadoop(user, master_IP, source_file, dest_dir, pub=True
 #     response = subprocess.call(str_command, stderr=FNULL, shell=True)
 #     return response
     
-    # until then let's piggyback on ioannis server > hadoop streaming
+    # until then let's piggyback on put from server > hadoop streaming
     if pub==False:
         str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + \
         "{0}@{1} ".format(user, master_IP) + \
@@ -324,6 +330,7 @@ def read_replication_factor(user, master_IP):
 
     return replication_factor
 
+
 def ssh_stream_from_hadoop(user, master_IP, source_file, dest_dir):
     """
         SSH to master VM and
@@ -337,6 +344,7 @@ def ssh_stream_from_hadoop(user, master_IP, source_file, dest_dir):
 
     return response
 
+
 def parse_hdfs_dest(regex, path):
     """
     Parses remote hdfs directory for the orka put command to check if directory exists.
@@ -346,15 +354,16 @@ def parse_hdfs_dest(regex, path):
         return parsed_path.group(1)
     else:
         return parsed_path
-    
+
+
 def get_file_protocol(filespec, fileaction="fileput", direction="source"):
     """ 
     Method to determine the file protocol (http/ftp, file, pithos etc)
     :input filespec, ['fileput|fileget'], ['source'|'destination']
     :output 'http-ftp|pithos|file|unknown', ['path_without_protocol']
     """
-    if fileaction=="fileput": # put <source> file to Hadoop FS.
-        if direction=="source":
+    if fileaction == "fileput": # put <source> file to Hadoop FS.
+        if direction == "source":
             # matches http:// https:// ftp:// ftps://
             remote_regex = re.compile("(?iu)((?:^ht|^f)+?tps?://)(.+)")
             # matches pithos://
@@ -371,10 +380,10 @@ def get_file_protocol(filespec, fileaction="fileput", direction="source"):
             if result:
                 return "file", result.group(0)
             return "unknown", None
-        elif direction=="destination":
+        elif direction == "destination":
             return "unknown", None
-    elif fileaction=="fileget": # get <source> file from Hadoop FS to <destination> FS
-        if direction=="destination":
+    elif fileaction == "fileget": # get <source> file from Hadoop FS to <destination> FS
+        if direction == "destination":
             pithos_regex = re.compile("(?iu)((?:^pithos)+?://)(.+)")
             result = pithos_regex.match(filespec)
             if result:
@@ -390,7 +399,8 @@ def get_file_protocol(filespec, fileaction="fileput", direction="source"):
             return "unknown", None
         elif direction=="source":
             return "unknown", None
-    
+
+
 def bytes_to_shorthand(num_bytes):
     """ 
     Method to Convert bytes to higher denominations.
@@ -420,11 +430,11 @@ def bytes_to_shorthand(num_bytes):
         num_out = num_bytes/factor
     
     if isinstance(num_out, (int,long,)):
-        return "{:d}{:s}".format(num_out,suffix)
+        return "{:d}{:s}".format(num_out, suffix)
     elif isinstance(num_out, float):
-        return "{:.2f}{:s}".format(num_out,suffix)
+        return "{:.2f}{:s}".format(num_out, suffix)
     else:
-        return "{0}{1}".format(num_out,suffix)
+        return "{0}{1}".format(num_out, suffix)
  
 
 def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
@@ -521,3 +531,22 @@ def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
     response_delete_temp = subprocess.call("ssh {0}@{1} \"rm temp_file\"".format(user,master_IP), shell=True)
     return
 
+
+def is_period(checked_string):
+    """
+    Check if a string is a period.
+    """
+    if len(checked_string) == 1 and checked_string == '.':
+        return True
+    else:
+        return False
+
+
+def is_default_dir(checked_string):
+    """
+    Check if string is default Hdfs directory
+    """
+    if checked_string in DEFAULT_HDFS_DIR:
+        return True
+    else:
+        return False
