@@ -45,7 +45,6 @@ public class PithosFileSystem extends FileSystem {
 	static String filename;
 
 	private String[] filesList;
-	private boolean exist = true;
 	private boolean isDir = false;
 	private long length = 0;
 	private PithosFileStatus pithos_file_status;
@@ -165,6 +164,16 @@ public class PithosFileSystem extends FileSystem {
 		// TODO Auto-generated method stub
 		return false;
 	}
+	
+	public boolean ContainerExistance(String container) {
+		PithosResponse containerInfo = getHadoopPithosConnector()
+				.getContainerInfo(container);
+		if (containerInfo.toString().contains("404")) {
+			return false;
+		} else {
+			return true;
+		}
+	}
 
 	@Override
 	public PithosFileStatus getFileStatus(Path targetPath) throws IOException {
@@ -177,46 +186,39 @@ public class PithosFileSystem extends FileSystem {
 				.getPithosObjectMetaData(pithosPath.getContainer(),
 						pithosPath.getObjectPath(), PithosResponseFormat.JSON);
 		if (metadata.toString().contains("404")) {
-			System.out.println("File does not exist in Pithos FS.");
-			exist = false;
+			FileNotFoundException fnfe = new FileNotFoundException("File does not exist in Pithos FS.");
+			throw fnfe;
+		}		
+		for (String obj : metadata.getResponseData().keySet()) {
+			if (obj != null) {
+				if (obj.matches("Content-Type") || obj.matches("Content_Type")) {
+					for (String fileType : metadata.getResponseData()
+							.get(obj)) {
+						if (fileType.contains("application/directory")) {
+							isDir = true;
+							break;
+						} else {
+							isDir = false;
+						}
+					}
+				}
+			}
 		}
-		
-		if (exist) {
+		if (isDir) {
+			pithos_file_status = new PithosFileStatus(true, getDefaultBlockSize(), false, targetPath); 
+		} else {				
 			for (String obj : metadata.getResponseData().keySet()) {
 				if (obj != null) {
-					if (obj.matches("Content-Type")) {
-						for (String fileType : metadata.getResponseData()
+					if (obj.matches("Content-Length")) {
+						for (String lengthStr : metadata.getResponseData()
 								.get(obj)) {
-							if (fileType.contains("application/directory")) {
-								isDir = true;
-								break;
-							} else {
-								isDir = false;
-							}
+							length = Long.parseLong(lengthStr);
 						}
 					}
-
 				}
 			}
-
-			if (isDir) {
-				pithos_file_status = new PithosFileStatus(true, getDefaultBlockSize(), false, targetPath); 
-			} else {				
-				for (String obj : metadata.getResponseData().keySet()) {
-					if (obj != null) {
-						if (obj.matches("Content-Length")) {
-							for (String lengthStr : metadata.getResponseData()
-									.get(obj)) {
-								length = Long.parseLong(lengthStr);
-							}
-						}
-
-					}
-				}
-				pithos_file_status = new PithosFileStatus(length, getDefaultBlockSize(), 123, targetPath);
-			}
+			pithos_file_status = new PithosFileStatus(length, getDefaultBlockSize(), 123, targetPath);
 		}
-
 		System.out.println("here in getFileStatus AFTER!");
 		return pithos_file_status;
 	}

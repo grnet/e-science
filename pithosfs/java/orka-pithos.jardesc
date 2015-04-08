@@ -4,19 +4,16 @@
     <options buildIfNeeded="true" compress="true" descriptionLocation="/PithosFS/orka-pithos.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
-    <manifest generateManifest="true" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+    <manifest generateManifest="true" mainClassHandleIdentifier="=PithosFS/src&lt;gr.grnet.escience.fs.pithos{PithosFileSystem.java[PithosFileSystem" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
         <sealing sealJar="false">
             <packagesToSeal/>
             <packagesToUnSeal/>
         </sealing>
     </manifest>
-    <selectedElements exportClassFiles="true" exportJavaFiles="true" exportOutputFolder="false">
+    <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <javaElement handleIdentifier="=PithosFS/src&lt;gr.grnet.escience.commons"/>
-        <file path="/PithosFS/.classpath"/>
-        <folder path="/PithosFS/lib"/>
-        <javaElement handleIdentifier="=PithosFS/src&lt;gr.grnet.escience.pithos.rest"/>
         <javaElement handleIdentifier="=PithosFS/src&lt;gr.grnet.escience.pithos.restapi"/>
+        <javaElement handleIdentifier="=PithosFS/src&lt;gr.grnet.escience.pithos.rest"/>
         <javaElement handleIdentifier="=PithosFS/src&lt;gr.grnet.escience.fs.pithos"/>
-        <file path="/PithosFS/.project"/>
     </selectedElements>
 </jardesc>

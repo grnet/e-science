@@ -1,5 +1,7 @@
 package gr.grnet.escience.fs.pithos;
 
+
+import org.apache.hadoop.fs.InvalidPathException;
 import org.apache.hadoop.fs.Path;
 
 public class PithosPath {
@@ -24,21 +26,21 @@ public class PithosPath {
 		this.object_path = pithos_object_path;
 	}
 
-	private void convertHadoopFSPathToPithosFSPath(Path hadoopPath) {
+	private void convertHadoopFSPathToPithosFSPath(Path hadoopPath) throws InvalidPathException {
 		fsPathStr = hadoopPath.toString();
 
 		fsPathStr = fsPathStr.substring(pithosFs.getScheme().toString()
 				.concat("://").length());
 
 		pathParts = fsPathStr.split("/");
-
-//		if (this.container dhladh pathParts[0] exist){
-//			this.container = pathParts[0];
-//		} else {
-//			System.err.println("The container " + pathParts[0] + " does not exist.");
-//		}
-		this.container = pathParts[0];
-		this.object_path = fsPathStr.substring(getContainer().length() + 1);
+		
+		if (pithosFs.ContainerExistance(pathParts[0])) {
+			this.container = pathParts[0];
+			this.object_path = fsPathStr.substring(getContainer().length() + 1);
+		} else {
+			InvalidPathException ipe = new InvalidPathException(pathParts[0], "No such pithos:// container");
+			throw ipe;
+		}
 	}
 
 	public String getContainer() {

@@ -30,19 +30,19 @@ public class TestPithosRestClient {
 	@Before
 	public static void createHdConnector() {
 		// - CREATE HADOOP CONNECTOR INSTANCE
-		hdconnector = new HadoopPithosConnector("https://pithos.okeanos.grnet.gr/v1", "juUVEDtgTftG24r-JA4pAvaU9c-UB2353op42-D0REQ", "fc1bd1b1-9691-4142-b759-12a12a1e6fe3");
+		hdconnector = new HadoopPithosConnector("https://pithos.okeanos.grnet.gr/v1", "RLnz8y8jrIVAfC5ss3zGmfxT2miMHpr1FjSJpbknyp8", "fc1bd1b1-9691-4142-b759-12a12a1e6fe3");
 	}
 	
-//	@Test
-//	public static void testgetContainerList() {
-//		// - GET CONTAINER INFORMATION
-//		System.out
-//				.println("---------------------------------------------------------------------\n");
-//		pithosListResponse = hdconnector.getContainerList(PITHOS_CONTAINER);
-//		System.out.println(pithosListResponse);
-//		System.out
-//				.println("---------------------------------------------------------------------\n");
-//	}
+	@Test
+	public static void testgetContainerList() {
+		// - GET CONTAINER INFORMATION
+		System.out
+				.println("---------------------------------------------------------------------\n");
+		pithosListResponse = hdconnector.getFileList(PITHOS_CONTAINER);
+		System.out.println(pithosListResponse);
+		System.out
+				.println("---------------------------------------------------------------------\n");
+	}
 
 	@Test
 	public static void testGet_Container_Info() {
