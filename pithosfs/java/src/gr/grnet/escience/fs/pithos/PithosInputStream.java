@@ -136,7 +136,7 @@ public class PithosInputStream extends FSInputStream {
 		this.blockStream = new DataInputStream(new FileInputStream(blockFile));
 
 	}
-    private File retrieveBlock(PithosBlock pithosobjectblock, long offsetIntoBlock) throws IOException{
+    private synchronized File retrieveBlock(PithosBlock pithosobjectblock, long offsetIntoBlock) throws IOException{
 		
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ObjectOutput out = null;
