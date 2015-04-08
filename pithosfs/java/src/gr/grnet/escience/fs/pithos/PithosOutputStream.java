@@ -223,8 +223,9 @@ public class PithosOutputStream extends FSDataOutputStream {
 	 * @throws IOException
 	 */
 	private synchronized void nextBlockOutputStream() throws IOException {
-		byte[] blockData = null; // TODO: serialize the buffer file
+		byte[] blockData = store.serializeFile(backupFile);
 		String blockHash = null;
+		//TODO: Get hash algorithm from pithos container metadata.
 		try {
 			blockHash = utils.computeHash(blockData, "SHA-256");
 			if (!store.pithosObjectBlockExists(blockHash)){
@@ -233,9 +234,8 @@ public class PithosOutputStream extends FSDataOutputStream {
 				bytesWrittenToBlock = 0;
 			}
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} //TODO: Get hash algorithm from the pithos container metadata
+		}
 	}
 
 //	/**
