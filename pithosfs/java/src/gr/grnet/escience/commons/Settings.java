@@ -2,7 +2,6 @@ package gr.grnet.escience.commons;
 
 import java.util.HashMap;
 import java.util.Map;
-
 /**
  * @since March, 2015
  * @author Dimitris G. Kelaidonis  (kelaidonis@gmail.com)

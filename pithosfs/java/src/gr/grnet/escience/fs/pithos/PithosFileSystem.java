@@ -136,7 +136,8 @@ public class PithosFileSystem extends FileSystem {
 	public long getDefaultBlockSize() {
 		System.out.println("blockSize!");
 		//pithosPath = new PithosPath(new Path(getUri().toString()));
-		return getHadoopPithosConnector().getPithosBlockDefaultSize("");
+		//return getHadoopPithosConnector().getPithosBlockDefaultSize("");
+		return 128 * 1024 * 1024;
 	}
 
 	@Override
@@ -276,8 +277,9 @@ public class PithosFileSystem extends FileSystem {
 	public FSDataInputStream open(Path target_file, int buffer_size)
 			throws IOException {
 		// TODO: parse the container
-		return getHadoopPithosConnector().pithosObjectInputStream("pithos",
-				"server.txt");
+		pithosPath = new PithosPath(target_file);
+		return getHadoopPithosConnector().pithosObjectInputStream(pithosPath.getContainer(),
+				pithosPath.getObjectPath());
 	}
 
 	@Override
@@ -292,6 +294,8 @@ public class PithosFileSystem extends FileSystem {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		// Stub so we can create a 'runnable jar' export for packing
+		// dependencies
 		System.out.println("Pithos FileSystem Connector loaded.");
 	}
 

@@ -477,17 +477,15 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 				target_object);
 
 		// - Check if the requested offset if valid
-		// if ((offsetIntoPithosBlock < object_total_size)
-		// && (offsetIntoPithosBlock < block_size)) {
+//		if ((offsetIntoPithosBlock < object_total_size)
+//				&& (offsetIntoPithosBlock < block_size)) {
 
-		pithosBlockAsFile = pithosBlockInputStream(pithos_container,
-				target_object, target_block_hash, offsetIntoPithosBlock);
-		System.out.println("Block Hash = " + target_block_hash + " | Size = "
-				+ pithosBlockAsFile.length() + " Bytes");
-		return pithosBlockAsFile;
-		// } else {
-		// return null;
-		// }
+			pithosBlockAsFile = pithosBlockInputStream(pithos_container,
+					target_object, target_block_hash, offsetIntoPithosBlock);
+			return pithosBlockAsFile;
+//		} else {
+//			return null;
+//		}
 
 	}
 

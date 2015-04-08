@@ -12,4 +12,5 @@ ansible_hosts*
 .settings/
 bower_components/
 node_modules/
-*.enc
+.classpath
+orka-pithos.jardesc

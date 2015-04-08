@@ -8,6 +8,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,8 +29,6 @@ import org.apache.hadoop.fs.FileSystem;
  */
 public class PithosInputStream extends FSInputStream {
 
-	private PithosBlock[] blocks;
-
 	private boolean closed;
 
 	private long fileLength;
@@ -42,10 +42,14 @@ public class PithosInputStream extends FSInputStream {
 	private String _pithos_container;
 
 	private String _pithos_object;
+	
+	private String currentBlockHash;
 
 	private long blockEnd = -1;
 
 	private FileSystem.Statistics stats;
+	
+	private Collection<String> blockHashesList = new ArrayList<String>(); 
 
 	private static final Log LOG = LogFactory.getLog(PithosInputStream.class
 			.getName());
@@ -60,20 +64,21 @@ public class PithosInputStream extends FSInputStream {
 		// - Initialize local variables
 		this._pithos_container = pithos_container;
 		this._pithos_object = pithos_object;
-
+      
 		// - Get Object Blocks
-		this.blocks = PithosFileSystem.getHadoopPithosConnector()
-				.retrievePithosObjectBlocks(getRequestedContainer(),
-						getRequestedObject());
+		this.blockHashesList = PithosFileSystem.getHadoopPithosConnector().getPithosObjectBlockHashes(getRequestedContainer(), getRequestedObject());
+//				.retrievePithosObjectBlocks(getRequestedContainer(),
+//						getRequestedObject());
 
 		// - Iterate on available blocks of the selected object
-		for (PithosBlock block : getAvailableBlocks()) {
-			this.fileLength += block.getBlockLength();
-		}
+//		for (PithosBlock block : getAvailableBlocks()) { 
+//			this.fileLength += block.getBlockLength();
+//		}
+		this.fileLength = PithosFileSystem.getHadoopPithosConnector().getPithosObjectSize(getRequestedContainer(), getRequestedObject());
 	}
 
-	private PithosBlock[] getAvailableBlocks() {
-		return blocks;
+	private Collection<String> getAvailableBlocks() { 
+		return blockHashesList;
 	}
 
 	private String getRequestedContainer() {
@@ -84,21 +89,35 @@ public class PithosInputStream extends FSInputStream {
 		return _pithos_object;
 	}
 
+	
 	private synchronized void blockSeekTo(long target) throws IOException {
 		int targetBlock = -1;
 		long targetBlockStart = 0;
 		long targetBlockEnd = 0;
-
-		for (int i = 0; i < getAvailableBlocks().length; i++) {
-			long blockLength = getAvailableBlocks()[i].getBlockLength();
+        int i = 0;
+        PithosBlock p_file_block = null;
+		
+		while (getAvailableBlocks().iterator().hasNext()) {
+			
+			currentBlockHash = getAvailableBlocks().iterator().next();
+			
+			
+			long blockLength = PithosFileSystem.getHadoopPithosConnector()
+			.retrievePithosBlock(getRequestedContainer(),
+					getRequestedObject(), currentBlockHash).getBlockLength();
 			targetBlockEnd = targetBlockStart + blockLength - 1;
 
 			if (target >= targetBlockStart && target <= targetBlockEnd) {
 				targetBlock = i;
+				p_file_block = PithosFileSystem.getHadoopPithosConnector()
+						.retrievePithosBlock(getRequestedContainer(),
+								getRequestedObject(),
+								currentBlockHash);
 				break;
 			} else {
 				targetBlockStart = targetBlockEnd + 1;
 			}
+			i++; 
 		}
 		if (targetBlock < 0) {
 			throw new IOException(
@@ -108,18 +127,8 @@ public class PithosInputStream extends FSInputStream {
 		long offsetIntoBlock = target - targetBlockStart;
 
 		// - Read block blocks[targetBlock] from position offsetIntoBlock
-		PithosBlock p_file_block = PithosFileSystem.getHadoopPithosConnector()
-				.retrievePithosBlock(getRequestedContainer(),
-						getRequestedObject(),
-						getAvailableBlocks()[targetBlock].getBlockHash());
 
-		// - Create block file
-		System.out.println("Current Block->" + p_file_block + "Offset=" + offsetIntoBlock);
-		//this.blockFile = PithosFileSystem.getHadoopPithosConnector()
-				//.seekPithosBlock(getRequestedContainer(), getRequestedObject(),
-						//p_file_block.getBlockHash(), offsetIntoBlock);
-		//PithosBlock p_file_block = this.pithos_conn.getPithosObjectBlock("pithos", "server.txt", blocks[targetBlock].getBlockHash());
-		
+		// - Create block file	
 		this.blockFile = retrieveBlock(p_file_block, offsetIntoBlock);
 
 		this.pos = target;
@@ -131,13 +140,13 @@ public class PithosInputStream extends FSInputStream {
 		
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ObjectOutput out = null;
+		FileOutputStream fileOuputStream = null;
 		try {
 		  out = new ObjectOutputStream(bos);
-		  System.out.println(pithosobjectblock.toString());
 		  out.writeObject(pithosobjectblock.getBlockData());
 		  byte[] yourBytes = bos.toByteArray();
 		  
-		  FileOutputStream fileOuputStream;
+		  
 		  Integer i = (int)(long)offsetIntoBlock;
 		  long block_len = pithosobjectblock.getBlockLength();
 		  Integer j= (int)(long)(block_len - offsetIntoBlock);
@@ -146,7 +155,7 @@ public class PithosInputStream extends FSInputStream {
 			// - Create output stream with data to the file
 			fileOuputStream = new FileOutputStream(block);
 			fileOuputStream.write(yourBytes, i, j);
-			fileOuputStream.close();
+			//fileOuputStream.close();
 			// - return the file
 			return block;
 
@@ -154,6 +163,7 @@ public class PithosInputStream extends FSInputStream {
 		  try {
 		    if (out != null) {
 		      out.close();
+		      fileOuputStream.close();
 		    }
 		  } catch (IOException ex) {
 		    // ignore close exception
@@ -164,7 +174,7 @@ public class PithosInputStream extends FSInputStream {
 		    // ignore close exception
 		  }
 		}
-		// convert array of bytes into file
+		
 		
 	}
 	@Override
