@@ -171,55 +171,28 @@ public class PithosInputStream extends FSInputStream {
 	}
     private synchronized File retrieveBlock(PithosBlock[] pithosobjectblock, long offsetIntoBlock) throws IOException{
 		
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		ObjectOutput out = null;
-		FileOutputStream fileOutputStream = null;
-		long block_len = 0;
+		File block = new File("blockfile");
+		FileOutputStream fileOutputStream = new FileOutputStream(block);
 		try {
-		  out = new ObjectOutputStream(bos);
 		  for (int i=0; i< pithosobjectblock.length; i++){
 			  if (pithosobjectblock[i] != null){
-		           out.writeObject(pithosobjectblock[i].getBlockData());
-		           block_len = block_len + pithosobjectblock[i].getBlockLength();
+		           fileOutputStream.write(pithosobjectblock[i].getBlockData(), (int)offsetIntoBlock,
+		        		   (int)(pithosobjectblock[i].getBlockLength() - offsetIntoBlock));
+		           offsetIntoBlock=0;
 			  }
 			  else {
 				  //end of array of pithos blocks
 				  break;
 			  }
 		  }
-		  byte[] yourBytes = bos.toByteArray();
-		  
-		  
-		  Integer offset = (int)(long)offsetIntoBlock;
-		  Integer blocklenMinusoffset = (int)(long)(block_len - offsetIntoBlock);
-		  
-		  File block = new File("/tmp/blockfile");
-		  if (!block.exists()) {
-				block.createNewFile();
-			}
-			// - Create output stream with data to the file
-			fileOutputStream = new FileOutputStream(block);
-			fileOutputStream.write(yourBytes, offset, blocklenMinusoffset);
-			fileOutputStream.flush();
-			fileOutputStream.close();
-			//fileOuputStream.close();
-			// - return the file
-			return block;
+		  //fileOuputStream.close();
+		  // - return the file
+		  fileOutputStream.flush();
+		  fileOutputStream.close();
+
+		  return block;
 
 		} finally {
-		  try {
-		    if (out != null) {
-		      out.close();
-		      
-		    }
-		  } catch (IOException ex) {
-		    // ignore close exception
-		  }
-		  try {
-		    bos.close();
-		  } catch (IOException ex) {
-		    // ignore close exception
-		  }
 		  try {
 				if (fileOutputStream != null) {
 					fileOutputStream.close();
