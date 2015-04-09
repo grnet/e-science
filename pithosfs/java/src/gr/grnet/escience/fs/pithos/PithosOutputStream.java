@@ -36,7 +36,7 @@ public class PithosOutputStream extends FSDataOutputStream {
 	/**
 	 * Destination path
 	 */
-	private PithosPath path;
+	private PithosPath pithosPath;
 
 	/**
 	 * size of block
@@ -202,8 +202,8 @@ public class PithosOutputStream extends FSDataOutputStream {
 
 		//
 		// Send it to pithos
-		String pithos_container = "pithos"; //TODO: get from destination path
-		String target_object = "test_out"; //TODO: get from destination path
+		String pithos_container = pithosPath.getContainer();
+		String target_object = pithosPath.getObjectPath();
 		nextBlockOutputStream();
 		store.storePithosBlock(pithos_container, target_object, nextBlock, backupFile);
 //		internalClose();
@@ -287,7 +287,7 @@ public class PithosOutputStream extends FSDataOutputStream {
 		super(out, stats);
 		this.conf = conf;
 		this.store = store;
-		this.path = path;
+		this.pithosPath = path;
 		this.blockSize = blockSize;
 		this.utils = new Utils();
 		this.backupFile = newBackupFile();
