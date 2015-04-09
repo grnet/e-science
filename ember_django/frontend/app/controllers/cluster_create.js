@@ -770,7 +770,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			this.set('warning_mes_replication_factor', '');
 		}
 		else {
-			this.set('warning_mes_replication_factor', 'Replication factor has changed from default value');
+			this.set('warning_mes_replication_factor', 'Value differs from default');
 		}
 		return this.get('warning_mes_replication_factor');
 	}.property('replication_factor','cluster_size'),
@@ -781,7 +781,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			this.set('warning_mes_dfs_blocksize', '');
 		}
 		else {
-			this.set('warning_mes_dfs_blocksize', 'Dfs blocksize has changed from default value');	
+			this.set('warning_mes_dfs_blocksize', 'Value differs from default');	
 		}
 		return this.get('warning_mes_dfs_blocksize');
 	}.property('dfs_blocksize'),
