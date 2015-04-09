@@ -15,7 +15,6 @@ import org.apache.hadoop.security.authentication.client.AuthenticationException;
 
 import gr.grnet.escience.commons.Configurator;
 import gr.grnet.escience.commons.Settings;
-import gr.grnet.escience.fs.pithos.PithosAbstractFileSystem;
 import gr.grnet.escience.fs.pithos.PithosFileSystem;
 
 public class Test {

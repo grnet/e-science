@@ -1,5 +1,7 @@
 package gr.grnet.escience.commons;
 
+import gr.grnet.escience.fs.pithos.PithosFileSystem;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;

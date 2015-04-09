@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.util.Collection;
 
 import gr.grnet.escience.fs.pithos.PithosFileStatus;
-import gr.grnet.escience.fs.pithos.PithosObjectBlock;
 import gr.grnet.escience.fs.pithos.PithosPath;
 
 import org.apache.hadoop.fs.Path;
@@ -20,8 +19,8 @@ import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 public class TestPithosRestClient {
 	static String filename;
-	private static final String PITHOS_CONTAINER = "";
-	private static String PITHOS_FILE = "file.txt";
+	private static final String PITHOS_CONTAINER = "pithos";
+	private static String PITHOS_FILE = "file 1.txt";
 	private static PithosResponse pithosResponse;
 	private static String pithosListResponse;
 	private static Collection<String> object_block_hashes;
@@ -75,49 +74,50 @@ public class TestPithosRestClient {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
-		PithosResponse metadata = hdconnector.getPithosObjectMetaData(PITHOS_CONTAINER, PITHOS_FILE, PithosResponseFormat.JSON);
-		try {
-			System.out.println("metadata: " + metadata.toString());
-			JSONObject obj = new JSONObject(metadata.toString());
-			String objExist = obj.getJSONObject("pithosResponse").getString("null");
-			boolean exist = true;
-			if (objExist.contains("404")){
-				System.out.println("File does not exist in Pithos FS.");
-				exist = false;
-			}		
-			/*---------------------------------------------------------*/
-			if (exist){		
-				String getContentType = obj.getJSONObject("pithosResponse").getString("Content-Type");
-				int left0 = getContentType.indexOf("[\"");
-				int right0 = getContentType.indexOf("\"]");
-				String isDirOrFile = getContentType.substring(left0+2, right0);
-				boolean isDir = false;
-				if (isDirOrFile.contains("directory")){
-					isDir = true;
-				}
-				
-				String lastMod = obj.getJSONObject("pithosResponse").getString("Last-Modified");
-				int left1 = lastMod.indexOf("[\"");
-				int right1 = lastMod.indexOf("\"]");
-				String lastModified = lastMod.substring(left1+2, right1);
-				System.out.println("modification date : " + lastModified);
-				
-				if (isDir){
-					System.out.println("DIRECTORY");
-				}else{
-					System.out.println("NOT DIRECTORY");
-					String contentLength = obj.getJSONObject("pithosResponse").getString("Content-Length");
-					int left = contentLength.indexOf("[\"");
-					int right = contentLength.indexOf("\"]");
-					String objlength = contentLength.substring(left+2, right);
-					long length = Long.parseLong(objlength);
-					System.out.println("object length: " + length);
-				}
-			}
-		}catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		/////////////////////////////////////////////////////////////////////////////////////////////////
+//		PithosResponse metadata = hdconnector.getPithosObjectMetaData(PITHOS_CONTAINER, PITHOS_FILE, PithosResponseFormat.JSON);
+//		try {
+//			System.out.println("metadata: " + metadata.toString());
+//			JSONObject obj = new JSONObject(metadata.toString());
+//			String objExist = obj.getJSONObject("pithosResponse").getString("null");
+//			boolean exist = true;
+//			if (objExist.contains("404")){
+//				System.out.println("File does not exist in Pithos FS.");
+//				exist = false;
+//			}		
+//			/*---------------------------------------------------------*/
+//			if (exist){		
+//				String getContentType = obj.getJSONObject("pithosResponse").getString("Content-Type");
+//				int left0 = getContentType.indexOf("[\"");
+//				int right0 = getContentType.indexOf("\"]");
+//				String isDirOrFile = getContentType.substring(left0+2, right0);
+//				boolean isDir = false;
+//				if (isDirOrFile.contains("directory")){
+//					isDir = true;
+//				}
+//				
+//				String lastMod = obj.getJSONObject("pithosResponse").getString("Last-Modified");
+//				int left1 = lastMod.indexOf("[\"");
+//				int right1 = lastMod.indexOf("\"]");
+//				String lastModified = lastMod.substring(left1+2, right1);
+//				System.out.println("modification date : " + lastModified);
+//				
+//				if (isDir){
+//					System.out.println("DIRECTORY");
+//				}else{
+//					System.out.println("NOT DIRECTORY");
+//					String contentLength = obj.getJSONObject("pithosResponse").getString("Content-Length");
+//					int left = contentLength.indexOf("[\"");
+//					int right = contentLength.indexOf("\"]");
+//					String objlength = contentLength.substring(left+2, right);
+//					long length = Long.parseLong(objlength);
+//					System.out.println("object length: " + length);
+//				}
+//			}
+//		}catch (JSONException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		System.out
 				.println("---------------------------------------------------------------------\n");
 	}
@@ -134,17 +134,17 @@ public class TestPithosRestClient {
 				.println("---------------------------------------------------------------------\n");
 	}
 
-//	@Test
-//	public static void testGet_Pithos_Object() {
-//		// - GET AND STORE THE ACTUAL OBJECT AS A FILE
-//		System.out
-//				.println("---------------------------------------------------------------------\n");
-//		File pithosActualObject = hdconnector.getPithosObject(PITHOS_CONTAINER,
-//				PITHOS_FILE, "data");
-//		System.out.println("File name: " + pithosActualObject.getName());
-//		System.out
-//				.println("---------------------------------------------------------------------\n");
-//	}
+	@Test
+	public static void testGet_Pithos_Object() {
+		// - GET AND STORE THE ACTUAL OBJECT AS A FILE
+		System.out
+				.println("---------------------------------------------------------------------\n");
+		File pithosActualObject = hdconnector.retrievePithosObject(PITHOS_CONTAINER,
+				PITHOS_FILE, "data");
+		System.out.println("File name: " + pithosActualObject.getName());
+		System.out
+				.println("---------------------------------------------------------------------\n");
+	}
 
 	@Test
 	public void testGet_Pithos_Object_Block_Hashes() {
@@ -292,8 +292,8 @@ public class TestPithosRestClient {
 		//testRead_Pithos_Object();
 		//testGet_Pithos_Object();
 		//testgetContainerList();
-		//testGet_Pithos_Object_Metadata();
-		testGet_Container_Info();
+		testGet_Pithos_Object_Metadata();
+		//testGet_Container_Info();
 //		Path f = new Path("pithos://pithos/folder/subfolder/pithosFile2.txt");
 	}
 }

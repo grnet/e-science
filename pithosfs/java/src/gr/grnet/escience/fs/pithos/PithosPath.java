@@ -1,5 +1,6 @@
 package gr.grnet.escience.fs.pithos;
 
+import java.io.FileNotFoundException;
 
 import org.apache.hadoop.fs.InvalidPathException;
 import org.apache.hadoop.fs.Path;
@@ -16,7 +17,7 @@ public class PithosPath {
 	public PithosPath() {
 	}
 
-	public PithosPath(Path hadoopPath) {
+	public PithosPath(Path hadoopPath) throws InvalidPathException, FileNotFoundException {
 		this.pithosFSPath = hadoopPath;
 		convertHadoopFSPathToPithosFSPath(getPithosFSPath());
 	}
@@ -26,21 +27,30 @@ public class PithosPath {
 		this.object_path = pithos_object_path;
 	}
 
-	private void convertHadoopFSPathToPithosFSPath(Path hadoopPath) throws InvalidPathException {
+	private void convertHadoopFSPathToPithosFSPath(Path hadoopPath) throws InvalidPathException, FileNotFoundException {
 		fsPathStr = hadoopPath.toString();
 
 		fsPathStr = fsPathStr.substring(pithosFs.getScheme().toString()
 				.concat("://").length());
 
-		pathParts = fsPathStr.split("/");
+		pathParts = (fsPathStr + "/").split("/");
 		
-		if (pithosFs.ContainerExistance(pathParts[0])) {
+		System.out.println("EDWWWWW : " + pathParts[pathParts.length-1]);
+		
+		if (pithosFs.containerExistance(pathParts[0])) {
 			this.container = pathParts[0];
 			this.object_path = fsPathStr.substring(getContainer().length() + 1);
+			System.out.println("TI FTXNM: " + this.object_path);
 		} else {
 			InvalidPathException ipe = new InvalidPathException(pathParts[0], "No such pithos:// container");
 			throw ipe;
 		}
+		
+//		// Can't override hadoop message
+//		if (!pithosFs.fileExistance(container, object_path.replace("\"", ""))) {
+//			FileNotFoundException fnfe = new FileNotFoundException("File does not exist in Pithos FS.");
+//			throw fnfe;
+//		}
 	}
 
 	public String getContainer() {

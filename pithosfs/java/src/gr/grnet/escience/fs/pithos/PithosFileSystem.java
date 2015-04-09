@@ -166,7 +166,7 @@ public class PithosFileSystem extends FileSystem {
 		return false;
 	}
 	
-	public boolean ContainerExistance(String container) {
+	public boolean containerExistance(String container) {
 		PithosResponse containerInfo = getHadoopPithosConnector()
 				.getContainerInfo(container);
 		if (containerInfo.toString().contains("404")) {
@@ -175,21 +175,26 @@ public class PithosFileSystem extends FileSystem {
 			return true;
 		}
 	}
-
+	
+//	// Can't override hadoop message
+//	public boolean fileExistance(String container, String filename) {
+//		PithosResponse metadata = getHadoopPithosConnector().getPithosObjectMetaData(container,filename, PithosResponseFormat.JSON);
+//		if (metadata.toString().contains("404")) {
+//			return false;
+//		} else {
+//			return true;
+//		}
+//	}
+	
 	@Override
 	public PithosFileStatus getFileStatus(Path targetPath) throws IOException {
 		System.out.println("here in getFileStatus BEFORE!");
-		System.out.println("Path: " + targetPath.toString());
+		System.out.println("TARGET PATH: " + targetPath);
 		// - Process the given path
-		pithosPath = new PithosPath(targetPath);
-
+		pithosPath = new PithosPath(targetPath);	
 		PithosResponse metadata = getHadoopPithosConnector()
 				.getPithosObjectMetaData(pithosPath.getContainer(),
-						pithosPath.getObjectPath(), PithosResponseFormat.JSON);
-		if (metadata.toString().contains("404")) {
-			FileNotFoundException fnfe = new FileNotFoundException("File does not exist in Pithos FS.");
-			throw fnfe;
-		}		
+				pithosPath.getObjectPath(), PithosResponseFormat.JSON);
 		for (String obj : metadata.getResponseData().keySet()) {
 			if (obj != null) {
 				if (obj.matches("Content-Type") || obj.matches("Content_Type")) {
@@ -210,7 +215,7 @@ public class PithosFileSystem extends FileSystem {
 		} else {				
 			for (String obj : metadata.getResponseData().keySet()) {
 				if (obj != null) {
-					if (obj.matches("Content-Length")) {
+					if (obj.matches("Content-Length") || obj.matches("Content_Length")) {
 						for (String lengthStr : metadata.getResponseData()
 								.get(obj)) {
 							length = Long.parseLong(lengthStr);
