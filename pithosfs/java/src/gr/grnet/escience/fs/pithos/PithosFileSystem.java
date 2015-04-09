@@ -37,9 +37,6 @@ public class PithosFileSystem extends FileSystem {
 	private static HadoopPithosConnector hadoopPithosConnector;
 	private Path workingDir;
 	private String pathToString;
-	// private String container;
-	// private String objectPathStr;
-	// private String fsPathStr;
 	private PithosPath pithosPath;
 
 	private String[] filesList;
@@ -93,8 +90,8 @@ public class PithosFileSystem extends FileSystem {
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 		System.out.println(this.uri.toString());
 		this.workingDir = new Path("/user", System.getProperty("user.name"));
-		//this.workingDir = new Path("/user", System.getProperty("user.name"))
-				//.makeQualified(this.uri, this.getWorkingDirectory());
+		// this.workingDir = new Path("/user", System.getProperty("user.name"))
+		// .makeQualified(this.uri, this.getWorkingDirectory());
 		System.out.println(this.workingDir.toString());
 		System.out.println("Create System Store connector");
 
@@ -135,8 +132,8 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public long getDefaultBlockSize() {
 		System.out.println("blockSize!");
-		//pithosPath = new PithosPath(new Path(getUri().toString()));
-		//return getHadoopPithosConnector().getPithosBlockDefaultSize("");
+		// pithosPath = new PithosPath(new Path(getUri().toString()));
+		// return getHadoopPithosConnector().getPithosBlockDefaultSize("");
 		return 128 * 1024 * 1024;
 	}
 
@@ -173,7 +170,7 @@ public class PithosFileSystem extends FileSystem {
 
 		PithosResponse metadata = getHadoopPithosConnector()
 				.getPithosObjectMetaData(pithosPath.getContainer(),
-						pithosPath.getObjectPath(), PithosResponseFormat.JSON);
+						pithosPath.getObjectAbsolutePath(), PithosResponseFormat.JSON);
 
 		if (metadata.toString().contains("404")) {
 			System.out.println("File does not exist in Pithos FS.");
@@ -199,8 +196,8 @@ public class PithosFileSystem extends FileSystem {
 			}
 
 			if (isDir) {
-				pithos_file_status = new PithosFileStatus(true, getDefaultBlockSize(), false,
-						targetPath); // arg0.makeQualified(this.uri,
+				pithos_file_status = new PithosFileStatus(true,
+						getDefaultBlockSize(), false, targetPath); // arg0.makeQualified(this.uri,
 				// this.workingDir));
 			} else {
 				for (String obj : metadata.getResponseData().keySet()) {
@@ -214,8 +211,8 @@ public class PithosFileSystem extends FileSystem {
 
 					}
 				}
-				pithos_file_status = new PithosFileStatus(length, getDefaultBlockSize(), 123,
-						targetPath);
+				pithos_file_status = new PithosFileStatus(length,
+						getDefaultBlockSize(), 123, targetPath);
 			}
 		}
 
@@ -278,8 +275,8 @@ public class PithosFileSystem extends FileSystem {
 			throws IOException {
 		// TODO: parse the container
 		pithosPath = new PithosPath(target_file);
-		return getHadoopPithosConnector().pithosObjectInputStream(pithosPath.getContainer(),
-				pithosPath.getObjectPath());
+		return getHadoopPithosConnector().pithosObjectInputStream(
+				pithosPath.getContainer(), pithosPath.getObjectAbsolutePath());
 	}
 
 	@Override
