@@ -136,8 +136,7 @@ public class PithosInputStream extends FSInputStream {
 					}
 				}
 				else {
-                       for (int k=targetBlock; k < getPithosObjectBlockNum(); k++){
-						
+                    for (int k=targetBlock; k<getPithosObjectBlockNum(); k++){ 
 						p_file_block[l] = PithosFileSystem.getHadoopPithosConnector()
 								.retrievePithosBlock(getRequestedContainer(),
 										getRequestedObject(),
@@ -174,13 +173,19 @@ public class PithosInputStream extends FSInputStream {
 		
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		ObjectOutput out = null;
-		FileOutputStream fileOuputStream = null;
+		FileOutputStream fileOutputStream = null;
 		long block_len = 0;
 		try {
 		  out = new ObjectOutputStream(bos);
 		  for (int i=0; i< pithosobjectblock.length; i++){
-		  out.writeObject(pithosobjectblock[i].getBlockData());
-		  block_len = block_len + pithosobjectblock[i].getBlockLength();
+			  if (pithosobjectblock[i] != null){
+		           out.writeObject(pithosobjectblock[i].getBlockData());
+		           block_len = block_len + pithosobjectblock[i].getBlockLength();
+			  }
+			  else {
+				  //end of array of pithos blocks
+				  break;
+			  }
 		  }
 		  byte[] yourBytes = bos.toByteArray();
 		  
@@ -188,11 +193,15 @@ public class PithosInputStream extends FSInputStream {
 		  Integer offset = (int)(long)offsetIntoBlock;
 		  Integer blocklenMinusoffset = (int)(long)(block_len - offsetIntoBlock);
 		  
-		  File block = new File("block");
+		  File block = new File("/tmp/blockfile");
+		  if (!block.exists()) {
+				block.createNewFile();
+			}
 			// - Create output stream with data to the file
-			fileOuputStream = new FileOutputStream(block);
-			fileOuputStream.write(yourBytes, offset, blocklenMinusoffset);
-			fileOuputStream.close();
+			fileOutputStream = new FileOutputStream(block);
+			fileOutputStream.write(yourBytes, offset, blocklenMinusoffset);
+			fileOutputStream.flush();
+			fileOutputStream.close();
 			//fileOuputStream.close();
 			// - return the file
 			return block;
@@ -211,6 +220,13 @@ public class PithosInputStream extends FSInputStream {
 		  } catch (IOException ex) {
 		    // ignore close exception
 		  }
+		  try {
+				if (fileOutputStream != null) {
+					fileOutputStream.close();
+				}
+			} catch (IOException e) {
+				// ignore close exception
+			}
 		}
 		
 		
