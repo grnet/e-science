@@ -1,5 +1,8 @@
 package gr.grnet.escience.fs.pithos;
 
+import java.io.FileNotFoundException;
+
+import org.apache.hadoop.fs.InvalidPathException;
 import org.apache.hadoop.fs.Path;
 
 public class PithosPath {
@@ -14,7 +17,7 @@ public class PithosPath {
 	public PithosPath() {
 	}
 
-	public PithosPath(Path hadoopPath) {
+	public PithosPath(Path hadoopPath) throws InvalidPathException, FileNotFoundException {
 		this.pithosFSPath = hadoopPath;
 		convertHadoopFSPathToPithosFSPath(getPithosFSPath());
 	}
@@ -24,16 +27,31 @@ public class PithosPath {
 		this.object_path = pithos_object_path;
 	}
 
-	private void convertHadoopFSPathToPithosFSPath(Path hadoopPath) {
+	private void convertHadoopFSPathToPithosFSPath(Path hadoopPath) throws InvalidPathException {
 		fsPathStr = hadoopPath.toString();
 
 		fsPathStr = fsPathStr.substring(pithosFs.getScheme().toString()
 				.concat("://").length());
 
-		pathParts = fsPathStr.split("/");
-
-		this.container = pathParts[0];
-		this.object_path = fsPathStr.substring(getContainer().length() + 1);
+		if (fsPathStr.substring(fsPathStr.length()-2, fsPathStr.length()-1) != "/") {
+			pathParts = (fsPathStr + "/").split("/");
+		} else {
+			pathParts = fsPathStr.split("/");
+		}
+		
+		if (pithosFs.containerExistance(pathParts[0])) {
+			this.container = pathParts[0];
+			this.object_path = fsPathStr.substring(getContainer().length() + 1);
+		} else {
+			InvalidPathException ipe = new InvalidPathException(pathParts[0], "No such pithos:// container");
+			throw ipe;
+		}
+		
+//		// Can't override hadoop message
+//		if (!pithosFs.fileExistance(container, object_path.replace("\"", ""))) {
+//			FileNotFoundException fnfe = new FileNotFoundException("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
+//			throw fnfe;
+//		}
 	}
 
 	public String getContainer() {
