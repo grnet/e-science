@@ -1,7 +1,6 @@
 // Main application routes
 App.Router.map(function() {
 	this.route('homepage');
-	this.route('clustermanagment');
 	this.resource('user', function() {
 		// /user/login
 		this.route('login');
@@ -13,7 +12,7 @@ App.Router.map(function() {
 	this.resource('cluster', function() {
 		// /cluster/create
 		this.route('create');
-	//	this.route('managment');
+		this.route('management');
 	});
 	// Route to enforce login policy
 	// other routes that require login extend this
