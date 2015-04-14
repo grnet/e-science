@@ -1,0 +1,1 @@
+App.UserWelcomeController = Ember.Controller.extend({});
