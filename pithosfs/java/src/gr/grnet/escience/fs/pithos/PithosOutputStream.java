@@ -1,6 +1,9 @@
 package gr.grnet.escience.fs.pithos;
 
+import gr.grnet.escience.commons.PithosSerializer;
 import gr.grnet.escience.commons.Utils;
+import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
+import gr.grnet.escience.pithos.rest.PithosResponse;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -57,6 +60,16 @@ public class PithosOutputStream extends FSDataOutputStream {
 	 * Utils instance for computing hashes
 	 */
 	private Utils utils;
+	
+	/**
+	 * Pithos File <-> Byte operations
+	 */
+	private PithosSerializer pithosSerializer;
+	
+	/**
+	 * instance of HadoopPithosConnector
+	 */
+	private HadoopPithosConnector hadoopConnector;
 
 	/**
 	 * flag if stream closed
@@ -203,7 +216,7 @@ public class PithosOutputStream extends FSDataOutputStream {
 		//
 		// Send it to pithos
 		String pithos_container = pithosPath.getContainer();
-		String target_object = pithosPath.getObjectPath();
+		String target_object = pithosPath.getObjectAbsolutePath();
 		nextBlockOutputStream();
 		store.storePithosBlock(pithos_container, target_object, nextBlock, backupFile);
 //		internalClose();
@@ -223,12 +236,14 @@ public class PithosOutputStream extends FSDataOutputStream {
 	 * @throws IOException
 	 */
 	private synchronized void nextBlockOutputStream() throws IOException {
-		byte[] blockData = store.serializeFile(backupFile);
+		byte[] blockData = pithosSerializer.serializeFile(backupFile);
 		String blockHash = null;
-		//TODO: Get hash algorithm from pithos container metadata.
+		String container = pithosPath.getContainer();
+		String hashAlgo = store.getPithosContainerHashAlgorithm(container);
+		System.out.println(hashAlgo);
 		try {
 			blockHash = utils.computeHash(blockData, "SHA-256");
-			if (!store.pithosObjectBlockExists(blockHash)){
+			if (!store.pithosObjectBlockExists(container, blockHash)){
 				nextBlock = new PithosBlock(blockHash, bytesWrittenToBlock, blockData);
 				blocks.add(nextBlock);
 				bytesWrittenToBlock = 0;
@@ -290,6 +305,8 @@ public class PithosOutputStream extends FSDataOutputStream {
 		this.pithosPath = path;
 		this.blockSize = blockSize;
 		this.utils = new Utils();
+		this.pithosSerializer = new PithosSerializer();
+		this.hadoopConnector = new HadoopPithosConnector(conf.get("fs.pithos.url"), conf.get("auth.pithos.token"), conf.get("auth.pithos.uuid"));
 		this.backupFile = newBackupFile();
 		this.backupStream = new FileOutputStream(backupFile);
 		this.bufferSize = buffersize;

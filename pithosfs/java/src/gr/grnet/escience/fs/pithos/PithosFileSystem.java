@@ -41,13 +41,11 @@ public class PithosFileSystem extends FileSystem {
 	private static HadoopPithosConnector hadoopPithosConnector;
 	private Path workingDir;
 	private String pathToString;
-	// private String container;
-	// private String objectPathStr;
-	// private String fsPathStr;
 	private PithosPath pithosPath;
 	static String filename;
 
 	private String[] filesList;
+	private boolean exist = true;
 	private boolean isDir = false;
 	private long length = 0;
 	private PithosFileStatus pithos_file_status;
@@ -97,8 +95,8 @@ public class PithosFileSystem extends FileSystem {
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 		System.out.println(this.uri.toString());
 		this.workingDir = new Path("/user", System.getProperty("user.name"));
-		//this.workingDir = new Path("/user", System.getProperty("user.name"))
-				//.makeQualified(this.uri, this.getWorkingDirectory());
+		// this.workingDir = new Path("/user", System.getProperty("user.name"))
+		// .makeQualified(this.uri, this.getWorkingDirectory());
 		System.out.println(this.workingDir.toString());
 		System.out.println("Create System Store connector");
 
@@ -184,7 +182,8 @@ public class PithosFileSystem extends FileSystem {
 
 		PithosResponse metadata = getHadoopPithosConnector()
 				.getPithosObjectMetaData(pithosPath.getContainer(),
-						pithosPath.getObjectPath(), PithosResponseFormat.JSON);
+						pithosPath.getObjectAbsolutePath(), PithosResponseFormat.JSON);
+
 		if (metadata.toString().contains("404")) {
 			FileNotFoundException fnfe = new FileNotFoundException("File does not exist in Pithos FS.");
 			throw fnfe;
@@ -278,8 +277,8 @@ public class PithosFileSystem extends FileSystem {
 			throws IOException {
 		// TODO: parse the container
 		pithosPath = new PithosPath(target_file);
-		return getHadoopPithosConnector().pithosObjectInputStream(pithosPath.getContainer(),
-				pithosPath.getObjectPath());
+		return getHadoopPithosConnector().pithosObjectInputStream(
+				pithosPath.getContainer(), pithosPath.getObjectAbsolutePath());
 	}
 
 	@Override
