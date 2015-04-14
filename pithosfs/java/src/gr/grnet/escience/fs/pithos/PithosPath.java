@@ -1,44 +1,73 @@
 package gr.grnet.escience.fs.pithos;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 import org.apache.hadoop.fs.Path;
 
-public class PithosPath extends Path {
+public class PithosPath {
 
-	public PithosPath(String pathString) throws IllegalArgumentException,
-			URISyntaxException {
-		super(pathString);
+	private String container;
+	private String object_path;
+	private PithosFileSystem pithosFs = new PithosFileSystem();
+	private Path pithosFSPath;
+	private String fsPathStr;
+	private String[] pathParts;
+
+	public PithosPath() {
 	}
 
-	public PithosPath(URI aUri) {
-		super(aUri);
+	public PithosPath(Path hadoopPath) {
+		this.pithosFSPath = hadoopPath;
+		convertHadoopFSPathToPithosFSPath(getPithosFSPath());
 	}
 
-	public PithosPath(String parent, String child) {
-		super(parent, child);
-		// TODO Auto-generated constructor stub
+	public PithosPath(String pithos_container, String pithos_object_path) {
+		this.container = pithos_container;
+		this.object_path = pithos_object_path;
 	}
 
-	public PithosPath(Path parent, String child) {
-		super(parent, child);
-		// TODO Auto-generated constructor stub
+	private void convertHadoopFSPathToPithosFSPath(Path hadoopPath) {
+		fsPathStr = hadoopPath.toString();
+
+		fsPathStr = fsPathStr.substring(pithosFs.getScheme().toString()
+				.concat("://").length());
+
+		pathParts = fsPathStr.split("/");
+
+		this.container = pathParts[0];
+		this.object_path = fsPathStr.substring(getContainer().length() + 1);
 	}
 
-	public PithosPath(String parent, Path child) {
-		super(parent, child);
-		// TODO Auto-generated constructor stub
+	public String getContainer() {
+		return container;
 	}
 
-	public PithosPath(Path parent, Path child) {
-		super(parent, child);
-		// TODO Auto-generated constructor stub
+	public void setContainer(String container) {
+		this.container = container;
 	}
 
-	public PithosPath(String scheme, String authority, String path) {
-		super(scheme, authority, path);
-		// TODO Auto-generated constructor stub
+	public String getObjectPath() {
+		return object_path;
 	}
 
+	public void setObjectPath(String object_path) {
+		this.object_path = object_path;
+	}
+
+	public Path createFSPath() {
+		fsPathStr = pithosFs.getScheme().concat("://").concat(getContainer())
+				.concat("/").concat(getObjectPath());
+
+		this.pithosFSPath = new Path(fsPathStr);
+
+		return getPithosFSPath();
+	}
+
+	public Path getPithosFSPath() {
+		return pithosFSPath;
+	}
+
+	@Override
+	public String toString(){
+		return getPithosFSPath().toString();
+	}
+	
 }
