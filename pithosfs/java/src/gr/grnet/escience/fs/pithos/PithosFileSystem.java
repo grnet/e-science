@@ -80,20 +80,17 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public String getScheme() {
-		System.out.println("getScheme!");
 		return "pithos";
 	}
 
 	@Override
 	public URI getUri() {
-		System.out.println("GetUri!");
 		return uri;
 	}
 
 	@Override
 	public void initialize(URI uri, Configuration conf) throws IOException {
 		super.initialize(uri, conf);
-		System.out.println("Initialize!");
 		setConf(conf);
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 		System.out.println(this.uri.toString());
@@ -113,13 +110,11 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public Path getWorkingDirectory() {
-		System.out.println("getWorkingDirectory!");
 		return workingDir;
 	}
 
 	@Override
 	public void setWorkingDirectory(Path dir) {
-		System.out.println("SetWorkingDirectory!");
 		workingDir = makeAbsolute(dir);
 	}
 
@@ -140,8 +135,7 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public long getDefaultBlockSize() {
-		System.out.println("blockSize!");
-		return getConf().getLong("dfs.blocksize", 4 * 1024 * 1024);
+		return getConf().getLongBytes("dfs.blocksize", 4 * 1024 * 1024);
 	}
 
 	@Override
@@ -177,20 +171,8 @@ public class PithosFileSystem extends FileSystem {
 		}
 	}
 	
-//	// Can't override hadoop message
-//	public boolean fileExistance(String container, String filename) {
-//		PithosResponse metadata = getHadoopPithosConnector().getPithosObjectMetaData(container,filename, PithosResponseFormat.JSON);
-//		if (metadata.toString().contains("404")) {
-//			return false;
-//		} else {
-//			return true;
-//		}
-//	}
-	
 	@Override
 	public PithosFileStatus getFileStatus(Path targetPath) throws IOException {
-		System.out.println("here in getFileStatus BEFORE!");
-		System.out.println("Path: " + targetPath.toString());
 		// - Process the given path
 		pithosPath = new PithosPath(targetPath);
 
@@ -198,8 +180,9 @@ public class PithosFileSystem extends FileSystem {
 				.getPithosObjectMetaData(pithosPath.getContainer(),
 						URLEncoder.encode(pithosPath.getObjectPath(), "UTF-8").replace("+", "%20"), PithosResponseFormat.JSON);
 		if (metadata.toString().contains("404")) {
-			FileNotFoundException fnfe = new FileNotFoundException("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
-			throw fnfe;
+//			IOException fnfe = new IOException("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
+			System.err.println("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
+			System.exit(1);		
 		}		
 		for (String obj : metadata.getResponseData().keySet()) {
 			if (obj != null) {
@@ -221,7 +204,7 @@ public class PithosFileSystem extends FileSystem {
 		} else {				
 			for (String obj : metadata.getResponseData().keySet()) {
 				if (obj != null) {
-					if (obj.matches("Content-Length")) {
+					if (obj.matches("Content-Length") || obj.matches("Content_Length")) {
 						for (String lengthStr : metadata.getResponseData()
 								.get(obj)) {
 							length = Long.parseLong(lengthStr);
@@ -231,7 +214,6 @@ public class PithosFileSystem extends FileSystem {
 			}
 			pithos_file_status = new PithosFileStatus(length, getDefaultBlockSize(), 123, targetPath);
 		}
-		System.out.println("here in getFileStatus AFTER!");
 		return pithos_file_status;
 	}
 
