@@ -3,11 +3,13 @@
 <!-- Put site-specific property overrides in this file. -->
 <configuration>
 <property>
+  <final>true</final>
   <name>hadoop.tmp.dir</name>
   <value>/app/hadoop/tmp</value>
   <description>A base for other temporary directories.</description>
 </property>
 <property>
+  <final>true</final>
   <name>fs.default.name</name>
   <value>hdfs://{{ hostvars[groups['master'][0]].inventory_hostname_short}}:9000</value>
   <description>The name of the default file system.  A URI whose
