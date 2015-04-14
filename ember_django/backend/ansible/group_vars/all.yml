@@ -12,7 +12,7 @@
   is_slave: False
   token: placeholder
   dfs_replication: 2
-  dfs_blocksize: 128
+  dfs_blocksize: 128m
   filename: /home/hduser/.ssh/id_rsa
   etchosts_filename: /etc/hosts_2 
   yarn_common_url: http://archive.apache.org/dist/hadoop/common

@@ -16,4 +16,24 @@
   the FileSystem implementation class.  The uri's authority is used to
   determine the host, port, etc. for a filesystem.</description>
 </property>
+<property>
+  <name>auth.pithos.uuid</name>
+  <value>{{ uuid }}</value>
+  <description>login for ~okeanos</description>
+</property>
+<property>
+  <name>auth.pithos.token</name>
+  <value>{{ token }}</value>
+  <description>~okeanos access token</description>
+</property>
+<property>
+  <name>fs.pithos.impl</name>
+  <value>gr.grnet.escience.fs.pithos.PithosFileSystem</value>
+  <description>fqn of class</description>
+</property>
+<property>
+  <name>fs.pithos.url</name>
+  <value>https://pithos.okeanos.grnet.gr/v1</value>
+  <description>pithos url</description>
+</property>
 </configuration>
