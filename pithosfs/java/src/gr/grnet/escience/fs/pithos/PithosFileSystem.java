@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
@@ -189,12 +190,17 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public PithosFileStatus getFileStatus(Path targetPath) throws IOException {
 		System.out.println("here in getFileStatus BEFORE!");
-		System.out.println("TARGET PATH: " + targetPath);
+		System.out.println("Path: " + targetPath.toString());
 		// - Process the given path
-		pithosPath = new PithosPath(targetPath);	
+		pithosPath = new PithosPath(targetPath);
+
 		PithosResponse metadata = getHadoopPithosConnector()
 				.getPithosObjectMetaData(pithosPath.getContainer(),
-				pithosPath.getObjectPath(), PithosResponseFormat.JSON);
+						URLEncoder.encode(pithosPath.getObjectPath(), "UTF-8").replace("+", "%20"), PithosResponseFormat.JSON);
+		if (metadata.toString().contains("404")) {
+			FileNotFoundException fnfe = new FileNotFoundException("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
+			throw fnfe;
+		}		
 		for (String obj : metadata.getResponseData().keySet()) {
 			if (obj != null) {
 				if (obj.matches("Content-Type") || obj.matches("Content_Type")) {
@@ -215,7 +221,7 @@ public class PithosFileSystem extends FileSystem {
 		} else {				
 			for (String obj : metadata.getResponseData().keySet()) {
 				if (obj != null) {
-					if (obj.matches("Content-Length") || obj.matches("Content_Length")) {
+					if (obj.matches("Content-Length")) {
 						for (String lengthStr : metadata.getResponseData()
 								.get(obj)) {
 							length = Long.parseLong(lengthStr);

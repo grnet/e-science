@@ -27,20 +27,21 @@ public class PithosPath {
 		this.object_path = pithos_object_path;
 	}
 
-	private void convertHadoopFSPathToPithosFSPath(Path hadoopPath) throws InvalidPathException, FileNotFoundException {
+	private void convertHadoopFSPathToPithosFSPath(Path hadoopPath) throws InvalidPathException {
 		fsPathStr = hadoopPath.toString();
 
 		fsPathStr = fsPathStr.substring(pithosFs.getScheme().toString()
 				.concat("://").length());
 
-		pathParts = (fsPathStr + "/").split("/");
-		
-		System.out.println("EDWWWWW : " + pathParts[pathParts.length-1]);
+		if (fsPathStr.substring(fsPathStr.length()-2, fsPathStr.length()-1) != "/") {
+			pathParts = (fsPathStr + "/").split("/");
+		} else {
+			pathParts = fsPathStr.split("/");
+		}
 		
 		if (pithosFs.containerExistance(pathParts[0])) {
 			this.container = pathParts[0];
 			this.object_path = fsPathStr.substring(getContainer().length() + 1);
-			System.out.println("TI FTXNM: " + this.object_path);
 		} else {
 			InvalidPathException ipe = new InvalidPathException(pathParts[0], "No such pithos:// container");
 			throw ipe;
@@ -48,7 +49,7 @@ public class PithosPath {
 		
 //		// Can't override hadoop message
 //		if (!pithosFs.fileExistance(container, object_path.replace("\"", ""))) {
-//			FileNotFoundException fnfe = new FileNotFoundException("File does not exist in Pithos FS.");
+//			FileNotFoundException fnfe = new FileNotFoundException("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
 //			throw fnfe;
 //		}
 	}
