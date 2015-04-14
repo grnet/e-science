@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +46,6 @@ public class PithosFileSystem extends FileSystem {
 	static String filename;
 
 	private String[] filesList;
-	private boolean exist = true;
 	private boolean isDir = false;
 	private long length = 0;
 	private PithosFileStatus pithos_file_status;
@@ -151,7 +151,7 @@ public class PithosFileSystem extends FileSystem {
 	public FSDataOutputStream create(Path arg0, FsPermission arg1,
 			boolean arg2, int arg3, short arg4, long arg5, Progressable arg6)
 			throws IOException {
-		System.out.println("Create!");
+		System.out.println("Create!" + arg0);
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -179,10 +179,16 @@ public class PithosFileSystem extends FileSystem {
 		System.out.println("Path: " + targetPath.toString());
 		// - Process the given path
 		pithosPath = new PithosPath(targetPath);
-
+		Utils utils = new Utils();
+		String url_esc = null;
+		try {
+			url_esc = utils.urlEscape(null, null, pithosPath.getObjectAbsolutePath(), null);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
 		PithosResponse metadata = getHadoopPithosConnector()
 				.getPithosObjectMetaData(pithosPath.getContainer(),
-						pithosPath.getObjectAbsolutePath(), PithosResponseFormat.JSON);
+						url_esc, PithosResponseFormat.JSON);
 
 		if (metadata.toString().contains("404")) {
 			FileNotFoundException fnfe = new FileNotFoundException("File does not exist in Pithos FS.");

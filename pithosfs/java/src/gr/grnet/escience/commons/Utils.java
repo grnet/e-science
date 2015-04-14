@@ -2,6 +2,9 @@ package gr.grnet.escience.commons;
 
 import java.io.UnsupportedEncodingException;
 import java.security.*;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.net.URI;
 
 public class Utils {
 	
@@ -51,6 +54,44 @@ public class Utils {
 	      sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16).substring(1));
 	    }
 	    return sb.toString();
+	}
+	
+	/**
+	 * Return an escaped url using form encoding and character replacement
+	 * 
+	 * @param url
+	 * @return url escaped path
+	 * @throws UnsupportedEncodingException
+	 */
+	public String urlEscape(String url) throws UnsupportedEncodingException{
+		String url_escaped = URLEncoder.encode(url, "UTF-8")
+        .replaceAll("\\+", "%20")
+        .replaceAll("\\%21", "!")
+        .replaceAll("\\%27", "'")
+        .replaceAll("\\%28", "(")
+        .replaceAll("\\%29", ")")
+        .replaceAll("\\%7E", "~");
+		return url_escaped;
+	}
+	
+	/**
+	 * Construct a URI from passed components
+	 * and return the escaped and encoded url 
+	 * 
+	 * @param scheme
+	 * 			: can be null for partial path
+	 * @param host
+	 * 			: can be null for partial path
+	 * @param path
+	 * @param fragment
+	 * 			: can be null for partial path
+	 * @return url escaped path
+	 * @throws URISyntaxException
+	 */
+	public String urlEscape(String scheme, String host, String path, String fragment) throws URISyntaxException{
+		URI uri = new URI(scheme, host, path, fragment);
+		String url_escaped = uri.toASCIIString();
+		return url_escaped;
 	}
 	
 	public Utils() {
