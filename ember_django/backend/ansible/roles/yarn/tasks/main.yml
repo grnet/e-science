@@ -163,6 +163,10 @@
     tags: postconfig
     copy: src=dist/ dest={{path_to_hdfs_libs}} owner=hduser group=hadoop
 
+  - name: Delete .gitignore
+    tags: postconfig
+    shell: find -name '.gitignore' | xargs rm chdir={{hadoop_home}}
+
   - name: create app/hadoop/tmp to store HDFS
     tags: postconfig
     action: command {{item}}
