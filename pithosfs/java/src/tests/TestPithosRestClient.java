@@ -20,10 +20,10 @@ public class TestPithosRestClient {
 	private static final String UUID = "ec567bea-4fa2-433d-9935-261a0867ec60";
 	private static final String TOKEN = "-0c6fk775-AEiOJiIW3FcBAy8jo7YCXsKVoNsp7j__8";
 	private static final String PITHOS_CONTAINER = "";
-	private static final String PITHOS_FILE_TO_DOWNLOAD = "tests/testBigNewObject.txt";
+	private static final String PITHOS_FILE_TO_DOWNLOAD = "tests/mitsos.txt";//"tests/testBigNewObject.txt";
 	private static final long OFFSET = 5194305;
 	private static final String LOCAL_SOURCE_FILE_TO_UPLOAD = "testOutput.txt";
-	private static final String PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM = "tests/testBigNewObject.txt";
+	private static final String PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM = "tests/mitsos.txt";
 	private static final byte[] DUMMY_BLOCK_DATA = "TEST DATA".getBytes();
 	private static PithosResponse pithosResponse;
 	private static Collection<String> object_block_hashes;
@@ -375,7 +375,7 @@ public class TestPithosRestClient {
 		// - Local parameters
 		String BLOCK_HASH = "1262c627a1349c1148276b85f5c27c6bd2c1c601d25677c22d84da1fa5a998c4";
 		byte[] bigBlockData = PithosSerializer.serializeFile(new File(
-				"bigBlock2.txt"));
+				"bigBlock1.txt"));
 
 		// - Create Pithos Object instance
 		PithosBlock pithosBlock = new PithosBlock(BLOCK_HASH,
@@ -406,10 +406,10 @@ public class TestPithosRestClient {
 		client.createHdConnector();
 		// client.testGet_Container_Info();
 		// client.testGet_Container_File_List();
-		// client.testGet_Pithos_Object_Metadata();
+		 client.testGet_Pithos_Object_Metadata();
 		// client.testGet_Pithos_Object_Size();
 		// client.testGet_Pithos_Object();
-		client.testGet_Pithos_Object_Block_Hashes();
+		// client.testGet_Pithos_Object_Block_Hashes();
 		// client.testGet_Pithos_Object_Block_Default_Size();
 		// client.testGet_Pithos_Object_Blocks_Number();
 		// client.testGet_Pithos_Object_Block();
@@ -419,7 +419,7 @@ public class TestPithosRestClient {
 		// client.testPithos_Object_Block_InputStream_With_Offset();
 		// client.testStore_File_To_Pithos();
 		// client.testStore_Object_To_Pithos();
-		// client.testAppend_Pithos_Block();
+		// client.testAppend_Pithos_Small_Block();
 		// client.testAppend_Pithos_Big_Block();
 	}
 
