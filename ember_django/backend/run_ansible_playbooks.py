@@ -9,7 +9,7 @@ This script installs and configures a Hadoop-Yarn cluster using Ansible.
 import os
 from os.path import dirname, abspath, isfile
 import logging
-from backend.models import ClusterInfo
+from backend.models import ClusterInfo, UserInfo
 from django_db_after_login import db_hadoop_update
 from celery import current_task
 from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS
@@ -135,11 +135,11 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
     ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
     # find ansible playbook (site.yml)
-
+    uuid = UserInfo.objects.get(okeanos_token=token).uuid
     # Create command that executes ansible playbook
     ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
     '-f {0} -e "choose_role=yarn ssh_file_name={1} token={2} '.format(str(cluster_size), ssh_file, token) + \
-    'dfs_blocksize={0}m dfs_replication={1}'.format(dfs_blocksize, replication_factor)
+    'dfs_blocksize={0}m dfs_replication={1} uuid={2}'.format(dfs_blocksize, replication_factor, uuid)
 
     # hadoop_image flag(true/false)
     if hadoop_image:

@@ -1,5 +1,7 @@
 package gr.grnet.escience.fs.pithos;
 
+import java.io.FileNotFoundException;
+
 import org.apache.hadoop.fs.Path;
 
 public class PithosPath {
@@ -16,15 +18,14 @@ public class PithosPath {
 	public PithosPath() {
 	}
 
-	public PithosPath(Path hadoopPath) {
+	public PithosPath(Path hadoopPath) throws FileNotFoundException {
 		this.pithosFSPath = hadoopPath;
 		convertHadoopFSPathToPithosFSPath(getPithosFSPath());
 	}
 
-	public PithosPath(String pithos_container,
-			String pithos_object_absolute_path) {
+	public PithosPath(String pithos_container, String pithos_object_path) {
 		this.container = pithos_container;
-		this.object_absolute_path = pithos_object_absolute_path;
+		this.object_absolute_path = pithos_object_path;
 
 		// - If the given object absolute path does not refer to folder, then
 		// extract file name if exists

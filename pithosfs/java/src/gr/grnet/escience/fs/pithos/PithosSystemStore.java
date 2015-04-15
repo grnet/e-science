@@ -83,24 +83,6 @@ public interface PithosSystemStore {
 			String target_object, String block_hash);
 
 	/**
-	 * 
-	 * @param pithos_container
-	 *            : the Pithos container on which the action will be performed.
-	 *            Leave it blank so as to refer to the default container that
-	 *            corresponds to 'Pithos
-	 * @param target_object
-	 *            : the object on which the seek method will seek on its blocks
-	 * @param target_block_hash
-	 *            : the hash of the selected block
-	 * @param offsetIntoPithosBlock
-	 *            : the starting point of the range for the retrieved data
-	 * @return a file that includes the data of the requested chunk og data
-	 *         based on the defined offset
-	 */
-	public File seekPithosBlock(String pithos_container, String target_object,
-			String target_block_hash, long offsetIntoPithosBlock);
-
-	/**
 	 * Get the hashes of all blocks that comprise the requested object
 	 * 
 	 * @param pithos_container
@@ -167,15 +149,15 @@ public interface PithosSystemStore {
 	 *            corresponds to 'Pithos'
 	 */
 	public long getPithosBlockDefaultSize(String pithos_container);
-	
+
 	/**
-	 * Get the hash algorithm used to compute the digest of blocks stored in container
+	 * Get the hash algorithm used to compute the digest of blocks stored in
+	 * container
 	 * 
 	 * 
 	 * @param pithos_container
-	 *				: the Pithos container queried
-	 * @return
-	 * 		: name of hash algorithm used
+	 *            : the Pithos container queried
+	 * @return : name of hash algorithm used
 	 */
 	public String getPithosContainerHashAlgorithm(String pithos_container);
 
@@ -360,6 +342,9 @@ public interface PithosSystemStore {
 	public String uploadFileToPithos(String pithos_container, String source_file);
 
 	/**
+	 * Stream primitive data as bytes to Pithos storage system. It should be
+	 * identified the type of the data that is going to be uploaded to Pithos,
+	 * so as the outputstream to be configured appropriately.
 	 * 
 	 * @param pithos_container
 	 *            : the Pithos container on which the action will be performed.
@@ -464,5 +449,21 @@ public interface PithosSystemStore {
 	 */
 	public boolean pithosObjectBlockExists(String pithos_container,
 			String blockHash);
+
+	/**
+	 * Return an array of pithos blocks as a Java File object
+	 * 
+	 * @param pithosBlockArray
+	 *            the PithosBlock array with the pithos blocks that constitute a
+	 *            Hadoop block.
+	 * 
+	 * @param offsetIntoBlock
+	 *            the long offSet used to read from a pithos block.
+	 * 
+	 * @return return a Java File object that is made up from the pithos blocks
+	 *         in pithosBlockArray
+	 */
+	public File retrieveBlock(PithosBlock[] pithosBlockArray,
+			long offsetIntoBlock);
 
 }
