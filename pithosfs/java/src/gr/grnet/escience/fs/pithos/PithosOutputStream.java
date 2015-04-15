@@ -123,7 +123,8 @@ public class PithosOutputStream extends FSDataOutputStream {
 		result.deleteOnExit();
 		return result;
 	}
-
+	
+	@Override
 	public long getPos() throws IOException {
 		return filePos;
 	}
