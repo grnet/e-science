@@ -17,7 +17,7 @@
    <div class="tab-pane fade in active" id="Info">
    		<h4 class="list-group-item-heading">Cluster</h4>
       	<ul class="list-group text-left">
-      		<li> ID : {{model.cluster_id}}</li>
+      		<li> ID : {{model.id}}</li>
       		<li> Creation Date : </li>
       		<li> Cluster Status : </li>
       		<li> Hadoop Status : </li>
@@ -34,13 +34,15 @@
       	</ul>
    </div>
    <div class="tab-pane fade" id="Access">
-      <a href="cluster url 8088/cluster">Cluster</a>
+   	{{#if model.cluster_status_active}}
+      <a {{bind-attr href='model.cluster_url'}} target="_blank">Cluster</a>
       <p></p>
-      <a href="HDFS overview port 50070">HDFS Overview</a>
+      <a {{bind-attr href='model.master_info'}} target="_blank">HDFS Overview</a>
       <p></p>
-      <a href="HDFS browse 50070/explorer.html#/">HDFS Browse</a>
+      <a {{bind-attr href='model.browse_hdfs'}} target="_blank">HDFS Browse</a>
       <p></p>
       <button  class = 'btn btn-primary btn-sm' action ='format hadoop'>Format HDFS</button>
+    {{/if}}
    </div>
    <div class="tab-pane fade" id="Manage">
       <p></p>
