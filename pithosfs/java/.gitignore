@@ -1,4 +1,3 @@
 *.sh
 bin/
-lib/
-dist/
+*.txt

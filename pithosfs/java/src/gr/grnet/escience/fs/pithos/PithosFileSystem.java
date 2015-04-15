@@ -39,7 +39,7 @@ import gr.grnet.escience.commons.Utils;
  */
 public class PithosFileSystem extends FileSystem {
 
-	private URI uri;
+	private URI uri;	
 	private static HadoopPithosConnector hadoopPithosConnector;
 	private static long defaultBlockSize = 128 * 1024 * 1024;
 	private Path workingDir;
@@ -133,7 +133,7 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public long getDefaultBlockSize() {
-		return getConf().getLongBytes("dfs_blocksize", defaultBlockSize);
+		return getConf().getLongBytes("dfs.blocksize", defaultBlockSize);
 	}
 
 	@Override
@@ -177,8 +177,8 @@ public class PithosFileSystem extends FileSystem {
 				.getPithosObjectMetaData(pithosPath.getContainer(),
 						URLEncoder.encode(pithosPath.getObjectPath(), "UTF-8").replace("+", "%20"), PithosResponseFormat.JSON);
 		if (metadata.toString().contains("404")) {
-			IOException fnfe = new IOException("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
-			throw fnfe;
+			System.err.println("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
+			System.exit(1);
 		}		
 		for (String obj : metadata.getResponseData().keySet()) {
 			if (obj != null) {
@@ -266,7 +266,6 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public FSDataInputStream open(Path target_file, int buffer_size)
 			throws IOException {
-		// TODO: parse the container
 		pithosPath = new PithosPath(target_file);
 		return getHadoopPithosConnector().pithosObjectInputStream(pithosPath.getContainer(),
 				URLEncoder.encode(pithosPath.getObjectPath(), "UTF-8").replace("+", "%20"));

@@ -4,6 +4,7 @@ import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -442,5 +443,18 @@ public interface PithosSystemStore {
 	 *         deserialized
 	 */
 	public File deserializeFile(byte[] data);
-
+	
+	/**
+	 * Return an array of pithos blocks as a Java File object
+	 * 
+	 * @param pithosBlockArray
+	 *            the PithosBlock array with the pithos blocks that constitute a Hadoop block.
+	 *            
+	 * @param offsetIntoBlock
+	 *            the long offSet used to read from a pithos block.
+	 *   
+	 * @return return a Java File object that is made up from the pithos blocks in pithosBlockArray
+	 */	
+	public File retrieveBlock(PithosBlock[] pithosBlockArray, long offsetIntoBlock) throws IOException;
+	
 }

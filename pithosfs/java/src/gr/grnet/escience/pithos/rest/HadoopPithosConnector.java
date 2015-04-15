@@ -837,10 +837,47 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 			}
 		}
 	}
+	
+	@Override
+    public File retrieveBlock(PithosBlock[] pithosBlockArray, long offsetIntoBlock) throws IOException{
+        // read a Hadoop block (array of pithos blocks) from an offset and return it as file
+		File block = new File("blockfile");
+		FileOutputStream fileOutputStream = new FileOutputStream(block);
+		try {
+		  for (int i=0; i< pithosBlockArray.length; i++){
+			  if (pithosBlockArray[i] != null){
+		           fileOutputStream.write(pithosBlockArray[i].getBlockData(), (int)offsetIntoBlock,
+		        		   (int)(pithosBlockArray[i].getBlockLength() - offsetIntoBlock));
+		           offsetIntoBlock=0;
+			  }
+			  else {
+				  //end of array of pithos blocks
+				  break;
+			  }
+		  }
+		  //fileOuputStream.close();
+		  // - return the file
+		  fileOutputStream.flush();
+		  fileOutputStream.close();
+
+		  return block;
+
+		} finally {
+		  try {
+				if (fileOutputStream != null) {
+					fileOutputStream.close();
+				}
+			} catch (IOException e) {
+				// ignore close exception
+			}
+		}
+		
+		
+	}
 
 	@Override
 	public String pithosFileOutputStream(String pithos_container,
-			String object_name, File file) {
+        String object_name, File file) {
 		// TODO Auto-generated method stub
 		return null;
 	}
