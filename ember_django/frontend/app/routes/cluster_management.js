@@ -6,7 +6,7 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 		console.log(params["usercluster.cluster_name"]);
 
 		var self = this;
-		var sel_cluster;
+	
 		this.store.fetch('user', 1).then(function(user) {
 		var clusters = user.get('clusters');
 
@@ -17,6 +17,7 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 				if (clusters.objectAt(i).get('cluster_name') == params["usercluster.cluster_name"])
 				{
 					self.set('sel_cluster', clusters.objectAt(i));
+					alert(clusters.objectAt(i).get('cluster_name'));
 				}
 			}
 		}
@@ -24,6 +25,7 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
  	}, function(reason) {
 		console.log(reason.message);
 	});
+
  	return this.get('sel_cluster');
   }
   
