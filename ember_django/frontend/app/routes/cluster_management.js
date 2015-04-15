@@ -1,32 +1,36 @@
 App.ClusterManagementRoute = App.RestrictedRoute.extend({
 	
-  model: function(params) {
+	
+	model: function(params) {
 	  	console.log("---> ");
 		console.log(params);
 		console.log(params["usercluster.cluster_name"]);
 
 		var self = this;
-	
-		this.store.fetch('user', 1).then(function(user) {
-		var clusters = user.get('clusters');
+		var cl = this.store.fetch('user', 1).then(function(user) {
 
-		var length = clusters.get('length');
-		if (length > 0) {
+			var clusters = user.get('clusters');
 
-			for (var i = 0; i < length; i++) {
-				if (clusters.objectAt(i).get('cluster_name') == params["usercluster.cluster_name"])
-				{
-					self.set('sel_cluster', clusters.objectAt(i));
-					alert(clusters.objectAt(i).get('cluster_name'));
+			var length = clusters.get('length');
+			if (length > 0) {
+
+				for (var i = 0; i < length; i++) {
+					if (clusters.objectAt(i).get('cluster_name') == params["usercluster.cluster_name"])
+					{
+						self.set('sel_cluster', clusters.objectAt(i));
+						//alert(clusters.objectAt(i).get('cluster_name'));
+					 	return clusters.objectAt(i);
+					}
 				}
 			}
-		}
 	
- 	}, function(reason) {
-		console.log(reason.message);
-	});
+ 			}, function(reason) {
+				console.log(reason.message);
+			});
+		
 
- 	return this.get('sel_cluster');
-  }
-  
+		
+	 	return cl;
+	}
+	  
 });
