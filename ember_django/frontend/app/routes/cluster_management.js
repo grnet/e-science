@@ -1,10 +1,6 @@
 App.ClusterManagementRoute = App.RestrictedRoute.extend({
 	
-	
 	model: function(params) {
-	  	console.log("---> ");
-		console.log(params);
-		console.log(params["usercluster.cluster_name"]);
 
 		var self = this;
 		var selected_cluster = this.store.fetch('user', 1).then(function(user) {
@@ -27,9 +23,7 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
  			}, function(reason) {
 				console.log(reason.message);
 			});
-		
 
-		
 	 	return selected_cluster;
 	}
 	  
