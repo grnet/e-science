@@ -135,7 +135,7 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public long getDefaultBlockSize() {
-		return getConf().getLongBytes("dfs.blocksize", 4 * 1024 * 1024);
+		return getConf().getLongBytes("dfs.blocksize", 128 * 1024 * 1024);
 	}
 
 	@Override

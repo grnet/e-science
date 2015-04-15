@@ -13,12 +13,14 @@
 <configuration>
 <!-- Site specific YARN configuration properties -->
   <property>
+    <final>true</final>
     <name>yarn.resourcemanager.hostname</name>
     <value>{{ hostvars[groups['master'][0]].inventory_hostname_short}}</value>
     <description>host is the hostname of the resource manager.
     </description>
   </property>
   <property>
+    <final>true</final>
     <name>yarn.resourcemanager.resource-tracker.address</name>
     <value>{{ hostvars[groups['master'][0]].inventory_hostname_short}}:8025</value>
     <description>host is the hostname of the resource manager and
@@ -26,6 +28,7 @@
     </description>
   </property>
   <property>
+    <final>true</final>
     <name>yarn.resourcemanager.scheduler.address</name>
     <value>{{ hostvars[groups['master'][0]].inventory_hostname_short}}:8030</value>
     <description>host is the hostname of the resourcemanager and port is the port
@@ -33,6 +36,7 @@
     </description>
   </property>
   <property>
+    <final>true</final>
     <name>yarn.resourcemanager.address</name>
     <value>{{ hostvars[groups['master'][0]].inventory_hostname_short}}:8050</value>
     <description>the host is the hostname of the ResourceManager and the port is the port on

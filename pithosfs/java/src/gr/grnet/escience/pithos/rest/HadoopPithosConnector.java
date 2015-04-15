@@ -9,7 +9,6 @@ import gr.grnet.escience.pithos.restapi.PithosRESTAPI;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -154,7 +153,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	 *            : tha file that should be serialized into bytes array
 	 * @return a File as bytes []
 	 */
-	@Override
 	public byte[] serializeFile(File inputFile) {
 		// - Convert File in bytes []
 		byte[] block_data_bytes = new byte[(int) inputFile.length()];
@@ -182,7 +180,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	 * @return return a File that actually constitutes the bytes that were
 	 *         deserialized
 	 */
-	@Override
 	public File deserializeFile(byte[] data) {
 		// convert array of bytes into file
 		FileOutputStream fileOuputStream;
