@@ -50,6 +50,7 @@ public class PithosFileSystem extends FileSystem {
 	private long length = 0;
 	private PithosFileStatus pithos_file_status;
 	public static final Log LOG = LogFactory.getLog(PithosFileSystem.class);
+	private Utils util;
 
 	public PithosFileSystem() {
 	}
@@ -77,28 +78,29 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public String getScheme() {
-		System.out.println("getScheme!");
+		util.dbgPrint("getScheme");
 		return "pithos";
 	}
 
 	@Override
 	public URI getUri() {
-		System.out.println("GetUri!");
+		util.dbgPrint("getUri");
 		return uri;
 	}
 
 	@Override
 	public void initialize(URI uri, Configuration conf) throws IOException {
 		super.initialize(uri, conf);
-		System.out.println("Initialize!");
+		this.util = new Utils();
+		util.dbgPrint("initialize");
 		setConf(conf);
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
-		System.out.println(this.uri.toString());
+		util.dbgPrint(this.uri);
 		this.workingDir = new Path("/user", System.getProperty("user.name"));
 		// this.workingDir = new Path("/user", System.getProperty("user.name"))
 		// .makeQualified(this.uri, this.getWorkingDirectory());
-		System.out.println(this.workingDir.toString());
-		System.out.println("Create System Store connector");
+		util.dbgPrint(this.workingDir);
+		util.dbgPrint("Create System Store connector");
 
 		// - Create instance of Hadoop connector
 		setHadoopPithosConnector(new HadoopPithosConnector(
@@ -109,13 +111,13 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public Path getWorkingDirectory() {
-		System.out.println("getWorkingDirectory!");
+		util.dbgPrint("getWorkingDirectory");
 		return workingDir;
 	}
 
 	@Override
 	public void setWorkingDirectory(Path dir) {
-		System.out.println("SetWorkingDirectory!");
+		util.dbgPrint("setWorkingDirectory");
 		workingDir = makeAbsolute(dir);
 	}
 
@@ -130,19 +132,19 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public FSDataOutputStream append(Path f, int bufferSize,
 			Progressable progress) throws IOException {
-		System.out.println("append!");
+		util.dbgPrint("append");
 		throw new IOException("Not supported");
 	}
 
 	@Override
 	public long getDefaultBlockSize() {
-		System.out.println("blockSize!");
+		util.dbgPrint("getDefaultBlockSize");
 		return getConf().getLongBytes("dfs.blocksize", 4 * 1024 * 1024);
 	}
 
 	@Override
 	public String getCanonicalServiceName() {
-		System.out.println("getcanonicalservicename!");
+		util.dbgPrint("getCanonicalServiceName");
 		// Does not support Token
 		return null;
 	}
@@ -151,14 +153,14 @@ public class PithosFileSystem extends FileSystem {
 	public FSDataOutputStream create(Path arg0, FsPermission arg1,
 			boolean arg2, int arg3, short arg4, long arg5, Progressable arg6)
 			throws IOException {
-		System.out.println("Create!" + arg0);
+		util.dbgPrint("create",arg0);
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean delete(Path arg0, boolean arg1) throws IOException {
-		System.out.println("Delete!");
+		util.dbgPrint("delete");
 		// TODO Auto-generated method stub
 		return false;
 	}
@@ -175,17 +177,19 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public PithosFileStatus getFileStatus(Path targetPath) throws IOException {
-		System.out.println("here in getFileStatus BEFORE!");
-		System.out.println("Path: " + targetPath.toString());
+		util.dbgPrint("getFileStatus","ENTRY");
+		util.dbgPrint("Path >",targetPath);
 		// - Process the given path
 		pithosPath = new PithosPath(targetPath);
-		Utils utils = new Utils();
+		util.dbgPrint(pithosPath.getObjectAbsolutePath());
 		String url_esc = null;
-		try {
-			url_esc = utils.urlEscape(null, null, pithosPath.getObjectAbsolutePath(), null);
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-		}
+		url_esc = util.urlEscape(pithosPath.getObjectAbsolutePath());
+		// alternatively
+//		try {
+//			url_esc = util.urlEscape(null, null, pithosPath.getObjectAbsolutePath(), null);
+//		} catch (URISyntaxException e) {
+//			e.printStackTrace();
+//		}
 		PithosResponse metadata = getHadoopPithosConnector()
 				.getPithosObjectMetaData(pithosPath.getContainer(),
 						url_esc, PithosResponseFormat.JSON);
@@ -193,7 +197,7 @@ public class PithosFileSystem extends FileSystem {
 		if (metadata.toString().contains("404")) {
 			FileNotFoundException fnfe = new FileNotFoundException("File does not exist in Pithos FS.");
 			throw fnfe;
-		}		
+		}
 		for (String obj : metadata.getResponseData().keySet()) {
 			if (obj != null) {
 				if (obj.matches("Content-Type") || obj.matches("Content_Type")) {
@@ -224,14 +228,14 @@ public class PithosFileSystem extends FileSystem {
 			}
 			pithos_file_status = new PithosFileStatus(length, getDefaultBlockSize(), 123, targetPath);
 		}
-		System.out.println("here in getFileStatus AFTER!");
+		util.dbgPrint("getFileStatus","EXIT");
 		return pithos_file_status;
 	}
 
 	@Override
 	public FileStatus[] listStatus(Path f) throws FileNotFoundException,
 			IOException {
-		System.out.println("\n--->  List Status Method!");
+		util.dbgPrint("\n---> listStatus");
 
 		filename = "";
  		pithosPath = new PithosPath(f);
@@ -273,7 +277,7 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public boolean mkdirs(Path arg0, FsPermission arg1) throws IOException {
-		System.out.println("Make dirs!");
+		util.dbgPrint("mkdirs");
 		// TODO Auto-generated method stub
 		return false;
 	}
@@ -289,7 +293,7 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public boolean rename(Path arg0, Path arg1) throws IOException {
-		System.out.println("rename!");
+		util.dbgPrint("rename");
 		// TODO Auto-generated method stub
 		return false;
 	}
@@ -312,8 +316,8 @@ public class PithosFileSystem extends FileSystem {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("Pithos FileSystem Connector loaded.");
-		System.out.println("Test hashing: " + out);
+		util.dbgPrint("Pithos FileSystem Connector loaded.");
+		util.dbgPrint("Hash Test:",out);
 	}
 
 }

@@ -94,6 +94,21 @@ public class Utils {
 		return url_escaped;
 	}
 	
+	/**
+	 * Thin wrapper around System.err.println for quick tracing
+	 * 
+	 * @param args
+	 * 			: variable length array of objects
+	 */
+	public void dbgPrint(Object... args){
+		String formatter = "\nDEBUG:";
+		for (Object obj : args){
+			formatter+=" %s";
+		}
+		formatter+="\n";
+		System.err.format(formatter, args);
+	}
+	
 	public Utils() {
 	}
 }
