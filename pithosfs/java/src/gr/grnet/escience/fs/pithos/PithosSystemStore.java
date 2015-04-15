@@ -167,6 +167,17 @@ public interface PithosSystemStore {
 	 *            corresponds to 'Pithos'
 	 */
 	public long getPithosBlockDefaultSize(String pithos_container);
+	
+	/**
+	 * Get the hash algorithm used to compute the digest of blocks stored in container
+	 * 
+	 * 
+	 * @param pithos_container
+	 *				: the Pithos container queried
+	 * @return
+	 * 		: name of hash algorithm used
+	 */
+	public String getPithosContainerHashAlgorithm(String pithos_container);
 
 	/***
 	 * Method to get the meta-data that correspond to a Pithos object stored

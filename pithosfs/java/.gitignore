@@ -1,5 +1,2 @@
 *.sh
-*.txt
 bin/
-lib/
-dist/

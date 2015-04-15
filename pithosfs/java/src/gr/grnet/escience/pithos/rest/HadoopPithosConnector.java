@@ -483,6 +483,16 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 				.get("X-Container-Block-Size").get(0));
 
 	}
+	
+	@Override
+	public String getPithosContainerHashAlgorithm(String pithos_container) {
+		// - Create response object
+		PithosResponse resp = (new Gson()).fromJson(
+				(new Gson()).toJson(getContainerInfo(pithos_container)),
+				PithosResponse.class);
+		// - Return the name of the hash algorithm
+		return resp.getResponseData().get("X-Container-Block-Hash").get(0);
+	}
 
 	@Override
 	public PithosResponse getPithosObjectMetaData(String pithos_container,

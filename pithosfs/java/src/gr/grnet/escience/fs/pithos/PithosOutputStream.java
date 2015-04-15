@@ -1,20 +1,24 @@
 package gr.grnet.escience.fs.pithos;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import gr.grnet.escience.commons.PithosSerializer;
+import gr.grnet.escience.commons.Utils;
+import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
+import gr.grnet.escience.pithos.rest.PithosResponse;
+
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem.Statistics;
 
 /**
- * Wraps FSDataOutputStream (which wraps OutputStream) for streaming data into
- * Pithos
+ * Wraps FSDataOutputStream (which wraps OutputStream) for streaming data into Pithos
  */
 public class PithosOutputStream extends FSDataOutputStream {
 	/**
@@ -53,9 +57,19 @@ public class PithosOutputStream extends FSDataOutputStream {
 	private OutputStream backupStream;
 
 	/**
-	 * random for generating next id for block
+	 * Utils instance for computing hashes
 	 */
-	private Random r = new Random();
+	private Utils utils;
+	
+	/**
+	 * Pithos File <-> Byte operations
+	 */
+	private PithosSerializer pithosSerializer;
+	
+	/**
+	 * instance of HadoopPithosConnector
+	 */
+	private HadoopPithosConnector hadoopConnector;
 
 	/**
 	 * flag if stream closed
@@ -93,35 +107,8 @@ public class PithosOutputStream extends FSDataOutputStream {
 	private PithosBlock nextBlock;
 
 	/**
-	 * @param conf
-	 *            FS conf
-	 * @param store
-	 *            FS store
-	 * @param path
-	 *            file path
-	 * @param blockSize
-	 *            size of block
-	 * @param buffersize
-	 *            size of buffer
-	 * @throws IOException
-	 */
-	public PithosOutputStream(OutputStream out, Statistics stats,
-			Configuration conf, PithosSystemStore store, PithosPath path,
-			long blockSize, int buffersize) throws IOException {
-		super(out, stats);
-		this.conf = conf;
-		this.store = store;
-		this.pithosPath = path;
-		this.blockSize = blockSize;
-		this.backupFile = newBackupFile();
-		this.backupStream = new FileOutputStream(backupFile);
-		this.bufferSize = buffersize;
-		this.outBuf = new byte[bufferSize];
-	}
-
-	/**
-	 * method for creating backup file of 4mb for buffering before streaming to
-	 * pithos
+	 * method for creating backup file of 4mb for buffering
+	 * before streaming to pithos
 	 * 
 	 * @return File
 	 * @throws IOException
@@ -136,7 +123,8 @@ public class PithosOutputStream extends FSDataOutputStream {
 		result.deleteOnExit();
 		return result;
 	}
-
+	
+	@Override
 	public long getPos() throws IOException {
 		return filePos;
 	}
@@ -228,10 +216,11 @@ public class PithosOutputStream extends FSDataOutputStream {
 
 		//
 		// Send it to pithos
+		String pithos_container = pithosPath.getContainer();
+		String target_object = pithosPath.getObjectAbsolutePath();
 		nextBlockOutputStream();
-		store.storePithosBlock(pithosPath.getContainer(),
-				pithosPath.getObjectAbsolutePath(), nextBlock, backupFile);
-		// internalClose();
+		store.storePithosBlock(pithos_container, target_object, nextBlock, backupFile);
+//		internalClose();
 
 		//
 		// Delete local backup, start new one
@@ -248,30 +237,33 @@ public class PithosOutputStream extends FSDataOutputStream {
 	 * @throws IOException
 	 */
 	private synchronized void nextBlockOutputStream() throws IOException {
-		long blockId = r.nextLong();
-		String strBlock = Long.toString(blockId); // TODO: Refactor to pithos
-													// block hash check /
-													// generation
-		while (store.pithosObjectBlockExists(pithosPath.getContainer(),
-				strBlock)) {
-			blockId = r.nextLong();
+		byte[] blockData = pithosSerializer.serializeFile(backupFile);
+		String blockHash = null;
+		String container = pithosPath.getContainer();
+		String hashAlgo = store.getPithosContainerHashAlgorithm(container);
+		System.out.println(hashAlgo);
+		try {
+			blockHash = utils.computeHash(blockData, "SHA-256");
+			if (!store.pithosObjectBlockExists(container, blockHash)){
+				nextBlock = new PithosBlock(blockHash, bytesWrittenToBlock, blockData);
+				blocks.add(nextBlock);
+				bytesWrittenToBlock = 0;
+			}
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
 		}
-		byte[] blockData = null; // TODO: serialize the buffer file
-		nextBlock = new PithosBlock(strBlock, bytesWrittenToBlock, blockData);
-		blocks.add(nextBlock);
-		bytesWrittenToBlock = 0;
 	}
 
-	// /**
-	// * Close and save all information carefully on internal close
-	// *
-	// * @throws IOException
-	// */
-	// private synchronized void internalClose() throws IOException {
-	// INode inode = new INode(INode.FILE_TYPES[1],
-	// blocks.toArray(new Block[blocks.size()]));
-	// store.storeINode(path, inode);
-	// }
+//	/**
+//	 * Close and save all information carefully on internal close
+//	 * 
+//	 * @throws IOException
+//	 */
+//	private synchronized void internalClose() throws IOException {
+//		INode inode = new INode(INode.FILE_TYPES[1],
+//				blocks.toArray(new Block[blocks.size()]));
+//		store.storeINode(path, inode);
+//	}
 
 	@Override
 	public synchronized void close() throws IOException {
@@ -292,4 +284,33 @@ public class PithosOutputStream extends FSDataOutputStream {
 		closed = true;
 	}
 
+	/**
+	 * @param conf
+	 *            FS conf
+	 * @param store
+	 *            FS store
+	 * @param path
+	 *            file path
+	 * @param blockSize
+	 *            size of block
+	 * @param buffersize
+	 *            size of buffer
+	 * @throws IOException
+	 */
+	public PithosOutputStream(OutputStream out, Statistics stats,
+			Configuration conf, PithosSystemStore store, PithosPath path,
+			long blockSize, int buffersize) throws IOException {
+		super(out, stats);
+		this.conf = conf;
+		this.store = store;
+		this.pithosPath = path;
+		this.blockSize = blockSize;
+		this.utils = new Utils();
+		this.pithosSerializer = new PithosSerializer();
+		this.hadoopConnector = new HadoopPithosConnector(conf.get("fs.pithos.url"), conf.get("auth.pithos.token"), conf.get("auth.pithos.uuid"));
+		this.backupFile = newBackupFile();
+		this.backupStream = new FileOutputStream(backupFile);
+		this.bufferSize = buffersize;
+		this.outBuf = new byte[bufferSize];
+	}
 }
