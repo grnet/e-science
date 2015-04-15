@@ -9,11 +9,11 @@
 
   - name: Copy Java dist directory in ansible folder
     tags: postimage
-    local_action: copy src={{path_to_java_dirs}}/dist dest={{settings_path}}/ansible/roles/yarn/files
+    local_action: copy src={{path_to_java_dirs}}/dist dest={{settings_path}}/ansible/roles/yarn/files directory_mode=0755
 
   - name: Copy Java lib directory in ansible folder
     tags: postimage
-    local_action: copy src={{path_to_java_dirs}}/lib dest={{settings_path}}/ansible/roles/yarn/files
+    local_action: copy src={{path_to_java_dirs}}/lib dest={{settings_path}}/ansible/roles/yarn/files directory_mode=0755
 
   - name: Install orka as a python package
     tags: postimage
