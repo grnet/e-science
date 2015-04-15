@@ -7,6 +7,14 @@
     tags: postimage
     git: repo={{escience_repo}} dest={{my_project_dir}}/{{my_project_name}} version={{escience_version|default(origin)}}
 
+  - name: Copy Java dist directory in ansible folder
+    tags: postimage
+    local_action: copy src={{path_to_java_dirs}}/dist dest={{settings_path}}/ansible/roles/yarn/files
+
+  - name: Copy Java lib directory in ansible folder
+    tags: postimage
+    local_action: copy src={{path_to_java_dirs}}/lib dest={{settings_path}}/ansible/roles/yarn/files
+
   - name: Install orka as a python package
     tags: postimage
     sudo: yes

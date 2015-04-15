@@ -14,24 +14,24 @@
 <!-- Put site-specific property overrides in this file. -->
 <configuration>
 <property>
-  <name>dfs.replication</name>
-  <value>{{ dfs_replication }}</value>
-  <description>Default block replication.
-  The actual number of replications can be specified when the file is created.
-  The default is used if replication is not specified in create time.
-  </description>
+<name>dfs.replication</name>
+<value>{{ dfs_replication }}</value>
+<description>Default block replication.
+The actual number of replications can be specified when the file is created.
+The default is used if replication is not specified in create time.
+</description>
 </property>
 <property>
-   <name>dfs.namenode.name.dir</name>
-   <value>file:/app/hadoop/tmp/namenode</value>
+<name>dfs.namenode.name.dir</name>
+<value>file:/app/hadoop/tmp/namenode</value>
 </property>
 <property>
-   <name>dfs.datanode.data.dir</name>
-   <value>file:/app/hadoop/tmp/datanode</value>
+<name>dfs.datanode.data.dir</name>
+<value>file:/app/hadoop/tmp/datanode</value>
 </property>
 <property> 
-	<name>dfs.blocksize</name> 
-	<value>{{ dfs_blocksize }}</value> 
-	<description>Block size</description> 
+<name>dfs.blocksize</name>
+<value>{{ dfs_blocksize }}</value>
+<description>Block size</description>
 </property>
 </configuration>

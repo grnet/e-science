@@ -155,6 +155,13 @@
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle"' }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export HADOOP_PREFIX=/usr/local/hadoop"' }
 
+  - name: Copy Java lib directory
+    tags: postconfig
+    copy: src=lib/ dest={{path_to_common_libs}} owner=hduser group=hadoop
+
+  - name: Copy Java dist directory
+    tags: postconfig
+    copy: src=dist/ dest={{path_to_hdfs_libs}} owner=hduser group=hadoop
 
   - name: create app/hadoop/tmp to store HDFS
     tags: postconfig
