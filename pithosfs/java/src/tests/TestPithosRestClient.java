@@ -1,6 +1,7 @@
 package tests;
 
 import gr.grnet.escience.commons.PithosSerializer;
+import gr.grnet.escience.commons.Utils;
 import gr.grnet.escience.fs.pithos.PithosBlock;
 import gr.grnet.escience.fs.pithos.PithosObject;
 import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
@@ -10,6 +11,7 @@ import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 
 import org.junit.Before;
@@ -20,11 +22,11 @@ public class TestPithosRestClient {
 	private static final String UUID = "ec567bea-4fa2-433d-9935-261a0867ec60";
 	private static final String TOKEN = "-0c6fk775-AEiOJiIW3FcBAy8jo7YCXsKVoNsp7j__8";
 	private static final String PITHOS_CONTAINER = "";
-	private static final String PITHOS_FILE_TO_DOWNLOAD = "tests/testBigNewObject.txt";
+	private static final String PITHOS_FILE_TO_DOWNLOAD = "tests/newPithosObjectData.txt";
 	private static final long OFFSET = 5194305;
 	private static final String LOCAL_SOURCE_FILE_TO_UPLOAD = "testOutput.txt";
-	private static final String PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM = "tests/testBigNewObject.txt";
-	private static final byte[] DUMMY_BLOCK_DATA = "TEST DATA".getBytes();
+	private static final String PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM = "tests/newPithosObjectData.txt";
+	private static final String DUMMY_BLOCK_DATA = "TEST DATA";
 	private static PithosResponse pithosResponse;
 	private static Collection<String> object_block_hashes;
 	private static HadoopPithosConnector hdconnector;
@@ -348,25 +350,36 @@ public class TestPithosRestClient {
 	@Test
 	public void testAppend_Pithos_Small_Block() throws IOException {
 
+		Utils utils = new Utils();
+
 		// - Local parameters
-		String BLOCK_HASH = "65e71d1c0c2952a04baa9acfd2ba078a5134fb31aec6fc48dc96af0a5b9e53ba";
+		String BLOCK_HASH;
+		try {
+			BLOCK_HASH = utils.computeHash(DUMMY_BLOCK_DATA.getBytes(), "SHA-256");
+			
+			System.out.println("GENERATED HASH: " + BLOCK_HASH);
 
-		// - Create Pithos Object instance
-		PithosBlock pithosBlock = new PithosBlock(BLOCK_HASH,
-				DUMMY_BLOCK_DATA.length, DUMMY_BLOCK_DATA);
+			// - Create Pithos Object instance
+			byte[] toBeSent = DUMMY_BLOCK_DATA.getBytes();
+			PithosBlock pithosBlock = new PithosBlock(BLOCK_HASH,
+					toBeSent.length, toBeSent);
 
-		System.out
-				.println("---------------------------------------------------------------------");
-		System.out.println("APPEND BLOCK: <" + pithosBlock.getBlockHash()
-				+ "> TO PITHOS OBJECT <" + PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM
-				+ ">");
-		System.out
-				.println("---------------------------------------------------------------------");
-		String response = hdconnector.appendPithosBlock(PITHOS_CONTAINER,
-				PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM, pithosBlock);
-		System.out.println("RESPONSE FROM PITHOS: " + response);
-		System.out
-				.println("---------------------------------------------------------------------\n");
+			System.out
+					.println("---------------------------------------------------------------------");
+			System.out.println("APPEND BLOCK: <" + pithosBlock.getBlockHash()
+					+ "> TO PITHOS OBJECT <"
+					+ PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM + ">");
+			System.out
+					.println("---------------------------------------------------------------------");
+			String response = hdconnector.appendPithosBlock(PITHOS_CONTAINER,
+					PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM, pithosBlock);
+			System.out.println("RESPONSE FROM PITHOS: " + response);
+			System.out
+					.println("---------------------------------------------------------------------\n");
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Test
@@ -375,11 +388,11 @@ public class TestPithosRestClient {
 		// - Local parameters
 		String BLOCK_HASH = "1262c627a1349c1148276b85f5c27c6bd2c1c601d25677c22d84da1fa5a998c4";
 		byte[] bigBlockData = PithosSerializer.serializeFile(new File(
-				"bigBlock2.txt"));
+				"bigBlock1.txt"));
 
 		// - Create Pithos Object instance
 		PithosBlock pithosBlock = new PithosBlock(BLOCK_HASH,
-				DUMMY_BLOCK_DATA.length, bigBlockData);
+				bigBlockData.length, bigBlockData);
 
 		System.out
 				.println("---------------------------------------------------------------------");
@@ -409,7 +422,7 @@ public class TestPithosRestClient {
 		// client.testGet_Pithos_Object_Metadata();
 		// client.testGet_Pithos_Object_Size();
 		// client.testGet_Pithos_Object();
-		client.testGet_Pithos_Object_Block_Hashes();
+		// client.testGet_Pithos_Object_Block_Hashes();
 		// client.testGet_Pithos_Object_Block_Default_Size();
 		// client.testGet_Pithos_Object_Blocks_Number();
 		// client.testGet_Pithos_Object_Block();
@@ -419,7 +432,7 @@ public class TestPithosRestClient {
 		// client.testPithos_Object_Block_InputStream_With_Offset();
 		// client.testStore_File_To_Pithos();
 		// client.testStore_Object_To_Pithos();
-		// client.testAppend_Pithos_Block();
+		 client.testAppend_Pithos_Small_Block();
 		// client.testAppend_Pithos_Big_Block();
 	}
 

@@ -40,6 +40,7 @@ public class PithosFileSystem extends FileSystem {
 
 	private URI uri;
 	private static HadoopPithosConnector hadoopPithosConnector;
+	private static long defaultBlockSize = 128 * 1024 * 1024;
 	private Path workingDir;
 	private String pathToString;
 	private PithosPath pithosPath;
@@ -139,7 +140,7 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public long getDefaultBlockSize() {
 		util.dbgPrint("getDefaultBlockSize");
-		return getConf().getLongBytes("dfs.blocksize", 4 * 1024 * 1024);
+		return getConf().getLongBytes("dfs.blocksize", defaultBlockSize);
 	}
 
 	@Override
@@ -153,7 +154,7 @@ public class PithosFileSystem extends FileSystem {
 	public FSDataOutputStream create(Path arg0, FsPermission arg1,
 			boolean arg2, int arg3, short arg4, long arg5, Progressable arg6)
 			throws IOException {
-		util.dbgPrint("create",arg0);
+		util.dbgPrint("create", arg0);
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -164,8 +165,8 @@ public class PithosFileSystem extends FileSystem {
 		// TODO Auto-generated method stub
 		return false;
 	}
-	
-	public boolean ContainerExistance(String container) {
+
+	public boolean containerExistance(String container) {
 		PithosResponse containerInfo = getHadoopPithosConnector()
 				.getContainerInfo(container);
 		if (containerInfo.toString().contains("404")) {
@@ -177,32 +178,33 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public PithosFileStatus getFileStatus(Path targetPath) throws IOException {
-		util.dbgPrint("getFileStatus","ENTRY");
-		util.dbgPrint("Path >",targetPath);
+		util.dbgPrint("getFileStatus", "ENTRY");
+		util.dbgPrint("Path >", targetPath);
 		// - Process the given path
 		pithosPath = new PithosPath(targetPath);
 		util.dbgPrint(pithosPath.getObjectAbsolutePath());
 		String url_esc = null;
 		url_esc = util.urlEscape(pithosPath.getObjectAbsolutePath());
 		// alternatively
-//		try {
-//			url_esc = util.urlEscape(null, null, pithosPath.getObjectAbsolutePath(), null);
-//		} catch (URISyntaxException e) {
-//			e.printStackTrace();
-//		}
+		// try {
+		// url_esc = util.urlEscape(null, null,
+		// pithosPath.getObjectAbsolutePath(), null);
+		// } catch (URISyntaxException e) {
+		// e.printStackTrace();
+		// }
 		PithosResponse metadata = getHadoopPithosConnector()
-				.getPithosObjectMetaData(pithosPath.getContainer(),
-						url_esc, PithosResponseFormat.JSON);
+				.getPithosObjectMetaData(pithosPath.getContainer(), url_esc,
+						PithosResponseFormat.JSON);
 
 		if (metadata.toString().contains("404")) {
-			FileNotFoundException fnfe = new FileNotFoundException("File does not exist in Pithos FS.");
+			FileNotFoundException fnfe = new FileNotFoundException(
+					"File does not exist in Pithos FS.(If filename contains spaces, add Quotation Marks)");
 			throw fnfe;
 		}
 		for (String obj : metadata.getResponseData().keySet()) {
 			if (obj != null) {
 				if (obj.matches("Content-Type") || obj.matches("Content_Type")) {
-					for (String fileType : metadata.getResponseData()
-							.get(obj)) {
+					for (String fileType : metadata.getResponseData().get(obj)) {
 						if (fileType.contains("application/directory")) {
 							isDir = true;
 							break;
@@ -214,21 +216,23 @@ public class PithosFileSystem extends FileSystem {
 			}
 		}
 		if (isDir) {
-			pithos_file_status = new PithosFileStatus(true, getDefaultBlockSize(), false, targetPath); 
-		} else {				
+			pithos_file_status = new PithosFileStatus(true,
+					getDefaultBlockSize(), false, targetPath);
+		} else {
 			for (String obj : metadata.getResponseData().keySet()) {
 				if (obj != null) {
 					if (obj.matches("Content-Length")) {
-						for (String lengthStr : metadata.getResponseData()
-								.get(obj)) {
+						for (String lengthStr : metadata.getResponseData().get(
+								obj)) {
 							length = Long.parseLong(lengthStr);
 						}
 					}
 				}
 			}
-			pithos_file_status = new PithosFileStatus(length, getDefaultBlockSize(), 123, targetPath);
+			pithos_file_status = new PithosFileStatus(length,
+					getDefaultBlockSize(), 123, targetPath);
 		}
-		util.dbgPrint("getFileStatus","EXIT");
+		util.dbgPrint("getFileStatus", "EXIT");
 		return pithos_file_status;
 	}
 
@@ -238,7 +242,7 @@ public class PithosFileSystem extends FileSystem {
 		util.dbgPrint("\n---> listStatus");
 
 		filename = "";
- 		pithosPath = new PithosPath(f);
+		pithosPath = new PithosPath(f);
 		pathToString = pithosPath.toString();
 
 		pathToString = pathToString.substring(this.getScheme().toString()
@@ -247,26 +251,30 @@ public class PithosFileSystem extends FileSystem {
 		filesList = pathToString.split("/");
 		filename = filesList[filesList.length - 1];
 		int count = 2;
-		while (!filesList[filesList.length-count].equals(pithosPath.getContainer())){
-			filename = filesList[filesList.length-count]+"/"+filename;
-			count ++;
+		while (!filesList[filesList.length - count].equals(pithosPath
+				.getContainer())) {
+			filename = filesList[filesList.length - count] + "/" + filename;
+			count++;
 		}
-		
+
 		final List<FileStatus> result = new ArrayList<FileStatus>();
-		FileStatus fileStatus; 
-		
-		String files[] = getHadoopPithosConnector().getFileList(pithosPath.getContainer()).split("\\r?\\n");
+		FileStatus fileStatus;
+
+		String files[] = getHadoopPithosConnector().getFileList(
+				pithosPath.getContainer()).split("\\r?\\n");
 		// - Iterate on available files in the container
 		for (int i = 0; i < files.length; i++) {
-			String file = files[i].substring(files[i].lastIndexOf("/")+1);
-			files[i] = files[i].substring(0, (files[i].length() - file.length()));
+			String file = files[i].substring(files[i].lastIndexOf("/") + 1);
+			files[i] = files[i].substring(0,
+					(files[i].length() - file.length()));
 			if ((filename + "/").equals(files[i])) {
-				Path path = new Path("pithos://"+pithosPath.getContainer()+"/"+filename + "/" + file);
+				Path path = new Path("pithos://" + pithosPath.getContainer()
+						+ "/" + filename + "/" + file);
 				fileStatus = getFileStatus(path);
 				result.add(fileStatus);
 			}
 		}
-		
+
 		// - Return the list of the available files
 		if (!result.isEmpty()) {
 			return result.toArray(new FileStatus[result.size()]);
@@ -285,10 +293,12 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public FSDataInputStream open(Path target_file, int buffer_size)
 			throws IOException {
-		// TODO: parse the container
 		pithosPath = new PithosPath(target_file);
+
+		String path_esc = util.urlEscape(pithosPath.getObjectAbsolutePath());
+
 		return getHadoopPithosConnector().pithosObjectInputStream(
-				pithosPath.getContainer(), pithosPath.getObjectAbsolutePath());
+				pithosPath.getContainer(), path_esc);
 	}
 
 	@Override
@@ -317,7 +327,7 @@ public class PithosFileSystem extends FileSystem {
 			e.printStackTrace();
 		}
 		util.dbgPrint("Pithos FileSystem Connector loaded.");
-		util.dbgPrint("Hash Test:",out);
+		util.dbgPrint("Hash Test:", out);
 	}
 
 }

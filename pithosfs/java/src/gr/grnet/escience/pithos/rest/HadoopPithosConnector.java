@@ -10,6 +10,7 @@ import gr.grnet.escience.pithos.restapi.PithosRESTAPI;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -414,31 +415,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public File seekPithosBlock(String pithos_container, String target_object,
-			String target_block_hash, long offsetIntoPithosBlock) {
-
-		// // - Get required info for the object and the block
-		// long object_total_size = getPithosObjectSize(pithos_container,
-		// target_object);
-		// long block_size = getPithosObjectBlockSize(pithos_container,
-		// target_object);
-
-		// - Check if the requested offset if valid
-		// if ((offsetIntoPithosBlock < object_total_size)
-		// && (offsetIntoPithosBlock < block_size)) {
-
-		// pithosBlockAsFile = pithosBlockInputStream(pithos_container,
-		// target_object, target_block_hash, offsetIntoPithosBlock);
-		// return pithosBlockAsFile;
-		// } else {
-		// return null;
-		// }
-
-		return null;
-
-	}
-
-	@Override
 	public long getPithosObjectBlockSize(String pithos_container,
 			String object_location) {
 
@@ -483,7 +459,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 				.get("X-Container-Block-Size").get(0));
 
 	}
-	
+
 	@Override
 	public String getPithosContainerHashAlgorithm(String pithos_container) {
 		// - Create response object
@@ -704,8 +680,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	 * (HADOOP --> PITHOS): POST/PUT STREAM DATA TO PITHOS
 	 ********************************************************/
 	@Override
-	public String storePithosObject(String pithos_container,
-			PithosObject pithos_object) {
+	public String storePithosObject(String pithos_container, PithosObject pithos_object) {
 		try {
 			// - Create Pithos request
 			setPithosRequest(new PithosRequest());
@@ -897,6 +872,50 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 			return PithosSerializer.exceptionToStrign(e);
 		}
 
+	}
+
+	@Override
+	public File retrieveBlock(PithosBlock[] pithosBlockArray,
+			long offsetIntoBlock) {
+		File block = null;
+		FileOutputStream fileOutputStream = null;
+		try {
+			// read a Hadoop block (array of pithos blocks) from an offset and
+			// return it as file
+			block = new File("blockfile");
+			fileOutputStream = new FileOutputStream(block);
+
+			for (int i = 0; i < pithosBlockArray.length; i++) {
+				if (pithosBlockArray[i] != null) {
+					fileOutputStream
+							.write(pithosBlockArray[i].getBlockData(),
+									(int) offsetIntoBlock,
+									(int) (pithosBlockArray[i].getBlockLength() - offsetIntoBlock));
+					offsetIntoBlock = 0;
+				} else {
+					// end of array of pithos blocks
+					break;
+				}
+			}
+			// fileOuputStream.close();
+			// - return the file
+			fileOutputStream.flush();
+			fileOutputStream.close();
+
+			return block;
+
+		} catch (Exception ex) {
+			PithosSerializer.exceptionToStrign(ex);
+			return null;
+		} finally {
+			try {
+				if (fileOutputStream != null) {
+					fileOutputStream.close();
+				}
+			} catch (IOException e) {
+				// ignore close exception
+			}
+		}
 	}
 
 	@Override
