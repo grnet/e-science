@@ -30,7 +30,7 @@ Grid should be sort-able by status & size -->
                         {{#if sortedclusters}}
                         {{#each usercluster in sortedCollection}}
                         <tr>
-                        	<td>{{#link-to 'cluster.management' usercluster.cluster_name}}{{usercluster.cluster_name}}{{/link-to}}</td>
+                        	<td>{{#link-to 'cluster.management' usercluster.id}}{{usercluster.cluster_name}}{{/link-to}}</td>
                             <td>{{formatDate usercluster.action_date format='shortdatetime'}}</td>
                             <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
                             	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
@@ -72,7 +72,7 @@ Grid should be sort-able by status & size -->
                         {{else}}
                         {{#each usercluster in model.clusters}}
                         <tr>
-                        	<td>{{#link-to 'cluster.management' usercluster.cluster_name}}{{usercluster.cluster_name}}{{/link-to}}</td>
+                        	<td>{{#link-to 'cluster.management' usercluster.id}}{{usercluster.cluster_name}}{{/link-to}}</td>
                             <td>{{formatDate usercluster.action_date format='shortdatetime'}}</td>
                             <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
                             	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
