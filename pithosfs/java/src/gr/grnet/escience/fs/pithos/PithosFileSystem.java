@@ -5,7 +5,6 @@ import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -56,7 +55,7 @@ public class PithosFileSystem extends FileSystem {
 	public PithosFileSystem() {
 	}
 
-	public String getConfig(String param) {
+	private String getConfig(String param) {
 		Configuration conf = new Configuration();
 		String result = conf.get(param);
 		return result;
@@ -166,7 +165,7 @@ public class PithosFileSystem extends FileSystem {
 	public boolean containerExistance(String container) {
 		PithosResponse containerInfo = getHadoopPithosConnector()
 				.getContainerInfo(container);
-		if (containerInfo.toString().contains("404")) {
+		if (containerInfo.toString().contains("HTTP/1.1 404 NOT FOUND")) {
 			return false;
 		} else {
 			return true;
@@ -181,19 +180,18 @@ public class PithosFileSystem extends FileSystem {
 		pithosPath = new PithosPath(targetPath);
 		util.dbgPrint(pithosPath.getObjectAbsolutePath());
 		String url_esc = null;
-		//url_esc = util.urlEscape(pithosPath.getObjectAbsolutePath());
-		 try {
-		 url_esc = util.urlEscape(null, null,
-		 pithosPath.getObjectAbsolutePath(), null);
-		 } catch (URISyntaxException e) {
-		 e.printStackTrace();
-		 }
+		try {
+			url_esc = util.urlEscape(null, null,
+					pithosPath.getObjectAbsolutePath(), null);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
 		PithosResponse metadata = getHadoopPithosConnector()
 				.getPithosObjectMetaData(pithosPath.getContainer(), url_esc,
 						PithosResponseFormat.JSON);
 
 		if (metadata.toString().contains("HTTP/1.1 404 NOT FOUND")) {
-			util.dbgPrint(("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)"));
+			System.err.println(("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)"));
 			System.exit(1);
 		}
 		for (String obj : metadata.getResponseData().keySet()) {
@@ -232,8 +230,7 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	@Override
-	public FileStatus[] listStatus(Path f) throws FileNotFoundException,
-			IOException {
+	public FileStatus[] listStatus(Path f) throws IOException {
 		util.dbgPrint("\n---> listStatus");
 
 		filename = "";
@@ -290,14 +287,13 @@ public class PithosFileSystem extends FileSystem {
 			throws IOException {
 		pithosPath = new PithosPath(target_file);
 
-		//String path_esc = util.urlEscape(pithosPath.getObjectAbsolutePath());
 		String path_esc = null;
 		try {
 			path_esc = util.urlEscape(null, null,
-			 pithosPath.getObjectAbsolutePath(), null);
-			 } catch (URISyntaxException e) {
-			 e.printStackTrace();
-			 }
+					pithosPath.getObjectAbsolutePath(), null);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
 
 		return getHadoopPithosConnector().pithosObjectInputStream(
 				pithosPath.getContainer(), path_esc);
