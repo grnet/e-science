@@ -41,6 +41,14 @@ App.Usercluster = DS.Model.extend({
 	cluster_url : function() {
 		return 'http://' + this.get('master_IP') + ':8088/cluster';
 	}.property('master_IP'),
+	hdfs_overview : function() {
+		// overview for hdfs URL=master_IP:50070
+		return 'http://' + this.get('master_IP') + ':50070';
+	}.property('master_IP'),
+	browse_hdfs : function() {
+		// hdfs browse URL=master_IP:50070/explorer.html#/
+		return 'http://' + this.get('master_IP') + ':50070/explorer.html#/';
+	}.property('master_IP'),
 	cluster_status_verbose : function() {
 		var status = this.get('cluster_status');
 		switch (status) {
@@ -185,6 +193,11 @@ App.Usercluster = DS.Model.extend({
 	hadoop_status_class_format : function(){
 		return "glyphicon glyphicon-erase text-warning";
 	}.property(),
+	cluster_name_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var cluster_name_id = "id_".concat("cluster_name_",cluster_name_sort);
+		return cluster_name_id;	
+	}.property('cluster_name'),
 	cluster_status_id : function (){
 		var cluster_name_sort = this.get('cluster_name').slice(7);
 		var cluster_status_id = "id_".concat("cluster_status_",cluster_name_sort);

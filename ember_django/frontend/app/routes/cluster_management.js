@@ -1,54 +1,102 @@
 App.ClusterManagementRoute = App.RestrictedRoute.extend({
-	
-	needs : 'clusterManagement',
-	
+
+	// model for cluster management route
 	model: function(params) {
-	  	console.log("---> ");
-		console.log(params);
-		console.log(params["usercluster.cluster_name"]);
 
-		var self = this;
+		// find the correct cluster
 		var selected_cluster = this.store.fetch('user', 1).then(function(user) {
-
+	
+			// find all clusters of user
 			var clusters = user.get('clusters');
-
 			var length = clusters.get('length');
 			if (length > 0) {
-
 				for (var i = 0; i < length; i++) {
-					if (clusters.objectAt(i).get('cluster_name') == params["usercluster.cluster_name"])
+					// check for the cluster id
+					if (clusters.objectAt(i).get('id') == params["usercluster.id"])
 					{
 					 	return clusters.objectAt(i);
 					}
 				}
 			}
 	
- 			}, function(reason) {
-				console.log(reason.message);
-			});
- 	return selected_cluster;
+ 		}, function(reason) {
+			console.log(reason.message);
+		});
+
+	 	return selected_cluster;
 	},
 	
+	// possible actions
 	actions: {
 		
 		takeAction : function(cluster) {
+			var self = this;
+			var store = this.store;
 			var action = cluster.get('cluster_confirm_action');
 			cluster.set('cluster_confirm_action', false);
 			switch(action) {
 			case 'cluster_delete':
-				cluster.destroyRecord();			
+				cluster.destroyRecord().then(function(data) {
+					var count = self.controller.get('count');
+					var extend = Math.max(5, count);
+					self.controller.set('count', extend);
+					self.controller.set('create_cluster_start', true);
+					self.controller.send('timer', true, store);
+				}, function(reason) {
+					console.log(reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
+				});
 				break;
 			case 'hadoop_start':
 				cluster.set('hadoop_status','start');
-				cluster.save();			
+				cluster.save().then(function(data){
+					var count = self.controller.get('count');
+					var extend = Math.max(5, count);
+					self.controller.set('count', extend);
+					self.controller.set('create_cluster_start', true);
+					self.controller.send('timer', true, store);
+				},function(reason){
+					console.log(reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
+				});
 				break;
 			case 'hadoop_stop':
 				cluster.set('hadoop_status','stop');
-				cluster.save();
+				cluster.save().then(function(data){
+					var count = self.controller.get('count');
+					var extend = Math.max(5, count);
+					self.controller.set('count', extend);
+					self.controller.set('create_cluster_start', true);
+					self.controller.send('timer', true, store);
+				},function(reason){
+					console.log(reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
+				});
 				break;
 			case 'hadoop_format':
 				cluster.set('hadoop_status','format');
-				cluster.save();
+				cluster.save().then(function(data){
+					var count = self.controller.get('count');
+					var extend = Math.max(5, count);
+					self.controller.set('count', extend);
+					self.controller.set('create_cluster_start', true);
+					self.controller.send('timer', true, store);
+				},function(reason){
+					console.log(reason.message);
+					if (!Ember.isBlank(reason.message)){
+						var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+					}
+				});
 				break;
 			}
 		},
@@ -56,10 +104,6 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 		confirmAction : function(cluster, value) {
 			cluster.set('cluster_confirm_action', value);
 		}	
-	},
-	deactivate : function() {
-		// left this route
-		this.controller.send('timer', false);
 	}
 	  
 });
