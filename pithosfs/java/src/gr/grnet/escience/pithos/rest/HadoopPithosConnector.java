@@ -59,6 +59,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	public HadoopPithosConnector(String pithosUrl, String pithosToken,
 			String uuid) {
 		// - implement aPithos RESTAPI instance
+		//TODO: Refactor to use org.apache.hadoop.conf.Configuration 
+		//and pass the conf object from PithosFileSystem instead of option literals
 		super(pithosUrl, pithosToken, uuid);
 	}
 

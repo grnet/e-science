@@ -9,6 +9,8 @@ import java.security.NoSuchAlgorithmException;
 
 public class Utils {
 
+	private final boolean DEBUG = true;
+	
 	/**
 	 * Get the hash container
 	 * 
@@ -101,6 +103,7 @@ public class Utils {
 	 *            : variable length array of objects
 	 */
 	public void dbgPrint(Object... args) {
+		if (!DEBUG){return;}
 		String formatter = "DEBUG:";
 		for (int i = 0; i < args.length; i++) {
 			formatter+=" %s";

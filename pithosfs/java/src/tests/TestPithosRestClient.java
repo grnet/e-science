@@ -21,7 +21,7 @@ public class TestPithosRestClient {
 	private static final String PITHOS_STORAGE_SYSTEM_URL = "https://pithos.okeanos.grnet.gr/v1";
 	private static final String UUID = "ec567bea-4fa2-433d-9935-261a0867ec60";
 	private static final String TOKEN = "-0c6fk775-AEiOJiIW3FcBAy8jo7YCXsKVoNsp7j__8";
-	private static final String PITHOS_CONTAINER = "";
+	private static final String PITHOS_CONTAINER = "Images";
 	private static final String PITHOS_FILE_TO_DOWNLOAD = "tests/newPithosObjectData.txt";
 	private static final long OFFSET = 5194305;
 	private static final String LOCAL_SOURCE_FILE_TO_UPLOAD = "testOutput.txt";

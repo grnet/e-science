@@ -5,7 +5,6 @@ import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -70,7 +69,7 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	/**
-	 * Set thes instance of hadoop - pithos connector
+	 * Set the instance of hadoop - pithos connector
 	 */
 	public static void setHadoopPithosConnector(
 			HadoopPithosConnector hadoopPithosConnector) {
@@ -150,12 +149,12 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	@Override
-	public FSDataOutputStream create(Path arg0, FsPermission arg1,
-			boolean arg2, int arg3, short arg4, long arg5, Progressable arg6)
-			throws IOException {
-		util.dbgPrint("create", arg0);
-		// TODO Auto-generated method stub
-		return null;
+	public FSDataOutputStream create(Path f, FsPermission permission,
+			boolean overwrite, int bufferSize, short replication,
+			long blockSize, Progressable progress) throws IOException {
+		util.dbgPrint("create", f, pithosPath, blockSize, bufferSize);
+		return new FSDataOutputStream(new PithosOutputStream(getConf(),
+				pithosPath, blockSize, bufferSize),statistics);
 	}
 
 	@Override
@@ -195,7 +194,7 @@ public class PithosFileSystem extends FileSystem {
 
 		if (metadata.toString().contains("HTTP/1.1 404 NOT FOUND")) {
 			util.dbgPrint("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
-			System.exit(1);
+			throw new IOException("File does not exist in Pithos FS.");
 		}
 		for (String obj : metadata.getResponseData().keySet()) {
 			if (obj != null) {
@@ -229,6 +228,7 @@ public class PithosFileSystem extends FileSystem {
 					getDefaultBlockSize(), 123, targetPath);
 		}
 		util.dbgPrint("getFileStatus", "EXIT");
+		util.dbgPrint(pithos_file_status);
 		return pithos_file_status;
 	}
 
