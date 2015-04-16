@@ -41,6 +41,12 @@ App.Usercluster = DS.Model.extend({
 	cluster_url : function() {
 		return 'http://' + this.get('master_IP') + ':8088/cluster';
 	}.property('master_IP'),
+	master_info : function() {
+		return 'http://' + this.get('master_IP') + ':50070';
+	}.property('master_IP'),
+	browse_hdfs : function() {
+		return 'http://' + this.get('master_IP') + ':50070/explorer.html#/';
+	}.property('master_IP'),
 	cluster_status_verbose : function() {
 		var status = this.get('cluster_status');
 		switch (status) {
