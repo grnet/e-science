@@ -34,22 +34,43 @@
       	</ul>
    </div>
    <div class="tab-pane fade" id="Access">
-      <a href="cluster url 8088/cluster">Cluster</a>
+      <a {{bind-attr href='model.cluster_url'}} target="_blank">Cluster</a>
       <p></p>
-      <a href="HDFS overview port 50070">HDFS Overview</a>
+      <a {{bind-attr href='model.master_IP'}} target="_blank">HDFS Overview</a>
       <p></p>
       <a href="HDFS browse 50070/explorer.html#/">HDFS Browse</a>
       <p></p>
-      <button  class = 'btn btn-primary btn-sm' action ='format hadoop'>Format HDFS</button>
+      <button  class = 'btn btn-primary btn-sm' {{action 'confirmAction' usercluster 'hadoop_format'}}>Format HDFS</button>
    </div>
-   <div class="tab-pane fade" id="Manage">
-      <p></p>
-      <button  class = 'btn btn-primary btn-sm' action ='start hadoop'>Start Hadoop</button>
-      <p></p>
-      <button  class = 'btn btn-primary btn-sm' action ='stop hadoop'>Stop Hadoop</button>
-      <p></p>
-      <button  class = 'btn btn-primary btn-sm' action ='destory cluster'>Destroy Cluster</button>
-   </div>
+	<div class="tab-pane fade" id="Manage">
+		{{#if model.cluster_status_active}}	
+				<p></p>
+				<button {{bind-attr id='model.hadoop_start_id'}} class="btn btn-sm btn-primary" {{action 'confirmAction' model 'hadoop_start'}}{{bind-attr disabled=model.hadoop_action_start_disabled}}>
+					Start Hadoop <b {{bind-attr class='model.hadoop_status_class_start'}}></b>
+				</button>
+				<p></p>
+				<button {{bind-attr id='model.hadoop_stop_id'}} class="btn btn-sm btn-primary" {{action 'confirmAction' model 'hadoop_stop'}}{{bind-attr disabled=model.hadoop_action_stop_disabled}}>
+					Stop Hadoop <b {{bind-attr class='model.hadoop_status_class_stop'}}></b>
+				</button>
+				<p></p>
+				<button {{bind-attr id='model.cluster_destroy_id'}} class="btn btn-sm btn-primary"{{action 'confirmAction' model 'cluster_delete'}}>
+					Destroy Cluster <b {{bind-attr class='model.cluster_status_class_destroy'}}></b>
+				</button>
+			</div>
+			<p></p>
+			<p></p>
+			{{#if model.cluster_confirm_action}}
+				<div class="btn-group  btn-block">
+					<a role="button" {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</a>
+					<a role="button" {{action 'confirmAction' model false}} class="btn btn-danger btn-sm active">x</a>
+				</div>
+			{{/if}}
+		{{else}}
+			<div class="text-warning text-center">This cluster has been destroyed. No actions available.</div>
+		{{/if}}
+
+</div>
+
 </div>
 
 
