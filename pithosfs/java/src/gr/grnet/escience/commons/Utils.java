@@ -101,7 +101,7 @@ public class Utils {
 	 *            : variable length array of objects
 	 */
 	public void dbgPrint(Object... args) {
-		String formatter = "\nDEBUG:";
+		String formatter = "DEBUG:";
 		for (int i = 0; i < args.length; i++) {
 			formatter+=" %s";
 		}

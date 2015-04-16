@@ -56,7 +56,7 @@ public class PithosFileSystem extends FileSystem {
 	public PithosFileSystem() {
 	}
 
-	public String getConfig(String param) {
+	private String getConfig(String param) {
 		Configuration conf = new Configuration();
 		String result = conf.get(param);
 		return result;
@@ -168,7 +168,7 @@ public class PithosFileSystem extends FileSystem {
 	public boolean containerExistance(String container) {
 		PithosResponse containerInfo = getHadoopPithosConnector()
 				.getContainerInfo(container);
-		if (containerInfo.toString().contains("404")) {
+		if (containerInfo.toString().contains("HTTP/1.1 404 NOT FOUND")) {
 			return false;
 		} else {
 			return true;
@@ -193,9 +193,9 @@ public class PithosFileSystem extends FileSystem {
 				.getPithosObjectMetaData(pithosPath.getContainer(), url_esc,
 						PithosResponseFormat.JSON);
 
-		if (metadata.toString().contains("404")) {
+		if (metadata.toString().contains("HTTP/1.1 404 NOT FOUND")) {
 			util.dbgPrint("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
-			System.exit(1);
+			//System.exit(1);
 		}
 		for (String obj : metadata.getResponseData().keySet()) {
 			if (obj != null) {
@@ -233,8 +233,7 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	@Override
-	public FileStatus[] listStatus(Path f) throws FileNotFoundException,
-			IOException {
+	public FileStatus[] listStatus(Path f) throws IOException {
 		util.dbgPrint("\n---> listStatus");
 
 		filename = "";
