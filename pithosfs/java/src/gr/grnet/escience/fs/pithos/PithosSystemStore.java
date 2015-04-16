@@ -4,19 +4,31 @@ import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
 
 public interface PithosSystemStore {
 
 	/**************************
 	 * PITHOS CONTAINER LEVEL
 	 **************************/
+	/**
+	 * 
+	 * @param pithos_container
+	 * @return Pithos response in JSON format that includes information about a
+	 *         selected container on +Pithos as they are identified into the
+	 *         specifications / API {@link https
+	 *         ://www.synnefo.org/docs/synnefo/latest/object-api-guide.html}
+	 */
+
 	public PithosResponse getContainerInfo(String pithos_container);
 
+	/**
+	 * 
+	 * @param pithos_container
+	 * @return The list of available files into the selected container.
+	 */
 	public String getFileList(String pithos_container);
 
 	/**************************
@@ -61,7 +73,7 @@ public interface PithosSystemStore {
 	 * @param pithos_container
 	 *            : the Pithos container on which the action will be performed.
 	 *            Leave it blank so as to refer to the default container that
-	 *            coressponds to 'Pithos'
+	 *            corresponds to 'Pithos'
 	 * @param target_object
 	 *            : the object of which the block will be retrieved
 	 * @param block_hash
@@ -69,24 +81,6 @@ public interface PithosSystemStore {
 	 */
 	public PithosBlock retrievePithosBlock(String pithos_container,
 			String target_object, String block_hash);
-
-	/**
-	 * 
-	 * @param pithos_container
-	 *            : the Pithos container on which the action will be performed.
-	 *            Leave it blank so as to refer to the default container that
-	 *            corresponds to 'Pithos
-	 * @param target_object
-	 *            : the object on which the seek method will seek on its blocks
-	 * @param target_block_hash
-	 *            : the hash of the selected block
-	 * @param offsetIntoPithosBlock
-	 *            : the starting point of the range for the retrieved data
-	 * @return a file that includes the data of the requested chunk og data
-	 *         based on the defined offset
-	 */
-	public File seekPithosBlock(String pithos_container, String target_object,
-			String target_block_hash, long offsetIntoPithosBlock);
 
 	/**
 	 * Get the hashes of all blocks that comprise the requested object
@@ -155,6 +149,17 @@ public interface PithosSystemStore {
 	 *            corresponds to 'Pithos'
 	 */
 	public long getPithosBlockDefaultSize(String pithos_container);
+
+	/**
+	 * Get the hash algorithm used to compute the digest of blocks stored in
+	 * container
+	 * 
+	 * 
+	 * @param pithos_container
+	 *            : the Pithos container queried
+	 * @return : name of hash algorithm used
+	 */
+	public String getPithosContainerHashAlgorithm(String pithos_container);
 
 	/***
 	 * Method to get the meta-data that correspond to a Pithos object stored
@@ -275,7 +280,7 @@ public interface PithosSystemStore {
 	 *            Pithos storage systme
 	 */
 	public String storePithosObject(String pithos_container,
-			String object_name, PithosObject pithos_object);
+			PithosObject pithos_object);
 
 	/**
 	 * 
@@ -290,7 +295,11 @@ public interface PithosSystemStore {
 	 *            storage system
 	 * @param backup_file
 	 *            : the temporary file storing the block data to be streamed
-	 * @return
+	 * @return A string that actually is the response code and message that
+	 *         identifies the result of the current process based on the
+	 *         corresponding response codes as they are described into
+	 *         {@link https
+	 *         ://www.synnefo.org/docs/synnefo/latest/object-api-guide.html}
 	 */
 	public String storePithosBlock(String pithos_container,
 			String target_object, PithosBlock pithos_block, File backup_file);
@@ -301,11 +310,36 @@ public interface PithosSystemStore {
 	 *            : the Pithos container on which the action will be performed.
 	 *            Leave it blank so as to refer to the default container that
 	 *            corresponds to 'Pithos'
+	 * @param target_object
+	 *            : the name of the object on which the block will be appended
+	 * @param newPithosBlock
+	 *            : the actual Pithos Block that will be appended to the target
+	 *            object
+	 * @return A string that actually is the response code and message that
+	 *         identifies the result of the current process based on the
+	 *         corresponding response codes as they are described into
+	 *         {@link https
+	 *         ://www.synnefo.org/docs/synnefo/latest/object-api-guide.html}
+	 */
+	public String appendPithosBlock(String pithos_container,
+			String target_object, PithosBlock newPithosBlock);
+
+	/**
+	 * 
+	 * @param pithos_container
+	 *            : the Pithos container on which the action will be performed.
+	 *            Leave it blank so as to refer to the default container that
+	 *            corresponds to 'Pithos'
 	 * @param source_file
 	 *            : the absolute path of the file that should be uploaded/stored
 	 *            to pithos storage system
+	 * @return A string that actually is the response code and message that
+	 *         identifies the result of the current process based on the
+	 *         corresponding response codes as they are described into
+	 *         {@link https
+	 *         ://www.synnefo.org/docs/synnefo/latest/object-api-guide.html}
 	 */
-	public String storeFileToPithos(String pithos_container, String source_file);
+	public String uploadFileToPithos(String pithos_container, String source_file);
 
 	/**
 	 * Stream primitive data as bytes to Pithos storage system. It should be
@@ -316,37 +350,39 @@ public interface PithosSystemStore {
 	 *            : the Pithos container on which the action will be performed.
 	 *            Leave it blank so as to refer to the default container that
 	 *            corresponds to 'Pithos'
-	 * @param file_name
-	 *            : the name of the file that will be stored on Pithos stoarage
-	 *            system
-	 * @param file_type
-	 *            : one of the possible types of data that can be added on
-	 *            Pithos storage system <i>(OBJECT, BLOCK, FILE)</i>
-	 * @param data
-	 * @return
+	 * @param object_location
+	 *            : the path (including the name of the new file) that will be
+	 *            created on pithos
+	 * @return A string that actually is the response code and message that
+	 *         identifies the result of the current process based on the
+	 *         corresponding response codes as they are described into
+	 *         {@link https
+
 	 */
-	public String pithosOutputStream(String pithos_container, String file_name,
-			PithosFileType file_type, byte[] data);
+	public String createEmptyPithosObject(String pithos_container,
+			PithosObject pithos_object);
 
 	/**
-	 * THis method aims to simplify the bridging between Hadoop output data
-	 * tubes and Pithos storage system, by giving the abillity to open and
-	 * connect a direct FS data outputstream to the pithos storage system.
+	 * Performs the move of a selected pithos object that is in the root of the
+	 * selected container, to a specific target folder into the same (selected)
+	 * container
 	 * 
 	 * @param pithos_container
 	 *            : the Pithos container on which the action will be performed.
 	 *            Leave it blank so as to refer to the default container that
 	 *            corresponds to 'Pithos'
-	 * @param file_type
-	 *            : one of the possible types of data that can be added on
-	 *            Pithos storage system <i>(OBJECT, BLOCK, FILE)</i>
-	 * @param fs_output_stream
-	 *            : the hadoop output stream that essentially streams a specific
-	 *            type of dtaa
-	 * @return
+	 * @param target_object
+	 *            : the object that should be moved
+	 * @param target_folder_path
+	 *            : the full path of the folder that the object will be moved
+	 * @return A string that actually is the response code and message that
+	 *         identifies the result of the current process based on the
+	 *         corresponding response codes as they are described into
+	 *         {@link https
+
 	 */
-	public String pithosFSDataOutputStream(String pithos_container,
-			PithosFileType file_type, FSDataOutputStream fs_output_stream);
+	public String movePithosObjectToFolder(String pithos_container,
+			String target_object, String target_folder_path);
 
 	/**
 	 * This method gets as input the container of the Pithos storage system, the
@@ -361,8 +397,11 @@ public interface PithosSystemStore {
 	 *            : a Pithos Object instance that stores the data of the object
 	 *            that will be stored on Pithos storage system
 	 * 
-	 * @return: the response code that is returned by the execution of the
-	 *          method
+	 * @return A string that actually is the response code and message that
+	 *         identifies the result of the current process based on the
+	 *         corresponding response codes as they are described into
+	 *         {@link https
+	 *         ://www.synnefo.org/docs/synnefo/latest/object-api-guide.html}
 	 */
 	public String pithosObjectOutputStream(String pithos_container,
 			String object_name, PithosObject pithos_object);
@@ -376,35 +415,20 @@ public interface PithosSystemStore {
 	 *            : the Pithos container on which the action will be performed.
 	 *            Leave it blank so as to refer to the default container that
 	 *            corresponds to 'Pithos'
-	 * @param block_hash
-	 *            : the sha-X hash code of the generated object
+	 * @param target_object
+	 *            : the object on which will stream block data on
 	 * @param pithos_block
+	 *            : the actuall block instance that should be created before and
+	 *            sent after to system store
 	 * 
-	 * @return: the response code that is returned by the execution of the
-	 *          method
+	 * @return A string that actually is the response code and message that
+	 *         identifies the result of the current process based on the
+	 *         corresponding response codes as they are described into
+	 *         {@link https
+	 *         ://www.synnefo.org/docs/synnefo/latest/object-api-guide.html}
 	 */
 	public String pithosBlockOutputStream(String pithos_container,
-			String block_hash, PithosBlock pithos_block);
-
-	/**
-	 * This method gets as input the container of the Pithos storage system, the
-	 * name of a file that will be storege on Pithos as a Pithos Object and send
-	 * the data to Pithos by streaming them to Pithos
-	 * 
-	 * @param pithos_container
-	 *            : the Pithos container on which the action will be performed.
-	 *            Leave it blank so as to refer to the default container that
-	 *            corresponds to 'Pithos'
-	 * @param object_name
-	 *            : a Pithos Object instance that stores the data of the object
-	 *            that will be stored on Pithos storage system
-	 * @param file
-	 *            : the actual file that will be stored on pithos
-	 * 
-	 * @return the response code that is returned by the execution of the method
-	 */
-	public String pithosFileOutputStream(String pithos_container,
-			String object_name, File file);
+			String target_object, PithosBlock pithos_block);
 
 	/**
 	 * 
@@ -423,38 +447,23 @@ public interface PithosSystemStore {
 	 *            : the hash code of the requested block
 	 * @return <b>true</b> if the block exists and <b>false</b> if not
 	 */
-	public boolean pithosObjectBlockExists(String blockHash);
+	public boolean pithosObjectBlockExists(String pithos_container,
+			String blockHash);
 
-	/**
-	 * Serialize a file into bytes array
-	 * 
-	 * @param inputFile
-	 *            : tha file that should be serialized into bytes array
-	 * @return a File as bytes []
-	 */
-	public byte[] serializeFile(File inputFile);
-
-	/**
-	 * Deserialize a byte array into File
-	 * 
-	 * @param data
-	 *            the byte array that should be desirialized int File
-	 * @return return a File that actually constitutes the bytes that were
-	 *         deserialized
-	 */
-	public File deserializeFile(byte[] data);
-	
 	/**
 	 * Return an array of pithos blocks as a Java File object
 	 * 
 	 * @param pithosBlockArray
-	 *            the PithosBlock array with the pithos blocks that constitute a Hadoop block.
-	 *            
+	 *            the PithosBlock array with the pithos blocks that constitute a
+	 *            Hadoop block.
+	 * 
 	 * @param offsetIntoBlock
 	 *            the long offSet used to read from a pithos block.
-	 *   
-	 * @return return a Java File object that is made up from the pithos blocks in pithosBlockArray
-	 */	
-	public File retrieveBlock(PithosBlock[] pithosBlockArray, long offsetIntoBlock) throws IOException;
-	
+	 * 
+	 * @return return a Java File object that is made up from the pithos blocks
+	 *         in pithosBlockArray
+	 */
+	public File retrieveBlock(PithosBlock[] pithosBlockArray,
+			long offsetIntoBlock);
+
 }
