@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
@@ -180,19 +181,18 @@ public class PithosFileSystem extends FileSystem {
 		pithosPath = new PithosPath(targetPath);
 		util.dbgPrint(pithosPath.getObjectAbsolutePath());
 		String url_esc = null;
-		url_esc = util.urlEscape(pithosPath.getObjectAbsolutePath());
-		// alternatively
-		// try {
-		// url_esc = util.urlEscape(null, null,
-		// pithosPath.getObjectAbsolutePath(), null);
-		// } catch (URISyntaxException e) {
-		// e.printStackTrace();
-		// }
+		//url_esc = util.urlEscape(pithosPath.getObjectAbsolutePath());
+		 try {
+		 url_esc = util.urlEscape(null, null,
+		 pithosPath.getObjectAbsolutePath(), null);
+		 } catch (URISyntaxException e) {
+		 e.printStackTrace();
+		 }
 		PithosResponse metadata = getHadoopPithosConnector()
 				.getPithosObjectMetaData(pithosPath.getContainer(), url_esc,
 						PithosResponseFormat.JSON);
 
-		if (metadata.toString().contains("404")) {
+		if (metadata.toString().contains("HTTP/1.1 404 NOT FOUND")) {
 			util.dbgPrint(("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)"));
 			System.exit(1);
 		}
@@ -290,7 +290,14 @@ public class PithosFileSystem extends FileSystem {
 			throws IOException {
 		pithosPath = new PithosPath(target_file);
 
-		String path_esc = util.urlEscape(pithosPath.getObjectAbsolutePath());
+		//String path_esc = util.urlEscape(pithosPath.getObjectAbsolutePath());
+		String path_esc = null;
+		try {
+			path_esc = util.urlEscape(null, null,
+			 pithosPath.getObjectAbsolutePath(), null);
+			 } catch (URISyntaxException e) {
+			 e.printStackTrace();
+			 }
 
 		return getHadoopPithosConnector().pithosObjectInputStream(
 				pithosPath.getContainer(), path_esc);
