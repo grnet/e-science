@@ -1,2 +1,5 @@
 *.sh
 bin/
+.classpath
+.project
+testOutput.txt
