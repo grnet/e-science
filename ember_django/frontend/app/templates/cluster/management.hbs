@@ -2,60 +2,108 @@
 
 <div class="well well-lg text-center v-center">
 	<div class="row">
-	<h2 id = 'id_title_cluster_create_route'>Hadoop Cluster Management</h2>
-	<h3 id = 'id_title_clsuter_name'>{{model.cluster_name}}</h3>
-</div>
+		<h2 id = 'id_title_cluster_create_route'>Hadoop Cluster Management</h2>
+		<h3 id = 'id_title_clsuter_name'>{{model.cluster_name}}</h3>
+	</div>
 </div>
 
 <ul id="myTab" class="nav nav-tabs">
-   <li class="active">
-      <a href="#Info" data-toggle="tab">Info</a></li>
-   <li><a href="#Access" data-toggle="tab">Access</a></li>
-   <li><a href="#Manage" data-toggle="tab">Manage</a></li>
+	<li class="active">
+		<a href="#Info" data-toggle="tab">Info</a>
+	</li>
+	<li>
+		<a href="#Access" data-toggle="tab">Access</a>
+	</li>
+	<li>
+		<a href="#Manage" data-toggle="tab">Manage</a>
+	</li>
 </ul>
 <div id="myTabContent" class="tab-content">
    <div class="tab-pane fade in active" id="Info">
    		<h4 class="list-group-item-heading">Cluster</h4>
       	<ul class="list-group text-left">
-      		<li> ID : {{model.id}}</li>
-      		<li> Creation Date : </li>
-      		<li> Cluster Status : </li>
-      		<li> Hadoop Status : </li>
-      		<li> Hadoop Version : </li>
-      		<li> Master IP : </li>
+      		<li> <b>ID :</b> <span class="text text-info"> {{model.id}} </span></li>
+      		<li> <b>Creation Date :</b> <span class="text text-info"> {{model.action_date}} </span></li>
+      		<li> <b>Cluster Status :</b> <span class="text text-info"> {{model.cluster_status_verbose}} </span></li>
+      		<li> <b>Hadoop Status :</b> <span class="text text-info"> {{model.state}} </span></li>
+      		<li> <b>Image :</b> <span class="text text-info"> {{model.os_image}} </span></li>
+      		<li> <b>Master IP :</b> <span class="text text-info"> {{model.master_IP}} </span></li>
       	</ul>
       	<p></p>
       	<p></p>
       	<h4 class="list-group-item-heading">Properties</h4>
       	<ul class="list-group text-left">
-      		<li> Cluster size : {{model.cluster_size}}</li>
-      		<li> Master Settings : </li>
-      		<li> Slaves Settings : </li>
+      		<li> <b>Cluster size :</b> <span class="text text-info"> {{model.cluster_size}} </span></li>
+      		<li> <b>Master Settings :</b> <span class="text text-info"> {{model.cpu_master}}xCPUs {{model.ram_master}}xRAM {{model.disk_master}}xDisk size </span></li>
+      		<li> <b>Slaves Settings :</b> <span class="text text-info"> {{model.cpu_slaves}}xCPUs {{model.ram_slaves}}xRAM {{model.disk_slaves}}xDisk size </span></li>
       	</ul>
    </div>
    <div class="tab-pane fade" id="Access">
-   	{{#if model.cluster_status_active}}
-      <a {{bind-attr href='model.cluster_url'}} target="_blank">Cluster</a>
-      <p></p>
-      <a {{bind-attr href='model.master_info'}} target="_blank">HDFS Overview</a>
-      <p></p>
-      <a {{bind-attr href='model.browse_hdfs'}} target="_blank">HDFS Browse</a>
-      <p></p>
-      <button  class = 'btn btn-primary btn-sm' action ='format hadoop'>Format HDFS</button>
-    {{/if}}
+       {{#if model.cluster_status_active}}
+           {{#unless model.hadoop_status_active}}
+       	       <table style="width:100%">
+	 		     <tr>
+	  			   <td><b>Cluster</b></td>
+	  			   <td><span class="text-muted">{{model.cluster_url}}</span></td>
+	  			 </tr>
+			     <tr>
+			     	<td><b>HDFS Overview</b></td>
+			     	<td><span class="text-muted">{{model.master_info}}</span></td>
+			     </tr>
+			   	 <tr>
+			   	 	<td><b>HDFS Browse</b></td>
+			   	 	<td><span class="text-muted">{{model.browse_hdfs}}</span></td>
+			   	 </tr>
+	 		   </table>
+	       {{else}}	    
+	       	   <table style="width:100%">
+	 		     <tr>
+	  			   <td><b>Cluster</b></td>
+	  			   <td><a {{bind-attr href='model.cluster_url'}} target="_blank">{{model.cluster_url}}</a></td>
+	  			 </tr>
+			     <tr>
+			     	<td><b>HDFS Overview</b></td>
+			     	<td><a {{bind-attr href='model.master_info'}} target="_blank">{{model.master_info}}</a></td>
+			     </tr>
+			   	 <tr>
+			   	 	<td><b>HDFS Browse</b></td>
+			   	 	<td><a {{bind-attr href='model.browse_hdfs'}} target="_blank">{{model.browse_hdfs}}</a></td>
+			   	 </tr>
+	 		   </table>
+	       {{/unless}}
+       {{else}}
+	       <div class="text-warning text-center">This cluster has been destroyed. No information available.</div>
+       {{/if}}
    </div>
    <div class="tab-pane fade" id="Manage">
-      <p></p>
-      <button  class = 'btn btn-primary btn-sm' action ='start hadoop'>Start Hadoop</button>
-      <p></p>
-      <button  class = 'btn btn-primary btn-sm' action ='stop hadoop'>Stop Hadoop</button>
-      <p></p>
-      <button  class = 'btn btn-primary btn-sm' action ='destory cluster'>Destroy Cluster</button>
-   </div>
+		{{#if model.cluster_status_active}}	
+				<p></p>
+				<button {{bind-attr id='model.hadoop_start_id'}} class="btn btn-sm btn-primary" {{action 'confirmAction' model 'hadoop_start'}}{{bind-attr disabled=model.hadoop_action_start_disabled}}>
+					Start Hadoop <b {{bind-attr class='model.hadoop_status_class_start'}}></b>
+				</button>
+				<p></p>
+				<button {{bind-attr id='model.hadoop_stop_id'}} class="btn btn-sm btn-primary" {{action 'confirmAction' model 'hadoop_stop'}}{{bind-attr disabled=model.hadoop_action_stop_disabled}}>
+					Stop Hadoop <b {{bind-attr class='model.hadoop_status_class_stop'}}></b>
+				</button>
+				<p></p>
+				<button {{bind-attr id='model.hadoop_format_id'}} class="btn btn-sm btn-primary" {{action 'confirmAction' model 'hadoop_format'}}{{bind-attr disabled=model.hadoop_action_format_disabled}}>
+					Format HDFS <b {{bind-attr class='model.hadoop_status_class_format'}}></b>
+		   	    </button>
+				<p></p>
+				<button {{bind-attr id='model.cluster_destroy_id'}} class="btn btn-sm btn-primary"{{action 'confirmAction' model 'cluster_delete'}}>
+					Destroy Cluster <b {{bind-attr class='model.cluster_status_class_destroy'}}></b>
+				</button>
+			</div>
+			<p></p>
+			<p></p>
+			{{#if model.cluster_confirm_action}}
+				<div class="btn-group  btn-block">
+					<a role="button" {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</a>
+					<a role="button" {{action 'confirmAction' model false}} class="btn btn-danger btn-sm active">x</a>
+				</div>
+			{{/if}}
+		{{else}}
+			<div class="text-warning text-center">This cluster has been destroyed. No actions available.</div>
+		{{/if}}
+
 </div>
-
-
-
-
-
-
