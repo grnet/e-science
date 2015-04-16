@@ -1,13 +1,17 @@
 App.ClusterManagementRoute = App.RestrictedRoute.extend({
 
+	// model for cluster management route
 	model: function(params) {
 
+		// find the correct cluster
 		var selected_cluster = this.store.fetch('user', 1).then(function(user) {
-
+	
+			// find all clusters of user
 			var clusters = user.get('clusters');
 			var length = clusters.get('length');
 			if (length > 0) {
 				for (var i = 0; i < length; i++) {
+					// check for the cluster id
 					if (clusters.objectAt(i).get('id') == params["usercluster.id"])
 					{
 					 	return clusters.objectAt(i);
@@ -15,13 +19,14 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 				}
 			}
 	
- 			}, function(reason) {
-				console.log(reason.message);
-			});
+ 		}, function(reason) {
+			console.log(reason.message);
+		});
 
 	 	return selected_cluster;
 	},
 	
+	// possible actions
 	actions: {
 		
 		takeAction : function(cluster) {
@@ -100,6 +105,5 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 			cluster.set('cluster_confirm_action', value);
 		}	
 	}
-	  
 	  
 });
