@@ -195,7 +195,7 @@ public class PithosFileSystem extends FileSystem {
 
 		if (metadata.toString().contains("HTTP/1.1 404 NOT FOUND")) {
 			util.dbgPrint("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
-			//System.exit(1);
+			System.exit(1);
 		}
 		for (String obj : metadata.getResponseData().keySet()) {
 			if (obj != null) {
