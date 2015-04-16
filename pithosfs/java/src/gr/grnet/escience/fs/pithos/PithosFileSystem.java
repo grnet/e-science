@@ -51,7 +51,7 @@ public class PithosFileSystem extends FileSystem {
 	private long length = 0;
 	private PithosFileStatus pithos_file_status;
 	public static final Log LOG = LogFactory.getLog(PithosFileSystem.class);
-	private Utils util;
+	private final Utils util = new Utils();
 
 	public PithosFileSystem() {
 	}
@@ -92,7 +92,6 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public void initialize(URI uri, Configuration conf) throws IOException {
 		super.initialize(uri, conf);
-		this.util = new Utils();
 		util.dbgPrint("initialize");
 		setConf(conf);
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
@@ -184,22 +183,19 @@ public class PithosFileSystem extends FileSystem {
 		pithosPath = new PithosPath(targetPath);
 		util.dbgPrint(pithosPath.getObjectAbsolutePath());
 		String url_esc = null;
-		url_esc = util.urlEscape(pithosPath.getObjectAbsolutePath());
-		// alternatively
-		// try {
-		// url_esc = util.urlEscape(null, null,
-		// pithosPath.getObjectAbsolutePath(), null);
-		// } catch (URISyntaxException e) {
-		// e.printStackTrace();
-		// }
+		try {
+			url_esc = util.urlEscape(null, null,
+					pithosPath.getObjectAbsolutePath(), null);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
 		PithosResponse metadata = getHadoopPithosConnector()
 				.getPithosObjectMetaData(pithosPath.getContainer(), url_esc,
 						PithosResponseFormat.JSON);
 
 		if (metadata.toString().contains("404")) {
-			FileNotFoundException fnfe = new FileNotFoundException(
-					"File does not exist in Pithos FS.(If filename contains spaces, add Quotation Marks)");
-			throw fnfe;
+			util.dbgPrint("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
+			System.exit(1);
 		}
 		for (String obj : metadata.getResponseData().keySet()) {
 			if (obj != null) {
@@ -295,7 +291,13 @@ public class PithosFileSystem extends FileSystem {
 			throws IOException {
 		pithosPath = new PithosPath(target_file);
 
-		String path_esc = util.urlEscape(pithosPath.getObjectAbsolutePath());
+		String path_esc = null;
+		try {
+			path_esc = util.urlEscape(null, null,
+					pithosPath.getObjectAbsolutePath(), null);
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
 
 		return getHadoopPithosConnector().pithosObjectInputStream(
 				pithosPath.getContainer(), path_esc);

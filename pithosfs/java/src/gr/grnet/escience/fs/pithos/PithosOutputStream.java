@@ -59,7 +59,7 @@ public class PithosOutputStream extends FSDataOutputStream {
 	/**
 	 * Utils instance for computing hashes
 	 */
-	private Utils utils;
+	private final Utils util = new Utils();
 	
 	/**
 	 * Pithos File <-> Byte operations
@@ -243,7 +243,7 @@ public class PithosOutputStream extends FSDataOutputStream {
 		String hashAlgo = store.getPithosContainerHashAlgorithm(container);
 		System.out.println(hashAlgo);
 		try {
-			blockHash = utils.computeHash(blockData, "SHA-256");
+			blockHash = util.computeHash(blockData, "SHA-256");
 			if (!store.pithosObjectBlockExists(container, blockHash)){
 				nextBlock = new PithosBlock(blockHash, bytesWrittenToBlock, blockData);
 				blocks.add(nextBlock);
@@ -305,7 +305,6 @@ public class PithosOutputStream extends FSDataOutputStream {
 		this.store = store;
 		this.pithosPath = path;
 		this.blockSize = blockSize;
-		this.utils = new Utils();
 		this.pithosSerializer = new PithosSerializer();
 		this.hadoopConnector = new HadoopPithosConnector(conf.get("fs.pithos.url"), conf.get("auth.pithos.token"), conf.get("auth.pithos.uuid"));
 		this.backupFile = newBackupFile();
