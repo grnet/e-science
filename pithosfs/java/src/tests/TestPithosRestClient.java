@@ -377,41 +377,36 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testAppend_Pithos_Small_Block() throws IOException {
+	public void testAppend_Pithos_Small_Block() throws IOException, NoSuchAlgorithmException {
 
 		// - Local parameters
 		String BLOCK_HASH;
-		try {
-			BLOCK_HASH = utils.computeHash(DUMMY_BLOCK_DATA.getBytes(),
-					"SHA-256");
+		BLOCK_HASH = utils.computeHash(DUMMY_BLOCK_DATA.getBytes(),
+				"SHA-256");
 
-			System.out.println("GENERATED HASH: " + BLOCK_HASH);
+		System.out.println("GENERATED HASH: " + BLOCK_HASH);
 
-			// - Create Pithos Object instance
-			byte[] toBeSent = DUMMY_BLOCK_DATA.getBytes();
-			PithosBlock pithosBlock = new PithosBlock(BLOCK_HASH,
-					toBeSent.length, toBeSent);
+		// - Create Pithos Object instance
+		byte[] toBeSent = DUMMY_BLOCK_DATA.getBytes();
+		PithosBlock pithosBlock = new PithosBlock(BLOCK_HASH,
+				toBeSent.length, toBeSent);
 
-			System.out
-					.println("---------------------------------------------------------------------");
-			System.out.println("APPEND BLOCK: <" + pithosBlock.getBlockHash()
-					+ "> TO PITHOS OBJECT <"
-					+ PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM + ">");
-			System.out
-					.println("---------------------------------------------------------------------");
-			String response = hdconnector.appendPithosBlock(PITHOS_CONTAINER,
-					PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM, pithosBlock);
-			System.out.println("RESPONSE FROM PITHOS: " + response);
-			System.out
-					.println("---------------------------------------------------------------------\n");
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		System.out
+				.println("---------------------------------------------------------------------");
+		System.out.println("APPEND BLOCK: <" + pithosBlock.getBlockHash()
+				+ "> TO PITHOS OBJECT <"
+				+ PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM + ">");
+		System.out
+				.println("---------------------------------------------------------------------");
+		String response = hdconnector.appendPithosBlock(PITHOS_CONTAINER,
+				PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM, pithosBlock);
+		System.out.println("RESPONSE FROM PITHOS: " + response);
+		System.out
+				.println("---------------------------------------------------------------------\n");
 	}
 
 	@Test
-	public void testAppend_Pithos_Big_Block() throws IOException {
+	public void testAppend_Pithos_Big_Block() throws IOException, NoSuchAlgorithmException {
 
 		// - Local parameters
 		String BLOCK_HASH = null;
@@ -420,29 +415,25 @@ public class TestPithosRestClient {
 		byte[] bigBlockData = PithosSerializer.serializeFile(new File(
 				"bigBlock1.txt"));
 
-		try {
-			// - Generate HASH CODE
-			BLOCK_HASH = utils.computeHash(bigBlockData, "SHA-256");
+		// - Generate HASH CODE
+		BLOCK_HASH = utils.computeHash(bigBlockData, "SHA-256");
 
-			// - Create Pithos Object instance
-			PithosBlock pithosBlock = new PithosBlock(BLOCK_HASH,
-					bigBlockData.length, bigBlockData);
+		// - Create Pithos Object instance
+		PithosBlock pithosBlock = new PithosBlock(BLOCK_HASH,
+				bigBlockData.length, bigBlockData);
 
-			System.out
-					.println("---------------------------------------------------------------------");
-			System.out.println("APPEND BLOCK: <" + pithosBlock.getBlockHash()
-					+ "> TO PITHOS OBJECT <"
-					+ PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM + ">");
-			System.out
-					.println("---------------------------------------------------------------------");
-			String response = hdconnector.appendPithosBlock(PITHOS_CONTAINER,
-					PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM, pithosBlock);
-			System.out.println("RESPONSE FROM PITHOS: " + response);
-			System.out
-					.println("---------------------------------------------------------------------\n");
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
+		System.out
+				.println("---------------------------------------------------------------------");
+		System.out.println("APPEND BLOCK: <" + pithosBlock.getBlockHash()
+				+ "> TO PITHOS OBJECT <"
+				+ PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM + ">");
+		System.out
+				.println("---------------------------------------------------------------------");
+		String response = hdconnector.appendPithosBlock(PITHOS_CONTAINER,
+				PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM, pithosBlock);
+		System.out.println("RESPONSE FROM PITHOS: " + response);
+		System.out
+				.println("---------------------------------------------------------------------\n");
 	}
 
 	/**

@@ -8,8 +8,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class Utils {
-	private final boolean DEBUG = false;
 
+	private final boolean DEBUG = false;
+	
 	/**
 	 * Get the hash container
 	 * 
@@ -19,23 +20,19 @@ public class Utils {
 	 *            : the name of the hash algorithm to use
 	 * @return bytestring hash representation of the input digest
 	 */
-	public String computeHash(byte[] byteData, String hash_algorithm) {
-		try {
-			MessageDigest digest = MessageDigest.getInstance(hash_algorithm);
-			digest.reset();
-
-			byte[] byteDatad = digest.digest(byteData);
-			StringBuilder sb = new StringBuilder();
-
-			for (int i = 0; i < byteDatad.length; i++) {
-				sb.append(Integer.toString((byteDatad[i] & 0xff) + 0x100, 16)
-						.substring(1));
-			}
-			return sb.toString();
-		} catch (Exception ex) {
-			PithosSerializer.exceptionToStrign(ex);
-			return null;
-		}
+	public String computeHash(byte[] byteData, String hash_algorithm)
+			throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		// eg. hash_algorithm = "SHA-256";
+	    MessageDigest digest = MessageDigest.getInstance(hash_algorithm);
+	    digest.reset();
+	    
+        byte[] byteDatad = digest.digest(byteData);
+	    StringBuilder sb = new StringBuilder();
+	    
+	    for (int i = 0; i < byteDatad.length; i++){
+	      sb.append(Integer.toString((byteDatad[i] & 0xff) + 0x100, 16).substring(1));
+	    }
+	    return sb.toString();
 	}
 
 	/**
@@ -47,23 +44,20 @@ public class Utils {
 	 *            : the name of the hash algorithm to use
 	 * @return bytestring hash representation of the input digest
 	 */
-	public String computeHash(String input, String hash_algorithm) {
-		try {
-			MessageDigest digest = MessageDigest.getInstance(hash_algorithm);
-			digest.reset();
+	public String computeHash(String input, String hash_algorithm)
+			throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		// eg. hash_algorithm = "SHA-256";
+		MessageDigest digest = MessageDigest.getInstance(hash_algorithm);
+		digest.reset();
 
-			byte[] byteData = digest.digest(input.getBytes("UTF-8"));
-			StringBuilder sb = new StringBuilder();
+	    byte[] byteData = digest.digest(input.getBytes("UTF-8"));
+	    StringBuilder sb = new StringBuilder();
 
-			for (int i = 0; i < byteData.length; i++) {
-				sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16)
-						.substring(1));
-			}
-			return sb.toString();
-		} catch (Exception ex) {
-			PithosSerializer.exceptionToStrign(ex);
-			return null;
+		for (int i = 0; i < byteData.length; i++) {
+			sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16)
+					.substring(1));
 		}
+		return sb.toString();
 	}
 
 	/**
@@ -109,15 +103,15 @@ public class Utils {
 	 *            : variable length array of objects
 	 */
 	public void dbgPrint(Object... args) {
-		if (!DEBUG) {return;}
+		if (!DEBUG){return;}
 		String formatter = "DEBUG:";
 		for (int i = 0; i < args.length; i++) {
-			formatter += " %s";
+			formatter+=" %s";
 		}
-		formatter += "\n";
+		formatter+="\n";
 		System.err.format(formatter, args);
 	}
-
+	
 	public Utils() {
 	}
 }

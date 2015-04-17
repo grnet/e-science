@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -312,15 +313,19 @@ public class PithosFileSystem extends FileSystem {
 	 * 
 	 * @param args
 	 */
-	public static void main(String[] args) throws UnsupportedEncodingException {
+	public static void main(String[] args) {
 		// Stub so we can create a 'runnable jar' export for packing
 		// dependencies
 		Utils util = new Utils();
 		String out = null;
 		String hashAlgo = "SHA-256";
-		out = util.computeHash("Lorem ipsum dolor sit amet.", hashAlgo);
-
-		util.dbgPrint("invalid hash algorithm:" + hashAlgo);
+		try {
+			out = util.computeHash("Lorem ipsum dolor sit amet.", hashAlgo);
+		} catch (NoSuchAlgorithmException e) {
+			util.dbgPrint("invalid hash algorithm:" + hashAlgo);
+		} catch (UnsupportedEncodingException e) {
+			util.dbgPrint("invalid encoding");
+		}
 		util.dbgPrint("Pithos FileSystem Connector loaded.");
 		util.dbgPrint("Hash Test:", out);
 	}
