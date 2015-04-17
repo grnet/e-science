@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +30,7 @@ import org.apache.hadoop.util.Progressable;
  * hadoop and pithos storage system.
  * 
  * @since March, 2015
- * @author Dimitris G. Kelaidonis & Ioannis Stenos
+ * @author eScience Dev Team
  * @version 0.1
  * 
  */
@@ -48,8 +47,8 @@ public class PithosFileSystem extends FileSystem {
 	private String[] filesList;
 	private boolean isDir = false;
 	private long length = 0;
-	private PithosFileStatus pithos_file_status;
-	public static final Log LOG = LogFactory.getLog(PithosFileSystem.class);
+	private PithosFileStatus pithosFileStatus;
+	private static final Log LOG = LogFactory.getLog(PithosFileSystem.class);
 	private final Utils util = new Utils();
 
 	public PithosFileSystem() {
@@ -69,7 +68,7 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	/**
-	 * Set thes instance of hadoop - pithos connector
+	 * Set the instance of hadoop - pithos connector
 	 */
 	public static void setHadoopPithosConnector(
 			HadoopPithosConnector hadoopPithosConnector) {
@@ -78,13 +77,13 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public String getScheme() {
-		util.dbgPrint("getScheme");
+		util.dbgPrint("getScheme >", "pithos");
 		return "pithos";
 	}
 
 	@Override
 	public URI getUri() {
-		util.dbgPrint("getUri");
+		util.dbgPrint("getUri >", uri);
 		return uri;
 	}
 
@@ -94,9 +93,9 @@ public class PithosFileSystem extends FileSystem {
 		util.dbgPrint("initialize");
 		setConf(conf);
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
-		util.dbgPrint(this.uri);
+		util.dbgPrint("uri >", this.uri);
 		this.workingDir = new Path("/user", System.getProperty("user.name"));
-		util.dbgPrint(this.workingDir);
+		util.dbgPrint("workingDir >", this.workingDir);
 		util.dbgPrint("Create System Store connector");
 
 		// - Create instance of Hadoop connector
@@ -108,14 +107,14 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public Path getWorkingDirectory() {
-		util.dbgPrint("getWorkingDirectory");
+		util.dbgPrint("getWorkingDirectory", workingDir);
 		return workingDir;
 	}
 
 	@Override
 	public void setWorkingDirectory(Path dir) {
-		util.dbgPrint("setWorkingDirectory");
 		workingDir = makeAbsolute(dir);
+		util.dbgPrint("setWorkingDirectory >", workingDir);
 	}
 
 	private Path makeAbsolute(Path path) {
@@ -135,7 +134,8 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public long getDefaultBlockSize() {
-		util.dbgPrint("getDefaultBlockSize");
+		util.dbgPrint("getDefaultBlockSize >",
+				getConf().getLongBytes("dfs.blocksize", defaultBlockSize));
 		return getConf().getLongBytes("dfs.blocksize", defaultBlockSize);
 	}
 
@@ -147,16 +147,16 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	@Override
-	public FSDataOutputStream create(Path arg0, FsPermission arg1,
-			boolean arg2, int arg3, short arg4, long arg5, Progressable arg6)
-			throws IOException {
-		util.dbgPrint("create", arg0);
-		// TODO Auto-generated method stub
-		return null;
+	public FSDataOutputStream create(Path f, FsPermission permission,
+			boolean overwrite, int bufferSize, short replication,
+			long blockSize, Progressable progress) throws IOException {
+		util.dbgPrint("create >", f, pithosPath, blockSize, bufferSize);
+		return new FSDataOutputStream(new PithosOutputStream(getConf(),
+				pithosPath, blockSize, bufferSize), statistics);
 	}
 
 	@Override
-	public boolean delete(Path arg0, boolean arg1) throws IOException {
+	public boolean delete(Path f, boolean recursive) throws IOException {
 		util.dbgPrint("delete");
 		// TODO Auto-generated method stub
 		return false;
@@ -175,24 +175,25 @@ public class PithosFileSystem extends FileSystem {
 	@Override
 	public PithosFileStatus getFileStatus(Path targetPath) throws IOException {
 		util.dbgPrint("getFileStatus", "ENTRY");
-		util.dbgPrint("Path >", targetPath);
+		util.dbgPrint("targetPath >", targetPath);
 		// - Process the given path
 		pithosPath = new PithosPath(targetPath);
-		util.dbgPrint(pithosPath.getObjectAbsolutePath());
-		String url_esc = null;
+		util.dbgPrint("pithosPath >", pithosPath.getObjectAbsolutePath());
+		String urlEsc = null;
 		try {
-			url_esc = util.urlEscape(null, null,
+			urlEsc = util.urlEscape(null, null,
 					pithosPath.getObjectAbsolutePath(), null);
 		} catch (URISyntaxException e) {
-			e.printStackTrace();
+			util.dbgPrint("getFileStatus > invalid pithosPath");
+			throw new IOException(e);
 		}
 		PithosResponse metadata = getHadoopPithosConnector()
-				.getPithosObjectMetaData(pithosPath.getContainer(), url_esc,
+				.getPithosObjectMetaData(pithosPath.getContainer(), urlEsc,
 						PithosResponseFormat.JSON);
 
 		if (metadata.toString().contains("HTTP/1.1 404 NOT FOUND")) {
-			System.err.println(("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)"));
-			System.exit(1);
+			util.dbgPrint("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
+			throw new IOException("File does not exist in Pithos FS.");
 		}
 		for (String obj : metadata.getResponseData().keySet()) {
 			if (obj != null) {
@@ -209,8 +210,7 @@ public class PithosFileSystem extends FileSystem {
 			}
 		}
 		if (isDir) {
-			pithos_file_status = new PithosFileStatus(true,
-					getDefaultBlockSize(), false, targetPath);
+			pithosFileStatus = new PithosFileStatus(true, 0L, false, targetPath);
 		} else {
 			for (String obj : metadata.getResponseData().keySet()) {
 				if (obj != null) {
@@ -222,16 +222,17 @@ public class PithosFileSystem extends FileSystem {
 					}
 				}
 			}
-			pithos_file_status = new PithosFileStatus(length,
+			pithosFileStatus = new PithosFileStatus(length,
 					getDefaultBlockSize(), 123, targetPath);
 		}
 		util.dbgPrint("getFileStatus", "EXIT");
-		return pithos_file_status;
+		util.dbgPrint("pithos_file_status >", pithosFileStatus);
+		return pithosFileStatus;
 	}
 
 	@Override
 	public FileStatus[] listStatus(Path f) throws IOException {
-		util.dbgPrint("\n---> listStatus");
+		util.dbgPrint("listStatus");
 
 		filename = "";
 		pithosPath = new PithosPath(f);
@@ -276,31 +277,32 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	@Override
-	public boolean mkdirs(Path arg0, FsPermission arg1) throws IOException {
+	public boolean mkdirs(Path f, FsPermission permission) throws IOException {
 		util.dbgPrint("mkdirs");
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public FSDataInputStream open(Path target_file, int buffer_size)
+	public FSDataInputStream open(Path targetFile, int buffer_size)
 			throws IOException {
-		pithosPath = new PithosPath(target_file);
+		pithosPath = new PithosPath(targetFile);
 
-		String path_esc = null;
+		String pathEsc = null;
 		try {
-			path_esc = util.urlEscape(null, null,
+			pathEsc = util.urlEscape(null, null,
 					pithosPath.getObjectAbsolutePath(), null);
 		} catch (URISyntaxException e) {
-			e.printStackTrace();
+			util.dbgPrint("open > invalid targetFile");
+			throw new IOException(e);
 		}
 
 		return getHadoopPithosConnector().pithosObjectInputStream(
-				pithosPath.getContainer(), path_esc);
+				pithosPath.getContainer(), pathEsc);
 	}
 
 	@Override
-	public boolean rename(Path arg0, Path arg1) throws IOException {
+	public boolean rename(Path src, Path dst) throws IOException {
 		util.dbgPrint("rename");
 		// TODO Auto-generated method stub
 		return false;
@@ -310,20 +312,15 @@ public class PithosFileSystem extends FileSystem {
 	 * 
 	 * @param args
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws UnsupportedEncodingException {
 		// Stub so we can create a 'runnable jar' export for packing
 		// dependencies
 		Utils util = new Utils();
 		String out = null;
-		try {
-			out = util.computeHash("Lorem ipsum dolor sit amet.", "SHA-256");
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		String hashAlgo = "SHA-256";
+		out = util.computeHash("Lorem ipsum dolor sit amet.", hashAlgo);
+
+		util.dbgPrint("invalid hash algorithm:" + hashAlgo);
 		util.dbgPrint("Pithos FileSystem Connector loaded.");
 		util.dbgPrint("Hash Test:", out);
 	}

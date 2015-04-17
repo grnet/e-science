@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.Collection;
 
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 
 public interface PithosSystemStore {
 
