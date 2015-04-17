@@ -123,7 +123,7 @@ class test_hdfs_configuration_dfs_blocksize(unittest.TestCase):
         driver.find_element_by_id('id_cluster_name_'+cluster_name).click()
         time.sleep(10)
         driver.find_element_by_link_text("Info").click()
-        try: self.assertEqual("2", driver.find_element_by_xpath("//div[@id='Info']/ul[2]/li/span").text)
+        try: self.assertEqual("2", driver.find_element_by_xpath("//div[@id='Info']/table[2]/tbody/tr/td[2]").text)
         except AssertionError as e: self.verificationErrors.append(str(e))
         #check that cluster url is up and page is running
         try: self.assertTrue(True, 'Check ok')

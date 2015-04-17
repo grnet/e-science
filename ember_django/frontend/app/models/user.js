@@ -256,7 +256,25 @@ App.Usercluster = DS.Model.extend({
 		default:
 			return 'Confirm';
 		}
-	}.property('cluster_confirm_action')
+	}.property('cluster_confirm_action'),
+	cluster_hadoop_status : function()
+	{
+  		var status = this.get('hadoop_status');
+  		var cluster_status = this.get('cluster_status');
+  		if (cluster_status !== "1"){
+   			status = "0";
+  		}
+  		switch (status){
+  			case "0":
+   				return "STOPPED";
+  			case "1":
+   				return "STARTED";
+  			case "2":
+   				return "PENDING";
+  			default:
+   				return "";
+  		}
+ 	}.property('hadoop_status','cluster_status')
 });
 
 App.Usermessages = DS.Model.extend({
