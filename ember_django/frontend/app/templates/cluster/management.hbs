@@ -23,7 +23,7 @@
    		<h4 class="list-group-item-heading">Cluster</h4>
       	<ul class="list-group text-left">
       		<li> <b>ID :</b> <span class="text text-info"> {{model.id}} </span></li>
-      		<li> <b>Creation Date :</b> <span class="text text-info"> {{model.action_date}} </span></li>
+      		<li> <b>Creation Date :</b> <span class="text text-info"> {{formatDate model.action_date format='shortdatetime'}}</span></li>
       		<li> <b>Cluster Status :</b> <span class="text text-info"> {{model.cluster_status_verbose}} </span></li>
       		<li> <b>Hadoop Status :</b> <span class="text text-info"> {{model.state}} </span></li>
       		<li> <b>Image :</b> <span class="text text-info"> {{model.os_image}} </span></li>
