@@ -271,7 +271,7 @@ public class PithosOutputStream extends OutputStream {
 				bytesWrittenToBlock = 0;
 			}
 		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
+			throw new IOException(e);
 		}
 	}
 

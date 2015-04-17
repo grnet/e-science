@@ -560,11 +560,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 			String object_location, String block_hash,
 			long offsetIntoPithosBlock) {
 
-		// // - Get the file object from pithos
-		// PithosBlock pithosBlock = retrievePithosBlock(pithos_container,
-		// object_location, block_hash);
-
-		// /////////////
 		// - Get required info for the object and the block
 		long object_total_size = getPithosObjectSize(pithos_container,
 				object_location);

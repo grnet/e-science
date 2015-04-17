@@ -31,7 +31,7 @@ import org.apache.hadoop.util.Progressable;
  * hadoop and pithos storage system.
  * 
  * @since March, 2015
- * @author Dimitris G. Kelaidonis & Ioannis Stenos
+ * @author eScience Dev Team
  * @version 0.1
  * 
  */
@@ -78,13 +78,13 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public String getScheme() {
-		util.dbgPrint("getScheme >","pithos");
+		util.dbgPrint("getScheme >", "pithos");
 		return "pithos";
 	}
 
 	@Override
 	public URI getUri() {
-		util.dbgPrint("getUri >",uri);
+		util.dbgPrint("getUri >", uri);
 		return uri;
 	}
 
@@ -94,9 +94,9 @@ public class PithosFileSystem extends FileSystem {
 		util.dbgPrint("initialize");
 		setConf(conf);
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
-		util.dbgPrint("uri >",this.uri);
+		util.dbgPrint("uri >", this.uri);
 		this.workingDir = new Path("/user", System.getProperty("user.name"));
-		util.dbgPrint("workingDir >",this.workingDir);
+		util.dbgPrint("workingDir >", this.workingDir);
 		util.dbgPrint("Create System Store connector");
 
 		// - Create instance of Hadoop connector
@@ -135,7 +135,8 @@ public class PithosFileSystem extends FileSystem {
 
 	@Override
 	public long getDefaultBlockSize() {
-		util.dbgPrint("getDefaultBlockSize >",getConf().getLongBytes("dfs.blocksize", defaultBlockSize));
+		util.dbgPrint("getDefaultBlockSize >",
+				getConf().getLongBytes("dfs.blocksize", defaultBlockSize));
 		return getConf().getLongBytes("dfs.blocksize", defaultBlockSize);
 	}
 
@@ -152,7 +153,7 @@ public class PithosFileSystem extends FileSystem {
 			long blockSize, Progressable progress) throws IOException {
 		util.dbgPrint("create >", f, pithosPath, blockSize, bufferSize);
 		return new FSDataOutputStream(new PithosOutputStream(getConf(),
-				pithosPath, blockSize, bufferSize),statistics);
+				pithosPath, blockSize, bufferSize), statistics);
 	}
 
 	@Override
@@ -185,6 +186,7 @@ public class PithosFileSystem extends FileSystem {
 					pithosPath.getObjectAbsolutePath(), null);
 		} catch (URISyntaxException e) {
 			util.dbgPrint("getFileStatus > invalid pithosPath");
+			throw new IOException(e);
 		}
 		PithosResponse metadata = getHadoopPithosConnector()
 				.getPithosObjectMetaData(pithosPath.getContainer(), urlEsc,
@@ -209,8 +211,7 @@ public class PithosFileSystem extends FileSystem {
 			}
 		}
 		if (isDir) {
-			pithosFileStatus = new PithosFileStatus(true,
-					0L, false, targetPath);
+			pithosFileStatus = new PithosFileStatus(true, 0L, false, targetPath);
 		} else {
 			for (String obj : metadata.getResponseData().keySet()) {
 				if (obj != null) {
@@ -226,7 +227,7 @@ public class PithosFileSystem extends FileSystem {
 					getDefaultBlockSize(), 123, targetPath);
 		}
 		util.dbgPrint("getFileStatus", "EXIT");
-		util.dbgPrint("pithos_file_status >",pithosFileStatus);
+		util.dbgPrint("pithos_file_status >", pithosFileStatus);
 		return pithosFileStatus;
 	}
 
@@ -294,6 +295,7 @@ public class PithosFileSystem extends FileSystem {
 					pithosPath.getObjectAbsolutePath(), null);
 		} catch (URISyntaxException e) {
 			util.dbgPrint("open > invalid targetFile");
+			throw new IOException(e);
 		}
 
 		return getHadoopPithosConnector().pithosObjectInputStream(

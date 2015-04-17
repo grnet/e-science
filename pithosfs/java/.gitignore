@@ -2,3 +2,6 @@
 *.properties
 .classpath
 bin/
+.classpath
+.project
+testOutput.txt
