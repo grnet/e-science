@@ -96,8 +96,6 @@ public class PithosFileSystem extends FileSystem {
 		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
 		util.dbgPrint("uri >",this.uri);
 		this.workingDir = new Path("/user", System.getProperty("user.name"));
-		// this.workingDir = new Path("/user", System.getProperty("user.name"))
-		// .makeQualified(this.uri, this.getWorkingDirectory());
 		util.dbgPrint("workingDir >",this.workingDir);
 		util.dbgPrint("Create System Store connector");
 

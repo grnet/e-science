@@ -49,7 +49,7 @@ public class PithosOutputStream extends OutputStream {
 	private OutputStream backupStream;
 
 	/**
-	 * Utils instance for computing hashes
+	 * Utils instance
 	 */
 	private final Utils util = new Utils();
 
@@ -117,6 +117,7 @@ public class PithosOutputStream extends OutputStream {
 		this.backupStream = new FileOutputStream(backupFile);
 		this.bufferSize = buffersize;
 		this.outBuf = new byte[bufferSize];
+		util.dbgPrint("PithosOutputStream instantiated");
 	}
 
 	/**
@@ -128,6 +129,7 @@ public class PithosOutputStream extends OutputStream {
 	 */
 	private File newBackupFile() throws IOException {
 		File dir = new File(conf.get("hadoop.tmp.dir"));
+		util.dbgPrint("newBackupFile >",dir);
 		if (!dir.exists() && !dir.mkdirs()) {
 			throw new IOException("Cannot create local pithos buffer directory: "
 					+ dir);
@@ -143,6 +145,7 @@ public class PithosOutputStream extends OutputStream {
 
 	@Override
 	public synchronized void write(int b) throws IOException {
+		util.dbgPrint("write(int)");
 		if (closed) {
 			throw new IOException("Stream closed");
 		}
@@ -157,6 +160,7 @@ public class PithosOutputStream extends OutputStream {
 	@Override
 	public synchronized void write(byte b[], int off, int len)
 			throws IOException {
+		util.dbgPrint("write(byte, int, int)");
 		if (closed) {
 			throw new IOException("Stream closed");
 		}
@@ -177,6 +181,7 @@ public class PithosOutputStream extends OutputStream {
 
 	@Override
 	public synchronized void flush() throws IOException {
+		util.dbgPrint("flush");
 		if (closed) {
 			throw new IOException("Stream closed");
 		}
@@ -198,6 +203,7 @@ public class PithosOutputStream extends OutputStream {
 	 * @throws IOException
 	 */
 	private synchronized void flushData(int maxPos) throws IOException {
+		util.dbgPrint("flushData");
 		int workingPos = Math.min(pos, maxPos);
 
 		if (workingPos > 0) {
@@ -255,7 +261,7 @@ public class PithosOutputStream extends OutputStream {
 		String container = pithosPath.getContainer();
 		String hashAlgo = hadoopConnector
 				.getPithosContainerHashAlgorithm(container);
-		util.dbgPrint(hashAlgo);
+		util.dbgPrint("nextBlockOutputStream",hashAlgo);
 		try {
 			blockHash = util.computeHash(blockData, "SHA-256");
 			if (!hadoopConnector.pithosObjectBlockExists(container, blockHash)) {
@@ -282,6 +288,7 @@ public class PithosOutputStream extends OutputStream {
 
 	@Override
 	public synchronized void close() throws IOException {
+		util.dbgPrint("close");
 		if (closed) {
 			return;
 		}
