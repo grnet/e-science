@@ -54,11 +54,6 @@ public class PithosOutputStream extends OutputStream {
 	private final Utils util = new Utils();
 
 	/**
-	 * Pithos File <-> Byte operations
-	 */
-	private PithosSerializer pithosSerializer;
-
-	/**
 	 * instance of HadoopPithosConnector
 	 */
 	private HadoopPithosConnector hadoopConnector;
@@ -115,7 +110,6 @@ public class PithosOutputStream extends OutputStream {
 		this.conf = conf;
 		this.pithosPath = path;
 		this.blockSize = blockSize;
-		this.pithosSerializer = new PithosSerializer();
 		this.hadoopConnector = new HadoopPithosConnector(
 				conf.get("fs.pithos.url"), conf.get("auth.pithos.token"),
 				conf.get("auth.pithos.uuid"));
@@ -135,7 +129,7 @@ public class PithosOutputStream extends OutputStream {
 	private File newBackupFile() throws IOException {
 		File dir = new File(conf.get("hadoop.tmp.dir"));
 		if (!dir.exists() && !dir.mkdirs()) {
-			throw new IOException("Cannot create pithos buffer directory: "
+			throw new IOException("Cannot create local pithos buffer directory: "
 					+ dir);
 		}
 		File result = File.createTempFile("output-", ".tmp", dir);
@@ -256,7 +250,7 @@ public class PithosOutputStream extends OutputStream {
 	 * @throws IOException
 	 */
 	private synchronized void nextBlockOutputStream() throws IOException {
-		byte[] blockData = pithosSerializer.serializeFile(backupFile);
+		byte[] blockData = PithosSerializer.serializeFile(backupFile);
 		String blockHash = null;
 		String container = pithosPath.getContainer();
 		String hashAlgo = hadoopConnector
