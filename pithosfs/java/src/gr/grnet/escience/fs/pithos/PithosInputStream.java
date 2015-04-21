@@ -180,12 +180,6 @@ public class PithosInputStream extends FSInputStream {
 				// - Check if targetblock plus 32 (default for now, number of
 				// pithos blocks to one hadoop block) is
 				// not over the number of pithos object blocks
-				// if (targetBlock + getHadoopToPithosBlock() <
-				// getPithosObjectBlockNum()) {
-
-				// for (pithosBlocksIndex = targetBlock; pithosBlocksIndex <
-				// targetBlock
-				// + getHadoopToPithosBlock(); pithosBlocksIndex++) {
 				for (pithosBlocksIndex = targetBlock; pithosBlocksIndex < stop; pithosBlocksIndex++) {
 					setPithosToHadoopBlocks(
 							pithosBlocksToHadoopBlockIndex,
@@ -202,25 +196,6 @@ public class PithosInputStream extends FSInputStream {
 									.getBlockLength());
 					pithosBlocksToHadoopBlockIndex++;
 				}
-				// } else {
-				// for (pithosBlocksIndex = targetBlock; pithosBlocksIndex <
-				// getPithosObjectBlockNum(); pithosBlocksIndex++) {
-				// setPithosToHadoopBlocks(
-				// pithosBlocksToHadoopBlockIndex,
-				// PithosFileSystem
-				// .getHadoopPithosConnector()
-				// .retrievePithosBlock(
-				// getRequestedContainer(),
-				// getRequestedObject(),
-				// getAvailableBlocksAsArray()[pithosBlocksIndex]
-				// .toString()));
-				// setHadoopBlockLen(getHadoopBlockLen()
-				// + getPithosToHadoopBlocks(
-				// pithosBlocksToHadoopBlockIndex)
-				// .getBlockLength());
-				// pithosBlocksToHadoopBlockIndex++;
-				// }
-				// }
 				targetBlockEnd = targetBlockStart + getHadoopBlockLen() - 1;
 				break;
 			} else {

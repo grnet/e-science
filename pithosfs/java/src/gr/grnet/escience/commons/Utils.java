@@ -9,7 +9,7 @@ import java.security.NoSuchAlgorithmException;
 
 public class Utils {
 
-	private final boolean DEBUG = false;
+	private final boolean DEBUG = true;
 	
 	/**
 	 * Get the hash container
