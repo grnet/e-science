@@ -114,6 +114,12 @@ public class PithosInputStream extends FSInputStream {
 	private PithosBlock getPithosToHadoopBlocks(int index) {
 		return pithosToHadoopBlocks[index];
 	}
+	
+	private void setPithosToHadoopBlocksEmpty() {
+		for (int i=0; i< getPithosToHadoopArray().length; i++){
+			setPithosToHadoopBlocks(i, null);
+		}
+	}
 
 	private PithosBlock[] getPithosToHadoopArray() {
 		return pithosToHadoopBlocks;
@@ -151,19 +157,18 @@ public class PithosInputStream extends FSInputStream {
 		int targetBlock = -1;
 		long targetBlockStart = 0;
 		long targetBlockEnd = 0;
-		int i = 0;
 		// -Used for iterations and index in arrays.
 		int pithosBlocksToHadoopBlockIndex = 0;
 		int pithosBlocksIndex = 0;
 
-		while (getAvailableBlocks().iterator().hasNext()) {
+		for(int i=0; i<getAvailableBlocksAsArray().length;i++ ) {
 
-			currentBlockHash = getAvailableBlocks().iterator().next();
+			currentBlockHash = getAvailableBlocksAsArray()[i].toString();
 
 			long blockLength = PithosFileSystem
 					.getHadoopPithosConnector()
 					.retrievePithosBlock(getRequestedContainer(),
-							getRequestedObject(), currentBlockHash)
+							getRequestedObject(), currentBlockHash) 
 					.getBlockLength();
 			targetBlockEnd = targetBlockStart + blockLength - 1;
 
@@ -171,21 +176,23 @@ public class PithosInputStream extends FSInputStream {
 				targetBlock = i;
 				long stop = -1;
 				// -
-				if (targetBlock + getHadoopToPithosBlock() < getPithosObjectBlockNum()) {
+				if (targetBlock + getHadoopToPithosBlock() <= getPithosObjectBlockNum()) {
 					stop = targetBlock + getHadoopToPithosBlock();
+
 				} else {
+					//0 blockend: 8388609target:0targetBlockStart:0HadoopBlockLen:8388610 
+					//block 0 blockend: 8388607 target:0 targetBlockStart:0 HadoopBlockLen:8388610
+					//1 12582914target:8388608targetBlockStart:4194305HadoopBlockLen:8388610
+					// 2 blockend: 16777215 target:8388608 targetBlockStart:8388608 HadoopBlockLen:8388608
+					
+					//for 14 mb file
+					//block 0 blockend: 8388607target:0targetBlockStart:0HadoopBlockLen:8388608
+					// block 2 blockend: 15264641 target:8388608 targetBlockStart:8388608 HadoopBlockLen:6876034
+										
+					setPithosToHadoopBlocksEmpty();
 					stop = getPithosObjectBlockNum();
 				}
 
-				// - Check if targetblock plus 32 (default for now, number of
-				// pithos blocks to one hadoop block) is
-				// not over the number of pithos object blocks
-				// if (targetBlock + getHadoopToPithosBlock() <
-				// getPithosObjectBlockNum()) {
-
-				// for (pithosBlocksIndex = targetBlock; pithosBlocksIndex <
-				// targetBlock
-				// + getHadoopToPithosBlock(); pithosBlocksIndex++) {
 				for (pithosBlocksIndex = targetBlock; pithosBlocksIndex < stop; pithosBlocksIndex++) {
 					setPithosToHadoopBlocks(
 							pithosBlocksToHadoopBlockIndex,
@@ -196,37 +203,20 @@ public class PithosInputStream extends FSInputStream {
 											getRequestedObject(),
 											getAvailableBlocksAsArray()[pithosBlocksIndex]
 													.toString()));
+					long pithosBlockLen=getPithosToHadoopBlocks(
+							pithosBlocksToHadoopBlockIndex)
+							.getBlockLength(); //For some reason getBlockLength returns 1 byte more
+
 					setHadoopBlockLen(getHadoopBlockLen()
-							+ getPithosToHadoopBlocks(
-									pithosBlocksToHadoopBlockIndex)
-									.getBlockLength());
+							+ pithosBlockLen );
 					pithosBlocksToHadoopBlockIndex++;
-				}
-				// } else {
-				// for (pithosBlocksIndex = targetBlock; pithosBlocksIndex <
-				// getPithosObjectBlockNum(); pithosBlocksIndex++) {
-				// setPithosToHadoopBlocks(
-				// pithosBlocksToHadoopBlockIndex,
-				// PithosFileSystem
-				// .getHadoopPithosConnector()
-				// .retrievePithosBlock(
-				// getRequestedContainer(),
-				// getRequestedObject(),
-				// getAvailableBlocksAsArray()[pithosBlocksIndex]
-				// .toString()));
-				// setHadoopBlockLen(getHadoopBlockLen()
-				// + getPithosToHadoopBlocks(
-				// pithosBlocksToHadoopBlockIndex)
-				// .getBlockLength());
-				// pithosBlocksToHadoopBlockIndex++;
-				// }
-				// }
-				targetBlockEnd = targetBlockStart + getHadoopBlockLen() - 1;
+
+					}
+				targetBlockEnd = targetBlockStart + getHadoopBlockLen()- 1;
 				break;
 			} else {
 				targetBlockStart = targetBlockEnd + 1;
 			}
-			i++;
 		}
 		if (targetBlock < 0) {
 			throw new IOException(
