@@ -464,7 +464,7 @@ public interface PithosSystemStore {
 	 * @return return a Java File object that is made up from the pithos blocks
 	 *         in pithosBlockArray
 	 */
-	public File retrieveBlock(PithosBlock[] pithosBlockArray,
-			long offsetIntoBlock);
+	public File retrieveBlock(PithosBlock [] pithosBlockArray, String pithos_container,
+			String target_object, long offsetIntoBlock, long targetBlockEnd);
 
 }

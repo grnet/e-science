@@ -23,8 +23,8 @@ public class TestPithosRestClient {
 	private static final String UUID = "ec567bea-4fa2-433d-9935-261a0867ec60";
 	private static final String TOKEN = "-0c6fk775-AEiOJiIW3FcBAy8jo7YCXsKVoNsp7j__8";
 	private static final String PITHOS_CONTAINER = "";
-	private static final String PITHOS_FILE_TO_DOWNLOAD = "tests/testObjectToBeDownload.txt";
-	private static final String PITHOS_FILE_TO_DOWNLOAD_BLOCK = "Scrum/ScrumTrainingForGRNET.pdf";
+	private static final String PITHOS_FILE_TO_DOWNLOAD = "pythonaa";
+	private static final String PITHOS_FILE_TO_DOWNLOAD_BLOCK = "pythonaa";
 	private static final long OFFSET = 5194305;
 	private static final String LOCAL_SOURCE_FILE_TO_UPLOAD = "testOutput.txt";
 	private static final String PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM = "tests/newPithosObjectData.txt";
@@ -435,6 +435,27 @@ public class TestPithosRestClient {
 		System.out
 				.println("---------------------------------------------------------------------\n");
 	}
+	
+	@Test
+	public void testRead_Pithos_Object_Block_Sizes() throws IOException {
+		// - READ PITHOS OBJECT BLOCK: ESSENTIALLY CREATES INPUTSTREAM FOR A
+		// PITHOS OBJECT BLOCK REQUESTED BY IT'S HASH
+		// - Get a block hash of the previously requested object
+
+		long size = 0;
+		object_block_hashes = hdconnector.getPithosObjectBlockHashes(
+				PITHOS_CONTAINER, PITHOS_FILE_TO_DOWNLOAD_BLOCK);
+		// - local loop to get the corresponding hash
+		Object[] blockHashesArray = new Object[object_block_hashes.size()];
+		String currentBlockHash;
+		blockHashesArray = object_block_hashes.toArray();
+		for(int i=0;i<blockHashesArray.length;i++)
+			{
+				currentBlockHash = blockHashesArray[i].toString();
+				size = hdconnector.retrievePithosBlock(PITHOS_CONTAINER, PITHOS_FILE_TO_DOWNLOAD_BLOCK, currentBlockHash).getBlockLength();
+				System.out.println("block length:"+ size);
+				}
+	}
 
 	/**
 	 * @param args
@@ -462,6 +483,8 @@ public class TestPithosRestClient {
 		// client.testStore_Object_To_Pithos();
 		// client.testAppend_Pithos_Small_Block();
 		// client.testAppend_Pithos_Big_Block();
+		//for printing block sizes of a pithos object
+		client.testRead_Pithos_Object_Block_Sizes();
 	}
 
 }

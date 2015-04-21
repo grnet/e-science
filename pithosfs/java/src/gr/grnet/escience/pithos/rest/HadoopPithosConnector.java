@@ -104,18 +104,18 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 				// - Get range start
 				range[0] = current_size;
 				// - Get range stop
-				range[1] = block_size;
+				range[1] = block_size - 1;
 			}
-			// - if the requested block is the first one
+			// - if the requested block is the last one
 			else if (block_pointer == blocks_number) {
 				int previous_blocks = blocks_number - 1;
 				long previous_size = block_size * previous_blocks;
 				long last_block_size = object_total_size - previous_size;
 				// - Get range start
-				range[0] = (object_total_size - last_block_size) + 1;
+				range[0] = (object_total_size - last_block_size);
 
 				// - Get range stop
-				range[1] = object_total_size;
+				range[1] = object_total_size -1 ;
 
 			} else {
 				// - Any intermediate block
@@ -126,20 +126,20 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 						range[0] = current_size;
 
 						// - Get range stop
-						range[1] = range[0] + block_size;
+						range[1] = range[0] + block_size - 1;
 
 						// - stop the loop
 						break;
 					}
 
-					current_size = (current_size + block_size) + 1;
+					current_size = (current_size + block_size);
 				}
 			}
 		} else {
 			// - Get range start
 			range[0] = 0;
 			// - Get range stop
-			range[1] = object_total_size;
+			range[1] = object_total_size - 1;
 		}
 
 		// - Return the table
@@ -303,7 +303,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 		getPithosRequest().getRequestParameters().put("format", "json");
 		// - Add requested parameter for the range
 		// - If it is not requested the last block, the add specific range
-		if (block_bytes_range[1] != object_total_size) {
+		if (block_bytes_range[1] != object_total_size -1) {
 			getPithosRequest().getRequestHeaders().put(
 					"Range",
 					"bytes=" + block_bytes_range[0] + "-"
@@ -872,13 +872,43 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public File retrieveBlock(PithosBlock[] pithosBlockArray,
-			long offsetIntoBlock) {
+	public File retrieveBlock(PithosBlock[] pithosBlockArray,String pithos_container,
+			String target_object, long offsetIntoBlock, long targetBlockEnd) {
+
+			// - Create byte array for the object
+			// - Create Pithos request
+//			setPithosRequest(new PithosRequest());
+//
+//			// - Request Parameters
+//			// - JSON Format
+//			getPithosRequest().getRequestParameters().put("format", "json");
+//			// - Add requested parameter for the range
+//			// - If it is not requested the last block, the add specific range
+//			getPithosRequest().getRequestHeaders().put(
+//						"Content-Range",
+//						"bytes=" + offsetIntoBlock + "-"
+//								+ targetBlockEnd);
+//
+//			// - Read data object
+//			try {
+//				// - Get the chunk of the pithos object as a file
+//				block_data = (File) read_object_data(target_object,
+//						pithos_container,
+//						getPithosRequest().getRequestParameters(),
+//						getPithosRequest().getRequestHeaders());
+//
+//				// - Return the created pithos object
+//				return block_data;
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//				return null;
+//			}
+//		}
 		File block = null;
 		FileOutputStream fileOutputStream = null;
 		try {
 			// read a Hadoop block (array of pithos blocks) from an offset and
-			// return it as file
+		// return it as file
 			block = new File("blockfile");
 			fileOutputStream = new FileOutputStream(block);
 
@@ -888,14 +918,15 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 							.write(pithosBlockArray[i].getBlockData(),
 									(int) offsetIntoBlock,
 									(int) (pithosBlockArray[i].getBlockLength() - offsetIntoBlock));
+					//offsetIntoBlock += (pithosBlockArray[i].getBlockLength() - offsetIntoBlock);
 					offsetIntoBlock = 0;
 				} else {
 					// end of array of pithos blocks
 					break;
 				}
 			}
-			// fileOuputStream.close();
-			// - return the file
+//			// fileOuputStream.close();
+//			// - return the file
 			fileOutputStream.flush();
 			fileOutputStream.close();
 

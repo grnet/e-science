@@ -180,15 +180,7 @@ public class PithosInputStream extends FSInputStream {
 					stop = targetBlock + getHadoopToPithosBlock();
 
 				} else {
-					//0 blockend: 8388609target:0targetBlockStart:0HadoopBlockLen:8388610 
-					//block 0 blockend: 8388607 target:0 targetBlockStart:0 HadoopBlockLen:8388610
-					//1 12582914target:8388608targetBlockStart:4194305HadoopBlockLen:8388610
-					// 2 blockend: 16777215 target:8388608 targetBlockStart:8388608 HadoopBlockLen:8388608
-					
-					//for 14 mb file
-					//block 0 blockend: 8388607target:0targetBlockStart:0HadoopBlockLen:8388608
-					// block 2 blockend: 15264641 target:8388608 targetBlockStart:8388608 HadoopBlockLen:6876034
-										
+									
 					setPithosToHadoopBlocksEmpty();
 					stop = getPithosObjectBlockNum();
 				}
@@ -228,8 +220,9 @@ public class PithosInputStream extends FSInputStream {
 		// - Read block blocks[targetBlock] from position offsetIntoBlock
 
 		// - Create block file
+		// targetBlockStart - targetBlockEnd
 		this.blockFile = PithosFileSystem.getHadoopPithosConnector()
-				.retrieveBlock(getPithosToHadoopArray(), offsetIntoBlock);
+				.retrieveBlock(getPithosToHadoopArray(), getRequestedContainer(), getRequestedObject(), offsetIntoBlock, targetBlockEnd);
 
 		this.pos = target;
 		this.blockEnd = targetBlockEnd;
