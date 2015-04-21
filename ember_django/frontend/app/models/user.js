@@ -42,9 +42,11 @@ App.Usercluster = DS.Model.extend({
 		return 'http://' + this.get('master_IP') + ':8088/cluster';
 	}.property('master_IP'),
 	hdfs_overview : function() {
+		// overview for hdfs URL=master_IP:50070
 		return 'http://' + this.get('master_IP') + ':50070';
 	}.property('master_IP'),
 	browse_hdfs : function() {
+		// hdfs browse URL=master_IP:50070/explorer.html#/
 		return 'http://' + this.get('master_IP') + ':50070/explorer.html#/';
 	}.property('master_IP'),
 	cluster_status_verbose : function() {
@@ -249,7 +251,25 @@ App.Usercluster = DS.Model.extend({
 		default:
 			return 'Confirm';
 		}
-	}.property('cluster_confirm_action')
+	}.property('cluster_confirm_action'),
+	cluster_hadoop_status : function()
+	{
+  		var status = this.get('hadoop_status');
+  		var cluster_status = this.get('cluster_status');
+  		if (cluster_status !== "1"){
+   			status = "0";
+  		}
+  		switch (status){
+  			case "0":
+   				return "STOPPED";
+  			case "1":
+   				return "STARTED";
+  			case "2":
+   				return "PENDING";
+  			default:
+   				return "";
+  		}
+ 	}.property('hadoop_status','cluster_status')
 });
 
 App.Usermessages = DS.Model.extend({
