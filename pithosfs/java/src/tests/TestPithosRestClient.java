@@ -18,13 +18,15 @@ import java.util.Collection;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.gson.JsonSyntaxException;
+
 public class TestPithosRestClient {
 	private static final String PITHOS_STORAGE_SYSTEM_URL = "https://pithos.okeanos.grnet.gr/v1";
 	private static final String UUID = "ec567bea-4fa2-433d-9935-261a0867ec60";
 	private static final String TOKEN = "-0c6fk775-AEiOJiIW3FcBAy8jo7YCXsKVoNsp7j__8";
 	private static final String PITHOS_CONTAINER = "";
 	private static final String PITHOS_FILE_TO_DOWNLOAD = "tests/testObjectToBeDownload.txt";
-	private static final String PITHOS_FILE_TO_DOWNLOAD_BLOCK = "Scrum/ScrumTrainingForGRNET.pdf";
+	private static final String PITHOS_FILE_TO_DOWNLOAD_BLOCK = "tests/testObjectToBeDownload.txt";
 	private static final long OFFSET = 5194305;
 	private static final String LOCAL_SOURCE_FILE_TO_UPLOAD = "testOutput.txt";
 	private static final String PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM = "tests/newPithosObjectData.txt";
@@ -43,7 +45,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Container_Info() {
+	public void testGet_Container_Info() throws IOException {
 		// - GET CONTAINER INFORMATION
 		System.out
 				.println("---------------------------------------------------------------------");
@@ -77,7 +79,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Metadata() {
+	public void testGet_Pithos_Object_Metadata() throws IOException {
 		// - GET METADATA OF A SPECIFIC OBJECT
 		System.out
 				.println("---------------------------------------------------------------------");
@@ -93,7 +95,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Size() {
+	public void testGet_Pithos_Object_Size() throws IOException {
 		// - GET OBJECT ACTUAL SIZE
 		System.out
 				.println("---------------------------------------------------------------------");
@@ -109,7 +111,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object() {
+	public void testGet_Pithos_Object() throws IOException {
 		// - GET AND STORE THE ACTUAL OBJECT AS A FILE
 		System.out
 				.println("---------------------------------------------------------------------");
@@ -128,7 +130,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Block_Hashes() {
+	public void testGet_Pithos_Object_Block_Hashes() throws IOException {
 		// - GET OBJECT HASHES
 		System.out
 				.println("---------------------------------------------------------------------");
@@ -144,7 +146,8 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Block_Default_Size() {
+	public void testGet_Pithos_Object_Block_Default_Size()
+			throws JsonSyntaxException, IOException {
 		// -GET BLOCK DEFAULT SIZE
 		System.out
 				.println("---------------------------------------------------------------------");
@@ -161,7 +164,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Blocks_Number() {
+	public void testGet_Pithos_Object_Blocks_Number() throws IOException {
 		// - GET THE NUMBER OF THE BLOCKS THAT COMPRISE A PITHOS OBJECT
 		System.out
 				.println("---------------------------------------------------------------------");
@@ -178,7 +181,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Block_Size() {
+	public void testGet_Pithos_Object_Block_Size() throws IOException {
 		// - GET OBJECT CURRENT BLOCK SIZE, IN CASE IT IS STORED WITH DIFFERENT
 		// POLICIES THAT THE DEFAULTS
 		System.out
@@ -196,7 +199,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Block() {
+	public void testGet_Pithos_Object_Block() throws IOException {
 		// - GET OBJECT BLOCK BY HASH
 		// - Get a block hash of the previously requested object
 		System.out
@@ -226,7 +229,7 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testGet_Pithos_Object_Block_All() {
+	public void testGet_Pithos_Object_Block_All() throws IOException {
 		// - GET OBJECT ALL BLOCKS
 		System.out
 				.println("---------------------------------------------------------------------");
@@ -377,25 +380,25 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testAppend_Pithos_Small_Block() throws IOException, NoSuchAlgorithmException {
+	public void testAppend_Pithos_Small_Block() throws IOException,
+			NoSuchAlgorithmException {
 
 		// - Local parameters
-		String BLOCK_HASH;
-		BLOCK_HASH = utils.computeHash(DUMMY_BLOCK_DATA.getBytes(),
+		String BLOCK_HASH = utils.computeHash(DUMMY_BLOCK_DATA.getBytes(),
 				"SHA-256");
 
 		System.out.println("GENERATED HASH: " + BLOCK_HASH);
 
 		// - Create Pithos Object instance
 		byte[] toBeSent = DUMMY_BLOCK_DATA.getBytes();
-		PithosBlock pithosBlock = new PithosBlock(BLOCK_HASH,
-				toBeSent.length, toBeSent);
+		PithosBlock pithosBlock = new PithosBlock(BLOCK_HASH, toBeSent.length,
+				toBeSent);
 
 		System.out
 				.println("---------------------------------------------------------------------");
 		System.out.println("APPEND BLOCK: <" + pithosBlock.getBlockHash()
-				+ "> TO PITHOS OBJECT <"
-				+ PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM + ">");
+				+ "> TO PITHOS OBJECT <" + PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM
+				+ ">");
 		System.out
 				.println("---------------------------------------------------------------------");
 		String response = hdconnector.appendPithosBlock(PITHOS_CONTAINER,
@@ -406,17 +409,15 @@ public class TestPithosRestClient {
 	}
 
 	@Test
-	public void testAppend_Pithos_Big_Block() throws IOException, NoSuchAlgorithmException {
-
-		// - Local parameters
-		String BLOCK_HASH = null;
+	public void testAppend_Pithos_Big_Block() throws IOException,
+			NoSuchAlgorithmException {
 
 		// - Load file bytes
 		byte[] bigBlockData = PithosSerializer.serializeFile(new File(
 				"bigBlock1.txt"));
 
 		// - Generate HASH CODE
-		BLOCK_HASH = utils.computeHash(bigBlockData, "SHA-256");
+		String BLOCK_HASH = utils.computeHash(bigBlockData, "SHA-256");
 
 		// - Create Pithos Object instance
 		PithosBlock pithosBlock = new PithosBlock(BLOCK_HASH,
@@ -425,8 +426,8 @@ public class TestPithosRestClient {
 		System.out
 				.println("---------------------------------------------------------------------");
 		System.out.println("APPEND BLOCK: <" + pithosBlock.getBlockHash()
-				+ "> TO PITHOS OBJECT <"
-				+ PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM + ">");
+				+ "> TO PITHOS OBJECT <" + PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM
+				+ ">");
 		System.out
 				.println("---------------------------------------------------------------------");
 		String response = hdconnector.appendPithosBlock(PITHOS_CONTAINER,
@@ -434,34 +435,43 @@ public class TestPithosRestClient {
 		System.out.println("RESPONSE FROM PITHOS: " + response);
 		System.out
 				.println("---------------------------------------------------------------------\n");
+
 	}
 
 	/**
 	 * @param args
 	 * @throws IOException
+	 * @throws NoSuchAlgorithmException
 	 * 
 	 */
-	public static void main(String[] args) throws IOException {
-		TestPithosRestClient client = new TestPithosRestClient();
+	public static void main(String[] args) throws IOException,
+			NoSuchAlgorithmException {
 
+		TestPithosRestClient client = new TestPithosRestClient();
 		client.createHdConnector();
-		// client.testGet_Container_Info();
-		// client.testGet_Container_File_List();
-		// client.testGet_Pithos_Object_Metadata();
-		// client.testGet_Pithos_Object_Size();
-		// client.testGet_Pithos_Object();
-		// client.testGet_Pithos_Object_Block_Hashes();
-		// client.testGet_Pithos_Object_Block_Default_Size();
-		// client.testGet_Pithos_Object_Blocks_Number();
-		// client.testGet_Pithos_Object_Block();
-		// client.testGet_Pithos_Object_Block_All();
-		// client.testRead_Pithos_Object();
-		// client.testRead_Pithos_Object_Block();
-		// client.testPithos_Object_Block_InputStream_With_Offset();
-		// client.testStore_File_To_Pithos();
-		// client.testStore_Object_To_Pithos();
-		// client.testAppend_Pithos_Small_Block();
-		// client.testAppend_Pithos_Big_Block();
+
+		// - METADATA (PITHOS --> HADOOP)
+		client.testGet_Container_Info();
+		client.testGet_Container_File_List();
+		client.testGet_Pithos_Object_Metadata();
+		client.testGet_Pithos_Object_Size();
+
+		// - INPUT STREAM (PITHOS --> HADOOP)
+		client.testGet_Pithos_Object();
+		client.testGet_Pithos_Object_Block_Hashes();
+		client.testGet_Pithos_Object_Block_Default_Size();
+		client.testGet_Pithos_Object_Blocks_Number();
+		client.testGet_Pithos_Object_Block();
+		client.testGet_Pithos_Object_Block_All();
+		client.testRead_Pithos_Object();
+		client.testRead_Pithos_Object_Block();
+		client.testPithos_Object_Block_InputStream_With_Offset();
+		client.testStore_File_To_Pithos();
+
+		// - OUTPUT STREAM (HADOOP --> PITHOS)
+		client.testStore_Object_To_Pithos();
+		client.testAppend_Pithos_Small_Block();
+		client.testAppend_Pithos_Big_Block();
 	}
 
 }

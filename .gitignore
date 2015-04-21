@@ -10,7 +10,14 @@
 ansible_hosts*
 *_rebuild.sh
 .settings/
+lib/
 bower_components/
 node_modules/
 .classpath
+.gitignore
+block
 orka-pithos.jardesc
+*.txt
+*.pdf
+*.properties
+*.xml
