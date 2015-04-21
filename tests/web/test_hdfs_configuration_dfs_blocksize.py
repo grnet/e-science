@@ -111,6 +111,7 @@ class test_hdfs_configuration_dfs_blocksize(unittest.TestCase):
         driver.find_element_by_id("dfs_blocksize").send_keys(dfs_blocksize)
         time.sleep(3)
         driver.find_element_by_id("next").click()
+        driver.find_element_by_id("next").click()
         print 'Creating cluster...'
         for i in range(1500): 
             # wait for cluster create to finish
