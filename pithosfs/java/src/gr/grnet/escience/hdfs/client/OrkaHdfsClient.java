@@ -1,8 +1,5 @@
 package gr.grnet.escience.hdfs.client;
 
-import gr.grnet.escience.commons.Configurator;
-import gr.grnet.escience.commons.Settings;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -35,26 +32,18 @@ import org.apache.hadoop.security.UserGroupInformation;
 public class OrkaHdfsClient {
 
 	private final Configuration conf = new Configuration();
-	private static final String CONFIGURATION_FILE = "hadoopPithosConfiguration.json";
-	private static final Settings hadoopConfiguration = Configurator
-			.load(CONFIGURATION_FILE);
 	private UserGroupInformation ugi;
 
 	/** Constructor **/
 	public OrkaHdfsClient() {
 
 		/** Create Hadoop FS configuration **/
-		getConfiguration().set(
-				"fs.defaultFS",
-				hadoopConfiguration.getHadoopGeneralConfiguration().get(
-						"fs.defaultFS"));
-		getConfiguration().set("hadoop.job.ugi",
-				hadoopConfiguration.getHadoopUser().get("hadoop.job.ugi"));
+		getConfiguration().set("fs.defaultFS", "fs.defaultFS");
+		getConfiguration().set("hadoop.job.ugi", "hadoop.job.ugi");
 
 		// - Create User Group info
 		setUserGroupInformation(UserGroupInformation
-				.createRemoteUser(hadoopConfiguration.getHadoopUser().get(
-						"hadoop.job.ugi")));
+				.createRemoteUser("hadoop.job.ugi"));
 	}
 
 	/** Get current configuration instance **/

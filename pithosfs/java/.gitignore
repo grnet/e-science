@@ -1,4 +1,5 @@
 *.sh
 bin/
-lib/
-dist/
+.classpath
+.project
+testOutput.txt
