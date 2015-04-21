@@ -447,6 +447,7 @@ public class TestPithosRestClient {
 	public static void main(String[] args) throws IOException,
 			NoSuchAlgorithmException {
 
+		// - CREATE CONNECTOR INSTANCE
 		TestPithosRestClient client = new TestPithosRestClient();
 		client.createHdConnector();
 
