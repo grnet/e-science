@@ -170,7 +170,7 @@ public class PithosInputStream extends FSInputStream {
 			if (pos > blockEnd) {
 				blockSeekTo(pos);
 			}
-			int realLen = (int) Math.min(len, (blockEnd - pos + 1L));
+			int realLen = (int) Math.min(len, blockEnd - pos + 1L);
 			int result = blockStream.read(buf, off, realLen);
 			if (result >= 0) {
 				pos += result;
