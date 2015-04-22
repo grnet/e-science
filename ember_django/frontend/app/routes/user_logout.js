@@ -28,6 +28,8 @@ App.UserLogoutRoute = Ember.Route.extend({
 		window.scrollTo(0,0);
 		this.transitionTo('homepage');
 		this.controllerFor('application').set('loggedIn', false);
+		$.loader.close(true);
+		this.controllerFor('user.login').cancelRunTimer();
 	}
 });
 
