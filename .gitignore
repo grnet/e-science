@@ -14,3 +14,4 @@ bower_components/
 node_modules/
 .classpath
 orka-pithos.jardesc
+sonar-project.properties
