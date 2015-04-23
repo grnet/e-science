@@ -6,6 +6,7 @@
 .project
 .pydevproject
 *.log
+*.properties
 *_root_password
 ansible_hosts*
 *_rebuild.sh
