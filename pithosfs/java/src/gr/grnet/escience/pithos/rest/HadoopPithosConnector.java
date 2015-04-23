@@ -199,7 +199,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 			return response_data;
 		} catch (IOException e) {
 			// - Return the exception message as String
-			return PithosSerializer.exceptionToStrign(e);
+			return PithosSerializer.exceptionToString(e);
 		}
 	}
 
@@ -721,7 +721,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 						+ "> already exists.";
 			}
 		} catch (IOException e) {
-			return PithosSerializer.exceptionToStrign(e);
+			return PithosSerializer.exceptionToString(e);
 		}
 	}
 
@@ -771,7 +771,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 			}
 		} catch (IOException e) {
 			// - Return the exception message as String
-			return PithosSerializer.exceptionToStrign(e);
+			return PithosSerializer.exceptionToString(e);
 		} finally {
 			if (temp != null) {
 				temp.delete();
@@ -808,7 +808,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
 		} catch (IOException e) {
 			// - Return the exception message as String
-			return PithosSerializer.exceptionToStrign(e);
+			return PithosSerializer.exceptionToString(e);
 		}
 
 	}
@@ -836,7 +836,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 					getPithosRequest().getRequestHeaders());
 		} catch (IOException e) {
 			// - Return the exception message as String
-			return PithosSerializer.exceptionToStrign(e);
+			return PithosSerializer.exceptionToString(e);
 		}
 
 	}
@@ -865,7 +865,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 					getPithosRequest().getRequestHeaders());
 		} catch (IOException e) {
 			// - Return the exception message as String
-			return PithosSerializer.exceptionToStrign(e);
+			return PithosSerializer.exceptionToString(e);
 		}
 
 	}

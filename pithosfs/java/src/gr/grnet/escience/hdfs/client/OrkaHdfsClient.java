@@ -295,7 +295,7 @@ public class OrkaHdfsClient {
 							.println("File " + filename + "copied to " + dest);
 				} catch (Exception e) {
 					System.err.println("Exception caught! :" + e);
-					System.exit(1);
+
 				} finally {
 					fileSystem.close();
 				}
@@ -347,7 +347,6 @@ public class OrkaHdfsClient {
 							+ dest);
 				} catch (Exception e) {
 					System.err.println("Exception caught! :" + e);
-					System.exit(1);
 				} finally {
 					fileSystem.close();
 				}
@@ -398,7 +397,6 @@ public class OrkaHdfsClient {
 					}
 				} catch (Exception e) {
 					System.out.println("Exception :" + e);
-					System.exit(1);
 				} finally {
 					fileSystem.close();
 				}
