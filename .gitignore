@@ -6,7 +6,6 @@
 .project
 .pydevproject
 *.log
-*.properties
 *_root_password
 ansible_hosts*
 *_rebuild.sh
@@ -15,3 +14,4 @@ bower_components/
 node_modules/
 .classpath
 orka-pithos.jardesc
+sonar-project.properties

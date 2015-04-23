@@ -4,6 +4,7 @@ import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -464,7 +465,7 @@ public interface PithosSystemStore {
 	 * @return return a Java File object that is made up from the pithos blocks
 	 *         in pithosBlockArray
 	 */
-	public File retrieveBlock(PithosBlock[] pithosBlockArray,
-			long offsetIntoBlock);
+	public File retrieveBlock(String pithos_container,
+			String target_object, long target, long targetBlockEnd);
 
 }
