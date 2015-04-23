@@ -466,7 +466,7 @@ public class TestPithosRestClient {
         long target = 0;
         long blockEnd = 400000;
         File block_data = new File("block");
-		block_data = hdconnector.retrieveBlock(PITHOS_CONTAINER, PITHOS_FILE_TO_DOWNLOAD_BLOCK, target, blockEnd);
+		block_data = hdconnector.retrievePithosBlocks(PITHOS_CONTAINER, PITHOS_FILE_TO_DOWNLOAD_BLOCK, target, blockEnd);
         System.out.println("size:"+ block_data.length());	
 	}
 	

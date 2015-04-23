@@ -871,8 +871,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public File retrieveBlock(String pithos_container,
-			String target_object, long target, long targetBlockEnd){
+	public File retrievePithosBlocks(String pithosContainer,
+			String targetObject, long targetBlockStart, long targetBlockEnd){
 	
 			setPithosRequest(new PithosRequest());
 
@@ -883,14 +883,14 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 			// - If it is not requested the last block, then add specific range
 			getPithosRequest().getRequestHeaders().put(
 						"Range",
-						"bytes=" + target + "-"
+						"bytes=" + targetBlockStart + "-"
 								+ targetBlockEnd);
 
 			// - Read data object
 			try {
 				// - Get the chunk of the pithos object as a file
-				block_data = (File) read_object_data(target_object,
-						pithos_container,
+				block_data = (File) read_object_data(targetObject,
+						pithosContainer,
 						getPithosRequest().getRequestParameters(),
 						getPithosRequest().getRequestHeaders());
 

@@ -4,11 +4,10 @@ import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
+
 
 public interface PithosSystemStore {
 
@@ -453,19 +452,23 @@ public interface PithosSystemStore {
 			String blockHash);
 
 	/**
-	 * Return an array of pithos blocks as a Java File object
+	 * Return a stream of pithos blocks as a Java File object
 	 * 
-	 * @param pithosBlockArray
-	 *            the PithosBlock array with the pithos blocks that constitute a
-	 *            Hadoop block.
+	 * @param pithosContainer
+	 *            the Pithos container where the requested pithos file belongs.
 	 * 
-	 * @param offsetIntoBlock
-	 *            the long offSet used to read from a pithos block.
+	 * @param targetObject
+	 *            the Pithos file to be read.
 	 * 
-	 * @return return a Java File object that is made up from the pithos blocks
-	 *         in pithosBlockArray
+	 * @param targetBlockStart
+	 *            the start of the byte range to be read.
+	 * 
+	 * @param targetBlockEnd
+	 *            the end of the byte range to be read.
+	 * 
+	 * @return return a Java File object that is made up from pithos blocks
 	 */
-	public File retrieveBlock(String pithos_container,
-			String target_object, long target, long targetBlockEnd);
+	public File retrievePithosBlocks(String pithosContainer,
+			String targetObject, long targetBlockStart, long targetBlockEnd);
 
 }

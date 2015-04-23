@@ -1,5 +1,4 @@
 package gr.grnet.escience.fs.pithos;
-
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,7 +23,7 @@ import org.apache.hadoop.fs.FileSystem;
  */
 public class PithosInputStream extends FSInputStream {
 
-	private int HadoopToPithosBlock = 0;
+	private int hadoopToPithosBlock = 0;
 
 	private boolean closed;
 
@@ -36,9 +35,9 @@ public class PithosInputStream extends FSInputStream {
 
 	private DataInputStream blockStream;
 
-	private String _pithos_container;
+	private String pithosContainer;
 
-	private String _pithos_object;
+	private String pithosObject;
 
 	private long blockEnd = -1;
 
@@ -47,19 +46,19 @@ public class PithosInputStream extends FSInputStream {
 	private static final Log LOG = LogFactory.getLog(PithosInputStream.class
 			.getName());
 
-	private static final long defaultBlockSize = (long) 128 * 1024 * 1024;
+	private static final long DEFAULT_BLOCK_SIZE = (long) 128 * 1024 * 1024;
 	
-	private long PithosContainerBlockSize = 0;
+	private long pithosContainerBlockSize = 0;
 
 	public PithosInputStream() {
 	}
 
-	public PithosInputStream(String pithos_container, String pithos_object) {
+	public PithosInputStream(String pithosContainer, String pithosObject) {
 
 		// - Initialize local variables
-		this._pithos_container = pithos_container;
-		this._pithos_object = pithos_object;
-		this.PithosContainerBlockSize = PithosFileSystem.getHadoopPithosConnector()
+		this.pithosContainer = pithosContainer;
+		this.pithosObject = pithosObject;
+		this.pithosContainerBlockSize = PithosFileSystem.getHadoopPithosConnector()
 				.getPithosBlockDefaultSize(getRequestedContainer());
 		this.setHadoopToPithosBlock();
 
@@ -70,27 +69,27 @@ public class PithosInputStream extends FSInputStream {
 	}
 
 	private int getHadoopToPithosBlock() {
-		return HadoopToPithosBlock;
+		return hadoopToPithosBlock;
 	}
 	
 	private long getPithosContainerBlockSize(){
-		return PithosContainerBlockSize;
+		return pithosContainerBlockSize;
 	}
 
 	private void setHadoopToPithosBlock() {
 		Configuration conf = new Configuration();
 
-		this.HadoopToPithosBlock = (int) (conf.getLongBytes("dfs.blocksize",
-				defaultBlockSize) / getPithosContainerBlockSize() );
+		this.hadoopToPithosBlock = (int) (conf.getLongBytes("dfs.blocksize",
+				DEFAULT_BLOCK_SIZE) / getPithosContainerBlockSize() );
 
 	}
 	
 	private String getRequestedContainer() {
-		return _pithos_container;
+		return pithosContainer;
 	}
 
 	private String getRequestedObject() {
-		return _pithos_object;
+		return pithosObject;
 	}
 
 	private synchronized void blockSeekTo(long target) throws IOException {
@@ -107,7 +106,7 @@ public class PithosInputStream extends FSInputStream {
 		}
 		
 		this.blockFile = PithosFileSystem.getHadoopPithosConnector()
-				.retrieveBlock(getRequestedContainer(), getRequestedObject(), target, targetBlockEnd);		
+				.retrievePithosBlocks(getRequestedContainer(), getRequestedObject(), target, targetBlockEnd);		
 		this.pos = target;
 		this.blockEnd = targetBlockEnd;
 		this.blockStream = new DataInputStream(new FileInputStream(blockFile));
@@ -161,7 +160,7 @@ public class PithosInputStream extends FSInputStream {
 	}
 
 	@Override
-	public synchronized int read(byte buf[], int off, int len)
+	public synchronized int read(byte[] buf, int off, int len)
 			throws IOException {
 		if (closed) {
 			throw new IOException("Stream closed");
