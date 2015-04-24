@@ -9,21 +9,24 @@ import java.security.NoSuchAlgorithmException;
 
 public class Utils {
 
-	private final boolean DEBUG = true;
+	private static final boolean DEBUG = true;
+	
+	public Utils() {
+	}
 	
 	/**
 	 * Get the hash container
 	 * 
 	 * @param byteData
 	 *            : the byte array to get the digest of
-	 * @param hash_algorithm
+	 * @param hashAlgorithm
 	 *            : the name of the hash algorithm to use
 	 * @return bytestring hash representation of the input digest
 	 */
-	public String computeHash(byte[] byteData, String hash_algorithm)
+	public String computeHash(byte[] byteData, String hashAlgorithm)
 			throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		// eg. hash_algorithm = "SHA-256";
-	    MessageDigest digest = MessageDigest.getInstance(hash_algorithm);
+		/** eg. hash_algorithm = "SHA-256"; */
+	    MessageDigest digest = MessageDigest.getInstance(hashAlgorithm);
 	    digest.reset();
 	    
         byte[] byteDatad = digest.digest(byteData);
@@ -40,14 +43,14 @@ public class Utils {
 	 * 
 	 * @param utf
 	 *            -8 string : the string to get the digest of
-	 * @param hash_algorithm
+	 * @param hashAlgorithm
 	 *            : the name of the hash algorithm to use
 	 * @return bytestring hash representation of the input digest
 	 */
-	public String computeHash(String input, String hash_algorithm)
+	public String computeHash(String input, String hashAlgorithm)
 			throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		// eg. hash_algorithm = "SHA-256";
-		MessageDigest digest = MessageDigest.getInstance(hash_algorithm);
+		/** eg. hash_algorithm = "SHA-256"; */
+		MessageDigest digest = MessageDigest.getInstance(hashAlgorithm);
 		digest.reset();
 
 	    byte[] byteData = digest.digest(input.getBytes("UTF-8"));
@@ -68,11 +71,10 @@ public class Utils {
 	 * @throws UnsupportedEncodingException
 	 */
 	public String urlEscape(String url) throws UnsupportedEncodingException {
-		String url_escaped = URLEncoder.encode(url, "UTF-8")
+		return URLEncoder.encode(url, "UTF-8")
 				.replaceAll("\\+", "%20").replaceAll("\\%21", "!")
 				.replaceAll("\\%27", "'").replaceAll("\\%28", "(")
 				.replaceAll("\\%29", ")").replaceAll("\\%7E", "~");
-		return url_escaped;
 	}
 
 	/**
@@ -92,8 +94,7 @@ public class Utils {
 	public String urlEscape(String scheme, String host, String path,
 			String fragment) throws URISyntaxException {
 		URI uri = new URI(scheme, host, path, fragment);
-		String url_escaped = uri.toASCIIString();
-		return url_escaped;
+		return uri.toASCIIString();
 	}
 
 	/**
@@ -103,7 +104,9 @@ public class Utils {
 	 *            : variable length array of objects
 	 */
 	public void dbgPrint(Object... args) {
-		if (!DEBUG){return;}
+		if (!DEBUG){
+			return;
+			}
 		String formatter = "DEBUG:";
 		for (int i = 0; i < args.length; i++) {
 			formatter+=" %s";

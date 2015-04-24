@@ -2,6 +2,7 @@
 App.UserLoginController = Ember.Controller.extend({
 	needs: 'application',
 	token : '',
+	runLater : null,
 	isLoggedIn : function() {
 		// Check local storage auth token for user login status.
 		if (window.localStorage.escience_auth_token != 'null' && !Ember.isEmpty(window.localStorage.escience_auth_token) && window.localStorage.escience_auth_token !== 'undefined') {
@@ -46,12 +47,8 @@ App.UserLoginController = Ember.Controller.extend({
 						previousTransition.retry();
 					}else{
 						self.transitionToRoute('user.welcome');	
-					}
-                    Ember.run.later(self, function(){
-                        self.set('controllers.application.loggedIn', false);
-						self.set('token', '');
-						self.transitionToRoute('user.logout');
-                    },3600000);
+					}	
+                    
 				}, function(reason) {
 					// Failed login.
 					console.log(reason.errorThrown);
@@ -66,6 +63,19 @@ App.UserLoginController = Ember.Controller.extend({
 			$('#token').focus();
 			$('#id_alert_wrongtoken > button').click();
 			this.set('loginFailed', false);
-		}
+		},
+	},
+	
+	runTimer : function() { 
+		var self = this; 
+		this.set("runLater", Ember.run.later(self, function() {
+			self.set('controllers.application.loggedIn', false);
+			self.set('token', '');
+			self.transitionToRoute('user.logout');
+        }, 3600000));
+	},
+	
+	cancelRunTimer : function(){
+		Ember.run.cancel(this.get("runLater"));
 	}
 }); 

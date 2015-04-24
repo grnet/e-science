@@ -11,7 +11,10 @@ App.Router.map(function() {
 	});
 	this.resource('cluster', function() {
 		// /cluster/create
-		this.route('create');
+		this.route('create');		
+		// cluster management route
+		// /cluster/cluster_id
+		this.route('management', { path: "/:usercluster.id" });
 	});
 	// Route to enforce login policy
 	// other routes that require login extend this

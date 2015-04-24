@@ -12,6 +12,7 @@
 	<div class="col col-sm-3"></div>
 	</div>    
 </div>
+
 <div class="panel panel-primary">
     <div id="id_project_selection" class="panel-heading text-center v-center">
         <h3 class="panel-title">~Okeanos Project Selection</h3>
@@ -301,9 +302,18 @@
 
 <div class="panel panel-primary">
 	<div id = "hdfs_configuration" class="panel-heading text-center v-center">
-        <h3 class="panel-title">Hdfs Configuration</h3>
+        <h3 class="panel-title">Hadoop Configuration</h3>
     </div>
     <div class="panel-body">
+    	<div class="row text-center text-warning">
+	            <div id = "replication_factor_change" class="col col-sm-4">
+	                {{replication_factor_change}}
+	            </div>
+	            <div id = "dfs_blocksize_change" class="col col-sm-4">
+	                {{dfs_blocksize_change}}
+	            </div>
+	            <div class="col col-sm-4"></div>
+        	</div>
     	<div class="row">
 	    	<div class="col col-sm-4 text-left">
 	            <div class="form-horizontal">
@@ -320,7 +330,7 @@
 			<div class="col col-sm-4 text-left">
 	            <div class="form-horizontal">
 	                <div class="form-group">
-	                    <label for="dfs_blocksize" class="control-label col-sm-7">Hdfs blocksize in MB</label>
+	                    <label for="dfs_blocksize" class="control-label col-sm-7">HDFS blocksize in MB</label>
 	                    <div class="col col-sm-5">
 	                        {{view Ember.TextField valueBinding="dfs_blocksize"
 	                        id="dfs_blocksize" class="input-sm form-control"
@@ -329,23 +339,23 @@
 	                </div>
 				</div>
 			</div>
-			<div class="col col-sm-4 text-left">
+			<div class="col col-sm-1"></div>
+			<div class="col col-sm-3 text-left">
 				<button class="btn btn-primary btn-sm" id = id_hdfs_configuration {{action "default_hdfs_configuration"}} >
 					Default HDFS Configuration
 				</button>
 			</div>
 		</div>
 		<div class="row text-center text-danger">
-            <div id = "alert_mes_replication_factor" class="col col-sm-5">
+            <div id = "alert_mes_replication_factor" class="col col-sm-4">
                 {{alert_mes_replication_factor}}
             </div>
-            <div id = "alert_mes_dfs_blocksize" class="col col-sm-5">
+            <div id = "alert_mes_dfs_blocksize" class="col col-sm-4">
                 {{alert_mes_dfs_blocksize}}
             </div>
+            <div class="col col-sm-4"></div>
         </div>
-	</div>
-    	
-    </div>
+	</div>   	
 </div>
 
 <div class="row">

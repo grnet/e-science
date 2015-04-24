@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-This script is a test for cluster creation via GUI end to end with celery
+This script is a test for cluster management via GUI end to end with celery
 
 @author: Ioannis Stenos, Nick Vrionis
 '''
@@ -106,10 +106,6 @@ class test_hdfs_configuration_dfs_blocksize(unittest.TestCase):
             for flavor in ['cpus' , 'ram' , 'disk']:
                 button_id = role + '_' + flavor + '_' + str(kamaki_flavors[flavor][0])
                 driver.find_element_by_id(button_id).click()
-        driver.find_element_by_id("dfs_blocksize").clear()
-        dfs_blocksize = '64'
-        driver.find_element_by_id("dfs_blocksize").send_keys(dfs_blocksize)
-        time.sleep(3)
         driver.find_element_by_id("next").click()
         print 'Creating cluster...'
         for i in range(1500): 
@@ -124,9 +120,11 @@ class test_hdfs_configuration_dfs_blocksize(unittest.TestCase):
                     pass
             except: pass
             time.sleep(1)
-        config_url = str(driver.find_element_by_id("id_ip_"+cluster_name).get_attribute("href"))
-        time.sleep(30)
-        driver.get(config_url)
+        driver.find_element_by_id('id_cluster_name_'+cluster_name).click()
+        time.sleep(10)
+        driver.find_element_by_link_text("Info").click()
+        try: self.assertEqual("2", driver.find_element_by_xpath("//div[@id='Info']/table[2]/tbody/tr/td[2]").text)
+        except AssertionError as e: self.verificationErrors.append(str(e))
         #check that cluster url is up and page is running
         try: self.assertTrue(True, 'Check ok')
         except AssertionError as e: self.verificationErrors.append(str(e))
