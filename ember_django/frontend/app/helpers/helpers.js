@@ -13,3 +13,11 @@ Ember.Handlebars.helper('formatDate', function(date, options) {
   }
   return new Ember.Handlebars.SafeString(moment(date).format(DateFormats[format]));
 });
+
+// if equal helper
+// checks equality of two arguments
+Ember.Handlebars.registerHelper('ifeq', function(a, b, options) {
+  return Ember.Handlebars.bind.call(options.contexts[0], a, options, true, function(result) {
+    return result === b;
+  });
+});

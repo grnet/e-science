@@ -14,4 +14,6 @@ App.Clusterchoice = DS.Model.extend({
 	disk_template : attr('string'),		// disk template
 	os_choice : attr('string'),			// operating system
 	ssh_key_selection : attr('string'),	// ssh_key_name
+	replication_factor : attr('string'), // hdfs replication factor
+	dfs_blocksize : attr('string'),    // hdfs blocksize
 });

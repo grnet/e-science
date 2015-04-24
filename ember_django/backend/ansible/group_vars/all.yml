@@ -6,12 +6,14 @@
   create_orka_admin: False
   
   # Hadoop-yarn variables
+  path_to_common_libs: /usr/local/hadoop/share/hadoop/common
+  path_to_hdfs_libs: /usr/local/hadoop/share/hadoop/hdfs/lib
   hadoopuser_path: /home/hduser
   start_yarn: False
   is_master: False
   is_slave: False
-  token: placeholder
   dfs_replication: 2
+  dfs_blocksize: 128m
   filename: /home/hduser/.ssh/id_rsa
   etchosts_filename: /etc/hosts_2 
   yarn_common_url: http://archive.apache.org/dist/hadoop/common

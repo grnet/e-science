@@ -108,6 +108,7 @@ class test_hadoop_start_action(unittest.TestCase):
                 button_id = role + '_' + flavor + '_' + str(kamaki_flavors[flavor][0])
                 driver.find_element_by_id(button_id).click()
         self.assert_(True , 'ok')
+        time.sleep(5)
         driver.find_element_by_id("next").click()
         print 'Creating cluster...'
         for i in range(1500): 

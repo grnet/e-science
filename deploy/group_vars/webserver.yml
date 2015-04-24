@@ -21,7 +21,8 @@
  my_project_dir: "{{user_home}}/projects"
  my_project_name: e-science
  ember_django_dir: ember_django
- settings_path: "{{my_project_dir}}/{{my_project_name}}/{{ember_django_dir}}/backend/"
+ settings_path: "{{my_project_dir}}/{{my_project_name}}/{{ember_django_dir}}/backend"
+ path_to_java_dirs: "{{my_project_dir}}/{{my_project_name}}/pithosfs/java"
  orka_version: orka-0.1.1
 
  # Paths for project
