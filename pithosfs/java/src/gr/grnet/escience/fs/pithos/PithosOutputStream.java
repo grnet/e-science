@@ -18,6 +18,8 @@ import org.apache.hadoop.conf.Configuration;
  * Wraps OutputStream for streaming data into Pithos
  */
 public class PithosOutputStream extends OutputStream {
+	
+	private static String ERR_STREAM_CLOSED = "Stream closed";
 	/**
 	 * Hadoop configuration
 	 */
@@ -147,7 +149,7 @@ public class PithosOutputStream extends OutputStream {
 	public synchronized void write(int b) throws IOException {
 		util.dbgPrint("write(int)");
 		if (closed) {
-			throw new IOException("Stream closed");
+			throw new IOException(ERR_STREAM_CLOSED);
 		}
 
 		if ((bytesWrittenToBlock + pos == blockSize) || (pos >= bufferSize)) {
@@ -162,7 +164,7 @@ public class PithosOutputStream extends OutputStream {
 			throws IOException {
 		util.dbgPrint("write(byte, int, int)");
 		if (closed) {
-			throw new IOException("Stream closed");
+			throw new IOException(ERR_STREAM_CLOSED);
 		}
 		while (len > 0) {
 			int remaining = bufferSize - pos;
@@ -183,7 +185,7 @@ public class PithosOutputStream extends OutputStream {
 	public synchronized void flush() throws IOException {
 		util.dbgPrint("flush");
 		if (closed) {
-			throw new IOException("Stream closed");
+			throw new IOException(ERR_STREAM_CLOSED);
 		}
 
 		if (bytesWrittenToBlock + pos >= blockSize) {
