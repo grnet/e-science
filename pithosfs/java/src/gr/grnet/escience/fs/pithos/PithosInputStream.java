@@ -1,4 +1,5 @@
 package gr.grnet.escience.fs.pithos;
+
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,197 +24,199 @@ import org.apache.hadoop.fs.FileSystem;
  */
 public class PithosInputStream extends FSInputStream {
 
-	private int hadoopToPithosBlock = 0;
+    private int hadoopToPithosBlock = 0;
 
-	private boolean closed;
+    private boolean closed;
 
-	private long fileLength;
+    private long fileLength;
 
-	private long pos = 0;
+    private long pos = 0;
 
-	private File blockFile;
+    private File blockFile;
 
-	private DataInputStream blockStream;
+    private DataInputStream blockStream;
 
-	private String pithosContainer;
+    private String pithosContainer;
 
-	private String pithosObject;
+    private String pithosObject;
 
-	private long blockEnd = -1;
+    private long blockEnd = -1;
 
-	private FileSystem.Statistics stats;
+    private FileSystem.Statistics stats;
 
-	private static final Log LOG = LogFactory.getLog(FSInputStream.class
-			.getName());
+    private static final Log LOG = LogFactory.getLog(FSInputStream.class
+            .getName());
 
-	private static final long DEFAULT_BLOCK_SIZE = (long) 128 * 1024 * 1024;
-	
-	private long pithosContainerBlockSize = 0;
+    private static final long DEFAULT_BLOCK_SIZE = (long) 128 * 1024 * 1024;
 
-	public PithosInputStream() {
-	}
+    private long pithosContainerBlockSize = 0;
 
-	public PithosInputStream(String pithosContainer, String pithosObject) {
+    public PithosInputStream() {
+    }
 
-		// - Initialize local variables
-		this.pithosContainer = pithosContainer;
-		this.pithosObject = pithosObject;
-		this.pithosContainerBlockSize = PithosFileSystem.getHadoopPithosConnector()
-				.getPithosBlockDefaultSize(getRequestedContainer());
-		this.setHadoopToPithosBlock();
+    public PithosInputStream(String pithosContainer, String pithosObject) {
 
-		// - Get Object Length
-		this.fileLength = PithosFileSystem.getHadoopPithosConnector()
-				.getPithosObjectSize(getRequestedContainer(),
-						getRequestedObject());
-	}
+        // - Initialize local variables
+        this.pithosContainer = pithosContainer;
+        this.pithosObject = pithosObject;
+        this.pithosContainerBlockSize = PithosFileSystem
+                .getHadoopPithosConnector().getPithosBlockDefaultSize(
+                        getRequestedContainer());
+        this.setHadoopToPithosBlock();
 
-	private int getHadoopToPithosBlock() {
-		return hadoopToPithosBlock;
-	}
-	
-	private long getPithosContainerBlockSize(){
-		return pithosContainerBlockSize;
-	}
+        // - Get Object Length
+        this.fileLength = PithosFileSystem.getHadoopPithosConnector()
+                .getPithosObjectSize(getRequestedContainer(),
+                        getRequestedObject());
+    }
 
-	private void setHadoopToPithosBlock() {
-		Configuration conf = new Configuration();
+    private int getHadoopToPithosBlock() {
+        return hadoopToPithosBlock;
+    }
 
-		this.hadoopToPithosBlock = (int) (conf.getLongBytes("dfs.blocksize",
-				DEFAULT_BLOCK_SIZE) / getPithosContainerBlockSize() );
+    private long getPithosContainerBlockSize() {
+        return pithosContainerBlockSize;
+    }
 
-	}
-	
-	private String getRequestedContainer() {
-		return pithosContainer;
-	}
+    private void setHadoopToPithosBlock() {
+        Configuration conf = new Configuration();
 
-	private String getRequestedObject() {
-		return pithosObject;
-	}
+        this.hadoopToPithosBlock = (int) (conf.getLongBytes("dfs.blocksize",
+                DEFAULT_BLOCK_SIZE) / getPithosContainerBlockSize());
 
-	private synchronized void blockSeekTo(long target) throws IOException {
+    }
 
-		long targetBlockEnd = 0;
+    private String getRequestedContainer() {
+        return pithosContainer;
+    }
 
-		long sizeOfPithosBlocksToRead = getHadoopToPithosBlock()*getPithosContainerBlockSize();
+    private String getRequestedObject() {
+        return pithosObject;
+    }
 
-		if (target + sizeOfPithosBlocksToRead <= fileLength ){
-			targetBlockEnd = target + sizeOfPithosBlocksToRead -1;
-		}
-		else{		
-			targetBlockEnd = fileLength - 1;
-		}
-		
-		this.blockFile = PithosFileSystem.getHadoopPithosConnector()
-				.retrievePithosBlocks(getRequestedContainer(), getRequestedObject(), target, targetBlockEnd);		
-		this.pos = target;
-		this.blockEnd = targetBlockEnd;
-		this.blockStream = new DataInputStream(new FileInputStream(blockFile));
+    private synchronized void blockSeekTo(long target) throws IOException {
 
-	}
+        long targetBlockEnd = 0;
 
-	@Override
-	public synchronized long getPos() throws IOException {
-		return pos;
-	}
+        long sizeOfPithosBlocksToRead = getHadoopToPithosBlock()
+                * getPithosContainerBlockSize();
 
-	@Override
-	public synchronized int available() throws IOException {
-		return (int) (fileLength - pos);
-	}
+        if (target + sizeOfPithosBlocksToRead <= fileLength) {
+            targetBlockEnd = target + sizeOfPithosBlocksToRead - 1;
+        } else {
+            targetBlockEnd = fileLength - 1;
+        }
 
-	@Override
-	public synchronized void seek(long targetPos) throws IOException {
-		if (targetPos > fileLength) {
-			throw new IOException("Cannot seek after EOF");
-		}
-		pos = targetPos;
-		blockEnd = -1;
-	}
+        this.blockFile = PithosFileSystem.getHadoopPithosConnector()
+                .retrievePithosBlocks(getRequestedContainer(),
+                        getRequestedObject(), target, targetBlockEnd);
+        this.pos = target;
+        this.blockEnd = targetBlockEnd;
+        this.blockStream = new DataInputStream(new FileInputStream(blockFile));
 
-	@Override
-	public synchronized boolean seekToNewSource(long targetPos)
-			throws IOException {
-		return false;
-	}
+    }
 
-	@Override
-	public synchronized int read() throws IOException {
-		if (closed) {
-			throw new IOException("Stream closed");
-		}
-		int result = -1;
-		if (pos < fileLength) {
-			if (pos > blockEnd) {
-				blockSeekTo(pos);
-			}
-			result = blockStream.read();
-			if (result >= 0) {
-				pos++;
-			}
-		}
-		if (stats != null && result >= 0) {
-			stats.incrementBytesRead(1);
-		}
-		return result;
-	}
+    @Override
+    public synchronized long getPos() throws IOException {
+        return pos;
+    }
 
-	@Override
-	public synchronized int read(byte[] buf, int off, int len)
-			throws IOException {
-		if (closed) {
-			throw new IOException("Stream closed");
-		}
-		if (pos < fileLength) {
-			if (pos > blockEnd) {
-				blockSeekTo(pos);
-			}
-			int realLen = (int) Math.min(len, blockEnd - pos + 1L);
-			int result = blockStream.read(buf, off, realLen);
-			if (result >= 0) {
-				pos += result;
-			}
-			if (stats != null && result > 0) {
-				stats.incrementBytesRead(result);
-			}
-			return result;
-		}
-		return -1;
-	}
+    @Override
+    public synchronized int available() throws IOException {
+        return (int) (fileLength - pos);
+    }
 
-	@Override
-	public void close() throws IOException {
-		if (closed) {
-			return;
-		}
-		if (blockStream != null) {
-			blockStream.close();
-			blockStream = null;
-		}
-		if (blockFile != null) {
-			boolean b = blockFile.delete();
-			if (!b) {
-				LOG.warn("Ignoring failed delete");
-			}
-		}
-		super.close();
-		closed = true;
-	}
+    @Override
+    public synchronized void seek(long targetPos) throws IOException {
+        if (targetPos > fileLength) {
+            throw new IOException("Cannot seek after EOF");
+        }
+        pos = targetPos;
+        blockEnd = -1;
+    }
 
-	@Override
-	public boolean markSupported() {
-		return false;
-	}
+    @Override
+    public synchronized boolean seekToNewSource(long targetPos)
+            throws IOException {
+        return false;
+    }
 
-	@Override
-	public void mark(int readLimit) {
-		// Do nothing
-	}
+    @Override
+    public synchronized int read() throws IOException {
+        if (closed) {
+            throw new IOException("Stream closed");
+        }
+        int result = -1;
+        if (pos < fileLength) {
+            if (pos > blockEnd) {
+                blockSeekTo(pos);
+            }
+            result = blockStream.read();
+            if (result >= 0) {
+                pos++;
+            }
+        }
+        if (stats != null && result >= 0) {
+            stats.incrementBytesRead(1);
+        }
+        return result;
+    }
 
-	@Override
-	public void reset() throws IOException {
-		throw new IOException("Mark not supported");
-	}
+    @Override
+    public synchronized int read(byte[] buf, int off, int len)
+            throws IOException {
+        if (closed) {
+            throw new IOException("Stream closed");
+        }
+        if (pos < fileLength) {
+            if (pos > blockEnd) {
+                blockSeekTo(pos);
+            }
+            int realLen = (int) Math.min(len, blockEnd - pos + 1L);
+            int result = blockStream.read(buf, off, realLen);
+            if (result >= 0) {
+                pos += result;
+            }
+            if (stats != null && result > 0) {
+                stats.incrementBytesRead(result);
+            }
+            return result;
+        }
+        return -1;
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (closed) {
+            return;
+        }
+        if (blockStream != null) {
+            blockStream.close();
+            blockStream = null;
+        }
+        if (blockFile != null) {
+            boolean b = blockFile.delete();
+            if (!b) {
+                LOG.warn("Ignoring failed delete");
+            }
+        }
+        super.close();
+        closed = true;
+    }
+
+    @Override
+    public boolean markSupported() {
+        return false;
+    }
+
+    @Override
+    public void mark(int readLimit) {
+        // Do nothing
+    }
+
+    @Override
+    public void reset() throws IOException {
+        throw new IOException("Mark not supported");
+    }
 
 }
