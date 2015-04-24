@@ -10,8 +10,6 @@ import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
-
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,10 +51,15 @@ public class TestPithosRestClient {
 		System.out.println("GET CONTAINER INFO");
 		System.out
 				.println("---------------------------------------------------------------------");
+		try {
 		pithosResponse = hdconnector.getContainerInfo(PITHOS_CONTAINER);
 		System.out.println(pithosResponse.toString());
 		System.out
 				.println("---------------------------------------------------------------------\n");
+		}
+		catch (IOException e){
+			utils.dbgPrint(e.getMessage());
+		}
 	}
 
 	@Test
@@ -74,9 +77,14 @@ public class TestPithosRestClient {
 		}
 		System.out
 				.println("---------------------------------------------------------------------");
+		try{
 		System.out.println(hdconnector.getFileList(PITHOS_CONTAINER));
 		System.out
 				.println("---------------------------------------------------------------------\n");
+	}
+		catch (IOException e){
+			utils.dbgPrint(e.getMessage());
+		}
 	}
 
 	@Test
@@ -155,12 +163,17 @@ public class TestPithosRestClient {
 				.println("GET PITHOS CONTAINER BLOCK DEFAULT SIZE: [CONTAINER:<pithos>]");
 		System.out
 				.println("---------------------------------------------------------------------");
+		try{
 		long blocksDefaultSize = hdconnector
 				.getPithosBlockDefaultSize(PITHOS_CONTAINER);
 		System.out.println("Container block defaut size: " + blocksDefaultSize
 				+ " Bytes");
 		System.out
 				.println("---------------------------------------------------------------------\n");
+	}
+		catch (IOException e){
+			utils.dbgPrint(e.getMessage());
+		}
 	}
 
 	@Test

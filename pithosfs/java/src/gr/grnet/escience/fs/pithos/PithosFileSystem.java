@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -49,7 +50,8 @@ public class PithosFileSystem extends FileSystem {
 	private boolean isDir = false;
 	private long length = 0;
 	private PithosFileStatus pithosFileStatus;
-	private static final Log LOG = LogFactory.getLog(PithosFileSystem.class);
+	private static final Log LOG = LogFactory.getLog(FileSystem.class);
+	//private static final Logger LOG = Logger.getLogger("");
 	private final Utils util = new Utils();
 
 	public PithosFileSystem() {
@@ -164,8 +166,16 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	public boolean containerExistance(String container) {
-		PithosResponse containerInfo = getHadoopPithosConnector()
+		
+		PithosResponse containerInfo = null;
+		try{
+		containerInfo = getHadoopPithosConnector()
 				.getContainerInfo(container);
+		}
+		catch (IOException e){
+			LOG.error(e.getMessage(), e);
+			return false;
+		}
 		if (containerInfo.toString().contains("HTTP/1.1 404 NOT FOUND")) {
 			return false;
 		} else {
@@ -321,10 +331,12 @@ public class PithosFileSystem extends FileSystem {
 		String hashAlgo = "SHA-256";
 		try {
 			out = util.computeHash("Lorem ipsum dolor sit amet.", hashAlgo);
+			LOG.info("hadoop");
 		} catch (NoSuchAlgorithmException e) {
-			util.dbgPrint("invalid hash algorithm:" + hashAlgo);
+			LOG.error("invalid hash algorithm:" + hashAlgo, e);
+
 		} catch (UnsupportedEncodingException e) {
-			util.dbgPrint("invalid encoding");
+			LOG.error("invalid encoding", e);
 		}
 		util.dbgPrint("Pithos FileSystem Connector loaded.");
 		util.dbgPrint("Hash Test:", out);

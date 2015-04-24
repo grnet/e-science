@@ -149,7 +149,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	 * (PITHOS --> HADOOP): GET / STREAM DATA FROM PITHOS
 	 ********************************************************/
 	@Override
-	public PithosResponse getContainerInfo(String pithos_container) {
+	public PithosResponse getContainerInfo(String pithosContainer) throws IOException {
 		// - Create Pithos request
 		setPithosRequest(new PithosRequest());
 
@@ -157,32 +157,29 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 		setPithosResponse(new PithosResponse());
 
 		// - Read meta-data and add the data on the Pithos Response
-		try {
 			// - If container argument is empty the initialize it with the
 			// default value
-			if (pithos_container.equals("")) {
-				pithos_container = "pithos";
+			if (pithosContainer.equals("")) {
+				pithosContainer = "pithos";
 			}
 
 			// - Perform action by using Pithos REST API method
 			Map<String, List<String>> response_data = retrieve_container_info(
-					pithos_container,
+					pithosContainer,
 					getPithosRequest().getRequestParameters(),
 					getPithosRequest().getRequestHeaders());
 
 			// - Add data from pithos response on the corresponding java object
 			getPithosResponse().setResponseData(response_data);
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	
 
 		// - Return the response data as String
 		return getPithosResponse();
 	}
 
 	@Override
-	public String getFileList(String pithos_container) {
+	public String getFileList(String pithosContainer) throws IOException  {
 		// - Create Pithos request
 		setPithosRequest(new PithosRequest());
 
@@ -190,17 +187,13 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 		setPithosResponse(new PithosResponse());
 		String response_data = "";
 		// - Read meta-data and add the data on the Pithos Response
-		try {
 			// - Perform action by using Pithos REST API method
-			response_data = list_container_objects(pithos_container,
+			response_data = list_container_objects(pithosContainer,
 					getPithosRequest().getRequestParameters(),
 					getPithosRequest().getRequestHeaders());
 			// - Return the response data as String
 			return response_data;
-		} catch (IOException e) {
-			// - Return the exception message as String
-			return PithosSerializer.exceptionToString(e);
-		}
+		
 	}
 
 	@Override
@@ -449,7 +442,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public long getPithosBlockDefaultSize(String pithos_container) {
+	public long getPithosBlockDefaultSize(String pithos_container) throws IOException {
 		// - Create response object
 		PithosResponse resp = (new Gson()).fromJson(
 				(new Gson()).toJson(getContainerInfo(pithos_container)),
@@ -462,7 +455,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	}
 
 	@Override
-	public String getPithosContainerHashAlgorithm(String pithos_container) {
+	public String getPithosContainerHashAlgorithm(String pithos_container) throws IOException {
 		// - Create response object
 		PithosResponse resp = (new Gson()).fromJson(
 				(new Gson()).toJson(getContainerInfo(pithos_container)),
@@ -652,7 +645,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
 	@Override
 	public boolean pithosObjectExists(String pithos_container,
-			String pithos_object_name) {
+			String pithos_object_name) throws IOException {
 
 		if (getFileList(pithos_container).contains("pithos_object_name")) {
 			return true;
@@ -676,8 +669,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 	 * (HADOOP --> PITHOS): POST/PUT STREAM DATA TO PITHOS
 	 ********************************************************/
 	@Override
-	public String storePithosObject(String pithos_container, PithosObject pithos_object) {
-		try {
+	public String storePithosObject(String pithos_container, PithosObject pithos_object) throws IOException {
 			// - Create Pithos request
 			setPithosRequest(new PithosRequest());
 
@@ -720,14 +712,11 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 				return "ERROR: Object <" + pithos_object.getName()
 						+ "> already exists.";
 			}
-		} catch (IOException e) {
-			return PithosSerializer.exceptionToString(e);
-		}
-	}
+		} 
 
 	@Override
 	public String createEmptyPithosObject(String pithos_container,
-			PithosObject pithos_object) {
+			PithosObject pithos_object) throws IOException {
 		// - Create Pithos request
 		setPithosRequest(new PithosRequest());
 
@@ -769,10 +758,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 			} else {
 				return responseStr;
 			}
-		} catch (IOException e) {
-			// - Return the exception message as String
-			return PithosSerializer.exceptionToString(e);
-		} finally {
+		}  finally {
 			if (temp != null) {
 				temp.delete();
 			}
@@ -784,7 +770,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
 	@Override
 	public String movePithosObjectToFolder(String pithos_container,
-			String target_object, String target_folder_path) {
+			String target_object, String target_folder_path) throws IOException {
 		// - Create Pithos request
 		setPithosRequest(new PithosRequest());
 
@@ -798,23 +784,16 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 				target_folder_path = target_folder_path.concat("/");
 			}
 		}
-
-		try {
 			// - Post data and get the response
 			return move_object(pithos_container, target_object,
 					pithos_container, target_folder_path.concat(target_object),
 					getPithosRequest().getRequestParameters(),
 					getPithosRequest().getRequestHeaders());
 
-		} catch (IOException e) {
-			// - Return the exception message as String
-			return PithosSerializer.exceptionToString(e);
-		}
-
 	}
 
 	@Override
-	public String uploadFileToPithos(String pithos_container, String source_file) {
+	public String uploadFileToPithos(String pithos_container, String source_file) throws IOException {
 		// - Create Pithos request
 		setPithosRequest(new PithosRequest());
 
@@ -822,8 +801,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 		// - Format of the uploaded file
 		getPithosRequest().getRequestHeaders()
 				.put("Content-Type", "text/plain");
-
-		try {
 			// - Convert hadoop output file to java file that is compatible with
 			// Pithos
 			srcFile2bUploaded = new File(source_file);
@@ -834,16 +811,13 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 			return upload_file(srcFile2bUploaded, null, pithos_container,
 					getPithosRequest().getRequestParameters(),
 					getPithosRequest().getRequestHeaders());
-		} catch (IOException e) {
-			// - Return the exception message as String
-			return PithosSerializer.exceptionToString(e);
-		}
+		
 
 	}
 
 	@Override
 	public String appendPithosBlock(String pithos_container,
-			String target_object, PithosBlock newPithosBlock) {
+			String target_object, PithosBlock newPithosBlock) throws IOException {
 
 		// - Create Pithos request
 		setPithosRequest(new PithosRequest());
@@ -857,17 +831,11 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
 		getPithosRequest().getRequestHeaders()
 				.put("Content-Range", "bytes */*");
-
-		try {
 			return update_append_truncate_object(pithos_container,
 					target_object, new String(newPithosBlock.getBlockData()),
 					getPithosRequest().getRequestParameters(),
 					getPithosRequest().getRequestHeaders());
-		} catch (IOException e) {
-			// - Return the exception message as String
-			return PithosSerializer.exceptionToString(e);
-		}
-
+		
 	}
 
 	@Override

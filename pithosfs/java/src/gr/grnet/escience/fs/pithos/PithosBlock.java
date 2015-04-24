@@ -5,10 +5,10 @@ public class PithosBlock {
 	private long blockLength;
 	private byte[] blockData;
 
-	public PithosBlock(String _blockHash, long _blockLength, byte[] _blockData) {
-		this.blockHash = _blockHash;
-		this.blockLength = _blockLength;
-		this.blockData = _blockData;
+	public PithosBlock(String blockHash, long blockLength, byte[] blockData) {
+		this.blockHash = blockHash;
+		this.blockLength = blockLength;
+		this.blockData = blockData;
 	}
 
 	public String getBlockHash() {

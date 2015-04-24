@@ -31,7 +31,7 @@ public class PithosRESTAPI implements Serializable {
 
 	private String url = "";
 	private String X_Auth_Token = "";
-	private HttpURLConnection con = null;
+	private transient HttpURLConnection con = null;
 	private String username = "";
 
 	public PithosRESTAPI(String url, String X_Auth_Token, String username) {
@@ -92,7 +92,7 @@ public class PithosRESTAPI implements Serializable {
 	 * @param properties
 	 *            The various URL properties.
 	 */
-	private void setUrl(String url, HashMap<String, String> properties) {
+	private void setUrl(String url, HashMap<String, String> properties) throws MalformedURLException, IOException {
 
 		if (!properties.isEmpty()) {
 			Iterator<String> keys = properties.keySet().iterator();
@@ -106,18 +106,10 @@ public class PithosRESTAPI implements Serializable {
 			}
 		}
 
-		try {
-			URL url2 = new URL(url);
+		URL url2 = new URL(url);
 
-			this.setConnection((HttpURLConnection) url2.openConnection());
+		this.setConnection((HttpURLConnection) url2.openConnection());
 
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			System.err.println("Error-->Malformed URL...");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			System.err.println("Error-->Invalid Input for connection...");
-		}
 	}
 
 	/**
@@ -189,7 +181,7 @@ public class PithosRESTAPI implements Serializable {
 	 */
 	private void configureConnection(String url, String method,
 			HashMap<String, String> properties, HashMap<String, String> headers)
-			throws ProtocolException {
+			throws ProtocolException, IOException {
 		//
 		// if (this.getConnection() != null) {
 		// System.out.println("Closing connection");
@@ -1003,16 +995,8 @@ public class PithosRESTAPI implements Serializable {
 					}
 
 					if (outputStream != null) {
-						try {
-
-							outputStream.close();
-
-						} catch (IOException e) {
-							e.printStackTrace();
-							return null;
+                         outputStream.close();
 						}
-
-					}
 
 				}
 				System.out.println(getConnection().getHeaderFields());

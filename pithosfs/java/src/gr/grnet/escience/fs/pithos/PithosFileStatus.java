@@ -14,8 +14,8 @@ public class PithosFileStatus extends FileStatus {
 	}
 
 	// Files
-	public PithosFileStatus(long length, long blockSize, long modification_time, Path path) {
-		super(length, false, 1, blockSize, modification_time, path);
+	public PithosFileStatus(long length, long blockSize, long modificationTime, Path path) {
+		super(length, false, 1, blockSize, modificationTime, path);
 		isEmptyDirectory = false;
 	}
 
