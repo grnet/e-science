@@ -39,15 +39,15 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 		PithosSystemStore {
 
 	private static final long serialVersionUID = 1L;
-	private PithosRequest request;
-	private PithosResponse response;
+	private transient PithosRequest request;
+	private transient PithosResponse response;
 	private File srcFile2bUploaded;
 	private File temp;
 	private File block_data;
-	private InputStream pithosFileInputStream;
+	private transient InputStream pithosFileInputStream;
 	private String objectDataContent;
 	private String responseStr;
-	private PithosPath path;
+	private transient PithosPath path;
 	private static final Utils util = new Utils();
 
 	/********************************************************

@@ -35,7 +35,7 @@ import gr.grnet.escience.commons.Utils;
 public class PithosObject implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	private PithosBlock[] objectBlocks;
+	private transient PithosBlock[] objectBlocks;
 	private String objectName;
 	private long totalSize = -1;
 	private static final Utils util = new Utils();
