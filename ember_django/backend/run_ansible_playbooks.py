@@ -9,7 +9,7 @@ This script installs and configures a Hadoop-Yarn cluster using Ansible.
 import os
 from os.path import dirname, abspath, isfile
 import logging
-from backend.models import ClusterInfo
+from backend.models import ClusterInfo, UserInfo
 from django_db_after_login import db_hadoop_update
 from celery import current_task
 from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS
@@ -22,10 +22,10 @@ playbook = 'site.yml'
 ansible_playbook = dirname(abspath(__file__)) + '/ansible/' + playbook
 ansible_hosts_prefix = 'ansible_hosts_'
 ansible_verbosity = ' -vvvv'
+XML_FILE = '/home/developer/workspace/hdfs-site.xml'
 
 
-
-def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_file):
+def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_file, replication_factor, dfs_blocksize):
     """
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn.
@@ -40,7 +40,8 @@ def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_f
         hosts_filename = create_ansible_hosts(cluster_name, list_of_hosts,
                                          hostname_master)
         # Run Ansible playbook
-        ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, token)
+        ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, token, replication_factor,
+                               dfs_blocksize)
         # Format and start Hadoop cluster
         set_cluster_state(token, cluster_id,
                           ' Yarn Cluster is active', status='Active',
@@ -116,7 +117,8 @@ def ansible_manage_cluster(cluster_id, action):
         raise RuntimeError(msg)
 
 
-def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, token):
+def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, token, replication_factor,
+                           dfs_blocksize):
     """
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
@@ -133,11 +135,11 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
     ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
     # find ansible playbook (site.yml)
-
-
+    uuid = UserInfo.objects.get(okeanos_token=token).uuid
     # Create command that executes ansible playbook
-    ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -f '\
-                   + str(cluster_size) + ' -e "choose_role=yarn ssh_file_name=' + ssh_file + ' token=' + token
+    ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
+    '-f {0} -e "choose_role=yarn ssh_file_name={1} token={2} '.format(str(cluster_size), ssh_file, token) + \
+    'dfs_blocksize={0}m dfs_replication={1} uuid={2}'.format(dfs_blocksize, replication_factor, uuid)
 
     # hadoop_image flag(true/false)
     if hadoop_image:
@@ -146,6 +148,7 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     else:
         # false -> use a bare VM
         ansible_code += '"' + ansible_log
+
     # Execute ansible
     execute_ansible_playbook(ansible_code)
 
