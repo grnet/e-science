@@ -98,7 +98,9 @@ def db_cluster_create(choices, task_id):
                     project_name=choices['project_name'],
                     task_id=task_id,
                     state='Authenticated',
-                    hadoop_status=const_hadoop_status_stopped)
+                    hadoop_status=const_hadoop_status_stopped,
+                    replication_factor= choices['replication_factor'],
+                    dfs_blocksize=choices['dfs_blocksize'])
 
     return new_cluster.id
 
