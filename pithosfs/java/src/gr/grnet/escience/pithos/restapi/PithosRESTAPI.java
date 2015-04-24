@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import gr.grnet.escience.commons.Utils;
 
 /**
  * @author kostas vogias
@@ -33,6 +34,7 @@ public class PithosRESTAPI implements Serializable {
 	private String X_Auth_Token = "";
 	private transient HttpURLConnection con = null;
 	private String username = "";
+	private static final Utils util = new Utils();
 
 	public PithosRESTAPI(String url, String X_Auth_Token, String username) {
 		this.url = url;
@@ -92,7 +94,7 @@ public class PithosRESTAPI implements Serializable {
 	 * @param properties
 	 *            The various URL properties.
 	 */
-	private void setUrl(String url, HashMap<String, String> properties) throws MalformedURLException, IOException {
+	private void setUrl(String url, HashMap<String, String> properties) {
 
 		if (!properties.isEmpty()) {
 			Iterator<String> keys = properties.keySet().iterator();
@@ -106,10 +108,18 @@ public class PithosRESTAPI implements Serializable {
 			}
 		}
 
-		URL url2 = new URL(url);
+		try {
+			URL url2 = new URL(url);
 
-		this.setConnection((HttpURLConnection) url2.openConnection());
+			this.setConnection((HttpURLConnection) url2.openConnection());
 
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			util.dbgPrint("Error-->Malformed URL...", e);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			util.dbgPrint("Error-->Invalid Input for connection...", e);
+		}
 	}
 
 	/**
@@ -181,7 +191,7 @@ public class PithosRESTAPI implements Serializable {
 	 */
 	private void configureConnection(String url, String method,
 			HashMap<String, String> properties, HashMap<String, String> headers)
-			throws ProtocolException, IOException {
+			throws ProtocolException {
 		//
 		// if (this.getConnection() != null) {
 		// System.out.println("Closing connection");
@@ -995,8 +1005,16 @@ public class PithosRESTAPI implements Serializable {
 					}
 
 					if (outputStream != null) {
-                         outputStream.close();
+						try {
+
+							outputStream.close();
+
+						} catch (IOException e) {
+							util.dbgPrint(e.getMessage(), e);
+							return null;
 						}
+
+					}
 
 				}
 				System.out.println(getConnection().getHeaderFields());

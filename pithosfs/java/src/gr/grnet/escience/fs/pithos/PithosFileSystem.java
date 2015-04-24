@@ -12,10 +12,7 @@ import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -40,7 +37,7 @@ public class PithosFileSystem extends FileSystem {
 
 	private URI uri;
 	private static HadoopPithosConnector hadoopPithosConnector;
-	private static long defaultBlockSize = 128 * 1024 * 1024;
+	private static long defaultBlockSize = (long)128 * 1024 * 1024;
 	private Path workingDir;
 	private String pathToString;
 	private PithosPath pithosPath;
@@ -50,8 +47,6 @@ public class PithosFileSystem extends FileSystem {
 	private boolean isDir = false;
 	private long length = 0;
 	private PithosFileStatus pithosFileStatus;
-	private static final Log LOG = LogFactory.getLog(FileSystem.class);
-	//private static final Logger LOG = Logger.getLogger("");
 	private final Utils util = new Utils();
 
 	public PithosFileSystem() {
@@ -59,8 +54,7 @@ public class PithosFileSystem extends FileSystem {
 
 	private String getConfig(String param) {
 		Configuration conf = new Configuration();
-		String result = conf.get(param);
-		return result;
+		return conf.get(param);
 	}
 
 	/**
@@ -166,16 +160,8 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	public boolean containerExistance(String container) {
-		
-		PithosResponse containerInfo = null;
-		try{
-		containerInfo = getHadoopPithosConnector()
+		PithosResponse containerInfo = getHadoopPithosConnector()
 				.getContainerInfo(container);
-		}
-		catch (IOException e){
-			LOG.error(e.getMessage(), e);
-			return false;
-		}
 		if (containerInfo.toString().contains("HTTP/1.1 404 NOT FOUND")) {
 			return false;
 		} else {
@@ -264,13 +250,13 @@ public class PithosFileSystem extends FileSystem {
 		final List<FileStatus> result = new ArrayList<FileStatus>();
 		FileStatus fileStatus;
 
-		String files[] = getHadoopPithosConnector().getFileList(
+		String[] files = getHadoopPithosConnector().getFileList(
 				pithosPath.getContainer()).split("\\r?\\n");
 		// - Iterate on available files in the container
 		for (int i = 0; i < files.length; i++) {
 			String file = files[i].substring(files[i].lastIndexOf("/") + 1);
 			files[i] = files[i].substring(0,
-					(files[i].length() - file.length()));
+					files[i].length() - file.length());
 			if ((filename + "/").equals(files[i])) {
 				Path path = new Path("pithos://" + pithosPath.getContainer()
 						+ "/" + filename + "/" + file);
@@ -295,7 +281,7 @@ public class PithosFileSystem extends FileSystem {
 	}
 
 	@Override
-	public FSDataInputStream open(Path targetFile, int buffer_size)
+	public FSDataInputStream open(Path targetFile, int bufferSize)
 			throws IOException {
 		pithosPath = new PithosPath(targetFile);
 
@@ -331,12 +317,10 @@ public class PithosFileSystem extends FileSystem {
 		String hashAlgo = "SHA-256";
 		try {
 			out = util.computeHash("Lorem ipsum dolor sit amet.", hashAlgo);
-			LOG.info("hadoop");
 		} catch (NoSuchAlgorithmException e) {
-			LOG.error("invalid hash algorithm:" + hashAlgo, e);
-
+			util.dbgPrint("invalid hash algorithm:" + hashAlgo, e);
 		} catch (UnsupportedEncodingException e) {
-			LOG.error("invalid encoding", e);
+			util.dbgPrint("invalid encoding", e);
 		}
 		util.dbgPrint("Pithos FileSystem Connector loaded.");
 		util.dbgPrint("Hash Test:", out);

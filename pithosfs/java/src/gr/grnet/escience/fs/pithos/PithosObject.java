@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import gr.grnet.escience.commons.Utils;
 
 /**
  * PithosObject constructor
@@ -37,6 +38,7 @@ public class PithosObject implements Serializable {
 	private PithosBlock[] objectBlocks;
 	private String objectName;
 	private long totalSize = -1;
+	private static final Utils util = new Utils();
 
 	/** Create a Pithos Object **/
 	public PithosObject(String _name, PithosBlock[] _blocks) {
@@ -149,14 +151,14 @@ public class PithosObject implements Serializable {
 			input = new ObjectInputStream(buffer);
 			return (PithosObject) input.readObject();
 		} catch (ClassNotFoundException | IOException e) {
-			e.printStackTrace();
+			util.dbgPrint(e.getMessage(), e);
 			return null;
 		} finally {
 			try {
 				buffer.close();
 				input.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				util.dbgPrint(e.getMessage(), e);
 			}
 
 		}

@@ -58,13 +58,8 @@ public class PithosInputStream extends FSInputStream {
 		// - Initialize local variables
 		this.pithosContainer = pithosContainer;
 		this.pithosObject = pithosObject;
-		try{
 		this.pithosContainerBlockSize = PithosFileSystem.getHadoopPithosConnector()
 				.getPithosBlockDefaultSize(getRequestedContainer());
-		}
-		catch (IOException e){
-			LOG.error(e.getMessage(), e);
-		}
 		this.setHadoopToPithosBlock();
 
 		// - Get Object Length

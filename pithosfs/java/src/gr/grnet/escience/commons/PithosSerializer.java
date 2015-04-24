@@ -78,7 +78,7 @@ public class PithosSerializer {
 	 * Deserialize a byte array into File
 	 * 
 	 * @param data
-	 *            the byte array that should be desirialized int File
+	 *            the byte array that should be deserialized int File
 	 * @return return a File that actually constitutes the bytes that were
 	 *         deserialized
 	 */
