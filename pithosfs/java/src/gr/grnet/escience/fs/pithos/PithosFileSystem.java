@@ -12,8 +12,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -48,7 +46,6 @@ public class PithosFileSystem extends FileSystem {
     private boolean isDir = false;
     private long length = 0;
     private PithosFileStatus pithosFileStatus;
-    private static final Log LOG = LogFactory.getLog(PithosFileSystem.class);
     private final Utils util = new Utils();
 
     public PithosFileSystem() {

@@ -18,293 +18,292 @@ import org.apache.hadoop.conf.Configuration;
  * Wraps OutputStream for streaming data into Pithos
  */
 public class PithosOutputStream extends OutputStream {
-	
-	private static String ERR_STREAM_CLOSED = "Stream closed";
-	/**
-	 * Hadoop configuration
-	 */
-	private Configuration conf;
 
-	/**
-	 * buffer size
-	 */
-	private int bufferSize;
+    private static String ERR_STREAM_CLOSED = "Stream closed";
+    /**
+     * Hadoop configuration
+     */
+    private Configuration conf;
 
-	/**
-	 * Destination path
-	 */
-	private PithosPath pithosPath;
+    /**
+     * buffer size
+     */
+    private int bufferSize;
 
-	/**
-	 * size of block
-	 */
-	private long blockSize;
+    /**
+     * Destination path
+     */
+    private PithosPath pithosPath;
 
-	/**
-	 * backup where data is writing before streaming in pithos
-	 */
-	private File backupFile;
+    /**
+     * size of block
+     */
+    private long blockSize;
 
-	/**
-	 * output stream
-	 */
-	private OutputStream backupStream;
+    /**
+     * backup where data is writing before streaming in pithos
+     */
+    private File backupFile;
 
-	/**
-	 * Utils instance
-	 */
-	private final Utils util = new Utils();
+    /**
+     * output stream
+     */
+    private OutputStream backupStream;
 
-	/**
-	 * instance of HadoopPithosConnector
-	 */
-	private HadoopPithosConnector hadoopConnector;
+    /**
+     * Utils instance
+     */
+    private final Utils util = new Utils();
 
-	/**
-	 * flag if stream closed
-	 */
-	private boolean closed;
+    /**
+     * instance of HadoopPithosConnector
+     */
+    private HadoopPithosConnector hadoopConnector;
 
-	/**
-	 * current position
-	 */
-	private int pos = 0;
+    /**
+     * flag if stream closed
+     */
+    private boolean closed;
 
-	/**
-	 * file position
-	 */
-	private long filePos = 0;
+    /**
+     * current position
+     */
+    private int pos = 0;
 
-	/**
-	 * written bytes
-	 */
-	private int bytesWrittenToBlock = 0;
+    /**
+     * file position
+     */
+    private long filePos = 0;
 
-	/**
-	 * output buffer
-	 */
-	private byte[] outBuf;
+    /**
+     * written bytes
+     */
+    private int bytesWrittenToBlock = 0;
 
-	/**
-	 * blocks of file
-	 */
-	private List<PithosBlock> blocks = new ArrayList<PithosBlock>();
+    /**
+     * output buffer
+     */
+    private byte[] outBuf;
 
-	/**
-	 * current block to store to pithos
-	 */
-	private PithosBlock nextBlock;
+    /**
+     * blocks of file
+     */
+    private List<PithosBlock> blocks = new ArrayList<PithosBlock>();
 
-	
-	/**
-	 * @param conf
-	 *            FS conf
-	 * @param path
-	 *            file path
-	 * @param blockSize
-	 *            size of block
-	 * @param buffersize
-	 *            size of buffer
-	 * @throws IOException
-	 */
-	public PithosOutputStream(Configuration conf, PithosPath path,
-			long blockSize, int buffersize) throws IOException {
-		this.conf = conf;
-		this.pithosPath = path;
-		this.blockSize = blockSize;
-		this.hadoopConnector = new HadoopPithosConnector(
-				conf.get("fs.pithos.url"), conf.get("auth.pithos.token"),
-				conf.get("auth.pithos.uuid"));
-		this.backupFile = newBackupFile();
-		this.backupStream = new FileOutputStream(backupFile);
-		this.bufferSize = buffersize;
-		this.outBuf = new byte[bufferSize];
-		util.dbgPrint("PithosOutputStream instantiated");
-	}
+    /**
+     * current block to store to pithos
+     */
+    private PithosBlock nextBlock;
 
-	/**
-	 * method for creating backup file of 4mb for buffering before streaming to
-	 * pithos
-	 * 
-	 * @return File
-	 * @throws IOException
-	 */
-	private File newBackupFile() throws IOException {
-		File dir = new File(conf.get("hadoop.tmp.dir"));
-		util.dbgPrint("newBackupFile >",dir);
-		if (!dir.exists() && !dir.mkdirs()) {
-			throw new IOException("Cannot create local pithos buffer directory: "
-					+ dir);
-		}
-		File result = File.createTempFile("output-", ".tmp", dir);
-		result.deleteOnExit();
-		return result;
-	}
+    /**
+     * @param conf
+     *            FS conf
+     * @param path
+     *            file path
+     * @param blockSize
+     *            size of block
+     * @param buffersize
+     *            size of buffer
+     * @throws IOException
+     */
+    public PithosOutputStream(Configuration conf, PithosPath path,
+            long blockSize, int buffersize) throws IOException {
+        this.conf = conf;
+        this.pithosPath = path;
+        this.blockSize = blockSize;
+        this.hadoopConnector = new HadoopPithosConnector(
+                conf.get("fs.pithos.url"), conf.get("auth.pithos.token"),
+                conf.get("auth.pithos.uuid"));
+        this.backupFile = newBackupFile();
+        this.backupStream = new FileOutputStream(backupFile);
+        this.bufferSize = buffersize;
+        this.outBuf = new byte[bufferSize];
+        util.dbgPrint("PithosOutputStream instantiated");
+    }
 
-	public long getPos() throws IOException {
-		return filePos;
-	}
+    /**
+     * method for creating backup file of 4mb for buffering before streaming to
+     * pithos
+     * 
+     * @return File
+     * @throws IOException
+     */
+    private File newBackupFile() throws IOException {
+        File dir = new File(conf.get("hadoop.tmp.dir"));
+        util.dbgPrint("newBackupFile >", dir);
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new IOException(
+                    "Cannot create local pithos buffer directory: " + dir);
+        }
+        File result = File.createTempFile("output-", ".tmp", dir);
+        result.deleteOnExit();
+        return result;
+    }
 
-	@Override
-	public synchronized void write(int b) throws IOException {
-		util.dbgPrint("write(int)");
-		if (closed) {
-			throw new IOException(ERR_STREAM_CLOSED);
-		}
+    public long getPos() throws IOException {
+        return filePos;
+    }
 
-		if ((bytesWrittenToBlock + pos == blockSize) || (pos >= bufferSize)) {
-			flush();
-		}
-		outBuf[pos++] = (byte) b;
-		filePos++;
-	}
+    @Override
+    public synchronized void write(int b) throws IOException {
+        util.dbgPrint("write(int)");
+        if (closed) {
+            throw new IOException(ERR_STREAM_CLOSED);
+        }
 
-	@Override
-	public synchronized void write(byte b[], int off, int len)
-			throws IOException {
-		util.dbgPrint("write(byte, int, int)");
-		if (closed) {
-			throw new IOException(ERR_STREAM_CLOSED);
-		}
-		while (len > 0) {
-			int remaining = bufferSize - pos;
-			int toWrite = Math.min(remaining, len);
-			System.arraycopy(b, off, outBuf, pos, toWrite);
-			pos += toWrite;
-			off += toWrite;
-			len -= toWrite;
-			filePos += toWrite;
+        if ((bytesWrittenToBlock + pos == blockSize) || (pos >= bufferSize)) {
+            flush();
+        }
+        outBuf[pos++] = (byte) b;
+        filePos++;
+    }
 
-			if ((bytesWrittenToBlock + pos >= blockSize) || (pos == bufferSize)) {
-				flush();
-			}
-		}
-	}
+    @Override
+    public synchronized void write(byte b[], int off, int len)
+            throws IOException {
+        util.dbgPrint("write(byte, int, int)");
+        if (closed) {
+            throw new IOException(ERR_STREAM_CLOSED);
+        }
+        while (len > 0) {
+            int remaining = bufferSize - pos;
+            int toWrite = Math.min(remaining, len);
+            System.arraycopy(b, off, outBuf, pos, toWrite);
+            pos += toWrite;
+            off += toWrite;
+            len -= toWrite;
+            filePos += toWrite;
 
-	@Override
-	public synchronized void flush() throws IOException {
-		util.dbgPrint("flush");
-		if (closed) {
-			throw new IOException(ERR_STREAM_CLOSED);
-		}
+            if ((bytesWrittenToBlock + pos >= blockSize) || (pos == bufferSize)) {
+                flush();
+            }
+        }
+    }
 
-		if (bytesWrittenToBlock + pos >= blockSize) {
-			flushData((int) blockSize - bytesWrittenToBlock);
-		}
-		if (bytesWrittenToBlock == blockSize) {
-			endBlock();
-		}
-		flushData(pos);
-	}
+    @Override
+    public synchronized void flush() throws IOException {
+        util.dbgPrint("flush");
+        if (closed) {
+            throw new IOException(ERR_STREAM_CLOSED);
+        }
 
-	/**
-	 * Flushes data to output buffer
-	 * 
-	 * @param maxPos
-	 *            position to which backup data
-	 * @throws IOException
-	 */
-	private synchronized void flushData(int maxPos) throws IOException {
-		util.dbgPrint("flushData");
-		int workingPos = Math.min(pos, maxPos);
+        if (bytesWrittenToBlock + pos >= blockSize) {
+            flushData((int) blockSize - bytesWrittenToBlock);
+        }
+        if (bytesWrittenToBlock == blockSize) {
+            endBlock();
+        }
+        flushData(pos);
+    }
 
-		if (workingPos > 0) {
-			//
-			// To the local block backup, write just the bytes
-			//
-			backupStream.write(outBuf, 0, workingPos);
+    /**
+     * Flushes data to output buffer
+     * 
+     * @param maxPos
+     *            position to which backup data
+     * @throws IOException
+     */
+    private synchronized void flushData(int maxPos) throws IOException {
+        util.dbgPrint("flushData");
+        int workingPos = Math.min(pos, maxPos);
 
-			//
-			// Track position
-			//
-			bytesWrittenToBlock += workingPos;
-			System.arraycopy(outBuf, workingPos, outBuf, 0, pos - workingPos);
-			pos -= workingPos;
-		}
-	}
+        if (workingPos > 0) {
+            //
+            // To the local block backup, write just the bytes
+            //
+            backupStream.write(outBuf, 0, workingPos);
 
-	/**
-	 * Stores block in pithos
-	 * 
-	 * @throws IOException
-	 */
-	private synchronized void endBlock() throws IOException {
-		//
-		// Done with local copy
-		//
-		backupStream.close();
+            //
+            // Track position
+            //
+            bytesWrittenToBlock += workingPos;
+            System.arraycopy(outBuf, workingPos, outBuf, 0, pos - workingPos);
+            pos -= workingPos;
+        }
+    }
 
-		//
-		// Send it to pithos
-		String pithosContainer = pithosPath.getContainer();
-		String targetObject = pithosPath.getObjectAbsolutePath();
-		nextBlockOutputStream();
-		hadoopConnector.storePithosBlock(pithosContainer, targetObject,
-				nextBlock, backupFile);
-		// internalClose();
+    /**
+     * Stores block in pithos
+     * 
+     * @throws IOException
+     */
+    private synchronized void endBlock() throws IOException {
+        //
+        // Done with local copy
+        //
+        backupStream.close();
 
-		//
-		// Delete local backup, start new one
-		//
-		backupFile.delete();
-		backupFile = newBackupFile();
-		backupStream = new FileOutputStream(backupFile);
-		bytesWrittenToBlock = 0;
-	}
+        //
+        // Send it to pithos
+        String pithosContainer = pithosPath.getContainer();
+        String targetObject = pithosPath.getObjectAbsolutePath();
+        nextBlockOutputStream();
+        hadoopConnector.storePithosBlock(pithosContainer, targetObject,
+                nextBlock, backupFile);
+        // internalClose();
 
-	/**
-	 * Creates next block for output stream
-	 * 
-	 * @throws IOException
-	 */
-	private synchronized void nextBlockOutputStream() throws IOException {
-		byte[] blockData = PithosSerializer.serializeFile(backupFile);
-		String blockHash = null;
-		String container = pithosPath.getContainer();
-		String hashAlgo = hadoopConnector
-				.getPithosContainerHashAlgorithm(container);
-		util.dbgPrint("nextBlockOutputStream",hashAlgo);
-		try {
-			blockHash = util.computeHash(blockData, "SHA-256");
-			if (!hadoopConnector.pithosObjectBlockExists(container, blockHash)) {
-				nextBlock = new PithosBlock(blockHash, bytesWrittenToBlock,
-						blockData);
-				blocks.add(nextBlock);
-				bytesWrittenToBlock = 0;
-			}
-		} catch (NoSuchAlgorithmException e) {
-			throw new IOException(e);
-		}
-	}
+        //
+        // Delete local backup, start new one
+        //
+        backupFile.delete();
+        backupFile = newBackupFile();
+        backupStream = new FileOutputStream(backupFile);
+        bytesWrittenToBlock = 0;
+    }
 
-	// /**
-	// * Close and save all information carefully on internal close
-	// *
-	// * @throws IOException
-	// */
-	// private synchronized void internalClose() throws IOException {
-	// INode inode = new INode(INode.FILE_TYPES[1],
-	// blocks.toArray(new Block[blocks.size()]));
-	// store.storeINode(path, inode);
-	// }
+    /**
+     * Creates next block for output stream
+     * 
+     * @throws IOException
+     */
+    private synchronized void nextBlockOutputStream() throws IOException {
+        byte[] blockData = PithosSerializer.serializeFile(backupFile);
+        String blockHash = null;
+        String container = pithosPath.getContainer();
+        String hashAlgo = hadoopConnector
+                .getPithosContainerHashAlgorithm(container);
+        util.dbgPrint("nextBlockOutputStream", hashAlgo);
+        try {
+            blockHash = util.computeHash(blockData, "SHA-256");
+            if (!hadoopConnector.pithosObjectBlockExists(container, blockHash)) {
+                nextBlock = new PithosBlock(blockHash, bytesWrittenToBlock,
+                        blockData);
+                blocks.add(nextBlock);
+                bytesWrittenToBlock = 0;
+            }
+        } catch (NoSuchAlgorithmException e) {
+            throw new IOException(e);
+        }
+    }
 
-	@Override
-	public synchronized void close() throws IOException {
-		util.dbgPrint("close");
-		if (closed) {
-			return;
-		}
+    // /**
+    // * Close and save all information carefully on internal close
+    // *
+    // * @throws IOException
+    // */
+    // private synchronized void internalClose() throws IOException {
+    // INode inode = new INode(INode.FILE_TYPES[1],
+    // blocks.toArray(new Block[blocks.size()]));
+    // store.storeINode(path, inode);
+    // }
 
-		flush();
-		if (filePos == 0 || bytesWrittenToBlock != 0) {
-			endBlock();
-		}
+    @Override
+    public synchronized void close() throws IOException {
+        util.dbgPrint("close");
+        if (closed) {
+            return;
+        }
 
-		backupStream.close();
-		backupFile.delete();
+        flush();
+        if (filePos == 0 || bytesWrittenToBlock != 0) {
+            endBlock();
+        }
 
-		super.close();
+        backupStream.close();
+        backupFile.delete();
 
-		closed = true;
-	}
+        super.close();
+
+        closed = true;
+    }
 }
