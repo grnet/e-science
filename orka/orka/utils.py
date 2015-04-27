@@ -239,12 +239,12 @@ def compose(inner_func, *outer_funcs):
      return lambda *args, **kwargs: outer_func(inner_func(*args, **kwargs))
 
 
-def ssh_call_hadoop(user, master_IP, func_arg):
+def ssh_call_hadoop(user, master_IP, func_arg, hadoop_path=HADOOP_PATH):
     """
         SSH to master VM
         and make Hadoop calls
     """
-    response = subprocess.call( "ssh " + user + "@" + master_IP + " \"" + HADOOP_PATH 
+    response = subprocess.call( "ssh " + user + "@" + master_IP + " \"" + hadoop_path
                      + func_arg + "\"", stderr=FNULL, shell=True)
     
     return response
