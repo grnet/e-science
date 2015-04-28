@@ -262,11 +262,4 @@ public class LoggerServer {
         public String usage = null;
     }
 
-    
-    
-    public static void main(String [] args){
-        
-        new LoggerServer();
-        
-    }
 }

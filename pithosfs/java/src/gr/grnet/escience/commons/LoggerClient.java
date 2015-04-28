@@ -13,12 +13,6 @@ public class LoggerClient {
         getClient().getConfig().setHost(getLoggerServerDefaultIP());
         getClient().getConfig().setPort(
                 Integer.parseInt(getLoggerServerDefaultPort()));
-
-        // - Info
-        System.out.println("LOGGER CLIENT INITIALIZED SUCCESSFULLY:\n"
-                + "\tProtocol: " + getClient().getProtocol() + "\n"
-                + "\tHost: " + getClient().getConfig().getHost() + "\n"
-                + "\tPort: " + getClient().getConfig().getPort() + "\n");
     }
 
     public LoggerClient(String loogerServerIp, String loggerServerPort,
@@ -27,12 +21,6 @@ public class LoggerClient {
         this.client = Syslog.getInstance(loggerServerProtocol);
         getClient().getConfig().setHost(loogerServerIp);
         getClient().getConfig().setPort(Integer.parseInt(loggerServerPort));
-
-        // - Info
-        System.out.println("LOGGER CLIENT INITIALIZED SUCCESSFULLY:\n"
-                + "\tProtocol: " + getClient().getProtocol() + "\n"
-                + "\tHost: " + getClient().getConfig().getHost() + "\n"
-                + "\tPort: " + getClient().getConfig().getPort() + "\n");
     }
 
     private String getLoggerServerDefaultIP() {

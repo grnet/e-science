@@ -20,6 +20,7 @@ public class Utils {
     private static final boolean DEBUG = false;
     private static Date date = new Date();
     private LoggerClient loggerClient = new LoggerClient();
+    private StringBuilder logStrBuilder = null;
 
     public Utils() {
     }
@@ -176,9 +177,14 @@ public class Utils {
         }
         formatter += "\n";
 
-        PrintStream st = System.err.format(formatter, args);
+        // -
+        System.err.format(formatter, args);
 
-        loggerClient.getClient().debug(st.toString());
+        // - Create builder
+        logStrBuilder = new StringBuilder(String.format(formatter, args));
+
+        // - Write to centrilized logger
+        loggerClient.getClient().debug(logStrBuilder.toString());
 
     }
 

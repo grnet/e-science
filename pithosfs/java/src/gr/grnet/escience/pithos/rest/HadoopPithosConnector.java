@@ -65,9 +65,18 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         // and pass the conf object from PithosFileSystem instead of option
         // literals
         super(pithosUrl, pithosToken, uuid);
-        
+
         // - Initialize the loggerServer
-        new LoggerServer();
+        Thread loggerThread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                new LoggerServer();
+            }
+        });
+        // - Start logger into a separated thread
+        loggerThread.start();
+
     }
 
     /***
@@ -507,7 +516,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
             // - Add data from pithos response on the corresponding java object
             getPithosResponse().setResponseData(response_data);
-            
+
         } catch (IOException e) {
             util.dbgPrint(e.getMessage(), e);
             return null;
