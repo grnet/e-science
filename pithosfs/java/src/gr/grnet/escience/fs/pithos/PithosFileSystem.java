@@ -12,6 +12,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -244,7 +246,8 @@ public class PithosFileSystem extends FileSystem {
             count++;
         }
 
-        ArrayList<FileStatus> results = new ArrayList<FileStatus>();
+        //ArrayList<FileStatus> results = new ArrayList<FileStatus>();
+        List<FileStatus> results = Collections.synchronizedList(new ArrayList<FileStatus>());
         FileStatus fileStatus;
 
         String[] files = this.hadoopPithosConnector.getFileList(
