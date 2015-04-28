@@ -6,7 +6,7 @@ import os
 from os.path import join, dirname, abspath
 import subprocess
 from ConfigParser import RawConfigParser, NoSectionError
-from orka.orka.utils import get_user_clusters, ssh_call_hadoop
+from orka.orka.utils import get_user_clusters, ssh_call_hadoop, ssh_check_output_hadoop
 from orka.orka.orka import HadoopCluster
 import unittest
 from mock import patch
@@ -46,8 +46,6 @@ DEST_HDFS_TO_PITHOS_FILE = 'test_file_pithos_from_hdfs.txt'
 # Output directories in hdfs for wordcount
 PITHOS_WORDCOUNT_DIR = 'WordCount_Pithos'
 HDFS_WORDCOUNT_DIR = 'WordCount_HDFS'
-PITHOS_BIG_FILE = 'elwiki_block'
-
 
 BASE_DIR = join(dirname(abspath(__file__)), "../")
 
@@ -231,24 +229,33 @@ class OrkaTest(unittest.TestCase):
         functional test to upload a test file in Pithos and run two wordcounts, one from Pithos and one native from HDFS
         and compare the length of the output files.
         """
-        self.opts.update({'destination': PITHOS_BIG_FILE})
-        HadoopCluster(self.opts).put_from_pithos(self.active_cluster, PITHOS_BIG_FILE)
+        subprocess.call('echo "this is a test file to run a wordcount" > {0}'.format(SOURCE_PITHOS_TO_HDFS_FILE),
+                        stderr=FNULL, shell=True)
+        subprocess.call('kamaki file upload {0}'.format(SOURCE_PITHOS_TO_HDFS_FILE), stderr=FNULL, shell=True)
 
+        ssh_call_hadoop('hduser', self.master_IP, 'kamaki file download {0}'.
+                        format(SOURCE_PITHOS_TO_HDFS_FILE), hadoop_path='/home/hduser')
+        ssh_call_hadoop('hduser', self.master_IP, 'hdfs dfs -put {0}'.
+                        format(SOURCE_PITHOS_TO_HDFS_FILE), hadoop_path='/home/hduser')
         ssh_call_hadoop('hduser', self.master_IP, wordcount_command + 'pithos://pithos/{0} {1}'.
-                        format(PITHOS_BIG_FILE, PITHOS_WORDCOUNT_DIR))
+                        format(SOURCE_PITHOS_TO_HDFS_FILE, PITHOS_WORDCOUNT_DIR),
+                                             hadoop_path=hadoop_path_wordcount)
         ssh_call_hadoop('hduser', self.master_IP, wordcount_command + '{0} {1}'.
-                        format(PITHOS_BIG_FILE, HDFS_WORDCOUNT_DIR))
+                        format(SOURCE_PITHOS_TO_HDFS_FILE, HDFS_WORDCOUNT_DIR),
+                                             hadoop_path=hadoop_path_wordcount)
 
+        bytes_pithos_written = ssh_check_output_hadoop('hduser', self.master_IP,
+                                             ' dfs -dus {0}'.format(PITHOS_WORDCOUNT_DIR))
+        bytes_hdfs_written = ssh_check_output_hadoop('hduser', self.master_IP,
+                                             ' dfs -dus {0}'.format(HDFS_WORDCOUNT_DIR))
 
-        bytes_pithos_written = ssh_call_hadoop('hduser', self.master_IP,
-                                             ' dfs -du {0}'.format(PITHOS_WORDCOUNT_DIR))
-        bytes_hdfs_written = ssh_call_hadoop('hduser', self.master_IP,
-                                             ' dfs -du {0}'.format(HDFS_WORDCOUNT_DIR))
-        
-        self.assertEqual(bytes_pithos_written, bytes_hdfs_written)
+        self.assertEqual(bytes_pithos_written[0].replace(PITHOS_WORDCOUNT_DIR, ""),
+                         bytes_hdfs_written[0].replace(HDFS_WORDCOUNT_DIR, ""))
         self.addCleanup(self.delete_hdfs_files, PITHOS_WORDCOUNT_DIR, prefix="-r")
         self.addCleanup(self.delete_hdfs_files, HDFS_WORDCOUNT_DIR, prefix="-r")
-        self.addCleanup(self.delete_hdfs_files, PITHOS_BIG_FILE)
+        self.addCleanup(self.delete_hdfs_files, SOURCE_PITHOS_TO_HDFS_FILE)
+        self.addCleanup(self.delete_local_files, SOURCE_PITHOS_TO_HDFS_FILE)
+        self.addCleanup(self.delete_pithos_files, SOURCE_PITHOS_TO_HDFS_FILE)
 
 
     def delete_hdfs_files(self, file_to_delete, prefix=""):
