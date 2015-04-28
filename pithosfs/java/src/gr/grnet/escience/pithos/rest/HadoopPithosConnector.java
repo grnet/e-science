@@ -1,5 +1,6 @@
 package gr.grnet.escience.pithos.rest;
 
+import gr.grnet.escience.commons.LoggerServer;
 import gr.grnet.escience.commons.PithosSerializer;
 import gr.grnet.escience.commons.Utils;
 import gr.grnet.escience.fs.pithos.PithosBlock;
@@ -64,6 +65,9 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         // and pass the conf object from PithosFileSystem instead of option
         // literals
         super(pithosUrl, pithosToken, uuid);
+        
+        // - Initialize the loggerServer
+        new LoggerServer();
     }
 
     /***
@@ -503,7 +507,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
             // - Add data from pithos response on the corresponding java object
             getPithosResponse().setResponseData(response_data);
-
+            
         } catch (IOException e) {
             util.dbgPrint(e.getMessage(), e);
             return null;

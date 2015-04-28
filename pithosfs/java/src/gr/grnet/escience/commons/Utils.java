@@ -1,17 +1,23 @@
 package gr.grnet.escience.commons;
 
+import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.MessageFormat;
+import java.util.Date;
 
 public class Utils {
 
     private static final boolean DEBUG = false;
+    private static Date date = new Date();
+    private LoggerClient loggerClient = new LoggerClient();
 
     public Utils() {
+
     }
 
     /**
@@ -98,11 +104,20 @@ public class Utils {
         return uri.toASCIIString();
     }
 
+    @SuppressWarnings("deprecation")
+    public static String getCurentTimestamp() {
+        // - Create and return a unique timestamp
+        return MessageFormat.format("{0}{1}{2}_{3}{4}{5}", date.getYear(),
+                date.getMonth(), date.getDate(), date.getHours(),
+                date.getMinutes(), date.getSeconds());
+    }
+
     /**
      * Thin wrapper around System.err.println for quick tracing
      * 
      * @param args
      *            : variable length array of objects
+     * @throws UnsupportedEncodingException
      */
     public void dbgPrint(Object... args) {
         if (!DEBUG) {
@@ -113,7 +128,13 @@ public class Utils {
             formatter += " %s";
         }
         formatter += "\n";
-        System.err.format(formatter, args);
-    }
 
+        PrintStream ps = System.err.format(formatter, args);
+
+        String content = ps.toString();
+
+        // - Log message to the centralized logger on Hadoop Master
+        loggerClient.getClient().debug(content);
+
+    }
 }
