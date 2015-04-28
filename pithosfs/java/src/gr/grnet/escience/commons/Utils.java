@@ -6,6 +6,11 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class Utils {
 
@@ -96,6 +101,46 @@ public class Utils {
             String fragment) throws URISyntaxException {
         URI uri = new URI(scheme, host, path, fragment);
         return uri.toASCIIString();
+    }
+
+    /**
+     * Convert dateTime String to long epoch time in milliseconds
+     * 
+     * @param dtString
+     *            : datetime as String
+     *            invalid datetime string will use current datetime
+     * @param dtFormat
+     *            : DateTimeFormatter or String pattern to instantiate one
+     *            pass empty string to use default
+     * @return long epoch time in milliseconds
+     */
+    public Long dateTimeToEpoch(String dtString, Object dtFormat) {
+        DateTimeFormatter dtf = null;
+        Long epoch = null;
+        if (dtFormat instanceof String) {
+            if (dtFormat.toString() != "") {
+                try {
+                    dtf = DateTimeFormatter.ofPattern(dtFormat.toString());
+                } catch (IllegalArgumentException ex) {
+                    dtf = DateTimeFormatter.RFC_1123_DATE_TIME;
+                    this.dbgPrint("dateTimeToEpoch: invalid DateFormatter pattern", ex);
+                }
+            } else {
+                dtf = DateTimeFormatter.RFC_1123_DATE_TIME;
+            }
+
+        } else if (dtFormat instanceof DateTimeFormatter) {
+            dtf = (DateTimeFormatter) dtFormat;
+        }
+        try {
+            LocalDateTime ldt = LocalDateTime.parse(dtString, dtf);
+            ZonedDateTime zdt = ldt.atZone(ZoneId.systemDefault());
+            epoch = zdt.toInstant().toEpochMilli();
+        } catch (DateTimeParseException ex) {
+            epoch = System.currentTimeMillis();
+            this.dbgPrint("dateTimeToEpoch: invalid datetime string using current.", ex, epoch);
+        }
+        return epoch;
     }
 
     /**

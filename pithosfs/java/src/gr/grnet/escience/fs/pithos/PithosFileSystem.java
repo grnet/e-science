@@ -5,13 +5,13 @@ import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -52,10 +52,6 @@ public class PithosFileSystem extends FileSystem {
     public PithosFileSystem() {
     }
 
-    private String getConfig(String param) {
-        Configuration conf = new Configuration();
-        return conf.get(param);
-    }
 
     /**
      * @return the instance of hadoop - pithos connector
@@ -95,10 +91,11 @@ public class PithosFileSystem extends FileSystem {
         util.dbgPrint("workingDir >", this.workingDir);
         util.dbgPrint("Create System Store connector");
 
-        // - Create instance of Hadoop connector
-        setHadoopPithosConnector(new HadoopPithosConnector(
-                getConfig("fs.pithos.url"), getConfig("auth.pithos.token"),
-                getConfig("auth.pithos.uuid")));
+        if (hadoopPithosConnector == null) {
+            this.hadoopPithosConnector = new HadoopPithosConnector(
+                    conf.get("fs.pithos.url"), conf.get("auth.pithos.token"),
+                    conf.get("auth.pithos.uuid"));
+        }
 
     }
 
@@ -154,19 +151,22 @@ public class PithosFileSystem extends FileSystem {
 
     @Override
     public boolean delete(Path f, boolean recursive) throws IOException {
-        util.dbgPrint("delete");
+        util.dbgPrint("delete", f);
         // TODO Auto-generated method stub
         return false;
     }
 
+    @Override
+    public boolean exists(Path f) throws IOException {
+        // TODO only for testing, should re-use getFileStatus normally
+        util.dbgPrint("exists", f);
+        return super.exists(f);
+    }
+
     public boolean containerExistance(String container) {
-        PithosResponse containerInfo = getHadoopPithosConnector()
+        PithosResponse containerInfo = this.hadoopPithosConnector
                 .getContainerInfo(container);
-        if (containerInfo.toString().contains("HTTP/1.1 404 NOT FOUND")) {
-            return false;
-        } else {
-            return true;
-        }
+        return containerInfo.toString().contains("HTTP/1.1 404 NOT FOUND");
     }
 
     @Override
@@ -184,24 +184,23 @@ public class PithosFileSystem extends FileSystem {
             util.dbgPrint("getFileStatus > invalid pithosPath");
             throw new IOException(e);
         }
-        PithosResponse metadata = getHadoopPithosConnector()
+        PithosResponse metadata = this.hadoopPithosConnector
                 .getPithosObjectMetaData(pithosPath.getContainer(), urlEsc,
                         PithosResponseFormat.JSON);
-
         if (metadata.toString().contains("HTTP/1.1 404 NOT FOUND")) {
             util.dbgPrint("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
-            throw new IOException("File does not exist in Pithos FS.");
+            throw new FileNotFoundException("File does not exist in Pithos FS.");
         }
         for (String obj : metadata.getResponseData().keySet()) {
-            if (obj != null) {
-                if (obj.matches("Content-Type") || obj.matches("Content_Type")) {
-                    for (String fileType : metadata.getResponseData().get(obj)) {
-                        if (fileType.contains("application/directory")) {
-                            isDir = true;
-                            break;
-                        } else {
-                            isDir = false;
-                        }
+            if (obj != null
+                    && (obj.matches("Content-Type") || obj
+                            .matches("Content_Type"))) {
+                for (String fileType : metadata.getResponseData().get(obj)) {
+                    if (fileType.contains("application/directory")) {
+                        isDir = true;
+                        break;
+                    } else {
+                        isDir = false;
                     }
                 }
             }
@@ -210,17 +209,15 @@ public class PithosFileSystem extends FileSystem {
             pithosFileStatus = new PithosFileStatus(true, 0L, false, targetPath);
         } else {
             for (String obj : metadata.getResponseData().keySet()) {
-                if (obj != null) {
-                    if (obj.matches("Content-Length")) {
-                        for (String lengthStr : metadata.getResponseData().get(
-                                obj)) {
-                            length = Long.parseLong(lengthStr);
-                        }
+                if (obj != null && obj.matches("Content-Length")) {
+                    for (String lengthStr : metadata.getResponseData().get(obj)) {
+                        length = Long.parseLong(lengthStr);
                     }
                 }
             }
+            String modificationTime = metadata.getResponseData().get("Last-Modified").get(0);
             pithosFileStatus = new PithosFileStatus(length,
-                    getDefaultBlockSize(), 123, targetPath);
+                    getDefaultBlockSize(), util.dateTimeToEpoch(modificationTime, ""), targetPath);
         }
         util.dbgPrint("getFileStatus", "EXIT");
         util.dbgPrint("pithos_file_status >", pithosFileStatus);
@@ -247,10 +244,10 @@ public class PithosFileSystem extends FileSystem {
             count++;
         }
 
-        final List<FileStatus> result = new ArrayList<FileStatus>();
+        ArrayList<FileStatus> results = new ArrayList<FileStatus>();
         FileStatus fileStatus;
 
-        String[] files = getHadoopPithosConnector().getFileList(
+        String[] files = this.hadoopPithosConnector.getFileList(
                 pithosPath.getContainer()).split("\\r?\\n");
         // - Iterate on available files in the container
         for (int i = 0; i < files.length; i++) {
@@ -260,16 +257,13 @@ public class PithosFileSystem extends FileSystem {
                 Path path = new Path("pithos://" + pithosPath.getContainer()
                         + "/" + filename + "/" + file);
                 fileStatus = getFileStatus(path);
-                result.add(fileStatus);
+                results.add(fileStatus);
             }
         }
-
+        util.dbgPrint("listStatus >",results);
         // - Return the list of the available files
-        if (!result.isEmpty()) {
-            return result.toArray(new FileStatus[result.size()]);
-        } else {
-            return null;
-        }
+        FileStatus [] resultsArr = new FileStatus[results.size()];
+        return results.toArray(resultsArr);
     }
 
     @Override
@@ -293,13 +287,13 @@ public class PithosFileSystem extends FileSystem {
             throw new IOException(e);
         }
 
-        return getHadoopPithosConnector().pithosObjectInputStream(
+        return this.hadoopPithosConnector.pithosObjectInputStream(
                 pithosPath.getContainer(), pathEsc);
     }
 
     @Override
     public boolean rename(Path src, Path dst) throws IOException {
-        util.dbgPrint("rename");
+        util.dbgPrint("rename", src, dst);
         // TODO Auto-generated method stub
         return false;
     }
