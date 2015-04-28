@@ -64,13 +64,13 @@ public interface PithosSystemStore {
      * @param pithosContainer
      *            : the Pithos container on which the action will be performed.
      *            Leave it blank so as to refer to the default container that
-     *            coresponds to 'Pithos'
+     *            Corresponds to 'pithos'
      * @param objectLocation
      *            : the location of the object into the Pithos default container
      * @return the total size in bytes of the requested Pithos Object
      */
     public long getPithosObjectSize(String pithosContainer,
-            String objectLocation);
+            String objectLocation);   
 
     /**
      * Downloads and stores on the defined destination location, a chunk of the
@@ -172,7 +172,8 @@ public interface PithosSystemStore {
      */
     public String getPithosContainerHashAlgorithm(String pithosContainer)
             throws IOException;
-
+   
+    
     /***
      * Method to get the meta-data that correspond to a Pithos object stored
      * under the default ("Pithos")
@@ -355,7 +356,7 @@ public interface PithosSystemStore {
      * @throws IOException
      *             TODO
      */
-    public String uploadFileToPithos(String pithosContainer, String sourceFile)
+    public String uploadFileToPithos(String pithosContainer, String sourceFile, boolean isDir)
             throws IOException;
 
     /**

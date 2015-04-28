@@ -118,7 +118,7 @@ public class PithosOutputStream extends OutputStream {
         this.backupStream = new FileOutputStream(backupFile);
         this.bufferSize = buffersize;
         this.outBuf = new byte[bufferSize];
-        util.dbgPrint("PithosOutputStream instantiated");
+        util.dbgPrint("PithosOutputStream instantiated",path,blockSize,buffersize);
     }
 
     /**
@@ -136,6 +136,7 @@ public class PithosOutputStream extends OutputStream {
                     "Cannot create local pithos buffer directory: " + dir);
         }
         File result = File.createTempFile("output-", ".tmp", dir);
+        util.dbgPrint(result);
         result.deleteOnExit();
         return result;
     }
@@ -228,15 +229,16 @@ public class PithosOutputStream extends OutputStream {
      * @throws IOException
      */
     private synchronized void endBlock() throws IOException {
+        util.dbgPrint("endBlock");
         //
         // Done with local copy
         //
         backupStream.close();
-
         //
         // Send it to pithos
         String pithosContainer = pithosPath.getContainer();
         String targetObject = pithosPath.getObjectAbsolutePath();
+        util.dbgPrint(pithosContainer,targetObject);
         nextBlockOutputStream();
         hadoopConnector.storePithosBlock(pithosContainer, targetObject,
                 nextBlock, backupFile);

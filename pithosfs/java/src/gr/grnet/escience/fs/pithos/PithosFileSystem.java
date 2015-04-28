@@ -11,6 +11,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -49,6 +50,28 @@ public class PithosFileSystem extends FileSystem {
     private final Utils util = new Utils();
 
     public PithosFileSystem() {
+    }
+
+    private boolean mkdir(Path path) throws IOException {
+        util.dbgPrint("mkdir");
+        Path absolutePath = makeAbsolute(path);
+        PithosPath createPath = new PithosPath(path);
+        util.dbgPrint("mkdir", path, absolutePath, createPath);
+        PithosFileStatus status = null;
+        try {
+            status = getFileStatus(path);
+        } catch (IOException iox) {
+            util.dbgPrint("mkdir", iox);
+            this.hadoopPithosConnector.uploadFileToPithos(
+                    createPath.getContainer(), createPath.toString(), true);
+            return true;
+        }
+        if (status != null && status.isFile()) {
+            throw new IOException(String.format(
+                    "Can't make directory for path %s since it is a file.",
+                    absolutePath));
+        }
+        return true;
     }
 
     @Override
@@ -134,7 +157,7 @@ public class PithosFileSystem extends FileSystem {
 
     @Override
     public boolean delete(Path f, boolean recursive) throws IOException {
-        util.dbgPrint("delete");
+        util.dbgPrint("delete", f);
         // TODO Auto-generated method stub
         return false;
     }
@@ -170,21 +193,20 @@ public class PithosFileSystem extends FileSystem {
         PithosResponse metadata = this.hadoopPithosConnector
                 .getPithosObjectMetaData(pithosPath.getContainer(), urlEsc,
                         PithosResponseFormat.JSON);
-
         if (metadata.toString().contains("HTTP/1.1 404 NOT FOUND")) {
             util.dbgPrint("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
             throw new FileNotFoundException("File does not exist in Pithos FS.");
         }
         for (String obj : metadata.getResponseData().keySet()) {
-            if (obj != null) {
-                if (obj.matches("Content-Type") || obj.matches("Content_Type")) {
-                    for (String fileType : metadata.getResponseData().get(obj)) {
-                        if (fileType.contains("application/directory")) {
-                            isDir = true;
-                            break;
-                        } else {
-                            isDir = false;
-                        }
+            if (obj != null
+                    && (obj.matches("Content-Type") || obj
+                            .matches("Content_Type"))) {
+                for (String fileType : metadata.getResponseData().get(obj)) {
+                    if (fileType.contains("application/directory")) {
+                        isDir = true;
+                        break;
+                    } else {
+                        isDir = false;
                     }
                 }
             }
@@ -193,17 +215,15 @@ public class PithosFileSystem extends FileSystem {
             pithosFileStatus = new PithosFileStatus(true, 0L, false, targetPath);
         } else {
             for (String obj : metadata.getResponseData().keySet()) {
-                if (obj != null) {
-                    if (obj.matches("Content-Length")) {
-                        for (String lengthStr : metadata.getResponseData().get(
-                                obj)) {
-                            length = Long.parseLong(lengthStr);
-                        }
+                if (obj != null && obj.matches("Content-Length")) {
+                    for (String lengthStr : metadata.getResponseData().get(obj)) {
+                        length = Long.parseLong(lengthStr);
                     }
                 }
             }
+            String modificationTime = metadata.getResponseData().get("Last-Modified").get(0);
             pithosFileStatus = new PithosFileStatus(length,
-                    getDefaultBlockSize(), 123, targetPath);
+                    getDefaultBlockSize(), util.dateTimeToEpoch(modificationTime, ""), targetPath);
         }
         util.dbgPrint("getFileStatus", "EXIT");
         util.dbgPrint("pithos_file_status >", pithosFileStatus);
@@ -230,7 +250,7 @@ public class PithosFileSystem extends FileSystem {
             count++;
         }
 
-        final FileStatus[] result = null;
+        ArrayList<FileStatus> results = new ArrayList<FileStatus>();
         FileStatus fileStatus;
 
         String[] files = this.hadoopPithosConnector.getFileList(
@@ -243,18 +263,42 @@ public class PithosFileSystem extends FileSystem {
                 Path path = new Path("pithos://" + pithosPath.getContainer()
                         + "/" + filename + "/" + file);
                 fileStatus = getFileStatus(path);
-                result[result != null ? result.length + 1 : 0] = fileStatus;
+                results.add(fileStatus);
             }
         }
+        util.dbgPrint("listStatus >",results);
         // - Return the list of the available files
-        return result;
+        FileStatus [] resultsArr = new FileStatus[results.size()];
+        return results.toArray(resultsArr);
     }
 
     @Override
     public boolean mkdirs(Path f, FsPermission permission) throws IOException {
-        util.dbgPrint("mkdirs");
-        // TODO Auto-generated method stub
-        return false;
+        util.dbgPrint("mkdirs path >", f);
+        pithosPath = new PithosPath(f);
+        Path absolutePath = makeAbsolute(f);
+        util.dbgPrint("mkdirs absolute >", absolutePath);
+        ArrayList<PithosPath> pithosPaths = new ArrayList<PithosPath>();
+        do {
+            util.dbgPrint("mkdirs, absPath >", absolutePath);
+            try {
+                pithosPaths.add(new PithosPath(absolutePath));
+            } catch (Exception e) {
+                util.dbgPrint("mkdirs exception", e);
+                throw new IOException(e);
+            }
+            absolutePath = absolutePath.getParent();
+            util.dbgPrint("mkdirs parent >", absolutePath);
+        } while (absolutePath != null);
+        boolean result = true;
+        for (PithosPath p : pithosPaths) {
+            util.dbgPrint("mkdirs getParent> ", p.getParent());
+            if (p.getParent() == null)
+                continue;
+            result &= mkdir(absolutePath);
+        }
+        return result;
+        // return false;
     }
 
     @Override
@@ -277,7 +321,7 @@ public class PithosFileSystem extends FileSystem {
 
     @Override
     public boolean rename(Path src, Path dst) throws IOException {
-        util.dbgPrint("rename");
+        util.dbgPrint("rename", src, dst);
         // TODO Auto-generated method stub
         return false;
     }

@@ -78,7 +78,11 @@ public class PithosPath {
     public String getContainer() {
         return container;
     }
-
+    
+    public String getParent(){
+        return this.folderAbsolutePath;
+    }
+    
     public void setContainer(String container) {
         this.container = container;
     }
