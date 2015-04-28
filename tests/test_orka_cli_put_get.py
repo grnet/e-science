@@ -208,7 +208,7 @@ class OrkaTest(unittest.TestCase):
 
     def test_run_wordcount_from_pithos(self):
         """
-        functional test to upload a test file in Pithos and run a wordcount streaming the file from Pithos.
+        Functional test to upload a test file in Pithos and run a wordcount streaming the file from Pithos.
         """
         subprocess.call('echo "this is a test file to run a streaming wordcount" > {0}'.format(SOURCE_PITHOS_TO_HDFS_FILE),
                         stderr=FNULL, shell=True)
@@ -226,7 +226,7 @@ class OrkaTest(unittest.TestCase):
 
     def test_compare_wordcount_pithos_hdfs(self):
         """
-        functional test to upload a test file in Pithos and run two wordcounts, one from Pithos and one native from HDFS
+        Functional test to upload a test file in Pithos and run two wordcounts, one from Pithos and one native from HDFS
         and compare the length of the output files.
         """
         subprocess.call('echo "this is a test file to run a wordcount" > {0}'.format(SOURCE_PITHOS_TO_HDFS_FILE),
@@ -234,9 +234,10 @@ class OrkaTest(unittest.TestCase):
         subprocess.call('kamaki file upload {0}'.format(SOURCE_PITHOS_TO_HDFS_FILE), stderr=FNULL, shell=True)
 
         ssh_call_hadoop('hduser', self.master_IP, 'kamaki file download {0}'.
-                        format(SOURCE_PITHOS_TO_HDFS_FILE), hadoop_path='/home/hduser')
-        ssh_call_hadoop('hduser', self.master_IP, 'hdfs dfs -put {0}'.
-                        format(SOURCE_PITHOS_TO_HDFS_FILE), hadoop_path='/home/hduser')
+                        format(SOURCE_PITHOS_TO_HDFS_FILE), hadoop_path='')
+        ssh_call_hadoop('hduser', self.master_IP, ' dfs -put {0}'.
+                        format(SOURCE_PITHOS_TO_HDFS_FILE))
+
         ssh_call_hadoop('hduser', self.master_IP, wordcount_command + 'pithos://pithos/{0} {1}'.
                         format(SOURCE_PITHOS_TO_HDFS_FILE, PITHOS_WORDCOUNT_DIR),
                                              hadoop_path=hadoop_path_wordcount)
@@ -256,6 +257,7 @@ class OrkaTest(unittest.TestCase):
         self.addCleanup(self.delete_hdfs_files, SOURCE_PITHOS_TO_HDFS_FILE)
         self.addCleanup(self.delete_local_files, SOURCE_PITHOS_TO_HDFS_FILE)
         self.addCleanup(self.delete_pithos_files, SOURCE_PITHOS_TO_HDFS_FILE)
+        self.addCleanup(self.hadoop_local_fs_action, 'rm {0}'.format(SOURCE_PITHOS_TO_HDFS_FILE))
 
 
     def delete_hdfs_files(self, file_to_delete, prefix=""):
