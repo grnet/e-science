@@ -1,6 +1,7 @@
 package gr.grnet.escience.commons;
 
 import java.io.IOException;
+import java.lang.RuntimeException;
 
 import org.graylog2.syslog4j.server.SyslogServer;
 import org.graylog2.syslog4j.server.SyslogServerConfigIF;
@@ -10,9 +11,11 @@ import org.graylog2.syslog4j.server.impl.event.printstream.FileSyslogServerEvent
 import org.graylog2.syslog4j.server.impl.event.printstream.SystemOutSyslogServerEventHandler;
 import org.graylog2.syslog4j.server.impl.net.tcp.TCPNetSyslogServerConfigIF;
 import org.graylog2.syslog4j.util.SyslogUtility;
+import gr.grnet.escience.commons.Utils;
 
 public class LoggerServer {
-
+    
+    private static final Utils util = new Utils();
     private static final String LOGGER_DEFAULT_IP = "192.168.0.2";
     private static final String LOGGER_DEFAULT_PORT = "1050";
     private static final String LOGGER_DEFAULT_PROTOCOL = "udp";
@@ -20,7 +23,7 @@ public class LoggerServer {
     private static final String LOGGER_DEFAULT_LOG_FILENAME_PREFIX = "pithosfs_log_";
     private static final String LOGGER_DEFAULT_LOG_FILENAME_EXT = ".log";
 
-    public static boolean CALL_SYSTEM_EXIT_ON_FAILURE = true;
+    public static final boolean CALL_SYSTEM_EXIT_ON_FAILURE = true;
 
     public LoggerServer() {
         initialize(null);
@@ -72,7 +75,7 @@ public class LoggerServer {
         if (options.usage != null) {
             usage(options.usage);
             if (CALL_SYSTEM_EXIT_ON_FAILURE)
-                System.exit(1);
+                throw new RuntimeException("CALL_SYSTEM_EXIT_ON_FAILURE");
             else
                 return;
         }
@@ -84,7 +87,7 @@ public class LoggerServer {
         if (!SyslogServer.exists(options.protocol)) {
             usage("Protocol \"" + options.protocol + "\" not supported");
             if (CALL_SYSTEM_EXIT_ON_FAILURE)
-                System.exit(1);
+                throw new RuntimeException("CALL_SYSTEM_EXIT_ON_FAILURE"); 
             else
                 return;
         }
@@ -127,8 +130,7 @@ public class LoggerServer {
                         options.fileName, options.append);
                 syslogServerConfig.addEventHandler(eventHandler);
             } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                util.dbgPrint(e.getMessage(), e);
             }
             if (!options.quiet) {
                 System.out.println((options.append ? "Appending" : "Writing")
@@ -262,11 +264,4 @@ public class LoggerServer {
         public String usage = null;
     }
 
-    
-    
-    public static void main(String [] args){
-        
-        new LoggerServer();
-        
-    }
 }

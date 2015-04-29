@@ -280,7 +280,6 @@ public class PithosFileSystem extends FileSystem {
     public FSDataInputStream open(Path targetFile, int bufferSize)
             throws IOException {
         pithosPath = new PithosPath(targetFile);
-
         String pathEsc = null;
         try {
             pathEsc = util.urlEscape(null, null,
