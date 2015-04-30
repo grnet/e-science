@@ -12,6 +12,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -249,8 +251,8 @@ public class PithosFileSystem extends FileSystem {
             filename = filesList[filesList.length - count] + "/" + filename;
             count++;
         }
-
-        ArrayList<FileStatus> results = new ArrayList<FileStatus>();
+        
+        List<FileStatus> results = Collections.synchronizedList(new ArrayList<FileStatus>());
         FileStatus fileStatus;
 
         String[] files = this.hadoopPithosConnector.getFileList(
@@ -275,30 +277,30 @@ public class PithosFileSystem extends FileSystem {
     @Override
     public boolean mkdirs(Path f, FsPermission permission) throws IOException {
         util.dbgPrint("mkdirs path >", f);
-        pithosPath = new PithosPath(f);
-        Path absolutePath = makeAbsolute(f);
-        util.dbgPrint("mkdirs absolute >", absolutePath);
-        ArrayList<PithosPath> pithosPaths = new ArrayList<PithosPath>();
-        do {
-            util.dbgPrint("mkdirs, absPath >", absolutePath);
-            try {
-                pithosPaths.add(new PithosPath(absolutePath));
-            } catch (Exception e) {
-                util.dbgPrint("mkdirs exception", e);
-                throw new IOException(e);
-            }
-            absolutePath = absolutePath.getParent();
-            util.dbgPrint("mkdirs parent >", absolutePath);
-        } while (absolutePath != null);
-        boolean result = true;
-        for (PithosPath p : pithosPaths) {
-            util.dbgPrint("mkdirs getParent> ", p.getParent());
-            if (p.getParent() == null)
-                continue;
-            result &= mkdir(absolutePath);
-        }
-        return result;
-        // return false;
+//        pithosPath = new PithosPath(f);
+//        Path absolutePath = makeAbsolute(f);
+//        util.dbgPrint("mkdirs absolute >", absolutePath);
+//        List<PithosPath> pithosPaths = Collections.synchronizedList(new ArrayList<PithosPath>());
+//        do {
+//            util.dbgPrint("mkdirs, absPath >", absolutePath);
+//            try {
+//                pithosPaths.add(new PithosPath(absolutePath));
+//            } catch (Exception e) {
+//                util.dbgPrint("mkdirs exception", e);
+//                throw new IOException(e);
+//            }
+//            absolutePath = absolutePath.getParent();
+//            util.dbgPrint("mkdirs parent >", absolutePath);
+//        } while (absolutePath != null);
+//        boolean result = true;
+//        for (PithosPath p : pithosPaths) {
+//            util.dbgPrint("mkdirs getParent> ", p.getParent());
+//            if (p.getParent() == null)
+//                continue;
+//            result &= mkdir(absolutePath);
+//        }
+////        return result;
+        return false;
     }
 
     @Override
