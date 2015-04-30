@@ -320,7 +320,7 @@ public class TestPithosRestClient {
         System.out
                 .println("---------------------------------------------------------------------");
         String response = hdconnector.uploadFileToPithos("",
-                LOCAL_SOURCE_FILE_TO_UPLOAD);
+                LOCAL_SOURCE_FILE_TO_UPLOAD, false);
         System.out.println("RESPONSE FROM PITHOS: " + response);
         System.out
                 .println("---------------------------------------------------------------------\n");
