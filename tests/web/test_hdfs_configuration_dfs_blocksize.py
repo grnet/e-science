@@ -18,6 +18,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
 from backend.okeanos_utils import check_quota, get_flavor_id, check_credentials
+from backend.cluster_errors_constants import *
 from random import randint
 import unittest, time, re
 
@@ -99,6 +100,7 @@ class test_hdfs_configuration_dfs_blocksize(unittest.TestCase):
         driver.find_element_by_id("cluster_name").clear()
         cluster_name = 'test_cluster' + str(randint(0,9999))
         driver.find_element_by_id("cluster_name").send_keys(cluster_name)
+        driver.find_element_by_id(storage_template[kamaki_flavors['disk_template'][0]]).click()
         hadoop_image = 'Hadoop-2.5.2'                           
         Select(driver.find_element_by_id("os_systems")).select_by_visible_text(hadoop_image)
         Select(driver.find_element_by_id("size_of_cluster")).select_by_visible_text('2')
@@ -110,7 +112,6 @@ class test_hdfs_configuration_dfs_blocksize(unittest.TestCase):
         dfs_blocksize = '64'
         driver.find_element_by_id("dfs_blocksize").send_keys(dfs_blocksize)
         time.sleep(3)
-        driver.find_element_by_id("next").click()
         driver.find_element_by_id("next").click()
         print 'Creating cluster...'
         for i in range(1500): 
