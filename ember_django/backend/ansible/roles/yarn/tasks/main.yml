@@ -67,9 +67,21 @@
     group: name=hadoop state=present
     tags: postconfig
 
+  - name: create hue group
+    group: name=hue state=present
+    tags: hueconfig
+
   - name: create hadoop user
     user: name=hduser group=hadoop generate_ssh_key=yes shell=/bin/bash
     tags: postconfig
+
+  - name: create hue user
+    user: name=hue group=hue generate_ssh_key=yes shell=/bin/bash
+    tags: hueconfig
+
+  - name: chown of hue bin directory
+    file: path=/usr/local/hue owner=hue group=hue state=directory
+    tags: hueconfig
 
   - stat: path="{{ ssh_file_name }}"
     tags: postconfig
@@ -184,7 +196,12 @@
       - { src: 'hdfs-site.j2', dest: '/usr/local/hadoop/etc/hadoop/hdfs-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'yarn-site.j2', dest: '/usr/local/hadoop/etc/hadoop/yarn-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'kamakirc.j2', dest: '/home/hduser/.kamakirc', owner: 'hduser', group: 'hadoop' }
- 
+
+  - name: copy hue.ini in master node
+    tags: hueconfig
+    template: src=hue.j2 dest=/usr/local/hue/desktop/conf/hue.ini owner=hue group=hue
+    when: is_master
+
   - name: create masters and slaves files in hadoop-yarn master node
     tags: postconfig
     template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"

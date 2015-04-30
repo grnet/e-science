@@ -25,37 +25,39 @@ ansible_verbosity = ' -vvvv'
 XML_FILE = '/home/developer/workspace/hdfs-site.xml'
 
 
-def install_yarn(token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_file, replication_factor, dfs_blocksize):
+def install_yarn(*args):
     """
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn.
+    args: token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_file, replication_factor, dfs_blocksize
     """
-    list_of_hosts = hosts_list
+
+    list_of_hosts = args[1]
     master_hostname = list_of_hosts[0]['fqdn'].split('.', 1)[0]
-    hostname_master = master_ip
     cluster_size = len(list_of_hosts)
-    cluster_id = cluster_name.rsplit('-',1)[1]
+    cluster_id = args[3].rsplit('-',1)[1]
     # Create ansible_hosts file
     try:
-        hosts_filename = create_ansible_hosts(cluster_name, list_of_hosts,
-                                         hostname_master)
+        hosts_filename = create_ansible_hosts(args[3], list_of_hosts,
+                                         args[2])
         # Run Ansible playbook
-        ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, token, replication_factor,
-                               dfs_blocksize)
+        ansible_create_cluster(hosts_filename, cluster_size, args[4], args[5], args[0], args[6], args[7])
         # Format and start Hadoop cluster
-        set_cluster_state(token, cluster_id,
+        set_cluster_state(args[0], cluster_id,
                           ' Yarn Cluster is active', status='Active',
-                          master_IP=master_ip)
+                          master_IP=args[2])
         ansible_manage_cluster(cluster_id, 'format')
         ansible_manage_cluster(cluster_id, 'start')
         ansible_manage_cluster(cluster_id, 'HDFSMkdir')
+        if args[4] == 'hue':
+            ansible_manage_cluster(cluster_id, 'HUEstart')
     except Exception, e:
         msg = 'Error while running Ansible '
         raise RuntimeError(msg, error_ansible_playbook)
     finally:
         os.system('rm /tmp/master_' + master_hostname + '_pub_key_* ')
     logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
-                + hostname_master + ':8088/cluster')
+                + args[2] + ':8088/cluster')
 
 
 def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
@@ -92,7 +94,7 @@ def ansible_manage_cluster(cluster_id, action):
     Updates database only when starting or stopping a cluster.
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
-    if action == 'format' or action == 'HDFSMkdir':
+    if action in ['format','HDFSMkdir','HUEstart']:
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
         current_hadoop_status = action
@@ -139,17 +141,18 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     # Create command that executes ansible playbook
     ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
     '-f {0} -e "choose_role=yarn ssh_file_name={1} token={2} '.format(str(cluster_size), ssh_file, token) + \
-    'dfs_blocksize={0}m dfs_replication={1} uuid={2}'.format(dfs_blocksize, replication_factor, uuid)
+    'dfs_blocksize={0}m dfs_replication={1} uuid={2} "'.format(dfs_blocksize, replication_factor, uuid)
 
     # hadoop_image flag(true/false)
-    if hadoop_image:
+    if hadoop_image == 'hue':
         # true -> use an available image (hadoop pre-installed)
-        ansible_code += '" -t postconfig' + ansible_log
-    else:
+        ansible_code += ' -t postconfig,hueconfig'
+    elif hadoop_image == 'hadoopbase':
         # false -> use a bare VM
-        ansible_code += '"' + ansible_log
+        ansible_code += ' -t postconfig'
 
     # Execute ansible
+    ansible_code += ansible_log
     execute_ansible_playbook(ansible_code)
 
 

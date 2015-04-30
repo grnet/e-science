@@ -10,7 +10,7 @@ import datetime
 from time import sleep
 import logging
 import subprocess
-import os
+import json
 from os.path import join, expanduser
 from reroute_ssh import reroute_ssh_prep
 from kamaki.clients import ClientError
@@ -21,6 +21,7 @@ from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
 from django_db_after_login import db_cluster_create
 from cluster_errors_constants import *
 from celery import current_task
+import os
 
 
 class YarnCluster(object):
@@ -75,13 +76,18 @@ class YarnCluster(object):
         for image in list_current_images:
             if self.opts['os_choice'] == image['name']:
                 try:
-                    if image['properties']['hadoopconf'] == 'true': 
-                        self.hadoop_image = True
-                    else:
-                        self.hadoop_image = False
+                    if image['properties']['escienceconf']:
+                        image_metadata = json.loads(image['properties']['escienceconf'])
+                        if image_metadata['hadoop'] == 'True' and image_metadata['hue'] == 'True':
+                            self.hadoop_image = 'hue'
+                        elif image_metadata['hadoop'] == 'False':
+                            self.hadoop_image = 'debianbase'
+                        else:
+                            self.hadoop_image = 'hadoopbase'
+
                 except:
-                    # if hadoopconf hasn't been set then hadoop_image flag is false
-                    self.hadoop_image = False
+                    # if property hasn't been set then hadoop_image flag is false
+                    self.hadoop_image = 'debianbase'
                         
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
