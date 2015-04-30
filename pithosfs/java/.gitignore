@@ -4,4 +4,7 @@
 bin/
 .classpath
 .project
-testOutput.txt
+*.txt
+*.pdf
+*.properties
+*.xml

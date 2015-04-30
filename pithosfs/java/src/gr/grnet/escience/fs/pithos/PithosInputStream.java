@@ -23,7 +23,7 @@ import org.apache.hadoop.fs.FileSystem;
  * 
  */
 public class PithosInputStream extends FSInputStream {
-
+    
     private int hadoopToPithosBlock = 0;
 
     private boolean closed;

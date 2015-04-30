@@ -54,6 +54,22 @@ public class PithosFileSystem extends FileSystem {
     public PithosFileSystem() {
     }
 
+
+    /**
+     * @return the instance of hadoop - pithos connector
+     */
+    public static HadoopPithosConnector getHadoopPithosConnector() {
+        return hadoopPithosConnector;
+    }
+
+    /**
+     * Set the instance of hadoop - pithos connector
+     */
+    public static void setHadoopPithosConnector(
+            HadoopPithosConnector hadoopPithosConnector) {
+        PithosFileSystem.hadoopPithosConnector = hadoopPithosConnector;
+    }
+
     private boolean mkdir(Path path) throws IOException {
         util.dbgPrint("mkdir");
         Path absolutePath = makeAbsolute(path);
@@ -251,7 +267,8 @@ public class PithosFileSystem extends FileSystem {
             filename = filesList[filesList.length - count] + "/" + filename;
             count++;
         }
-        
+
+        //ArrayList<FileStatus> results = new ArrayList<FileStatus>();
         List<FileStatus> results = Collections.synchronizedList(new ArrayList<FileStatus>());
         FileStatus fileStatus;
 
@@ -307,7 +324,6 @@ public class PithosFileSystem extends FileSystem {
     public FSDataInputStream open(Path targetFile, int bufferSize)
             throws IOException {
         pithosPath = new PithosPath(targetFile);
-
         String pathEsc = null;
         try {
             pathEsc = util.urlEscape(null, null,
@@ -347,10 +363,6 @@ public class PithosFileSystem extends FileSystem {
         }
         util.dbgPrint("Pithos FileSystem Connector loaded.");
         util.dbgPrint("Hash Test:", out);
-    }
-
-    public static HadoopPithosConnector getHadoopPithosConnector() {
-        return hadoopPithosConnector;
     }
 
 }

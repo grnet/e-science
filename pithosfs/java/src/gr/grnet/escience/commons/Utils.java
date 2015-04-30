@@ -6,11 +6,13 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Date;
 
 public class Utils {
 
@@ -83,6 +85,14 @@ public class Utils {
                 .replaceAll("\\%7E", "~");
     }
 
+    @SuppressWarnings("deprecation")
+    public static String getCurentTimestamp() {
+        // - Create and return a unique timestamp
+        return MessageFormat.format("{0}{1}{2}_{3}{4}{5}", date.getYear(),
+                date.getMonth(), date.getDate(), date.getHours(),
+                date.getMinutes(), date.getSeconds());
+    }
+
     /**
      * Construct a URI from passed components and return the escaped and encoded
      * url
@@ -107,11 +117,11 @@ public class Utils {
      * Convert dateTime String to long epoch time in milliseconds
      * 
      * @param dtString
-     *            : datetime as String
-     *            invalid datetime string will use current datetime
+     *            : datetime as String invalid datetime string will use current
+     *            datetime
      * @param dtFormat
-     *            : DateTimeFormatter or String pattern to instantiate one
-     *            pass empty string to use default
+     *            : DateTimeFormatter or String pattern to instantiate one pass
+     *            empty string to use default
      * @return long epoch time in milliseconds
      */
     public Long dateTimeToEpoch(String dtString, Object dtFormat) {
@@ -123,7 +133,9 @@ public class Utils {
                     dtf = DateTimeFormatter.ofPattern(dtFormat.toString());
                 } catch (IllegalArgumentException ex) {
                     dtf = DateTimeFormatter.RFC_1123_DATE_TIME;
-                    this.dbgPrint("dateTimeToEpoch: invalid DateFormatter pattern", ex);
+                    this.dbgPrint(
+                            "dateTimeToEpoch: invalid DateFormatter pattern",
+                            ex);
                 }
             } else {
                 dtf = DateTimeFormatter.RFC_1123_DATE_TIME;
@@ -138,7 +150,9 @@ public class Utils {
             epoch = zdt.toInstant().toEpochMilli();
         } catch (DateTimeParseException ex) {
             epoch = System.currentTimeMillis();
-            this.dbgPrint("dateTimeToEpoch: invalid datetime string using current.", ex, epoch);
+            this.dbgPrint(
+                    "dateTimeToEpoch: invalid datetime string using current.",
+                    ex, epoch);
         }
         return epoch;
     }
@@ -158,7 +172,16 @@ public class Utils {
             formatter += " %s";
         }
         formatter += "\n";
+
+        // -
         System.err.format(formatter, args);
+
+        // - Create builder
+        logStrBuilder = new StringBuilder(String.format(formatter, args));
+
+        // - Write to centralized logger
+        loggerClient.getClient().debug(logStrBuilder.toString());
+
     }
 
 }

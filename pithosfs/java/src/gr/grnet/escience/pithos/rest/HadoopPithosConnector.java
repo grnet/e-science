@@ -1,5 +1,6 @@
 package gr.grnet.escience.pithos.rest;
 
+import gr.grnet.escience.commons.LoggerServer;
 import gr.grnet.escience.commons.PithosSerializer;
 import gr.grnet.escience.commons.Utils;
 import gr.grnet.escience.fs.pithos.PithosBlock;
@@ -39,6 +40,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         PithosSystemStore {
 
     private static final long serialVersionUID = 1L;
+    private transient LoggerServer loggerServer = null;
     private transient PithosRequest request;
     private transient PithosResponse response;
     private transient Object srcFile2bUploaded;
@@ -64,6 +66,18 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         // and pass the conf object from PithosFileSystem instead of option
         // literals
         super(pithosUrl, pithosToken, uuid);
+
+        // - Initialize the loggerServer
+        Thread loggerThread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+               loggerServer = new LoggerServer();
+            }
+        });
+        // - Start logger into a separated thread
+        loggerThread.start();
+
     }
 
     /***
