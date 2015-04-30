@@ -80,7 +80,7 @@
     tags: hueconfig
 
   - name: chown of hue bin directory
-    file: path=/usr/local/hue owner=hue group=hue state=directory
+    file: path=/usr/local/hue owner=hue group=hue state=directory recurse=yes
     tags: hueconfig
 
   - stat: path="{{ ssh_file_name }}"
