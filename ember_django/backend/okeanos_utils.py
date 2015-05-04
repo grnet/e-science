@@ -234,14 +234,15 @@ def get_flavor_id(token):
     disk_template_list = []
 
     for flavor in flavor_list:
-        if flavor['vcpus'] not in cpu_list:
-            cpu_list.append(flavor['vcpus'])
-        if flavor['ram'] not in ram_list:
-            ram_list.append(flavor['ram'])
-        if flavor['disk'] not in disk_list:
-            disk_list.append(flavor['disk'])
-        if flavor['SNF:disk_template'] not in disk_template_list:
-            disk_template_list.append(flavor['SNF:disk_template'])
+        if flavor['SNF:allow_create']:
+            if flavor['vcpus'] not in cpu_list:
+                cpu_list.append(flavor['vcpus'])
+            if flavor['ram'] not in ram_list:
+                ram_list.append(flavor['ram'])
+            if flavor['disk'] not in disk_list:
+                disk_list.append(flavor['disk'])
+            if flavor['SNF:disk_template'] not in disk_template_list:
+                disk_template_list.append(flavor['SNF:disk_template'])
     cpu_list = sorted(cpu_list)
     ram_list = sorted(ram_list)
     disk_list = sorted(disk_list)

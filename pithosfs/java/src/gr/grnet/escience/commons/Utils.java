@@ -1,24 +1,19 @@
 package gr.grnet.escience.commons;
 
-import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Date;
 
 public class Utils {
-
-    private static final boolean DEBUG = false;
-    private static Date date = new Date();
+    private static final boolean DEBUG = true;
     private LoggerClient loggerClient = new LoggerClient();
     private StringBuilder logStrBuilder = null;
 
@@ -117,6 +112,13 @@ public class Utils {
         return uri.toASCIIString();
     }
 
+    public static String getCurrentTimestamp() {
+        // - Create and return a unique timestamp
+        LocalDateTime ldt = LocalDateTime.now();
+        DateTimeFormatter dtf = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        return ldt.format(dtf);
+    }
+    
     /**
      * Convert dateTime String to long epoch time in milliseconds
      * 
@@ -183,7 +185,7 @@ public class Utils {
         // - Create builder
         logStrBuilder = new StringBuilder(String.format(formatter, args));
 
-        // - Write to centrilized logger
+        // - Write to centralized logger
         loggerClient.getClient().debug(logStrBuilder.toString());
 
     }

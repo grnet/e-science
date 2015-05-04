@@ -1,4 +1,6 @@
 *.sh
+*.properties
+.classpath
 bin/
 .classpath
 .project

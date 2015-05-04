@@ -17,8 +17,8 @@
 		
 		<!-- JUnit dependencies -->
 		<dependency org="junit" name="junit" rev="4.11"/>
-				
-		<!-- SysLog dependencies -->
+		
+		<!-- Syslog4j dependencies -->
 		<dependency org="org.graylog2" name="syslog4j" rev="0.9.52"/>
 				
 	</dependencies>

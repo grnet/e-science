@@ -24,6 +24,8 @@ public class PithosPath {
     }
 
     public PithosPath(String pithosContainer, String pithosObjectPath) {
+        // TODO Do not parse the path as a string, instead use Path api 
+        // and take into account type of requested resource and pithos container / authority elements.
         this.container = pithosContainer;
         this.objectAbsolutePath = pithosObjectPath;
 
@@ -78,7 +80,11 @@ public class PithosPath {
     public String getContainer() {
         return container;
     }
-
+    
+    public String getParent(){
+        return this.folderAbsolutePath;
+    }
+    
     public void setContainer(String container) {
         this.container = container;
     }
