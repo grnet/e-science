@@ -4,10 +4,10 @@ import gr.grnet.escience.commons.PithosSerializer;
 import gr.grnet.escience.commons.Utils;
 import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
@@ -163,7 +163,7 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void write(byte[] b, int off, int len)
             throws IOException {
-//        util.dbgPrint("write(byte, int, int)",off,len);
+        // util.dbgPrint("write(byte, int, int)",off,len);
         if (closed) {
             throw new IOException(ERR_STREAM_CLOSED);
         }
@@ -237,12 +237,29 @@ public class PithosOutputStream extends OutputStream {
         backupStream.close();
         //
         // Send it to pithos
-        String pithosContainer = pithosPath.getContainer();
-        String targetObject = pithosPath.getObjectAbsolutePath();
-        util.dbgPrint(pithosContainer,targetObject);
-        nextBlockOutputStream();
-        hadoopConnector.storePithosBlock(pithosContainer, targetObject,
-                nextBlock, backupFile);
+        // String pithosContainer = pithosPath.getContainer();
+        // String targetObject = pithosPath.getObjectAbsolutePath();
+        // util.dbgPrint(pithosContainer, targetObject);
+        // nextBlockOutputStream();
+
+        // - Load file bytes
+        byte[] endBlockData = PithosSerializer.serializeFile(backupFile);
+
+        // - Create block and append on the existing object
+        try {
+            // - Create Pithos Block by using the content of the endBlock
+            PithosBlock pithosBlock = new PithosBlock(util.computeHash(
+                    endBlockData, "SHA-256"), endBlockData.length, endBlockData);
+
+            // - Append Pithos Block on the existing object
+            hadoopConnector.appendPithosBlock(pithosPath.getContainer(),
+                    pithosPath.getObjectAbsolutePath(), pithosBlock);
+
+        } catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
         // internalClose();
 
         //

@@ -47,6 +47,13 @@ public class PithosObject implements Serializable {
         this.objectBlocks = blocks;
     }
 
+    /** Create a Pithos Object **/
+    public PithosObject(PithosPath path, PithosBlock[] blocks) {
+        // - Extract Object Absolute Name by excluding Scheme & container
+        this.objectName = path.getObjectName();
+        this.objectBlocks = blocks;
+    }
+    
     public String getName() {
         return objectName;
     }
