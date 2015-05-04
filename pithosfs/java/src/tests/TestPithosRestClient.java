@@ -31,7 +31,7 @@ public class TestPithosRestClient {
     private static final String PITHOS_FILE_TO_DOWNLOAD_DIR_NAME = "tests/";
     private static final long OFFSET = 5;
     private static final String LOCAL_SOURCE_FILE_TO_UPLOAD = "testOutput.txt";
-    private static final String FOLDER_NAME = "testOut";
+    private static final String FOLDER_NAME = "testOut/child/childofchild";
     private static final String PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM = "tests/newPithosObjectData.txt";
     private static final String DUMMY_BLOCK_DATA = "TEST DATA";
     private static PithosResponse pithosResponse;

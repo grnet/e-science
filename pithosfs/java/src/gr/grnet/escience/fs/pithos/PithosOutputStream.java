@@ -160,9 +160,9 @@ public class PithosOutputStream extends OutputStream {
     }
 
     @Override
-    public synchronized void write(byte b[], int off, int len)
+    public synchronized void write(byte[] b, int off, int len)
             throws IOException {
-        util.dbgPrint("write(byte, int, int)");
+//        util.dbgPrint("write(byte, int, int)",off,len);
         if (closed) {
             throw new IOException(ERR_STREAM_CLOSED);
         }

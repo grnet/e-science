@@ -212,7 +212,7 @@ public class PithosFileSystem extends FileSystem {
                 .getPithosObjectMetaData(pithosPath.getContainer(), urlEsc,
                         PithosResponseFormat.JSON);
         if (metadata.toString().contains("HTTP/1.1 404 NOT FOUND")) {
-            util.dbgPrint("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
+            util.dbgPrint("File does not exist in Pithos FS.");
             throw new FileNotFoundException("File does not exist in Pithos FS.");
         }
         for (String obj : metadata.getResponseData().keySet()) {
@@ -268,7 +268,6 @@ public class PithosFileSystem extends FileSystem {
             count++;
         }
 
-        //ArrayList<FileStatus> results = new ArrayList<FileStatus>();
         List<FileStatus> results = Collections.synchronizedList(new ArrayList<FileStatus>());
         FileStatus fileStatus;
 
@@ -294,7 +293,9 @@ public class PithosFileSystem extends FileSystem {
     @Override
     public boolean mkdirs(Path f, FsPermission permission) throws IOException {
         util.dbgPrint("mkdirs path >", f);
-//        pithosPath = new PithosPath(f);
+        pithosPath = new PithosPath(f);
+        util.dbgPrint("mkdirs pithosPath >",pithosPath.getObjectAbsolutePath());
+        this.hadoopPithosConnector.uploadFileToPithos(pithosPath.getContainer(), pithosPath.getObjectAbsolutePath(), true);
 //        Path absolutePath = makeAbsolute(f);
 //        util.dbgPrint("mkdirs absolute >", absolutePath);
 //        List<PithosPath> pithosPaths = Collections.synchronizedList(new ArrayList<PithosPath>());

@@ -84,13 +84,6 @@ public class Utils {
                 .replaceAll("\\%7E", "~");
     }
 
-    public static String getCurrentTimestamp() {
-        // - Create and return a unique timestamp
-        LocalDateTime ldt = LocalDateTime.now();
-        DateTimeFormatter dtf = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-        return ldt.format(dtf);
-    }
-
     /**
      * Construct a URI from passed components and return the escaped and encoded
      * url
@@ -111,6 +104,13 @@ public class Utils {
         return uri.toASCIIString();
     }
 
+    public static String getCurrentTimestamp() {
+        // - Create and return a unique timestamp
+        LocalDateTime ldt = LocalDateTime.now();
+        DateTimeFormatter dtf = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        return ldt.format(dtf);
+    }
+    
     /**
      * Convert dateTime String to long epoch time in milliseconds
      * 
