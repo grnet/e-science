@@ -700,7 +700,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         try {
             // - Create Pithos request
             setPithosRequest(new PithosRequest());
-
+            
             // - Check if exists and if no, then create it
             if (!getFileList(pithos_container)
                     .contains(pithos_object.getName())) {

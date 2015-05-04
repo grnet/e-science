@@ -54,7 +54,6 @@ public class PithosFileSystem extends FileSystem {
     public PithosFileSystem() {
     }
 
-
     /**
      * @return the instance of hadoop - pithos connector
      */
@@ -169,8 +168,16 @@ public class PithosFileSystem extends FileSystem {
             boolean overwrite, int bufferSize, short replication,
             long blockSize, Progressable progress) throws IOException {
         util.dbgPrint("create >", f, pithosPath, blockSize, bufferSize);
+
+        // - Create empty object on Pithos FS with the given name by using the
+        // path
+        hadoopPithosConnector.storePithosObject(pithosPath.getContainer(),
+                new PithosObject(new PithosPath(f), null));
+
         return new FSDataOutputStream(new PithosOutputStream(getConf(),
-                pithosPath, blockSize, bufferSize), statistics);
+                pithosPath,
+                hadoopPithosConnector.getPithosBlockDefaultSize(pithosPath
+                        .getContainer()), 2 * 1024 * 1024), statistics);
     }
 
     @Override
@@ -239,9 +246,11 @@ public class PithosFileSystem extends FileSystem {
                     }
                 }
             }
-            String modificationTime = metadata.getResponseData().get("Last-Modified").get(0);
+            String modificationTime = metadata.getResponseData()
+                    .get("Last-Modified").get(0);
             pithosFileStatus = new PithosFileStatus(length,
-                    getDefaultBlockSize(), util.dateTimeToEpoch(modificationTime, ""), targetPath);
+                    getDefaultBlockSize(), util.dateTimeToEpoch(
+                            modificationTime, ""), targetPath);
         }
         util.dbgPrint("getFileStatus", "EXIT");
         util.dbgPrint("pithos_file_status >", pithosFileStatus);
@@ -268,7 +277,8 @@ public class PithosFileSystem extends FileSystem {
             count++;
         }
 
-        List<FileStatus> results = Collections.synchronizedList(new ArrayList<FileStatus>());
+        List<FileStatus> results = Collections
+                .synchronizedList(new ArrayList<FileStatus>());
         FileStatus fileStatus;
 
         String[] files = this.hadoopPithosConnector.getFileList(
@@ -284,9 +294,9 @@ public class PithosFileSystem extends FileSystem {
                 results.add(fileStatus);
             }
         }
-        util.dbgPrint("listStatus >",results);
+        util.dbgPrint("listStatus >", results);
         // - Return the list of the available files
-        FileStatus [] resultsArr = new FileStatus[results.size()];
+        FileStatus[] resultsArr = new FileStatus[results.size()];
         return results.toArray(resultsArr);
     }
 
@@ -294,30 +304,34 @@ public class PithosFileSystem extends FileSystem {
     public boolean mkdirs(Path f, FsPermission permission) throws IOException {
         util.dbgPrint("mkdirs path >", f);
         pithosPath = new PithosPath(f);
-        util.dbgPrint("mkdirs pithosPath >",pithosPath.getObjectAbsolutePath());
-        this.hadoopPithosConnector.uploadFileToPithos(pithosPath.getContainer(), pithosPath.getObjectAbsolutePath(), true);
-//        Path absolutePath = makeAbsolute(f);
-//        util.dbgPrint("mkdirs absolute >", absolutePath);
-//        List<PithosPath> pithosPaths = Collections.synchronizedList(new ArrayList<PithosPath>());
-//        do {
-//            util.dbgPrint("mkdirs, absPath >", absolutePath);
-//            try {
-//                pithosPaths.add(new PithosPath(absolutePath));
-//            } catch (Exception e) {
-//                util.dbgPrint("mkdirs exception", e);
-//                throw new IOException(e);
-//            }
-//            absolutePath = absolutePath.getParent();
-//            util.dbgPrint("mkdirs parent >", absolutePath);
-//        } while (absolutePath != null);
-//        boolean result = true;
-//        for (PithosPath p : pithosPaths) {
-//            util.dbgPrint("mkdirs getParent> ", p.getParent());
-//            if (p.getParent() == null)
-//                continue;
-//            result &= mkdir(absolutePath);
-//        }
-////        return result;
+        util.dbgPrint("mkdirs pithosPath >",
+                pithosPath.getObjectFolderAbsolutePath());
+        this.hadoopPithosConnector.uploadFileToPithos(
+                pithosPath.getContainer(),
+                pithosPath.getObjectFolderAbsolutePath(), true);
+        // Path absolutePath = makeAbsolute(f);
+        // util.dbgPrint("mkdirs absolute >", absolutePath);
+        // List<PithosPath> pithosPaths = Collections.synchronizedList(new
+        // ArrayList<PithosPath>());
+        // do {
+        // util.dbgPrint("mkdirs, absPath >", absolutePath);
+        // try {
+        // pithosPaths.add(new PithosPath(absolutePath));
+        // } catch (Exception e) {
+        // util.dbgPrint("mkdirs exception", e);
+        // throw new IOException(e);
+        // }
+        // absolutePath = absolutePath.getParent();
+        // util.dbgPrint("mkdirs parent >", absolutePath);
+        // } while (absolutePath != null);
+        // boolean result = true;
+        // for (PithosPath p : pithosPaths) {
+        // util.dbgPrint("mkdirs getParent> ", p.getParent());
+        // if (p.getParent() == null)
+        // continue;
+        // result &= mkdir(absolutePath);
+        // }
+        // // return result;
         return false;
     }
 

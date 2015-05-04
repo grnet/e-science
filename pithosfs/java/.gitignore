@@ -8,3 +8,5 @@ bin/
 *.pdf
 *.properties
 *.xml
+dist/
+orka-pithos.jardesc

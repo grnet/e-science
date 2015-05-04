@@ -84,14 +84,6 @@ public class Utils {
                 .replaceAll("\\%7E", "~");
     }
 
-    @SuppressWarnings("deprecation")
-    public static String getCurentTimestamp() {
-        // - Create and return a unique timestamp
-        return MessageFormat.format("{0}{1}{2}_{3}{4}{5}", date.getYear(),
-                date.getMonth(), date.getDate(), date.getHours(),
-                date.getMinutes(), date.getSeconds());
-    }
-
     /**
      * Construct a URI from passed components and return the escaped and encoded
      * url
@@ -118,7 +110,7 @@ public class Utils {
         DateTimeFormatter dtf = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         return ldt.format(dtf);
     }
-    
+
     /**
      * Convert dateTime String to long epoch time in milliseconds
      * 
@@ -182,11 +174,11 @@ public class Utils {
         // -
         System.err.format(formatter, args);
 
-        // - Create builder
-        logStrBuilder = new StringBuilder(String.format(formatter, args));
-
-        // - Write to centralized logger
-        loggerClient.getClient().debug(logStrBuilder.toString());
+//        // - Create builder
+//        logStrBuilder = new StringBuilder(String.format(formatter, args));
+//
+//        // - Write to centralized logger
+//        loggerClient.getClient().debug(logStrBuilder.toString());
 
     }
 
