@@ -486,7 +486,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                 (new Gson()).toJson(getContainerInfo(pithos_container)),
                 PithosResponse.class);
         // - Return the name of the hash algorithm
-        return resp.getResponseData().get("X-Container-Block-Hash").get(0);
+        String hashAlgo = resp.getResponseData().get("X-Container-Block-Hash").get(0);
+        return util.fixPithosHashName(hashAlgo);
     }
 
     @Override

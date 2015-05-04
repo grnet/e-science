@@ -11,6 +11,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils {
     private static final boolean DEBUG = true;
@@ -19,7 +21,25 @@ public class Utils {
 
     public Utils() {
     }
-
+    
+    /**
+     * Fix the hash algorithm name
+     * 
+     * @param hashAlgorithm
+     * @return unsquelch pithos X-Container-Block-Hash data
+     */
+    public String fixPithosHashName(String hashAlgorithm){
+        Pattern pSha = Pattern.compile("^(sha)([0-9]+)$", Pattern.CASE_INSENSITIVE);
+        Matcher mSha = pSha.matcher(hashAlgorithm);
+        if (mSha.matches()){
+            hashAlgorithm = String.format("%s-%s", mSha.group(1),mSha.group(2));
+            this.dbgPrint("fixPithosHash matches", hashAlgorithm);
+        }else{
+            this.dbgPrint("fixPithosHash no match:",hashAlgorithm);
+        }
+        return hashAlgorithm;
+    }
+    
     /**
      * Get the hash container
      * 
@@ -174,11 +194,11 @@ public class Utils {
         // -
         System.err.format(formatter, args);
 
-        // - Create builder
-        logStrBuilder = new StringBuilder(String.format(formatter, args));
-
-        // - Write to centralized logger
-        loggerClient.getClient().debug(logStrBuilder.toString());
+//        // - Create builder
+//        logStrBuilder = new StringBuilder(String.format(formatter, args));
+//
+//        // - Write to centralized logger
+//        loggerClient.getClient().debug(logStrBuilder.toString());
 
     }
 

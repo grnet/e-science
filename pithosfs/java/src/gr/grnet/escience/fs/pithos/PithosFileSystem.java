@@ -170,7 +170,7 @@ public class PithosFileSystem extends FileSystem {
             long blockSize, Progressable progress) throws IOException {
         util.dbgPrint("create >", f, pithosPath, blockSize, bufferSize);
         return new FSDataOutputStream(new PithosOutputStream(getConf(),
-                pithosPath, blockSize, bufferSize), statistics);
+                pithosPath, hadoopPithosConnector.getPithosBlockDefaultSize(pithosPath.getContainer()), 1*1024*1024), statistics);
     }
 
     @Override
@@ -341,7 +341,39 @@ public class PithosFileSystem extends FileSystem {
     @Override
     public boolean rename(Path src, Path dst) throws IOException {
         util.dbgPrint("rename", src, dst);
-        // TODO Auto-generated method stub
+        PithosPath srcPath = new PithosPath(src);
+        PithosPath dstPath = new PithosPath(dst);
+        PithosFileStatus srcStatus = null;
+        PithosFileStatus dstStatus = null;
+        try {
+            srcStatus = getFileStatus(src);
+            if (srcStatus.isDirectory()) {
+                throw new IOException("Source is a directory");
+            } else {
+                try {
+                    dstStatus = getFileStatus(dst);
+                    if (dstStatus.isFile()) {
+                        throw new IOException("Destination already exists");
+                    }
+                } catch (FileNotFoundException e) {
+                    util.dbgPrint("rename", "Destination doesn't exist (good)",
+                            e);
+                    String resp = this.hadoopPithosConnector
+                            .movePithosObjectToFolder(srcPath.getContainer(),
+                                    dstPath.getObjectAbsolutePath(),
+                                    srcPath.getObjectFolderAbsolutePath());
+                    util.dbgPrint("rename Destination not exist rest response",
+                            resp);
+                    if (resp.contains("201")) {
+                        return true;
+                    }
+                }
+            }
+        } catch (FileNotFoundException e) {
+            util.dbgPrint("rename", "Source doesn't exist", e);
+            throw new IOException("Source doesn't exist");
+        }
+
         return false;
     }
 
@@ -354,7 +386,7 @@ public class PithosFileSystem extends FileSystem {
         // dependencies
         Utils util = new Utils();
         String out = null;
-        String hashAlgo = "SHA-256";
+        String hashAlgo = "sha-256";
         try {
             out = util.computeHash("Lorem ipsum dolor sit amet.", hashAlgo);
         } catch (NoSuchAlgorithmException e) {

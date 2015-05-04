@@ -100,25 +100,26 @@ public class PithosOutputStream extends OutputStream {
      *            FS conf
      * @param path
      *            file path
-     * @param blockSize
+     * @param blocksize
      *            size of block
      * @param buffersize
      *            size of buffer
      * @throws IOException
      */
     public PithosOutputStream(Configuration conf, PithosPath path,
-            long blockSize, int buffersize) throws IOException {
+            long blocksize, int buffersize) throws IOException {
+        util.dbgPrint("PithosOutputStream ENTRY", path, blocksize, buffersize);
         this.conf = conf;
         this.pithosPath = path;
-        this.blockSize = blockSize;
+        this.blockSize = blocksize;
         this.hadoopConnector = new HadoopPithosConnector(
                 conf.get("fs.pithos.url"), conf.get("auth.pithos.token"),
                 conf.get("auth.pithos.uuid"));
         this.backupFile = newBackupFile();
         this.backupStream = new FileOutputStream(backupFile);
         this.bufferSize = buffersize;
-        this.outBuf = new byte[bufferSize];
-        util.dbgPrint("PithosOutputStream instantiated",path,blockSize,buffersize);
+        this.outBuf = new byte[buffersize];
+        util.dbgPrint("PithosOutputStream EXIT");
     }
 
     /**
@@ -136,7 +137,7 @@ public class PithosOutputStream extends OutputStream {
                     "Cannot create local pithos buffer directory: " + dir);
         }
         File result = File.createTempFile("output-", ".tmp", dir);
-        util.dbgPrint(result);
+        util.dbgPrint("newBackupFile > result:",result);
         result.deleteOnExit();
         return result;
     }
@@ -266,7 +267,7 @@ public class PithosOutputStream extends OutputStream {
                 .getPithosContainerHashAlgorithm(container);
         util.dbgPrint("nextBlockOutputStream", hashAlgo);
         try {
-            blockHash = util.computeHash(blockData, "SHA-256");
+            blockHash = util.computeHash(blockData, hashAlgo);
             if (!hadoopConnector.pithosObjectBlockExists(container, blockHash)) {
                 nextBlock = new PithosBlock(blockHash, bytesWrittenToBlock,
                         blockData);
