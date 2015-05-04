@@ -16,19 +16,19 @@ from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATU
 from okeanos_utils import set_cluster_state
 
 # Definitions of return value errors
-from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY
+from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY, NON_STATE_HADOOP_ACTIONS
 # Ansible constants
 playbook = 'site.yml'
 ansible_playbook = dirname(abspath(__file__)) + '/ansible/' + playbook
 ansible_hosts_prefix = 'ansible_hosts_'
 ansible_verbosity = ' -vvvv'
-XML_FILE = '/home/developer/workspace/hdfs-site.xml'
 
 
 def install_yarn(*args):
     """
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn.
+    Takes positional arguments as args tuple.
     args: token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_file, replication_factor, dfs_blocksize
     """
 
@@ -90,11 +90,11 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
 
 def ansible_manage_cluster(cluster_id, action):
     """
-    Start,stop or format a hadoop cluster, depending on the action arg.
+    Perform an action on a Hadoop cluster depending on the action arg.
     Updates database only when starting or stopping a cluster.
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
-    if action in ['format','HDFSMkdir','HUEstart']:
+    if action in NON_STATE_HADOOP_ACTIONS:
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
         current_hadoop_status = action
@@ -124,8 +124,8 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     """
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
-    Filename as argument is the name of ansible_hosts file.
-    If a hadoop image was used in the VMs creation, ansible
+    hosts_filename is the name of ansible_hosts file.
+    If a specific hadoop image was used in the VMs creation, ansible
     playbook will not install Hadoop-Yarn and will only perform
     the appropriate configuration.
     """
@@ -143,13 +143,15 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     '-f {0} -e "choose_role=yarn ssh_file_name={1} token={2} '.format(str(cluster_size), ssh_file, token) + \
     'dfs_blocksize={0}m dfs_replication={1} uuid={2} "'.format(dfs_blocksize, replication_factor, uuid)
 
-    # hadoop_image flag(true/false)
+    # hadoop_image flag(bare/Hadoop only/Hadoop + Hue)
     if hadoop_image == 'hue':
-        # true -> use an available image (hadoop pre-installed)
+        # Hue -> use an available image (Hadoop and Hue pre-installed)
         ansible_code += ' -t postconfig,hueconfig'
     elif hadoop_image == 'hadoopbase':
-        # false -> use a bare VM
+        # Hadoop -> use an available image (Hadoop pre-installed)
         ansible_code += ' -t postconfig'
+
+    # If above checks are false, will create a cluster with Debian Base image and install Hadoop
 
     # Execute ansible
     ansible_code += ansible_log

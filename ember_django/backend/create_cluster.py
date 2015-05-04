@@ -71,7 +71,7 @@ class YarnCluster(object):
         # Get resources of pending clusters
         self.pending_quota = retrieve_pending_clusters(self.opts['token'],
                                                        self.opts['project_name'])
-        # check hadoopconf flag and set hadoop_image accordingly
+        # check escienceconf flag and set hadoop_image accordingly
         list_current_images = self.plankton.list_public(True, 'default')
         for image in list_current_images:
             if self.opts['os_choice'] == image['name']:
