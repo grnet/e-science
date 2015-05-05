@@ -150,6 +150,8 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     elif hadoop_image == 'hadoopbase':
         # Hadoop -> use an available image (Hadoop pre-installed)
         ansible_code += ' -t postconfig'
+    else:
+        ansible_code += ' -t preconfig,postconfig'
 
     # If above checks are false, will create a cluster with Debian Base image and install Hadoop
 

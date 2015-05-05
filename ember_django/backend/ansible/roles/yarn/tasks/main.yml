@@ -84,11 +84,11 @@
     tags: hueconfig
 
   - name: Remove Hue obsolete directory
-    file: path=/root/hue-*  state=absent
+    shell: rm -r hue-*
     tags: hueconfig
 
   - name: Remove Hadoop .tar.gz file
-    file: path={{path_to_hadoop}}/hadoop-*.tar.gz  state=absent
+    shell: rm hadoop-*.tar.gz chdir={{path_to_hadoop}}
     tags: postconfig
 
   - stat: path="{{ ssh_file_name }}"
