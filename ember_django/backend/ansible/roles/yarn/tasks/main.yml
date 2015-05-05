@@ -83,6 +83,14 @@
     file: path=/usr/local/hue owner=hue group=hue state=directory recurse=yes
     tags: hueconfig
 
+  - name: Remove Hue obsolete directory
+    file: path=/root/hue-*  state=absent
+    tags: hueconfig
+
+  - name: Remove Hadoop .tar.gz file
+    file: path={{path_to_hadoop}}/hadoop-*.tar.gz  state=absent
+    tags: postconfig
+
   - stat: path="{{ ssh_file_name }}"
     tags: postconfig
     register: p
