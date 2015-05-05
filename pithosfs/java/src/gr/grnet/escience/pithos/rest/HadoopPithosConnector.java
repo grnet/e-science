@@ -66,13 +66,13 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         // and pass the conf object from PithosFileSystem instead of option
         // literals
         super(pithosUrl, pithosToken, uuid);
-        
+
         // - Initialize the loggerServer
         Thread loggerThread = new Thread(new Runnable() {
 
             @Override
             public void run() {
-               loggerServer = new LoggerServer();
+                loggerServer = new LoggerServer();
             }
         });
         // - Start logger into a separated thread
@@ -517,7 +517,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
             // - Add data from pithos response on the corresponding java object
             getPithosResponse().setResponseData(response_data);
-            
+
         } catch (IOException e) {
             util.dbgPrint(e.getMessage(), e);
             return null;
@@ -700,7 +700,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         try {
             // - Create Pithos request
             setPithosRequest(new PithosRequest());
-            
+
             // - Check if exists and if no, then create it
             if (!getFileList(pithos_container)
                     .contains(pithos_object.getName())) {
@@ -799,9 +799,9 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             if (temp != null) {
                 temp.delete();
             }
-            if (srcFile2bUploaded != null) {
-                ((File) srcFile2bUploaded).delete();
-            }
+//            if (srcFile2bUploaded != null) {
+//                ((File) srcFile2bUploaded).delete();
+//            }
         }
     }
 
@@ -844,19 +844,23 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         // - Create Pithos request
         setPithosRequest(new PithosRequest());
 
-        // - Header Parameters
-        // - Format of the uploaded file
-        getPithosRequest().getRequestHeaders()
-                .put("Content-Type", "text/plain");
         String strLength = null;
         try {
             if (isDir) {
                 srcFile2bUploaded = sourceFile;
                 strLength = "0";
+                // - Header Parameters
+                // - Format of the uploaded file
+                getPithosRequest().getRequestHeaders().put("Content-Type",
+                        "application/directory");
             }
 
             else {
                 srcFile2bUploaded = new File(sourceFile);
+                // - Header Parameters
+                // - Format of the uploaded file
+                getPithosRequest().getRequestHeaders().put("Content-Type",
+                        "text/plain");
             }
 
             // - If there is successful renaming of the object into the required
