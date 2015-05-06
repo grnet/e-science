@@ -71,7 +71,7 @@ public class PithosPath {
         this.objectAbsolutePath = givenPath_str.substring(getContainer()
                 .length() + 1);
 
-        util.dbgPrint("3. OBEJCT ABSOLUTE PATH --> ", getObjectAbsolutePath());
+        util.dbgPrint("3. OBJECT ABSOLUTE PATH --> ", getObjectAbsolutePath());
 
         // - Check what is requested in terms of files and directories on Pithos
         // FS

@@ -33,9 +33,6 @@ public class Utils {
         Matcher mSha = pSha.matcher(hashAlgorithm);
         if (mSha.matches()){
             hashAlgorithm = String.format("%s-%s", mSha.group(1),mSha.group(2));
-            this.dbgPrint("fixPithosHash matches", hashAlgorithm);
-        }else{
-            this.dbgPrint("fixPithosHash no match:",hashAlgorithm);
         }
         return hashAlgorithm;
     }

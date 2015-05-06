@@ -392,10 +392,12 @@ public interface PithosSystemStore {
      *            : the Pithos container on which the action will be performed.
      *            Leave it blank so as to refer to the default container that
      *            corresponds to 'Pithos'
-     * @param targetObject
+     * @param sourceObject
      *            : the object that should be moved
      * @param targetFolderPath
      *            : the full path of the folder that the object will be moved
+     * @param targetObject
+     *            : the name of the destination object (optional)
      * @return A string that actually is the response code and message that
      *         identifies the result of the current process based on the
      *         corresponding response codes as they are described into
@@ -403,7 +405,7 @@ public interface PithosSystemStore {
 
      */
     public String movePithosObjectToFolder(String pithosContainer,
-            String targetObject, String targetFolderPath) throws IOException;
+            String sourceObject, String targetFolderPath, String targetObject) throws IOException;
 
     /**
      * This method gets as input the container of the Pithos storage system, the

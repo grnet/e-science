@@ -785,7 +785,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                 if (responseStr.contains("201")) {
                     return movePithosObjectToFolder(path.getContainer(),
                             tmpFile2bUploaded.getName(),
-                            path.getObjectFolderAbsolutePath());
+                            path.getObjectFolderAbsolutePath(), null);
                 } else {
                     return "ERROR: Fail to create the object into the requested location";
                 }
@@ -807,8 +807,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     }
 
     @Override
-    public String movePithosObjectToFolder(String pithos_container,
-            String target_object, String target_folder_path) {
+    public String movePithosObjectToFolder(String pithosContainer,
+            String sourceObject, String targetFolderPath, String targetObject) {
         // - Create Pithos request
         setPithosRequest(new PithosRequest());
 
@@ -817,16 +817,21 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         getPithosRequest().getRequestParameters().put("format", "json");
 
         // - Check if the folder path is in appropriate format
-        if (!target_folder_path.isEmpty()) {
-            if (!target_folder_path.endsWith("/")) {
-                target_folder_path = target_folder_path.concat("/");
+        if (!targetFolderPath.isEmpty()) {
+            if (!targetFolderPath.endsWith("/")) {
+                targetFolderPath = targetFolderPath.concat("/");
             }
         }
-
+        String toFilename = null;
+        if (targetObject==null || targetObject.isEmpty()){
+            toFilename = targetFolderPath.concat(sourceObject);
+        }else{
+            toFilename = targetFolderPath.concat(targetObject);
+        }
         try {
             // - Post data and get the response
-            return move_object(pithos_container, target_object,
-                    pithos_container, target_folder_path.concat(target_object),
+            return move_object(pithosContainer, sourceObject,
+                    pithosContainer, toFilename,
                     getPithosRequest().getRequestParameters(),
                     getPithosRequest().getRequestHeaders());
 

@@ -309,36 +309,15 @@ public class PithosFileSystem extends FileSystem {
         pithosPath = new PithosPath(f);
         util.dbgPrint("mkdirs pithosPath >",
                 pithosPath.getObjectFolderAbsolutePath());
-        
-        
-        hadoopPithosConnector.uploadFileToPithos(
+            
+        String resp = hadoopPithosConnector.uploadFileToPithos(
                 pithosPath.getContainer(),
                 pithosPath.getObjectFolderAbsolutePath(), true);
         
-        
-        // Path absolutePath = makeAbsolute(f);
-        // util.dbgPrint("mkdirs absolute >", absolutePath);
-        // List<PithosPath> pithosPaths = Collections.synchronizedList(new
-        // ArrayList<PithosPath>());
-        // do {
-        // util.dbgPrint("mkdirs, absPath >", absolutePath);
-        // try {
-        // pithosPaths.add(new PithosPath(absolutePath));
-        // } catch (Exception e) {
-        // util.dbgPrint("mkdirs exception", e);
-        // throw new IOException(e);
-        // }
-        // absolutePath = absolutePath.getParent();
-        // util.dbgPrint("mkdirs parent >", absolutePath);
-        // } while (absolutePath != null);
-        // boolean result = true;
-        // for (PithosPath p : pithosPaths) {
-        // util.dbgPrint("mkdirs getParent> ", p.getParent());
-        // if (p.getParent() == null)
-        // continue;
-        // result &= mkdir(absolutePath);
-        // }
-        // // return result;
+        if (resp.contains("201")){
+            return true;
+        }
+        util.dbgPrint("mkdirs> response:", resp);
         return false;
     }
 
@@ -362,7 +341,16 @@ public class PithosFileSystem extends FileSystem {
     @Override
     public boolean rename(Path src, Path dst) throws IOException {
         util.dbgPrint("rename", src, dst);
-        // TODO Auto-generated method stub
+        PithosPath srcPiPath = new PithosPath(src);
+        PithosPath dstPiPath = new PithosPath(dst);
+        String srcName = srcPiPath.getObjectAbsolutePath();
+        String dstName = dstPiPath.getObjectAbsolutePath();
+        util.dbgPrint("rename src, dst",srcName,dstName);
+        String resp = this.hadoopPithosConnector.movePithosObjectToFolder(srcPiPath.getContainer(), srcName, "", dstName);
+        util.dbgPrint("rename resp>",resp);
+        if (resp.contains("201")){
+            return true;
+        }
         return false;
     }
 

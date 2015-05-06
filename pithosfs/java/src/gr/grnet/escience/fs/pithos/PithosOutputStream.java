@@ -256,7 +256,8 @@ public class PithosOutputStream extends OutputStream {
                     pithosPath.getObjectAbsolutePath(), pithosBlock);
 
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            util.dbgPrint("endBlock",e);
+            throw new IOException(e.toString());
         }
 
         // internalClose();
