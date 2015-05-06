@@ -69,27 +69,27 @@ public class PithosFileSystem extends FileSystem {
         PithosFileSystem.hadoopPithosConnector = hadoopPithosConnector;
     }
 
-    private boolean mkdir(Path path) throws IOException {
-        util.dbgPrint("mkdir");
-        Path absolutePath = makeAbsolute(path);
-        PithosPath createPath = new PithosPath(path);
-        util.dbgPrint("mkdir", path, absolutePath, createPath);
-        PithosFileStatus status = null;
-        try {
-            status = getFileStatus(path);
-        } catch (IOException iox) {
-            util.dbgPrint("mkdir", iox);
-            this.hadoopPithosConnector.uploadFileToPithos(
-                    createPath.getContainer(), createPath.toString(), true);
-            return true;
-        }
-        if (status != null && status.isFile()) {
-            throw new IOException(String.format(
-                    "Can't make directory for path %s since it is a file.",
-                    absolutePath));
-        }
-        return true;
-    }
+//    private boolean mkdir(Path path) throws IOException {
+//        util.dbgPrint("mkdir");
+//        Path absolutePath = makeAbsolute(path);
+//        PithosPath createPath = new PithosPath(path);
+//        util.dbgPrint("mkdir", path, absolutePath, createPath);
+//        PithosFileStatus status = null;
+//        try {
+//            status = getFileStatus(path);
+//        } catch (IOException iox) {
+//            util.dbgPrint("mkdir", iox);
+//            this.hadoopPithosConnector.uploadFileToPithos(
+//                    createPath.getContainer(), createPath.toString(), true);
+//            return true;
+//        }
+//        if (status != null && status.isFile()) {
+//            throw new IOException(String.format(
+//                    "Can't make directory for path %s since it is a file.",
+//                    absolutePath));
+//        }
+//        return true;
+//    }
 
     @Override
     public String getScheme() {
@@ -167,17 +167,20 @@ public class PithosFileSystem extends FileSystem {
     public FSDataOutputStream create(Path f, FsPermission permission,
             boolean overwrite, int bufferSize, short replication,
             long blockSize, Progressable progress) throws IOException {
-        util.dbgPrint("create >", f, pithosPath, blockSize, bufferSize);
-
+        
+            pithosPath = new PithosPath(f);
+        
+        util.dbgPrint("create >", f, pithosPath, hadoopPithosConnector.getPithosBlockDefaultSize(pithosPath
+                .getContainer()), bufferSize);
+                
         // - Create empty object on Pithos FS with the given name by using the
         // path
         hadoopPithosConnector.storePithosObject(pithosPath.getContainer(),
                 new PithosObject(new PithosPath(f), null));
-
+        
         return new FSDataOutputStream(new PithosOutputStream(getConf(),
                 pithosPath,
-                hadoopPithosConnector.getPithosBlockDefaultSize(pithosPath
-                        .getContainer()), 2 * 1024 * 1024), statistics);
+                hadoopPithosConnector.getPithosBlockDefaultSize(pithosPath.getContainer()), 2 * 1024 * 1024), statistics);
     }
 
     @Override
@@ -306,9 +309,13 @@ public class PithosFileSystem extends FileSystem {
         pithosPath = new PithosPath(f);
         util.dbgPrint("mkdirs pithosPath >",
                 pithosPath.getObjectFolderAbsolutePath());
-        this.hadoopPithosConnector.uploadFileToPithos(
+        
+        
+        hadoopPithosConnector.uploadFileToPithos(
                 pithosPath.getContainer(),
                 pithosPath.getObjectFolderAbsolutePath(), true);
+        
+        
         // Path absolutePath = makeAbsolute(f);
         // util.dbgPrint("mkdirs absolute >", absolutePath);
         // List<PithosPath> pithosPaths = Collections.synchronizedList(new
