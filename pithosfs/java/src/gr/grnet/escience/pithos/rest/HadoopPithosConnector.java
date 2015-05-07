@@ -800,9 +800,9 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             if (temp != null) {
                 temp.delete();
             }
-//            if (srcFile2bUploaded != null) {
-//                ((File) srcFile2bUploaded).delete();
-//            }
+            if (srcFile2bUploaded instanceof File && srcFile2bUploaded != null){
+                ((File) srcFile2bUploaded).delete();
+            }
         }
     }
 

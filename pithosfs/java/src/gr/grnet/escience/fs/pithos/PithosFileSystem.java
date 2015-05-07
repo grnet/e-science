@@ -69,28 +69,6 @@ public class PithosFileSystem extends FileSystem {
         PithosFileSystem.hadoopPithosConnector = hadoopPithosConnector;
     }
 
-//    private boolean mkdir(Path path) throws IOException {
-//        util.dbgPrint("mkdir");
-//        Path absolutePath = makeAbsolute(path);
-//        PithosPath createPath = new PithosPath(path);
-//        util.dbgPrint("mkdir", path, absolutePath, createPath);
-//        PithosFileStatus status = null;
-//        try {
-//            status = getFileStatus(path);
-//        } catch (IOException iox) {
-//            util.dbgPrint("mkdir", iox);
-//            this.hadoopPithosConnector.uploadFileToPithos(
-//                    createPath.getContainer(), createPath.toString(), true);
-//            return true;
-//        }
-//        if (status != null && status.isFile()) {
-//            throw new IOException(String.format(
-//                    "Can't make directory for path %s since it is a file.",
-//                    absolutePath));
-//        }
-//        return true;
-//    }
-
     @Override
     public String getScheme() {
         util.dbgPrint("getScheme >", "pithos");
@@ -297,9 +275,9 @@ public class PithosFileSystem extends FileSystem {
                 results.add(fileStatus);
             }
         }
-        util.dbgPrint("listStatus >", results);
         // - Return the list of the available files
         FileStatus[] resultsArr = new FileStatus[results.size()];
+        util.dbgPrint("listStatus results >", results.toArray(resultsArr));
         return results.toArray(resultsArr);
     }
 
