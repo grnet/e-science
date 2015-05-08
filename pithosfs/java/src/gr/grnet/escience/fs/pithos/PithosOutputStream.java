@@ -175,7 +175,7 @@ public class PithosOutputStream extends OutputStream {
             off += toWrite;
             len -= toWrite;
             filePos += toWrite;
-            b = null;
+
             if ((bytesWrittenToBlock + pos >= blockSize) || (pos == bufferSize)) {
                 flush();
             }
