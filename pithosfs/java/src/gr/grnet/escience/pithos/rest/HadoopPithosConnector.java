@@ -43,7 +43,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     private transient LoggerServer loggerServer = null;
     private transient PithosRequest request;
     private transient PithosResponse response;
-    private File srcFile2bUploaded;
+    private transient Object srcFile2bUploaded;
     private File temp;
     private File block_data;
     private transient InputStream pithosFileInputStream;
@@ -72,7 +72,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
             @Override
             public void run() {
-               loggerServer = new LoggerServer();
+                loggerServer = new LoggerServer();
             }
         });
         // - Start logger into a separated thread
@@ -486,7 +486,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                 (new Gson()).toJson(getContainerInfo(pithos_container)),
                 PithosResponse.class);
         // - Return the name of the hash algorithm
-        return resp.getResponseData().get("X-Container-Block-Hash").get(0);
+        String hashAlgo = resp.getResponseData().get("X-Container-Block-Hash").get(0);
+        return util.fixPithosHashName(hashAlgo);
     }
 
     @Override
@@ -767,11 +768,11 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
             // - Get temp file contents into the file that will be uploaded into
             // pithos selected container
-            srcFile2bUploaded = new File(path.getObjectName());
-            temp.renameTo(srcFile2bUploaded);
+            File tmpFile2bUploaded = new File(path.getObjectName());
+            temp.renameTo(tmpFile2bUploaded);
 
             // - Upload file to the root of the selected container
-            responseStr = upload_file(srcFile2bUploaded, null,
+            responseStr = upload_file(tmpFile2bUploaded, null,
                     path.getContainer(), getPithosRequest()
                             .getRequestParameters(), getPithosRequest()
                             .getRequestHeaders());
@@ -783,8 +784,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                 // container
                 if (responseStr.contains("201")) {
                     return movePithosObjectToFolder(path.getContainer(),
-                            srcFile2bUploaded.getName(),
-                            path.getObjectFolderAbsolutePath());
+                            tmpFile2bUploaded.getName(),
+                            path.getObjectFolderAbsolutePath(), null);
                 } else {
                     return "ERROR: Fail to create the object into the requested location";
                 }
@@ -799,15 +800,15 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             if (temp != null) {
                 temp.delete();
             }
-            if (srcFile2bUploaded != null) {
-                srcFile2bUploaded.delete();
+            if (srcFile2bUploaded instanceof File && srcFile2bUploaded != null){
+                ((File) srcFile2bUploaded).delete();
             }
         }
     }
 
     @Override
-    public String movePithosObjectToFolder(String pithos_container,
-            String target_object, String target_folder_path) {
+    public String movePithosObjectToFolder(String pithosContainer,
+            String sourceObject, String targetFolderPath, String targetObject) {
         // - Create Pithos request
         setPithosRequest(new PithosRequest());
 
@@ -816,16 +817,21 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         getPithosRequest().getRequestParameters().put("format", "json");
 
         // - Check if the folder path is in appropriate format
-        if (!target_folder_path.isEmpty()) {
-            if (!target_folder_path.endsWith("/")) {
-                target_folder_path = target_folder_path.concat("/");
+        if (!targetFolderPath.isEmpty()) {
+            if (!targetFolderPath.endsWith("/")) {
+                targetFolderPath = targetFolderPath.concat("/");
             }
         }
-
+        String toFilename = null;
+        if (targetObject==null || targetObject.isEmpty()){
+            toFilename = targetFolderPath.concat(sourceObject);
+        }else{
+            toFilename = targetFolderPath.concat(targetObject);
+        }
         try {
             // - Post data and get the response
-            return move_object(pithos_container, target_object,
-                    pithos_container, target_folder_path.concat(target_object),
+            return move_object(pithosContainer, sourceObject,
+                    pithosContainer, toFilename,
                     getPithosRequest().getRequestParameters(),
                     getPithosRequest().getRequestHeaders());
 
@@ -838,24 +844,35 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     }
 
     @Override
-    public String uploadFileToPithos(String pithos_container, String source_file) {
+    public String uploadFileToPithos(String pithosContainer, String sourceFile,
+            boolean isDir) {
+        isDir = !(!isDir);
         // - Create Pithos request
         setPithosRequest(new PithosRequest());
 
-        // - Header Parameters
-        // - Format of the uploaded file
-        getPithosRequest().getRequestHeaders()
-                .put("Content-Type", "text/plain");
-
+        String strLength = null;
         try {
-            // - Convert hadoop output file to java file that is compatible with
-            // Pithos
-            srcFile2bUploaded = new File(source_file);
+            if (isDir) {
+                srcFile2bUploaded = sourceFile;
+                strLength = "0";
+                // - Header Parameters
+                // - Format of the uploaded file
+                getPithosRequest().getRequestHeaders().put("Content-Type",
+                        "application/directory");
+            }
+
+            else {
+                srcFile2bUploaded = new File(sourceFile);
+                // - Header Parameters
+                // - Format of the uploaded file
+                getPithosRequest().getRequestHeaders().put("Content-Type",
+                        "text/plain");
+            }
 
             // - If there is successful renaming of the object into the required
             // name
             // - Post data and get the response
-            return upload_file(srcFile2bUploaded, null, pithos_container,
+            return upload_file(srcFile2bUploaded, strLength, pithosContainer,
                     getPithosRequest().getRequestParameters(),
                     getPithosRequest().getRequestHeaders());
         } catch (IOException e) {

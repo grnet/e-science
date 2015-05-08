@@ -25,12 +25,13 @@ public class TestPithosRestClient {
     private static final String PITHOS_STORAGE_SYSTEM_URL = "https://pithos.okeanos.grnet.gr/v1";
     private static final String UUID = "ec567bea-4fa2-433d-9935-261a0867ec60";
     private static final String TOKEN = "SFy6ATmUS2cdkbJZkwTDs_cujtFQ87LOCKiLIQiML3g";
-    private static final String PITHOS_CONTAINER = "";
+    private static final String PITHOS_CONTAINER = "pithos";
     private static final String PITHOS_FILE_TO_DOWNLOAD = "tests/newPithosObjectData.txt";
     private static final String PITHOS_FILE_TO_DOWNLOAD_BLOCK = "tests/newPithosObjectData.txt";
     private static final String PITHOS_FILE_TO_DOWNLOAD_DIR_NAME = "tests/";
     private static final long OFFSET = 5;
     private static final String LOCAL_SOURCE_FILE_TO_UPLOAD = "testOutput.txt";
+    private static final String FOLDER_NAME = "testOut/child/childofchild";
     private static final String PITHOS_OBJECT_NAME_TO_OUTPUTSTREAM = "tests/newPithosObjectData.txt";
     private static final String DUMMY_BLOCK_DATA = "TEST DATA";
     private static PithosResponse pithosResponse;
@@ -43,9 +44,10 @@ public class TestPithosRestClient {
     @BeforeClass
     public static void createHdConnector() {
         // - CREATE HADOOP CONNECTOR INSTANCE
-        hdconnector = new HadoopPithosConnector(PITHOS_STORAGE_SYSTEM_URL,
-                TOKEN, UUID);
-        PithosFileSystem.setHadoopPithosConnector(hdconnector);
+        if (hdconnector == null) {
+            hdconnector = new HadoopPithosConnector(PITHOS_STORAGE_SYSTEM_URL,
+                    TOKEN, UUID);
+        }
     }
 
     @Test
@@ -318,11 +320,13 @@ public class TestPithosRestClient {
         System.out
                 .println("---------------------------------------------------------------------");
         String response = hdconnector.uploadFileToPithos("",
-                LOCAL_SOURCE_FILE_TO_UPLOAD);
+                LOCAL_SOURCE_FILE_TO_UPLOAD, false);
         System.out.println("RESPONSE FROM PITHOS: " + response);
         System.out
                 .println("---------------------------------------------------------------------\n");
     }
+
+
 
     @Test
     public void testStore_Object_To_Pithos() throws IOException {
@@ -338,6 +342,21 @@ public class TestPithosRestClient {
                 .println("---------------------------------------------------------------------");
         String response = hdconnector.storePithosObject(PITHOS_CONTAINER,
                 pithosObj);
+        System.out.println("RESPONSE FROM PITHOS: " + response);
+        System.out
+                .println("---------------------------------------------------------------------\n");
+    }
+
+    @Test
+    public void testCreate_Folder_To_Pithos() throws IOException {
+        System.out
+                .println("---------------------------------------------------------------------");
+        System.out.println("CREATE FOLDER: <" + FOLDER_NAME
+                + "> TO PITHOS STORAGE SYSTEM");
+        System.out
+                .println("---------------------------------------------------------------------");
+        String response = hdconnector.uploadFileToPithos("",
+                FOLDER_NAME, true);
         System.out.println("RESPONSE FROM PITHOS: " + response);
         System.out
                 .println("---------------------------------------------------------------------\n");

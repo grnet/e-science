@@ -80,7 +80,7 @@
     tags: hueconfig
 
   - name: chown of hue bin directory
-    file: path=/usr/local/hue owner=hue group=hue state=directory recurse=yes
+    file: path=/usr/local/hue owner=hduser group=hadoop state=directory recurse=yes
     tags: hueconfig
 
   - name: Remove Hue obsolete directory
@@ -207,7 +207,7 @@
 
   - name: copy hue.ini in master node
     tags: hueconfig
-    template: src=hue.j2 dest=/usr/local/hue/desktop/conf/hue.ini owner=hue group=hue
+    template: src=hue.j2 dest=/usr/local/hue/desktop/conf/hue.ini owner=hduser group=hadoop
     when: is_master
 
   - name: create masters and slaves files in hadoop-yarn master node

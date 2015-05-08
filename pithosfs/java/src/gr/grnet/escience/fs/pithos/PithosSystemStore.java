@@ -64,13 +64,13 @@ public interface PithosSystemStore {
      * @param pithosContainer
      *            : the Pithos container on which the action will be performed.
      *            Leave it blank so as to refer to the default container that
-     *            coresponds to 'Pithos'
+     *            Corresponds to 'pithos'
      * @param objectLocation
      *            : the location of the object into the Pithos default container
      * @return the total size in bytes of the requested Pithos Object
      */
     public long getPithosObjectSize(String pithosContainer,
-            String objectLocation);
+            String objectLocation);   
 
     /**
      * Downloads and stores on the defined destination location, a chunk of the
@@ -172,7 +172,8 @@ public interface PithosSystemStore {
      */
     public String getPithosContainerHashAlgorithm(String pithosContainer)
             throws IOException;
-
+   
+    
     /***
      * Method to get the meta-data that correspond to a Pithos object stored
      * under the default ("Pithos")
@@ -355,7 +356,7 @@ public interface PithosSystemStore {
      * @throws IOException
      *             TODO
      */
-    public String uploadFileToPithos(String pithosContainer, String sourceFile)
+    public String uploadFileToPithos(String pithosContainer, String sourceFile, boolean isDir)
             throws IOException;
 
     /**
@@ -391,10 +392,12 @@ public interface PithosSystemStore {
      *            : the Pithos container on which the action will be performed.
      *            Leave it blank so as to refer to the default container that
      *            corresponds to 'Pithos'
-     * @param targetObject
+     * @param sourceObject
      *            : the object that should be moved
      * @param targetFolderPath
      *            : the full path of the folder that the object will be moved
+     * @param targetObject
+     *            : the name of the destination object (optional)
      * @return A string that actually is the response code and message that
      *         identifies the result of the current process based on the
      *         corresponding response codes as they are described into
@@ -402,7 +405,7 @@ public interface PithosSystemStore {
 
      */
     public String movePithosObjectToFolder(String pithosContainer,
-            String targetObject, String targetFolderPath) throws IOException;
+            String sourceObject, String targetFolderPath, String targetObject) throws IOException;
 
     /**
      * This method gets as input the container of the Pithos storage system, the
