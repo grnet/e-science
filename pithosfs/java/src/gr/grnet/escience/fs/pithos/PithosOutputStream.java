@@ -88,7 +88,7 @@ public class PithosOutputStream extends OutputStream {
     /**
      * blocks of file
      */
-    private List<PithosBlock> blocks = new ArrayList<PithosBlock>();
+//    private List<PithosBlock> blocks = new ArrayList<PithosBlock>();
 
     /**
      * current block to store to pithos
@@ -175,7 +175,7 @@ public class PithosOutputStream extends OutputStream {
             off += toWrite;
             len -= toWrite;
             filePos += toWrite;
-
+            b = null;
             if ((bytesWrittenToBlock + pos >= blockSize) || (pos == bufferSize)) {
                 flush();
             }
@@ -236,32 +236,13 @@ public class PithosOutputStream extends OutputStream {
         //
         backupStream.close();
         //
-        // Send it to pithos
-        // String pithosContainer = pithosPath.getContainer();
-        // String targetObject = pithosPath.getObjectAbsolutePath();
-        // util.dbgPrint(pithosContainer, targetObject);
-        // nextBlockOutputStream();
-
         // - Load file bytes
-        byte[] endBlockData = PithosSerializer.serializeFile(backupFile);
+        nextBlockOutputStream();
 
-        // - Create block and append on the existing object
-        try {
-            // - Create Pithos Block by using the content of the endBlock
-            PithosBlock pithosBlock = new PithosBlock(util.computeHash(
-                    endBlockData, "SHA-256"), endBlockData.length, endBlockData);
-
-            // - Append Pithos Block on the existing object
-            hadoopConnector.appendPithosBlock(pithosPath.getContainer(),
-                    pithosPath.getObjectAbsolutePath(), pithosBlock);
-
-        } catch (NoSuchAlgorithmException e) {
-            util.dbgPrint("endBlock",e);
-            throw new IOException(e.toString());
-        }
-
-        // internalClose();
-
+        // - Append Pithos Block on the existing object
+        hadoopConnector.appendPithosBlock(pithosPath.getContainer(),
+                pithosPath.getObjectAbsolutePath(), nextBlock);
+        
         //
         // Delete local backup, start new one
         //
@@ -288,7 +269,7 @@ public class PithosOutputStream extends OutputStream {
             if (!hadoopConnector.pithosObjectBlockExists(container, blockHash)) {
                 nextBlock = new PithosBlock(blockHash, bytesWrittenToBlock,
                         blockData);
-                blocks.add(nextBlock);
+//                blocks.add(nextBlock);
                 bytesWrittenToBlock = 0;
             }
         } catch (NoSuchAlgorithmException e) {
@@ -296,16 +277,6 @@ public class PithosOutputStream extends OutputStream {
         }
     }
 
-    // /**
-    // * Close and save all information carefully on internal close
-    // *
-    // * @throws IOException
-    // */
-    // private synchronized void internalClose() throws IOException {
-    // INode inode = new INode(INode.FILE_TYPES[1],
-    // blocks.toArray(new Block[blocks.size()]));
-    // store.storeINode(path, inode);
-    // }
 
     @Override
     public synchronized void close() throws IOException {

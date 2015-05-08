@@ -164,7 +164,7 @@ public class PithosFileSystem extends FileSystem {
     @Override
     public boolean delete(Path f, boolean recursive) throws IOException {
         util.dbgPrint("delete", f);
-        // TODO Auto-generated method stub
+        
         return false;
     }
 

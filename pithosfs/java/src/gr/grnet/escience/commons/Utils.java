@@ -21,22 +21,24 @@ public class Utils {
 
     public Utils() {
     }
-    
+
     /**
      * Fix the hash algorithm name
      * 
      * @param hashAlgorithm
      * @return unsquelch pithos X-Container-Block-Hash data
      */
-    public String fixPithosHashName(String hashAlgorithm){
-        Pattern pSha = Pattern.compile("^(sha)([0-9]+)$", Pattern.CASE_INSENSITIVE);
+    public String fixPithosHashName(String hashAlgorithm) {
+        Pattern pSha = Pattern.compile("^(sha)([0-9]+)$",
+                Pattern.CASE_INSENSITIVE);
         Matcher mSha = pSha.matcher(hashAlgorithm);
-        if (mSha.matches()){
-            hashAlgorithm = String.format("%s-%s", mSha.group(1),mSha.group(2));
+        if (mSha.matches()) {
+            hashAlgorithm = String
+                    .format("%s-%s", mSha.group(1), mSha.group(2));
         }
         return hashAlgorithm;
     }
-    
+
     /**
      * Get the hash container
      * 
@@ -186,16 +188,15 @@ public class Utils {
         for (int i = 0; i < args.length; i++) {
             formatter += " %s";
         }
-        formatter += "\n";
 
         // -
-        System.err.format(formatter, args);
+        System.err.format(formatter + "\n", args);
 
-//        // - Create builder
-//        logStrBuilder = new StringBuilder(String.format(formatter, args));
-//
-//        // - Write to centralized logger
-//        loggerClient.getClient().debug(logStrBuilder.toString());
+        // - Create builder
+        logStrBuilder = new StringBuilder(String.format(formatter, args));
+
+        // - Write to centralized logger
+        loggerClient.getClient().debug(logStrBuilder.toString());
 
     }
 
