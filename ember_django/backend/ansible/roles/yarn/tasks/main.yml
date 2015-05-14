@@ -67,17 +67,9 @@
     group: name=hadoop state=present
     tags: postconfig
 
-  - name: create hue group
-    group: name=hue state=present
-    tags: hueconfig
-
   - name: create hadoop user
     user: name=hduser group=hadoop generate_ssh_key=yes shell=/bin/bash
     tags: postconfig
-
-  - name: create hue user
-    user: name=hue group=hue generate_ssh_key=yes shell=/bin/bash
-    tags: hueconfig
 
   - name: chown of hue bin directory
     file: path=/usr/local/hue owner=hduser group=hadoop state=directory recurse=yes
@@ -171,7 +163,7 @@
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_HDFS_HOME=$HADOOP_INSTALL'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export YARN_HOME=$HADOOP_INSTALL'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true'" }
-      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export export HADOOP_CONF_DIR=$HADOOP_INSTALL/etc/hadoop'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_CONF_DIR=$HADOOP_INSTALL/etc/hadoop'" }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle"' }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export HADOOP_PREFIX=/usr/local/hadoop"' }
 
@@ -207,7 +199,7 @@
 
   - name: copy hue.ini in master node
     tags: hueconfig
-    template: src=hue.j2 dest=/usr/local/hue/desktop/conf/hue.ini owner=hduser group=hadoop
+    template: src=hue.j2 dest={{ hue_home }}/desktop/conf/hue.ini owner=hduser group=hadoop
     when: is_master
 
   - name: create masters and slaves files in hadoop-yarn master node
@@ -224,3 +216,58 @@
     with_items:
       - { dest: '/app/hadoop/tmp/namenode', mode: '750', owner: 'hduser', group: 'hadoop', state: 'directory' }
       - { dest: '/app/hadoop/tmp/datanode', mode: '750', owner: 'hduser', group: 'hadoop', state: 'directory' }
+
+  - name: Install psycopg2 in Hue virtual env
+    shell: sudo -u hduser {{ hue_home }}/build/env/bin/pip install psycopg2
+    tags: hueconfig
+    when: is_master
+
+  - name: Edit pg_hba.conf, local to trust
+    lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
+    tags: hueconfig
+    when: is_master
+
+  - name: Edit pg_hba.conf, host to password
+    lineinfile: line="host\tall\t\tall\t\t127.0.0.1/32\t\tpassword" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="host(\s)+all(\s)+all(\s)+127.0.0.1/32(\s)+(?=md5)" backrefs=yes
+    tags: hueconfig
+    when: is_master
+
+  - name: Edit pg_hba.conf, add hduser
+    lineinfile: line="host\thduser\t\thduser\t\t0.0.0.0/0\t\tmd5" dest=/etc/postgresql/9.1/main/pg_hba.conf
+    tags: hueconfig
+    when: is_master
+
+  - name: Edit postgresql.conf
+    lineinfile: line="listen_addresses = '0.0.0.0'" dest=/etc/postgresql/9.1/main/postgresql.conf
+    tags: hueconfig
+    when: is_master
+
+  - name: Restart PostgreSql service
+    service: name=postgresql state=restarted
+    tags: hueconfig
+    when: is_master
+
+  - name: Create PostgreSql user
+    postgresql_user: name={{ hue_db_user }} password={{ hue_db_password }} role_attr_flags=CREATEDB,SUPERUSER,CREATEROLE
+    tags: hueconfig
+    when: is_master
+
+  - name: Create PostgreSql database
+    postgresql_db: name={{ hue_db_name }} owner={{ hue_db_user }}
+    tags: hueconfig
+    when: is_master
+
+  - name: Restart PostgreSql service
+    service: name=postgresql state=restarted
+    tags: hueconfig
+    when: is_master
+
+  - name: Hue project syncdb
+    shell: sudo -u hduser ./hue syncdb --noinput chdir={{ hue_home }}/build/env/bin
+    tags: hueconfig
+    when: is_master
+
+  - name: Hue project migrate
+    shell: sudo -u hduser ./hue migrate chdir={{ hue_home }}/build/env/bin
+    tags: hueconfig
+    when: is_master

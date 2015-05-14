@@ -373,12 +373,12 @@
     # Note that for sqlite3, 'name', below is a path to the filename. For other backends, it is the database name.
     # Note for Oracle, options={'threaded':true} must be set in order to avoid crashes.
     # Note for Oracle, you can use the Oracle Service Name by setting "port=0" and then "name=<host>:<port>/<service_name>".
-    ## engine=sqlite3
-    ## host=
-    ## port=
-    ## user=
-    ## password=
-    ## name=desktop/desktop.db
+    host=localhost
+    port=5432
+    engine=django.db.backends.postgresql_psycopg2
+    user=hduser
+    password=hdpass
+    name=hduser
     ## options={}
 
   # Configuration options for specifying the Desktop session.
@@ -719,7 +719,7 @@
       jobtracker_host={{ hostvars[groups['master'][0]].inventory_hostname_short}}
 
       # The port where the JobTracker IPC listens on
-      #jobtracker_port=8021
+      jobtracker_port=8050
 
       # JobTracker logical name for HA
       ## logical_name=
@@ -884,7 +884,7 @@
 
 [pig]
   # Location of piggybank.jar on local filesystem.
-  #local_sample_dir=/usr/share/hue/apps/pig/examples
+  local_sample_dir=/usr/local/pig/lib
 
   # Location piggybank.jar will be copied to in HDFS.
   remote_data_dir=/user/hduser/pig/examples
@@ -924,10 +924,10 @@
   # Comma-separated list of HBase Thrift servers for clusters in the format of '(name|host:port)'.
   # Use full hostname with security.
   # If using Kerberos we assume GSSAPI SASL, not PLAIN.
-  ## hbase_clusters=(Cluster|localhost:9090)
+  hbase_clusters=(Cluster|{{ hostvars[groups['master'][0]].inventory_hostname_short}}:9090)
 
   # HBase configuration directory, where hbase-site.xml is located.
-  ## hbase_conf_dir=/etc/hbase/conf
+  hbase_conf_dir=/usr/local/hbase/conf
 
   # Hard limit of rows or columns per row fetched before truncating.
   ## truncate_limit = 500
@@ -1001,7 +1001,7 @@
     [[[default]]]
       # Zookeeper ensemble. Comma separated list of Host/Port.
       # e.g. localhost:2181,localhost:2182,localhost:2183
-      ## host_ports=localhost:2181
+      host_ports={{ hostvars[groups['master'][0]].inventory_hostname_short}}:2181
 
       # The URL of the REST contrib service (required for znode browsing).
       ## rest_url=http://localhost:9998
