@@ -114,7 +114,7 @@ public class PithosObject implements Serializable {
         if (getBlocksNumber() > 0) {
             try {
                 // - Add object name
-                out.write(getName().getBytes());
+                out.write(getName().getBytes("UTF-8")); // do we need "UTF-8" here?
                 // - Add object blocks total number
                 out.writeInt(getBlocksNumber());
                 // - Add object size
@@ -122,7 +122,7 @@ public class PithosObject implements Serializable {
 
                 // - Add all available blocks for the object
                 for (int i = 0; i < getBlocksNumber(); i++) {
-                    out.write(getBlocks()[i].getBlockHash().getBytes());
+                    out.write(getBlocks()[i].getBlockHash().getBytes("UTF-8")); // do we need "UTF-8"?
                     out.writeLong(getBlocks()[i].getBlockLength());
                     out.write(getBlocks()[i].getBlockData());
                 }

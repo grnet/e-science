@@ -88,7 +88,7 @@ public class PithosOutputStream extends OutputStream {
     /**
      * blocks of file
      */
-//    private List<PithosBlock> blocks = new ArrayList<PithosBlock>();
+    // private List<PithosBlock> blocks = new ArrayList<PithosBlock>();
 
     /**
      * current block to store to pithos
@@ -137,7 +137,7 @@ public class PithosOutputStream extends OutputStream {
                     "Cannot create local pithos buffer directory: " + dir);
         }
         File result = File.createTempFile("output-", ".tmp", dir);
-        util.dbgPrint("newBackupFile > result:",result);
+        util.dbgPrint("newBackupFile > result:", result);
         result.deleteOnExit();
         return result;
     }
@@ -184,7 +184,7 @@ public class PithosOutputStream extends OutputStream {
 
     @Override
     public synchronized void flush() throws IOException {
-        util.dbgPrint("flush");
+        // util.dbgPrint("flush");
         if (closed) {
             throw new IOException(ERR_STREAM_CLOSED);
         }
@@ -206,7 +206,7 @@ public class PithosOutputStream extends OutputStream {
      * @throws IOException
      */
     private synchronized void flushData(int maxPos) throws IOException {
-        util.dbgPrint("flushData");
+        // util.dbgPrint("flushData");
         int workingPos = Math.min(pos, maxPos);
 
         if (workingPos > 0) {
@@ -240,9 +240,11 @@ public class PithosOutputStream extends OutputStream {
         nextBlockOutputStream();
 
         // - Append Pithos Block on the existing object
+        util.dbgPrint("endBlock nextBlock.length",
+                nextBlock.getBlockData().length);
         hadoopConnector.appendPithosBlock(pithosPath.getContainer(),
                 pithosPath.getObjectAbsolutePath(), nextBlock);
-        
+
         //
         // Delete local backup, start new one
         //
@@ -267,16 +269,20 @@ public class PithosOutputStream extends OutputStream {
         try {
             blockHash = util.computeHash(blockData, hashAlgo);
             if (!hadoopConnector.pithosObjectBlockExists(container, blockHash)) {
+                util.dbgPrint("nextBlockOutputStream bytesWrittenToBlock >",
+                        bytesWrittenToBlock);
                 nextBlock = new PithosBlock(blockHash, bytesWrittenToBlock,
                         blockData);
-//                blocks.add(nextBlock);
+                // blocks.add(nextBlock);
                 bytesWrittenToBlock = 0;
             }
         } catch (NoSuchAlgorithmException e) {
             throw new IOException(e);
+        } catch (Exception e) {
+            util.dbgPrint("nextBlockOutputStream exception >", e.toString());
+            throw new IOException(e);
         }
     }
-
 
     @Override
     public synchronized void close() throws IOException {

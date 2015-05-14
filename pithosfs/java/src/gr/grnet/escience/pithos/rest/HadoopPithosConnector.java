@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -486,7 +487,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                 (new Gson()).toJson(getContainerInfo(pithos_container)),
                 PithosResponse.class);
         // - Return the name of the hash algorithm
-        String hashAlgo = resp.getResponseData().get("X-Container-Block-Hash").get(0);
+        String hashAlgo = resp.getResponseData().get("X-Container-Block-Hash")
+                .get(0);
         return util.fixPithosHashName(hashAlgo);
     }
 
@@ -800,7 +802,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             if (temp != null) {
                 temp.delete();
             }
-            if (srcFile2bUploaded instanceof File && srcFile2bUploaded != null){
+            if (srcFile2bUploaded instanceof File && srcFile2bUploaded != null) {
                 ((File) srcFile2bUploaded).delete();
             }
         }
@@ -823,16 +825,15 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             }
         }
         String toFilename = null;
-        if (targetObject==null || targetObject.isEmpty()){
+        if (targetObject == null || targetObject.isEmpty()) {
             toFilename = targetFolderPath.concat(sourceObject);
-        }else{
+        } else {
             toFilename = targetFolderPath.concat(targetObject);
         }
         try {
             // - Post data and get the response
-            return move_object(pithosContainer, sourceObject,
-                    pithosContainer, toFilename,
-                    getPithosRequest().getRequestParameters(),
+            return move_object(pithosContainer, sourceObject, pithosContainer,
+                    toFilename, getPithosRequest().getRequestParameters(),
                     getPithosRequest().getRequestHeaders());
 
         } catch (IOException e) {
@@ -900,11 +901,24 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         getPithosRequest().getRequestHeaders()
                 .put("Content-Range", "bytes */*");
 
+        String contentLength = ((Integer) newPithosBlock.getBlockData().length)
+                .toString();
+
+        util.dbgPrint("appendPithosBlock content-length >", contentLength);
+        getPithosRequest().getRequestHeaders().put("Content-Length",
+                contentLength);
+        
+        getPithosRequest().getRequestHeaders().put("Content-Encoding", "UTF-8");
+        
         try {
             return update_append_truncate_object(pithos_container,
-                    target_object, new String(newPithosBlock.getBlockData()),
+                    target_object, new String(newPithosBlock.getBlockData(),
+                            "UTF-8"),
                     getPithosRequest().getRequestParameters(),
                     getPithosRequest().getRequestHeaders());
+        } catch (UnsupportedEncodingException e) {
+            util.dbgPrint(e.getMessage(), e);
+            return null;
         } catch (IOException e) {
             // - Return the exception message as String
             util.dbgPrint(e.getMessage(), e);

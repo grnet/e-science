@@ -1249,7 +1249,7 @@ public class PithosRESTAPI implements Serializable {
                         int clength = Integer.parseInt(contentLength);
                         if (clength < 0) {
                             System.err
-                                    .println("Conten-Length should be greater to zero.");
+                                    .println("Content-Length should be greater to zero.");
                             return null;
                         }
                         if (clength > 0)
@@ -1544,7 +1544,7 @@ public class PithosRESTAPI implements Serializable {
                 this.getConnection().setDoOutput(true);
                 DataOutputStream wr = new DataOutputStream(getConnection()
                         .getOutputStream());
-                wr.writeBytes(content);
+                wr.write(content.getBytes("UTF-8"));
                 wr.flush();
                 wr.close();
             } else {
