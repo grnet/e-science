@@ -128,43 +128,31 @@ public class PithosFileSystem extends FileSystem {
     }
 
     @Override
-    public long getDefaultBlockSize() {
-        util.dbgPrint("getDefaultBlockSize >",
-                getConf().getLongBytes("dfs.blocksize", defaultBlockSize));
-        return getConf().getLongBytes("dfs.blocksize", defaultBlockSize);
-    }
-
-    @Override
-    public String getCanonicalServiceName() {
-        util.dbgPrint("getCanonicalServiceName");
-        // Does not support Token
-        return null;
-    }
-
-    @Override
     public FSDataOutputStream create(Path f, FsPermission permission,
             boolean overwrite, int bufferSize, short replication,
             long blockSize, Progressable progress) throws IOException {
-        
-            pithosPath = new PithosPath(f);
-        
-        util.dbgPrint("create >", f, pithosPath, hadoopPithosConnector.getPithosBlockDefaultSize(pithosPath
-                .getContainer()), bufferSize);
-                
+
+        pithosPath = new PithosPath(f);
+
+        util.dbgPrint("create >", f, pithosPath, hadoopPithosConnector
+                .getPithosBlockDefaultSize(pithosPath.getContainer()),
+                bufferSize);
+
         // - Create empty object on Pithos FS with the given name by using the
         // path
         hadoopPithosConnector.storePithosObject(pithosPath.getContainer(),
                 new PithosObject(new PithosPath(f), null));
-        
+
         return new FSDataOutputStream(new PithosOutputStream(getConf(),
                 pithosPath,
-                hadoopPithosConnector.getPithosBlockDefaultSize(pithosPath.getContainer()), 2 * 1024 * 1024), statistics);
+                hadoopPithosConnector.getPithosBlockDefaultSize(pithosPath
+                        .getContainer()), 1 * 1024 * 1024), statistics);
     }
 
     @Override
     public boolean delete(Path f, boolean recursive) throws IOException {
         util.dbgPrint("delete", f);
-        
+
         return false;
     }
 
@@ -173,12 +161,6 @@ public class PithosFileSystem extends FileSystem {
         // TODO only for testing, should re-use getFileStatus normally
         util.dbgPrint("exists", f);
         return super.exists(f);
-    }
-
-    public boolean containerExistance(String container) {
-        PithosResponse containerInfo = this.hadoopPithosConnector
-                .getContainerInfo(container);
-        return containerInfo.toString().contains("HTTP/1.1 404 NOT FOUND");
     }
 
     @Override
@@ -230,7 +212,8 @@ public class PithosFileSystem extends FileSystem {
             String modificationTime = metadata.getResponseData()
                     .get("Last-Modified").get(0);
             pithosFileStatus = new PithosFileStatus(length,
-                    getDefaultBlockSize(), util.dateTimeToEpoch(
+                    hadoopPithosConnector.getPithosBlockDefaultSize(pithosPath
+                            .getContainer()), util.dateTimeToEpoch(
                             modificationTime, ""), targetPath);
         }
         util.dbgPrint("getFileStatus", "EXIT");
@@ -287,12 +270,12 @@ public class PithosFileSystem extends FileSystem {
         pithosPath = new PithosPath(f);
         util.dbgPrint("mkdirs pithosPath >",
                 pithosPath.getObjectFolderAbsolutePath());
-            
+
         String resp = hadoopPithosConnector.uploadFileToPithos(
                 pithosPath.getContainer(),
                 pithosPath.getObjectFolderAbsolutePath(), true);
-        
-        if (resp.contains("201")){
+
+        if (resp.contains("201")) {
             return true;
         }
         util.dbgPrint("mkdirs> response:", resp);
@@ -323,10 +306,11 @@ public class PithosFileSystem extends FileSystem {
         PithosPath dstPiPath = new PithosPath(dst);
         String srcName = srcPiPath.getObjectAbsolutePath();
         String dstName = dstPiPath.getObjectAbsolutePath();
-        util.dbgPrint("rename src, dst",srcName,dstName);
-        String resp = this.hadoopPithosConnector.movePithosObjectToFolder(srcPiPath.getContainer(), srcName, "", dstName);
-        util.dbgPrint("rename resp>",resp);
-        if (resp.contains("201")){
+        util.dbgPrint("rename src, dst", srcName, dstName);
+        String resp = this.hadoopPithosConnector.movePithosObjectToFolder(
+                srcPiPath.getContainer(), srcName, "", dstName);
+        util.dbgPrint("rename resp>", resp);
+        if (resp.contains("201")) {
             return true;
         }
         return false;

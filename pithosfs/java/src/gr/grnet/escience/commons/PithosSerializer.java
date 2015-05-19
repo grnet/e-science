@@ -13,7 +13,8 @@ public class PithosSerializer {
     private PithosSerializer() {
 
     }
-
+    
+    private static Utils util = new Utils();
     /**
      * 
      * @param is
@@ -56,12 +57,16 @@ public class PithosSerializer {
 
         // - Convert File in bytes []
         byte[] blockDataBytes = new byte[(int) inputFile.length()];
+        int bytesRead = 0;
+        util.dbgPrint("serializeFile inputFile.length >",inputFile.length());
 
         // - Perform the conversion
         try {
             // - Convert file into array of bytes
             fileInputStream = new FileInputStream(inputFile);
-            fileInputStream.read(blockDataBytes);
+            bytesRead = fileInputStream.read(blockDataBytes);
+            util.dbgPrint("serializeFile fileInputStream read > ",bytesRead);
+            util.dbgPrint("serializeFile blockDataBytes > ",blockDataBytes.length);
 
             // - return the bytes array
             return blockDataBytes;
@@ -82,19 +87,19 @@ public class PithosSerializer {
      */
     public static File deserializeFile(byte[] data) throws IOException {
         // convert array of bytes into file
-        FileOutputStream fileOuputStream = null;
+        FileOutputStream fileOutputStream = null;
         try {
             // - Create file
             File block = new File("block");
             // - Create output stream with data to the file
-            fileOuputStream = new FileOutputStream(block);
-            fileOuputStream.write(data);
+            fileOutputStream = new FileOutputStream(block);
+            fileOutputStream.write(data);
 
             // - return the file
             return block;
         } finally {
-            if (fileOuputStream != null) {
-                fileOuputStream.close();
+            if (fileOutputStream != null) {
+                fileOutputStream.close();
             }
         }
     }

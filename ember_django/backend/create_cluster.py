@@ -78,7 +78,9 @@ class YarnCluster(object):
                 try:
                     if image['properties']['escienceconf']:
                         image_metadata = json.loads(image['properties']['escienceconf'])
-                        if image_metadata['hadoop'] == 'True' and image_metadata['hue'] == 'True':
+                        if image_metadata['cloudera'] == 'True':
+                            self.hadoop_image = 'cloudera'
+                        elif image_metadata['hadoop'] == 'True' and image_metadata['hue'] == 'True':
                             self.hadoop_image = 'hue'
                         elif image_metadata['hadoop'] == 'False':
                             self.hadoop_image = 'debianbase'

@@ -1,19 +1,27 @@
 ---
+  - name: clean namenode and datanodes temp storage dir
+    tags: format
+    shell: sudo -u hduser rm -rf /app/hadoop/tmp/*
+
   - name: format hdfs
     tags: format
     command: sudo -u hduser ./hdfs namenode -format -force chdir={{hadoop_home}}/bin
+    when: is_master
 
   - name: start dfs
     tags: start
     command: sudo -u hduser ./start-dfs.sh chdir={{hadoop_home}}/sbin
+    when: is_master
 
   - name: start yarn
     tags: start
     command: sudo -u hduser ./start-yarn.sh chdir={{hadoop_home}}/sbin
+    when: is_master
 
   - name: start history server
     tags: start
     command: sudo -u hduser ./mr-jobhistory-daemon.sh start historyserver chdir={{hadoop_home}}/sbin
+    when: is_master
 
   - name: Creates directory
     tags: HDFSMkdir
@@ -21,19 +29,24 @@
     with_items:
       - sudo -u hduser ./hadoop fs -mkdir /user 
       - sudo -u hduser ./hadoop fs -mkdir /user/hduser
+    when: is_master
 
   - name: Start Hue
     tags: HUEstart
     command: sudo -u hduser ./supervisor -d chdir=/usr/local/hue/build/env/bin/
+    when: is_master
 
   - name: Stop dfs
     tags: stop
     command: sudo -u hduser ./stop-dfs.sh chdir={{hadoop_home}}/sbin
+    when: is_master
 
   - name: Stop yarn
     tags: stop
     command: sudo -u hduser ./stop-yarn.sh chdir={{hadoop_home}}/sbin
+    when: is_master
 
   - name: Stop history server
     tags: stop
     command: sudo -u hduser ./mr-jobhistory-daemon.sh stop historyserver chdir={{hadoop_home}}/sbin
+    when: is_master
