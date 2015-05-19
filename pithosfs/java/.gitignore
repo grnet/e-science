@@ -1,3 +1,8 @@
 *.sh
 bin/
-
+.classpath
+.project
+*.txt
+*.pdf
+*.properties
+*.xml

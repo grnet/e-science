@@ -4,6 +4,12 @@
   # setup_orca_admin variables
   orka_admin_password: $1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20
   create_orka_admin: False
+  # PostgreSql variables
+  hue_db_user: hduser
+  hue_db_password: hdpass
+  hue_db_name: hduser
+  hue_home: /usr/local/hue
+  choose_role: webserver
   
   # Hadoop-yarn variables
   path_to_common_libs: /usr/local/hadoop/share/hadoop/common

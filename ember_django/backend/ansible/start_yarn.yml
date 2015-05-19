@@ -22,6 +22,10 @@
       - sudo -u hduser ./hadoop fs -mkdir /user 
       - sudo -u hduser ./hadoop fs -mkdir /user/hduser
 
+  - name: Start Hue
+    tags: HUEstart
+    command: sudo -u hduser ./supervisor -d chdir=/usr/local/hue/build/env/bin/
+
   - name: Stop dfs
     tags: stop
     command: sudo -u hduser ./stop-dfs.sh chdir={{hadoop_home}}/sbin

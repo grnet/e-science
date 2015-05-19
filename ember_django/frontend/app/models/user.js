@@ -46,9 +46,18 @@ App.Usercluster = DS.Model.extend({
 		return 'http://' + this.get('master_IP') + ':50070';
 	}.property('master_IP'),
 	browse_hdfs : function() {
-		// hdfs browse URL=master_IP:50070/explorer.html#/
-		return 'http://' + this.get('master_IP') + ':50070/explorer.html#/';
-	}.property('master_IP'),
+		// hdfs browse URL=master_IP:50070/explorer.html#/ if not Hue image
+        // If Hue image, then browse URL=master_IP:8888/
+        var hdfs_explorer_default = ':50070/explorer.html#/' ;
+        var self = this ;
+        // Images with functional HDFS browser
+        var images_with_hdfs_browser = ['Hue', 'Cloudera', 'Ecosystem'];
+
+        if (images_with_hdfs_browser.some(function(v) { return self.get('os_image').indexOf(v) > -1; })) {
+            hdfs_explorer_default = ':8888' ;
+        }
+		return 'http://' + this.get('master_IP') + hdfs_explorer_default;
+	}.property('master_IP', 'os_image'),
 	cluster_status_verbose : function() {
 		var status = this.get('cluster_status');
 		switch (status) {

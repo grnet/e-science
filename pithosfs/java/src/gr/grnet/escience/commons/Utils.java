@@ -6,22 +6,37 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils {
-
     private static final boolean DEBUG = false;
-    private static Date date = new Date();
     private LoggerClient loggerClient = new LoggerClient();
     private StringBuilder logStrBuilder = null;
 
     public Utils() {
+    }
+
+    /**
+     * Fix the hash algorithm name
+     * 
+     * @param hashAlgorithm
+     * @return unsquelch pithos X-Container-Block-Hash data
+     */
+    public String fixPithosHashName(String hashAlgorithm) {
+        Pattern pSha = Pattern.compile("^(sha)([0-9]+)$",
+                Pattern.CASE_INSENSITIVE);
+        Matcher mSha = pSha.matcher(hashAlgorithm);
+        if (mSha.matches()) {
+            hashAlgorithm = String
+                    .format("%s-%s", mSha.group(1), mSha.group(2));
+        }
+        return hashAlgorithm;
     }
 
     /**
@@ -88,14 +103,6 @@ public class Utils {
                 .replaceAll("\\%7E", "~");
     }
 
-    @SuppressWarnings("deprecation")
-    public static String getCurentTimestamp() {
-        // - Create and return a unique timestamp
-        return MessageFormat.format("{0}{1}{2}_{3}{4}{5}", date.getYear(),
-                date.getMonth(), date.getDate(), date.getHours(),
-                date.getMinutes(), date.getSeconds());
-    }
-
     /**
      * Construct a URI from passed components and return the escaped and encoded
      * url
@@ -114,6 +121,13 @@ public class Utils {
             String fragment) throws URISyntaxException {
         URI uri = new URI(scheme, host, path, fragment);
         return uri.toASCIIString();
+    }
+
+    public static String getCurrentTimestamp() {
+        // - Create and return a unique timestamp
+        LocalDateTime ldt = LocalDateTime.now();
+        DateTimeFormatter dtf = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        return ldt.format(dtf);
     }
 
     /**
@@ -174,10 +188,9 @@ public class Utils {
         for (int i = 0; i < args.length; i++) {
             formatter += " %s";
         }
-        formatter += "\n";
 
         // -
-        System.err.format(formatter, args);
+        System.err.format(formatter + "\n", args);
 
         // - Create builder
         logStrBuilder = new StringBuilder(String.format(formatter, args));
