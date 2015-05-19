@@ -12,11 +12,10 @@ import logging
 from backend.models import ClusterInfo, UserInfo
 from django_db_after_login import db_hadoop_update
 from celery import current_task
-from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS
+from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS, NON_STATE_HADOOP_ACTIONS, REPORT, SUMMARY, \
+    error_ansible_playbook, const_hadoop_status_format, const_hadoop_status_started, const_hadoop_status_stopped
 from okeanos_utils import set_cluster_state
 
-# Definitions of return value errors
-from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY, NON_STATE_HADOOP_ACTIONS
 # Ansible constants
 playbook = 'site.yml'
 ansible_playbook = dirname(abspath(__file__)) + '/ansible/' + playbook
@@ -94,6 +93,7 @@ def ansible_manage_cluster(cluster_id, action):
     Updates database only when starting or stopping a cluster.
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
+    pre_action_status = cluster.hadoop_status
     if action in NON_STATE_HADOOP_ACTIONS:
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
@@ -104,13 +104,35 @@ def ansible_manage_cluster(cluster_id, action):
         state = ' %s %s' %(HADOOP_STATUS_ACTIONS[action][1], cluster.cluster_name)
         current_task.update_state(state=state)
         db_hadoop_update(cluster_id, 'Pending', state)
-        ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + action
-        ansible_exit_status = execute_ansible_playbook(ansible_code)
-
-        if ansible_exit_status == 0:
-            msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
-            db_hadoop_update(cluster_id, current_hadoop_status, msg)
-            return msg
+        if action == "format" and pre_action_status == const_hadoop_status_started:
+            # format request for started cluster > stop [> clean ]> format > start
+            # stop
+            ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + "stop"
+            ansible_exit_status = execute_ansible_playbook(ansible_code)
+            if ansible_exit_status == 0:
+                # TODO: shall we also update the db status with a message for each intermediate step?
+                # clean + format
+                ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + action
+                ansible_exit_status = execute_ansible_playbook(ansible_code)
+                if ansible_exit_status == 0:
+                    # re-start to return to initial status
+                    ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + "start"
+                    ansible_exit_status = execute_ansible_playbook(ansible_code)
+                    if ansible_exit_status == 0:
+                        msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
+                        db_hadoop_update(cluster_id, current_hadoop_status, msg)
+                        return msg
+                    db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action') # re-start failed
+                db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action') # format failed
+            db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action') # stop failed
+        else: # other actions including format request when hadoop is stopped
+            ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + action
+            ansible_exit_status = execute_ansible_playbook(ansible_code)
+    
+            if ansible_exit_status == 0:
+                msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
+                db_hadoop_update(cluster_id, current_hadoop_status, msg)
+                return msg
 
         db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action')
 
