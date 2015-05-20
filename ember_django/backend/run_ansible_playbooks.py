@@ -48,7 +48,7 @@ def install_yarn(*args):
                           ' Yarn Cluster is active', status='Active',
                           master_IP=args[2])
         ansible_manage_cluster(cluster_id, 'format')
-        #ansible_manage_cluster(cluster_id, 'start')
+        ansible_manage_cluster(cluster_id, 'start')
         ansible_manage_cluster(cluster_id, 'HDFSMkdir')
         if args[4] == 'hue':
             ansible_manage_cluster(cluster_id, 'HUEstart')
