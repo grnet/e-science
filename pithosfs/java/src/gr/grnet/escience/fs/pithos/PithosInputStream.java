@@ -10,6 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSInputStream;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.mapreduce.Job;
 
 /**
  * This class implements the FSInputstream by extending Hadoop 2.5.2 API native
@@ -23,45 +24,35 @@ import org.apache.hadoop.fs.FileSystem;
  * 
  */
 public class PithosInputStream extends FSInputStream {
-    
+
     private int hadoopToPithosBlock = 0;
-
-    private boolean closed;
-
-    private long fileLength;
-
+    private boolean closed = false;
+    private long fileLength = 0;
     private long pos = 0;
-
-    private File blockFile;
-
-    private DataInputStream blockStream;
-
-    private String pithosContainer;
-
-    private String pithosObject;
-
+    private File blockFile = null;
+    private DataInputStream blockStream = null;
+    private String pithosContainer = null;
+    private String pithosObject = null;
     private long blockEnd = -1;
-
-    private FileSystem.Statistics stats;
-
+    private FileSystem.Statistics stats = null;
     private static final Log LOG = LogFactory.getLog(FSInputStream.class
             .getName());
-
-    private static final long DEFAULT_BLOCK_SIZE = (long) 128 * 1024 * 1024;
-
+    private final long DEFAULT_BLOCK_SIZE = (long) 128 * 1024 * 1024;
     private long pithosContainerBlockSize = 0;
+    private int result = -1;
+    private Configuration conf = new Configuration();
 
     public PithosInputStream() {
     }
 
-    public PithosInputStream(String pithosContainer, String pithosObject) {
-
+    public PithosInputStream(String pithosContainerIn, String pithosObjectIn) {
         // - Initialize local variables
-        this.pithosContainer = pithosContainer;
-        this.pithosObject = pithosObject;
+        this.pithosContainer = pithosContainerIn;
+        this.pithosObject = pithosObjectIn;
         this.pithosContainerBlockSize = PithosFileSystem
                 .getHadoopPithosConnector().getPithosBlockDefaultSize(
                         getRequestedContainer());
+
         this.setHadoopToPithosBlock();
 
         // - Get Object Length
@@ -79,11 +70,8 @@ public class PithosInputStream extends FSInputStream {
     }
 
     private void setHadoopToPithosBlock() {
-        Configuration conf = new Configuration();
-
         this.hadoopToPithosBlock = (int) (conf.getLongBytes("dfs.blocksize",
                 DEFAULT_BLOCK_SIZE) / getPithosContainerBlockSize());
-
     }
 
     private String getRequestedContainer() {
@@ -146,7 +134,7 @@ public class PithosInputStream extends FSInputStream {
         if (closed) {
             throw new IOException("Stream closed");
         }
-        int result = -1;
+        result = -1;
         if (pos < fileLength) {
             if (pos > blockEnd) {
                 blockSeekTo(pos);
@@ -188,6 +176,7 @@ public class PithosInputStream extends FSInputStream {
     @Override
     public void close() throws IOException {
         if (closed) {
+            Job.getInstance().killJob();
             return;
         }
         if (blockStream != null) {
@@ -216,6 +205,7 @@ public class PithosInputStream extends FSInputStream {
 
     @Override
     public void reset() throws IOException {
+        Job.getInstance().killJob();
         throw new IOException("Mark not supported");
     }
 
