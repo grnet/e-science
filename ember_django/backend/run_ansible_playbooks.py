@@ -51,6 +51,9 @@ def install_yarn(*args):
         ansible_manage_cluster(cluster_id, 'HDFSMkdir')
         if args[4] == 'hue':
             ansible_manage_cluster(cluster_id, 'HUEstart')
+        if args[4] == 'ecosystem':
+            ansible_manage_cluster(cluster_id, 'HUEstart')
+            ansible_manage_cluster(cluster_id, 'HIVEstart')
     except Exception, e:
         msg = 'Error while running Ansible '
         raise RuntimeError(msg, error_ansible_playbook)
@@ -147,6 +150,9 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     if hadoop_image == 'hue':
         # Hue -> use an available image (Hadoop and Hue pre-installed)
         ansible_code += ' -t postconfig,hueconfig'
+    elif hadoop_image == 'ecosystem':
+        # Ecosystem -> use an available image (Hadoop, Hue, Hive, Oozie, HBase, Pig, Spark pre-installed)
+        ansible_code += ' -t postconfig,hueconfig,ecoconfig'
     elif hadoop_image == 'hadoopbase':
         # Hadoop -> use an available image (Hadoop pre-installed)
         ansible_code += ' -t postconfig'

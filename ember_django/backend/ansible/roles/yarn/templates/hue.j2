@@ -794,13 +794,13 @@
 
   # Host where HiveServer2 is running.
   # If Kerberos security is enabled, use fully-qualified domain name (FQDN).
-  ## hive_server_host=localhost
+  hive_server_host={{ hostvars[groups['master'][0]].inventory_hostname_short}}
 
   # Port where HiveServer2 Thrift server runs on.
   ## hive_server_port=10000
 
   # Hive configuration directory, where hive-site.xml is located
-  ## hive_conf_dir=/etc/hive/conf
+  hive_conf_dir=/usr/local/hive/conf
 
   # Timeout in seconds for thrift calls to Hive service
   ## server_conn_timeout=120

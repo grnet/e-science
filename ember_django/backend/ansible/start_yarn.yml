@@ -26,6 +26,14 @@
     tags: HUEstart
     command: sudo -u hduser ./supervisor -d chdir=/usr/local/hue/build/env/bin/
 
+  - name: Start Hue for Ecosystem
+    tags: HIVEstart
+    command: sudo -u hduser ./supervisor -d chdir=/usr/local/hue/build/env/bin/
+
+  - name: Start HiveServer2
+    tags: HIVEstart
+    command: sudo -u hduser ./hive --service hiveserver2 & chdir=/usr/local/hive/bin/
+
   - name: Stop dfs
     tags: stop
     command: sudo -u hduser ./stop-dfs.sh chdir={{hadoop_home}}/sbin

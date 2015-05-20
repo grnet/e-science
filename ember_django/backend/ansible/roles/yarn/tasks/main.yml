@@ -164,6 +164,8 @@
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export YARN_HOME=$HADOOP_INSTALL'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_CONF_DIR=$HADOOP_INSTALL/etc/hadoop'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HIVE_HOME=/usr/local/hive'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$HIVE_HOME/bin:$PATH'" }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle"' }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export HADOOP_PREFIX=/usr/local/hadoop"' }
 
@@ -248,12 +250,12 @@
     when: is_master
 
   - name: Create PostgreSql user
-    postgresql_user: name={{ hue_db_user }} password={{ hue_db_password }} role_attr_flags=CREATEDB,SUPERUSER,CREATEROLE
+    postgresql_user: name={{ eco_db_user }} password={{ eco_db_password }} role_attr_flags=CREATEDB,SUPERUSER,CREATEROLE
     tags: hueconfig
     when: is_master
 
   - name: Create PostgreSql database
-    postgresql_db: name={{ hue_db_name }} owner={{ hue_db_user }}
+    postgresql_db: name={{ hue_db_name }} owner={{ eco_db_user }}
     tags: hueconfig
     when: is_master
 
@@ -270,4 +272,37 @@
   - name: Hue project migrate
     shell: sudo -u hduser ./hue migrate chdir={{ hue_home }}/build/env/bin
     tags: hueconfig
+    when: is_master
+
+  - name: Create Hive directories
+    tags: ecoconfig
+    action: command {{item}} chdir={{hadoop_home}}/bin
+    with_items:
+      - sudo -u hduser ./hadoop fs -mkdir /user/hive 
+      - sudo -u hduser ./hadoop fs -mkdir /user/hive/warehouse
+      - sudo -u hduser ./hadoop fs -chmod g+w /user/hive/warehouse
+      - sudo -u hduser ./hadoop fs -chmod g+w /tmp
+    when: is_master
+
+  - name: Change own to hduser
+    tags: ecoconfig
+    file: path={{hive_home}} owner={{eco_db_user}} group=hadoop recurse=yes state=directory
+    when: is_master
+
+  - name: Create PostgreSql database for Hive
+    tags: ecoconfig
+    postgresql_db: name={{hive_db_name}} owner={{eco_db_user}}
+    when: is_master
+
+  - name: Run sql scripts
+    tags: ecoconfig
+    shell: sudo -u postgres psql -h localhost -U hduser -d metastore -f {{item}}
+    with_items:
+      - "{{hive_home}}/scripts/metastore/upgrade/postgres/hive-schema-1.1.0.postgres.sql"
+      - "{{hive_home}}/scripts/metastore/upgrade/postgres/hive-txn-schema-0.13.0.postgres.sql"
+    when: is_master
+
+  - name: Restart PostgreSql service
+    tags: ecoconfig
+    service: name=postgresql state=restarted
     when: is_master
