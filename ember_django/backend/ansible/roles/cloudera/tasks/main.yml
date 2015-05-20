@@ -84,6 +84,7 @@
   - name: create local storage directories in all nodes
     tags: postconfig
     file: "dest={{item.dest}} mode={{item.mode}} owner={{item.owner}} group={{item.group}} state={{item.state}}"
+    with_items:
       - { dest: '/data/1/yarn/local', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
       - { dest: '/data/2/yarn/local', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
       - { dest: '/data/3/yarn/local', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
