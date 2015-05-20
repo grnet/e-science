@@ -96,6 +96,10 @@ def ansible_manage_cluster(cluster_id, action):
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
     pre_action_status = cluster.hadoop_status
+    role = 'yarn'
+    if 'cloudera' in cluster.os_image:
+        role = 'cloudera'
+    ansible_code_generic = 'ansible-playbook -i {0} {1} {2} -e "choose_role={3} manage_cluster={3}" -t'.format(hosts_filename, ansible_playbook, ansible_verbosity, role)
     if action in NON_STATE_HADOOP_ACTIONS:
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
@@ -109,16 +113,16 @@ def ansible_manage_cluster(cluster_id, action):
         if action == "format" and pre_action_status == const_hadoop_status_started:
             # format request for started cluster > stop [> clean ]> format > start
             # stop
-            ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t stop'
+            ansible_code = '{0} {1}'.format(ansible_code_generic, 'stop')
             ansible_exit_status = execute_ansible_playbook(ansible_code)
             if ansible_exit_status == 0:
                 # TODO: shall we also update the db status with a message for each intermediate step?
                 # clean + format
-                ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + action
+                ansible_code = '{0} {1}'.format(ansible_code_generic, action)
                 ansible_exit_status = execute_ansible_playbook(ansible_code)
                 if ansible_exit_status == 0:
                     # re-start to return to initial status
-                    ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t start'
+                    ansible_code = '{0} {1}'.format(ansible_code_generic, 'start')
                     ansible_exit_status = execute_ansible_playbook(ansible_code)
                     if ansible_exit_status == 0:
                         msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
@@ -128,7 +132,7 @@ def ansible_manage_cluster(cluster_id, action):
                 db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action') # format failed
             db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action') # stop failed
         else: # other actions including format request when hadoop is stopped
-            ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + action
+            ansible_code = '{0} {1}'.format(ansible_code_generic, action)
             ansible_exit_status = execute_ansible_playbook(ansible_code)
     
             if ansible_exit_status == 0:
@@ -156,7 +160,18 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     logging.log(REPORT, ' Ansible starts Yarn installation on master and '
                         'slave nodes')
     level = logging.getLogger().getEffectiveLevel()
-
+    role = 'yarn'
+    if hadoop_image == 'hue':
+        # Hue -> use an available image (Hadoop and Hue pre-installed)
+        tags = '-t postconfig,hueconfig'
+    elif hadoop_image == 'hadoopbase':
+        # Hadoop -> use an available image (Hadoop pre-installed)
+        tags = '-t postconfig'
+    elif hadoop_image == 'cloudera':
+        role = 'cloudera'
+        tags = '-t postconfig'
+    else:
+        tags = '-t preconfig,postconfig'
     # Create debug file for ansible
     debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
     ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
@@ -164,20 +179,9 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     uuid = UserInfo.objects.get(okeanos_token=token).uuid
     # Create command that executes ansible playbook
     ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
-    '-f {0} -e "choose_role=yarn ssh_file_name={1} token={2} '.format(str(cluster_size), ssh_file, token) + \
-    'dfs_blocksize={0}m dfs_replication={1} uuid={2} "'.format(dfs_blocksize, replication_factor, uuid)
+    '-f {0} -e "choose_role={1} ssh_file_name={2} token={3} '.format(str(cluster_size), role, ssh_file, token) + \
+    'dfs_blocksize={0}m dfs_replication={1} uuid={2} " {3}'.format(dfs_blocksize, replication_factor, uuid, tags)
 
-    # hadoop_image flag(bare/Hadoop only/Hadoop + Hue)
-    if hadoop_image == 'hue':
-        # Hue -> use an available image (Hadoop and Hue pre-installed)
-        ansible_code += ' -t postconfig,hueconfig'
-    elif hadoop_image == 'hadoopbase':
-        # Hadoop -> use an available image (Hadoop pre-installed)
-        ansible_code += ' -t postconfig'
-    else:
-        ansible_code += ' -t preconfig,postconfig'
-
-    # If above checks are false, will create a cluster with Debian Base image and install Hadoop
 
     # Execute ansible
     ansible_code += ansible_log
