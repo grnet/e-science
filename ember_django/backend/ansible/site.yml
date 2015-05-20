@@ -16,7 +16,9 @@
 
 - name: Format cluster (if needed) and start the Hadoop-yarn daemons
   remote_user: root
-  hosts: all
+  hosts:
+    - master
+    - slaves
   tasks:
      - { include: start_yarn.yml, when: start_yarn == 'True'}
 

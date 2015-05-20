@@ -48,7 +48,7 @@ def install_yarn(*args):
                           ' Yarn Cluster is active', status='Active',
                           master_IP=args[2])
         ansible_manage_cluster(cluster_id, 'format')
-        ansible_manage_cluster(cluster_id, 'start')
+        #ansible_manage_cluster(cluster_id, 'start')
         ansible_manage_cluster(cluster_id, 'HDFSMkdir')
         if args[4] == 'hue':
             ansible_manage_cluster(cluster_id, 'HUEstart')
@@ -109,7 +109,7 @@ def ansible_manage_cluster(cluster_id, action):
         if action == "format" and pre_action_status == const_hadoop_status_started:
             # format request for started cluster > stop [> clean ]> format > start
             # stop
-            ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + "stop"
+            ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t stop'
             ansible_exit_status = execute_ansible_playbook(ansible_code)
             if ansible_exit_status == 0:
                 # TODO: shall we also update the db status with a message for each intermediate step?
@@ -118,7 +118,7 @@ def ansible_manage_cluster(cluster_id, action):
                 ansible_exit_status = execute_ansible_playbook(ansible_code)
                 if ansible_exit_status == 0:
                     # re-start to return to initial status
-                    ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + "start"
+                    ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t start'
                     ansible_exit_status = execute_ansible_playbook(ansible_code)
                     if ansible_exit_status == 0:
                         msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
