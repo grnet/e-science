@@ -20,8 +20,8 @@
     - master
     - slaves
   tasks:
-     - { include: start_yarn.yml, is_master: True, when: start_yarn == 'True'}
-     - { include: start_yarn.yml, is_slave: True, when: start_yarn == 'True'}
+     - { include: start_yarn.yml, is_master: True, when: "ansible_hostname == '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and start_yarn == 'True'"}
+     - { include: start_yarn.yml, is_slave: True, when: "ansible_hostname != '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and start_yarn == 'True'"}
 
 - name: Setup orka_admin user in Django server
   hosts: webserver

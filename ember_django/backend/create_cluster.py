@@ -78,7 +78,7 @@ class YarnCluster(object):
                 try:
                     if image['properties']['escienceconf']:
                         image_metadata = json.loads(image['properties']['escienceconf'])
-                        if image_metadata['cloudera'] == 'True':
+                        if image_metadata.get('cloudera', 'False') == 'True':
                             self.hadoop_image = 'cloudera'
                         elif image_metadata['hadoop'] == 'True' and image_metadata['hue'] == 'True':
                             self.hadoop_image = 'hue'
@@ -90,7 +90,7 @@ class YarnCluster(object):
                 except:
                     # if property hasn't been set then hadoop_image flag is false
                     self.hadoop_image = 'debianbase'
-                        
+
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_cluster_size_quotas
