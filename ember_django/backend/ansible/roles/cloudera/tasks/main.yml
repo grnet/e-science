@@ -20,11 +20,7 @@
     tags: postconfig
 
   - name: Add virtual machine private ips in /etc/hosts
-    template: src=hosts.j2 dest={{etchosts_filename}}
-    tags: postconfig
-
-  - name: Append the host file
-    shell: cat {{etchosts_filename}} >> /etc/hosts
+    template: src=hosts.j2 dest=/etc/hosts
     tags: postconfig
 
   - stat: path="{{ ssh_file_name }}"
@@ -96,3 +92,18 @@
       - { dest: '/data/2/yarn/logs', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
       - { dest: '/data/3/yarn/logs', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
       - { dest: '/data/4/yarn/logs', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
+
+  - name: Edit spark-env file
+    tags: spark
+    lineinfile: line="export STANDALONE_SPARK_MASTER_HOST='{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}'" dest=/etc/spark/conf/spark-env.sh
+
+  - name: Copy spark-defaults file
+    tags: spark
+    command: cp /etc/spark/conf/spark-defaults.conf.template /etc/spark/conf/spark-defaults.conf
+
+  - name: Edit spark-defaults file
+    tags: spark
+    lineinfile: "line={{item.line}} dest={{item.dest}}"
+    with_items:
+        - { line: 'spark.eventLog.dir=/user/spark/applicationHistory', dest: '/etc/spark/conf/spark-defaults.conf'}
+        - { line: 'spark.eventLog.enabled=true', dest: '/etc/spark/conf/spark-defaults.conf'}
