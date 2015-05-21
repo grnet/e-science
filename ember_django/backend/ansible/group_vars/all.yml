@@ -28,4 +28,5 @@
   path: ~/.ssh/id_rsa.pub
   master_key_hduser: master_{{ hostvars[groups['master'][0]].inventory_hostname_short}}_pub_key_hduser
   master_key_root: master_{{ hostvars[groups['master'][0]].inventory_hostname_short}}_pub_key_root
+  master_key_cloudera: master_{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}_pub_key_root
   ssh_file_name: no_ssh_key_selected

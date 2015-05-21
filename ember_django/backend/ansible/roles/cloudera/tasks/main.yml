@@ -39,14 +39,14 @@
 
   - name: copy master root public ssh key to local box
     tags: postconfig
-    fetch: src=/root/.ssh/id_rsa.pub dest=/tmp/{{master_key_root}} flat=yes
+    fetch: src=/root/.ssh/id_rsa.pub dest=/tmp/{{master_key_cloudera}} flat=yes
     when: is_master
 
   - name: copy local box master root ssh key to root every VM
     tags: postconfig
     authorized_key: user=root key="{{ item }}"
     with_file:
-      - /tmp/{{master_key_root}}
+      - /tmp/{{master_key_cloudera}}
     when: is_slave
 
   - name: copy yarn configuration xml and kamakirc files in every node
