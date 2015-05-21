@@ -1,0 +1,74 @@
+---
+  - name: format hdfs
+    tags: format
+    command: sudo -u hdfs hdfs namenode -format -force chdir={{ cloudera_bin }}
+    when: is_master
+
+  - name: start Namenode
+    tags: start
+    service: name=hadoop-hdfs-namenode state=started
+    when: is_master
+
+  - name: start Resource Manager
+    tags: start
+    service: name=hadoop-yarn-resourcemanager state=started
+    when: is_master
+
+  - name: start Datanode
+    tags: start
+    service: name=hadoop-hdfs-datanode state=started
+    when: is_slave
+
+  - name: start Node Manager
+    tags: start
+    service: name=hadoop-yarn-nodemanager state=started
+    when: is_slave
+
+  - name: start History Server
+    tags: start
+    service: name=hadoop-mapreduce-historyserver state=started
+    when: is_master
+
+  - name: Create mandatory directories in Hdfs
+    tags: HDFSMkdir
+    action: command {{item}} chdir={{ cloudera_bin }}
+    with_items:
+      - sudo -u hdfs hadoop fs -mkdir -p /user/yarn
+      - sudo -u hdfs hadoop fs -chown yarn /user/yarn
+      - sudo -u hdfs hadoop fs -mkdir -p /user/mapred
+      - sudo -u hdfs hadoop fs -chown mapred /user/mapred
+      - sudo -u hdfs hadoop fs -mkdir -p /user/hdfs
+      - sudo -u hdfs hadoop fs -chown hdfs /user/hdfs
+      - sudo -u hdfs hadoop fs -mkdir /tmp
+      - sudo -u hdfs hadoop fs -chmod -R 1777 /tmp
+      - sudo -u hdfs hadoop fs -mkdir -p /user/history
+      - sudo -u hdfs hadoop fs -chmod -R 1777 /user/history
+      - sudo -u hdfs hadoop fs -chown mapred:hadoop /user/history
+      - sudo -u hdfs hadoop fs -mkdir -p /var/log/hadoop-yarn
+      - sudo -u hdfs hadoop fs -chown yarn:mapred /var/log/hadoop-yarn
+    when: is_master
+
+  - name: stop Namenode
+    tags: stop
+    service: name=hadoop-hdfs-namenode state=stopped
+    when: is_master
+
+  - name: stop Resource Manager
+    tags: stop
+    service: name=hadoop-yarn-resourcemanager state=stopped
+    when: is_master
+
+  - name: stop Datanode
+    tags: stop
+    service: name=hadoop-hdfs-datanode state=stopped
+    when: is_slave
+
+  - name: stop Node Manager
+    tags: stop
+    service: name=hadoop-yarn-nodemanager state=stopped
+    when: is_slave
+
+  - name: stop History Server
+    tags: stop
+    service: name=hadoop-mapreduce-historyserver state=stopped
+    when: is_master

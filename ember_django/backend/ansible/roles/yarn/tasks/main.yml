@@ -76,11 +76,11 @@
     tags: hueconfig
 
   - name: Remove Hue obsolete directory
-    shell: rm -r hue-*
+    file: path=hue-* state=absent
     tags: hueconfig
 
   - name: Remove Hadoop .tar.gz file
-    shell: rm hadoop-*.tar.gz chdir={{path_to_hadoop}}
+    file: path={{path_to_hadoop}}/hadoop-*.tar.gz state=absent
     tags: postconfig
 
   - stat: path="{{ ssh_file_name }}"
@@ -166,6 +166,7 @@
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_CONF_DIR=$HADOOP_INSTALL/etc/hadoop'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HIVE_HOME=/usr/local/hive'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$HIVE_HOME/bin:$PATH'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=/home/hduser/pig-0.14.0/bin/:$PATH'" }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle"' }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export HADOOP_PREFIX=/usr/local/hadoop"' }
 
@@ -229,8 +230,8 @@
     tags: hueconfig
     when: is_master
 
-  - name: Edit pg_hba.conf, host to password
-    lineinfile: line="host\tall\t\tall\t\t127.0.0.1/32\t\tpassword" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="host(\s)+all(\s)+all(\s)+127.0.0.1/32(\s)+(?=md5)" backrefs=yes
+  - name: Edit pg_hba.conf, host to trust
+    lineinfile: line="host\tall\t\tall\t\t127.0.0.1/32\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="host(\s)+all(\s)+all(\s)+127.0.0.1/32(\s)+(?=md5)" backrefs=yes
     tags: hueconfig
     when: is_master
 
@@ -274,16 +275,6 @@
     tags: hueconfig
     when: is_master
 
-  - name: Create Hive directories
-    tags: ecoconfig
-    action: command {{item}} chdir={{hadoop_home}}/bin
-    with_items:
-      - sudo -u hduser ./hadoop fs -mkdir /user/hive 
-      - sudo -u hduser ./hadoop fs -mkdir /user/hive/warehouse
-      - sudo -u hduser ./hadoop fs -chmod g+w /user/hive/warehouse
-      - sudo -u hduser ./hadoop fs -chmod g+w /tmp
-    when: is_master
-
   - name: Change own to hduser
     tags: ecoconfig
     file: path={{hive_home}} owner={{eco_db_user}} group=hadoop recurse=yes state=directory
@@ -298,11 +289,6 @@
     tags: ecoconfig
     shell: sudo -u postgres psql -h localhost -U hduser -d metastore -f {{item}}
     with_items:
-      - "{{hive_home}}/scripts/metastore/upgrade/postgres/hive-schema-1.1.0.postgres.sql"
-      - "{{hive_home}}/scripts/metastore/upgrade/postgres/hive-txn-schema-0.13.0.postgres.sql"
-    when: is_master
-
-  - name: Restart PostgreSql service
-    tags: ecoconfig
-    service: name=postgresql state=restarted
+      - "{{hive_home}}/metastore/scripts/upgrade/postgres/hive-schema-1.1.0.postgres.sql"
+      - "{{hive_home}}/metastore/scripts/upgrade/postgres/hive-txn-schema-0.13.0.postgres.sql"
     when: is_master
