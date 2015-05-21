@@ -231,7 +231,7 @@
     when: is_master
 
   - name: Edit pg_hba.conf, host to trust
-    lineinfile: line='\1trust\2' dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp='^(.*)md5(.*)$' backrefs=yes
+    lineinfile: line="host\tall\t\tall\t\t127.0.0.1/32\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="host(\s)+all(\s)+all(\s)+127.0.0.1/32(\s)+(?=password)" backrefs=yes
     tags: hueconfig
     when: is_master
 
