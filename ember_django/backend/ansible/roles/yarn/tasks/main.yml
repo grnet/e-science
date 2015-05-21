@@ -205,6 +205,11 @@
     template: src=hue.j2 dest={{ hue_home }}/desktop/conf/hue.ini owner=hduser group=hadoop
     when: is_master
 
+  - name: copy .pgpass in master node
+    tags: ecoconfig
+    template: src=.pgpass.j2 dest=/home/hduser/.pgpass owner=hduser group=hadoop mode=600
+    when: is_master
+
   - name: create masters and slaves files in hadoop-yarn master node
     tags: postconfig
     template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
@@ -287,7 +292,7 @@
 
   - name: Run sql scripts
     tags: ecoconfig
-    shell: sudo -u postgres psql -h localhost -U hduser -d metastore -f {{item}}
+    shell: sudo -u postgres psql -w -h localhost -U hduser -d metastore -f {{item}}
     with_items:
       - "{{hive_home}}/metastore/scripts/upgrade/postgres/hive-schema-1.1.0.postgres.sql"
       - "{{hive_home}}/metastore/scripts/upgrade/postgres/hive-txn-schema-0.13.0.postgres.sql"
