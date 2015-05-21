@@ -26,20 +26,20 @@
 - name: Installing and configuring Cloudera cluster
   remote_user: root
   hosts:
-    - master
-    - slaves
+    - master_cloud
+    - slaves_cloud
   roles:
-    - {role: cloudera, is_master: True, when: "ansible_hostname == '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and choose_role == 'cloudera'"}
-    - {role: cloudera, is_slave: True, when: "ansible_hostname != '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and choose_role == 'cloudera'"}
+    - {role: cloudera, is_master: True, when: "ansible_hostname == '{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}' and choose_role == 'cloudera'"}
+    - {role: cloudera, is_slave: True, when: "ansible_hostname != '{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}' and choose_role == 'cloudera'"}
 
 - name: Format Cloudera cluster (if needed) and start the Hadoop cloudera daemons
   remote_user: root
   hosts:
-    - master
-    - slaves
+    - master_cloud
+    - slaves_cloud
   tasks:
-     - { include: start_cloudera.yml, is_master: True, when: "ansible_hostname == '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and manage_cluster == 'cloudera'"}
-     - { include: start_cloudera.yml, is_slave: True, when: "ansible_hostname != '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and manage_cluster == 'cloudera'"}
+     - { include: start_cloudera.yml, is_master: True, when: "ansible_hostname == '{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}' and manage_cluster == 'cloudera'"}
+     - { include: start_cloudera.yml, is_slave: True, when: "ansible_hostname != '{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}' and manage_cluster == 'cloudera'"}
 
 - name: Setup orka_admin user in Django server
   hosts: webserver

@@ -14,14 +14,14 @@
 <!-- Site specific YARN configuration properties -->
 <property>
     <name>yarn.resourcemanager.hostname</name>
-    <value>{{ hostvars[groups['master'][0]].inventory_hostname_short}}</value>
+    <value>{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}</value>
     <final>true</final>
     <description>host is the hostname of the resource manager.
     </description>
 </property>
 <property>
     <name>yarn.resourcemanager.address</name>
-    <value>{{ hostvars[groups['master'][0]].inventory_hostname_short}}:8050</value>
+    <value>{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:8050</value>
     <final>true</final>
     <description>the host is the hostname of the ResourceManager and the port is the port on
     which the clients can talk to the Resource Manager. </description>
@@ -43,7 +43,7 @@
 <property>
 <description>Where to aggregate logs</description>
 <name>yarn.nodemanager.remote-app-log-dir</name>
-<value>hdfs://{{ hostvars[groups['master'][0]].inventory_hostname_short}}:9000/var/log/hadoop-yarn/apps</value>
+<value>hdfs://{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:9000/var/log/hadoop-yarn/apps</value>
 </property>
 <property>
     <name>yarn.nodemanager.log-dirs</name>

@@ -650,7 +650,7 @@
 
     [[[default]]]
       # Enter the filesystem uri
-      fs_defaultfs=hdfs://{{ hostvars[groups['master'][0]].inventory_hostname_short}}:9000
+      fs_defaultfs=hdfs://{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:9000
 
       # NameNode logical name.
       ## logical_name=
@@ -676,7 +676,7 @@
 
     [[[default]]]
       # Enter the host on which you are running the ResourceManager
-      resourcemanager_host={{ hostvars[groups['master'][0]].inventory_hostname_short}}
+      resourcemanager_host={{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}
 
       # The port where the ResourceManager IPC listens on
       resourcemanager_port=8050
@@ -716,7 +716,7 @@
 
     [[[default]]]
       # Enter the host on which you are running the Hadoop JobTracker
-      jobtracker_host={{ hostvars[groups['master'][0]].inventory_hostname_short}}
+      jobtracker_host={{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}
 
       # The port where the JobTracker IPC listens on
       jobtracker_port=8050
@@ -924,7 +924,7 @@
   # Comma-separated list of HBase Thrift servers for clusters in the format of '(name|host:port)'.
   # Use full hostname with security.
   # If using Kerberos we assume GSSAPI SASL, not PLAIN.
-  hbase_clusters=(Cluster|{{ hostvars[groups['master'][0]].inventory_hostname_short}}:9090)
+  hbase_clusters=(Cluster|{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:9090)
 
   # HBase configuration directory, where hbase-site.xml is located.
   hbase_conf_dir=/usr/local/hbase/conf
@@ -1001,7 +1001,7 @@
     [[[default]]]
       # Zookeeper ensemble. Comma separated list of Host/Port.
       # e.g. localhost:2181,localhost:2182,localhost:2183
-      host_ports={{ hostvars[groups['master'][0]].inventory_hostname_short}}:2181
+      host_ports={{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:2181
 
       # The URL of the REST contrib service (required for znode browsing).
       ## rest_url=http://localhost:9998

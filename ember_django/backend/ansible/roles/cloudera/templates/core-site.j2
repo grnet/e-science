@@ -4,7 +4,7 @@
 <configuration>
 <property>
   <name>fs.defaultFS</name>
-  <value>hdfs://{{ hostvars[groups['master'][0]].inventory_hostname_short}}:9000</value>
+  <value>hdfs://{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:9000</value>
   <final>true</final>
   <description>The name of the default file system.  A URI whose
   scheme and authority determine the FileSystem implementation.  The

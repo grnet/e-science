@@ -36,7 +36,7 @@ def install_yarn(*args):
     list_of_hosts = args[1]
     master_hostname = list_of_hosts[0]['fqdn'].split('.', 1)[0]
     cluster_size = len(list_of_hosts)
-    cluster_id = args[3].rsplit('-',1)[1]
+    cluster_id = args[3].rsplit('-', 1)[1]
     # Create ansible_hosts file
     try:
         hosts_filename = create_ansible_hosts(args[3], list_of_hosts,
@@ -74,12 +74,20 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name.replace(" ", "_")
     # Create ansible_hosts file and write all information that is
     # required from Ansible playbook.
+    master_host = '[master]'
+    slaves_host = '[slaves]'
+    cluster_id = cluster_name.rsplit('-',1)[1]
+    cluster = ClusterInfo.objects.get(id=cluster_id)
+    if 'cloudera' in cluster.os_image.lower():
+        master_host = '[master_cloud]'
+        slaves_host = '[slaves_cloud]'
+
     with open(hosts_filename, 'w+') as target:
-        target.write('[master]' + '\n')
+        target.write(master_host + '\n')
         target.write(list_of_hosts[0]['fqdn'])
         target.write(' private_ip='+list_of_hosts[0]['private_ip'])
         target.write(' ansible_ssh_host=' + hostname_master + '\n' + '\n')
-        target.write('[slaves]'+'\n')
+        target.write(slaves_host +'\n')
 
         for host in list_of_hosts[1:]:
             target.write(host['fqdn'])
@@ -97,9 +105,8 @@ def ansible_manage_cluster(cluster_id, action):
     cluster = ClusterInfo.objects.get(id=cluster_id)
     pre_action_status = cluster.hadoop_status
     role = 'yarn'
-    if 'cloudera' in cluster.os_image:
+    if 'cloudera' in cluster.os_image.lower():
         role = 'cloudera'
-    ansible_code_generic = 'ansible-playbook -i {0} {1} {2} -e "choose_role={3} manage_cluster={3}" -t'.format(hosts_filename, ansible_playbook, ansible_verbosity, role)
     if action in NON_STATE_HADOOP_ACTIONS:
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
@@ -110,6 +117,8 @@ def ansible_manage_cluster(cluster_id, action):
         state = ' %s %s' %(HADOOP_STATUS_ACTIONS[action][1], cluster.cluster_name)
         current_task.update_state(state=state)
         db_hadoop_update(cluster_id, 'Pending', state)
+        ansible_code_generic = 'ansible-playbook -i {0} {1} {2} -e "choose_role={3} manage_cluster={3}" -t'.format(hosts_filename, ansible_playbook, ansible_verbosity, role)
+
         if action == "format" and pre_action_status == const_hadoop_status_started:
             # format request for started cluster > stop [> clean ]> format > start
             # stop

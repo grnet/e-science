@@ -23,7 +23,7 @@
 <configuration>
 <property>
     <name>hbase.rootdir</name>
-    <value>hdfs://{{ hostvars[groups['master'][0]].inventory_hostname_short}}:9000/hbase</value>
+    <value>hdfs://{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:9000/hbase</value>
   </property>
   <property>
   <name>hbase.cluster.distributed</name>
@@ -31,7 +31,7 @@
   </property>
   <property>
   <name>hbase.zookeeper.quorum</name>
-  <value>{{ hostvars[groups['master'][0]].inventory_hostname_short}}</value>
+  <value>{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}</value>
 </property>
 <property>
   <name>hbase.zookeeper.property.dataDir</name>
