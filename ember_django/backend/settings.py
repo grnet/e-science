@@ -27,7 +27,7 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os

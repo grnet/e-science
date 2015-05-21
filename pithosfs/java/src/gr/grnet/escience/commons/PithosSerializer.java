@@ -10,11 +10,17 @@ import java.io.InputStreamReader;
 
 public class PithosSerializer {
 
-    private PithosSerializer() {
+    private static BufferedReader br = null;
+    private static StringBuilder sb = null;
+    private static String line = null;
+    private static FileInputStream fileInputStream = null;
+    private static byte[] blockDataBytes = null;
+    private static int bytesRead = 0;
+    private static InputStreamReader inputStreamReader = null;
 
+    private PithosSerializer() {
     }
-    
-    private static Utils util = new Utils();
+
     /**
      * 
      * @param is
@@ -23,13 +29,11 @@ public class PithosSerializer {
      */
     public static String inputStreamToString(InputStream is) throws IOException {
 
-        BufferedReader br = null;
-        StringBuilder sb = new StringBuilder();
-
-        String line;
         try {
+            sb = new StringBuilder();
+            inputStreamReader = new InputStreamReader(is);
+            br = new BufferedReader(inputStreamReader);
 
-            br = new BufferedReader(new InputStreamReader(is));
             while ((line = br.readLine()) != null) {
                 sb.append(line);
             }
@@ -37,6 +41,9 @@ public class PithosSerializer {
         } finally {
             if (br != null) {
                 br.close();
+            }
+            if (inputStreamReader != null) {
+                inputStreamReader.close();
             }
         }
 
@@ -53,20 +60,22 @@ public class PithosSerializer {
      */
     public static byte[] serializeFile(File inputFile) throws IOException {
         // -Create file input stream
-        FileInputStream fileInputStream = null;
+        fileInputStream = null;
 
         // - Convert File in bytes []
-        byte[] blockDataBytes = new byte[(int) inputFile.length()];
-        int bytesRead = 0;
-        util.dbgPrint("serializeFile inputFile.length >",inputFile.length());
+        blockDataBytes = new byte[(int) inputFile.length()];
+        bytesRead = 0;
+
+        Utils.dbgPrint("serializeFile inputFile.length >", inputFile.length());
 
         // - Perform the conversion
         try {
             // - Convert file into array of bytes
             fileInputStream = new FileInputStream(inputFile);
             bytesRead = fileInputStream.read(blockDataBytes);
-            util.dbgPrint("serializeFile fileInputStream read > ",bytesRead);
-            util.dbgPrint("serializeFile blockDataBytes > ",blockDataBytes.length);
+            Utils.dbgPrint("serializeFile fileInputStream read > ", bytesRead);
+            Utils.dbgPrint("serializeFile blockDataBytes > ",
+                    blockDataBytes.length);
 
             // - return the bytes array
             return blockDataBytes;

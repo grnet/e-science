@@ -51,7 +51,7 @@ def install_yarn(*args):
         if args[4] == 'hue':
             ansible_manage_cluster(cluster_id, 'HUEstart')
     except Exception, e:
-        msg = 'Error while running Ansible '
+        msg = 'Error while running Ansible %s' % e
         raise RuntimeError(msg, error_ansible_playbook)
     finally:
         os.system('rm /tmp/master_' + master_hostname + '_pub_key_* ')
@@ -164,7 +164,7 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
     '-f {0} -e "choose_role=yarn ssh_file_name={1} token={2} '.format(str(cluster_size), ssh_file, token) + \
     'dfs_blocksize={0}m dfs_replication={1} uuid={2} "'.format(dfs_blocksize, replication_factor, uuid)
-
+    
     # hadoop_image flag(bare/Hadoop only/Hadoop + Hue)
     if hadoop_image == 'hue':
         # Hue -> use an available image (Hadoop and Hue pre-installed)
