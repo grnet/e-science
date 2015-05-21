@@ -72,3 +72,8 @@
     tags: stop
     service: name=hadoop-mapreduce-historyserver state=stopped
     when: is_master
+
+  - name: start cloudera cluster
+    tags: CLOUDstart
+    service: name=hadoop-mapreduce-historyserver state=stopped
+    when: is_master

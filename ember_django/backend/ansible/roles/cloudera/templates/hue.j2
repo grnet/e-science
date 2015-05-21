@@ -18,7 +18,7 @@
 
   # Set this to a random string, the longer the better.
   # This is used for secure hashing in the session store.
-  secret_key=!@#secretkey*&^
+  secret_key=!onlide@th1sri@l
 
   # Webserver listens on this address and port
   http_host=0.0.0.0
@@ -46,18 +46,17 @@
   ## django_email_backend=django.core.mail.backends.smtp.EmailBackend
 
   # Webserver runs as this user
-  server_user=hduser
-  server_group=hduser
+  ## server_user=hue
+  ## server_group=hue
 
   # This should be the Hue admin and proxy user
-  default_user=hduser
+  ## default_user=hue
 
   # This should be the hadoop cluster admin
-  default_hdfs_superuser=hduser
+  ## default_hdfs_superuser=hdfs
 
   # If set to false, runcpserver will not actually start the web server.
   # Used if Apache is being used as a WSGI container.
-  ## enable_server=yes
 
   # Number of threads used by the CherryPy web server
   ## cherrypy_server_threads=40
@@ -212,9 +211,6 @@
     # Defaults to HTTP_REMOTE_USER
     ## remote_user_header=HTTP_REMOTE_USER
 
-    # Synchronize a users groups when they login
-    ## sync_groups_on_login=false
-
     # Ignore the case of usernames when searching for existing users.
     # Only supported in remoteUserDjangoBackend.
     ## ignore_username_case=true
@@ -256,6 +252,10 @@
     # anonymous searches
     ## bind_password=
 
+    # Execute this script to produce the bind user password. This will be used
+    # when `bind_password` is not set.
+    ## bind_password_script=
+
     # Pattern for searching for usernames -- Use <username> for the parameter
     # For use when using LdapBackend for Hue authentication
     ## ldap_username_pattern="uid=<username>,ou=People,dc=mycompany,dc=com"
@@ -263,6 +263,9 @@
     # Create users in Hue when they try to login with their LDAP credentials
     # For use when using LdapBackend for Hue authentication
     ## create_users_on_login = true
+
+    # Synchronize a users groups when they login
+    ## sync_groups_on_login=false
 
     # Ignore the case of usernames when searching for existing users in Hue.
     ## ignore_username_case=false
@@ -337,6 +340,10 @@
         # anonymous searches
         ## bind_password=
 
+        # Execute this script to produce the bind user password. This will be used
+        # when `bind_password` is not set.
+        ## bind_password_script=
+
         # Pattern for searching for usernames -- Use <username> for the parameter
         # For use when using LdapBackend for Hue authentication
         ## ldap_username_pattern="uid=<username>,ou=People,dc=mycompany,dc=com"
@@ -346,6 +353,16 @@
 
         # Whether or not to follow referrals
         ## follow_referrals=false
+
+        # Enable python-ldap debugging.
+        ## debug=false
+
+        # Sets the debug level within the underlying LDAP C lib.
+        ## debug_level=255
+
+        # Possible values for trace_level are 0 for no logging, 1 for only logging the method calls with arguments,
+        # 2 for logging the method calls with arguments and the complete results and 9 for also logging the traceback of method calls.
+        ## trace_level=0
 
         ## [[[[[users]]]]]
 
@@ -367,18 +384,20 @@
   # see http://docs.djangoproject.com/en/1.4/ref/settings/#database-engine
   # ------------------------------------------------------------------------
   [[database]]
+    engine=sqlite3
+    name=/var/lib/hue/desktop.db
     # Database engine is typically one of:
     # postgresql_psycopg2, mysql, sqlite3 or oracle.
     #
     # Note that for sqlite3, 'name', below is a path to the filename. For other backends, it is the database name.
     # Note for Oracle, options={'threaded':true} must be set in order to avoid crashes.
     # Note for Oracle, you can use the Oracle Service Name by setting "port=0" and then "name=<host>:<port>/<service_name>".
-    host=localhost
-    port=5432
-    engine=django.db.backends.postgresql_psycopg2
-    user=hduser
-    password=hdpass
-    name=hduser
+    #host=localhost
+    #port=5432
+    #engine=django.db.backends.postgresql_psycopg2
+    #user=hduser
+    #password=hdpass
+    #name=hduser
     ## options={}
 
   # Configuration options for specifying the Desktop session.
@@ -680,7 +699,7 @@
 
       # The port where the ResourceManager IPC listens on
       resourcemanager_port=8050
-
+      # resourcemanager_port=8032
       # Whether to submit jobs to this cluster
       submit_to=True
 
@@ -720,7 +739,7 @@
 
       # The port where the JobTracker IPC listens on
       jobtracker_port=8050
-
+      # 8032 or 8021 ?
       # JobTracker logical name for HA
       ## logical_name=
 
@@ -762,7 +781,7 @@
   ## security_enabled=false
 
   # Location on HDFS where the workflows/coordinator are deployed when submitted.
-  remote_deployement_dir=/user/hduser/oozie/deployments
+  ## remote_deployement_dir=/user/hue/oozie/deployments
 
 
 ###########################################################################
@@ -777,7 +796,7 @@
   ## sample_data_dir=...thirdparty/sample_data
 
   # Location on HDFS where the oozie examples and workflows are stored.
-  remote_data_dir=/user/hduser/oozie/workspaces
+  ## remote_data_dir=/user/hue/oozie/workspaces
 
   # Maximum of Oozie workflows or coodinators to retrieve in one API call.
   ## oozie_jobs_count=100
@@ -824,7 +843,7 @@
 
   # Thrift version to use when communicating with HiveServer2.
   # New column format is from version 7.
-  ## thrift_version=7
+  ## thrift_version=5
 
   [[ssl]]
     # Path to Certificate Authority certificates.
@@ -884,10 +903,10 @@
 
 [pig]
   # Location of piggybank.jar on local filesystem.
-  local_sample_dir=/usr/local/pig/lib
+  ## local_sample_dir=/usr/share/hue/apps/pig/examples
 
   # Location piggybank.jar will be copied to in HDFS.
-  remote_data_dir=/user/hduser/pig/examples
+  ## remote_data_dir=/user/hue/pig/examples
 
 
 ###########################################################################
@@ -927,7 +946,7 @@
   hbase_clusters=(Cluster|{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:9090)
 
   # HBase configuration directory, where hbase-site.xml is located.
-  hbase_conf_dir=/usr/local/hbase/conf
+  ## hbase_conf_dir=/etc/hbase/conf
 
   # Hard limit of rows or columns per row fetched before truncating.
   ## truncate_limit = 500
@@ -1052,3 +1071,9 @@
 
   # Sentry configuration directory, where sentry-site.xml is located.
   ## sentry_conf_dir=/etc/sentry/conf
+
+  # Host address of the Livy Server.
+  livy_server_host={{ ansible_ssh_host }}
+  # Port of the Livy Server.
+  livy_server_port=8998
+

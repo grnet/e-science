@@ -52,6 +52,8 @@ def install_yarn(*args):
         ansible_manage_cluster(cluster_id, 'HDFSMkdir')
         if args[4] == 'hue':
             ansible_manage_cluster(cluster_id, 'HUEstart')
+        # elif args[4] == 'cloudera':
+        #     ansible_manage_cluster(cluster_id, 'CLOUDstart')
     except Exception, e:
         msg = 'Error while running Ansible '
         raise RuntimeError(msg, error_ansible_playbook)
@@ -178,7 +180,6 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
         tags = '-t postconfig'
     elif hadoop_image == 'cloudera':
         role = 'cloudera'
-        tags = '-t postconfig'
     else:
         tags = '-t preconfig,postconfig'
     # Create debug file for ansible
