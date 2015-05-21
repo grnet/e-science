@@ -172,6 +172,7 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
                         'slave nodes')
     level = logging.getLogger().getEffectiveLevel()
     role = 'yarn'
+    tags = '-t preconfig,postconfig'
     if hadoop_image == 'hue':
         # Hue -> use an available image (Hadoop and Hue pre-installed)
         tags = '-t postconfig,hueconfig'
@@ -180,8 +181,6 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
         tags = '-t postconfig'
     elif hadoop_image == 'cloudera':
         role = 'cloudera'
-    else:
-        tags = '-t preconfig,postconfig'
     # Create debug file for ansible
     debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
     ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)

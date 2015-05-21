@@ -73,7 +73,21 @@
     service: name=hadoop-mapreduce-historyserver state=stopped
     when: is_master
 
-  - name: start cloudera cluster
+  - name: start Hbase in cloudera cluster
     tags: CLOUDstart
-    service: name=hadoop-mapreduce-historyserver state=stopped
+    service: "name={{item.name}} state={{item.state}}"
+    with_items:
+      - { name: 'hbase-master', state: 'started' }
+      - { name: 'hbase-thrift', state: 'started' }
+      - { name: 'hbase-rest', state: 'started' }
     when: is_master
+
+  - name: start Hue in cloudera cluster
+    tags: CLOUDstart
+    service: name=hue state=started
+    when: is_master
+
+  - name: start Hbase regionservers in cloudera cluster
+    tags: CLOUDstart
+    service: service hbase-regionserver start
+    when: is_slave
