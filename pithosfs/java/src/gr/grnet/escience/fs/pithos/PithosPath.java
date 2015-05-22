@@ -15,8 +15,7 @@ public class PithosPath {
     private PithosFileSystem pithosFs = new PithosFileSystem();
     private Path pithosFSPath;
     private String fsPathStr;
-
-    // private String[] pathParts;
+    private String givenPath_str = null;
 
     public PithosPath() {
     }
@@ -53,17 +52,16 @@ public class PithosPath {
 
     private void convertHadoopFSPathToPithosFSPath(Path givenPath) {
 
-        Utils util = new Utils();
-        String givenPath_str = givenPath.toString();
-        util.dbgPrint("-------------------| CONVERT |-------------------");
-        util.dbgPrint("1. INITIAL GIVEN PATH --> ", givenPath_str);
+        givenPath_str = givenPath.toString();
+        Utils.dbgPrint("-------------------| CONVERT |-------------------");
+        Utils.dbgPrint("1. INITIAL GIVEN PATH --> ", givenPath_str);
 
         // - Check if contains scheme and remove it
         if (givenPath_str.contains("://")) {
             givenPath_str = givenPath_str.substring(pithosFs.getScheme()
                     .toString().concat("://").length());
         }
-        util.dbgPrint("2. GIVEN PATH WITHOUT SCHEME --> ", givenPath_str);
+        Utils.dbgPrint("2. GIVEN PATH WITHOUT SCHEME --> ", givenPath_str);
 
         // - Get the defined container
         this.container = givenPath_str.substring(0, givenPath_str.indexOf("/"));
@@ -71,7 +69,7 @@ public class PithosPath {
         this.objectAbsolutePath = givenPath_str.substring(getContainer()
                 .length() + 1);
 
-        util.dbgPrint("3. OBJECT ABSOLUTE PATH --> ", getObjectAbsolutePath());
+        Utils.dbgPrint("3. OBJECT ABSOLUTE PATH --> ", getObjectAbsolutePath());
 
         // - Check what is requested in terms of files and directories on Pithos
         // FS
@@ -102,12 +100,12 @@ public class PithosPath {
             this.objectName = getObjectAbsolutePath();
         }
 
-        util.dbgPrint("4. OBJECT NAME --> ", getObjectName());
+        Utils.dbgPrint("4. OBJECT NAME --> ", getObjectName());
 
-        util.dbgPrint("5. FOLDER ABSOLUTE PATH --> ",
+        Utils.dbgPrint("5. FOLDER ABSOLUTE PATH --> ",
                 getObjectFolderAbsolutePath());
 
-        util.dbgPrint("--------------------------------------------------");
+        Utils.dbgPrint("--------------------------------------------------");
 
     }
 

@@ -384,20 +384,18 @@
   # see http://docs.djangoproject.com/en/1.4/ref/settings/#database-engine
   # ------------------------------------------------------------------------
   [[database]]
-    engine=sqlite3
-    name=/var/lib/hue/desktop.db
     # Database engine is typically one of:
     # postgresql_psycopg2, mysql, sqlite3 or oracle.
     #
     # Note that for sqlite3, 'name', below is a path to the filename. For other backends, it is the database name.
     # Note for Oracle, options={'threaded':true} must be set in order to avoid crashes.
     # Note for Oracle, you can use the Oracle Service Name by setting "port=0" and then "name=<host>:<port>/<service_name>".
-    #host=localhost
-    #port=5432
-    #engine=django.db.backends.postgresql_psycopg2
-    #user=hduser
-    #password=hdpass
-    #name=hduser
+    host=localhost
+    port=5432
+    engine=django.db.backends.postgresql_psycopg2
+    user=hue
+    password=hue
+    name=hue
     ## options={}
 
   # Configuration options for specifying the Desktop session.
@@ -739,7 +737,6 @@
 
       # The port where the JobTracker IPC listens on
       jobtracker_port=8050
-      # 8032 or 8021 ?
       # JobTracker logical name for HA
       ## logical_name=
 
@@ -813,13 +810,13 @@
 
   # Host where HiveServer2 is running.
   # If Kerberos security is enabled, use fully-qualified domain name (FQDN).
-  ## hive_server_host=localhost
+  hive_server_host={{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}
 
   # Port where HiveServer2 Thrift server runs on.
-  ## hive_server_port=10000
+  #hive_server_port=10011
 
   # Hive configuration directory, where hive-site.xml is located
-  ## hive_conf_dir=/etc/hive/conf
+  hive_conf_dir=/usr/lib/hive/conf/
 
   # Timeout in seconds for thrift calls to Hive service
   ## server_conn_timeout=120
@@ -917,7 +914,7 @@
   # For autocompletion, fill out the librdbms section.
 
   # Sqoop server URL
-  ## server_url=http://localhost:12000/sqoop
+  ## server_url=http://{{ ansible_ssh_host}}:12000/sqoop
 
 
 ###########################################################################
@@ -964,7 +961,7 @@
 [search]
 
   # URL of the Solr Server
-  ## solr_url=http://localhost:8983/solr/
+  ## solr_url=http://{{ ansible_ssh_host}}:8983/solr/
 
   # Requires FQDN in solr_url if enabled
   ## security_enabled=false
@@ -983,7 +980,7 @@
   ## solrctl_path=/usr/bin/solrctl
 
   # Zookeeper ensemble.
-  ## solr_zk_ensemble=localhost:2181/solr
+  #solr_zk_ensemble={{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:2181/solr
 
 
 ###########################################################################
@@ -1023,7 +1020,7 @@
       host_ports={{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:2181
 
       # The URL of the REST contrib service (required for znode browsing).
-      ## rest_url=http://localhost:9998
+      rest_url=http://{{ ansible_ssh_host }}:9998
 
       # Name of Kerberos principal when using security.
       ## principal_name=zookeeper
@@ -1035,7 +1032,7 @@
 
 [spark]
   # URL of the REST Spark Job Server.
-  ## server_url=http://localhost:8090/
+  server_url=http://{{ ansible_ssh_host }}:8090/
 
   # List of available types of snippets
   ## languages='[{"name": "Scala", "type": "scala"},{"name": "Python", "type": "python"},{"name": "Impala SQL", "type": "impala"},{"name": "Hive SQL", "type": "hive"},{"name": "Text", "type": "text"}]'

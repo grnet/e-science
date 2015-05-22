@@ -81,6 +81,8 @@ class YarnCluster(object):
                         if 'cloudera' in image_metadata:
                             if image_metadata['cloudera'] == 'True':
                                 self.hadoop_image = 'cloudera'
+                            elif image_metadata['ecosystem'] == 'True':
+                                self.hadoop_image = 'ecosystem'
                         elif image_metadata['hadoop'] == 'True' and image_metadata['hue'] == 'True':
                             self.hadoop_image = 'hue'
                         elif image_metadata['hadoop'] == 'False':

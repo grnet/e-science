@@ -23,12 +23,9 @@
     command: sudo -u hduser ./mr-jobhistory-daemon.sh start historyserver chdir={{hadoop_home}}/sbin
     when: is_master
 
-  - name: Creates directory
-    tags: HDFSMkdir
-    action: command {{item}} chdir={{hadoop_home}}/bin
-    with_items:
-      - sudo -u hduser ./hadoop fs -mkdir /user 
-      - sudo -u hduser ./hadoop fs -mkdir /user/hduser
+  - name: create HDFS home directory
+    tags: start
+    command: sudo -u hduser ./hadoop fs -mkdir -p /user/hduser chdir={{hadoop_home}}/bin
     when: is_master
 
   - name: Start Hue

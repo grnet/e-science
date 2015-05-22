@@ -49,13 +49,13 @@ def install_yarn(*args):
                           master_IP=args[2])
         ansible_manage_cluster(cluster_id, 'format')
         ansible_manage_cluster(cluster_id, 'start')
-        ansible_manage_cluster(cluster_id, 'HDFSMkdir')
         if args[4] == 'hue':
             ansible_manage_cluster(cluster_id, 'HUEstart')
-        # elif args[4] == 'cloudera':
-        #     ansible_manage_cluster(cluster_id, 'CLOUDstart')
+        elif args[4] == 'cloudera':
+            ansible_manage_cluster(cluster_id, 'copyooziesharelib')
+            ansible_manage_cluster(cluster_id, 'CLOUDstart')
     except Exception, e:
-        msg = 'Error while running Ansible '
+        msg = 'Error while running Ansible %s' % e
         raise RuntimeError(msg, error_ansible_playbook)
     finally:
         os.system('rm /tmp/master_' + master_hostname + '_pub_key_* ')
@@ -80,7 +80,7 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
     slaves_host = '[slaves]'
     cluster_id = cluster_name.rsplit('-',1)[1]
     cluster = ClusterInfo.objects.get(id=cluster_id)
-    if 'cloudera' in cluster.os_image.lower():
+    if 'cdh' in cluster.os_image.lower():
         master_host = '[master_cloud]'
         slaves_host = '[slaves_cloud]'
 
@@ -107,7 +107,7 @@ def ansible_manage_cluster(cluster_id, action):
     cluster = ClusterInfo.objects.get(id=cluster_id)
     pre_action_status = cluster.hadoop_status
     role = 'yarn'
-    if 'cloudera' in cluster.os_image.lower():
+    if 'cdh' in cluster.os_image.lower():
         role = 'cloudera'
     if action in NON_STATE_HADOOP_ACTIONS:
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
@@ -124,34 +124,20 @@ def ansible_manage_cluster(cluster_id, action):
         if action == "format" and pre_action_status == const_hadoop_status_started:
             # format request for started cluster > stop [> clean ]> format > start
             # stop
-            ansible_code = '{0} {1}'.format(ansible_code_generic, 'stop')
-            ansible_exit_status = execute_ansible_playbook(ansible_code)
-            if ansible_exit_status == 0:
-                # TODO: shall we also update the db status with a message for each intermediate step?
-                # clean + format
-                ansible_code = '{0} {1}'.format(ansible_code_generic, action)
-                ansible_exit_status = execute_ansible_playbook(ansible_code)
-                if ansible_exit_status == 0:
-                    # re-start to return to initial status
-                    ansible_code = '{0} {1}'.format(ansible_code_generic, 'start')
-                    ansible_exit_status = execute_ansible_playbook(ansible_code)
-                    if ansible_exit_status == 0:
-                        msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
-                        db_hadoop_update(cluster_id, current_hadoop_status, msg)
-                        return msg
-                    db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action') # re-start failed
-                db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action') # format failed
-            db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action') # stop failed
+            for hadoop_action in ['stop', action, 'start']:
+               ansible_code = '{0} {1}'.format(ansible_code_generic, hadoop_action)
+               execute_ansible_playbook(ansible_code)
+
+            msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
+            db_hadoop_update(cluster_id, current_hadoop_status, msg)
+            return msg
+
         else: # other actions including format request when hadoop is stopped
             ansible_code = '{0} {1}'.format(ansible_code_generic, action)
-            ansible_exit_status = execute_ansible_playbook(ansible_code)
-    
-            if ansible_exit_status == 0:
-                msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
-                db_hadoop_update(cluster_id, current_hadoop_status, msg)
-                return msg
-
-        db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action')
+            execute_ansible_playbook(ansible_code)
+            msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
+            db_hadoop_update(cluster_id, current_hadoop_status, msg)
+            return msg
 
     else:
         msg = ' Ansible hosts file [%s] does not exist' % hosts_filename

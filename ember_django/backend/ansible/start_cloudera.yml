@@ -1,4 +1,14 @@
 ---
+  - name: clean master temp storage dir
+    tags: format
+    shell: sudo -u hdfs rm -rf /data/1/dfs/nn/* /nfsmount/dfs/nn/*
+    when: is_master
+
+  - name: clean slaves temp storage dir
+    tags: format
+    shell: sudo -u hdfs rm -rf /data/1/dfs/dn/* /data/2/dfs/dn/* /data/3/dfs/dn/* /data/4/dfs/dn/*
+    when: is_slave
+
   - name: format hdfs
     tags: format
     command: sudo -u hdfs hdfs namenode -format -force chdir={{ cloudera_bin }}
@@ -22,7 +32,7 @@
     when: is_slave
 
   - name: Create mandatory directories in Hdfs
-    tags: HDFSMkdir
+    tags: start
     action: command {{item}} chdir={{ cloudera_bin }}
     with_items:
       - sudo -u hdfs hadoop fs -mkdir -p /user/yarn
@@ -47,6 +57,8 @@
       - sudo -u hdfs hadoop fs -chown oozie:oozie /user/oozie
       - sudo -u hdfs hadoop fs -mkdir -p /var/log/oozie
       - sudo -u hdfs hadoop fs -chown oozie:oozie /var/log/oozie
+      - sudo -u hdfs hadoop fs -mkdir -p /hbase
+      - sudo -u hdfs hadoop fs -chown hbase /hbase
     when: is_master
 
   - name: stop Namenode, Resource Manager and History Server
@@ -66,11 +78,17 @@
       - { name: 'hadoop-yarn-nodemanager',  state: 'stopped' }
     when: is_slave
 
+  - name: Copy oozie sharelib
+    tags: copyooziesharelib
+    shell: oozie-setup sharelib create -fs hdfs://{{hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:9000 -locallib /usr/lib/oozie/oozie-sharelib-yarn
+    when: is_master
+
   - name: start Hbase in cloudera cluster
     tags: CLOUDstart
     service: "name={{item.name}} state={{item.state}}"
     with_items:
       - { name: 'hue', state: 'started' }
+      - { name: 'zookeeper-server', state: 'started' }
       - { name: 'hbase-master', state: 'started' }
       - { name: 'hbase-thrift', state: 'started' }
       - { name: 'hbase-rest', state: 'started' }
