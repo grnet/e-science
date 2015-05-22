@@ -34,11 +34,23 @@
   - name: Start Hue
     tags: HUEstart
     command: sudo -u hduser ./supervisor -d chdir=/usr/local/hue/build/env/bin/
+    when: is_master
 
-  - name: Create Hive directories
-    tags: HIVEstart
+  - name: Create Oozie Database
+    tags: ECOSYSTEMstart
+    action: command ./ooziedb.sh create -sqlfile oozie.sql -run chdir=/usr/local/oozie/bin/
+    when: is_master
+
+  - name: Create Sharelib Directory on HDFS
+    tags: ECOSYSTEMstart
+    action: command sudo -u hduser /usr/local/oozie/bin/./oozie-setup.sh sharelib create -fs hdfs://{{ hostvars[groups['master'][0]].inventory_hostname_short}}:9000 chdir={{hadoop_home}}/bin
+    when: is_master
+
+  - name: Create Hive and oozie directories
+    tags: ECOSYSTEMstart
     action: command {{item}} chdir={{hadoop_home}}/bin
     with_items:
+      - sudo -u hduser ./hadoop fs -mkdir -p /user/oozie
       - sudo -u hduser ./hadoop fs -mkdir -p /tmp
       - sudo -u hduser ./hadoop fs -mkdir -p /user/hive/warehouse
       - sudo -u hduser ./hadoop fs -chmod g+w /user/hive/warehouse
@@ -46,13 +58,14 @@
     when: is_master
 
   - name: Start HiveServer2
-    tags: HIVEstart
-    shell: printf "#! bin/bash\ncd /usr/local/hive/bin\nsudo -u hduser ./hive --service hiveserver2 &" > hiveserver2;chmod 755 /etc/init.d/hiveserver2 chdir=/etc/init.d/
+    tags: ECOSYSTEMstart
+    sudo: yes
+    service: name=hiveserver2 state=started
     when: is_master
 
-  - name: Start HiveServer2
-    tags: HIVEstart
-    shell: service hiveserver2 start
+  - name: Start oozie server
+    tags: ECOSYSTEMstart
+    action: command ./oozied.sh start chdir=/usr/local/oozie/bin/
     when: is_master
 
   - name: Stop dfs

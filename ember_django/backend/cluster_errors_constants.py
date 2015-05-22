@@ -82,9 +82,9 @@ HADOOP_STATUS_ACTIONS = {"stop": ["0","Stopping","stopped"],
                          "format": ["2","Formatting","formatted"],
                          "HDFSMkdir": ["3", "Creating /user/hduser in HDFS", "Created /user/hduser"],
                          "HUEstart": ["4", "Starting Hue", "Started Hue"],
-                         "HIVEstart": ["5", "Starting Hive", "Started Hive"] }
+                         "ECOSYSTEMstart": ["5", "Starting Hive", "Started Hive"] }
 
 REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}
 
 # List of Hadoop actions that do not update the  state field in database
-NON_STATE_HADOOP_ACTIONS = ['format','HDFSMkdir','HUEstart','HIVEstart']
+NON_STATE_HADOOP_ACTIONS = ['format','HDFSMkdir','HUEstart','ECOSYSTEMstart']
