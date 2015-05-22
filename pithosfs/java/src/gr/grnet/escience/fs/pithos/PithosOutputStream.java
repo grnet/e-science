@@ -295,7 +295,6 @@ public class PithosOutputStream extends OutputStream {
     public synchronized void close() throws IOException {
         Utils.dbgPrint("close");
         if (closed) {
-            //Job.getInstance().killJob();
             return;
         }
 

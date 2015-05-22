@@ -173,7 +173,7 @@ public class PithosFileSystem extends FileSystem {
     @Override
     public boolean delete(Path f, boolean recursive) throws IOException {
         Utils.dbgPrint("delete", f);
-
+        
         return false;
     }
 
@@ -220,7 +220,7 @@ public class PithosFileSystem extends FileSystem {
             }
         }
         if (isDir) {
-            pithosFileStatus = new PithosFileStatus(true, 0L, false, targetPath);
+            pithosFileStatus = new PithosFileStatus(true, DEFAULT_HDFS_BLOCK_SIZE, true, targetPath);
         } else {
             for (String obj : metadata.getResponseData().keySet()) {
                 if (obj != null && obj.matches("Content-Length")) {

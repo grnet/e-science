@@ -1,5 +1,7 @@
 package gr.grnet.escience.fs.pithos;
 
+import gr.grnet.escience.commons.Utils;
+
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -175,7 +177,6 @@ public class PithosInputStream extends FSInputStream {
     @Override
     public void close() throws IOException {
         if (closed) {
-            //Job.getInstance().killJob();
             return;
         }
         if (blockStream != null) {
@@ -204,7 +205,6 @@ public class PithosInputStream extends FSInputStream {
 
     @Override
     public void reset() throws IOException {
-        //Job.getInstance().killJob();
         throw new IOException("Mark not supported");
     }
 

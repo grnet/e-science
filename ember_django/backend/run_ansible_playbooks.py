@@ -119,12 +119,17 @@ def ansible_manage_cluster(cluster_id, action):
                     ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t start'
                     ansible_exit_status = execute_ansible_playbook(ansible_code)
                     if ansible_exit_status == 0:
-                        msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
-                        db_hadoop_update(cluster_id, current_hadoop_status, msg)
-                        return msg
-                    db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action') # re-start failed
-                db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action') # format failed
-            db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action') # stop failed
+                        # re-create the HDFS home directory
+                        ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t HDFSMkdir'
+                        ansible_exit_status = execute_ansible_playbook(ansible_code)
+                        if ansible_exit_status == 0:
+                            msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
+                            db_hadoop_update(cluster_id, current_hadoop_status, msg)
+                            return msg
+                        db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action: home') # refresh home failed
+                    db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action: start') # re-start failed
+                db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action: format') # format failed
+            db_hadoop_update(cluster_id, current_hadoop_status, 'Error in Hadoop action: stop') # stop failed
         else: # other actions including format request when hadoop is stopped
             ansible_code = 'ansible-playbook -i ' + hosts_filename + ' ' + ansible_playbook + ansible_verbosity + ' -e "choose_role=yarn start_yarn=True" -t ' + action
             ansible_exit_status = execute_ansible_playbook(ansible_code)
