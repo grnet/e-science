@@ -39,20 +39,20 @@
     tags: HIVEstart
     action: command {{item}} chdir={{hadoop_home}}/bin
     with_items:
-      - sudo -u hduser ./hadoop fs -mkdir /user/hive
-      - sudo -u hduser ./hadoop fs -mkdir /user/hive/warehouse
+      - sudo -u hduser ./hadoop fs -mkdir -p /tmp
+      - sudo -u hduser ./hadoop fs -mkdir -p /user/hive/warehouse
       - sudo -u hduser ./hadoop fs -chmod g+w /user/hive/warehouse
       - sudo -u hduser ./hadoop fs -chmod g+w /tmp
     when: is_master
 
-  - name: Start Hue for Ecosystem
+  - name: Start HiveServer2
     tags: HIVEstart
-    command: sudo -u hduser ./supervisor -d chdir=/usr/local/hue/build/env/bin/
+    shell: printf "#! bin/bash\ncd /usr/local/hive/bin\nsudo -u hduser ./hive --service hiveserver2 &" > hiveserver2;chmod 755 /etc/init.d/hiveserver2 chdir=/etc/init.d/
     when: is_master
 
   - name: Start HiveServer2
     tags: HIVEstart
-    command: sudo -u hduser ./hive --service hiveserver2 & chdir=/usr/local/hive/bin/
+    shell: service hiveserver2 start
     when: is_master
 
   - name: Stop dfs
