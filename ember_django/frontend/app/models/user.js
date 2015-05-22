@@ -193,6 +193,11 @@ App.Usercluster = DS.Model.extend({
 	hadoop_status_class_format : function(){
 		return "glyphicon glyphicon-erase text-warning";
 	}.property(),
+	cluster_name_id : function (){
+		var cluster_name_sort = this.get('cluster_name').slice(7);
+		var cluster_name_id = "id_".concat("cluster_name_",cluster_name_sort);
+		return cluster_name_id;	
+	}.property('cluster_name'),
 	cluster_status_id : function (){
 		var cluster_name_sort = this.get('cluster_name').slice(7);
 		var cluster_status_id = "id_".concat("cluster_status_",cluster_name_sort);

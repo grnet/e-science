@@ -13,32 +13,32 @@
 <configuration>
 <!-- Site specific YARN configuration properties -->
   <property>
-    <final>true</final>
     <name>yarn.resourcemanager.hostname</name>
     <value>{{ hostvars[groups['master'][0]].inventory_hostname_short}}</value>
+    <final>true</final>
     <description>host is the hostname of the resource manager.
     </description>
   </property>
   <property>
-    <final>true</final>
     <name>yarn.resourcemanager.resource-tracker.address</name>
     <value>{{ hostvars[groups['master'][0]].inventory_hostname_short}}:8025</value>
+    <final>true</final>
     <description>host is the hostname of the resource manager and
     port is the port on which the NodeManagers contact the Resource Manager.
     </description>
   </property>
   <property>
-    <final>true</final>
     <name>yarn.resourcemanager.scheduler.address</name>
     <value>{{ hostvars[groups['master'][0]].inventory_hostname_short}}:8030</value>
+    <final>true</final>
     <description>host is the hostname of the resourcemanager and port is the port
     on which the Applications in the cluster talk to the Resource Manager.
     </description>
   </property>
   <property>
-    <final>true</final>
     <name>yarn.resourcemanager.address</name>
     <value>{{ hostvars[groups['master'][0]].inventory_hostname_short}}:8050</value>
+    <final>true</final>
     <description>the host is the hostname of the ResourceManager and the port is the port on
     which the clients can talk to the Resource Manager. </description>
   </property>
@@ -70,5 +70,9 @@
     <name>yarn.resourcemanager.webapp.address</name>
     <value>{{ ansible_ssh_host}}:8088</value>
     <description>The http address of the RM web application </description>
+  </property>
+  <property>
+    <name>yarn.nodemanager.vmem-check-enabled</name>
+    <value>false</value>
   </property>
 </configuration>
