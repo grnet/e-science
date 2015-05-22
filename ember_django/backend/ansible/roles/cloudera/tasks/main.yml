@@ -62,36 +62,19 @@
     template: src=slaves.j2 dest=/etc/hadoop/conf/slaves
     when: is_master
 
-  - name: create local storage directories in namenode
+  - name: create local storage directories for namenode
     tags: postconfig
-    file: "dest={{item.dest}} mode={{item.mode}} owner={{item.owner}} group={{item.group}} state={{item.state}}"
-    with_items:
-      - { dest: '/data/1/dfs/nn', mode: '700', owner: 'hdfs', group: 'hdfs', state: 'directory' }
-      - { dest: '/nfsmount/dfs/nn', mode: '700', owner: 'hdfs', group: 'hdfs', state: 'directory' }
+    command: install -d -m 0700 -o hdfs -g hdfs /data/1/dfs/nn /nfsmount/dfs/nn
     when: is_master
 
-  - name: create local storage directories in datanodes
+  - name: create local storage directories for datanodes
     tags: postconfig
-    file: "dest={{item.dest}} mode={{item.mode}} owner={{item.owner}} group={{item.group}} state={{item.state}}"
-    with_items:
-      - { dest: '/data/1/dfs/dn', mode: '700', owner: 'hdfs', group: 'hdfs', state: 'directory' }
-      - { dest: '/data/2/dfs/dn', mode: '700', owner: 'hdfs', group: 'hdfs', state: 'directory' }
-      - { dest: '/data/3/dfs/dn', mode: '700', owner: 'hdfs', group: 'hdfs', state: 'directory' }
-      - { dest: '/data/4/dfs/dn', mode: '700', owner: 'hdfs', group: 'hdfs', state: 'directory' }
+    command: install -d -m 0700 -o hdfs -g hdfs /data/1/dfs/dn /data/2/dfs/dn /data/3/dfs/dn /data/4/dfs/dn
     when: is_slave
 
-  - name: create local storage directories in all nodes
+  - name: create local storage directories for yarn
     tags: postconfig
-    file: "dest={{item.dest}} mode={{item.mode}} owner={{item.owner}} group={{item.group}} state={{item.state}}"
-    with_items:
-      - { dest: '/data/1/yarn/local', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
-      - { dest: '/data/2/yarn/local', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
-      - { dest: '/data/3/yarn/local', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
-      - { dest: '/data/4/yarn/local', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
-      - { dest: '/data/1/yarn/logs', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
-      - { dest: '/data/2/yarn/logs', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
-      - { dest: '/data/3/yarn/logs', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
-      - { dest: '/data/4/yarn/logs', mode: '755', owner: 'yarn', group: 'yarn', state: 'directory' }
+    command: install -d -m 0755 -o yarn -g yarn /data/1/yarn/local /data/2/yarn/local /data/3/yarn/local /data/4/yarn/local /data/1/yarn/logs /data/2/yarn/logs /data/3/yarn/logs /data/4/yarn/logs
 
   - name: Edit spark-env file
     tags: spark
@@ -107,3 +90,24 @@
     with_items:
         - { line: 'spark.eventLog.dir=/user/spark/applicationHistory', dest: '/etc/spark/conf/spark-defaults.conf'}
         - { line: 'spark.eventLog.enabled=true', dest: '/etc/spark/conf/spark-defaults.conf'}
+
+  - name: Stop every cloudera hadoop ecosystem process
+    tags: postconfig
+    service: "name={{item.name}} state={{item.state}}"
+    with_items:
+      - { name: 'hadoop-hdfs-namenode', state: 'stopped' }
+      - { name: 'hadoop-yarn-resourcemanager',  state: 'stopped' }
+      - { name: 'hadoop-mapreduce-historyserver', state: 'stopped' }
+      - { name: 'hadoop-hdfs-datanode', state: 'stopped' }
+      - { name: 'hadoop-yarn-nodemanager',  state: 'stopped' }
+      - { name: 'hbase-master', state: 'stopped' }
+      - { name: 'hbase-thrift', state: 'stopped' }
+      - { name: 'hbase-rest', state: 'stopped' }
+      - { name: 'spark-master', state: 'stopped' }
+      - { name: 'spark-worker', state: 'stopped' }
+      - { name: 'spark-history-server', state: 'stopped' }
+      - { name: 'oozie', state: 'stopped' }
+      - { name: 'hive-metastore', state: 'stopped' }
+      - { name: 'hive-server2', state: 'stopped' }
+      - { name: 'hue', state: 'stopped' }
+      - { name: 'hbase-regionserver', state: 'stopped' }
