@@ -22,7 +22,7 @@ from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY, NO
 playbook = 'site.yml'
 ansible_playbook = dirname(abspath(__file__)) + '/ansible/' + playbook
 ansible_hosts_prefix = 'ansible_hosts_'
-ansible_verbosity = ' -vvvv'
+ansible_verbosity = ' -v'
 
 
 def install_yarn(*args):
