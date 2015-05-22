@@ -13,4 +13,11 @@ ansible_hosts*
 bower_components/
 node_modules/
 .classpath
+.gitignore
+block
 orka-pithos.jardesc
+sonar-project.properties
+*.txt
+*.pdf
+*.properties
+*.xml
