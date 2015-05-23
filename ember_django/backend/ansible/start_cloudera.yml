@@ -37,6 +37,8 @@
     with_items:
       - sudo -u hdfs hadoop fs -mkdir -p /user/yarn
       - sudo -u hdfs hadoop fs -chown yarn /user/yarn
+      - sudo -u hdfs hadoop fs -mkdir -p /user/root
+      - sudo -u hdfs hadoop fs -chown root:root /user/root
       - sudo -u hdfs hadoop fs -mkdir -p /user/mapred
       - sudo -u hdfs hadoop fs -chown mapred /user/mapred
       - sudo -u hdfs hadoop fs -mkdir -p /user/hdfs
@@ -108,6 +110,6 @@
     when: is_slave
 
   - name: start Hue livy server in cloudera cluster
-    tags: Livystart
+    tags: CLOUDstart
     shell: /usr/lib/hue/build/env/bin/hue  livy_server > /dev/null 2>&1 &
     when: is_master
