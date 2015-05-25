@@ -75,26 +75,13 @@
     file: path=/usr/local/hue owner=hduser group=hadoop state=directory recurse=yes
     tags: hueconfig
 
-  - name: Find if Hue obsolete directory exists
-    find: paths="/root" pattern="hue-*"
-    register: hue_dir
-    tags: hueconfig
-
   - name: Remove Hue obsolete directory
-    file: path=hue_dir.files.path state=absent
+    shell: rm -r hue-*
     tags: hueconfig
-    when: hue_dir.find.exists == True
-
-  - name: Find if Hadoop .tar.gz file exists
-    find: path="{{path_to_hadoop}}" pattern="hadoop-*.tar.gz"
-    register: hadoop_tar
-    file: path={{path_to_hadoop}}/hadoop-*.tar.gz state=absent
-    tags: postconfig
 
   - name: Remove Hadoop .tar.gz file
-    file: path=hadoop_tar.files.path state=absent
+    shell: rm hadoop-*.tar.gz chdir={{path_to_hadoop}}
     tags: postconfig
-    when: hadoop_tar.find.exists == True
 
   - stat: path="{{ ssh_file_name }}"
     tags: postconfig
@@ -304,4 +291,9 @@
     with_items:
       - "{{hive_home}}/metastore/scripts/upgrade/postgres/hive-schema-1.1.0.postgres.sql"
       - "{{hive_home}}/metastore/scripts/upgrade/postgres/hive-txn-schema-0.13.0.postgres.sql"
+    when: is_master
+
+  - name: Copy xml files to oozie conf directory
+    tags: ecoconfig
+    shell: cp -rf {{hadoop_home}}/etc/hadoop/* {{path_to_hadoop}}/oozie/conf/hadoop-conf
     when: is_master
