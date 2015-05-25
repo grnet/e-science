@@ -20,7 +20,11 @@
     tags: postconfig
 
   - name: Add virtual machine private ips in /etc/hosts
-    template: src=hosts.j2 dest=/etc/hosts
+    template: src=hosts.j2 dest={{etchosts_filename}}
+    tags: postconfig
+
+  - name: Append the host file
+    shell: cat {{etchosts_filename}} >> /etc/hosts
     tags: postconfig
 
   - stat: path="{{ ssh_file_name }}"
@@ -56,7 +60,7 @@
       - { src: 'hbase-site.j2', dest: '/etc/hbase/conf/hbase-site.xml' }
       - { src: 'oozie-site.j2', dest: '/etc/oozie/conf/oozie-site.xml' }
       - { src: 'hive-site.j2', dest: '/usr/lib/hive/conf/hive-site.xml' }
-      - { src: 'hue.j2', dest: '/etc/hue/conf/hue.ini' }
+      - { src: 'hue.j2', dest: '/etc/hue/conf.empty/hue.ini' }
       - { src: 'regionservers.j2', dest: '/etc/hbase/conf/regionservers' }
 
   - name: create slaves files in cloudera master node
@@ -119,3 +123,17 @@
   - name: Copy hadoop conf files to oozie conf directory
     tags: postconfig
     shell: cp -rf /etc/hadoop/conf/* /etc/oozie/conf/hadoop-conf
+
+  - name: Create Oozie database
+    tags: postconfig
+    shell: ./ooziedb.sh create -run chdir=/usr/lib/oozie/bin
+
+  - name: Add users to hadoop group
+    tags: postconfig
+    user: "name={{item.name}} groups=hadoop append=yes"
+    with_items:
+       - { name: 'oozie' }
+       - { name: 'hue' }
+       - { name: 'hbase' }
+       - { name: 'hive' }
+       - { name: 'spark' }
