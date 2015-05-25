@@ -82,7 +82,7 @@ HADOOP_STATUS_ACTIONS = {"stop": ["0","Stopping","stopped"],
                          "format": ["2","Formatting","formatted"],
                          "HDFSMkdir": ["3", "Creating /user/hduser in HDFS", "Created /user/hduser"],
                          "HUEstart": ["4", "Starting Hue", "Started Hue"],
-                         "ECOSYSTEMstart": ["5", "Starting Hive", "Started Hive"] }
+                         "ECOSYSTEMstart": ["5", "Starting Ecosystem", "Started Ecosystem"] }
 
 REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}
 
