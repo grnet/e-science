@@ -60,8 +60,9 @@
       - { src: 'hbase-site.j2', dest: '/etc/hbase/conf/hbase-site.xml' }
       - { src: 'oozie-site.j2', dest: '/etc/oozie/conf/oozie-site.xml' }
       - { src: 'hive-site.j2', dest: '/usr/lib/hive/conf/hive-site.xml' }
-      - { src: 'hue.j2', dest: '/etc/hue/conf.empty/hue.ini' }
+      - { src: 'hue.j2', dest: '/etc/hue/conf/hue.ini' }
       - { src: 'regionservers.j2', dest: '/etc/hbase/conf/regionservers' }
+      - { src: 'kamakirc.j2', dest: '/home/hdfs/.kamakirc', owner: 'hdfs', group: 'hadoop' }
 
   - name: create slaves files in cloudera master node
     tags: postconfig
@@ -97,28 +98,9 @@
         - { line: 'spark.eventLog.dir=/user/spark/applicationHistory', dest: '/etc/spark/conf/spark-defaults.conf'}
         - { line: 'spark.eventLog.enabled=true', dest: '/etc/spark/conf/spark-defaults.conf'}
 
-  - name: Stop every cloudera hadoop ecosystem process
+  - name: Restart postgresql service
     tags: postconfig
-    service: "name={{item.name}} state={{item.state}}"
-    with_items:
-      - { name: 'postgresql', state: 'restarted' }
-      - { name: 'hadoop-hdfs-namenode', state: 'stopped' }
-      - { name: 'hadoop-yarn-resourcemanager',  state: 'stopped' }
-      - { name: 'hadoop-mapreduce-historyserver', state: 'stopped' }
-      - { name: 'hadoop-hdfs-datanode', state: 'stopped' }
-      - { name: 'hadoop-yarn-nodemanager',  state: 'stopped' }
-      - { name: 'zookeeper-server', state: 'stopped' }
-      - { name: 'hbase-master', state: 'stopped' }
-      - { name: 'hbase-thrift', state: 'stopped' }
-      - { name: 'hbase-rest', state: 'stopped' }
-      - { name: 'spark-master', state: 'stopped' }
-      - { name: 'spark-worker', state: 'stopped' }
-      - { name: 'spark-history-server', state: 'stopped' }
-      - { name: 'oozie', state: 'stopped' }
-      - { name: 'hive-metastore', state: 'stopped' }
-      - { name: 'hive-server2', state: 'stopped' }
-      - { name: 'hue', state: 'stopped' }
-      - { name: 'hbase-regionserver', state: 'stopped' }
+    service: name=postgresql state=restarted
 
   - name: Copy hadoop conf files to oozie conf directory
     tags: postconfig

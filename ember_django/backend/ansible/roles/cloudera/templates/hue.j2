@@ -772,7 +772,7 @@
 [liboozie]
   # The URL where the Oozie service runs on. This is required in order for
   # users to submit jobs. Empty value disables the config check.
-  oozie_url={{ansible_ssh_host}}:11000/oozie
+  oozie_url=http://{{ansible_ssh_host}}:11000/oozie
 
   # Requires FQDN in oozie_url if enabled
   ## security_enabled=false
@@ -900,7 +900,7 @@
 
 [pig]
   # Location of piggybank.jar on local filesystem.
-  ## local_sample_dir=/usr/share/hue/apps/pig/examples
+  local_sample_dir=/usr/lib/pig/
 
   # Location piggybank.jar will be copied to in HDFS.
   ## remote_data_dir=/user/hue/pig/examples
@@ -1070,7 +1070,7 @@
   ## sentry_conf_dir=/etc/sentry/conf
 
   # Host address of the Livy Server.
-  livy_server_host={{ ansible_ssh_host }}
+  livy_server_host={{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}
   # Port of the Livy Server.
   livy_server_port=8998
 
