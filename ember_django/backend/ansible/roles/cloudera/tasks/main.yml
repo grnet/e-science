@@ -107,10 +107,6 @@
     tags: postconfig
     shell: cp -rf /etc/hadoop/conf/* /etc/oozie/conf/hadoop-conf
 
-  - name: Create Oozie database
-    tags: postconfig
-    shell: ./ooziedb.sh create -run chdir=/usr/lib/oozie/bin
-
   - name: Add users to hadoop group
     tags: postconfig
     user: "name={{item.name}} groups=hadoop append=yes"
