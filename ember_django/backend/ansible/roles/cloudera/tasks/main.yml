@@ -62,7 +62,6 @@
       - { src: 'hive-site.j2', dest: '/usr/lib/hive/conf/hive-site.xml' }
       - { src: 'hue.j2', dest: '/etc/hue/conf/hue.ini' }
       - { src: 'regionservers.j2', dest: '/etc/hbase/conf/regionservers' }
-      - { src: 'cloudera_livy.sh', dest: '/etc/init.d/cloudera_livy.sh' }
       - { src: 'kamakirc.j2', dest: '/root/.kamakirc' }
 
   - name: create slaves files in cloudera master node
@@ -124,3 +123,7 @@
   - name: Make sure Hue is stopped
     tags: postconfig
     shell: kill $(ps aux | grep '[s]upervisor' | awk '{print $2}')
+
+  - name: Copy Livy server shell script
+    tags: postconfig
+    copy: src=cloudera_livy.sh dest=/etc/init.d/cloudera_livy.sh
