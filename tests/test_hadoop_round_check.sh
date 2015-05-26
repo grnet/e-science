@@ -29,6 +29,8 @@ fi
 #ret=$?
 #echo "Cluster ID is $ret"
 
+# missing step here... to retrieve cluster id and master ip
+
 HOST=hduser@83.212.96.29
 
 echo "Running pi"
@@ -37,6 +39,26 @@ ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
 exit'
 
 
+echo "Stopping hadoop"
+orka hadoop stop $CLUSTERID
 
+echo "Starting hadoop"
+orka hadoop start $CLUSTERID
+
+echo "Running pi..."
+
+echo "Stopping hadoop"
+orka hadoop stop $CLUSTERID
+
+echo "Formatting hadoop"
+orka hadoop format $CLUSTERID
+
+echo "Starting hadoop"
+orka hadoop start $CLUSTERID
+
+echo "Running pi..."
+
+echo "Destroying cluster"
+orka destroy $CLUSTERID
 
 
