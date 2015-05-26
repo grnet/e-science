@@ -38,7 +38,7 @@
 
   - name: Create Oozie Database
     tags: ECOSYSTEMstart
-    action: command ./ooziedb.sh create -sqlfile oozie.sql -run chdir=/usr/local/oozie/bin/
+    action: command sudo -u hduser ./ooziedb.sh create -sqlfile oozie.sql -run chdir=/usr/local/oozie/bin/
     when: is_master
 
   - name: Create Sharelib Directory on HDFS
@@ -65,7 +65,7 @@
 
   - name: Start oozie server
     tags: ECOSYSTEMstart
-    action: command ./oozied.sh start chdir=/usr/local/oozie/bin/
+    action: command sudo -u hduser ./oozied.sh start chdir=/usr/local/oozie/bin/
     when: is_master
 
   - name: Stop dfs
