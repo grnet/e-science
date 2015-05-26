@@ -15,6 +15,7 @@
   hadoopuser_path: /home/hduser
   cloudera_bin: /usr/bin
   manage_cluster: placeholder
+  livy_server_script: cloudera_livy.sh
   is_master: False
   is_slave: False
   dfs_replication: 2

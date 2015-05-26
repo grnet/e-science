@@ -38,7 +38,7 @@
       - sudo -u hdfs hadoop fs -mkdir -p /user/yarn
       - sudo -u hdfs hadoop fs -chown yarn /user/yarn
       - sudo -u hdfs hadoop fs -mkdir -p /user/root
-      - sudo -u hdfs hadoop fs -chown root:root /user/root
+      - sudo -u hdfs hadoop fs -chown root /user/root
       - sudo -u hdfs hadoop fs -mkdir -p /user/mapred
       - sudo -u hdfs hadoop fs -chown mapred /user/mapred
       - sudo -u hdfs hadoop fs -mkdir -p /user/hdfs
@@ -85,7 +85,7 @@
     shell: oozie-setup sharelib create -fs hdfs://{{hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:9000 -locallib /usr/lib/oozie/oozie-sharelib-yarn
     when: is_master
 
-  - name: start Hbase in cloudera cluster
+  - name: start Hbase,spark,oozie and hive in cloudera cluster
     tags: CLOUDstart
     service: "name={{item.name}} state={{item.state}}"
     with_items:
@@ -100,7 +100,7 @@
       - { name: 'hive-server2', state: 'started' }
     when: is_master
 
-  - name: start Hbase regionservers in cloudera cluster
+  - name: start Hbase regionservers and spark workers in cloudera cluster
     tags: CLOUDstart
     service: "name={{item.name}} state={{item.state}}"
     with_items:
@@ -115,10 +115,10 @@
 
   - name: start Hue livy server in cloudera cluster
     tags: CLOUDstart
-    shell: ./hue  livy_server > /dev/null 2>&1 & chdir=/usr/lib/hue/build/env/bin/
+    shell: . /etc/init.d/{{livy_server_script}}
     when: is_master
 
-  - name: start Hbase in cloudera cluster
+  - name: stop Hbase,spark,oozie and hive in cloudera cluster
     tags: CLOUDstop
     service: "name={{item.name}} state={{item.state}}"
     with_items:
@@ -133,7 +133,7 @@
       - { name: 'hive-server2', state: 'stopped' }
     when: is_master
 
-  - name: start Hbase regionservers in cloudera cluster
+  - name: stop Hbase regionservers and spark workers in cloudera cluster
     tags: CLOUDstop
     service: "name={{item.name}} state={{item.state}}"
     with_items:
@@ -144,4 +144,9 @@
   - name: Stop Hue
     tags: CLOUDstop
     shell: kill $(ps aux | grep '[s]upervisor' | awk '{print $2}')
+    when: is_master
+
+  - name: Stop Livy Server
+    tags: CLOUDstop
+    shell: kill $(ps aux | grep '[l]ivy' | awk '{print $2}')
     when: is_master
