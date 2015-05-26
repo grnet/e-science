@@ -36,17 +36,6 @@
     command: sudo -u hduser ./supervisor -d chdir=/usr/local/hue/build/env/bin/
     when: is_master
 
-  - name: Create Hive and oozie directories
-    tags: ECOSYSTEMstart
-    action: command {{item}} chdir={{hadoop_home}}/bin
-    with_items:
-      - sudo -u hduser ./hadoop fs -mkdir -p /user/oozie
-      - sudo -u hduser ./hadoop fs -mkdir -p /tmp
-      - sudo -u hduser ./hadoop fs -mkdir -p /user/hive/warehouse
-      - sudo -u hduser ./hadoop fs -chmod g+w /user/hive/warehouse
-      - sudo -u hduser ./hadoop fs -chmod g+w /tmp
-    when: is_master
-
   - name: Start HiveServer2
     tags: ECOSYSTEMstart
     sudo: yes
@@ -58,9 +47,25 @@
     action: command sudo -u hduser ./oozied.sh start chdir=/usr/local/oozie/bin/
     when: is_master
 
+  - name: Start HBase server
+    tags: ECOSYSTEMstart
+    action: command sudo -u hduser ./start-hbase.sh chdir=/usr/local/hbase/bin/
+    when: is_master
+
   - name: Start Thrift server for HBase
     tags: ECOSYSTEMstart
     action: command sudo -u hduser ./hbase-daemon.sh start thrift chdir=/usr/local/hbase/bin/
+    when: is_master
+
+  - name: Create Hive and oozie directories
+    tags: ECOSYSTEMstart
+    action: command {{item}} chdir={{hadoop_home}}/bin
+    with_items:
+      - sudo -u hduser ./hadoop fs -mkdir -p /user/oozie
+      - sudo -u hduser ./hadoop fs -mkdir -p /tmp
+      - sudo -u hduser ./hadoop fs -mkdir -p /user/hive/warehouse
+      - sudo -u hduser ./hadoop fs -chmod g+w /user/hive/warehouse
+      - sudo -u hduser ./hadoop fs -chmod g+w /tmp
     when: is_master
 
   - name: Stop dfs

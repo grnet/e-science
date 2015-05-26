@@ -167,7 +167,7 @@
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle"' }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export HADOOP_PREFIX=/usr/local/hadoop"' }
 
-  - name: update ~/.bashrc file for ecosystem
+  - name: update ~/.bashrc and hbase-env.sh files for ecosystem
     tags: ecoconfig
     lineinfile: "dest={{item.dest}} state={{item.state}} insertafter={{item.insertafter}} line={{item.line}}"
     with_items:
