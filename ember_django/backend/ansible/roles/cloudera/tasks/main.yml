@@ -64,6 +64,8 @@
       - { src: 'regionservers.j2', dest: '/etc/hbase/conf/regionservers' }
       - { src: 'kamakirc.j2', dest: '/root/.kamakirc' }
       - { src: 'spark-slaves.j2', dest: '/etc/spark/conf/slaves' }
+      - { src: 'spark-env.j2', dest: '/etc/spark/conf/spark-env.sh' }
+      - { src: 'spark-defaults.j2', dest: '/etc/spark/conf/spark-defaults.conf' }
 
   - name: create slaves files in cloudera master node
     tags: postconfig
@@ -83,21 +85,6 @@
   - name: create local storage directories for yarn
     tags: postconfig
     command: install -d -m 0755 -o yarn -g yarn /data/1/yarn/local /data/2/yarn/local /data/3/yarn/local /data/4/yarn/local /data/1/yarn/logs /data/2/yarn/logs /data/3/yarn/logs /data/4/yarn/logs
-
-  - name: Edit spark-env file
-    tags: postconfig
-    lineinfile: line="export STANDALONE_SPARK_MASTER_HOST='{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}'" dest=/etc/spark/conf/spark-env.sh
-
-  - name: Copy spark-defaults file
-    tags: postconfig
-    command: cp /etc/spark/conf/spark-defaults.conf.template /etc/spark/conf/spark-defaults.conf
-
-  - name: Edit spark-defaults file
-    tags: postconfig
-    lineinfile: "line={{item.line}} dest={{item.dest}}"
-    with_items:
-        - { line: 'spark.eventLog.dir=/user/spark/applicationHistory', dest: '/etc/spark/conf/spark-defaults.conf'}
-        - { line: 'spark.eventLog.enabled=true', dest: '/etc/spark/conf/spark-defaults.conf'}
 
   - name: Restart postgresql service
     tags: postconfig
