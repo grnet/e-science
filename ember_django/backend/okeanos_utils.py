@@ -363,7 +363,7 @@ def check_images(token, project_id):
         # owner of image will be checked based on the uuid
         if image['owner'] == const_escience_uuid:
             image_properties = image['properties']
-            if image_properties.has_key('hadoopconf'):
+            if image_properties.has_key('escienceconf'):
                 available_images.append(image['name'])
         elif image['owner'] == const_system_uuid and image['name'] == "Debian Base":
             available_images.append(image['name'])

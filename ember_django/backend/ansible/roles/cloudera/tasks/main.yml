@@ -1,0 +1,159 @@
+---
+  - name: Disable ipv6
+    sysctl: "name={{item.name}} value={{item.value}} state={{item.state}}"
+    tags: postconfig
+    with_items:
+       - { name: 'net.ipv6.conf.all.disable_ipv6', value: '1', state: 'present' }
+       - { name: 'net.ipv6.conf.default.disable_ipv6', value: '1', state: 'present' }
+       - { name: 'net.ipv6.conf.lo.disable_ipv6', value: '1', state: 'present' }
+
+  - name: Change ssh_config to ssh from master with no StrictHostKeyCheck,command1
+    lineinfile: dest=/etc/ssh/ssh_config regexp='ask' line='StrictHostKeyChecking no' state=present
+    tags: postconfig
+
+  - name: Change ssh_config to ssh from master with no StrictHostKeyCheck,command2
+    lineinfile: dest=/etc/ssh/ssh_config line='UserKnownHostsFile=/dev/null' insertafter='EOF' state=present
+    tags: postconfig
+
+  - name: Remove second line of /etc/hosts
+    lineinfile: dest=/etc/hosts regexp='^127\.0\.1\.1' state=absent
+    tags: postconfig
+
+  - name: Add virtual machine private ips in /etc/hosts
+    template: src=hosts.j2 dest={{etchosts_filename}}
+    tags: postconfig
+
+  - name: Append the host file
+    shell: cat {{etchosts_filename}} >> /etc/hosts
+    tags: postconfig
+
+  - stat: path="{{ ssh_file_name }}"
+    tags: postconfig
+    register: p
+    delegate_to: 127.0.0.1
+
+  - name: create master vm root user ssh key
+    user: name=root generate_ssh_key=yes shell=/bin/bash state=present
+    tags: postconfig
+    when: is_master
+
+  - name: copy master root public ssh key to local box
+    tags: postconfig
+    fetch: src=/root/.ssh/id_rsa.pub dest=/tmp/{{master_key_cloudera}} flat=yes
+    when: is_master
+
+  - name: copy local box master root ssh key to root every VM
+    tags: postconfig
+    authorized_key: user=root key="{{ item }}"
+    with_file:
+      - /tmp/{{master_key_cloudera}}
+    when: is_slave
+
+  - name: copy yarn configuration xml and kamakirc files in every node
+    tags: postconfig
+    template: "src={{item.src}} dest={{item.dest}}"
+    with_items: 
+      - { src: 'core-site.j2', dest: '/etc/hadoop/conf/core-site.xml' }
+      - { src: 'mapred-site.j2', dest: '/etc/hadoop/conf/mapred-site.xml' }
+      - { src: 'hdfs-site.j2', dest: '/etc/hadoop/conf/hdfs-site.xml' }
+      - { src: 'yarn-site.j2', dest: '/etc/hadoop/conf/yarn-site.xml' }
+      - { src: 'hbase-site.j2', dest: '/etc/hbase/conf/hbase-site.xml' }
+      - { src: 'oozie-site.j2', dest: '/etc/oozie/conf/oozie-site.xml' }
+      - { src: 'hive-site.j2', dest: '/usr/lib/hive/conf/hive-site.xml' }
+      - { src: 'hue.j2', dest: '/etc/hue/conf/hue.ini' }
+      - { src: 'regionservers.j2', dest: '/etc/hbase/conf/regionservers' }
+      - { src: 'kamakirc.j2', dest: '/root/.kamakirc' }
+
+  - name: create slaves files in cloudera master node
+    tags: postconfig
+    template: src=slaves.j2 dest=/etc/hadoop/conf/slaves
+    when: is_master
+
+  - name: create local storage directories for namenode
+    tags: postconfig
+    command: install -d -m 0700 -o hdfs -g hdfs /data/1/dfs/nn /nfsmount/dfs/nn
+    when: is_master
+
+  - name: create local storage directories for datanodes
+    tags: postconfig
+    command: install -d -m 0700 -o hdfs -g hdfs /data/1/dfs/dn /data/2/dfs/dn /data/3/dfs/dn /data/4/dfs/dn
+    when: is_slave
+
+  - name: create local storage directories for yarn
+    tags: postconfig
+    command: install -d -m 0755 -o yarn -g yarn /data/1/yarn/local /data/2/yarn/local /data/3/yarn/local /data/4/yarn/local /data/1/yarn/logs /data/2/yarn/logs /data/3/yarn/logs /data/4/yarn/logs
+
+  - name: Edit spark-env file
+    tags: postconfig
+    lineinfile: line="export STANDALONE_SPARK_MASTER_HOST='{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}'" dest=/etc/spark/conf/spark-env.sh
+
+  - name: Copy spark-defaults file
+    tags: postconfig
+    command: cp /etc/spark/conf/spark-defaults.conf.template /etc/spark/conf/spark-defaults.conf
+
+  - name: Edit spark-defaults file
+    tags: postconfig
+    lineinfile: "line={{item.line}} dest={{item.dest}}"
+    with_items:
+        - { line: 'spark.eventLog.dir=/user/spark/applicationHistory', dest: '/etc/spark/conf/spark-defaults.conf'}
+        - { line: 'spark.eventLog.enabled=true', dest: '/etc/spark/conf/spark-defaults.conf'}
+
+  - name: Restart postgresql service
+    tags: postconfig
+    service: name=postgresql state=restarted
+
+  - name: Copy hadoop conf files to oozie conf directory
+    tags: postconfig
+    shell: cp -rf /etc/hadoop/conf/* /etc/oozie/conf/hadoop-conf
+
+  - name: Create Oozie database
+    tags: postconfig
+    shell: ./ooziedb.sh create -run chdir=/usr/lib/oozie/bin
+
+  - name: Add users to hadoop group
+    tags: postconfig
+    user: "name={{item.name}} groups=hadoop append=yes"
+    with_items:
+       - { name: 'oozie' }
+       - { name: 'hue' }
+       - { name: 'hbase' }
+       - { name: 'hive' }
+       - { name: 'spark' }
+
+  - name: Make sure Hue is stopped
+    tags: postconfig
+    shell: kill $(ps aux | grep '[s]upervisor' | awk '{print $2}')
+
+  - name: Copy Livy server shell script
+    tags: postconfig
+    copy: src=cloudera_livy.sh dest=/etc/init.d/livy-server mode=0755
+
+  - name: Make sure all cloudera daemons are stopped
+    tags: postconfig
+    service: "name={{item.name}} state={{item.state}}"
+    with_items:
+      - { name: 'hadoop-hdfs-namenode', state: 'stopped' }
+      - { name: 'hadoop-yarn-resourcemanager',  state: 'stopped' }
+      - { name: 'hadoop-mapreduce-historyserver', state: 'stopped' }
+      - { name: 'hadoop-hdfs-datanode', state: 'stopped' }
+      - { name: 'hadoop-yarn-nodemanager',  state: 'stopped' }
+      - { name: 'zookeeper-server', state: 'stopped' }
+      - { name: 'hbase-master', state: 'stopped' }
+      - { name: 'hbase-thrift', state: 'stopped' }
+      - { name: 'hbase-rest', state: 'stopped' }
+      - { name: 'spark-master', state: 'stopped' }
+      - { name: 'spark-history-server', state: 'stopped' }
+      - { name: 'hue', state: 'stopped' }
+      - { name: 'oozie', state: 'stopped' }
+      - { name: 'hive-metastore', state: 'stopped' }
+      - { name: 'hive-server2', state: 'stopped' }
+      - { name: 'spark-worker', state: 'stopped' }
+      - { name: 'hbase-regionserver', state: 'stopped' }
+
+  - name: Copy Java lib directory
+    tags: postconfig
+    copy: src=lib/ dest=/usr/lib/hadoop/lib/
+
+  - name: Copy Java dist directory
+    tags: postconfig
+    copy: src=dist/ dest=/usr/lib/hadoop/lib/

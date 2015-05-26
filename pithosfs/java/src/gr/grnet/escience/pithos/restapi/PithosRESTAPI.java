@@ -353,8 +353,8 @@ public class PithosRESTAPI implements Serializable {
             String urlCloned = getUrl() + "/" + getUsername();
             configureConnection(urlCloned, "GET", parameters, headers);
             System.out
-                    .println("Listing containers for the account of user with token:"
-                            + getX_Auth_Token());
+                    .println("Listing containers for the account of user:"
+                            + getUsername());
             System.out.println("Sending 'GET' request to URL : " + getUrl());
             int responseCode = getConnection().getResponseCode();
 
@@ -418,8 +418,8 @@ public class PithosRESTAPI implements Serializable {
             parameters.put("update", "True");
             configureConnection(urlCloned, "POST", parameters, headers);
             System.out
-                    .println("Updating account metadata for the account of user with token:"
-                            + getX_Auth_Token());
+                    .println("Updating account metadata for the account of user:"
+                            + getUsername());
             System.out.println("Sending 'POST' request to URL : " + getUrl());
             int responseCode = getConnection().getResponseCode();
 
@@ -485,8 +485,8 @@ public class PithosRESTAPI implements Serializable {
             configureConnection(urlCloned, "HEAD", parameters, headers);
             System.out
                     .println("Retrieving container metadata for the container:"
-                            + container + " of user with token:"
-                            + getX_Auth_Token());
+                            + container + " of user:"
+                            + getUsername());
             System.out.println("Sending 'HEAD' request to URL : " + getUrl());
             int responseCode = getConnection().getResponseCode();
 
@@ -592,8 +592,8 @@ public class PithosRESTAPI implements Serializable {
             configureConnection(urlCloned, "GET", parameters, headers);
             System.out
                     .println("Listing objects for the container:" + container
-                            + " of the account of user with token:"
-                            + getX_Auth_Token());
+                            + " of the account of user:"
+                            + getUsername());
             System.out.println("Sending 'GET' request to URL : " + getUrl());
             int responseCode = getConnection().getResponseCode();
 
@@ -662,8 +662,8 @@ public class PithosRESTAPI implements Serializable {
             configureConnection(urlCloned, "PUT", parameters, headers);
             System.out
                     .println("Creating/Updating the container:" + container
-                            + " of the account of user with token:"
-                            + getX_Auth_Token());
+                            + " of the account of user:"
+                            + getUsername());
             System.out.println("Sending 'PUT' request to URL : " + getUrl());
             int responseCode = getConnection().getResponseCode();
             System.out.println(getConnection().getHeaderFields());
@@ -720,8 +720,8 @@ public class PithosRESTAPI implements Serializable {
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container;
             configureConnection(urlCloned, "POST", parameters, headers);
             System.out.println("Updating metadata of the container:"
-                    + container + " of the account of user with token:"
-                    + getX_Auth_Token());
+                    + container + " of the account of user:"
+                    + getUsername());
             System.out.println("Sending 'POST' request to URL : " + getUrl());
             int responseCode = getConnection().getResponseCode();
             System.out.println(getConnection().getHeaderFields());
@@ -770,8 +770,8 @@ public class PithosRESTAPI implements Serializable {
             configureConnection(urlCloned, "DELETE", parameters, headers);
             System.out
                     .println("Deleting the container:" + container
-                            + " of the account of user with token:"
-                            + getX_Auth_Token());
+                            + " of the account of user:"
+                            + getUsername());
             System.out.println("Sending 'DELETE' request to URL : " + getUrl());
             int responseCode = getConnection().getResponseCode();
             System.out.println(getConnection().getHeaderFields());
@@ -845,7 +845,7 @@ public class PithosRESTAPI implements Serializable {
                     + "/" + filename;
             configureConnection(urlCloned, "HEAD", parameters, headers);
             System.out.println("Retrieving the metadata for the item:"
-                    + filename + " of user with token:" + getX_Auth_Token());
+                    + filename + " of user:" + getUsername());
             System.out.println("Sending 'HEAD' request to URL : " + getUrl());
             int responseCode = getConnection().getResponseCode();
 
@@ -960,8 +960,8 @@ public class PithosRESTAPI implements Serializable {
             configureConnection(urlCloned, "GET", parameters, headers);
             System.out
                     .println("Reading object:" + filename
-                            + " of the account of user with token:"
-                            + getX_Auth_Token());
+                            + " of the account of user:"
+                            + getUsername());
             System.out.println("Sending 'GET' request to URL : " + getUrl());
             int responseCode = getConnection().getResponseCode();
 
@@ -1073,7 +1073,7 @@ public class PithosRESTAPI implements Serializable {
                     + "/" + filename;
             configureConnection(urlCloned, "DELETE", parameters, headers);
             System.out.println("Deleting the item:" + filename
-                    + " of user with token:" + getX_Auth_Token());
+                    + " of user:" + getUsername());
             System.out.println("Sending 'DELETE' request to URL : " + getUrl());
             int responseCode = getConnection().getResponseCode();
             System.out.println(getConnection().getHeaderFields());
@@ -1211,7 +1211,7 @@ public class PithosRESTAPI implements Serializable {
                 if (file2upload != null) {
 
                     System.out.println("Uploading file:" + f2uload.getName()
-                            + " of user with token:" + getX_Auth_Token());
+                            + " of user:" + getUsername());
                     System.out.println("Sending 'PUT' request to URL : "
                             + getUrl());
 
@@ -1249,7 +1249,7 @@ public class PithosRESTAPI implements Serializable {
                         int clength = Integer.parseInt(contentLength);
                         if (clength < 0) {
                             System.err
-                                    .println("Conten-Length should be greater to zero.");
+                                    .println("Content-Length should be greater to zero.");
                             return null;
                         }
                         if (clength > 0)
@@ -1262,7 +1262,7 @@ public class PithosRESTAPI implements Serializable {
                 this.getConnection().setDoOutput(true);
 
                 System.out.println("Creating folder:" + folderName
-                        + " of user with token:" + getX_Auth_Token());
+                        + " of user:" + getUsername());
                 System.out
                         .println("Sending 'PUT' request to URL : " + getUrl());
                 int responseCode = getConnection().getResponseCode();
@@ -1343,7 +1343,7 @@ public class PithosRESTAPI implements Serializable {
             this.getConnection().setDoOutput(true);
 
             System.out.println("Copying the item:" + from
-                    + " of user with token:" + getX_Auth_Token() + " to:" + to);
+                    + " of user:" + getUsername() + " to:" + to);
             System.out.println("Sending 'PUT' request to URL : " + getUrl());
             int responseCode = getConnection().getResponseCode();
             System.out.println(getConnection().getHeaderFields());
@@ -1421,7 +1421,7 @@ public class PithosRESTAPI implements Serializable {
             this.getConnection().setDoOutput(true);
 
             System.out.println("Moving the item:" + from
-                    + " of user with token:" + getX_Auth_Token() + " to:" + to);
+                    + " of user:" + getUsername() + " to:" + to);
             System.out.println("Sending 'PUT' request to URL : " + getUrl());
             int responseCode = getConnection().getResponseCode();
 
@@ -1544,7 +1544,7 @@ public class PithosRESTAPI implements Serializable {
                 this.getConnection().setDoOutput(true);
                 DataOutputStream wr = new DataOutputStream(getConnection()
                         .getOutputStream());
-                wr.writeBytes(content);
+                wr.write(content.getBytes("UTF-8"));
                 wr.flush();
                 wr.close();
             } else {
@@ -1557,7 +1557,7 @@ public class PithosRESTAPI implements Serializable {
             }
 
             System.out.println("Updating the item:" + filename
-                    + " of user with token:" + getX_Auth_Token());
+                    + " of user:" + getUsername());
             System.out.println("Sending 'POST' request to URL : " + getUrl());
 
             System.out.println(getConnection().getHeaderFields());
@@ -1654,7 +1654,7 @@ public class PithosRESTAPI implements Serializable {
             configureConnection(urlCloned, "POST", parameters, headers);
 
             System.out.println("Adding metadata to the item:" + filename
-                    + " of user with token:" + getX_Auth_Token());
+                    + " of user:" + getUsername());
             System.out.println("Sending 'POST' request to URL : " + getUrl());
 
             System.out.println(getConnection().getHeaderFields());
@@ -1740,7 +1740,7 @@ public class PithosRESTAPI implements Serializable {
             configureConnection(urlCloned, "POST", parameters, headers);
 
             System.out.println("Publishing the item:" + filename
-                    + " of user with token:" + getX_Auth_Token());
+                    + " of user:" + getUsername());
             System.out.println("Sending 'POST' request to URL : " + getUrl());
 
             System.out.println(getConnection().getHeaderFields());
@@ -1827,7 +1827,7 @@ public class PithosRESTAPI implements Serializable {
             configureConnection(urlCloned, "POST", parameters, headers);
 
             System.out.println("Publishing the item:" + filename
-                    + " of user with token:" + getX_Auth_Token());
+                    + " of user:" + getUsername());
             System.out.println("Sending 'POST' request to URL : " + getUrl());
 
             System.out.println(getConnection().getHeaderFields());

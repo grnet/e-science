@@ -1,5 +1,7 @@
 package gr.grnet.escience.fs.pithos;
 
+import gr.grnet.escience.commons.Utils;
+
 import java.io.FileNotFoundException;
 
 import org.apache.hadoop.fs.Path;
@@ -13,7 +15,7 @@ public class PithosPath {
     private PithosFileSystem pithosFs = new PithosFileSystem();
     private Path pithosFSPath;
     private String fsPathStr;
-    private String[] pathParts;
+    private String givenPath_str = null;
 
     public PithosPath() {
     }
@@ -24,6 +26,9 @@ public class PithosPath {
     }
 
     public PithosPath(String pithosContainer, String pithosObjectPath) {
+        // TODO Do not parse the path as a string, instead use Path api
+        // and take into account type of requested resource and pithos container
+        // / authority elements.
         this.container = pithosContainer;
         this.objectAbsolutePath = pithosObjectPath;
 
@@ -45,38 +50,71 @@ public class PithosPath {
         }
     }
 
-    private void convertHadoopFSPathToPithosFSPath(Path hadoopPath) {
-        fsPathStr = hadoopPath.toString();
+    private void convertHadoopFSPathToPithosFSPath(Path givenPath) {
 
-        fsPathStr = fsPathStr.substring(pithosFs.getScheme().toString()
-                .concat("://").length());
+        givenPath_str = givenPath.toString();
+        Utils.dbgPrint("-------------------| CONVERT |-------------------");
+        Utils.dbgPrint("1. INITIAL GIVEN PATH --> ", givenPath_str);
 
-        pathParts = fsPathStr.split("/");
+        // - Check if contains scheme and remove it
+        if (givenPath_str.contains("://")) {
+            givenPath_str = givenPath_str.substring(pithosFs.getScheme()
+                    .toString().concat("://").length());
+        }
+        Utils.dbgPrint("2. GIVEN PATH WITHOUT SCHEME --> ", givenPath_str);
 
-        this.container = pathParts[0];
-        this.objectAbsolutePath = fsPathStr
-                .substring(getContainer().length() + 1);
+        // - Get the defined container
+        this.container = givenPath_str.substring(0, givenPath_str.indexOf("/"));
 
-        // - If the given object absolute path does not refer to folder, then
-        // extract file name if exists
+        this.objectAbsolutePath = givenPath_str.substring(getContainer()
+                .length() + 1);
+
+        Utils.dbgPrint("3. OBJECT ABSOLUTE PATH --> ", getObjectAbsolutePath());
+
+        // - Check what is requested in terms of files and directories on Pithos
+        // FS
         if (getObjectAbsolutePath().contains("/")) {
+            // - check if it is not a directory
             if (!getObjectAbsolutePath().endsWith("/")) {
-                // - Get the folder absolute path
+                // - Extract only the pithos path to the directory on pithos FS
                 this.folderAbsolutePath = getObjectAbsolutePath().substring(0,
                         getObjectAbsolutePath().lastIndexOf("/"));
-                // - Get the actual name of the object
-                this.objectName = getObjectAbsolutePath().substring(
-                        getObjectFolderAbsolutePath().length() + 1);
+                // - Essentially the object name for Pithos FS is the extracted
+                // absolute path
+                this.objectName = getObjectAbsolutePath();
 
             }
+            // - else if it is a directory
+            else {
+                // - Get the path of the directory specified
+                this.folderAbsolutePath = getObjectAbsolutePath().substring(
+                        getObjectAbsolutePath().lastIndexOf("/") + 1,
+                        getObjectAbsolutePath().length());
+                // - Essentially the object name for Pithos FS is the extracted
+                // absolute path
+                this.objectName = getObjectAbsolutePath();
+            }
         } else {
-            this.folderAbsolutePath = "";
+            // - Essentially the object name for Pithos FS is the extracted
+            // absolute path
             this.objectName = getObjectAbsolutePath();
         }
+
+        Utils.dbgPrint("4. OBJECT NAME --> ", getObjectName());
+
+        Utils.dbgPrint("5. FOLDER ABSOLUTE PATH --> ",
+                getObjectFolderAbsolutePath());
+
+        Utils.dbgPrint("--------------------------------------------------");
+
     }
 
     public String getContainer() {
         return container;
+    }
+
+    public String getParent() {
+        return this.folderAbsolutePath;
     }
 
     public void setContainer(String container) {

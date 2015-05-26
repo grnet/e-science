@@ -1,5 +1,5 @@
 export HADOOP_HOME=/usr/local/hadoop
-export JAVA_HOME=/usr/lib/jvm/java-7-oracle
+export JAVA_HOME=/usr/lib/jvm/java-8-oracle
 export HADOOP_INSTALL=/usr/local/hadoop
 export HADOOP_PREFIX=/usr/local/hadoop
 export PATH=$PATH:$HADOOP_INSTALL/bin

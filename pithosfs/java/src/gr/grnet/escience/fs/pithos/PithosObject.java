@@ -18,6 +18,8 @@
 
 package gr.grnet.escience.fs.pithos;
 
+import gr.grnet.escience.commons.Utils;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -27,7 +29,6 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import gr.grnet.escience.commons.Utils;
 
 /**
  * PithosObject constructor
@@ -35,15 +36,26 @@ import gr.grnet.escience.commons.Utils;
 public class PithosObject implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private transient PithosBlock[] objectBlocks;
-    private String objectName;
+    private transient PithosBlock[] objectBlocks = null;
+    private String objectName = null;
     private long totalSize = -1;
-    private static final Utils util = new Utils();
+    private transient ByteArrayOutputStream bytes = null;
+    private transient DataOutputStream out = null;
+    private transient ByteArrayInputStream serializedInputStream = null;
+    private static InputStream buffer = null;;
+    private static ObjectInput input = null;
 
     /** Create a Pithos Object **/
     public PithosObject(String name, PithosBlock[] blocks) {
         // - Initialize object name & blocks of the object
         this.objectName = name;
+        this.objectBlocks = blocks;
+    }
+
+    /** Create a Pithos Object **/
+    public PithosObject(PithosPath path, PithosBlock[] blocks) {
+        // - Extract Object Absolute Name by excluding Scheme & container
+        this.objectName = path.getObjectName();
         this.objectBlocks = blocks;
     }
 
@@ -100,14 +112,16 @@ public class PithosObject implements Serializable {
      * @throws IOException
      */
     public InputStream serialize() throws IOException {
-        // - Create parameters for stream
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        DataOutputStream out = new DataOutputStream(bytes);
+        // - Initialize parameters for stream
+        bytes = new ByteArrayOutputStream();
+        out = new DataOutputStream(bytes);
+        serializedInputStream = null;
 
         if (getBlocksNumber() > 0) {
             try {
                 // - Add object name
-                out.write(getName().getBytes());
+                out.write(getName().getBytes("UTF-8")); // do we need "UTF-8"
+                                                        // here?
                 // - Add object blocks total number
                 out.writeInt(getBlocksNumber());
                 // - Add object size
@@ -115,16 +129,21 @@ public class PithosObject implements Serializable {
 
                 // - Add all available blocks for the object
                 for (int i = 0; i < getBlocksNumber(); i++) {
-                    out.write(getBlocks()[i].getBlockHash().getBytes());
+                    out.write(getBlocks()[i].getBlockHash().getBytes("UTF-8"));
                     out.writeLong(getBlocks()[i].getBlockLength());
                     out.write(getBlocks()[i].getBlockData());
                 }
             } finally {
+                bytes.close();
                 out.close();
+                bytes = null;
                 out = null;
             }
             // - return the inputstream
-            return new ByteArrayInputStream(bytes.toByteArray());
+            serializedInputStream = new ByteArrayInputStream(
+                    bytes.toByteArray());
+
+            return serializedInputStream;
         } else {
             return null;
         }
@@ -144,21 +163,25 @@ public class PithosObject implements Serializable {
             return null;
         }
 
-        InputStream buffer = new BufferedInputStream(inputStreamForObject);
-        ObjectInput input = null;
+        buffer = new BufferedInputStream(inputStreamForObject);
+        input = null;
 
         try {
             input = new ObjectInputStream(buffer);
             return (PithosObject) input.readObject();
         } catch (ClassNotFoundException | IOException e) {
-            util.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint(e.getMessage(), e);
             return null;
         } finally {
             try {
                 buffer.close();
                 input.close();
+                buffer = null;
+                input = null;
             } catch (IOException e) {
-                util.dbgPrint(e.getMessage(), e);
+                buffer = null;
+                input = null;
+                Utils.dbgPrint(e.getMessage(), e);
             }
 
         }
