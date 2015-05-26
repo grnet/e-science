@@ -63,6 +63,7 @@
       - { src: 'hue.j2', dest: '/etc/hue/conf/hue.ini' }
       - { src: 'regionservers.j2', dest: '/etc/hbase/conf/regionservers' }
       - { src: 'kamakirc.j2', dest: '/root/.kamakirc' }
+      - { src: 'spark-slaves.j2', dest: '/etc/spark/conf/slaves' }
 
   - name: create slaves files in cloudera master node
     tags: postconfig
