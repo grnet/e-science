@@ -53,8 +53,8 @@ def install_yarn(*args):
         if args[4] == 'hue':
             ansible_manage_cluster(cluster_id, 'HUEstart')
         if args[4] == 'ecosystem':
-            ansible_manage_cluster(cluster_id, 'HUEstart')
             ansible_manage_cluster(cluster_id, 'ECOSYSTEMstart')
+            ansible_manage_cluster(cluster_id, 'HUEstart')
     except Exception, e:
         msg = 'Error while running Ansible '
         raise RuntimeError(msg, error_ansible_playbook)
