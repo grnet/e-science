@@ -98,6 +98,7 @@
       - { name: 'oozie', state: 'started' }
       - { name: 'hive-metastore', state: 'started' }
       - { name: 'hive-server2', state: 'started' }
+      - { name: 'livy-server', state: 'started' }
     when: is_master
 
   - name: start Hbase regionservers and spark workers in cloudera cluster
@@ -110,12 +111,7 @@
 
   - name: Start Hue
     tags: CLOUDstart
-    command: ./supervisor -d chdir=/usr/lib/hue/build/env/bin/
-    when: is_master
-
-  - name: start Hue livy server in cloudera cluster
-    tags: CLOUDstart
-    shell: . /etc/init.d/{{livy_server_script}}
+    command: sudo -u hue ./supervisor -d chdir=/usr/lib/hue/build/env/bin/
     when: is_master
 
   - name: stop Hbase,spark,oozie and hive in cloudera cluster
