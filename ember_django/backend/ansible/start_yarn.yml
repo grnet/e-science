@@ -36,27 +36,6 @@
     command: sudo -u hduser ./supervisor -d chdir=/usr/local/hue/build/env/bin/
     when: is_master
 
-  - name: Start HiveServer2
-    tags: ECOSYSTEMstart
-    sudo: yes
-    service: name=hiveserver2 state=started
-    when: is_master
-
-  - name: Start oozie server
-    tags: ECOSYSTEMstart
-    action: command sudo -u hduser ./oozied.sh start chdir=/usr/local/oozie/bin/
-    when: is_master
-
-  - name: Start HBase server
-    tags: ECOSYSTEMstart
-    action: command sudo -u hduser ./start-hbase.sh chdir=/usr/local/hbase/bin/
-    when: is_master
-
-  - name: Start Thrift server for HBase
-    tags: ECOSYSTEMstart
-    action: command sudo -u hduser ./hbase-daemon.sh start thrift chdir=/usr/local/hbase/bin/
-    when: is_master
-
   - name: Create Hive and oozie directories
     tags: ECOSYSTEMstart
     action: command {{item}} chdir={{hadoop_home}}/bin
@@ -66,6 +45,17 @@
       - sudo -u hduser ./hadoop fs -mkdir -p /user/hive/warehouse
       - sudo -u hduser ./hadoop fs -chmod g+w /user/hive/warehouse
       - sudo -u hduser ./hadoop fs -chmod g+w /tmp
+    when: is_master
+
+  - name: Create Sharelib Directory on HDFS
+    tags: ECOSYSTEMstart
+    command: sudo -u hduser /usr/local/oozie/bin/./oozie-setup.sh sharelib create -fs hdfs://{{ hostvars[groups['master'][0]].inventory_hostname_short }}:9000 chdir={{hadoop_home}}/bin
+    when: is_master
+
+  - name: Start HiveServer2
+    tags: ECOSYSTEMstart
+    sudo: yes
+    service: name=hiveserver2 state=started
     when: is_master
 
   - name: Stop dfs

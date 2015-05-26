@@ -321,11 +321,15 @@
     when: is_master
 
   - name: Create Oozie Database
-    tags: ECOSYSTEMstart
+    tags: ecoconfig
     action: command sudo -u hduser ./ooziedb.sh create -sqlfile oozie.sql -run chdir=/usr/local/oozie/bin/
     when: is_master
 
-  - name: Create Sharelib Directory on HDFS
-    tags: ECOSYSTEMstart
-    action: command sudo -u hduser /usr/local/oozie/bin/./oozie-setup.sh sharelib create -fs hdfs://{{ hostvars[groups['master'][0]].inventory_hostname_short}}:9000 chdir={{hadoop_home}}/bin
-    when: is_master
+  - name: update hiveserver2 service to start all ecosystem
+    tags: ecoconfig
+    lineinfile: "dest={{item.dest}} state={{item.state}} insertafter={{item.insertafter}} line={{item.line}}"
+    with_items:
+      - { dest: '/etc/init.d/hiveserver2', state: 'present', insertafter: 'EOF', line: "'/usr/local/oozie/bin/./oozied.sh start'" }
+      - { dest: '/etc/init.d/hiveserver2', state: 'present', insertafter: 'EOF', line: "'cd /usr/local/hbase/bin/'" }
+      - { dest: '/etc/init.d/hiveserver2', state: 'present', insertafter: 'EOF', line: "'./start-hbase.sh'" }
+      - { dest: '/etc/init.d/hiveserver2', state: 'present', insertafter: 'EOF', line: "'./hbase-daemon.sh start thrift'" }
