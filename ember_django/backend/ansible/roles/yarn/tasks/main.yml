@@ -229,17 +229,13 @@
       - { src: 'masters.j2', dest: '/usr/local/hadoop/etc/hadoop/masters', owner: 'hduser', group: 'hadoop' }
       - { src: 'slaves.j2', dest: '/usr/local/hadoop/etc/hadoop/slaves', owner: 'hduser', group: 'hadoop' }
     when: is_master
-    
+
   - name: create masters and slaves files in spark master node
     tags: ecoconfig
     template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
     with_items: 
       - { src: 'slaves.j2', dest: '/usr/local/spark/conf/slaves', owner: 'hduser', group: 'hadoop' }
     when: is_master 
-    
-  - name: Copy Livy server shell script
-    tags: postconfig
-    copy: src=hue_livy.sh dest=/etc/init.d/livy-server mode=0755
 
   - name: create app/hadoop/tmp/namenode and datanode
     tags: postconfig
@@ -348,3 +344,7 @@
     tags: ecoconfig
     shell: printf "#! bin/bash\ncd /usr/local/hbase/bin\nsudo -u hduser ./start-hbase.sh\nsudo -u hduser ./hbase-daemon.sh start thrift" > hbaseserver;chmod 755 /etc/init.d/hbaseserver chdir=/etc/init.d/
     when: is_master
+
+  - name: Create Livy server shell script
+    tags: ecoconfig
+    shell: printf "#! bin/bash\ncd /usr/local/hue/build/env/bin\nsudo -u hduser ./hue livy_server" > livyserver;chmod 755 /etc/init.d/livyserver chdir=/etc/init.d/

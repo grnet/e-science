@@ -72,14 +72,14 @@
 
   - name: Start spark master and slaves
     tags: ECOSYSTEMstart
-    action: command ./start-all.sh chdir=/usr/local/spark/bin/
+    shell: ./start-all.sh chdir=/usr/local/spark/bin/
     when: is_master 
-    
+
   - name: start spark
     tags: ECOSYSTEMstart
     service: "name={{item.name}} state={{item.state}}"
     with_items:
-      - { name: 'livy-server', state: 'started' }
+      - { name: 'livyserver', state: 'started' }
     when: is_master
 
   - name: Stop dfs
