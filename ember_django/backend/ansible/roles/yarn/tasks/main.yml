@@ -174,6 +174,8 @@
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HIVE_HOME=/usr/local/hive'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$HIVE_HOME/bin:$PATH'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=/usr/local/pig/bin/:$PATH'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HBASE_HOME=/usr/local/hbase'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$HBASE_HOME/bin'" }
       - { dest: '/usr/local/hbase/conf/hbase-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle/"' }
 
   - name: Copy Java lib directory
@@ -325,11 +327,12 @@
     action: command sudo -u hduser ./ooziedb.sh create -sqlfile oozie.sql -run chdir=/usr/local/oozie/bin/
     when: is_master
 
-  - name: update hiveserver2 service to start all ecosystem
+  - name: Create oozie service 
     tags: ecoconfig
-    lineinfile: "dest={{item.dest}} state={{item.state}} insertafter={{item.insertafter}} line={{item.line}}"
-    with_items:
-      - { dest: '/etc/init.d/hiveserver2', state: 'present', insertafter: 'EOF', line: "'/usr/local/oozie/bin/./oozied.sh start'" }
-      - { dest: '/etc/init.d/hiveserver2', state: 'present', insertafter: 'EOF', line: "'cd /usr/local/hbase/bin/'" }
-      - { dest: '/etc/init.d/hiveserver2', state: 'present', insertafter: 'EOF', line: "'./start-hbase.sh'" }
-      - { dest: '/etc/init.d/hiveserver2', state: 'present', insertafter: 'EOF', line: "'./hbase-daemon.sh start thrift'" }
+    shell: printf "#! bin/bash\ncd /usr/local/oozie/bin\nsudo -u hduser ./oozied.sh start" > oozieserver;chmod 755 /etc/init.d/oozieserver chdir=/etc/init.d/
+    when: is_master
+
+  - name: Create HBase service
+    tags: ecoconfig
+    shell: printf "#! bin/bash\ncd /usr/local/hbase/bin\nsudo -u hduser ./start-hbase.sh\nsudo -u hduser ./hbase-daemon.sh start thrift" > hbaseserver;chmod 755 /etc/init.d/hbaseserver chdir=/etc/init.d/
+    when: is_master

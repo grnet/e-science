@@ -58,6 +58,18 @@
     service: name=hiveserver2 state=started
     when: is_master
 
+  - name: Start oozie server
+    tags: ECOSYSTEMstart
+    sudo: yes
+    service: name=oozieserver state=started
+    when: is_master
+
+  - name: Start HBase server
+    tags: ECOSYSTEMstart
+    sudo: yes
+    service: name=hbaseserver state=started
+    when: is_master
+
   - name: Stop dfs
     tags: stop
     command: sudo -u hduser ./stop-dfs.sh chdir={{hadoop_home}}/sbin
