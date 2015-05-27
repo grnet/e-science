@@ -149,6 +149,7 @@ public class PithosFileSystem extends FileSystem {
         fsDataOutputStreamInstance = null;
 
         pithosPath = new PithosPath(f);
+        Utils.dbgPrint("create > container",pithosPath.getContainer());
 
         Utils.dbgPrint("create >", f, pithosPath, getHadoopPithosConnector()
                 .getPithosBlockDefaultSize(pithosPath.getContainer()),
@@ -173,7 +174,11 @@ public class PithosFileSystem extends FileSystem {
     @Override
     public boolean delete(Path f, boolean recursive) throws IOException {
         Utils.dbgPrint("delete", f);
-        
+        pithosPath = new PithosPath(f);
+        resp = getHadoopPithosConnector().deletePithosObject(pithosPath.getContainer(), pithosPath.getObjectAbsolutePath());
+        if (resp.contains("204")){
+            return true;
+        }
         return false;
     }
 
@@ -220,7 +225,7 @@ public class PithosFileSystem extends FileSystem {
             }
         }
         if (isDir) {
-            pithosFileStatus = new PithosFileStatus(true, DEFAULT_HDFS_BLOCK_SIZE, true, targetPath);
+            pithosFileStatus = new PithosFileStatus(true, DEFAULT_HDFS_BLOCK_SIZE, false, targetPath);
         } else {
             for (String obj : metadata.getResponseData().keySet()) {
                 if (obj != null && obj.matches("Content-Length")) {
@@ -291,12 +296,12 @@ public class PithosFileSystem extends FileSystem {
         pithosPath = new PithosPath(f);
         Utils.dbgPrint("mkdirs pithosPath >",
                 pithosPath.getObjectFolderAbsolutePath());
-
-        resp = hadoopPithosConnector.uploadFileToPithos(
+        Utils.dbgPrint("mkdirs > uploadFileToPithos > ",pithosPath.getContainer(),pithosPath.getObjectFolderAbsolutePath(),true);
+        resp = getHadoopPithosConnector().uploadFileToPithos(
                 pithosPath.getContainer(),
                 pithosPath.getObjectFolderAbsolutePath(), true);
 
-        if (resp.contains("201")) {
+        if (resp != null && resp.contains("201")) {
             return true;
         }
         Utils.dbgPrint("mkdirs> response:", resp);

@@ -15,7 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Utils {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static LoggerClient loggerClient = new LoggerClient();
     private static StringBuilder logStrBuilder = null;
     private static Pattern pSha = null;

@@ -24,11 +24,12 @@ import org.junit.AfterClass;
 public class TestPithosRestClient {
     private static final String PITHOS_STORAGE_SYSTEM_URL = "https://pithos.okeanos.grnet.gr/v1";
     private static final String UUID = "ec567bea-4fa2-433d-9935-261a0867ec60";
-    private static final String TOKEN = "SFy6ATmUS2cdkbJZkwTDs_cujtFQ87LOCKiLIQiML3g";
+    private static final String TOKEN = "n4kvgYT_8TEe8lwcWmOspulv5eZbyeBaSokmW6IfIQo";
     private static final String PITHOS_CONTAINER = "pithos";
     private static final String PITHOS_FILE_TO_DOWNLOAD = "tests/newPithosObjectData.txt";
     private static final String PITHOS_FILE_TO_DOWNLOAD_BLOCK = "tests/newPithosObjectData.txt";
     private static final String PITHOS_FILE_TO_DOWNLOAD_DIR_NAME = "tests/";
+    private static final String PITHOS_FILE_TO_DELETE = "tests/delPithosObjectData.txt";
     private static final long OFFSET = 5;
     private static final String LOCAL_SOURCE_FILE_TO_UPLOAD = "testOutput.txt";
     private static final String FOLDER_NAME = "testOut/child/childofchild";
@@ -309,6 +310,19 @@ public class TestPithosRestClient {
         System.out
                 .println("---------------------------------------------------------------------\n");
     }
+    
+    @Test
+    public void testPithos_Object_Delete() throws IOException{
+        System.out
+                .println("---------------------------------------------------------------------");
+        System.out.println("DELETE PITHOS FILE: <" + PITHOS_FILE_TO_DELETE + ">");
+        System.out
+                .println("---------------------------------------------------------------------");
+        String response = hdconnector.deletePithosObject("pithos", PITHOS_FILE_TO_DELETE);
+        System.out.println("RESPONSE FROM PITHOS: " + response);
+        System.out
+                .println("---------------------------------------------------------------------\n");
+    }
 
     @Test
     public void testStore_File_To_Pithos() throws IOException {
@@ -373,7 +387,7 @@ public class TestPithosRestClient {
         System.out.println("GENERATED HASH: " + BLOCK_HASH);
 
         // - Create Pithos Object instance
-        byte[] toBeSent = DUMMY_BLOCK_DATA.getBytes();
+        byte[] toBeSent = DUMMY_BLOCK_DATA.getBytes("UTF-8");
         PithosBlock pithosBlock = new PithosBlock(BLOCK_HASH, toBeSent.length,
                 toBeSent);
 
@@ -489,11 +503,13 @@ public class TestPithosRestClient {
         client.testPithos_Object_Block_InputStream_With_Offset();
         client.testStore_File_To_Pithos();
         client.testStore_Object_To_Pithos();
+        client.testCreate_Folder_To_Pithos();
+        client.testPithos_Object_Delete();
         try {
             client.testAppend_Pithos_Small_Block();
             client.testAppend_Pithos_Big_Block();
         } catch (NoSuchAlgorithmException e) {
-            util.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint(e.getMessage(), e);
         }
         TestPithosRestClient.tearDown();
 
