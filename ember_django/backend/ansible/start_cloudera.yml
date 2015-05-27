@@ -35,6 +35,7 @@
     tags: start
     action: command {{item}} chdir={{ cloudera_bin }}
     with_items:
+      - sudo -u hdfs hadoop fs -mkdir -p /user
       - sudo -u hdfs hadoop fs -mkdir -p /user/yarn
       - sudo -u hdfs hadoop fs -chown yarn /user/yarn
       - sudo -u hdfs hadoop fs -mkdir -p /user/root
