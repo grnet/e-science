@@ -49,6 +49,10 @@
       - /tmp/{{master_key_cloudera}}
     when: is_slave
 
+  - name: Install hbase-regionserver
+    tags: postconfig
+    command: apt-get install -y hbase-regionserver
+
   - name: copy yarn configuration xml and kamakirc files in every node
     tags: postconfig
     template: "src={{item.src}} dest={{item.dest}}"
@@ -148,3 +152,7 @@
   - name: Copy Java dist directory
     tags: postconfig
     copy: src=dist/ dest=/usr/lib/hadoop/lib/
+
+  - name: Create oozie db schema
+    tags: postconfig
+    shell: ./ooziedb.sh create -run chdir=/usr/lib/oozie/bin/
