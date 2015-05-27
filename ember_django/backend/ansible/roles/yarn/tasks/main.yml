@@ -176,6 +176,7 @@
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=/usr/local/pig/bin/:$PATH'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HBASE_HOME=/usr/local/hbase'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$HBASE_HOME/bin'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$SPARK_HOME/bin'" }
       - { dest: '/usr/local/hbase/conf/hbase-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle/"' }
 
   - name: Copy Java lib directory
@@ -228,6 +229,17 @@
       - { src: 'masters.j2', dest: '/usr/local/hadoop/etc/hadoop/masters', owner: 'hduser', group: 'hadoop' }
       - { src: 'slaves.j2', dest: '/usr/local/hadoop/etc/hadoop/slaves', owner: 'hduser', group: 'hadoop' }
     when: is_master
+    
+  - name: create masters and slaves files in spark master node
+    tags: ecoconfig
+    template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
+    with_items: 
+      - { src: 'slaves.j2', dest: '/usr/local/spark/conf/slaves', owner: 'hduser', group: 'hadoop' }
+    when: is_master 
+    
+  - name: Copy Livy server shell script
+    tags: postconfig
+    copy: src=hue_livy.sh dest=/etc/init.d/livy-server mode=0755
 
   - name: create app/hadoop/tmp/namenode and datanode
     tags: postconfig
