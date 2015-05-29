@@ -14,13 +14,12 @@
     command: sudo -u hdfs hdfs namenode -format -force chdir={{ cloudera_bin }}
     when: is_master
 
-  - name: start Namenode, Resource Manager and History Server
+  - name: start Namenode and Resource Manager
     tags: start
     service: "name={{item.name}} state={{item.state}}"
     with_items:
       - { name: 'hadoop-hdfs-namenode', state: 'restarted' }
       - { name: 'hadoop-yarn-resourcemanager',  state: 'restarted' }
-      - { name: 'hadoop-mapreduce-historyserver', state: 'restarted' }
     when: is_master
 
   - name: start Datanode and Node Manager
@@ -62,6 +61,13 @@
       - sudo -u hdfs hadoop fs -chown oozie:oozie /var/log/oozie
       - sudo -u hdfs hadoop fs -mkdir -p /hbase
       - sudo -u hdfs hadoop fs -chown hbase /hbase
+    when: is_master
+
+  - name: start History Server
+    tags: start
+    service: "name={{item.name}} state={{item.state}}"
+    with_items:
+      - { name: 'hadoop-mapreduce-historyserver', state: 'restarted' }
     when: is_master
 
   - name: stop Namenode, Resource Manager and History Server
