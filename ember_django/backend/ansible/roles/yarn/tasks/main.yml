@@ -340,8 +340,8 @@
     tags: ecoconfig
     copy: "src={{item.src}} dest={{item.dest}} mode={{item.mode}}"
     with_items:
-      - { src: 'hiveserver2', dest: '/etc/init.d/hiveserver2', mode:0755 }
-      - { src: 'hbaseserver', dest: '/etc/init.d/hbaseserver', mode:0755 }
-      - { src: 'livyserver', dest: '/etc/init.d/livyserver', mode:0755 }
-      - { src: 'oozieserver', dest: '/etc/init.d/oozieserver', mode:0755 }
+      - { src: 'hiveserver2', dest: '/etc/init.d/hiveserver2', mode: '0755' }
+      - { src: 'hbaseserver', dest: '/etc/init.d/hbaseserver', mode: '0755' }
+      - { src: 'livyserver', dest: '/etc/init.d/livyserver', mode: '0755' }
+      - { src: 'oozieserver', dest: '/etc/init.d/oozieserver', mode: '0755' }
     when: is_master
