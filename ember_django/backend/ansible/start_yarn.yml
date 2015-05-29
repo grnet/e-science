@@ -25,10 +25,7 @@
 
   - name: Creates directory
     tags: HDFSMkdir
-    action: command {{item}} chdir={{hadoop_home}}/bin
-    with_items:
-      - sudo -u hduser ./hadoop fs -mkdir /user 
-      - sudo -u hduser ./hadoop fs -mkdir /user/hduser
+    action: command sudo -u hduser ./hadoop fs -mkdir -p /user/hduser chdir={{hadoop_home}}/bin
     when: is_master
 
   - name: Start Hue
@@ -52,34 +49,34 @@
     command: sudo -u hduser /usr/local/oozie/bin/./oozie-setup.sh sharelib create -fs hdfs://{{ hostvars[groups['master'][0]].inventory_hostname_short }}:9000 chdir={{hadoop_home}}/bin
     when: is_master
 
-  - name: Start HiveServer2
-    tags: ECOSYSTEMstart
-    sudo: yes
-    service: name=hiveserver2 state=started
-    when: is_master
-
-  - name: Start oozie server
-    tags: ECOSYSTEMstart
-    sudo: yes
-    service: name=oozieserver state=started
-    when: is_master
-
-  - name: Start HBase server
-    tags: ECOSYSTEMstart
-    sudo: yes
-    service: name=hbaseserver state=started
-    when: is_master
-
   - name: Start spark master and slaves
     tags: ECOSYSTEMstart
-    shell: ./start-all.sh chdir=/usr/local/spark/bin/
-    when: is_master 
+    shell: ./start-all.sh chdir=/usr/local/spark/sbin/
+    when: is_master
 
-  - name: start spark
+  - name: Start Hadoop Ecosystem Servers
     tags: ECOSYSTEMstart
     service: "name={{item.name}} state={{item.state}}"
     with_items:
+      - { name: 'hiveserver2', state: 'started' }
+      - { name: 'oozieserver', state: 'started' }
+      - { name: 'hbaseserver', state: 'started' }
       - { name: 'livyserver', state: 'started' }
+    when: is_master
+
+  - name: Stop Hadoop Ecosystem Servers
+    tags: ECOSYSTEMstop
+    service: "name={{item.name}} state={{item.state}}"
+    with_items:
+      - { name: 'hiveserver2', state: 'stopped' }
+      - { name: 'oozieserver', state: 'stopped' }
+      - { name: 'hbaseserver', state: 'stopped' }
+      - { name: 'livyserver', state: 'stopped' }
+    when: is_master
+
+  - name: Stop spark master and slaves
+    tags: ECOSYSTEMstop
+    shell: ./stop-all.sh chdir=/usr/local/spark/sbin/
     when: is_master
 
   - name: Stop dfs

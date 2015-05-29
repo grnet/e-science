@@ -177,6 +177,7 @@
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HBASE_HOME=/usr/local/hbase'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$HBASE_HOME/bin'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$SPARK_HOME/bin'" }
+      - { dest: '.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$SPARK_HOME/bin'" }
       - { dest: '/usr/local/hbase/conf/hbase-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle/"' }
 
   - name: Copy Java lib directory
@@ -335,16 +336,12 @@
     action: command sudo -u hduser ./ooziedb.sh create -sqlfile oozie.sql -run chdir=/usr/local/oozie/bin/
     when: is_master
 
-  - name: Create oozie service 
+  - name: Copy Ecosystem services to /etc/init.d
     tags: ecoconfig
-    shell: printf "#! bin/bash\ncd /usr/local/oozie/bin\nsudo -u hduser ./oozied.sh start" > oozieserver;chmod 755 /etc/init.d/oozieserver chdir=/etc/init.d/
+    copy: "src={{item.src}} dest={{item.dest}} mode={{item.mode}}"
+    with_items:
+      - { src: 'hiveserver2', dest: '/etc/init.d/hiveserver2', mode:0755 }
+      - { src: 'hbaseserver', dest: '/etc/init.d/hbaseserver', mode:0755 }
+      - { src: 'livyserver', dest: '/etc/init.d/livyserver', mode:0755 }
+      - { src: 'oozieserver', dest: '/etc/init.d/oozieserver', mode:0755 }
     when: is_master
-
-  - name: Create HBase service
-    tags: ecoconfig
-    shell: printf "#! bin/bash\ncd /usr/local/hbase/bin\nsudo -u hduser ./start-hbase.sh\nsudo -u hduser ./hbase-daemon.sh start thrift" > hbaseserver;chmod 755 /etc/init.d/hbaseserver chdir=/etc/init.d/
-    when: is_master
-
-  - name: Create Livy server shell script
-    tags: ecoconfig
-    shell: printf "#! bin/bash\ncd /usr/local/hue/build/env/bin\nsudo -u hduser ./hue livy_server" > livyserver;chmod 755 /etc/init.d/livyserver chdir=/etc/init.d/
