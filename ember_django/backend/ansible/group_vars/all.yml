@@ -3,10 +3,12 @@
   orka_admin_password: $1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20
   create_orka_admin: False
   # PostgreSql variables
-  hue_db_user: hduser
-  hue_db_password: hdpass
+  eco_db_user: hduser
+  eco_db_password: hdpass
   hue_db_name: hduser
   hue_home: /usr/local/hue
+  hive_db_name: metastore
+  hive_home: /usr/local/hive
   choose_role: webserver
 
   # Hadoop-yarn variables
