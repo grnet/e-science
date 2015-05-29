@@ -77,14 +77,14 @@ const_hadoop_status_pending = const_hadoop_status_format
 const_truncate_limit = 350
 const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
 const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
-HADOOP_STATUS_ACTIONS = {"stop": ["0","Stopping","stopped"],
-                         "start": ["1","Starting","started"],
-                         "format": ["2","Formatting","formatted"],
-                         "HDFSMkdir": ["3", "Creating /user/hduser in HDFS", "Created /user/hduser"],
+HADOOP_STATUS_ACTIONS = {"stop": ["0", "Stopping", "Stopped"],
+                         "start": ["1", "Starting", "Started"],
+                         "format": ["2", "Formatting", "Formatted"],
+                         "HDFSMkdir": ["3", "Creating HDFS home directory", "Created home"],
                          "HUEstart": ["4", "Starting Hue", "Started Hue"],
                          "ECOSYSTEMstart": ["5", "Starting Ecosystem", "Started Ecosystem"],
-                         "CLOUDstart": ["4", "Starting Cloudera Components", "Started Cloudera Components"],
-                         "copyooziesharelib": ["5", "Copying Oozie share library", "Copyied Oozie share library"]} 
+                         "CLOUDstart": ["6", "Starting Cloudera Components", "Started Cloudera Components"],
+                         "copyooziesharelib": ["7", "Copying Oozie share library", "Copied Oozie share library"]}
 
 REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}
 
