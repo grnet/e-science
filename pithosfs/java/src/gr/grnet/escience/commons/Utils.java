@@ -155,7 +155,7 @@ public class Utils {
     public static Long dateTimeToEpoch(String dtString, Object dtFormat) {
 
         if (dtFormat instanceof String) {
-            if (dtFormat.toString() != "") {
+            if (!(dtFormat.toString()).equals("")) {
                 try {
                     dtf = DateTimeFormatter.ofPattern(dtFormat.toString());
                 } catch (IllegalArgumentException ex) {

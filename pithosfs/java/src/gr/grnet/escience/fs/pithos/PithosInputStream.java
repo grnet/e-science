@@ -1,5 +1,7 @@
 package gr.grnet.escience.fs.pithos;
 
+import gr.grnet.escience.commons.Utils;
+
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;

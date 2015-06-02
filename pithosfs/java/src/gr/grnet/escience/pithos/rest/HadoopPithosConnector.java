@@ -51,25 +51,25 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     private String objectDataContent;
     private String responseStr;
     private transient PithosPath path;
-    private Thread loggerThread = null;
+    private transient Thread loggerThread = null;
     private long[] range = { 0, 0 };
     // - Create
     private long current_size = 0;
-    private Map<String, List<String>> response_data = null;
-    private PithosResponseHashmap hashMapResp = null;
+    private transient Map<String, List<String>> response_data = null;
+    private transient PithosResponseHashmap hashMapResp = null;
     private long object_total_size = 0;
     private long block_size = 0;
     private int object_blocks_number = 0;
     private long[] block_bytes_range = null;
-    private Collection<String> object_block_hashes = null;
+    private transient Collection<String> object_block_hashes = null;
     int block_location_pointer_counter = 1;
     int block_location_pointer = 0;
-    private PithosBlock resultPithosBlock = null;
-    private PithosBlock[] blocks = null;
-    private PithosResponse resp = null;
+    private transient PithosBlock resultPithosBlock = null;
+    private transient PithosBlock[] blocks = null;
+    private transient PithosResponse resp = null;
     private String hashAlgo = null;
-    private FSDataInputStream fsDataInputStream = null;
-    private PithosInputStream pithosInputStream = null;
+    private transient FSDataInputStream fsDataInputStream = null;
+    private transient PithosInputStream pithosInputStream = null;
     private File pithosBlockData = null;
     private File tmpFile2bUploaded = null;
     private String contentLength = null;
@@ -90,10 +90,10 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         super(pithosUrl, pithosToken, uuid);
 
         // - Perform additional check for unused references
-        System.gc();
+        //System.gc();
 
         // - Initialize the loggerServer
-        loggerThread = new Thread(new Runnable() {
+        Thread loggerThread = new Thread(new Runnable() {
 
             @Override
             public void run() {
@@ -207,6 +207,12 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                 pithos_container = "pithos";
             }
 
+            // - Perform action by using Pithos REST API method
+            Map<String, List<String>> response_data = retrieve_container_info(
+                    pithos_container,
+                    getPithosRequest().getRequestParameters(),
+                    getPithosRequest().getRequestHeaders());
+
             // - Add data from pithos response on the corresponding java object
             getPithosResponse().setResponseData(
                     retrieve_container_info(pithos_container,
@@ -233,6 +239,9 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         // - Read meta-data and add the data on the Pithos Response
         try {
             // - Perform action by using Pithos REST API method
+            response_data = list_container_objects(pithos_container,
+                    getPithosRequest().getRequestParameters(),
+                    getPithosRequest().getRequestHeaders());
             // - Return the response data as String
             return list_container_objects(pithos_container, getPithosRequest()
                     .getRequestParameters(), getPithosRequest()
@@ -318,6 +327,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         block_size = getPithosObjectBlockSize(pithos_container, object_location);
         object_blocks_number = getPithosObjectBlocksNumber(pithos_container,
                 object_location);
+        int object_blocks_number = getPithosObjectBlocksNumber(
+                pithos_container, object_location);
 
         object_block_hashes = getPithosObjectBlockHashes(pithos_container,
                 object_location);
@@ -533,7 +544,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     @Override
     public long getPithosBlockDefaultSize(String pithos_container) {
         // - Create response object
-        PithosResponse resp = (new Gson()).fromJson(
+        resp = (new Gson()).fromJson(
                 (new Gson()).toJson(getContainerInfo(pithos_container)),
                 PithosResponse.class);
 
@@ -669,6 +680,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         block_size = getPithosObjectBlockSize(pithos_container, object_location);
         object_blocks_number = getPithosObjectBlocksNumber(pithos_container,
                 object_location);
+        int object_blocks_number = getPithosObjectBlocksNumber(
+                pithos_container, object_location);
 
         object_block_hashes = getPithosObjectBlockHashes(pithos_container,
                 object_location);
@@ -746,10 +759,20 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     }
 
     @Override
-    public void deletePithosObject(String pithos_container,
+    public String deletePithosObject(String pithos_container,
             String object_location) {
-        // TODO Auto-generated method stub
+        // - Create Pithos request
+        setPithosRequest(new PithosRequest());
 
+        String strResp = "";
+        try {
+            strResp = delete_object(object_location, pithos_container,
+                    getPithosRequest().getRequestParameters(),
+                    getPithosRequest().getRequestHeaders());
+        } catch (IOException e) {
+            Utils.dbgPrint(e.getMessage(), e);
+        }
+        return strResp;
     }
 
     @Override

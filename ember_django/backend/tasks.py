@@ -19,8 +19,8 @@ def create_cluster_async(choices):
     Asynchronous create cluster task.
     """
     new_yarn_cluster = YarnCluster(choices)
-    MASTER_IP, servers, password = new_yarn_cluster.create_yarn_cluster()
-    task_result = {"master_IP": MASTER_IP, "master_VM_password": password}
+    MASTER_IP, servers, password, cluster_id = new_yarn_cluster.create_yarn_cluster()
+    task_result = {"master_IP": MASTER_IP, "master_VM_password": password, "cluster_id": cluster_id}
 
     return task_result
 

@@ -2,15 +2,17 @@ package gr.grnet.escience.fs.pithos;
 
 import gr.grnet.escience.commons.PithosSerializer;
 import gr.grnet.escience.commons.Utils;
+import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Job;
 
 /**
  * Wraps OutputStream for streaming data into Pithos
@@ -47,6 +49,11 @@ public class PithosOutputStream extends OutputStream {
      * output stream
      */
     private OutputStream backupStream;
+
+    /**
+     * Utils instance
+     */
+    private final Utils util = new Utils();
 
     /**
      * instance of HadoopPithosConnector
@@ -122,7 +129,7 @@ public class PithosOutputStream extends OutputStream {
     }
 
     /**
-     * method for creating backup file of 4mb for buffering before streaming to
+     * method for creating backup file for buffering before streaming to
      * pithos
      * 
      * @return File
@@ -164,6 +171,7 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void write(byte[] b, int off, int len)
             throws IOException {
+        // util.dbgPrint("write(byte, int, int)",off,len);
         if (closed) {
             throw new IOException(ERR_STREAM_CLOSED);
         }
@@ -174,7 +182,7 @@ public class PithosOutputStream extends OutputStream {
 
             outBuf[pos] = b[off];
 
-            // System.arraycopy(b, off, outBuf, pos, toWrite);
+            System.arraycopy(b, off, outBuf, pos, toWrite);
 
             pos += toWrite;
             off += toWrite;
@@ -246,8 +254,7 @@ public class PithosOutputStream extends OutputStream {
         nextBlockOutputStream();
 
         // - Append Pithos Block on the existing object
-        Utils.dbgPrint("endBlock nextBlock.length",
-                nextBlock.getBlockData().length);
+        Utils.dbgPrint("endBlock nextBlock.length >",nextBlock.getBlockLength());
         PithosFileSystem.getHadoopPithosConnector().appendPithosBlock(
                 pithosPath.getContainer(), pithosPath.getObjectAbsolutePath(),
                 nextBlock);
@@ -296,7 +303,6 @@ public class PithosOutputStream extends OutputStream {
     public synchronized void close() throws IOException {
         Utils.dbgPrint("close");
         if (closed) {
-            Job.getInstance().killJob();
             return;
         }
 
@@ -309,7 +315,7 @@ public class PithosOutputStream extends OutputStream {
         backupFile.delete();
         
         super.close();
-
+        Utils.dbgPrint("super.close");
         closed = true;        
     }
 }

@@ -80,7 +80,7 @@ const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
 HADOOP_STATUS_ACTIONS = {"stop": ["0","Stopping","stopped"],
                          "start": ["1","Starting","started"],
                          "format": ["2","Formatting","formatted"],
-                         "HDFSMkdir": ["3", "Creating /user/hduser in HDFS", "Created /user/hduser"],
+                         "HDFSMkdir": ["3", "Creating HDFS home directory", "Created home"],
                          "HUEstart": ["4", "Starting Hue", "Started Hue"] }
 
 REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}
