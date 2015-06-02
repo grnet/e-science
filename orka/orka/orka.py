@@ -151,6 +151,7 @@ class HadoopCluster(object):
             logging.log(SUMMARY, " Yarn Cluster is active.You can access it through " +
                         result['master_IP'] + ":8088/cluster")
             logging.log(SUMMARY, " The root password of your master VM is " + result['master_VM_password'])
+            stdout.write("cluster_id: {0} master_IP: {1}".format(result['cluster_id'], result['master_IP']))
 
 
         except Exception, e:
@@ -703,7 +704,8 @@ def main():
         verb = argv[1]
         if verb == 'create':
             if opts['cluster_size'] == 2:
-                if opts['replication_factor'] == 2:
+                if opts['replication_factor'] != 1:
+                    logging.warning(' Replication factor cannot exceed the number of slave nodes; defaulting to 1')
                     opts['replication_factor'] = 1
             if opts['cluster_size'] <= opts['replication_factor']:
                 logging.error('Replication factor must be between 1 and number of slave nodes (cluster_size -1)')
