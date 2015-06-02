@@ -12,7 +12,7 @@ LOG_THRIFT="/var/log/$SERVICE_thrift.log"
 
 case "$1" in
     start)
-	    if [ -f "$PID_HBASE" ] && ps `cat "$PID_HBASE"` > /dev/null 2>&1; then
+	    if [ -f "$PID_HBASE" ] && ps `cat "$PID_HBASE" > /dev/null 2>&1` > /dev/null 2>&1; then
 	    	echo "Service already running"
 	  	else
 	    	echo "Starting $SERVICE..."
@@ -27,7 +27,7 @@ case "$1" in
 	  	fi
         ;;
     stop)
-		if ! [ -f "$PID_HBASE" ] && ps `cat "$PID_HBASE"` > /dev/null 2>&1; then
+		if ! [ -f "$PID_HBASE" ] && ps `cat "$PID_HBASE" > /dev/null 2>&1` > /dev/null 2>&1; then
 	        echo "Service not running"
 	        return 1
 		fi

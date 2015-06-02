@@ -58,10 +58,10 @@
     tags: ECOSYSTEMstart
     service: "name={{item.name}} state={{item.state}}"
     with_items:
-      - { name: 'hiveserver2', state: 'started' }
-      - { name: 'oozieserver', state: 'started' }
-      - { name: 'hbaseserver', state: 'started' }
-      - { name: 'livyserver', state: 'started' }
+      - { name: 'hiveserver2', state: 'restarted' }
+      - { name: 'oozieserver', state: 'restarted' }
+      - { name: 'hbaseserver', state: 'restarted' }
+      - { name: 'livyserver', state: 'restarted' }
     when: is_master
 
   - name: Stop Hadoop Ecosystem Servers
@@ -77,6 +77,11 @@
   - name: Stop spark master and slaves
     tags: ECOSYSTEMstop
     shell: ./stop-all.sh chdir=/usr/local/spark/sbin/
+    when: is_master
+
+  - name: Stop Hue
+    tags: HUEstop
+    shell: kill `ps -A | grep supervisor | cut -d " " -f2`
     when: is_master
 
   - name: Stop dfs

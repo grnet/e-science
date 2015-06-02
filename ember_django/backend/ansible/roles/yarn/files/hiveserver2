@@ -7,7 +7,7 @@ PID="/var/run/$SERVICE.pid"
 LOG="/var/log/$SERVICE.log"
 
 start() {
-	if [ -f "$PID" ] && ps `cat "$PID"` > /dev/null 2>&1; then
+	if [ -f "$PID" ] && ps `cat "$PID" > /dev/null 2>&1` > /dev/null 2>&1; then
     	echo "Service already running"
   	else
     	echo "Starting $SERVICE..."
@@ -21,7 +21,7 @@ start() {
 }
 
 stop() {
-	if ! [ -f "$PID" ] && ps `cat "$PID"` > /dev/null 2>&1; then
+	if ! [ -f "$PID" ] && ps `cat "$PID" > /dev/null 2>&1` > /dev/null 2>&1; then
         echo "Service not running"
         return 1
 	fi

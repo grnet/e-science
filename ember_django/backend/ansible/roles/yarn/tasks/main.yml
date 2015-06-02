@@ -176,7 +176,9 @@
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=/usr/local/pig/bin/:$PATH'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HBASE_HOME=/usr/local/hbase'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$HBASE_HOME/bin'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export SPARK_HOME=/usr/local/spark'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$SPARK_HOME/bin'" }
+      - { dest: '.bashrc', state: 'present', insertafter: 'EOF', line: "'export SPARK_HOME=/usr/local/spark'" }
       - { dest: '.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$SPARK_HOME/bin'" }
       - { dest: '/usr/local/hbase/conf/hbase-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle/"' }
 
