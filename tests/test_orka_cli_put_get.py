@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import os
+import os, sys
 from os.path import join, dirname, abspath
+sys.path.append(dirname(abspath(__file__)))
+from constants_of_tests import *
 import subprocess
 from ConfigParser import RawConfigParser, NoSectionError
 from orka.orka.utils import get_user_clusters, ssh_call_hadoop, ssh_check_output_hadoop
@@ -11,37 +13,6 @@ from orka.orka.orka import HadoopCluster
 import unittest
 from mock import patch
 from orka.orka.cluster_errors_constants import error_fatal, const_hadoop_status_started, FNULL
-
-
-# File names for the unit tests
-INVALID_SOURCE_FILE = 'file_that_does_not_exist_hopefully'
-VALID_DEST_FILE = 'destination_hdfs_file_non_existant'
-INVALID_DEST_DIR = 'a_directory_that_by_all_means_should_not_exist'
-
-# Source and destination file names for functional tests
-# Put Local to Hdfs
-SOURCE_LOCAL_TO_HDFS_FILE = 'test_file_local_to_hdfs.txt'
-DEST_LOCAL_TO_HDFS_FILE = 'test_file_hdfs_from_local.txt'
-
-# Get from Hdfs to Local
-SOURCE_HDFS_TO_LOCAL_FILE = 'test_file_hdfs_to_local.txt'
-DEST_HDFS_TO_LOCAL_FILE = 'test_file_local_from_hdfs.txt'
-
-# Put from Ftp/Http server to Hdfs
-SOURCE_REMOTE_TO_HDFS_FILE = 'https://dumps.wikimedia.org/elwiki/latest/elwiki-latest-pages-meta-current.xml.bz2'
-DEST_REMOTE_TO_HDFS_FILE = 'elwiki-latest-pages-meta-current.xml.bz2'
-
-# Put from Pithos to Hdfs
-SOURCE_PITHOS_TO_HDFS_FILE = 'test_file_pithos_to_hdfs.txt'
-DEST_PITHOS_TO_HDFS_FILE = 'test_file_hdfs_from_pithos.txt'
-
-# Get from Hdfs to Pithos
-SOURCE_HDFS_TO_PITHOS_FILE = 'test_file_hdfs_to_pithos.txt'
-DEST_HDFS_TO_PITHOS_FILE = 'test_file_pithos_from_hdfs.txt'
-
-# Output directories in hdfs for wordcount
-PITHOS_WORDCOUNT_DIR = 'WordCount_Pithos'
-HDFS_WORDCOUNT_DIR = 'WordCount_HDFS'
 
 BASE_DIR = join(dirname(abspath(__file__)), "../")
 
@@ -78,17 +49,17 @@ class OrkaTest(unittest.TestCase):
                 if cluster['master_IP'] == self.master_IP:
                     if cluster['hadoop_status'] == const_hadoop_status_started:
                         self.active_cluster = cluster
-                        self.wordcount_command = 'jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar wordcount '
-                        self.hadoop_path_wordcount = '/usr/local/hadoop/bin/hadoop '
+                        self.wordcount_command = WORDCOUNT
+                        self.hadoop_path = HADOOP_PATH
                         self.user = 'hduser'
-                        self.HADOOP_PATH = '/usr/local/hadoop/bin/hdfs '
+                        self.hdfs_path = HDFS_PATH
                         self.VALID_DEST_DIR = '/user/{0}'.format(self.user)
                         if 'cdh' in self.active_cluster['os_image']:
-                            self.wordcount_command = 'jar /usr/lib/hadoop-mapreduce/hadoop-mapreduce-examples.jar wordcount '
-                            self.hadoop_path_wordcount = 'sudo -u hdfs /usr/bin/hadoop '
+                            self.wordcount_command = CLOUDERA_WORDCOUNT
+                            self.hadoop_path = CLOUDERA_HADOOP_PATH
                             self.user = 'root'
                             self.VALID_DEST_DIR = '/user/hdfs'
-                            self.HADOOP_PATH = 'sudo -u hdfs /usr/bin/hdfs '
+                            self.hdfs_path = CLOUDERA_HDFS_PATH
                         break
             else:
                 logging.error(' You can take file actions on active clusters with started hadoop only.')
@@ -147,10 +118,10 @@ class OrkaTest(unittest.TestCase):
         HadoopCluster(self.opts).put_from_local(self.active_cluster)
         exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
                                              ' dfs -test -e {0}'.format(self.opts['destination']),
-                                             hadoop_path=self.HADOOP_PATH)
+                                             hadoop_path=self.hdfs_path)
         zero_check_status = ssh_call_hadoop(self.user, self.master_IP,
                                             ' dfs -test -z {0}'.format(self.opts['destination']),
-                                            hadoop_path=self.HADOOP_PATH)
+                                            hadoop_path=self.hdfs_path)
         self.assertEqual(exist_check_status, 0) and self.assertEqual(zero_check_status, 1)
         self.addCleanup(self.delete_hdfs_files, self.opts['destination'])
         self.addCleanup(self.delete_local_files, self.opts['source'])
@@ -178,10 +149,10 @@ class OrkaTest(unittest.TestCase):
         HadoopCluster(self.opts).put_from_server()
         exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
                                              ' dfs -test -e {0}'.format(self.opts['destination']),
-                                             hadoop_path=self.HADOOP_PATH)
+                                             hadoop_path=self.hdfs_path)
         zero_check_status = ssh_call_hadoop(self.user, self.master_IP,
                                             ' dfs -test -z {0}'.format(self.opts['destination']),
-                                            hadoop_path=self.HADOOP_PATH)
+                                            hadoop_path=self.hdfs_path)
         self.assertEqual(exist_check_status, 0) and self.assertEqual(zero_check_status, 1)
         self.addCleanup(self.delete_hdfs_files, self.opts['destination'])
 
@@ -197,10 +168,10 @@ class OrkaTest(unittest.TestCase):
         HadoopCluster(self.opts).put_from_pithos(self.active_cluster, SOURCE_PITHOS_TO_HDFS_FILE)
         exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
                                              ' dfs -test -e {0}'.format(self.opts['destination']),
-                                             hadoop_path=self.HADOOP_PATH)
+                                             hadoop_path=self.hdfs_path)
         zero_check_status = ssh_call_hadoop(self.user, self.master_IP,
                                             ' dfs -test -z {0}'.format(self.opts['destination']),
-                                            hadoop_path=self.HADOOP_PATH)
+                                            hadoop_path=self.hdfs_path)
         self.assertEqual(exist_check_status, 0) and self.assertEqual(zero_check_status, 1)
         self.addCleanup(self.delete_hdfs_files, self.opts['destination'])
         self.addCleanup(self.delete_pithos_files, SOURCE_PITHOS_TO_HDFS_FILE)
@@ -228,11 +199,11 @@ class OrkaTest(unittest.TestCase):
         subprocess.call('kamaki file upload {0}'.format(SOURCE_PITHOS_TO_HDFS_FILE), stderr=FNULL, shell=True)
         ssh_call_hadoop(self.user, self.master_IP, self.wordcount_command + 'pithos://pithos/{0} {1}'.
                         format(SOURCE_PITHOS_TO_HDFS_FILE, PITHOS_WORDCOUNT_DIR),
-                                             hadoop_path=self.hadoop_path_wordcount)
+                                             hadoop_path=self.hadoop_path)
 
         exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
                                              ' dfs -test -e {0}/_SUCCESS'.format(PITHOS_WORDCOUNT_DIR),
-                                             hadoop_path=self.HADOOP_PATH)
+                                             hadoop_path=self.hdfs_path)
         self.assertEqual(exist_check_status, 0)
         self.addCleanup(self.delete_hdfs_files, PITHOS_WORDCOUNT_DIR, prefix="-r")
         self.addCleanup(self.delete_local_files, SOURCE_PITHOS_TO_HDFS_FILE)
@@ -250,21 +221,21 @@ class OrkaTest(unittest.TestCase):
         ssh_call_hadoop(self.user, self.master_IP, 'kamaki file download {0} /tmp/{0}'.
                         format(SOURCE_PITHOS_TO_HDFS_FILE), hadoop_path='')
         ssh_call_hadoop(self.user, self.master_IP, ' dfs -put /tmp/{0}'.
-                        format(SOURCE_PITHOS_TO_HDFS_FILE),hadoop_path=self.HADOOP_PATH)
+                        format(SOURCE_PITHOS_TO_HDFS_FILE),hadoop_path=self.hdfs_path)
 
         ssh_call_hadoop(self.user, self.master_IP, self.wordcount_command + 'pithos://pithos/{0} {1}'.
                         format(SOURCE_PITHOS_TO_HDFS_FILE, PITHOS_WORDCOUNT_DIR),
-                                             hadoop_path=self.hadoop_path_wordcount)
+                                             hadoop_path=self.hadoop_path)
         ssh_call_hadoop(self.user, self.master_IP, self.wordcount_command + '{0} {1}'.
                         format(SOURCE_PITHOS_TO_HDFS_FILE, HDFS_WORDCOUNT_DIR),
-                                             hadoop_path=self.hadoop_path_wordcount)
+                                             hadoop_path=self.hadoop_path)
 
         bytes_pithos_written = ssh_check_output_hadoop(self.user, self.master_IP,
                                              ' dfs -dus {0}'.format(PITHOS_WORDCOUNT_DIR),
-                                             hadoop_path=self.HADOOP_PATH)
+                                             hadoop_path=self.hdfs_path)
         bytes_hdfs_written = ssh_check_output_hadoop(self.user, self.master_IP,
                                              ' dfs -dus {0}'.format(HDFS_WORDCOUNT_DIR),
-                                             hadoop_path=self.HADOOP_PATH)
+                                             hadoop_path=self.hdfs_path)
 
         self.assertEqual(bytes_pithos_written[0].replace(PITHOS_WORDCOUNT_DIR, ""),
                          bytes_hdfs_written[0].replace(HDFS_WORDCOUNT_DIR, ""))
@@ -281,7 +252,7 @@ class OrkaTest(unittest.TestCase):
         Helper method to delete files transfered to hdfs filesystem after test.
         """
         ssh_call_hadoop(self.user, self.master_IP, ' dfs -rm {0} {1}'.format(prefix, file_to_delete),
-                        hadoop_path=self.HADOOP_PATH)
+                        hadoop_path=self.hdfs_path)
 
     def delete_local_files(self, file_to_delete):
         """
@@ -304,7 +275,7 @@ class OrkaTest(unittest.TestCase):
         """
         self.hadoop_local_fs_action('echo "test file for hdfs" > {0}'.format(file_to_create))
         ssh_call_hadoop(self.user, self.master_IP, ' dfs -put {0}'.format(file_to_create),
-                        hadoop_path=self.HADOOP_PATH)
+                        hadoop_path=self.hdfs_path)
 
     def hadoop_local_fs_action(self, action):
         """
