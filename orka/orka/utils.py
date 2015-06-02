@@ -250,12 +250,12 @@ def ssh_call_hadoop(user, master_IP, func_arg, hadoop_path=HADOOP_PATH):
     return response
 
 
-def ssh_check_output_hadoop(user, master_IP, func_arg):
+def ssh_check_output_hadoop(user, master_IP, func_arg, hadoop_path=HADOOP_PATH):
     """
         SSH to master VM
         and check output of Hadoop calls
     """
-    response = subprocess.check_output( "ssh " + user + "@" + master_IP + " \"" + HADOOP_PATH 
+    response = subprocess.check_output( "ssh " + user + "@" + master_IP + " \"" + hadoop_path
                      + func_arg + "\"", stderr=FNULL, shell=True).splitlines()
     
     return response
