@@ -29,7 +29,7 @@ public class TestPithosRestClient {
     private static final String PITHOS_FILE_TO_DOWNLOAD = "tests/newPithosObjectData.txt";
     private static final String PITHOS_FILE_TO_DOWNLOAD_BLOCK = "tests/newPithosObjectData.txt";
     private static final String PITHOS_FILE_TO_DOWNLOAD_DIR_NAME = "tests/";
-    private static final String PITHOS_FILE_TO_DELETE = "tests/delPithosObjectData.txt";
+    private static final String PITHOS_FILE_TO_DELETE = "tests/DELETE_ME.txt";
     private static final long OFFSET = 5;
     private static final String LOCAL_SOURCE_FILE_TO_UPLOAD = "testOutput.txt";
     private static final String FOLDER_NAME = "testOut/child/childofchild";

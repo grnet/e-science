@@ -173,7 +173,7 @@ public class PithosFileSystem extends FileSystem {
 
     @Override
     public boolean delete(Path f, boolean recursive) throws IOException {
-        Utils.dbgPrint("delete", f);
+        Utils.dbgPrint("delete > path, recurse ", f, recursive);
         pithosPath = new PithosPath(f);
         resp = getHadoopPithosConnector().deletePithosObject(pithosPath.getContainer(), pithosPath.getObjectAbsolutePath());
         if (resp.contains("204")){
@@ -248,7 +248,7 @@ public class PithosFileSystem extends FileSystem {
 
     @Override
     public FileStatus[] listStatus(Path f) throws IOException {
-        Utils.dbgPrint("listStatus");
+        Utils.dbgPrint("listStatus > path", f);
 
         filename = "";
         pithosPath = new PithosPath(f);
@@ -256,16 +256,18 @@ public class PithosFileSystem extends FileSystem {
 
         pathToString = pathToString.substring(this.getScheme().toString()
                 .concat("://").length());
-
+        
+        Utils.dbgPrint("listStatus > pathToString",pathToString);
         filesList = pathToString.split("/");
         filename = filesList[filesList.length - 1];
+        Utils.dbgPrint("listStatus > 1. filename",filename);
         int count = 2;
         while (!filesList[filesList.length - count].equals(pithosPath
                 .getContainer())) {
             filename = filesList[filesList.length - count] + "/" + filename;
             count++;
         }
-
+        Utils.dbgPrint("listStatus > 2. filename",filename);
         // results = Collections.synchronizedList(new ArrayList<FileStatus>());
         results = new ArrayList<FileStatus>();
 
@@ -284,9 +286,9 @@ public class PithosFileSystem extends FileSystem {
         }
         // - Return the list of the available files
         resultsArr = new FileStatus[results.size()];
-
-        Utils.dbgPrint("listStatus results >", results.toArray(resultsArr));
-
+        for (int i = 0; i < results.toArray(resultsArr).length; i++) {
+            Utils.dbgPrint("listStatus results >", i, resultsArr[i]);
+        }
         return results.toArray(resultsArr);
     }
 
