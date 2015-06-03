@@ -189,16 +189,6 @@ class OrkaTest(unittest.TestCase):
         self.addCleanup(self.delete_hdfs_files, self.opts['source'])
         self.addCleanup(self.delete_local_files, self.opts['destination'])
         self.addCleanup(self.hadoop_local_fs_action, 'rm /tmp/{0}'.format(SOURCE_HDFS_TO_LOCAL_FILE))
-        
-    def test_pig(self):
-        """
-        Test pig for hadoop ecosystem
-        """
-        ssh_call_hadoop('hduser', self.master_IP, pig_command)
-        exist_check_status = ssh_call_hadoop('hduser', self.master_IP,
-                                             ' dfs -test -e {0}/_SUCCESS'.format('/user/hduser/pig_test'))
-        self.assertEqual(exist_check_status, 0)
-        self.addCleanup(self.delete_hdfs_files, '/user/hduser/pig_test', prefix="-r")
 
     def test_run_wordcount_from_pithos(self):
         """
