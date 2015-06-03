@@ -38,3 +38,8 @@ CLOUDERA_HADOOP_PATH = 'sudo -u hdfs /usr/bin/hadoop '
 WORDCOUNT = 'jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar wordcount '
 HADOOP_PATH = '/usr/local/hadoop/bin/hadoop '
 HDFS_PATH = '/usr/local/hadoop/bin/hdfs '
+PIG_CLOUDERA_COMMAND = "sudo -u hdfs pig -e \"fs -mkdir pig_test_folder\""
+PIG_TEST_FOLDER = 'pig_test_folder'
+OOZIE_TEST_FOLDER = 'oozie_app'
+OOZIE_COMMAND = 'sudo -u hdfs oozie job -oozie http://{0}:11000/oozie -config /tmp/job.properties -run'
+JOB_PROPERTIES_TEMPLATE = 'nameNode=hdfs://{0}:9000\njobTracker=http://{0}:8050\noozie.libpath=hdfs://{0}:9000/user/oozie/share/lib\noozie.wf.application.path=hdfs://{0}:9000/user/hdfs/oozie_app'

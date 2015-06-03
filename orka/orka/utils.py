@@ -261,7 +261,7 @@ def ssh_check_output_hadoop(user, master_IP, func_arg, hadoop_path=HADOOP_PATH):
     return response
 
 
-def ssh_stream_to_hadoop(user, master_IP, source_file, dest_dir):
+def ssh_stream_to_hadoop(user, master_IP, source_file, dest_dir, hadoop_path=HADOOP_PATH):
     """
         SSH to master VM
         and stream files to hadoop
@@ -269,7 +269,7 @@ def ssh_stream_to_hadoop(user, master_IP, source_file, dest_dir):
     str_command = "cat " + "\"{0}\"".format(source_file) \
     + " | ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " \
     + "{0}@{1} ".format(user,master_IP) \
-    + "\"" + HADOOP_PATH + " dfs -put - " + "\'{0}\'".format(dest_dir) + "\""
+    + "\"" + hadoop_path + " dfs -put - " + "\'{0}\'".format(dest_dir) + "\""
     
     response = subprocess.call(str_command, stderr=FNULL, shell=True)
 
