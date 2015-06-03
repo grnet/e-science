@@ -59,6 +59,32 @@ class ClouderaTest(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
 
+    def test_hive_count_rows_in_table_exists(self):
+        """
+        Functional test for Cloudera Hive
+        creates a table (if not exists)
+        and counts rows in this table 
+        """
+        # create a table
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "hive -e 'CREATE TABLE IF NOT EXISTS hive_table ( age int, name String );'" + "\""
+                                    , stderr=FNULL, shell=True)
+        # count rows
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "hive -e 'select count(*) from hive_table';" + "\""
+                                    , stderr=FNULL, shell=True)
+        self.assertEqual(response, 0) # OK
+
+    def test_hive_count_rows_in_table_not_exists(self):
+        """
+        Functional test for Cloudera Hive
+        count rows in a table that does not exist 
+        """
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "hive -e 'select count(*) from table_not_exists';" + "\""
+                                    , stderr=FNULL, shell=True)
+        self.assertEqual(response, 17) # ERROR table not found
+
     def test_hbase_table_not_exists(self):
         """
         Functional test for Cloudera HBase
