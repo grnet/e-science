@@ -59,6 +59,34 @@ class ClouderaTest(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
 
+    def test_oozie_status_normal(self):
+        """
+        Functional test for Cloudera Oozie
+        checks if status is normal
+        """
+        # ensure that oozie is running
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "service oozie restart" + "\""
+                                    , stderr=FNULL, shell=True)                
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "oozie admin -status -oozie http://" + self.master_IP + ":11000/oozie" + "\""
+                                    , stderr=FNULL, shell=True)        
+        self.assertEqual(response, 0) # NORMAL
+
+    def test_oozie_status_down(self):
+        """
+        Functional test for Cloudera Oozie
+        checks if oozie is down
+        """
+        # stop oozie
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "service oozie stop" + "\""
+                                    , stderr=FNULL, shell=True)                
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "oozie admin -status -oozie http://" + self.master_IP + ":11000/oozie" + "\""
+                                    , stderr=FNULL, shell=True)        
+        self.assertEqual(response, 255) # Oozie down
+        
     def test_hive_count_rows_in_table_exists(self):
         """
         Functional test for Cloudera Hive
