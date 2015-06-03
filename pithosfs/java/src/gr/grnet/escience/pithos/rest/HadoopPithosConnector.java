@@ -1,6 +1,5 @@
 package gr.grnet.escience.pithos.rest;
 
-import gr.grnet.escience.commons.LoggerServer;
 import gr.grnet.escience.commons.PithosSerializer;
 import gr.grnet.escience.commons.Utils;
 import gr.grnet.escience.fs.pithos.PithosBlock;
@@ -41,7 +40,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         PithosSystemStore {
 
     private static final long serialVersionUID = 1L;
-    private transient LoggerServer loggerServer = null;
     private transient PithosRequest request;
     private transient PithosResponse response;
     private transient Object srcFile2bUploaded;
@@ -51,7 +49,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     private String objectDataContent;
     private String responseStr;
     private transient PithosPath path;
-    private transient Thread loggerThread = null;
     private long[] range = { 0, 0 };
     // - Create
     private long current_size = 0;
@@ -88,21 +85,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         // and pass the conf object from PithosFileSystem instead of option
         // literals
         super(pithosUrl, pithosToken, uuid);
-
-        // - Perform additional check for unused references
-        //System.gc();
-
-        // - Initialize the loggerServer
-        Thread loggerThread = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                loggerServer = new LoggerServer();
-            }
-        });
-        // - Start logger into a separated thread
-        loggerThread.start();
-
     }
 
     /***
@@ -238,10 +220,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         response_data = null;
         // - Read meta-data and add the data on the Pithos Response
         try {
-            // - Perform action by using Pithos REST API method
-            response_data = list_container_objects(pithos_container,
-                    getPithosRequest().getRequestParameters(),
-                    getPithosRequest().getRequestHeaders());
+            
             // - Return the response data as String
             return list_container_objects(pithos_container, getPithosRequest()
                     .getRequestParameters(), getPithosRequest()
@@ -1063,7 +1042,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         } catch (IOException e) {
             Utils.dbgPrint(e.getMessage(), e);
             return null;
-        } 
+        }
     }
 
     @Override
