@@ -11,6 +11,7 @@ import unittest
 sys.path.append(dirname(abspath(__file__)))
 from constants_of_tests import *
 from orka.orka.cluster_errors_constants import error_fatal, const_hadoop_status_started, FNULL
+import requests
 
 BASE_DIR = join(dirname(abspath(__file__)), "../")
 
@@ -57,6 +58,40 @@ class ClouderaTest(unittest.TestCase):
             self.project_name = "INVALID_PROJECT_NAME"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
+
+    def test_hbase_table_not_exists(self):
+        """
+        Functional test for Cloudera HBase
+        check if a table does not exist
+        """
+        baseurl = "http://" + self.master_IP + ":60050"
+        # check for a table that does not exist
+        request = requests.get(baseurl + "/" + "table_not_exists" + "/schema")
+        self.assertEqual(request.status_code, 404) # NOT FOUND
+
+    def test_hbase_table_exists(self):
+        """
+        Functional test for Cloudera HBase
+        create a table and then
+        check if the table exists
+        """
+        baseurl = "http://" + self.master_IP + ":60050"                
+        tablename = "testtable"
+        cfname = "testcolumn1"
+        # delete it first (if already exists)
+        request = requests.delete(baseurl + "/" + tablename + "/schema")        
+        # Create XML for table
+        content =  '<?xml version="1.0" encoding="UTF-8"?>'
+        content += '<TableSchema name="' + tablename + '">'
+        content += '  <ColumnSchema name="' + cfname + '" />'
+        content += '</TableSchema>'
+        # Create the table
+        request = requests.post(baseurl + "/" + tablename + "/schema", 
+                                data=content, headers={"Content-Type" : "text/xml", "Accept" : "text/xml"})       
+        self.assertEqual(request.status_code, 201) # CREATED
+        # Check if table exists
+        request = requests.get(baseurl + "/" + tablename + "/schema")   
+        self.assertEqual(request.status_code, 200) # OK
 
     def test_spark_pi_wordcount(self):
         """
