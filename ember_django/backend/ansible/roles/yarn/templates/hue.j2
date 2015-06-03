@@ -756,7 +756,7 @@
 [liboozie]
   # The URL where the Oozie service runs on. This is required in order for
   # users to submit jobs. Empty value disables the config check.
-  oozie_url={{ansible_ssh_host}}:11000/oozie
+  oozie_url=http://{{ansible_ssh_host}}:11000/oozie
 
   # Requires FQDN in oozie_url if enabled
   ## security_enabled=false
@@ -794,13 +794,13 @@
 
   # Host where HiveServer2 is running.
   # If Kerberos security is enabled, use fully-qualified domain name (FQDN).
-  ## hive_server_host=localhost
+  hive_server_host={{ hostvars[groups['master'][0]].inventory_hostname_short}}
 
   # Port where HiveServer2 Thrift server runs on.
   ## hive_server_port=10000
 
   # Hive configuration directory, where hive-site.xml is located
-  ## hive_conf_dir=/etc/hive/conf
+  hive_conf_dir=/usr/local/hive/conf
 
   # Timeout in seconds for thrift calls to Hive service
   ## server_conn_timeout=120

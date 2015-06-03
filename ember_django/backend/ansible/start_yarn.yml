@@ -23,14 +23,65 @@
     command: sudo -u hduser ./mr-jobhistory-daemon.sh start historyserver chdir={{hadoop_home}}/sbin
     when: is_master
 
-  - name: create HDFS home directory
-    tags: start
-    command: sudo -u hduser ./hadoop fs -mkdir -p /user/hduser chdir={{hadoop_home}}/bin
+  - name: Creates directory
+    tags: HDFSMkdir
+    action: command sudo -u hduser ./hadoop fs -mkdir -p /user/hduser chdir={{hadoop_home}}/bin
     when: is_master
 
   - name: Start Hue
     tags: HUEstart
     command: sudo -u hduser ./supervisor -d chdir=/usr/local/hue/build/env/bin/
+    when: is_master
+
+  - name: Create Hive and oozie directories
+    tags: ECOSYSTEMstart
+    action: command {{item}} chdir={{hadoop_home}}/bin
+    with_items:
+      - sudo -u hduser ./hadoop fs -mkdir -p /user/oozie
+      - sudo -u hduser ./hadoop fs -mkdir -p /tmp
+      - sudo -u hduser ./hadoop fs -mkdir -p /user/hive/warehouse
+      - sudo -u hduser ./hadoop fs -chmod g+w /user/hive/warehouse
+      - sudo -u hduser ./hadoop fs -chmod g+w /tmp
+    when: is_master
+
+  - name: Create Sharelib Directory on HDFS
+    tags: ECOSYSTEMstart
+    command: sudo -u hduser /usr/local/oozie/bin/./oozie-setup.sh sharelib create -fs hdfs://{{ hostvars[groups['master'][0]].inventory_hostname_short }}:9000 chdir={{hadoop_home}}/bin
+    when: is_master
+
+  - name: Start spark master and slaves
+    tags: ECOSYSTEMstart
+    shell: ./start-all.sh chdir=/usr/local/spark/sbin/
+    when: is_master
+
+  - name: Start Hadoop Ecosystem Servers
+    tags: ECOSYSTEMstart
+    service: "name={{item.name}} state={{item.state}}"
+    with_items:
+      - { name: 'hiveserver2', state: 'restarted' }
+      - { name: 'oozieserver', state: 'restarted' }
+      - { name: 'hbaseserver', state: 'restarted' }
+      - { name: 'livyserver', state: 'restarted' }
+    when: is_master
+
+  - name: Stop Hadoop Ecosystem Servers
+    tags: ECOSYSTEMstop
+    service: "name={{item.name}} state={{item.state}}"
+    with_items:
+      - { name: 'hiveserver2', state: 'stopped' }
+      - { name: 'oozieserver', state: 'stopped' }
+      - { name: 'hbaseserver', state: 'stopped' }
+      - { name: 'livyserver', state: 'stopped' }
+    when: is_master
+
+  - name: Stop spark master and slaves
+    tags: ECOSYSTEMstop
+    shell: ./stop-all.sh chdir=/usr/local/spark/sbin/
+    when: is_master
+
+  - name: Stop Hue
+    tags: HUEstop
+    shell: kill `ps -A | grep supervisor | cut -d " " -f2`
     when: is_master
 
   - name: Stop dfs

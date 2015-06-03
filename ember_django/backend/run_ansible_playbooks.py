@@ -49,7 +49,13 @@ def install_yarn(*args):
                           master_IP=args[2])
         ansible_manage_cluster(cluster_id, 'format')
         ansible_manage_cluster(cluster_id, 'start')
+        
         if args[4] == 'hue':
+            ansible_manage_cluster(cluster_id, 'HDFSMkdir')
+            ansible_manage_cluster(cluster_id, 'HUEstart')
+        if args[4] == 'ecosystem':
+            ansible_manage_cluster(cluster_id, 'HDFSMkdir')
+            ansible_manage_cluster(cluster_id, 'ECOSYSTEMstart')
             ansible_manage_cluster(cluster_id, 'HUEstart')
         elif args[4] == 'cloudera':
             ansible_manage_cluster(cluster_id, 'copyooziesharelib')
@@ -167,6 +173,9 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
         tags = '-t postconfig'
     elif hadoop_image == 'cloudera':
         role = 'cloudera'
+    elif hadoop_image == 'ecosystem':
+        # Ecosystem -> use an available image (Hadoop, Hue, Hive, Oozie, HBase, Pig, Spark pre-installed)
+        tags = '-t postconfig,hueconfig,ecoconfig'
     # Create debug file for ansible
     debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
     ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
