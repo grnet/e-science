@@ -18,22 +18,21 @@ setUp(){
 	local OKEANOS_TOKEN=$(cat ../.private/.config.txt | grep "token" |cut -d' ' -f3)
 	echo -e '[global]\ndefault_cloud = ~okeanos\nignore_ssl = on\n[cloud "~okeanos"]\nurl = https://accounts.okeanos.grnet.gr/identity/v2.0\ntoken = '$OKEANOS_TOKEN'\n[orka]\nbase_url = http://127.0.0.1:8000' > ~/.kamakirc
 }
-
 tearDown(){
-	rm -f .kamakirc
+	rm -f ~/.kamakirc
 	rm -f _tmp.txt
 }
 
 setUp
-# 01
+# 01 Create
 declare -a ARR_RESULT=($(orka create integration_test 2 2 2048 5 2 2048 5 standard escience.grnet.gr 2 128 --use_hadoop_image))
 CLUSTER_ID=${ARR_RESULT[1]}
 MASTER_IP=${ARR_RESULT[3]}
 if [ -n "$CLUSTER_ID" ]; then
-	printf "Create Cluster: OK"
+	printf "Create Cluster: OK\n"
 	echo 0 >&1
 else
-	printf "Create Cluster: Fail"
+	printf "Create Cluster: Fail\n"
 	echo 1 >&1
 fi
 
@@ -47,50 +46,50 @@ fi
 HOST=hduser@$MASTER_IP
 HADOOP_HOME=/usr/local/hadoop
 
-# 02
+# 02 Stop
 RESULT=$(orka hadoop stop $CLUSTER_ID)
 if [ -n "$RESULT" ]; then
-	printf "Stop Hadoop: OK"
+	printf "Stop Hadoop: OK\n"
 	echo 0 >&1
 else
-	printf "Stop Hadoop: Fail"
+	printf "Stop Hadoop: Fail\n"
 	echo 1 >&1
 fi
 
-# 03
+# 03 Format
 RESULT=$(orka hadoop format $CLUSTER_ID)
 if [ -n "$RESULT" ]; then
-	printf "Format Hadoop: OK"
+	printf "Format Hadoop: OK\n"
 	echo 0 >&1
 else
-	printf "Format Hadoop: Fail"
+	printf "Format Hadoop: Fail\n"
 	echo 1 >&1
 fi
 
-# 04 
+# 04 Start
 RESULT=$(orka hadoop start $CLUSTER_ID)
 if [ -n "$RESULT" ]; then
-	printf "Start Hadoop: OK"
+	printf "Start Hadoop: OK\n"
 	echo 0 >&1
 else
-	printf "Start Hadoop: Fail"
+	printf "Start Hadoop: Fail\n"
 	echo 1 >&1
 fi
 
-# 05
+# 05 runPI
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
 '/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.5.2.jar pi 2 10000' 2>&1 | tee _tmp.txt
 RESULT=$(cat _tmp.txt | grep "Estimated value of Pi is" |cut -d' ' -f6)
 rm -f _tmp.txt
 if [ -n "$RESULT" ]; then
-	printf "Hadoop runPI: OK"
+	printf "Hadoop runPI: OK\n"
 	echo 0 >&1
 else
-	printf "Hadoop runPI: Fail"
+	printf "Hadoop runPI: Fail\n"
 	echo 1 >&1
 fi
 
-# 08
+# 08 pithosFS registered
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
 '/usr/local/hadoop/bin/hdfs dfs -ls pithos://pithos/WordCount/' 2>&1 | tee _tmp.txt
 cat _tmp.txt
@@ -99,10 +98,10 @@ rm -f _tmp.txt
 # 12
 RESULT=$(orka destroy $CLUSTER_ID)
 if [ -n "$RESULT" ]; then
-	printf "Destroy Cluster: OK"
+	printf "Destroy Cluster: OK\n"
 	echo 0 >&1
 else
-	printf "Destroy Cluster: Fail"
+	printf "Destroy Cluster: Fail\n"
 	echo 1 >&1
 fi
 
