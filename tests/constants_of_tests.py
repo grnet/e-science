@@ -32,6 +32,7 @@ PITHOS_WORDCOUNT_DIR = 'WordCount_Pithos'
 HDFS_WORDCOUNT_DIR = 'WordCount_HDFS'
 
 SPARK_EXAMPLES = '/usr/lib/spark/examples/lib/spark-examples-*-cdh*-hadoop*-cdh*.jar'
+SPARK_ECOSYSTEM_EXAMPLES = '/usr/local/spark/lib/spark-examples-1.3.1-hadoop2.4.0.jar'
 CLOUDERA_HDFS_PATH = 'sudo -u hdfs /usr/bin/hdfs '
 CLOUDERA_WORDCOUNT = 'jar /usr/lib/hadoop-mapreduce/hadoop-mapreduce-examples.jar wordcount '
 CLOUDERA_HADOOP_PATH = 'sudo -u hdfs /usr/bin/hadoop '

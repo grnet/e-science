@@ -21,8 +21,5 @@
 		<!-- Syslog4j dependencies -->
 		<dependency org="org.graylog2" name="syslog4j" rev="0.9.52"/>
 				
-		<!-- SysLog dependencies -->
-		<dependency org="org.graylog2" name="syslog4j" rev="0.9.52"/>
-				
 	</dependencies>
 </ivy-module>

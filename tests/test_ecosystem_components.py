@@ -41,8 +41,8 @@ class EcosystemTest(unittest.TestCase):
                         self.active_cluster = cluster
                         self.wordcount_command = WORDCOUNT
                         self.hadoop_path = HADOOP_PATH
-                        self.user = 'root'
-                        self.VALID_DEST_DIR = '/user/hdfs'
+                        self.user = 'hduser'
+                        self.VALID_DEST_DIR = '/user/hduser'
                         self.hdfs_path = HDFS_PATH
                         break
             else:
@@ -64,11 +64,92 @@ class EcosystemTest(unittest.TestCase):
         Test pig for hadoop ecosystem
         """
         pig_command = "export JAVA_HOME=/usr/lib/jvm/java-8-oracle; export HADOOP_HOME=/usr/local/hadoop; /usr/local/pig/bin/pig -e \"fs -mkdir /tmp/pig_test_folder\""
-        ssh_call_hadoop('hduser', self.master_IP, pig_command, hadoop_path='')
-        exist_check_status = ssh_call_hadoop('hduser', self.master_IP,
+        ssh_call_hadoop(self.user, self.master_IP, pig_command, hadoop_path='')
+        exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
                                              ' dfs -test -e /tmp/{0}'.format('pig_test_folder'))
         self.assertEqual(exist_check_status, 0)
         self.addCleanup(self.delete_hdfs_files, '/tmp/pig_test_folder', prefix="-r")
+        
+        
+    def test_spark_pi_wordcount(self):
+        """
+        Functional test to check if Spark is working correctly in a Ecosystem cluster
+        by running a Spark Pi and a Spark WordCount.
+        """
+        self.put_file_to_hdfs('/tmp/{0}'.format(SOURCE_HDFS_TO_PITHOS_FILE))
+        spark_job = 'export HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop; /usr/local/spark/bin/spark-submit --class org.apache.spark.examples.'
+
+        for job_properties in [('SparkPi', 10), ('JavaWordCount', SOURCE_HDFS_TO_PITHOS_FILE)]:
+            test_job = spark_job + '{0} --deploy-mode cluster --master yarn-cluster {1} {2}'.format(job_properties[0], SPARK_ECOSYSTEM_EXAMPLES, job_properties[1])
+            exist_check_status = ssh_call_hadoop(self.user, self.master_IP, test_job, hadoop_path='')
+            self.assertEqual(exist_check_status, 0)
+
+        self.addCleanup(self.delete_hdfs_files, SOURCE_HDFS_TO_PITHOS_FILE)
+        self.addCleanup(self.hadoop_local_fs_action, 'rm /tmp/{0}'.format(SOURCE_HDFS_TO_PITHOS_FILE))
+
+    def test_compare_mapreduce_wordcount_pithos_hdfs(self):
+        """
+        Functional test to upload a test file in Pithos and run two MapReduce wordcounts
+        in a Ecosystem cluster, one from Pithos and one native from HDFS and compare the
+        length of the output files.
+        """
+        subprocess.call('echo "this is a test file to run a wordcount" > {0}'.format(SOURCE_PITHOS_TO_HDFS_FILE),
+                        stderr=FNULL, shell=True)
+        subprocess.call('kamaki file upload {0}'.format(SOURCE_PITHOS_TO_HDFS_FILE), stderr=FNULL, shell=True)
+
+        ssh_call_hadoop(self.user, self.master_IP, 'kamaki file download {0} /tmp/{0}'.
+                        format(SOURCE_PITHOS_TO_HDFS_FILE), hadoop_path='')
+        ssh_call_hadoop(self.user, self.master_IP, ' dfs -put /tmp/{0}'.
+                        format(SOURCE_PITHOS_TO_HDFS_FILE),hadoop_path=self.hdfs_path)
+
+        ssh_call_hadoop(self.user, self.master_IP, self.wordcount_command + 'pithos://pithos/{0} {1}'.
+                        format(SOURCE_PITHOS_TO_HDFS_FILE, PITHOS_WORDCOUNT_DIR),
+                                             hadoop_path=self.hadoop_path)
+        ssh_call_hadoop(self.user, self.master_IP, self.wordcount_command + '{0} {1}'.
+                        format(SOURCE_PITHOS_TO_HDFS_FILE, HDFS_WORDCOUNT_DIR),
+                                             hadoop_path=self.hadoop_path)
+
+        bytes_pithos_written = ssh_check_output_hadoop(self.user, self.master_IP,
+                                             ' dfs -dus {0}'.format(PITHOS_WORDCOUNT_DIR),
+                                             hadoop_path=self.hdfs_path)
+        bytes_hdfs_written = ssh_check_output_hadoop(self.user, self.master_IP,
+                                             ' dfs -dus {0}'.format(HDFS_WORDCOUNT_DIR),
+                                             hadoop_path=self.hdfs_path)
+
+        self.assertEqual(bytes_pithos_written[0].replace(PITHOS_WORDCOUNT_DIR, ""),
+                         bytes_hdfs_written[0].replace(HDFS_WORDCOUNT_DIR, ""))
+        self.addCleanup(self.delete_hdfs_files, PITHOS_WORDCOUNT_DIR, prefix="-r")
+        self.addCleanup(self.delete_hdfs_files, HDFS_WORDCOUNT_DIR, prefix="-r")
+        self.addCleanup(self.delete_hdfs_files, SOURCE_PITHOS_TO_HDFS_FILE)
+        self.addCleanup(self.delete_local_files, SOURCE_PITHOS_TO_HDFS_FILE)
+        self.addCleanup(self.delete_pithos_files, SOURCE_PITHOS_TO_HDFS_FILE)
+        self.addCleanup(self.hadoop_local_fs_action, 'rm /tmp/{0}'.format(SOURCE_PITHOS_TO_HDFS_FILE))
+    
+    def test_hive_count_rows_in_table_exists(self):
+        """
+        Functional test for Ecosystem Hive
+        creates a table (if not exists)
+        and counts rows in this table 
+        """
+        # create a table
+        hive_command = "hive -e 'CREATE TABLE IF NOT EXISTS hive_table ( age int, name String );'"
+        ssh_call_hadoop(self.user, self.master_IP, hive_command, hadoop_path='/usr/local/hive/bin/')
+        
+        # count rows
+        hive_command_count = "hive -e 'select count(*) from hive_table';"
+        exist_check_status = ssh_call_hadoop(self.user, self.master_IP, hive_command_count, hadoop_path='/usr/local/hive/bin/')
+        
+        self.assertEqual(exist_check_status, 0) # OK
+
+    def test_hive_count_rows_in_table_not_exists(self):
+        """
+        Functional test for Ecosystem Hive
+        count rows in a table that does not exist 
+        """
+        hive_command = "hive -e 'select count(*) from table_not_exists';"
+        exist_check_status = ssh_call_hadoop(self.user, self.master_IP, hive_command, hadoop_path='/usr/local/hive/bin/')
+        
+        self.assertEqual(exist_check_status, 17) # ERROR table not found
     
     def put_file_to_hdfs(self, file_to_create):
         """
@@ -101,6 +182,12 @@ class EcosystemTest(unittest.TestCase):
         """
         subprocess.call("ssh {0}@".format(self.user) + self.master_IP + " \"" + action +
                         "\"", stderr=FNULL, shell=True)
+        
+    def delete_pithos_files(self, file_to_delete):
+        """
+        Helper method to delete files transfered to pithos filesystem after test.
+        """
+        subprocess.call('kamaki file delete --yes {}'.format(file_to_delete), stderr=FNULL, shell=True)
 
     def tearDown(self):
         """
