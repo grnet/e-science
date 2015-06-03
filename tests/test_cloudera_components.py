@@ -6,15 +6,16 @@ import logging
 from os.path import join, dirname, abspath
 import subprocess
 from ConfigParser import RawConfigParser, NoSectionError
-from orka.orka.utils import get_user_clusters, ssh_call_hadoop, ssh_check_output_hadoop
+from orka.orka.utils import get_user_clusters, ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to_hadoop
 import unittest
+import socket
 sys.path.append(dirname(abspath(__file__)))
 from constants_of_tests import *
 from orka.orka.cluster_errors_constants import error_fatal, const_hadoop_status_started, FNULL
 import requests
 
 BASE_DIR = join(dirname(abspath(__file__)), "../")
-
+JOB_PROPERTIES_PATH = join(dirname(abspath(__file__)), 'job.properties')
 
 class ClouderaTest(unittest.TestCase):
     """
@@ -45,6 +46,8 @@ class ClouderaTest(unittest.TestCase):
                         self.user = 'root'
                         self.VALID_DEST_DIR = '/user/hdfs'
                         self.hdfs_path = CLOUDERA_HDFS_PATH
+                        self.pig_command = PIG_CLOUDERA_COMMAND
+                        self.oozie_command = OOZIE_COMMAND.format(self.master_IP)
                         break
             else:
                 logging.error(' You can take file actions on active clusters with started hadoop only.')
@@ -157,7 +160,8 @@ class ClouderaTest(unittest.TestCase):
 
         for job_properties in [('SparkPi', 10), ('JavaWordCount', SOURCE_HDFS_TO_PITHOS_FILE)]:
             test_job = spark_job + '{0} --deploy-mode cluster --master yarn-cluster {1} {2}'.format(job_properties[0], SPARK_EXAMPLES, job_properties[1])
-            ssh_call_hadoop(self.user, self.master_IP, test_job, hadoop_path='')
+            exist_check_status = ssh_call_hadoop(self.user, self.master_IP, test_job, hadoop_path='')
+            self.assertEqual(exist_check_status, 0)
 
         self.addCleanup(self.delete_hdfs_files, SOURCE_HDFS_TO_PITHOS_FILE)
         self.addCleanup(self.hadoop_local_fs_action, 'rm /tmp/{0}'.format(SOURCE_HDFS_TO_PITHOS_FILE))
@@ -199,6 +203,51 @@ class ClouderaTest(unittest.TestCase):
         self.addCleanup(self.delete_local_files, SOURCE_PITHOS_TO_HDFS_FILE)
         self.addCleanup(self.delete_pithos_files, SOURCE_PITHOS_TO_HDFS_FILE)
         self.addCleanup(self.hadoop_local_fs_action, 'rm /tmp/{0}'.format(SOURCE_PITHOS_TO_HDFS_FILE))
+
+
+     # def test_oozie(self):
+     #     """
+     #     Test oozie for Cloudera cluster
+     #     """
+     #     ssh_call_hadoop(self.user, self.master_IP, pig_command)
+     #     exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
+     #                                          ' dfs -test -e {0}/_SUCCESS'.format('/user/hdfs/pig_test'))
+     #     self.assertEqual(exist_check_status, 0)
+     #     self.addCleanup(self.delete_hdfs_files, '/user/hduser/pig_test', prefix="-r")
+
+    def test_pig(self):
+        """
+        Test pig for Cloudera cluster
+        """
+        ssh_call_hadoop(self.user, self.master_IP, self.pig_command , hadoop_path='')
+        exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
+                                             ' dfs -test -e {0}'.format(PIG_TEST_FOLDER),
+                                             hadoop_path=self.hdfs_path)
+        self.assertEqual(exist_check_status, 0)
+        self.addCleanup(self.delete_hdfs_files, PIG_TEST_FOLDER, prefix="-r")
+
+    def test_oozie(self):
+        """
+        Test oozie for Cloudera cluster
+        """
+        ssh_call_hadoop(self.user, self.master_IP, 'dfs -mkdir oozie_app', hadoop_path=self.hdfs_path)
+        ssh_stream_to_hadoop(self.user, self.master_IP, join(dirname(abspath(__file__)), "workflow.xml"),
+                             self.VALID_DEST_DIR + "/oozie_app/workflow.xml", hadoop_path=self.hdfs_path)
+        master_vm_hostname = socket.gethostbyaddr(self.master_IP)[0].split('.')[0]
+        job_properties = JOB_PROPERTIES_TEMPLATE.format(master_vm_hostname)
+
+        create_job_properties_file = 'echo -e "{0}" > job.properties'.format(job_properties)
+        subprocess.call(create_job_properties_file, stderr=FNULL, shell=True)
+        subprocess.call( "scp {0} {1}@{2}:/tmp/".format(JOB_PROPERTIES_PATH, self.user, self.master_IP),
+                         stderr=FNULL, shell=True)
+        ssh_call_hadoop(self.user, self.master_IP, self.oozie_command, hadoop_path='')
+        exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
+                                             ' dfs -test -e {0}'.format(OOZIE_TEST_FOLDER),
+                                             hadoop_path=self.hdfs_path)
+        self.assertEqual(exist_check_status, 0)
+        self.addCleanup(self.delete_hdfs_files, OOZIE_TEST_FOLDER, prefix="-r")
+        self.addCleanup(self.hadoop_local_fs_action, 'rm /tmp/job.properties')
+        self.addCleanup(self.delete_local_files, JOB_PROPERTIES_PATH)
 
 
     def delete_hdfs_files(self, file_to_delete, prefix=""):
