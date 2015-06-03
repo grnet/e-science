@@ -49,6 +49,10 @@
       - /tmp/{{master_key_cloudera}}
     when: is_slave
 
+  - name: Install hbase-regionserver
+    tags: postconfig
+    command: apt-get install -y hbase-regionserver
+
   - name: copy yarn configuration xml and kamakirc files in every node
     tags: postconfig
     template: "src={{item.src}} dest={{item.dest}}"
@@ -86,20 +90,12 @@
     tags: postconfig
     command: install -d -m 0755 -o yarn -g yarn /data/1/yarn/local /data/2/yarn/local /data/3/yarn/local /data/4/yarn/local /data/1/yarn/logs /data/2/yarn/logs /data/3/yarn/logs /data/4/yarn/logs
 
-  - name: Edit spark-env file
+  - name: Fix postgresql bug
     tags: postconfig
-    lineinfile: line="export STANDALONE_SPARK_MASTER_HOST='{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}'" dest=/etc/spark/conf/spark-env.sh
-
-  - name: Copy spark-defaults file
-    tags: postconfig
-    command: cp /etc/spark/conf/spark-defaults.conf.template /etc/spark/conf/spark-defaults.conf
-
-  - name: Edit spark-defaults file
-    tags: postconfig
-    lineinfile: "line={{item.line}} dest={{item.dest}}"
+    file: "dest={{item.dest}} mode={{item.mode}} owner={{item.owner}} group={{item.group}} state={{item.state}}"
     with_items:
-        - { line: 'spark.eventLog.dir=/user/spark/applicationHistory', dest: '/etc/spark/conf/spark-defaults.conf'}
-        - { line: 'spark.eventLog.enabled=true', dest: '/etc/spark/conf/spark-defaults.conf'}
+      - { dest: '/etc/ssl/certs/ssl-cert-snakeoil.pem', mode: '777', owner: 'postgres', group: 'postgres', state: 'file' }
+      - { dest: '/etc/ssl/private/ssl-cert-snakeoil.key', mode: '700', owner: 'postgres', group: 'postgres', state: 'file' }
 
   - name: Restart postgresql service
     tags: postconfig
@@ -108,10 +104,6 @@
   - name: Copy hadoop conf files to oozie conf directory
     tags: postconfig
     shell: cp -rf /etc/hadoop/conf/* /etc/oozie/conf/hadoop-conf
-
-  - name: Create Oozie database
-    tags: postconfig
-    shell: ./ooziedb.sh create -run chdir=/usr/lib/oozie/bin
 
   - name: Add users to hadoop group
     tags: postconfig
@@ -160,3 +152,7 @@
   - name: Copy Java dist directory
     tags: postconfig
     copy: src=dist/ dest=/usr/lib/hadoop/lib/
+
+  - name: Create oozie db schema
+    tags: postconfig
+    shell: ./ooziedb.sh create -run chdir=/usr/lib/oozie/bin/

@@ -93,7 +93,7 @@ class YarnCluster(object):
                 except:
                     # if property hasn't been set then hadoop_image flag is false
                     self.hadoop_image = 'debianbase'
-                        
+
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_cluster_size_quotas

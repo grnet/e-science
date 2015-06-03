@@ -10,14 +10,14 @@
   hive_db_name: metastore
   hive_home: /usr/local/hive
   choose_role: webserver
-  
+
   # Hadoop-yarn variables
   path_to_common_libs: /usr/local/hadoop/share/hadoop/common
   path_to_hdfs_libs: /usr/local/hadoop/share/hadoop/hdfs/lib
   hadoopuser_path: /home/hduser
   cloudera_bin: /usr/bin
   manage_cluster: placeholder
-  livy_server_script: hue_livy.sh
+  livy_server_script: cloudera_livy.sh
   is_master: False
   is_slave: False
   dfs_replication: 2
@@ -31,4 +31,5 @@
   path: ~/.ssh/id_rsa.pub
   master_key_hduser: master_{{ hostvars[groups['master'][0]].inventory_hostname_short}}_pub_key_hduser
   master_key_root: master_{{ hostvars[groups['master'][0]].inventory_hostname_short}}_pub_key_root
+  master_key_cloudera: master_{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}_pub_key_root
   ssh_file_name: no_ssh_key_selected
