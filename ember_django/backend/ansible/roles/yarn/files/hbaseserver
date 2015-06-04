@@ -45,7 +45,9 @@ case "$1" in
 	    sudo -u "$USER" $CMD_THRIFT stop thrift >> "$LOG_THRIFT"
 	    rm -f "$PID_THRIFT"
 	    sudo -u "$USER" $CMD_HBASE_1 >> "$LOG_HBASE"
+	    echo $! > "$PID_HBASE"
 	    sudo -u "$USER" $CMD_THRIFT start thrift >> "$LOG_THRIFT"
+	    echo $! > "$PID_THRIFT"
 	    ;;
 esac
 

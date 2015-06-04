@@ -12,6 +12,7 @@ sys.path.append(dirname(abspath(__file__)))
 from constants_of_tests import *
 from orka.orka.cluster_errors_constants import error_fatal, const_hadoop_status_started, FNULL
 import requests
+import re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../")
 JOB_PROPERTIES_PATH = join(dirname(abspath(__file__)), 'job.properties')
@@ -210,11 +211,16 @@ class ClouderaTest(unittest.TestCase):
         """
         Make a directory in HDFS running a oozie job using a workflow.xml.
         """
+        master_vm_hostname = ssh_check_output_hadoop(self.user, self.master_IP, 'cat /etc/hostname', hadoop_path='')[0]
+        read_workflow = open("workflow.xml", "r").read()
+        workflow_file = open("workflow.xml", "w")
+        workflow_file.write( re.sub("hostname", master_vm_hostname, read_workflow) )
+        workflow_file.close()
         ssh_call_hadoop(self.user, self.master_IP, 'dfs -mkdir oozie_app', hadoop_path=self.hdfs_path)
         ssh_stream_to_hadoop(self.user, self.master_IP, join(dirname(abspath(__file__)), "workflow.xml"),
                              self.VALID_DEST_DIR + "/oozie_app/workflow.xml", hadoop_path=self.hdfs_path)
 
-        master_vm_hostname = ssh_check_output_hadoop(self.user, self.master_IP, 'cat /etc/hostname', hadoop_path='')[0]
+
         job_properties = JOB_PROPERTIES_TEMPLATE.format(master_vm_hostname)
 
         create_job_properties_file = 'echo -e "{0}" > job.properties'.format(job_properties)
@@ -229,7 +235,9 @@ class ClouderaTest(unittest.TestCase):
         self.addCleanup(self.delete_hdfs_files, OOZIE_TEST_FOLDER, prefix="-r")
         self.addCleanup(self.hadoop_local_fs_action, 'rm /tmp/job.properties')
         self.addCleanup(self.delete_local_files, JOB_PROPERTIES_PATH)
-
+        workflow_file = open("workflow.xml", "w")
+        workflow_file.write( re.sub(master_vm_hostname, "hostname", read_workflow) )
+        workflow_file.close()
 
     def delete_hdfs_files(self, file_to_delete, prefix=""):
         """
