@@ -28,6 +28,7 @@ setUp
 declare -a ARR_RESULT=($(orka create integration_test 2 2 2048 5 2 2048 5 standard escience.grnet.gr 2 128 --use_hadoop_image))
 CLUSTER_ID=${ARR_RESULT[1]}
 MASTER_IP=${ARR_RESULT[3]}
+SSHPASS=\'${ARR_RESULT[5]}\'
 if [ -n "$CLUSTER_ID" ]; then
 	printf "Create Cluster: OK\n"
 	echo 0 >&1
@@ -42,8 +43,6 @@ if [ -z "$CLUSTER_ID" ]
 	echo "Exiting"
 	return 1 2>/dev/null || exit 1
 fi
-HOST=hduser@$MASTER_IP
-HADOOP_HOME=/usr/local/hadoop
 
 # 02 Stop
 RESULT=$(orka hadoop stop $CLUSTER_ID)
@@ -75,8 +74,17 @@ else
 	echo 1 >&1
 fi
 
+HOST=hduser@$MASTER_IP
+ROOTHOST=root@$MASTER_IP
+HADOOP_HOME=/usr/local/hadoop
+# sshpass -e scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ~/.ssh/id_rsa.pub $ROOTHOST:/home/hduser/
+# sshpass -e ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ROOTHOST \
+# 'cat /home/hduser/id_rsa.pub >> /home/hduser/.ssh/authorized_keys;
+# rm -f /home/hduser/id_rsa.pub;
+# exit'
+
 # 05 runPI
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
+sshpass -e ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
 '/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.5.2.jar pi 2 10000' 2>&1 | tee _tmp.txt
 RESULT=$(cat _tmp.txt | grep "Estimated value of Pi is" |cut -d' ' -f6)
 rm -f _tmp.txt
@@ -89,12 +97,12 @@ else
 fi
 
 # 08 pithosFS registered
-ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
+sshpass -e ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
 '/usr/local/hadoop/bin/hdfs dfs -ls pithos://pithos/WordCount/' > _tmp.txt 2>&1
 cat _tmp.txt
 rm -f _tmp.txt
 
-# 12
+12
 RESULT=$(orka destroy $CLUSTER_ID)
 echo "12 Destroy:"$RESULT
 if [ -n "$RESULT" ]; then

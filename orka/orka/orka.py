@@ -151,7 +151,7 @@ class HadoopCluster(object):
             logging.log(SUMMARY, " Yarn Cluster is active.You can access it through " +
                         result['master_IP'] + ":8088/cluster")
             logging.log(SUMMARY, " The root password of your master VM is " + result['master_VM_password'])
-            stdout.write("cluster_id: {0} master_IP: {1}".format(result['cluster_id'], result['master_IP']))
+            stdout.write("cluster_id: {0} master_IP: {1} password: {2}".format(result['cluster_id'], result['master_IP'], result['master_VM_password']))
 
 
         except Exception, e:
