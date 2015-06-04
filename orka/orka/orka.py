@@ -175,6 +175,7 @@ class HadoopCluster(object):
             task_id = response['clusterchoice']['task_id']
             result = task_message(task_id, self.escience_token, wait_timer_delete)
             logging.log(SUMMARY, ' Cluster with name "%s" and all its resources deleted' %(result))
+            stdout.write("DESTROYED {0}".format(result))
         except Exception, e:
             logging.error(str(e.args[0]))
             exit(error_fatal)
@@ -207,6 +208,7 @@ class HadoopCluster(object):
             task_id = response['clusterchoice']['task_id']
             result = task_message(task_id, self.escience_token, wait_timer_delete)
             logging.log(SUMMARY, result)
+            stdout.write("{0}: {1}".format(str.upper(action),result))
         except Exception, e:
             logging.error(str(e.args[0]))
             exit(error_fatal)
@@ -285,6 +287,7 @@ class HadoopCluster(object):
         objects = pithos_client.list_objects()
         for object in objects:
             is_dir = 'application/directory' in object.get('content_type', object.get('content-type', ''))
+            is_dir = 'application/folder' in object.get('content_type', object.get('content-type', ''))
             if not is_dir:
                 print u"{:>12s} \"pithos:/{:s}/{:s}\"".format(bytes_to_shorthand(object['bytes']),
                                                               pithos_container,object['name'])

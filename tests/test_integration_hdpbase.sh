@@ -15,7 +15,7 @@
 
 # setUp
 setUp(){
-	local OKEANOS_TOKEN=$(cat ../.private/.config.txt | grep "token" |cut -d' ' -f3)
+	local OKEANOS_TOKEN=$(cat .private/.config.txt | grep "token" |cut -d' ' -f3)
 	echo -e '[global]\ndefault_cloud = ~okeanos\nignore_ssl = on\n[cloud "~okeanos"]\nurl = https://accounts.okeanos.grnet.gr/identity/v2.0\ntoken = '$OKEANOS_TOKEN'\n[orka]\nbase_url = http://127.0.0.1:8000' > ~/.kamakirc
 }
 tearDown(){
@@ -40,8 +40,7 @@ if [ -z "$CLUSTER_ID" ]
  then
 	echo "Couldn't create cluster"
 	echo "Exiting"
-	return 1
-	exit 1
+	return 1 2>/dev/null || exit 1
 fi
 HOST=hduser@$MASTER_IP
 HADOOP_HOME=/usr/local/hadoop
@@ -91,12 +90,13 @@ fi
 
 # 08 pithosFS registered
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
-'/usr/local/hadoop/bin/hdfs dfs -ls pithos://pithos/WordCount/' 2>&1 | tee _tmp.txt
+'/usr/local/hadoop/bin/hdfs dfs -ls pithos://pithos/WordCount/' > _tmp.txt 2>&1
 cat _tmp.txt
 rm -f _tmp.txt
 
 # 12
 RESULT=$(orka destroy $CLUSTER_ID)
+echo "12 Destroy:"$RESULT
 if [ -n "$RESULT" ]; then
 	printf "Destroy Cluster: OK\n"
 	echo 0 >&1
