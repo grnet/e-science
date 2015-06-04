@@ -21,6 +21,7 @@ setUp(){
 tearDown(){
 	rm -f ~/.kamakirc
 	rm -f _tmp.txt
+	unset SSHPASS
 }
 
 setUp
@@ -28,7 +29,7 @@ setUp
 declare -a ARR_RESULT=($(orka create integration_test 2 2 2048 5 2 2048 5 standard escience.grnet.gr 2 128 --use_hadoop_image))
 CLUSTER_ID=${ARR_RESULT[1]}
 MASTER_IP=${ARR_RESULT[3]}
-SSHPASS=\'${ARR_RESULT[5]}\'
+export SSHPASS=\'${ARR_RESULT[5]}\'
 if [ -n "$CLUSTER_ID" ]; then
 	printf "Create Cluster: OK\n"
 	echo 0 >&1
