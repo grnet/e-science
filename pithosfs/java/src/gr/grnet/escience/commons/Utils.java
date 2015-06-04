@@ -6,22 +6,47 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.MessageFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils {
-
-    private static final boolean DEBUG = false;
-    private static Date date = new Date();
-    private LoggerClient loggerClient = new LoggerClient();
-    private StringBuilder logStrBuilder = null;
+    private static final boolean DEBUG = true;
+    private static LoggerClient loggerClient = new LoggerClient();
+    private static StringBuilder logStrBuilder = null;
+    private static Pattern pSha = null;
+    private static Matcher mSha = null;
+    private static MessageDigest digest = null;
+    private static byte[] byteData = null;
+    private static StringBuilder sb = null;
+    private static URI uri = null;
+    private static DateTimeFormatter dtf = null;
+    private static Long epoch = null;
+    private static LocalDateTime ldt = null;
+    private static ZonedDateTime zdt = null;
+    private static String formatter = null;
 
     public Utils() {
+    }
+
+    /**
+     * Fix the hash algorithm name
+     * 
+     * @param hashAlgorithm
+     * @return unsquelch pithos X-Container-Block-Hash data
+     */
+    public static String fixPithosHashName(String hashAlgorithm) {
+        pSha = Pattern.compile("^(sha)([0-9]+)$", Pattern.CASE_INSENSITIVE);
+        mSha = pSha.matcher(hashAlgorithm);
+        if (mSha.matches()) {
+            hashAlgorithm = String
+                    .format("%s-%s", mSha.group(1), mSha.group(2));
+        }
+        return hashAlgorithm;
     }
 
     /**
@@ -33,17 +58,17 @@ public class Utils {
      *            : the name of the hash algorithm to use
      * @return bytestring hash representation of the input digest
      */
-    public String computeHash(byte[] byteData, String hashAlgorithm)
+    public static String computeHash(byte[] byteData, String hashAlgorithm)
             throws NoSuchAlgorithmException, UnsupportedEncodingException {
         /** eg. hash_algorithm = "SHA-256"; */
-        MessageDigest digest = MessageDigest.getInstance(hashAlgorithm);
+        digest = MessageDigest.getInstance(hashAlgorithm);
         digest.reset();
 
-        byte[] byteDatad = digest.digest(byteData);
-        StringBuilder sb = new StringBuilder();
+        byteData = digest.digest(byteData);
+        sb = new StringBuilder();
 
-        for (int i = 0; i < byteDatad.length; i++) {
-            sb.append(Integer.toString((byteDatad[i] & 0xff) + 0x100, 16)
+        for (int i = 0; i < byteData.length; i++) {
+            sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16)
                     .substring(1));
         }
         return sb.toString();
@@ -58,14 +83,14 @@ public class Utils {
      *            : the name of the hash algorithm to use
      * @return bytestring hash representation of the input digest
      */
-    public String computeHash(String input, String hashAlgorithm)
+    public static String computeHash(String input, String hashAlgorithm)
             throws NoSuchAlgorithmException, UnsupportedEncodingException {
         /** eg. hash_algorithm = "SHA-256"; */
-        MessageDigest digest = MessageDigest.getInstance(hashAlgorithm);
+        digest = MessageDigest.getInstance(hashAlgorithm);
         digest.reset();
 
-        byte[] byteData = digest.digest(input.getBytes("UTF-8"));
-        StringBuilder sb = new StringBuilder();
+        byteData = digest.digest(input.getBytes("UTF-8"));
+        sb = new StringBuilder();
 
         for (int i = 0; i < byteData.length; i++) {
             sb.append(Integer.toString((byteData[i] & 0xff) + 0x100, 16)
@@ -81,19 +106,12 @@ public class Utils {
      * @return url escaped path
      * @throws UnsupportedEncodingException
      */
-    public String urlEscape(String url) throws UnsupportedEncodingException {
+    public static String urlEscape(String url)
+            throws UnsupportedEncodingException {
         return URLEncoder.encode(url, "UTF-8").replaceAll("\\+", "%20")
                 .replaceAll("\\%21", "!").replaceAll("\\%27", "'")
                 .replaceAll("\\%28", "(").replaceAll("\\%29", ")")
                 .replaceAll("\\%7E", "~");
-    }
-
-    @SuppressWarnings("deprecation")
-    public static String getCurentTimestamp() {
-        // - Create and return a unique timestamp
-        return MessageFormat.format("{0}{1}{2}_{3}{4}{5}", date.getYear(),
-                date.getMonth(), date.getDate(), date.getHours(),
-                date.getMinutes(), date.getSeconds());
     }
 
     /**
@@ -110,10 +128,17 @@ public class Utils {
      * @return url escaped path
      * @throws URISyntaxException
      */
-    public String urlEscape(String scheme, String host, String path,
+    public static String urlEscape(String scheme, String host, String path,
             String fragment) throws URISyntaxException {
-        URI uri = new URI(scheme, host, path, fragment);
+        uri = new URI(scheme, host, path, fragment);
         return uri.toASCIIString();
+    }
+
+    public static String getCurrentTimestamp() {
+        // - Create and return a unique timestamp
+        LocalDateTime ldt = LocalDateTime.now();
+        DateTimeFormatter dtf = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        return ldt.format(dtf);
     }
 
     /**
@@ -127,16 +152,15 @@ public class Utils {
      *            empty string to use default
      * @return long epoch time in milliseconds
      */
-    public Long dateTimeToEpoch(String dtString, Object dtFormat) {
-        DateTimeFormatter dtf = null;
-        Long epoch = null;
+    public static Long dateTimeToEpoch(String dtString, Object dtFormat) {
+
         if (dtFormat instanceof String) {
-            if (dtFormat.toString() != "") {
+            if (!(dtFormat.toString()).equals("")) {
                 try {
                     dtf = DateTimeFormatter.ofPattern(dtFormat.toString());
                 } catch (IllegalArgumentException ex) {
                     dtf = DateTimeFormatter.RFC_1123_DATE_TIME;
-                    this.dbgPrint(
+                    Utils.dbgPrint(
                             "dateTimeToEpoch: invalid DateFormatter pattern",
                             ex);
                 }
@@ -148,12 +172,12 @@ public class Utils {
             dtf = (DateTimeFormatter) dtFormat;
         }
         try {
-            LocalDateTime ldt = LocalDateTime.parse(dtString, dtf);
-            ZonedDateTime zdt = ldt.atZone(ZoneId.systemDefault());
+            ldt = LocalDateTime.parse(dtString, dtf);
+            zdt = ldt.atZone(ZoneId.systemDefault());
             epoch = zdt.toInstant().toEpochMilli();
         } catch (DateTimeParseException ex) {
             epoch = System.currentTimeMillis();
-            this.dbgPrint(
+            Utils.dbgPrint(
                     "dateTimeToEpoch: invalid datetime string using current.",
                     ex, epoch);
         }
@@ -166,18 +190,17 @@ public class Utils {
      * @param args
      *            : variable length array of objects
      */
-    public void dbgPrint(Object... args) {
+    public static void dbgPrint(Object... args) {
         if (!DEBUG) {
             return;
         }
-        String formatter = "DEBUG:";
+        formatter = "DEBUG:";
         for (int i = 0; i < args.length; i++) {
             formatter += " %s";
         }
-        formatter += "\n";
 
         // -
-        System.err.format(formatter, args);
+        System.err.format(formatter + "\n", args);
 
         // - Create builder
         logStrBuilder = new StringBuilder(String.format(formatter, args));

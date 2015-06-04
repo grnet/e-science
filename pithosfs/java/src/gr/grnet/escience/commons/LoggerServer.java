@@ -40,7 +40,7 @@ public class LoggerServer {
                 "-o",
                 LOGGER_DEFAULT_LOG_DIR
                         .concat(LOGGER_DEFAULT_LOG_FILENAME_PREFIX.concat(
-                                Utils.getCurentTimestamp()).concat(
+                                Utils.getCurrentTimestamp()).concat(
                                 LOGGER_DEFAULT_LOG_FILENAME_EXT)),
                 LOGGER_DEFAULT_PROTOCOL };
 
@@ -65,7 +65,7 @@ public class LoggerServer {
                     "-o",
                     LOGGER_DEFAULT_LOG_DIR
                             .concat(LOGGER_DEFAULT_LOG_FILENAME_PREFIX.concat(
-                                    Utils.getCurentTimestamp()).concat(
+                                    Utils.getCurrentTimestamp()).concat(
                                     LOGGER_DEFAULT_LOG_FILENAME_EXT)),
                     LOGGER_DEFAULT_PROTOCOL };
         }
