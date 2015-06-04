@@ -57,7 +57,34 @@ class EcosystemTest(unittest.TestCase):
             self.project_name = "INVALID_PROJECT_NAME"
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
-                  
+
+    def test_oozie_status_normal(self):
+        """
+        Checks if Oozie status is normal.
+        """        
+        # ensure that oozie is running
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "service oozieserver restart" + "\""
+                                    , stderr=FNULL, shell=True)
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "/usr/local/oozie/bin/oozie admin -status -oozie http://" + 
+                                    self.master_IP + ":11000/oozie" + "\""
+                                    , stderr=FNULL, shell=True)
+        self.assertEqual(response, 0) # NORMAL
+
+    def test_oozie_status_down(self):
+        """
+        Checks if Oozie status is down.
+        """
+        # stop oozie
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "service oozieserver stop" + "\""
+                                    , stderr=FNULL, shell=True)            
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "/usr/local/oozie/bin/oozie admin -status -oozie http://" 
+                                    + self.master_IP + ":11000/oozie" + "\""
+                                    , stderr=FNULL, shell=True)      
+        self.assertEqual(response, 255) # Oozie down              
                   
     def test_pig(self):
         """
