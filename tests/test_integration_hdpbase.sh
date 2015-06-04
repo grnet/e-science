@@ -78,11 +78,15 @@ fi
 HOST=hduser@$MASTER_IP
 ROOTHOST=root@$MASTER_IP
 HADOOP_HOME=/usr/local/hadoop
+echo $SSHPASS
+echo $ROOTHOST
 sshpass -e scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ~/.ssh/id_rsa.pub $ROOTHOST:/home/hduser/
 sshpass -e ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ROOTHOST \
 'cat /home/hduser/id_rsa.pub >> /home/hduser/.ssh/authorized_keys;
 rm -f /home/hduser/id_rsa.pub;
-exit'
+exit' 2>&1 | tee _tmp.txt
+cat _tmp.txt
+rm -f _tmp.txt
 
 # 05 runPI
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
