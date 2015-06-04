@@ -70,7 +70,6 @@ class EcosystemTest(unittest.TestCase):
         self.assertEqual(exist_check_status, 0)
         self.addCleanup(self.delete_hdfs_files, '/tmp/pig_test_folder', prefix="-r")
         
-        
     def test_spark_pi_wordcount(self):
         """
         Functional test to check if Spark is working correctly in a Ecosystem cluster

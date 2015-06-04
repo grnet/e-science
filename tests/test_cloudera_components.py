@@ -6,14 +6,16 @@ import logging
 from os.path import join, dirname, abspath
 import subprocess
 from ConfigParser import RawConfigParser, NoSectionError
-from orka.orka.utils import get_user_clusters, ssh_call_hadoop, ssh_check_output_hadoop
+from orka.orka.utils import get_user_clusters, ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to_hadoop
 import unittest
+import socket
 sys.path.append(dirname(abspath(__file__)))
 from constants_of_tests import *
 from orka.orka.cluster_errors_constants import error_fatal, const_hadoop_status_started, FNULL
+import requests
 
 BASE_DIR = join(dirname(abspath(__file__)), "../")
-
+JOB_PROPERTIES_PATH = join(dirname(abspath(__file__)), 'job.properties')
 
 class ClouderaTest(unittest.TestCase):
     """
@@ -44,6 +46,8 @@ class ClouderaTest(unittest.TestCase):
                         self.user = 'root'
                         self.VALID_DEST_DIR = '/user/hdfs'
                         self.hdfs_path = CLOUDERA_HDFS_PATH
+                        self.pig_command = PIG_CLOUDERA_COMMAND
+                        self.oozie_command = OOZIE_COMMAND.format(self.master_IP)
                         break
             else:
                 logging.error(' You can take file actions on active clusters with started hadoop only.')
@@ -58,6 +62,94 @@ class ClouderaTest(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
 
+    def test_oozie_status_normal(self):
+        """
+        Functional test for Cloudera Oozie
+        checks if status is normal
+        """
+        # ensure that oozie is running
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "service oozie restart" + "\""
+                                    , stderr=FNULL, shell=True)                
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "oozie admin -status -oozie http://" + self.master_IP + ":11000/oozie" + "\""
+                                    , stderr=FNULL, shell=True)        
+        self.assertEqual(response, 0) # NORMAL
+
+    def test_oozie_status_down(self):
+        """
+        Functional test for Cloudera Oozie
+        checks if oozie is down
+        """
+        # stop oozie
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "service oozie stop" + "\""
+                                    , stderr=FNULL, shell=True)                
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "oozie admin -status -oozie http://" + self.master_IP + ":11000/oozie" + "\""
+                                    , stderr=FNULL, shell=True)        
+        self.assertEqual(response, 255) # Oozie down
+        
+    def test_hive_count_rows_in_table_exists(self):
+        """
+        Functional test for Cloudera Hive
+        creates a table (if not exists)
+        and counts rows in this table 
+        """
+        # create a table
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "hive -e 'CREATE TABLE IF NOT EXISTS hive_table ( age int, name String );'" + "\""
+                                    , stderr=FNULL, shell=True)
+        # count rows
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "hive -e 'select count(*) from hive_table';" + "\""
+                                    , stderr=FNULL, shell=True)
+        self.assertEqual(response, 0) # OK
+
+    def test_hive_count_rows_in_table_not_exists(self):
+        """
+        Functional test for Cloudera Hive
+        count rows in a table that does not exist 
+        """
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "hive -e 'select count(*) from table_not_exists';" + "\""
+                                    , stderr=FNULL, shell=True)
+        self.assertEqual(response, 17) # ERROR table not found
+
+    def test_hbase_table_not_exists(self):
+        """
+        Functional test for Cloudera HBase
+        check if a table does not exist
+        """
+        baseurl = "http://" + self.master_IP + ":60050"
+        # check for a table that does not exist
+        request = requests.get(baseurl + "/" + "table_not_exists" + "/schema")
+        self.assertEqual(request.status_code, 404) # NOT FOUND
+
+    def test_hbase_table_exists(self):
+        """
+        Functional test for Cloudera HBase
+        create a table and then
+        check if the table exists
+        """
+        baseurl = "http://" + self.master_IP + ":60050"                
+        tablename = "testtable"
+        cfname = "testcolumn1"
+        # delete it first (if already exists)
+        request = requests.delete(baseurl + "/" + tablename + "/schema")        
+        # Create XML for table
+        content =  '<?xml version="1.0" encoding="UTF-8"?>'
+        content += '<TableSchema name="' + tablename + '">'
+        content += '  <ColumnSchema name="' + cfname + '" />'
+        content += '</TableSchema>'
+        # Create the table
+        request = requests.post(baseurl + "/" + tablename + "/schema", 
+                                data=content, headers={"Content-Type" : "text/xml", "Accept" : "text/xml"})       
+        self.assertEqual(request.status_code, 201) # CREATED
+        # Check if table exists
+        request = requests.get(baseurl + "/" + tablename + "/schema")   
+        self.assertEqual(request.status_code, 200) # OK
+
     def test_spark_pi_wordcount(self):
         """
         Functional test to check if Spark is working correctly in a Cloudera cluster
@@ -68,7 +160,8 @@ class ClouderaTest(unittest.TestCase):
 
         for job_properties in [('SparkPi', 10), ('JavaWordCount', SOURCE_HDFS_TO_PITHOS_FILE)]:
             test_job = spark_job + '{0} --deploy-mode cluster --master yarn-cluster {1} {2}'.format(job_properties[0], SPARK_EXAMPLES, job_properties[1])
-            ssh_call_hadoop(self.user, self.master_IP, test_job, hadoop_path='')
+            exist_check_status = ssh_call_hadoop(self.user, self.master_IP, test_job, hadoop_path='')
+            self.assertEqual(exist_check_status, 0)
 
         self.addCleanup(self.delete_hdfs_files, SOURCE_HDFS_TO_PITHOS_FILE)
         self.addCleanup(self.hadoop_local_fs_action, 'rm /tmp/{0}'.format(SOURCE_HDFS_TO_PITHOS_FILE))
@@ -110,6 +203,51 @@ class ClouderaTest(unittest.TestCase):
         self.addCleanup(self.delete_local_files, SOURCE_PITHOS_TO_HDFS_FILE)
         self.addCleanup(self.delete_pithos_files, SOURCE_PITHOS_TO_HDFS_FILE)
         self.addCleanup(self.hadoop_local_fs_action, 'rm /tmp/{0}'.format(SOURCE_PITHOS_TO_HDFS_FILE))
+
+
+     # def test_oozie(self):
+     #     """
+     #     Test oozie for Cloudera cluster
+     #     """
+     #     ssh_call_hadoop(self.user, self.master_IP, pig_command)
+     #     exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
+     #                                          ' dfs -test -e {0}/_SUCCESS'.format('/user/hdfs/pig_test'))
+     #     self.assertEqual(exist_check_status, 0)
+     #     self.addCleanup(self.delete_hdfs_files, '/user/hduser/pig_test', prefix="-r")
+
+    def test_pig(self):
+        """
+        Test pig for Cloudera cluster
+        """
+        ssh_call_hadoop(self.user, self.master_IP, self.pig_command , hadoop_path='')
+        exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
+                                             ' dfs -test -e {0}'.format(PIG_TEST_FOLDER),
+                                             hadoop_path=self.hdfs_path)
+        self.assertEqual(exist_check_status, 0)
+        self.addCleanup(self.delete_hdfs_files, PIG_TEST_FOLDER, prefix="-r")
+
+    def test_oozie(self):
+        """
+        Test oozie for Cloudera cluster
+        """
+        ssh_call_hadoop(self.user, self.master_IP, 'dfs -mkdir oozie_app', hadoop_path=self.hdfs_path)
+        ssh_stream_to_hadoop(self.user, self.master_IP, join(dirname(abspath(__file__)), "workflow.xml"),
+                             self.VALID_DEST_DIR + "/oozie_app/workflow.xml", hadoop_path=self.hdfs_path)
+        master_vm_hostname = socket.gethostbyaddr(self.master_IP)[0].split('.')[0]
+        job_properties = JOB_PROPERTIES_TEMPLATE.format(master_vm_hostname)
+
+        create_job_properties_file = 'echo -e "{0}" > job.properties'.format(job_properties)
+        subprocess.call(create_job_properties_file, stderr=FNULL, shell=True)
+        subprocess.call( "scp {0} {1}@{2}:/tmp/".format(JOB_PROPERTIES_PATH, self.user, self.master_IP),
+                         stderr=FNULL, shell=True)
+        ssh_call_hadoop(self.user, self.master_IP, self.oozie_command, hadoop_path='')
+        exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
+                                             ' dfs -test -e {0}'.format(OOZIE_TEST_FOLDER),
+                                             hadoop_path=self.hdfs_path)
+        self.assertEqual(exist_check_status, 0)
+        self.addCleanup(self.delete_hdfs_files, OOZIE_TEST_FOLDER, prefix="-r")
+        self.addCleanup(self.hadoop_local_fs_action, 'rm /tmp/job.properties')
+        self.addCleanup(self.delete_local_files, JOB_PROPERTIES_PATH)
 
 
     def delete_hdfs_files(self, file_to_delete, prefix=""):
