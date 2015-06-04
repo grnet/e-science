@@ -223,7 +223,7 @@ class ClouderaTest(unittest.TestCase):
                          stderr=FNULL, shell=True)
         ssh_call_hadoop(self.user, self.master_IP, self.oozie_command, hadoop_path='')
         exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
-                                             ' dfs -test -e {0}'.format(OOZIE_TEST_FOLDER),
+                                             ' dfs -test -e {0}/{1}'.format(OOZIE_TEST_FOLDER, 'oozie_test_folder'),
                                              hadoop_path=self.hdfs_path)
         self.assertEqual(exist_check_status, 0)
         self.addCleanup(self.delete_hdfs_files, OOZIE_TEST_FOLDER, prefix="-r")
