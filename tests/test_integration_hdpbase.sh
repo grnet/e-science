@@ -29,7 +29,7 @@ setUp
 declare -a ARR_RESULT=($(orka create integration_test 2 2 2048 5 2 2048 5 standard escience.grnet.gr 2 128 --use_hadoop_image))
 CLUSTER_ID=${ARR_RESULT[1]}
 MASTER_IP=${ARR_RESULT[3]}
-export SSHPASS=\'${ARR_RESULT[5]}\'
+export SSHPASS=${ARR_RESULT[5]}
 if [ -n "$CLUSTER_ID" ]; then
 	printf "Create Cluster: OK\n"
 	echo 0 >&1
@@ -84,9 +84,8 @@ sshpass -e scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ~/.ss
 sshpass -e ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ROOTHOST \
 'cat /home/hduser/id_rsa.pub >> /home/hduser/.ssh/authorized_keys;
 rm -f /home/hduser/id_rsa.pub;
-exit' 2>&1 | tee _tmp.txt
-cat _tmp.txt
-rm -f _tmp.txt
+exit'
+echo "Before runPI"
 
 # 05 runPI
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
