@@ -49,10 +49,6 @@
       - /tmp/{{master_key_cloudera}}
     when: is_slave
 
-  - name: Install hbase-regionserver
-    tags: postconfig
-    command: apt-get install -y hbase-regionserver
-
   - name: copy yarn configuration xml and kamakirc files in every node
     tags: postconfig
     template: "src={{item.src}} dest={{item.dest}}"

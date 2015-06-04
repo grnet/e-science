@@ -35,6 +35,7 @@ case "$1" in
 	    sudo -u "$USER" $CMD stop >> "$LOG"
 	    rm -f "$PID"
 	    sudo -u "$USER" $CMD start >> "$LOG"
+	    echo $! > "$PID"
 esac
 
 exit 0
