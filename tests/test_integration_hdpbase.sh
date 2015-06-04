@@ -78,15 +78,15 @@ fi
 HOST=hduser@$MASTER_IP
 ROOTHOST=root@$MASTER_IP
 HADOOP_HOME=/usr/local/hadoop
-# sshpass -e scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ~/.ssh/id_rsa.pub $ROOTHOST:/home/hduser/
-# sshpass -e ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ROOTHOST \
-# 'cat /home/hduser/id_rsa.pub >> /home/hduser/.ssh/authorized_keys;
-# rm -f /home/hduser/id_rsa.pub;
-# exit'
+sshpass -e scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ~/.ssh/id_rsa.pub $ROOTHOST:/home/hduser/
+sshpass -e ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ROOTHOST \
+'cat /home/hduser/id_rsa.pub >> /home/hduser/.ssh/authorized_keys;
+rm -f /home/hduser/id_rsa.pub;
+exit'
 
 # 05 runPI
-sshpass -e ssh -t -t -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ROOTHOST \
-'su - hduser -c "/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.5.2.jar pi 2 10000"' 2>&1 | tee _tmp.txt
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
+'/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.5.2.jar pi 2 10000' 2>&1 | tee _tmp.txt
 RESULT=$(cat _tmp.txt | grep "Estimated value of Pi is" |cut -d' ' -f6)
 rm -f _tmp.txt
 if [ -n "$RESULT" ]; then
@@ -98,8 +98,8 @@ else
 fi
 
 # 08 pithosFS registered
-sshpass -e ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ROOTHOST \
-'su - hduser -c "/usr/local/hadoop/bin/hdfs dfs -ls pithos://pithos/WordCount/"' > _tmp.txt 2>&1
+sshpass -e ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
+'/usr/local/hadoop/bin/hdfs dfs -ls pithos://pithos/WordCount/' > _tmp.txt 2>&1
 cat _tmp.txt
 rm -f _tmp.txt
 
