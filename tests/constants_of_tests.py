@@ -43,4 +43,8 @@ PIG_CLOUDERA_COMMAND = "sudo -u hdfs pig -e \"fs -mkdir pig_test_folder\""
 PIG_TEST_FOLDER = 'pig_test_folder'
 OOZIE_TEST_FOLDER = 'oozie_app'
 OOZIE_COMMAND = 'sudo -u hdfs oozie job -oozie http://{0}:11000/oozie -config /tmp/job.properties -run'
+OOZIE_ECOSYSTEM_COMMAND = '/usr/local/oozie/bin/oozie job -oozie http://{0}:11000/oozie -config /tmp/job.properties -run'
 JOB_PROPERTIES_TEMPLATE = 'nameNode=hdfs://{0}:9000\njobTracker=http://{0}:8050\noozie.libpath=hdfs://{0}:9000/user/oozie/share/lib\noozie.wf.application.path=hdfs://{0}:9000/user/hdfs/oozie_app'
+JOB_PROPERTIES_ECOSYSTEM_TEMPLATE = 'nameNode=hdfs://{0}:9000\njobTracker=http://{0}:8050\noozie.libpath=hdfs://{0}:9000/user/hduser/share/lib\noozie.wf.application.path=hdfs://{0}:9000/user/hduser/oozie_app'
+
+HBASE_SCRIPT_PATH = '/usr/local/hbase/bin/hbaseTest.sh'
