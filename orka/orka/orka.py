@@ -151,6 +151,7 @@ class HadoopCluster(object):
             logging.log(SUMMARY, " Yarn Cluster is active.You can access it through " +
                         result['master_IP'] + ":8088/cluster")
             logging.log(SUMMARY, " The root password of your master VM is " + result['master_VM_password'])
+            stdout.write("cluster_id: {0} master_IP: {1} password: {2}".format(result['cluster_id'], result['master_IP'], result['master_VM_password']))
 
 
         except Exception, e:
@@ -174,6 +175,7 @@ class HadoopCluster(object):
             task_id = response['clusterchoice']['task_id']
             result = task_message(task_id, self.escience_token, wait_timer_delete)
             logging.log(SUMMARY, ' Cluster with name "%s" and all its resources deleted' %(result))
+            stdout.write("DESTROYED {0}".format(result))
         except Exception, e:
             logging.error(str(e.args[0]))
             exit(error_fatal)
@@ -206,6 +208,7 @@ class HadoopCluster(object):
             task_id = response['clusterchoice']['task_id']
             result = task_message(task_id, self.escience_token, wait_timer_delete)
             logging.log(SUMMARY, result)
+            stdout.write("{0}: {1}".format(str.upper(action),result))
         except Exception, e:
             logging.error(str(e.args[0]))
             exit(error_fatal)
@@ -284,6 +287,7 @@ class HadoopCluster(object):
         objects = pithos_client.list_objects()
         for object in objects:
             is_dir = 'application/directory' in object.get('content_type', object.get('content-type', ''))
+            is_dir = 'application/folder' in object.get('content_type', object.get('content-type', ''))
             if not is_dir:
                 print u"{:>12s} \"pithos:/{:s}/{:s}\"".format(bytes_to_shorthand(object['bytes']),
                                                               pithos_container,object['name'])
@@ -703,7 +707,8 @@ def main():
         verb = argv[1]
         if verb == 'create':
             if opts['cluster_size'] == 2:
-                if opts['replication_factor'] == 2:
+                if opts['replication_factor'] != 1:
+                    logging.warning(' Replication factor cannot exceed the number of slave nodes; defaulting to 1')
                     opts['replication_factor'] = 1
             if opts['cluster_size'] <= opts['replication_factor']:
                 logging.error('Replication factor must be between 1 and number of slave nodes (cluster_size -1)')

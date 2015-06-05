@@ -533,7 +533,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     @Override
     public long getPithosBlockDefaultSize(String pithos_container) {
         // - Create response object
-        PithosResponse resp = (new Gson()).fromJson(
+        resp = (new Gson()).fromJson(
                 (new Gson()).toJson(getContainerInfo(pithos_container)),
                 PithosResponse.class);
 
@@ -746,10 +746,20 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     }
 
     @Override
-    public void deletePithosObject(String pithos_container,
+    public String deletePithosObject(String pithos_container,
             String object_location) {
-        // TODO Auto-generated method stub
+        // - Create Pithos request
+        setPithosRequest(new PithosRequest());
 
+        String strResp = "";
+        try {
+            strResp = delete_object(object_location, pithos_container,
+                    getPithosRequest().getRequestParameters(),
+                    getPithosRequest().getRequestHeaders());
+        } catch (IOException e) {
+            Utils.dbgPrint(e.getMessage(), e);
+        }
+        return strResp;
     }
 
     @Override
