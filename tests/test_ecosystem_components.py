@@ -233,6 +233,9 @@ class EcosystemTest(unittest.TestCase):
                                     "/usr/local/oozie/bin/oozie admin -status -oozie http://" + self.master_IP + ":11000/oozie" + "\""
                                     , stderr=FNULL, shell=True)        
         self.assertEqual(response, 255) # Oozie down
+        subprocess.call( "ssh " + "root" + "@" + self.master_IP + " \"" + 
+                                    "service oozieserver start" + "\""
+                                    , stderr=FNULL, shell=True)
         
     def test_oozie(self):
         """
