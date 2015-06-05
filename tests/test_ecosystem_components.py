@@ -8,7 +8,6 @@ import subprocess
 from ConfigParser import RawConfigParser, NoSectionError
 from orka.orka.utils import get_user_clusters, ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to_hadoop
 import unittest
-from __builtin__ import file
 sys.path.append(dirname(abspath(__file__)))
 from constants_of_tests import *
 from orka.orka.cluster_errors_constants import error_fatal, const_hadoop_status_started, FNULL

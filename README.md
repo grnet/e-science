@@ -17,7 +17,7 @@ eScience software adopts the agile methodology. At the end of each development c
 On a high-level, Orka is being developed in a REST-API architectural fashion. Each client (CLI or Web) communicates with the eScience backend through REST calls. [schema](docs/orka_arch_diagram.png)
 
 ## Use it at your terminal
-Detailed information about installing and running orka is located in orka/README.md.
+Detailed information about installing and running orka on Debian OS is located in orka/README.md. Installation steps on other Linux distribution may differ, and may need further adjustments.
 
 ## Homepage URL
 Login to (http://83.212.114.81/) to create Hadoop clusters with your ~okeanos token. You need at least 2 VMs in an ~okeanos project to build the minimum YARN cluster.
