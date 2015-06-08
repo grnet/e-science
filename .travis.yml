@@ -41,4 +41,4 @@ before_script:
 script:
 # nosetests -sv tests/test_create_cluster.py
 # bash tests/integration/test_integration_hdpbase.sh
-- bash tests/integration/test_integration_cds.sh
+- bash tests/integration/test_integration_cdh.sh
