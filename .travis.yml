@@ -39,6 +39,6 @@ before_script:
 - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1920x1080x16"
 - ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
 script:
-# nosetests -sv tests/test_create_cluster.py
-# bash tests/integration/test_integration_hdpbase.sh
+- nosetests -sv tests/test_create_cluster.py
+- bash tests/integration/test_integration_hdpbase.sh
 - bash tests/integration/test_integration_cdh.sh
