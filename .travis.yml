@@ -40,4 +40,4 @@ before_script:
 - ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
 script:
 - nosetests -sv tests/test_create_cluster.py
-- bash tests/test_integration_hdpbase.sh
+- bash tests/integration/test_integration_hdpbase.sh
