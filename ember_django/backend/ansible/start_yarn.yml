@@ -37,6 +37,7 @@
     tags: ECOSYSTEMstart
     action: command {{item}} chdir={{hadoop_home}}/bin
     with_items:
+      - sudo -u hduser ./hadoop fs -mkdir -p /user/root
       - sudo -u hduser ./hadoop fs -mkdir -p /user/oozie
       - sudo -u hduser ./hadoop fs -mkdir -p /tmp
       - sudo -u hduser ./hadoop fs -mkdir -p /user/hive/warehouse
