@@ -121,7 +121,7 @@ public class PithosOutputStream extends OutputStream {
     }
 
     /**
-     * method for creating backup file of 4mb for buffering before streaming to
+     * method for creating backup file for buffering before streaming to
      * pithos
      * 
      * @return File
@@ -245,8 +245,7 @@ public class PithosOutputStream extends OutputStream {
         nextBlockOutputStream();
 
         // - Append Pithos Block on the existing object
-        Utils.dbgPrint("endBlock nextBlock.length",
-                nextBlock.getBlockData().length);
+        Utils.dbgPrint("endBlock nextBlock.length >",nextBlock.getBlockLength());
         PithosFileSystem.getHadoopPithosConnector().appendPithosBlock(
                 pithosPath.getContainer(), pithosPath.getObjectAbsolutePath(),
                 nextBlock);
@@ -307,7 +306,7 @@ public class PithosOutputStream extends OutputStream {
         backupFile.delete();
         
         super.close();
-
+        Utils.dbgPrint("super.close");
         closed = true;        
     }
 }

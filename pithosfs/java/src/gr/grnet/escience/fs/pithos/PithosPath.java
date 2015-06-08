@@ -53,15 +53,15 @@ public class PithosPath {
     private void convertHadoopFSPathToPithosFSPath(Path givenPath) {
 
         givenPath_str = givenPath.toString();
-        Utils.dbgPrint("-------------------| CONVERT |-------------------");
-        Utils.dbgPrint("1. INITIAL GIVEN PATH --> ", givenPath_str);
+//        Utils.dbgPrint("-------------------| CONVERT |-------------------");
+//        Utils.dbgPrint("1. INITIAL GIVEN PATH --> ", givenPath_str);
 
         // - Check if contains scheme and remove it
         if (givenPath_str.contains("://")) {
             givenPath_str = givenPath_str.substring(pithosFs.getScheme()
                     .toString().concat("://").length());
         }
-        Utils.dbgPrint("2. GIVEN PATH WITHOUT SCHEME --> ", givenPath_str);
+//        Utils.dbgPrint("2. GIVEN PATH WITHOUT SCHEME --> ", givenPath_str);
 
         // - Get the defined container
         this.container = givenPath_str.substring(0, givenPath_str.indexOf("/"));
@@ -69,7 +69,7 @@ public class PithosPath {
         this.objectAbsolutePath = givenPath_str.substring(getContainer()
                 .length() + 1);
 
-        Utils.dbgPrint("3. OBJECT ABSOLUTE PATH --> ", getObjectAbsolutePath());
+//        Utils.dbgPrint("3. OBJECT ABSOLUTE PATH --> ", getObjectAbsolutePath());
 
         // - Check what is requested in terms of files and directories on Pithos
         // FS
@@ -100,12 +100,12 @@ public class PithosPath {
             this.objectName = getObjectAbsolutePath();
         }
 
-        Utils.dbgPrint("4. OBJECT NAME --> ", getObjectName());
-
-        Utils.dbgPrint("5. FOLDER ABSOLUTE PATH --> ",
-                getObjectFolderAbsolutePath());
-
-        Utils.dbgPrint("--------------------------------------------------");
+//        Utils.dbgPrint("4. OBJECT NAME --> ", getObjectName());
+//
+//        Utils.dbgPrint("5. FOLDER ABSOLUTE PATH --> ",
+//                getObjectFolderAbsolutePath());
+//
+//        Utils.dbgPrint("--------------------------------------------------");
 
     }
 
