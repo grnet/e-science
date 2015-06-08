@@ -74,21 +74,6 @@ class EcosystemTest(unittest.TestCase):
         self.assertEqual(exist_check_status, 0)
         self.addCleanup(self.delete_hdfs_files, '/tmp/pig_test_folder', prefix="-r")
         
-    def test_pig_script(self):
-        """
-        Test pig through a pig script
-        """
-        self.put_file_to_hdfs('/tmp/{0}'.format('test_file_pig.txt'))
-        pig_command="export JAVA_HOME=/usr/lib/jvm/java-8-oracle; export HADOOP_HOME=/usr/local/hadoop; /usr/local/pig/bin/pig -e \\{0}\" ".format("\"data = LOAD {0} as (text:CHARARRAY);upper_case = FOREACH data GENERATE org.apache.pig.piggybank.evaluation.string.UPPER(text);STORE upper_case INTO {1};\\".format("'/user/hduser/test_file_pig.txt'", "'/user/hduser/pig_test'"))
-        ssh_call_hadoop(self.user, self.master_IP, pig_command, hadoop_path='')
-        exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
-                                            " dfs -test -e {0}".format('/user/hduser/pig_test/_SUCCESS'), 
-                                            hadoop_path=self.hdfs_path)
-        self.assertEqual(exist_check_status, 0)
-        self.addCleanup(self.delete_hdfs_files, '/user/hduser/pig_test', prefix="-r")
-        self.addCleanup(self.hadoop_local_fs_action, 'rm /tmp/{0}'.format('test_file_pig.txt'))
-        self.addCleanup(self.hadoop_local_fs_action, 'rm /user/hduser/{0}'.format('test_file_pig.txt'))
-        
     def test_spark_pi_wordcount(self):
         """
         Functional test to check if Spark is working correctly in a Ecosystem cluster
@@ -233,9 +218,6 @@ class EcosystemTest(unittest.TestCase):
                                     "/usr/local/oozie/bin/oozie admin -status -oozie http://" + self.master_IP + ":11000/oozie" + "\""
                                     , stderr=FNULL, shell=True)        
         self.assertEqual(response, 255) # Oozie down
-        subprocess.call( "ssh " + "root" + "@" + self.master_IP + " \"" + 
-                                    "service oozieserver start" + "\""
-                                    , stderr=FNULL, shell=True)
         
     def test_oozie(self):
         """

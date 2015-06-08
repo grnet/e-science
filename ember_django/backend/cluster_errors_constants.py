@@ -89,4 +89,4 @@ HADOOP_STATUS_ACTIONS = {"stop": ["0", "Stopping", "Stopped"],
 REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}
 
 # List of Hadoop actions that do not update the  state field in database
-NON_STATE_HADOOP_ACTIONS = ['format','HDFSMkdir','HUEstart','ECOSYSTEMstart','copyooziesharelib','CLOUDstart']
+NON_STATE_HADOOP_ACTIONS = ['format','HDFSMkdir','HUEstart']

@@ -48,16 +48,6 @@ public class PithosOutputStream extends OutputStream {
     private OutputStream backupStream;
 
     /**
-     * Utils instance
-     */
-    private final Utils util = new Utils();
-
-    /**
-     * instance of HadoopPithosConnector
-     */
-    // private HadoopPithosConnector hadoopConnector;
-
-    /**
      * flag if stream closed
      */
     private boolean closed;
@@ -126,7 +116,8 @@ public class PithosOutputStream extends OutputStream {
     }
 
     /**
-     * method for creating backup file for buffering before streaming to pithos
+     * method for creating backup file for buffering before streaming to
+     * pithos
      * 
      * @return File
      * @throws IOException
@@ -167,7 +158,6 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void write(byte[] b, int off, int len)
             throws IOException {
-        // util.dbgPrint("write(byte, int, int)",off,len);
         if (closed) {
             throw new IOException(ERR_STREAM_CLOSED);
         }
@@ -250,8 +240,7 @@ public class PithosOutputStream extends OutputStream {
         nextBlockOutputStream();
 
         // - Append Pithos Block on the existing object
-        Utils.dbgPrint("endBlock nextBlock.length >",
-                nextBlock.getBlockLength());
+        Utils.dbgPrint("endBlock nextBlock.length >",nextBlock.getBlockLength());
         PithosFileSystem.getHadoopPithosConnector().appendPithosBlock(
                 pithosPath.getContainer(), pithosPath.getObjectAbsolutePath(),
                 nextBlock);
@@ -310,9 +299,9 @@ public class PithosOutputStream extends OutputStream {
 
         backupStream.close();
         backupFile.delete();
-
+        
         super.close();
         Utils.dbgPrint("super.close");
-        closed = true;
+        closed = true;        
     }
 }
