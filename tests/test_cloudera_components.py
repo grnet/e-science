@@ -12,6 +12,7 @@ sys.path.append(dirname(abspath(__file__)))
 from constants_of_tests import *
 from orka.orka.cluster_errors_constants import error_fatal, const_hadoop_status_started, FNULL
 import requests
+import re
 
 BASE_DIR = join(dirname(abspath(__file__)), "../")
 JOB_PROPERTIES_PATH = join(dirname(abspath(__file__)), 'job.properties')
@@ -103,22 +104,22 @@ class ClouderaTest(unittest.TestCase):
                                     , stderr=FNULL, shell=True)
         self.assertEqual(response, 0) # OK
 
-    def test_hive_count_rows_in_table_not_exists(self):
+    def test_hive_count_rows_in_table_not_exist(self):
         """
         Count Hive rows in a table that does not exist
         """
         response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
-                                    "hive -e 'select count(*) from table_not_exists';" + "\""
+                                    "hive -e 'select count(*) from table_not_exist';" + "\""
                                     , stderr=FNULL, shell=True)
         self.assertEqual(response, 17) # ERROR table not found
 
-    def test_hbase_table_not_exists(self):
+    def test_hbase_table_not_exist(self):
         """
         Check if a table in Hbase does not exist
         """
         baseurl = "http://" + self.master_IP + ":60050"
         # check for a table that does not exist
-        request = requests.get(baseurl + "/" + "table_not_exists" + "/schema")
+        request = requests.get(baseurl + "/" + "table_not_exist" + "/schema")
         self.assertEqual(request.status_code, 404) # NOT FOUND
 
     def test_hbase_table_exists(self):
@@ -210,11 +211,16 @@ class ClouderaTest(unittest.TestCase):
         """
         Make a directory in HDFS running a oozie job using a workflow.xml.
         """
+        master_vm_hostname = ssh_check_output_hadoop(self.user, self.master_IP, 'cat /etc/hostname', hadoop_path='')[0]
+        read_workflow = open("workflow.xml", "r").read()
+        workflow_file = open("workflow.xml", "w")
+        workflow_file.write( re.sub("hostname", master_vm_hostname, read_workflow) )
+        workflow_file.close()
         ssh_call_hadoop(self.user, self.master_IP, 'dfs -mkdir oozie_app', hadoop_path=self.hdfs_path)
         ssh_stream_to_hadoop(self.user, self.master_IP, join(dirname(abspath(__file__)), "workflow.xml"),
                              self.VALID_DEST_DIR + "/oozie_app/workflow.xml", hadoop_path=self.hdfs_path)
 
-        master_vm_hostname = ssh_check_output_hadoop(self.user, self.master_IP, 'cat /etc/hostname', hadoop_path='')[0]
+
         job_properties = JOB_PROPERTIES_TEMPLATE.format(master_vm_hostname)
 
         create_job_properties_file = 'echo -e "{0}" > job.properties'.format(job_properties)
@@ -223,13 +229,15 @@ class ClouderaTest(unittest.TestCase):
                          stderr=FNULL, shell=True)
         ssh_call_hadoop(self.user, self.master_IP, self.oozie_command, hadoop_path='')
         exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
-                                             ' dfs -test -e {0}'.format(OOZIE_TEST_FOLDER),
+                                             ' dfs -test -e {0}/{1}'.format(OOZIE_TEST_FOLDER, 'oozie_test_folder'),
                                              hadoop_path=self.hdfs_path)
         self.assertEqual(exist_check_status, 0)
         self.addCleanup(self.delete_hdfs_files, OOZIE_TEST_FOLDER, prefix="-r")
         self.addCleanup(self.hadoop_local_fs_action, 'rm /tmp/job.properties')
         self.addCleanup(self.delete_local_files, JOB_PROPERTIES_PATH)
-
+        workflow_file = open("workflow.xml", "w")
+        workflow_file.write( re.sub(master_vm_hostname, "hostname", read_workflow) )
+        workflow_file.close()
 
     def delete_hdfs_files(self, file_to_delete, prefix=""):
         """

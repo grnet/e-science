@@ -2,7 +2,7 @@
 	<start to="createTestDir"/>
 	<action name="createTestDir">
 		<fs>
-			<mkdir  path="hdfs://hostname:9000/user/hdfs/oozie_app/oozie_test_folder"/>
+			<mkdir  path="hdfs://hostname:9000/user/hduser/oozie_app/oozie_test_folder"/>
 		</fs>
 		<ok to="end"/>
 		<error to="fail"/>
