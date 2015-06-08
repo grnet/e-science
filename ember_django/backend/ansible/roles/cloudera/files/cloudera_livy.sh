@@ -1,0 +1,1 @@
+/usr/lib/hue/build/env/bin/hue  livy_server > /dev/null 2>&1 &

@@ -7,13 +7,21 @@
     tags: postimage
     git: repo={{escience_repo}} dest={{my_project_dir}}/{{my_project_name}} version={{escience_version|default(origin)}}
 
-  - name: Copy Java dist directory in ansible folder
+  - name: Copy Java dist directory in ansible folder for yarn role
     tags: postimage
     command: cp -r {{path_to_java_dirs}}/dist/ {{settings_path}}/ansible/roles/yarn/files
 
-  - name: Copy Java lib directory in ansible folder
+  - name: Copy Java lib directory in ansible folder for yarn role
     tags: postimage
     command: cp -r {{path_to_java_dirs}}/lib/ {{settings_path}}/ansible/roles/yarn/files
+
+  - name: Copy Java dist directory in ansible folder for cloudera role
+    tags: postimage
+    command: cp -r {{path_to_java_dirs}}/dist/ {{settings_path}}/ansible/roles/cloudera/files
+
+  - name: Copy Java lib directory in ansible folder for cloudera role
+    tags: postimage
+    command: cp -r {{path_to_java_dirs}}/lib/ {{settings_path}}/ansible/roles/cloudera/files
 
   - name: Install orka as a python package
     tags: postimage

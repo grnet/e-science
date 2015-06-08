@@ -37,7 +37,6 @@ public class PithosFileSystem extends FileSystem {
 
     private URI uri;
     private static HadoopPithosConnector hadoopPithosConnector;
-    private static long defaultBlockSize = (long) 128 * 1024 * 1024;
     private Path workingDir;
     private String pathToString;
     private PithosPath pithosPath;
@@ -150,7 +149,7 @@ public class PithosFileSystem extends FileSystem {
         fsDataOutputStreamInstance = null;
 
         pithosPath = new PithosPath(f);
-        Utils.dbgPrint("create > container", pithosPath.getContainer());
+        Utils.dbgPrint("create > container",pithosPath.getContainer());
 
         Utils.dbgPrint("create >", f, pithosPath, getHadoopPithosConnector()
                 .getPithosBlockDefaultSize(pithosPath.getContainer()),
@@ -176,9 +175,8 @@ public class PithosFileSystem extends FileSystem {
     public boolean delete(Path f, boolean recursive) throws IOException {
         Utils.dbgPrint("delete > path, recurse ", f, recursive);
         pithosPath = new PithosPath(f);
-        resp = getHadoopPithosConnector().deletePithosObject(
-                pithosPath.getContainer(), pithosPath.getObjectAbsolutePath());
-        if (resp.contains("204")) {
+        resp = getHadoopPithosConnector().deletePithosObject(pithosPath.getContainer(), pithosPath.getObjectAbsolutePath());
+        if (resp.contains("204")){
             return true;
         }
         return false;
@@ -227,10 +225,7 @@ public class PithosFileSystem extends FileSystem {
             }
         }
         if (isDir) {
-            // TODO: the boolean param 'false' should be completed dynamically
-            // by the corresponding result from the list status method
-            pithosFileStatus = new PithosFileStatus(true,
-                    DEFAULT_HDFS_BLOCK_SIZE, false, targetPath);
+            pithosFileStatus = new PithosFileStatus(true, DEFAULT_HDFS_BLOCK_SIZE, false, targetPath);
         } else {
             for (String obj : metadata.getResponseData().keySet()) {
                 if (obj != null && obj.matches("Content-Length")) {
@@ -261,18 +256,18 @@ public class PithosFileSystem extends FileSystem {
 
         pathToString = pathToString.substring(this.getScheme().toString()
                 .concat("://").length());
-
-        Utils.dbgPrint("listStatus > pathToString", pathToString);
+        
+        Utils.dbgPrint("listStatus > pathToString",pathToString);
         filesList = pathToString.split("/");
         filename = filesList[filesList.length - 1];
-        Utils.dbgPrint("listStatus > 1. filename", filename);
+        Utils.dbgPrint("listStatus > 1. filename",filename);
         int count = 2;
         while (!filesList[filesList.length - count].equals(pithosPath
                 .getContainer())) {
             filename = filesList[filesList.length - count] + "/" + filename;
             count++;
         }
-        Utils.dbgPrint("listStatus > 2. filename", filename);
+        Utils.dbgPrint("listStatus > 2. filename",filename);
         // results = Collections.synchronizedList(new ArrayList<FileStatus>());
         results = new ArrayList<FileStatus>();
 
@@ -303,9 +298,7 @@ public class PithosFileSystem extends FileSystem {
         pithosPath = new PithosPath(f);
         Utils.dbgPrint("mkdirs pithosPath >",
                 pithosPath.getObjectFolderAbsolutePath());
-        Utils.dbgPrint("mkdirs > uploadFileToPithos > ",
-                pithosPath.getContainer(),
-                pithosPath.getObjectFolderAbsolutePath(), true);
+        Utils.dbgPrint("mkdirs > uploadFileToPithos > ",pithosPath.getContainer(),pithosPath.getObjectFolderAbsolutePath(),true);
         resp = getHadoopPithosConnector().uploadFileToPithos(
                 pithosPath.getContainer(),
                 pithosPath.getObjectFolderAbsolutePath(), true);

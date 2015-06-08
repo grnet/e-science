@@ -18,7 +18,7 @@
 
   # Set this to a random string, the longer the better.
   # This is used for secure hashing in the session store.
-  secret_key=!@#secretkey*&^
+  secret_key=!onlide@th1sri@l
 
   # Webserver listens on this address and port
   http_host=0.0.0.0
@@ -46,18 +46,17 @@
   ## django_email_backend=django.core.mail.backends.smtp.EmailBackend
 
   # Webserver runs as this user
-  server_user=hduser
-  server_group=hduser
+  ## server_user=hue
+  ## server_group=hue
 
   # This should be the Hue admin and proxy user
-  default_user=hduser
+  ## default_user=hue
 
   # This should be the hadoop cluster admin
-  default_hdfs_superuser=hduser
+  ## default_hdfs_superuser=hdfs
 
   # If set to false, runcpserver will not actually start the web server.
   # Used if Apache is being used as a WSGI container.
-  ## enable_server=yes
 
   # Number of threads used by the CherryPy web server
   ## cherrypy_server_threads=40
@@ -212,9 +211,6 @@
     # Defaults to HTTP_REMOTE_USER
     ## remote_user_header=HTTP_REMOTE_USER
 
-    # Synchronize a users groups when they login
-    ## sync_groups_on_login=false
-
     # Ignore the case of usernames when searching for existing users.
     # Only supported in remoteUserDjangoBackend.
     ## ignore_username_case=true
@@ -256,6 +252,10 @@
     # anonymous searches
     ## bind_password=
 
+    # Execute this script to produce the bind user password. This will be used
+    # when `bind_password` is not set.
+    ## bind_password_script=
+
     # Pattern for searching for usernames -- Use <username> for the parameter
     # For use when using LdapBackend for Hue authentication
     ## ldap_username_pattern="uid=<username>,ou=People,dc=mycompany,dc=com"
@@ -263,6 +263,9 @@
     # Create users in Hue when they try to login with their LDAP credentials
     # For use when using LdapBackend for Hue authentication
     ## create_users_on_login = true
+
+    # Synchronize a users groups when they login
+    ## sync_groups_on_login=false
 
     # Ignore the case of usernames when searching for existing users in Hue.
     ## ignore_username_case=false
@@ -337,6 +340,10 @@
         # anonymous searches
         ## bind_password=
 
+        # Execute this script to produce the bind user password. This will be used
+        # when `bind_password` is not set.
+        ## bind_password_script=
+
         # Pattern for searching for usernames -- Use <username> for the parameter
         # For use when using LdapBackend for Hue authentication
         ## ldap_username_pattern="uid=<username>,ou=People,dc=mycompany,dc=com"
@@ -346,6 +353,16 @@
 
         # Whether or not to follow referrals
         ## follow_referrals=false
+
+        # Enable python-ldap debugging.
+        ## debug=false
+
+        # Sets the debug level within the underlying LDAP C lib.
+        ## debug_level=255
+
+        # Possible values for trace_level are 0 for no logging, 1 for only logging the method calls with arguments,
+        # 2 for logging the method calls with arguments and the complete results and 9 for also logging the traceback of method calls.
+        ## trace_level=0
 
         ## [[[[[users]]]]]
 
@@ -376,9 +393,9 @@
     host=localhost
     port=5432
     engine=django.db.backends.postgresql_psycopg2
-    user=hduser
-    password=hdpass
-    name=hduser
+    user=hue
+    password=hue
+    name=hue
     ## options={}
 
   # Configuration options for specifying the Desktop session.
@@ -650,7 +667,7 @@
 
     [[[default]]]
       # Enter the filesystem uri
-      fs_defaultfs=hdfs://{{ hostvars[groups['master'][0]].inventory_hostname_short}}:9000
+      fs_defaultfs=hdfs://{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:9000
 
       # NameNode logical name.
       ## logical_name=
@@ -676,11 +693,11 @@
 
     [[[default]]]
       # Enter the host on which you are running the ResourceManager
-      resourcemanager_host={{ hostvars[groups['master'][0]].inventory_hostname_short}}
+      resourcemanager_host={{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}
 
       # The port where the ResourceManager IPC listens on
       resourcemanager_port=8050
-
+      # resourcemanager_port=8032
       # Whether to submit jobs to this cluster
       submit_to=True
 
@@ -716,11 +733,10 @@
 
     [[[default]]]
       # Enter the host on which you are running the Hadoop JobTracker
-      jobtracker_host={{ hostvars[groups['master'][0]].inventory_hostname_short}}
+      jobtracker_host={{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}
 
       # The port where the JobTracker IPC listens on
       jobtracker_port=8050
-
       # JobTracker logical name for HA
       ## logical_name=
 
@@ -762,7 +778,7 @@
   ## security_enabled=false
 
   # Location on HDFS where the workflows/coordinator are deployed when submitted.
-  remote_deployement_dir=/user/hduser/oozie/deployments
+  ## remote_deployement_dir=/user/hue/oozie/deployments
 
 
 ###########################################################################
@@ -777,7 +793,7 @@
   ## sample_data_dir=...thirdparty/sample_data
 
   # Location on HDFS where the oozie examples and workflows are stored.
-  remote_data_dir=/user/hduser/oozie/workspaces
+  ## remote_data_dir=/user/hue/oozie/workspaces
 
   # Maximum of Oozie workflows or coodinators to retrieve in one API call.
   ## oozie_jobs_count=100
@@ -794,13 +810,13 @@
 
   # Host where HiveServer2 is running.
   # If Kerberos security is enabled, use fully-qualified domain name (FQDN).
-  hive_server_host={{ hostvars[groups['master'][0]].inventory_hostname_short}}
+  hive_server_host={{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}
 
   # Port where HiveServer2 Thrift server runs on.
-  ## hive_server_port=10000
+  #hive_server_port=10011
 
   # Hive configuration directory, where hive-site.xml is located
-  hive_conf_dir=/usr/local/hive/conf
+  hive_conf_dir=/usr/lib/hive/conf/
 
   # Timeout in seconds for thrift calls to Hive service
   ## server_conn_timeout=120
@@ -824,7 +840,7 @@
 
   # Thrift version to use when communicating with HiveServer2.
   # New column format is from version 7.
-  ## thrift_version=7
+  ## thrift_version=5
 
   [[ssl]]
     # Path to Certificate Authority certificates.
@@ -884,10 +900,10 @@
 
 [pig]
   # Location of piggybank.jar on local filesystem.
-  local_sample_dir=/usr/local/pig/lib
+  local_sample_dir=/usr/lib/pig/
 
   # Location piggybank.jar will be copied to in HDFS.
-  remote_data_dir=/user/hduser/pig/examples
+  ## remote_data_dir=/user/hue/pig/examples
 
 
 ###########################################################################
@@ -898,7 +914,7 @@
   # For autocompletion, fill out the librdbms section.
 
   # Sqoop server URL
-  ## server_url=http://localhost:12000/sqoop
+  ## server_url=http://{{ ansible_ssh_host}}:12000/sqoop
 
 
 ###########################################################################
@@ -924,10 +940,10 @@
   # Comma-separated list of HBase Thrift servers for clusters in the format of '(name|host:port)'.
   # Use full hostname with security.
   # If using Kerberos we assume GSSAPI SASL, not PLAIN.
-  hbase_clusters=(Cluster|{{ hostvars[groups['master'][0]].inventory_hostname_short}}:9090)
+  hbase_clusters=(Cluster|{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:9090)
 
   # HBase configuration directory, where hbase-site.xml is located.
-  hbase_conf_dir=/usr/local/hbase/conf
+  ## hbase_conf_dir=/etc/hbase/conf
 
   # Hard limit of rows or columns per row fetched before truncating.
   ## truncate_limit = 500
@@ -945,7 +961,7 @@
 [search]
 
   # URL of the Solr Server
-  ## solr_url=http://localhost:8983/solr/
+  ## solr_url=http://{{ ansible_ssh_host}}:8983/solr/
 
   # Requires FQDN in solr_url if enabled
   ## security_enabled=false
@@ -964,7 +980,7 @@
   ## solrctl_path=/usr/bin/solrctl
 
   # Zookeeper ensemble.
-  ## solr_zk_ensemble=localhost:2181/solr
+  #solr_zk_ensemble={{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:2181/solr
 
 
 ###########################################################################
@@ -1001,10 +1017,10 @@
     [[[default]]]
       # Zookeeper ensemble. Comma separated list of Host/Port.
       # e.g. localhost:2181,localhost:2182,localhost:2183
-      host_ports={{ hostvars[groups['master'][0]].inventory_hostname_short}}:2181
+      host_ports={{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:2181
 
       # The URL of the REST contrib service (required for znode browsing).
-      ## rest_url=http://localhost:9998
+      rest_url=http://{{ ansible_ssh_host }}:9998
 
       # Name of Kerberos principal when using security.
       ## principal_name=zookeeper
@@ -1016,11 +1032,11 @@
 
 [spark]
   # URL of the REST Spark Job Server.
-  ## server_url=http://localhost:8090/
+  server_url=http://{{ ansible_ssh_host }}:8090/
 
   # List of available types of snippets
   ## languages='[{"name": "Scala", "type": "scala"},{"name": "Python", "type": "python"},{"name": "Impala SQL", "type": "impala"},{"name": "Hive SQL", "type": "hive"},{"name": "Text", "type": "text"}]'
-
+  livy_server_session_kind=yarn
 
 ###########################################################################
 # Settings for the User Admin application
@@ -1052,3 +1068,9 @@
 
   # Sentry configuration directory, where sentry-site.xml is located.
   ## sentry_conf_dir=/etc/sentry/conf
+
+  # Host address of the Livy Server.
+  livy_server_host={{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}
+  # Port of the Livy Server.
+  livy_server_port=8998
+

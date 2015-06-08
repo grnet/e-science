@@ -189,12 +189,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                 pithos_container = "pithos";
             }
 
-            // - Perform action by using Pithos REST API method
-            Map<String, List<String>> response_data = retrieve_container_info(
-                    pithos_container,
-                    getPithosRequest().getRequestParameters(),
-                    getPithosRequest().getRequestHeaders());
-
             // - Add data from pithos response on the corresponding java object
             getPithosResponse().setResponseData(
                     retrieve_container_info(pithos_container,
@@ -220,7 +214,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         response_data = null;
         // - Read meta-data and add the data on the Pithos Response
         try {
-            
+            // - Perform action by using Pithos REST API method
             // - Return the response data as String
             return list_container_objects(pithos_container, getPithosRequest()
                     .getRequestParameters(), getPithosRequest()
@@ -306,8 +300,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         block_size = getPithosObjectBlockSize(pithos_container, object_location);
         object_blocks_number = getPithosObjectBlocksNumber(pithos_container,
                 object_location);
-        int object_blocks_number = getPithosObjectBlocksNumber(
-                pithos_container, object_location);
 
         object_block_hashes = getPithosObjectBlockHashes(pithos_container,
                 object_location);
@@ -659,8 +651,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         block_size = getPithosObjectBlockSize(pithos_container, object_location);
         object_blocks_number = getPithosObjectBlocksNumber(pithos_container,
                 object_location);
-        int object_blocks_number = getPithosObjectBlocksNumber(
-                pithos_container, object_location);
 
         object_block_hashes = getPithosObjectBlockHashes(pithos_container,
                 object_location);
@@ -1042,7 +1032,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         } catch (IOException e) {
             Utils.dbgPrint(e.getMessage(), e);
             return null;
-        }
+        } 
     }
 
     @Override

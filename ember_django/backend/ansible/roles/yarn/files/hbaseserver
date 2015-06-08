@@ -1,0 +1,54 @@
+#!/bin/sh
+
+USER="hduser"
+CMD_HBASE_0="/usr/local/hbase/bin/stop-hbase.sh"
+CMD_HBASE_1="/usr/local/hbase/bin/start-hbase.sh"
+CMD_THRIFT="/usr/local/hbase/bin/hbase-daemon.sh"
+SERVICE=`basename $0`
+PID_HBASE="/var/run/$SERVICE.pid"
+PID_THRIFT="/var/run/$SERVICE_thrift.pid"
+LOG_HBASE="/var/log/$SERVICE.log"
+LOG_THRIFT="/var/log/$SERVICE_thrift.log"
+
+case "$1" in
+    start)
+	    if [ -f "$PID_HBASE" ] && ps `cat "$PID_HBASE" > /dev/null 2>&1` > /dev/null 2>&1; then
+	    	echo "Service already running"
+	  	else
+	    	echo "Starting $SERVICE..."
+	    	sudo -u "$USER" $CMD_HBASE_1 >> "$LOG_HBASE"
+	    	echo $! > "$PID_HBASE"
+	    	sudo -u "$USER" $CMD_THRIFT $1 thrift >> "$LOG_THRIFT"
+	    	echo $! > "$PID_THRIFT"
+	    	if ! [ -f "$PID_HBASE" ] && ps `cat "$PID_HBASE"` > /dev/null 2>&1; then
+	    	  echo "Something went wrong, see $LOG_HBASE and $LOG_THRIFT"
+	      	  return 1
+	    	fi
+	  	fi
+        ;;
+    stop)
+		if ! [ -f "$PID_HBASE" ] && ps `cat "$PID_HBASE" > /dev/null 2>&1` > /dev/null 2>&1; then
+	        echo "Service not running"
+	        return 1
+		fi
+	    echo "Stopping $SERVICE..."
+	    sudo -u "$USER" $CMD_HBASE_0 >> "$LOG_HBASE"
+	    sudo -u "$USER" $CMD_THRIFT $1 thrift >> "$LOG_THRIFT"
+	    echo "Service Stopped"
+	    rm -f "$PID_HBASE"
+	    rm -f "$PID_THRIFT"
+        ;;
+    restart)
+        echo "Restarting $SERVICE..."
+	    sudo -u "$USER" $CMD_HBASE_0 >> "$LOG_HBASE"
+	    rm -f "$PID_HBASE"
+	    sudo -u "$USER" $CMD_THRIFT stop thrift >> "$LOG_THRIFT"
+	    rm -f "$PID_THRIFT"
+	    sudo -u "$USER" $CMD_HBASE_1 >> "$LOG_HBASE"
+	    echo $! > "$PID_HBASE"
+	    sudo -u "$USER" $CMD_THRIFT start thrift >> "$LOG_THRIFT"
+	    echo $! > "$PID_THRIFT"
+	    ;;
+esac
+
+exit 0
