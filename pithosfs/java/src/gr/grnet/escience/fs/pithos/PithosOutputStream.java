@@ -289,7 +289,7 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void close() throws IOException {
         Utils.dbgPrint("close");
-        if (closed) {
+        if (isClosed()) {
             return;
         }
         Utils.dbgPrint("=================================================");
@@ -308,4 +308,9 @@ public class PithosOutputStream extends OutputStream {
         Utils.dbgPrint("super.close");
         closed = true;
     }
+
+    public static boolean isClosed() {
+        return closed;
+    }
+
 }
