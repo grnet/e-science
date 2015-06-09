@@ -6,8 +6,6 @@ env:
   global:
   - secure: K+JlJYjqHmO/5bRvkKSJoh6YfZGYf9/kyqM/j3HNUG0o5gvTa6zTcI2kjxpnnYvEpz64n58YcinusNTimUM4Y1eIaoxcKlCW0MyWkQcBAg8jB8mxttH3Igw0dSblo8XZcxLBMFr7mm6I9Z0cbRRyrDr+ebp6t/+m7xf/3hMozh4=
   - secure: X6F9qYcVNhPYHSHF15WnTmOgR3GToC0DISFhCyTD0Lb3qsoxu4PuNWA3X6LazQ57U5we/7keZuwVJAhJzy3JiVUYPOIM6AnYmG/qqdmvuTwyzqqXR9E0ULBWPTtA4HKaz/3P3RjkAyQ3WjcD2dHbRaGA+cFvXoTRAzsUmWYBTx8=
-  - TEST_SUITE=tests/integration/test_integration_hue.sh
-  - TEST_SUITE=tests/integration/test_integration_hdpbase.sh
 addons:
 - postgresql: '9.1'
 before_install:
@@ -42,6 +40,7 @@ before_script:
 - ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
 script:
 - nosetests -sv tests/test_create_cluster.py
-- "bash $TEST_SUITE" 
-- bash tests/integration/test_integration_ecosystem.sh
+- bash tests/integration/test_integration_hdpbase.sh
+# bash tests/integration/test_integration_hue.sh
+# bash tests/integration/test_integration_ecosystem.sh
 - bash tests/integration/test_integration_cdh.sh
