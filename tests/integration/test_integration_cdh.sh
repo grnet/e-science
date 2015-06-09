@@ -12,10 +12,9 @@
 # 06. wordcount
 # 07. teragen
 # 08. pithosFS is registered
-# 09. runPI pithosFS
-# 10. wordcount pithosFS
-# 11. teragen pithosFS
-# 12. Destroy Cluster
+# 09. wordcount pithosFS
+# 10. teragen pithosFS
+# 11. Destroy Cluster
 
 
 oneTimeSetUp(){
@@ -29,9 +28,10 @@ oneTimeSetUp(){
 
 oneTimeTearDown(){
 	# runs after whole test suite
-	rm -f ~/.kamakirc
+	kamaki file delete out_teragen -r --yes
 	rm -f _tmp.txt
 	unset SSHPASS
+	rm -f ~/.kamakirc
 }
 
 tearDown(){
@@ -153,7 +153,7 @@ testRegisteredpithosFS(){
 	assertTrue 'pithosFS registration Failed' '[ "$RESULT" -eq 0 ]'
 }
 
-# 10. wordcount pithosFS
+# 09. wordcount pithosFS
 testpithosFSwordcount(){
 	if [ "$DO_INTEGRATION_TEST" = true ]; then
 #		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ROOTHOST \
@@ -169,7 +169,21 @@ testpithosFSwordcount(){
 	assertTrue 'pithosFS wordcount Failed' '[ "$RESULT" -eq 0 ]'
 }
 
-# 12 Destroy
+# 10. teragen pithosFS
+testpithosFSteragen(){
+	if [ "$DO_INTEGRATION_TEST" = true ]; then
+		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
+		'/usr/lib/hadoop/bin/hadoop jar /usr/lib/hadoop-mapreduce/hadoop-mapreduce-examples.jar teragen 1342177 pithos://pithos/out_teragen/' 2>&1 | tee _tmp.txt
+		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
+		'/usr/bin/hdfs dfs -test -e pithos://pithos/out_teragen/_SUCCESS' > _tmp.txt 2>&1
+		RESULT="$?"
+	else
+		startSkipping
+	fi
+	assertTrue 'pithosFS teragen Failed' '[ "$RESULT" -eq 0 ]'
+}
+
+# 11 Destroy
 testClusterDestroy(){
 	if [ "$DO_INTEGRATION_TEST" = true ]; then
 		RESULT=$(orka destroy $CLUSTER_ID)
