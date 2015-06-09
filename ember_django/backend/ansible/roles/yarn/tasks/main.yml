@@ -76,11 +76,11 @@
     tags: hueconfig
 
   - name: Remove Hue obsolete directory
-    shell: rm -r hue-*
+    shell: rm -rf hue-*
     tags: hueconfig
 
   - name: Remove Hadoop .tar.gz file
-    shell: rm hadoop-*.tar.gz chdir={{path_to_hadoop}}
+    shell: rm -f hadoop-*.tar.gz chdir={{path_to_hadoop}}
     tags: postconfig
 
   - stat: path="{{ ssh_file_name }}"
@@ -167,6 +167,21 @@
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle"' }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export HADOOP_PREFIX=/usr/local/hadoop"' }
 
+  - name: update ~/.bashrc and hbase-env.sh files for ecosystem
+    tags: ecoconfig
+    lineinfile: "dest={{item.dest}} state={{item.state}} insertafter={{item.insertafter}} line={{item.line}}"
+    with_items:
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HIVE_HOME=/usr/local/hive'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$HIVE_HOME/bin:$PATH'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=/usr/local/pig/bin/:$PATH'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HBASE_HOME=/usr/local/hbase'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$HBASE_HOME/bin'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export SPARK_HOME=/usr/local/spark'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$SPARK_HOME/bin'" }
+      - { dest: '.bashrc', state: 'present', insertafter: 'EOF', line: "'export SPARK_HOME=/usr/local/spark'" }
+      - { dest: '.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$SPARK_HOME/bin'" }
+      - { dest: '/usr/local/hbase/conf/hbase-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle/"' }
+
   - name: Copy Java lib directory
     tags: postconfig
     copy: src=lib/ dest={{path_to_common_libs}} owner=hduser group=hadoop
@@ -190,7 +205,7 @@
   - name: copy yarn configuration xml and kamakirc files in every node
     tags: postconfig
     template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
-    with_items: 
+    with_items:
       - { src: 'core-site.j2', dest: '/usr/local/hadoop/etc/hadoop/core-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'mapred-site.j2', dest: '/usr/local/hadoop/etc/hadoop/mapred-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'hdfs-site.j2', dest: '/usr/local/hadoop/etc/hadoop/hdfs-site.xml', owner: 'hduser', group: 'hadoop' }
@@ -202,13 +217,29 @@
     template: src=hue.j2 dest={{ hue_home }}/desktop/conf/hue.ini owner=hduser group=hadoop
     when: is_master
 
+  - name: copy ecosystem xml files
+    tags: ecoconfig
+    template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
+    with_items:
+      - { src: 'regionservers.j2', dest: '/usr/local/hbase/conf/regionservers', owner: 'hduser', group: 'hadoop' }
+      - { src: 'regionservers.j2', dest: '/usr/local/hadoop/etc/hadoop/regionservers', owner: 'hduser', group: 'hadoop' }
+      - { src: 'hbase-site.j2', dest: '/usr/local/hbase/conf/hbase-site.xml', owner: 'hduser', group: 'hadoop' }
+      - { src: 'hive-site.j2', dest: '/usr/local/hive/conf/hive-site.xml', owner: 'hduser', group: 'hadoop' }
+
   - name: create masters and slaves files in hadoop-yarn master node
     tags: postconfig
     template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
-    with_items: 
+    with_items:
       - { src: 'masters.j2', dest: '/usr/local/hadoop/etc/hadoop/masters', owner: 'hduser', group: 'hadoop' }
       - { src: 'slaves.j2', dest: '/usr/local/hadoop/etc/hadoop/slaves', owner: 'hduser', group: 'hadoop' }
     when: is_master
+
+  - name: create masters and slaves files in spark master node
+    tags: ecoconfig
+    template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
+    with_items: 
+      - { src: 'slaves.j2', dest: '/usr/local/spark/conf/slaves', owner: 'hduser', group: 'hadoop' }
+    when: is_master 
 
   - name: create app/hadoop/tmp/namenode and datanode
     tags: postconfig
@@ -227,8 +258,8 @@
     tags: hueconfig
     when: is_master
 
-  - name: Edit pg_hba.conf, host to password
-    lineinfile: line="host\tall\t\tall\t\t127.0.0.1/32\t\tpassword" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="host(\s)+all(\s)+all(\s)+127.0.0.1/32(\s)+(?=md5)" backrefs=yes
+  - name: Edit pg_hba.conf, host to trust
+    lineinfile: line="host\tall\t\tall\t\t127.0.0.1/32\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="host(\s)+all(\s)+all(\s)+127.0.0.1/32(\s)+(?=password)" backrefs=yes
     tags: hueconfig
     when: is_master
 
@@ -248,12 +279,12 @@
     when: is_master
 
   - name: Create PostgreSql user
-    postgresql_user: name={{ hue_db_user }} password={{ hue_db_password }} role_attr_flags=CREATEDB,SUPERUSER,CREATEROLE
+    postgresql_user: name={{ eco_db_user }} password={{ eco_db_password }} role_attr_flags=CREATEDB,SUPERUSER,CREATEROLE
     tags: hueconfig
     when: is_master
 
   - name: Create PostgreSql database
-    postgresql_db: name={{ hue_db_name }} owner={{ hue_db_user }}
+    postgresql_db: name={{ hue_db_name }} owner={{ eco_db_user }}
     tags: hueconfig
     when: is_master
 
@@ -270,4 +301,50 @@
   - name: Hue project migrate
     shell: sudo -u hduser ./hue migrate chdir={{ hue_home }}/build/env/bin
     tags: hueconfig
+    when: is_master
+
+  - name: Create folder zookeeper
+    tags: ecoconfig
+    file: path=/usr/local/zookeeper owner={{eco_db_user}} group=hadoop state=directory
+
+  - name: Change ownership to hduser for all components
+    tags: ecoconfig
+    file: path={{item.path}} owner={{item.owner}} group={{item.group}} recurse=yes state=directory
+    with_items:
+      - { path: '{{hive_home}}', owner: '{{eco_db_user}}', group: 'hadoop' }
+      - { path: '/usr/local/hbase/', owner: '{{eco_db_user}}', group: 'hadoop' }
+      - { path: '/usr/local/oozie/', owner: '{{eco_db_user}}', group: 'hadoop' }
+      - { path: '/usr/local/pig/', owner: '{{eco_db_user}}', group: 'hadoop' }
+
+  - name: Create PostgreSql database for Hive
+    tags: ecoconfig
+    postgresql_db: name={{hive_db_name}} owner={{eco_db_user}}
+    when: is_master
+
+  - name: Run sql scripts
+    tags: ecoconfig
+    shell: sudo -u postgres psql -h localhost -U hduser -d metastore -f {{item}}
+    with_items:
+      - "{{hive_home}}/metastore/scripts/upgrade/postgres/hive-schema-1.1.0.postgres.sql"
+      - "{{hive_home}}/metastore/scripts/upgrade/postgres/hive-txn-schema-0.13.0.postgres.sql"
+    when: is_master
+
+  - name: Copy hadoop xml files to oozie conf directory
+    tags: ecoconfig
+    shell: cp -rf {{hadoop_home}}/etc/hadoop/* {{path_to_hadoop}}/oozie/conf/hadoop-conf
+    when: is_master
+
+  - name: Create Oozie Database
+    tags: ecoconfig
+    action: command sudo -u hduser ./ooziedb.sh create -sqlfile oozie.sql -run chdir=/usr/local/oozie/bin/
+    when: is_master
+
+  - name: Copy Ecosystem services to /etc/init.d
+    tags: ecoconfig
+    copy: "src={{item.src}} dest={{item.dest}} mode={{item.mode}}"
+    with_items:
+      - { src: 'hiveserver2', dest: '/etc/init.d/hiveserver2', mode: '0755' }
+      - { src: 'hbaseserver', dest: '/etc/init.d/hbaseserver', mode: '0755' }
+      - { src: 'livyserver', dest: '/etc/init.d/livyserver', mode: '0755' }
+      - { src: 'oozieserver', dest: '/etc/init.d/oozieserver', mode: '0755' }
     when: is_master

@@ -1,5 +1,10 @@
 package gr.grnet.escience.commons;
 
+import gr.grnet.escience.fs.pithos.PithosFileSystem;
+import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
+import gr.grnet.escience.pithos.rest.PithosResponse;
+import gr.grnet.escience.pithos.rest.PithosResponseFormat;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -11,6 +16,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,6 +37,10 @@ public class Utils {
     private static LocalDateTime ldt = null;
     private static ZonedDateTime zdt = null;
     private static String formatter = null;
+    private static StringTokenizer srtTokenizer = null;
+    private static List<String> filesList = new ArrayList<String>();
+    private static PithosResponse pithosResponse;
+    private static boolean isDir = false;
 
     public Utils() {
     }
@@ -209,5 +221,49 @@ public class Utils {
         loggerClient.getClient().debug(logStrBuilder.toString());
 
     }
+
+    public static String[] extractObjectList(String fileListStr,
+            String separator) {
+        // - Initialize Tokenizer instance
+        srtTokenizer = new StringTokenizer(fileListStr, separator);
+
+        // - Access all available files (either they are directories of files)
+        while (srtTokenizer.hasMoreElements()) {
+            filesList.add(srtTokenizer.nextElement().toString());
+        }
+
+        return filesList.toArray(new String[filesList.size()]);
+    }
+
+    public static boolean isDirectory(String pithos_container,
+            String targetObject, HadoopPithosConnector connector) {
+
+        // - re-initialiaze the flag
+        isDir = false;
+
+        // - If null this means use the current connector. Defined for testing
+        // purposes. Please check TestPithosFileStatus.java
+        if (connector == null) {
+            pithosResponse = PithosFileSystem.getHadoopPithosConnector()
+                    .getPithosObjectMetaData(pithos_container, targetObject,
+                            PithosResponseFormat.JSON);
+        } else {
+            pithosResponse = connector.getPithosObjectMetaData(
+                    pithos_container, targetObject, PithosResponseFormat.JSON);
+        }
+
+        if (pithosResponse.getResponseData().get("Content-Type")
+                .contains("application/directory")
+                || pithosResponse.getResponseData().get("Content-Type")
+                        .contains("application/folder")) {
+            isDir = true;
+        }
+
+        return isDir;
+    }
+
+    // public static boolean isEmpty(String targetDirectory) {
+    // return true;
+    // }
 
 }

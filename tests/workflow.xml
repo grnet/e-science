@@ -1,0 +1,14 @@
+<workflow-app xmlns="uri:oozie:workflow:0.2" name="wc-wf">
+    <start to="createTestDir"/>
+    <action name="createTestDir">
+        <fs>
+                <mkdir  path="hdfs://hostname:9000/user/hdfs/oozie_app/oozie_test_folder"/>
+        </fs>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <kill name="fail">
+        <message>Directory Creating test oozie dir failed</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>

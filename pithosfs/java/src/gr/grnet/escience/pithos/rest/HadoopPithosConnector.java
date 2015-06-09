@@ -1,6 +1,5 @@
 package gr.grnet.escience.pithos.rest;
 
-import gr.grnet.escience.commons.LoggerServer;
 import gr.grnet.escience.commons.PithosSerializer;
 import gr.grnet.escience.commons.Utils;
 import gr.grnet.escience.fs.pithos.PithosBlock;
@@ -41,7 +40,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         PithosSystemStore {
 
     private static final long serialVersionUID = 1L;
-    private transient LoggerServer loggerServer = null;
     private transient PithosRequest request;
     private transient PithosResponse response;
     private transient Object srcFile2bUploaded;
@@ -51,7 +49,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     private String objectDataContent;
     private String responseStr;
     private transient PithosPath path;
-    private transient Thread loggerThread = null;
     private long[] range = { 0, 0 };
     // - Create
     private long current_size = 0;
@@ -88,21 +85,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         // and pass the conf object from PithosFileSystem instead of option
         // literals
         super(pithosUrl, pithosToken, uuid);
-
-        // - Perform additional check for unused references
-        //System.gc();
-
-        // - Initialize the loggerServer
-        loggerThread = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                loggerServer = new LoggerServer();
-            }
-        });
-        // - Start logger into a separated thread
-        loggerThread.start();
-
     }
 
     /***
@@ -281,12 +263,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
         // - Read data object
         try {
-            // - Get response data in json format
-            // String json = (String) read_object_data(object_location,
-            // pithos_container,
-            // getPithosRequest().getRequestParameters(),
-            // getPithosRequest().getRequestHeaders());
-
             // -Serialize json response into Java object PithosResponseHashmap
             hashMapResp = (new Gson()).fromJson(
                     (String) read_object_data(object_location,
