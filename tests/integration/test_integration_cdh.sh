@@ -172,9 +172,9 @@ testpithosFSwordcount(){
 # 10. teragen pithosFS
 testpithosFSteragen(){
 	if [ "$DO_INTEGRATION_TEST" = true ]; then
-		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
+		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ROOTHOST \
 		'/usr/lib/hadoop/bin/hadoop jar /usr/lib/hadoop-mapreduce/hadoop-mapreduce-examples.jar teragen 1342177 pithos://pithos/out_teragen/' 2>&1 | tee _tmp.txt
-		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
+		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $ROOTHOST \
 		'/usr/bin/hdfs dfs -test -e pithos://pithos/out_teragen/_SUCCESS' > _tmp.txt 2>&1
 		RESULT="$?"
 	else
