@@ -149,7 +149,7 @@ public class PithosFileSystem extends FileSystem {
         fsDataOutputStreamInstance = null;
 
         pithosPath = new PithosPath(f);
-        Utils.dbgPrint("create > container",pithosPath.getContainer());
+        Utils.dbgPrint("create > container", pithosPath.getContainer());
 
         Utils.dbgPrint("create >", f, pithosPath, getHadoopPithosConnector()
                 .getPithosBlockDefaultSize(pithosPath.getContainer()),
@@ -175,10 +175,19 @@ public class PithosFileSystem extends FileSystem {
     public boolean delete(Path f, boolean recursive) throws IOException {
         Utils.dbgPrint("delete > path, recurse ", f, recursive);
         pithosPath = new PithosPath(f);
-        resp = getHadoopPithosConnector().deletePithosObject(pithosPath.getContainer(), pithosPath.getObjectAbsolutePath());
-        if (resp.contains("204")){
+        resp = getHadoopPithosConnector().deletePithosObject(
+                pithosPath.getContainer(), pithosPath.getObjectAbsolutePath());
+        if (resp.contains("204")) {
+            Utils.dbgPrint("=================================================");
+            Utils.dbgPrint("DELETE CALLED - SUCCESSFULLY");
+            Utils.dbgPrint("=================================================");
+
             return true;
         }
+        Utils.dbgPrint("=================================================");
+        Utils.dbgPrint("DELETE CALLED - FAILED");
+        Utils.dbgPrint("=================================================");
+
         return false;
     }
 
@@ -196,6 +205,38 @@ public class PithosFileSystem extends FileSystem {
         // - Process the given path
         pithosPath = new PithosPath(targetPath);
         Utils.dbgPrint("pithosPath >", pithosPath.getObjectAbsolutePath());
+
+        // //////////////////////////////////////////////////////
+        if (PithosOutputStream.closed) {
+
+            String fromFolder = pithosPath.getObjectAbsolutePath();
+            String toFolder = pithosPath.getObjectAbsolutePath().substring(0,
+                    pithosPath.getObjectAbsolutePath().indexOf("/"));
+            String resultFile = "part-r-00000";
+
+            String copyFromFullPath = fromFolder.concat("/").concat(resultFile);
+            String copyToFullPath = toFolder.concat("/").concat(resultFile);
+
+            Utils.dbgPrint("=================================================");
+            Utils.dbgPrint("MOVE RESULTS FOLDER");
+            Utils.dbgPrint("=================================================");
+            Utils.dbgPrint("FROM FOLDER --> " + fromFolder);
+            Utils.dbgPrint("THE FILE --> " + resultFile);
+            Utils.dbgPrint("FULL PATH FROM--> " + copyFromFullPath);
+            Utils.dbgPrint("------------------------------");
+            Utils.dbgPrint("TO FOLDER --> " + toFolder);
+            Utils.dbgPrint("THE FILE --> " + "part-r-00000");
+            Utils.dbgPrint("FULL PATH TO--> " + copyToFullPath);
+
+            PithosFileSystem.getHadoopPithosConnector()
+                    .movePithosObjectToFolder("pithos", // container
+                            copyFromFullPath, // source object
+                            "", // folder path
+                            copyToFullPath); // target object
+
+        }
+        // //////////////////////////////////////////////////////
+
         urlEsc = null;
         try {
             urlEsc = Utils.urlEscape(null, null,
@@ -225,7 +266,8 @@ public class PithosFileSystem extends FileSystem {
             }
         }
         if (isDir) {
-            pithosFileStatus = new PithosFileStatus(true, DEFAULT_HDFS_BLOCK_SIZE, false, targetPath);
+            pithosFileStatus = new PithosFileStatus(true,
+                    DEFAULT_HDFS_BLOCK_SIZE, false, targetPath);
         } else {
             for (String obj : metadata.getResponseData().keySet()) {
                 if (obj != null && obj.matches("Content-Length")) {
@@ -243,6 +285,11 @@ public class PithosFileSystem extends FileSystem {
         }
         Utils.dbgPrint("getFileStatus", "EXIT");
         Utils.dbgPrint("pithos_file_status >", pithosFileStatus);
+
+        Utils.dbgPrint("=================================================");
+        Utils.dbgPrint("GET FILE STATUS CALLED");
+        Utils.dbgPrint("=================================================");
+
         return pithosFileStatus;
     }
 
@@ -256,18 +303,18 @@ public class PithosFileSystem extends FileSystem {
 
         pathToString = pathToString.substring(this.getScheme().toString()
                 .concat("://").length());
-        
-        Utils.dbgPrint("listStatus > pathToString",pathToString);
+
+        Utils.dbgPrint("listStatus > pathToString", pathToString);
         filesList = pathToString.split("/");
         filename = filesList[filesList.length - 1];
-        Utils.dbgPrint("listStatus > 1. filename",filename);
+        Utils.dbgPrint("listStatus > 1. filename", filename);
         int count = 2;
         while (!filesList[filesList.length - count].equals(pithosPath
                 .getContainer())) {
             filename = filesList[filesList.length - count] + "/" + filename;
             count++;
         }
-        Utils.dbgPrint("listStatus > 2. filename",filename);
+        Utils.dbgPrint("listStatus > 2. filename", filename);
         // results = Collections.synchronizedList(new ArrayList<FileStatus>());
         results = new ArrayList<FileStatus>();
 
@@ -289,6 +336,11 @@ public class PithosFileSystem extends FileSystem {
         for (int i = 0; i < results.toArray(resultsArr).length; i++) {
             Utils.dbgPrint("listStatus results >", i, resultsArr[i]);
         }
+
+        Utils.dbgPrint("=================================================");
+        Utils.dbgPrint("LIST STATUS CALLED");
+        Utils.dbgPrint("=================================================");
+
         return results.toArray(resultsArr);
     }
 
@@ -298,7 +350,9 @@ public class PithosFileSystem extends FileSystem {
         pithosPath = new PithosPath(f);
         Utils.dbgPrint("mkdirs pithosPath >",
                 pithosPath.getObjectFolderAbsolutePath());
-        Utils.dbgPrint("mkdirs > uploadFileToPithos > ",pithosPath.getContainer(),pithosPath.getObjectFolderAbsolutePath(),true);
+        Utils.dbgPrint("mkdirs > uploadFileToPithos > ",
+                pithosPath.getContainer(),
+                pithosPath.getObjectFolderAbsolutePath(), true);
         resp = getHadoopPithosConnector().uploadFileToPithos(
                 pithosPath.getContainer(),
                 pithosPath.getObjectFolderAbsolutePath(), true);
@@ -338,10 +392,16 @@ public class PithosFileSystem extends FileSystem {
         resp = getHadoopPithosConnector().movePithosObjectToFolder(
                 srcPiPath.getContainer(), srcName, "", dstName);
         Utils.dbgPrint("rename resp>", resp);
+
+        Utils.dbgPrint("=================================================");
+        Utils.dbgPrint("RENAME CALLED");
+        Utils.dbgPrint("=================================================");
+
         if (resp.contains("201")) {
             return true;
+        } else {
+            return false;
         }
-        return false;
     }
 
     /**
