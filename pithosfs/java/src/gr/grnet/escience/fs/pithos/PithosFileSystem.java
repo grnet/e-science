@@ -67,7 +67,7 @@ public class PithosFileSystem extends FileSystem {
     private String copyToFullPath = null;
     private FileStatus[] resultFilesList = null;
     private int resultFilesCounter = 0;
-    private boolean fsClose = false;
+    private boolean commitCalled = false;
 
     public PithosFileSystem() {
     }
@@ -216,11 +216,14 @@ public class PithosFileSystem extends FileSystem {
 
         // - Check if it is the final call from outputstream and perform the
         // final action for the result file(s) movement
-        if (PithosOutputStream.isClosed() && !isClosedFS()) {
+        if (PithosOutputStream.isClosed() && !isCommitCalled()) {
             // - Set the current path as the one that constitutes the commit
             // directory for Hadoop outpustream
             setCommitPithosPath(pithosPath);
-            // TODO: add more comments
+
+            // - Perform the final commit by moving the result files to the root
+            // output folder
+            commitFinalResult();
         }
 
         urlEsc = null;
@@ -390,6 +393,15 @@ public class PithosFileSystem extends FileSystem {
         }
     }
 
+    /***
+     * Additional private methods for the management of the final results move
+     * to the root output directory
+     * 
+     */
+    /**
+     * 
+     * @return: the full path of the temp files during the output-stream example
+     */
     private PithosPath getCommitPithosPath() {
         return commitPithosPath;
     }
@@ -398,18 +410,27 @@ public class PithosFileSystem extends FileSystem {
         this.commitPithosPath = _path;
     }
 
-    private boolean isClosedFS() {
-        return fsClose;
+    /**
+     * 
+     * @return: check if the commit method has been already called, in order to
+     *          avoid any potential problems due to the recursive behaviour of
+     *          listStatus method
+     */
+    private boolean isCommitCalled() {
+        return commitCalled;
     }
 
+    /**
+     * Perform the move of the final result files from the temp files to the
+     * root ouput file, and delete the remaining unused temp files
+     */
     private void commitFinalResult() {
+
+        // - Avoid the impact due to the recursive behaviour
+        this.commitCalled = true;
 
         // - Get the attempt folder of the output result
         fromAttemptDirectory = getCommitPithosPath().getObjectAbsolutePath();
-        // .substring(
-        // 0,
-        // getCommitPithosPath().getObjectAbsolutePath()
-        // .lastIndexOf("/"));
 
         // - Get the root folder
         toOutputRootDirectory = getCommitPithosPath().getObjectAbsolutePath()
@@ -450,46 +471,36 @@ public class PithosFileSystem extends FileSystem {
             e.printStackTrace();
         }
 
-        String resultFile = "part-r-00000";
         // - Iterate on all results files
-        // for (String resultFile : resultFileName) {
-        // - Create the full From --> To paths that will be used by PithosFS
-        // methods so as to perform the move of the result files into pithos
-        // file storage
-        copyFromFullPath = fromAttemptDirectory.concat("/").concat(resultFile);
-        copyToFullPath = toOutputRootDirectory.concat("/").concat(resultFile);
+        for (String resultFile : resultFileName) {
+            // - Create the full From --> To paths that will be used by PithosFS
+            // methods so as to perform the move of the result files into pithos
+            // file storage
+            copyFromFullPath = fromAttemptDirectory.concat("/").concat(
+                    resultFile);
+            copyToFullPath = toOutputRootDirectory.concat("/").concat(
+                    resultFile);
 
-        Utils.dbgPrint("=================================================");
-        Utils.dbgPrint("MOVE RESULTS FOLDER");
-        Utils.dbgPrint("=================================================");
-        Utils.dbgPrint("FROM FOLDER --> " + fromAttemptDirectory);
-        Utils.dbgPrint("THE FILE --> " + resultFile);
-        Utils.dbgPrint("FULL PATH FROM--> " + copyFromFullPath);
-        Utils.dbgPrint("------------------------------");
-        Utils.dbgPrint("TO FOLDER --> " + toOutputRootDirectory);
-        Utils.dbgPrint("THE FILE --> " + resultFile);
-        Utils.dbgPrint("FULL PATH TO--> " + copyToFullPath);
+            Utils.dbgPrint("=================================================");
+            Utils.dbgPrint("MOVE RESULTS FOLDER");
+            Utils.dbgPrint("=================================================");
+            Utils.dbgPrint("FROM FOLDER --> " + fromAttemptDirectory);
+            Utils.dbgPrint("THE FILE --> " + resultFile);
+            Utils.dbgPrint("FULL PATH FROM--> " + copyFromFullPath);
+            Utils.dbgPrint("------------------------------");
+            Utils.dbgPrint("TO FOLDER --> " + toOutputRootDirectory);
+            Utils.dbgPrint("THE FILE --> " + resultFile);
+            Utils.dbgPrint("FULL PATH TO--> " + copyToFullPath);
 
-        // - Perform the move from the current temp directory to the root
-        // output
-        // directory - on PithosFS
-        PithosFileSystem.getHadoopPithosConnector().movePithosObjectToFolder(
-                "pithos", // container
-                copyFromFullPath, // source object
-                "", // folder path
-                copyToFullPath); // target object
-        // }
-
-    }
-
-    @Override
-    public void close() throws IOException {
-
-        // - Perform the final commit by moving the result files to the root
-        // output folder
-        commitFinalResult();
-
-        this.fsClose = true;
+            // - Perform the move from the current temp directory to the root
+            // output
+            // directory - on PithosFS
+            PithosFileSystem.getHadoopPithosConnector()
+                    .movePithosObjectToFolder("pithos", // container
+                            copyFromFullPath, // source object
+                            "", // folder path
+                            copyToFullPath); // target object
+        }
 
     }
 
