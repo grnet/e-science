@@ -59,7 +59,7 @@ public class PithosFileSystem extends FileSystem {
     private String[] files = null;
     private FileStatus[] resultsArr = null;
     private PithosOutputStream pithosOutputStreamInstance = null;
-    private final long DEFAULT_HDFS_BLOCK_SIZE = 128 * 1024 * 1024;
+    private static final long DEFAULT_HDFS_BLOCK_SIZE = (long)128 * 1024 * 1024;
     private String fromAttemptDirectory = null;
     private String toOutputRootDirectory = null;
     private String[] resultFileName = null;
@@ -468,7 +468,7 @@ public class PithosFileSystem extends FileSystem {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Utils.dbgPrint("commitFinalResult error: ",e);
         }
 
         // - Iterate on all results files
