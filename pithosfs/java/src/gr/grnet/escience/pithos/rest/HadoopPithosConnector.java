@@ -185,7 +185,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         try {
             // - If container argument is empty the initialize it with the
             // default value
-            if (pithos_container.equals("")) {
+            if ("".equals(pithos_container)) {
                 pithos_container = "pithos";
             }
 
@@ -378,11 +378,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
         // - Read data object
         try {
-            // - Get response data in json format
-            // String json = (String) read_object_data(object_location,
-            // pithos_container,
-            // getPithosRequest().getRequestParameters(),
-            // getPithosRequest().getRequestHeaders());
             // -Serialize json response into Java object PithosResponseHashmap
             hashMapResp = (new Gson()).fromJson(
                     (String) read_object_data(object_location,
@@ -416,11 +411,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
         // - Read data object
         try {
-            // - Get response data in json format
-            // String json = (String) read_object_data(object_location,
-            // pithos_container,
-            // getPithosRequest().getRequestParameters(),
-            // getPithosRequest().getRequestHeaders());
             // -Serialize json response into Java object PithosResponseHashmap
             hashMapResp = (new Gson()).fromJson(
                     (String) read_object_data(object_location,
@@ -480,12 +470,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
         // - Read data object
         try {
-            // - Get response data in json format
-            // String json = (String) read_object_data(object_location,
-            // pithos_container,
-            // getPithosRequest().getRequestParameters(),
-            // getPithosRequest().getRequestHeaders());
-            // System.out.println(json);
             // -Serialize json response into Java object PithosResponseHashmap
             hashMapResp = (new Gson()).fromJson(
                     (String) read_object_data(object_location,
@@ -659,15 +643,13 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             // - Move the pointer one step forward
             block_location_pointer_counter++;
         }
-
-        System.out
-                .println("Object pointer = " + block_location_pointer_counter);
+        Utils.dbgPrint("Object pointer = ", block_location_pointer_counter);
 
         // - Find the bytes range of the current block
         range = bytesRange(object_total_size, block_size, object_blocks_number,
                 block_location_pointer_counter);
 
-        System.out.println("RANGE [" + range[0] + "-" + range[1] + "]");
+        Utils.dbgPrint("RANGE [", range[0], "-", range[1], "]");
 
         // - Check if the requested offset is between the actual range of the
         // block
@@ -706,15 +688,10 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                 }
             }
         } else {
-            System.err
-                    .println("The defined offset into seek Pithos Block is out of range...\n\t"
-                            + "offset = "
-                            + offsetIntoPithosBlock
-                            + " | BlockRange["
-                            + range[0]
-                            + "-"
-                            + range[1]
-                            + "]");
+            Utils.dbgPrint(
+                    "The defined offset into seek Pithos Block is out of range...\n\t",
+                    "offset = ", offsetIntoPithosBlock, " | BlockRange[",
+                    range[0], "-", range[1], "]");
 
             return null;
         }
@@ -854,7 +831,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
             // - Check if file should be moved from root pithos to another
             // folder
-            if ((!path.getObjectFolderAbsolutePath().isEmpty())) {
+            if (!path.getObjectFolderAbsolutePath().isEmpty()) {
                 // - If the file is successfully upload to the root of pithos
                 // container
                 if (responseStr.contains("201")) {
