@@ -263,12 +263,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
         // - Read data object
         try {
-            // - Get response data in json format
-            // String json = (String) read_object_data(object_location,
-            // pithos_container,
-            // getPithosRequest().getRequestParameters(),
-            // getPithosRequest().getRequestHeaders());
-
             // -Serialize json response into Java object PithosResponseHashmap
             hashMapResp = (new Gson()).fromJson(
                     (String) read_object_data(object_location,
