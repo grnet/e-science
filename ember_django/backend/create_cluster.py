@@ -75,25 +75,20 @@ class YarnCluster(object):
         list_current_images = self.plankton.list_public(True, 'default')
         for image in list_current_images:
             if self.opts['os_choice'] == image['name']:
-                try:
-                    if image['properties']['escienceconf']:
-                        image_metadata = json.loads(image['properties']['escienceconf'])
-                        if image_metadata['ecosystem'] == 'True':
-                            self.hadoop_image = 'ecosystem'
-                        if 'cloudera' in image_metadata:
-                            if image_metadata['cloudera'] == 'True':
-                                self.hadoop_image = 'cloudera'
-                        elif image_metadata['hadoop'] == 'True' and image_metadata['hue'] == 'True':
-                            self.hadoop_image = 'hue'
-                        elif image_metadata['hadoop'] == 'False':
-                            self.hadoop_image = 'debianbase'
-                        else:
-                            self.hadoop_image = 'hadoopbase'
-
-                except:
-                    # if property hasn't been set then hadoop_image flag is false
+                if 'escienceconf' in image['properties']:
+                    image_metadata = json.loads(image['properties']['escienceconf'])
+                    if image_metadata['ecosystem'] == 'True':
+                        self.hadoop_image = 'ecosystem'
+                    elif image_metadata['cloudera'] == 'True':
+                        self.hadoop_image = 'cloudera'
+                    elif image_metadata['hadoop'] == 'True' and image_metadata['hue'] == 'True':
+                        self.hadoop_image = 'hue'
+                    else:
+                        self.hadoop_image = 'hadoopbase'
+                else:
                     self.hadoop_image = 'debianbase'
-
+        if not self.hadoop_image:
+            self.hadoop_image = 'debianbase'
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_cluster_size_quotas
