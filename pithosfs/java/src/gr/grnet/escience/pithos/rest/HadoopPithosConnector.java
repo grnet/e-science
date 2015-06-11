@@ -757,11 +757,12 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             if (!getFileList(pithos_container)
                     .contains(pithos_object.getName())) {
                 // - Create the file
-                createEmptyPithosObject(pithos_container, pithos_object);
+                String respStr = createEmptyPithosObject(pithos_container, pithos_object);
+                Utils.dbgPrint("storePithosObject#createEmptyPithosObject > ",respStr);
 
                 // - This means that the object should be created
                 if (pithos_object.getObjectSize() <= 0) {
-                    objectDataContent = " ";
+                    objectDataContent = "";
                 } else {
                     // - Create String from inputstream that corresponds to the
                     // serialized object
@@ -808,7 +809,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         // - Header Parameters
         // - Format of the uploaded file
         getPithosRequest().getRequestHeaders()
-                .put("Content-Type", "text/plain");
+                .put("Content-Type", "application/octet-stream");
 
         try {
             // - Create pithos path
@@ -917,7 +918,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                 // - Header Parameters
                 // - Format of the uploaded file
                 getPithosRequest().getRequestHeaders().put("Content-Type",
-                        "text/plain");
+                        "application/octet-stream");
             }
 
             // - If there is successful renaming of the object into the required

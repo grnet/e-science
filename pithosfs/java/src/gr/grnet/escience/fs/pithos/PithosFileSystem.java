@@ -245,7 +245,8 @@ public class PithosFileSystem extends FileSystem {
                     && (obj.matches("Content-Type") || obj
                             .matches("Content_Type"))) {
                 for (String fileType : metadata.getResponseData().get(obj)) {
-                    if (fileType.contains("application/directory")) {
+                    if (fileType.contains("application/directory")
+                            || fileType.contains("application/folder")) {
                         isDir = true;
                         break;
                     } else {
@@ -437,7 +438,7 @@ public class PithosFileSystem extends FileSystem {
                 .substring(
                         0,
                         getCommitPithosPath().getObjectAbsolutePath().indexOf(
-                                "/"));
+                                "/_temporary"));
 
         try {
             // - Get the file status by all available files into selected
