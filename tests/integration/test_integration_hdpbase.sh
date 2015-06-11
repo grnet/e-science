@@ -20,7 +20,7 @@
 oneTimeSetUp(){
 	# runs before whole test suite
 	if [ -z "${STAGING_IP}" ]; then
-		STAGING_IP=http://83.212.112.148
+		STAGING_IP=http://83.212.116.40
 	fi
 	local OKEANOS_TOKEN=$(cat .private/.config.txt | grep "token" |cut -d' ' -f3)
 	echo -e '[global]\ndefault_cloud = ~okeanos\nignore_ssl = on\n[cloud "~okeanos"]\nurl = https://accounts.okeanos.grnet.gr/identity/v2.0\ntoken = '$OKEANOS_TOKEN'\n[orka]\nbase_url = '$STAGING_IP > ~/.kamakirc	
@@ -47,7 +47,7 @@ testClusterCreate(){
 	# act
 	if [ "$DO_INTEGRATION_TEST" = true ]; then
 		# orka create name_of_cluster size_of_cluster master_cpus master_ram master_disksize slave_cpus slave_ram slave_disksize disk_template project_name replication blocksize
-		declare -a ARR_RESULT=($(orka create hdp_integration_test 2 4 4096 5 2 4096 10 standard escience.grnet.gr 2 128 --use_hadoop_image))
+		declare -a ARR_RESULT=($(orka create hdp_integration_test 2 4 4096 5 2 4096 10 standard escience.grnet.gr 2 128 --use_hadoop_image Hadoop\-2\.5\.2\-Debian\-8\.0))
 		CLUSTER_ID=${ARR_RESULT[1]}
 		MASTER_IP=${ARR_RESULT[3]}
 		export SSHPASS=${ARR_RESULT[5]}
