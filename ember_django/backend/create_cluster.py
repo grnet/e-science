@@ -87,8 +87,7 @@ class YarnCluster(object):
                         self.hadoop_image = 'hadoopbase'
                 else:
                     self.hadoop_image = 'debianbase'
-        if not self.hadoop_image:
-            self.hadoop_image = 'debianbase'
+
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_cluster_size_quotas
