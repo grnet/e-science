@@ -581,9 +581,9 @@ class ImagesInfo(object):
                 image_properties = image['properties']
                 if image_properties.has_key('escienceconf'):
                     available_images.append(image['name'])
-            elif image['owner'] == const_escience_uuid and image['name'] == "Debian Base":
+            elif image['name'] == "Debian Base":
                 available_images.append(image['name'])
-        
+        available_images.sort()
         for image in available_images:
             print image
     
