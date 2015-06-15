@@ -53,7 +53,6 @@ testClusterCreate(){
 		( $(orka create hdp_integration_test 2 4 4096 5 2 4096 10 standard escience.grnet.gr 2 128 --use_hadoop_image Hadoop\-2\.5\.2\-Debian\-8\.0 >_tmp.txt 2> /dev/null) ) & keepAlive $! " Working"
 		declare -a ARR_RESULT=($(cat _tmp.txt))
 		CLUSTER_ID=${ARR_RESULT[1]}
-		echo $CLUSTER_ID
 		MASTER_IP=${ARR_RESULT[3]}
 		export SSHPASS=${ARR_RESULT[5]}
 		if [ -n "$MASTER_IP" ]; then
