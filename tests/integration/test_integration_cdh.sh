@@ -16,6 +16,8 @@
 # 10. teragen pithosFS
 # 11. Destroy Cluster
 
+# Load test helpers
+. ./shunit2_helpers.sh
 
 oneTimeSetUp(){
 	# runs before whole test suite
@@ -41,13 +43,15 @@ tearDown(){
 	endSkipping
 }
 
+
 # 01 
 testClusterCreate(){
 	# arrange
 	# act
 	if [ "$DO_INTEGRATION_TEST" = true ]; then
 		# orka create name_of_cluster size_of_cluster master_cpus master_ram master_disksize slave_cpus slave_ram slave_disksize disk_template project_name replication blocksize
-		declare -a ARR_RESULT=($(orka create cdh_integration_test 2 4 4096 5 2 4096 10 standard escience.grnet.gr 2 128 --use_hadoop_image Hadoop_2\.6\.0\-Cloudera\-CDH\-5\.4\.2 2> _tmp.txt))
+		( $(orka create cdh_integration_test 2 4 4096 5 2 4096 10 standard escience.grnet.gr 2 128 --use_hadoop_image Hadoop_2\.6\.0\-Cloudera\-CDH\-5\.4\.2 >_tmp.txt 2> /dev/null) ) & keepAlive $! " Working"
+		declare -a ARR_RESULT=($(cat _tmp.txt))
 		CLUSTER_ID=${ARR_RESULT[1]}
 		MASTER_IP=${ARR_RESULT[3]}
 		export SSHPASS=${ARR_RESULT[5]}
