@@ -8,7 +8,7 @@ This module contains the definitions of returned errors and package constants.
 """
 import os
 
-# Definitions of return value errors
+# Definitions of return value success and errors
 error_syntax_clustersize = -1
 error_syntax_cpu_master = -2
 error_syntax_ram_master = -3
@@ -47,6 +47,7 @@ error_multiple_entries = -72
 error_project_quota = -73
 error_authentication = -99
 error_replication_factor = -36
+SUCCESS = 0
 
 # Package constants
 REPORT = 25  # Define logging level of REPORT

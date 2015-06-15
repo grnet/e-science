@@ -3,7 +3,7 @@
 
 """orka.orka: provides entry point main()."""
 import logging
-from sys import argv, stdout
+from sys import argv, stdout, stderr
 from kamaki.clients import ClientError
 from kamaki.clients.pithos import PithosClient
 from kamaki.clients.astakos import AstakosClient
@@ -99,19 +99,24 @@ def task_message(task_id, escience_token, wait_timer, task='not_progress_bar'):
                 stdout.write('{0}\r'.format(response['job']['state']))
                 stdout.flush()
             else:
-                logging.log(SUMMARY, response['job']['state'])
-                logging.log(SUMMARY, ' Waiting for cluster status update...')
+                stderr.write('{0}'.format('\r'))
+                logging.log(SUMMARY, '{0}'.format(response['job']['state']))
+
             previous_response = response
 
         else:
+            stderr.write('{0}'.format('.'))
             sleep(wait_timer)
         response = yarn_cluster_logger.retrieve()
+        stderr.flush()
 
 
     if 'success' in response['job']:
+        stderr.write('{0}'.format('\r'))
         return response['job']['success']
 
     elif 'error' in response['job']:
+        stderr.write('{0}'.format('\r'))
         logging.error(response['job']['error'])
         exit(error_fatal)
 
@@ -148,11 +153,10 @@ class HadoopCluster(object):
                 logging.error(response['clusterchoice']['message'])
                 exit(error_fatal)
             result = task_message(task_id, self.escience_token, wait_timer_create)
-            logging.log(SUMMARY, " Yarn Cluster is active.You can access it through " +
-                        result['master_IP'] + ":8088/cluster")
-            logging.log(SUMMARY, " The root password of your master VM is " + result['master_VM_password'])
-            stdout.write("cluster_id: {0} master_IP: {1} password: {2}".format(result['cluster_id'], result['master_IP'], result['master_VM_password']))
-
+            logging.log(SUMMARY, " YARN Cluster is active.You can access it through {0}:8088/cluster".format(result['master_IP']))
+            stdout.write("Your Cluster has the following properties:\ncluster_id: {0}\nmaster_IP: {1}\n"
+                         "root password: {2}\n".format(result['cluster_id'], result['master_IP'],
+                                                        result['master_VM_password']))
 
         except Exception, e:
             logging.error(' Fatal error: ' + str(e.args[0]))
@@ -174,8 +178,8 @@ class HadoopCluster(object):
             response = yarn_cluster_req.delete_cluster()
             task_id = response['clusterchoice']['task_id']
             result = task_message(task_id, self.escience_token, wait_timer_delete)
-            logging.log(SUMMARY, ' Cluster with name "%s" and all its resources deleted' %(result))
-            stdout.write("DESTROYED {0}".format(result))
+            logging.log(SUMMARY, ' Cluster with name "{0}" and all its resources deleted'.format(result))
+            exit(SUCCESS)
         except Exception, e:
             logging.error(str(e.args[0]))
             exit(error_fatal)
@@ -208,7 +212,7 @@ class HadoopCluster(object):
             task_id = response['clusterchoice']['task_id']
             result = task_message(task_id, self.escience_token, wait_timer_delete)
             logging.log(SUMMARY, result)
-            stdout.write("{0}: {1}".format(str.upper(action),result))
+            exit(SUCCESS)
         except Exception, e:
             logging.error(str(e.args[0]))
             exit(error_fatal)
@@ -643,7 +647,7 @@ def main():
         parser_create.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
                               ' Default is HadoopImage (overrides image selection)',
                               nargs='?', metavar='hadoop_image_name', default=None,
-                              const='Hadoop-2.5.2') 
+                              const='Hadoop-2.5.2')
         parser_create.add_argument("replication_factor", help='Replication factor for HDFS. Must be between 1 and number of slave nodes (cluster_size -1)',
                               type=checker.positive_num_is)
         parser_create.add_argument("dfs_blocksize", help='Dfs_blocksize at HDFS in megabytes',
