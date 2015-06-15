@@ -51,10 +51,8 @@ def install_yarn(*args):
         ansible_manage_cluster(cluster_id, 'start')
         
         if args[4] == 'hue':
-            ansible_manage_cluster(cluster_id, 'HDFSMkdir')
             ansible_manage_cluster(cluster_id, 'HUEstart')
         if args[4] == 'ecosystem':
-            ansible_manage_cluster(cluster_id, 'HDFSMkdir')
             ansible_manage_cluster(cluster_id, 'ECOSYSTEMstart')
             ansible_manage_cluster(cluster_id, 'HUEstart')
         elif args[4] == 'cloudera':
@@ -125,13 +123,15 @@ def ansible_manage_cluster(cluster_id, action):
         state = ' %s %s' %(HADOOP_STATUS_ACTIONS[action][1], cluster.cluster_name)
         current_task.update_state(state=state)
         db_hadoop_update(cluster_id, 'Pending', state)
+        debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
+        ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
         ansible_code_generic = 'ansible-playbook -i {0} {1} {2} -e "choose_role={3} manage_cluster={3}" -t'.format(hosts_filename, ansible_playbook, ansible_verbosity, role)
 
         if action == "format" and pre_action_status == const_hadoop_status_started:
             # format request for started cluster > stop [> clean ]> format > start
             # stop
             for hadoop_action in ['stop', action, 'start']:
-               ansible_code = '{0} {1}'.format(ansible_code_generic, hadoop_action)
+               ansible_code = '{0} {1} {2}'.format(ansible_code_generic, hadoop_action, ansible_log)
                execute_ansible_playbook(ansible_code)
 
             msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
@@ -139,7 +139,7 @@ def ansible_manage_cluster(cluster_id, action):
             return msg
 
         else: # other actions including format request when hadoop is stopped
-            ansible_code = '{0} {1}'.format(ansible_code_generic, action)
+            ansible_code = '{0} {1} {2}'.format(ansible_code_generic, action, ansible_log)
             execute_ansible_playbook(ansible_code)
             msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
             db_hadoop_update(cluster_id, current_hadoop_status, msg)

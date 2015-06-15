@@ -111,7 +111,7 @@ class MockPlankton():
     def list_public(self, *args):
         """ :returns static image list with valid keys. """
 
-        return [{'name': 'ubuntu', 'id': 0}]
+        return [{'name': 'ubuntu', 'id': 0, 'properties':'test'}]
 
 def mock_init_plankton(*args):
     """ :return: static image_list with valid keys. """

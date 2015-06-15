@@ -17,6 +17,7 @@ import org.apache.hadoop.conf.Configuration;
 public class PithosOutputStream extends OutputStream {
 
     private static String ERR_STREAM_CLOSED = "Stream closed";
+
     /**
      * Hadoop configuration
      */
@@ -50,7 +51,7 @@ public class PithosOutputStream extends OutputStream {
     /**
      * flag if stream closed
      */
-    private boolean closed;
+    private static boolean closed;
 
     /**
      * current position
@@ -105,9 +106,6 @@ public class PithosOutputStream extends OutputStream {
         this.conf = conf;
         this.pithosPath = path;
         this.blockSize = blocksize;
-        // this.hadoopConnector = new HadoopPithosConnector(
-        // conf.get("fs.pithos.url"), conf.get("auth.pithos.token"),
-        // conf.get("auth.pithos.uuid"));
         this.backupFile = newBackupFile();
         this.backupStream = new FileOutputStream(backupFile);
         this.bufferSize = buffersize;
@@ -116,8 +114,7 @@ public class PithosOutputStream extends OutputStream {
     }
 
     /**
-     * method for creating backup file for buffering before streaming to
-     * pithos
+     * method for creating backup file for buffering before streaming to pithos
      * 
      * @return File
      * @throws IOException
@@ -144,7 +141,7 @@ public class PithosOutputStream extends OutputStream {
     public synchronized void write(int b) throws IOException {
         Utils.dbgPrint("write(int)");
 
-        if (closed) {
+        if (isClosed()) {
             throw new IOException(ERR_STREAM_CLOSED);
         }
 
@@ -158,7 +155,7 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void write(byte[] b, int off, int len)
             throws IOException {
-        if (closed) {
+        if (isClosed()) {
             throw new IOException(ERR_STREAM_CLOSED);
         }
         while (len > 0) {
@@ -184,7 +181,7 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void flush() throws IOException {
         // util.dbgPrint("flush");
-        if (closed) {
+        if (isClosed()) {
             throw new IOException(ERR_STREAM_CLOSED);
         }
 
@@ -240,7 +237,8 @@ public class PithosOutputStream extends OutputStream {
         nextBlockOutputStream();
 
         // - Append Pithos Block on the existing object
-        Utils.dbgPrint("endBlock nextBlock.length >",nextBlock.getBlockLength());
+        Utils.dbgPrint("endBlock nextBlock.length >",
+                nextBlock.getBlockLength());
         PithosFileSystem.getHadoopPithosConnector().appendPithosBlock(
                 pithosPath.getContainer(), pithosPath.getObjectAbsolutePath(),
                 nextBlock);
@@ -288,9 +286,12 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void close() throws IOException {
         Utils.dbgPrint("close");
-        if (closed) {
+        if (isClosed()) {
             return;
         }
+        Utils.dbgPrint("=================================================");
+        Utils.dbgPrint("OUTPUTSTREAM CLOSE CALLED");
+        Utils.dbgPrint("=================================================");
 
         flush();
         if (filePos == 0 || bytesWrittenToBlock != 0) {
@@ -299,9 +300,18 @@ public class PithosOutputStream extends OutputStream {
 
         backupStream.close();
         backupFile.delete();
-        
+
         super.close();
         Utils.dbgPrint("super.close");
-        closed = true;        
+        setClosed(true);
     }
+
+    public static boolean isClosed() {
+        return closed;
+    }
+    
+    public static void setClosed(boolean flag){
+        closed = flag;
+    }
+
 }

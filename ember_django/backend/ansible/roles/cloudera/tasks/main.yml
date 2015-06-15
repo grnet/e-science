@@ -77,6 +77,13 @@
     command: install -d -m 0700 -o hdfs -g hdfs /data/1/dfs/nn /nfsmount/dfs/nn
     when: is_master
 
+  - name: update ~/.bashrc and profile files
+    tags: postconfig
+    lineinfile: "dest={{item.dest}} state={{item.state}} insertafter={{item.insertafter}} line={{item.line}}"
+    with_items:
+      - { dest: '/root/.bashrc', state: 'present', insertafter: 'EOF', line: "'export JAVA_HOME=/usr/lib/jvm/java-8-oracle'"}
+      - { dest: '/root/.profile', state: 'present', insertafter: 'EOF', line: "'export JAVA_HOME=/usr/lib/jvm/java-8-oracle'" }
+
   - name: create local storage directories for datanodes
     tags: postconfig
     command: install -d -m 0700 -o hdfs -g hdfs /data/1/dfs/dn /data/2/dfs/dn /data/3/dfs/dn /data/4/dfs/dn
