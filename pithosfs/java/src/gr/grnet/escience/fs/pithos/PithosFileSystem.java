@@ -20,6 +20,8 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Progressable;
 
 /**
@@ -61,7 +63,7 @@ public class PithosFileSystem extends FileSystem {
     private FileStatus[] resultsArr = null;
     private PithosOutputStream pithosOutputStreamInstance = null;
     private final long DEFAULT_HDFS_BLOCK_SIZE = 128 * 1024 * 1024;
-
+    
     public PithosFileSystem() {
     }
 
@@ -109,7 +111,6 @@ public class PithosFileSystem extends FileSystem {
                     conf.get("fs.pithos.url"), conf.get("auth.pithos.token"),
                     conf.get("auth.pithos.uuid")));
         }
-
     }
 
     @Override
@@ -342,6 +343,26 @@ public class PithosFileSystem extends FileSystem {
             return true;
         }
         return false;
+    }
+    
+    /**
+     * No more filesystem operations are needed.  Will
+     * release any held locks.
+     */
+    @Override
+    public void close() throws IOException {
+
+        // new Path("pithos://pithos/out_file9")
+        Configuration conf = super.getConf(); 
+        Job job = Job.getInstance(conf); 
+        FileOutputFormat.setOutputPath(job, new Path("pithos://pithos/out_file11"));
+
+        
+       	
+    	// delete all files that were marked as delete-on-exit.
+    	processDeleteOnExit();
+
+    	return;      
     }
 
     /**
