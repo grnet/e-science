@@ -14,7 +14,8 @@ from utils import ClusterRequest, ConnectionError, authenticate_escience, get_us
     custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf, \
     ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to_hadoop, \
     read_replication_factor, ssh_stream_from_hadoop, parse_hdfs_dest, get_file_protocol, \
-    ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, is_period, is_default_dir
+    ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, is_period, is_default_dir, \
+    check_credentials, endpoints_and_user_id, init_plankton
 from time import sleep
 
 
@@ -568,6 +569,31 @@ class UserClusterInfo(object):
         else:
             print 'No user cluster Information available.'
 
+class ImagesInfo(object):
+    """ Class holding info for available images
+    """
+    def __init__(self, opts):
+        self.opts = opts
+
+    # List available images
+    def list_images(self):
+        auth = check_credentials(self.opts['token'])
+        endpoints, user_id = endpoints_and_user_id(auth)    
+        plankton = init_plankton(endpoints['plankton'], self.opts['token'])
+        list_current_images = plankton.list_public(True, 'default')
+        available_images = []
+        for image in list_current_images:
+            # owner of image will be checked based on the uuid
+            if image['owner'] == const_escience_uuid:
+                image_properties = image['properties']
+                if image_properties.has_key('escienceconf'):
+                    available_images.append(image['name'])
+            elif image['name'] == "Debian Base":
+                available_images.append(image['name'])
+        available_images.sort()
+        for image in available_images:
+            print "{:<2}\"{name}\"".format('',name=image)
+    
 def main():
     """
     Entry point of orka package. Parses user arguments and return
@@ -584,6 +610,7 @@ def main():
         kamaki_base_url = get_from_kamaki_conf('orka','base_url')
     except ClientError, e:
         kamaki_token = ' '
+        kamaki_base_url = ' '
         logging.warning(e.message)
     
     orka_subparsers = orka_parser.add_subparsers(help='Choose Hadoop cluster action')
@@ -598,6 +625,10 @@ def main():
                               auth_url)
     common_parser.add_argument("--server_url", metavar='server_url', default=kamaki_base_url,
                               help='Application server url.  Default read from .kamakirc')
+
+    # images
+    parser_images = orka_subparsers.add_parser('images', parents=[common_parser],
+                                     help='List available images.')
     # cluster actions group
     parser_create = orka_subparsers.add_parser('create', parents=[common_parser],
                                      help='Create a Hadoop-Yarn cluster'
@@ -712,6 +743,7 @@ def main():
         opts = vars(orka_parser.parse_args(argv[1:]))
         c_hadoopcluster = HadoopCluster(opts)
         c_userclusters = UserClusterInfo(opts)
+        c_imagesinfo = ImagesInfo(opts)
         verb = argv[1]
         if verb == 'create':
             if opts['cluster_size'] == 2:
@@ -726,6 +758,8 @@ def main():
             c_hadoopcluster.create()
         elif verb == 'destroy':
             c_hadoopcluster.destroy()
+        elif verb == 'images':
+            c_imagesinfo.list_images()
         elif verb == 'list' or verb == 'info':
             if verb == 'info':
                 opts['verbose'] = True

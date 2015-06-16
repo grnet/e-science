@@ -66,6 +66,7 @@ const_cluster_status_active = "1"
 const_cluster_status_pending = "2"
 const_hadoop_status_started = "1"
 const_hadoop_status_stopped = "0"
+const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
 HADOOP_PATH = '/usr/local/hadoop/bin/hdfs'
 DEFAULT_HDFS_DIR = ['/user/hduser', '/user/hduser/']
 FNULL = open(os.devnull, 'w')

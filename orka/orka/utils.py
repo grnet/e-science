@@ -10,6 +10,8 @@ import xml.etree.ElementTree as ET
 from cluster_errors_constants import *
 from os.path import abspath, dirname, join, expanduser
 from kamaki.clients import ClientError
+from kamaki.clients.astakos import AstakosClient
+from kamaki.clients.image import ImageClient
 from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
 from requests import ConnectionError
 from collections import OrderedDict
@@ -551,3 +553,52 @@ def is_default_dir(checked_string):
         return True
     else:
         return False
+
+
+def check_credentials(token, auth_url=auth_url):
+    """Identity,Account/Astakos. Test authentication credentials"""
+    logging.log(REPORT, ' Test the credentials')
+    try:
+        auth = AstakosClient(auth_url, token)
+        auth.authenticate()
+    except ClientError:
+        msg = ' Authentication failed with url %s and token %s'\
+            % (auth_url, token)
+        raise ClientError(msg, error_authentication)
+    return auth
+
+def endpoints_and_user_id(auth):
+    """
+    Get the endpoints
+    Identity, Account --> astakos
+    Compute --> cyclades
+    Object-store --> pithos
+    Image --> plankton
+    Network --> network
+    """
+    logging.log(REPORT, ' Get the endpoints')
+    try:
+        endpoints = dict(
+            astakos=auth.get_service_endpoints('identity')['publicURL'],
+            cyclades=auth.get_service_endpoints('compute')['publicURL'],
+            pithos=auth.get_service_endpoints('object-store')['publicURL'],
+            plankton=auth.get_service_endpoints('image')['publicURL'],
+            network=auth.get_service_endpoints('network')['publicURL']
+            )
+        user_id = auth.user_info['id']
+    except ClientError:
+        msg = ' Failed to get endpoints & user_id from identity server'
+        raise ClientError(msg)
+    return endpoints, user_id
+
+def init_plankton(endpoint, token):
+    """
+    Plankton/Initialize Imageclient.
+    ImageClient has all registered images.
+    """
+    logging.log(REPORT, ' Initialize ImageClient')
+    try:
+        return ImageClient(endpoint, token)
+    except ClientError:
+        msg = ' Failed to initialize the Image client'
+        raise ClientError(msg)
