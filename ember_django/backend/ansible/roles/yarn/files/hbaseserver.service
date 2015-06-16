@@ -1,0 +1,12 @@
+[Unit]
+Description=HBaseserver
+
+[Service]
+Type=oneshot
+ExecStart=/etc/init.d/hbaseserver start
+ExecStop=/etc/init.d/hbaseserver stop
+ExecReload=/etc/init.d/hbaseserver restart
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
