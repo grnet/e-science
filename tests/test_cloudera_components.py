@@ -35,7 +35,7 @@ class ClouderaTest(unittest.TestCase):
             self.base_url = parser.get('deploy', 'url')
             self.project_name = parser.get('project', 'name')
             self.master_IP = parser.get('cluster', 'master_ip')
-            clusters = get_user_clusters(self.token)
+            clusters = get_user_clusters(self.token, self.base_url)
             self.active_cluster = None
             for cluster in clusters:
                 if cluster['master_IP'] == self.master_IP:
