@@ -186,17 +186,6 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     '-f {0} -e "choose_role={1} ssh_file_name={2} token={3} '.format(str(cluster_size), role, ssh_file, token) + \
     'dfs_blocksize={0}m dfs_replication={1} uuid={2} " {3}'.format(dfs_blocksize, replication_factor, uuid, tags)
 
-    # hadoop_image flag(bare/Hadoop only/Hadoop + Hue)
-    if hadoop_image == 'hue':
-        # Hue -> use an available image (Hadoop and Hue pre-installed)
-        ansible_code += ' -t postconfig,hueconfig'
-    elif hadoop_image == 'hadoopbase':
-        # Hadoop -> use an available image (Hadoop pre-installed)
-        ansible_code += ' -t postconfig'
-    else:
-        ansible_code += ' -t preconfig,postconfig'
-
-    # If above checks are false, will create a cluster with Debian Base image and install Hadoop
 
     # Execute ansible
     ansible_code += ansible_log
