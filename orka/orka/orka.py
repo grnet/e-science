@@ -157,6 +157,7 @@ class HadoopCluster(object):
             stdout.write("Your Cluster has the following properties:\ncluster_id: {0}\nmaster_IP: {1}\n"
                          "root password: {2}\n".format(result['cluster_id'], result['master_IP'],
                                                         result['master_VM_password']))
+            exit(SUCCESS)
 
         except Exception, e:
             logging.error(' Fatal error: ' + str(e.args[0]))
@@ -198,7 +199,7 @@ class HadoopCluster(object):
         else:
             logging.error(' Hadoop can only be managed for an active cluster.')
             exit(error_fatal)
-        if active_cluster:            
+        if active_cluster:
             if (active_cluster['hadoop_status'] == const_hadoop_status_started and action == "start"):
                 logging.error(' Hadoop already started.')
                 exit(error_fatal)
