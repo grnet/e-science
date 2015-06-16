@@ -14,7 +14,8 @@ from utils import ClusterRequest, ConnectionError, authenticate_escience, get_us
     custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf, \
     ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to_hadoop, \
     read_replication_factor, ssh_stream_from_hadoop, parse_hdfs_dest, get_file_protocol, \
-    ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, is_period, is_default_dir
+    ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, is_period, is_default_dir, \
+    check_credentials, endpoints_and_user_id, init_plankton
 from time import sleep
 
 
@@ -566,6 +567,31 @@ class UserClusterInfo(object):
         else:
             print 'No user cluster Information available.'
 
+class ImagesInfo(object):
+    """ Class holding info for available images
+    """
+    def __init__(self, opts):
+        self.opts = opts
+
+    # List available images
+    def list_images(self):
+        auth = check_credentials(self.opts['token'])
+        endpoints, user_id = endpoints_and_user_id(auth)    
+        plankton = init_plankton(endpoints['plankton'], self.opts['token'])
+        list_current_images = plankton.list_public(True, 'default')
+        available_images = []
+        for image in list_current_images:
+            # owner of image will be checked based on the uuid
+            if image['owner'] == const_escience_uuid:
+                image_properties = image['properties']
+                if image_properties.has_key('escienceconf'):
+                    available_images.append(image['name'])
+            elif image['name'] == "Debian Base":
+                available_images.append(image['name'])
+        available_images.sort()
+        for image in available_images:
+            print image
+    
 def main():
     """
     Entry point of orka package. Parses user arguments and return
@@ -593,6 +619,9 @@ def main():
     common_parser.add_argument("--auth_url", metavar='auth_url', default=auth_url,
                               help='Synnefo authentication url. Default is ' +
                               auth_url)
+    # images
+    parser_images = orka_subparsers.add_parser('images', parents=[common_parser],
+                                     help='List available images.')
     # cluster actions group
     parser_create = orka_subparsers.add_parser('create', parents=[common_parser],
                                      help='Create a Hadoop-Yarn cluster'
@@ -708,8 +737,11 @@ def main():
         opts = vars(orka_parser.parse_args(argv[1:]))
         c_hadoopcluster = HadoopCluster(opts)
         c_userclusters = UserClusterInfo(opts)
+        images_info = ImagesInfo(opts)
         verb = argv[1]
-        if verb == 'create':
+        if verb == 'images':
+            images_info.list_images()
+        elif verb == 'create':
             if opts['cluster_size'] == 2:
                 if opts['replication_factor'] != 1:
                     logging.warning(' Replication factor cannot exceed the number of slave nodes; defaulting to 1')
