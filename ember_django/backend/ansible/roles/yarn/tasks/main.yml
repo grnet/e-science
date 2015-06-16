@@ -361,4 +361,8 @@
       - { src: 'hbaseserver', dest: '/etc/init.d/hbaseserver', mode: '0755' }
       - { src: 'livyserver', dest: '/etc/init.d/livyserver', mode: '0755' }
       - { src: 'oozieserver', dest: '/etc/init.d/oozieserver', mode: '0755' }
+      - { src: 'hiveserver2.service', dest: '/lib/systemd/system/hiveserver2.service', mode: '644' }
+      - { src: 'hbaseserver.service', dest: '/lib/systemd/system/hbaseserver.service', mode: '644' }
+      - { src: 'livyserver.service', dest: '/lib/systemd/system/livyserver.service', mode: '644' }
+      - { src: 'oozieserver.service', dest: '/lib/systemd/system/oozieserver.service', mode: '644' }
     when: is_master
