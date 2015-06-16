@@ -21,3 +21,5 @@ sonar-project.properties
 *.pdf
 *.properties
 *.xml
+!workflow_ecosystem.xml
+!workflow.xml
