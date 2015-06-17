@@ -13,11 +13,10 @@ from backend.models import ClusterInfo, UserInfo
 from django_db_after_login import db_hadoop_update
 from celery import current_task
 from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS, NON_STATE_HADOOP_ACTIONS, REPORT, SUMMARY, \
-    error_ansible_playbook, const_hadoop_status_format, const_hadoop_status_started, const_hadoop_status_stopped
+    error_ansible_playbook, const_hadoop_status_started, hadoop_images_ansible_tags
 from okeanos_utils import set_cluster_state
 
 # Definitions of return value errors
-from cluster_errors_constants import error_ansible_playbook, REPORT, SUMMARY, NON_STATE_HADOOP_ACTIONS
 # Ansible constants
 playbook = 'site.yml'
 ansible_playbook = dirname(abspath(__file__)) + '/ansible/' + playbook
@@ -49,15 +48,7 @@ def install_yarn(*args):
                           master_IP=args[2])
         ansible_manage_cluster(cluster_id, 'format')
         ansible_manage_cluster(cluster_id, 'start')
-        
-        if args[4] == 'hue':
-            ansible_manage_cluster(cluster_id, 'HUEstart')
-        if args[4] == 'ecosystem':
-            ansible_manage_cluster(cluster_id, 'ECOSYSTEMstart')
-            ansible_manage_cluster(cluster_id, 'HUEstart')
-        elif args[4] == 'cloudera':
-            ansible_manage_cluster(cluster_id, 'copyooziesharelib')
-            ansible_manage_cluster(cluster_id, 'CLOUDstart')
+
     except Exception, e:
         msg = 'Error while running Ansible %s' % e
         raise RuntimeError(msg, error_ansible_playbook)
@@ -110,13 +101,20 @@ def ansible_manage_cluster(cluster_id, action):
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
     pre_action_status = cluster.hadoop_status
-    role = 'yarn'
-    if 'cdh' in cluster.os_image.lower():
-        role = 'cloudera'
     if action in NON_STATE_HADOOP_ACTIONS:
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
         current_hadoop_status = action
+    ansible_tags = hadoop_images_ansible_tags['hadoopbase']
+    role = 'yarn'
+    if 'cdh' in cluster.os_image.lower():
+        role = 'cloudera'
+        ansible_tags = hadoop_images_ansible_tags['cloudera']
+    elif 'ecosystem' in cluster.os_image.lower():
+        ansible_tags = hadoop_images_ansible_tags['ecosystem']
+    elif 'hue' in cluster.os_image.lower():
+        ansible_tags = hadoop_images_ansible_tags['hue']
+
     cluster_name_postfix_id = '%s%s%s' % (cluster.cluster_name, '-', cluster_id)
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name_postfix_id.replace(" ", "_")
     if isfile(hosts_filename):
@@ -130,7 +128,7 @@ def ansible_manage_cluster(cluster_id, action):
         if action == "format" and pre_action_status == const_hadoop_status_started:
             # format request for started cluster > stop [> clean ]> format > start
             # stop
-            for hadoop_action in ['stop', action, 'start']:
+            for hadoop_action in [ansible_tags['stop'], action, ansible_tags['start']]:
                ansible_code = '{0} {1} {2}'.format(ansible_code_generic, hadoop_action, ansible_log)
                execute_ansible_playbook(ansible_code)
 
@@ -139,7 +137,7 @@ def ansible_manage_cluster(cluster_id, action):
             return msg
 
         else: # other actions including format request when hadoop is stopped
-            ansible_code = '{0} {1} {2}'.format(ansible_code_generic, action, ansible_log)
+            ansible_code = '{0} {1} {2}'.format(ansible_code_generic, ansible_tags[action], ansible_log)
             execute_ansible_playbook(ansible_code)
             msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
             db_hadoop_update(cluster_id, current_hadoop_status, msg)

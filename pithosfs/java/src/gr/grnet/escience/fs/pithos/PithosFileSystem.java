@@ -59,7 +59,7 @@ public class PithosFileSystem extends FileSystem {
     private String[] files = null;
     private FileStatus[] resultsArr = null;
     private PithosOutputStream pithosOutputStreamInstance = null;
-    private final long DEFAULT_HDFS_BLOCK_SIZE = 128 * 1024 * 1024;
+    private static final long DEFAULT_HDFS_BLOCK_SIZE = (long)128 * 1024 * 1024;
     private String fromAttemptDirectory = null;
     private String toOutputRootDirectory = null;
     private String[] resultFileName = null;
@@ -245,7 +245,8 @@ public class PithosFileSystem extends FileSystem {
                     && (obj.matches("Content-Type") || obj
                             .matches("Content_Type"))) {
                 for (String fileType : metadata.getResponseData().get(obj)) {
-                    if (fileType.contains("application/directory")) {
+                    if (fileType.contains("application/directory")
+                            || fileType.contains("application/folder")) {
                         isDir = true;
                         break;
                     } else {
@@ -437,7 +438,7 @@ public class PithosFileSystem extends FileSystem {
                 .substring(
                         0,
                         getCommitPithosPath().getObjectAbsolutePath().indexOf(
-                                "/"));
+                                "/_temporary"));
 
         try {
             // - Get the file status by all available files into selected
@@ -468,7 +469,7 @@ public class PithosFileSystem extends FileSystem {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Utils.dbgPrint("commitFinalResult error: ",e);
         }
 
         // - Iterate on all results files

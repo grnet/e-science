@@ -14,7 +14,6 @@ public class TestPithosFileStatus {
     private static final String UUID = "ec567bea-4fa2-433d-9935-261a0867ec60";
     private static final String TOKEN = "n4kvgYT_8TEe8lwcWmOspulv5eZbyeBaSokmW6IfIQo";
     private static final String PITHOS_CONTAINER = "pithos";
-    private static final String TARGET_OBJECT = "Ansible";
     private static HadoopPithosConnector hdconnector;
     private static boolean dirFlag = false;
     private static String[] pithosObjectsArray;

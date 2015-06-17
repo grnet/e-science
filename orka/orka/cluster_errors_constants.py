@@ -8,7 +8,7 @@ This module contains the definitions of returned errors and package constants.
 """
 import os
 
-# Definitions of return value errors
+# Definitions of return value success and errors
 error_syntax_clustersize = -1
 error_syntax_cpu_master = -2
 error_syntax_ram_master = -3
@@ -47,6 +47,7 @@ error_multiple_entries = -72
 error_project_quota = -73
 error_authentication = -99
 error_replication_factor = -36
+SUCCESS = 0
 
 # Package constants
 REPORT = 25  # Define logging level of REPORT
@@ -65,6 +66,7 @@ const_cluster_status_active = "1"
 const_cluster_status_pending = "2"
 const_hadoop_status_started = "1"
 const_hadoop_status_stopped = "0"
+const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
 HADOOP_PATH = '/usr/local/hadoop/bin/hdfs'
 DEFAULT_HDFS_DIR = ['/user/hduser', '/user/hduser/']
 FNULL = open(os.devnull, 'w')
