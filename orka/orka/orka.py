@@ -85,13 +85,13 @@ class _ArgCheck(object):
             raise ArgumentTypeError(" %s must containt at least one letter." % val)
 
 
-def task_message(task_id, escience_token, wait_timer, task='not_progress_bar'):
+def task_message(task_id, escience_token, server_url, wait_timer, task='not_progress_bar'):
     """
     Function to check create and destroy celery tasks running from orka-CLI
     and log task state messages.
     """
     payload = {"job": {"task_id": task_id}}
-    yarn_cluster_logger = ClusterRequest(escience_token, payload, action='job')
+    yarn_cluster_logger = ClusterRequest(escience_token, server_url, payload, action='job')
     previous_response = {'job': {'state': 'placeholder'}}
     response = yarn_cluster_logger.retrieve()
     while 'state' in response['job']:
@@ -127,7 +127,8 @@ class HadoopCluster(object):
     def __init__(self, opts):
         self.opts = opts
         try: 
-            self.escience_token = authenticate_escience(self.opts['token'])
+            self.escience_token = authenticate_escience(self.opts['token'], self.opts['server_url'])
+            self.server_url = self.opts['server_url']
         except ConnectionError:
             logging.error(' e-science server unreachable or down.')
             exit(error_fatal)
@@ -146,18 +147,19 @@ class HadoopCluster(object):
                                         "ram_slaves": self.opts['ram_slave'], "disk_slaves": self.opts['disk_slave'],
                                         "disk_template": self.opts['disk_template'], "os_choice": self.opts['image'],
                                         "replication_factor": self.opts['replication_factor'], "dfs_blocksize": self.opts['dfs_blocksize']}}
-            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
+            yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='cluster')
             response = yarn_cluster_req.create_cluster()
             if 'task_id' in response['clusterchoice']:
                 task_id = response['clusterchoice']['task_id']
             else:
                 logging.error(response['clusterchoice']['message'])
                 exit(error_fatal)
-            result = task_message(task_id, self.escience_token, wait_timer_create)
+            result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
             logging.log(SUMMARY, " YARN Cluster is active.You can access it through {0}:8088/cluster".format(result['master_IP']))
             stdout.write("Your Cluster has the following properties:\ncluster_id: {0}\nmaster_IP: {1}\n"
                          "root password: {2}\n".format(result['cluster_id'], result['master_IP'],
                                                         result['master_VM_password']))
+            exit(SUCCESS)
 
         except Exception, e:
             logging.error(' Fatal error: ' + str(e.args[0]))
@@ -166,7 +168,7 @@ class HadoopCluster(object):
 
     def destroy(self):
         """ Method for deleting Hadoop clusters in~okeanos."""
-        clusters = get_user_clusters(self.opts['token'])
+        clusters = get_user_clusters(self.opts['token'], self.opts['server_url'])
         for cluster in clusters:
             if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == const_cluster_status_active:
                 break
@@ -175,10 +177,10 @@ class HadoopCluster(object):
             exit(error_fatal)
         try:
             payload = {"clusterchoice":{"id": self.opts['cluster_id']}}
-            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
+            yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='cluster')
             response = yarn_cluster_req.delete_cluster()
             task_id = response['clusterchoice']['task_id']
-            result = task_message(task_id, self.escience_token, wait_timer_delete)
+            result = task_message(task_id, self.escience_token, self.server_url, wait_timer_delete)
             logging.log(SUMMARY, ' Cluster with name "{0}" and all its resources deleted'.format(result))
             exit(SUCCESS)
         except Exception, e:
@@ -189,7 +191,7 @@ class HadoopCluster(object):
     def hadoop_action(self):
         """ Method for applying an action to a Hadoop cluster"""
         action = str.lower(self.opts['hadoop_status'])
-        clusters = get_user_clusters(self.opts['token'])
+        clusters = get_user_clusters(self.opts['token'], self.opts['server_url'])
         active_cluster = None
         for cluster in clusters:
             if (cluster['id'] == self.opts['cluster_id']):
@@ -199,7 +201,7 @@ class HadoopCluster(object):
         else:
             logging.error(' Hadoop can only be managed for an active cluster.')
             exit(error_fatal)
-        if active_cluster:            
+        if active_cluster:
             if (active_cluster['hadoop_status'] == const_hadoop_status_started and action == "start"):
                 logging.error(' Hadoop already started.')
                 exit(error_fatal)
@@ -208,10 +210,10 @@ class HadoopCluster(object):
                 exit(error_fatal)
         try:
             payload = {"clusterchoice":{"id": self.opts['cluster_id'], "hadoop_status": action}}
-            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
+            yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='cluster')
             response = yarn_cluster_req.create_cluster()
             task_id = response['clusterchoice']['task_id']
-            result = task_message(task_id, self.escience_token, wait_timer_delete)
+            result = task_message(task_id, self.escience_token, self.server_url, wait_timer_delete)
             logging.log(SUMMARY, result)
             exit(SUCCESS)
         except Exception, e:
@@ -227,7 +229,7 @@ class HadoopCluster(object):
         if opt_filelist == True:
             self.list_pithos_files()
         else:
-            clusters = get_user_clusters(self.opts['token'])
+            clusters = get_user_clusters(self.opts['token'], self.opts['server_url'])
             active_cluster = None
             for cluster in clusters:
                 if (cluster['id'] == self.opts['cluster_id']):
@@ -402,7 +404,7 @@ class HadoopCluster(object):
                                         "dest": "\'{0}\'".format(self.opts['destination']), "user": self.opts['user'],
                                         "password": self.opts['password']}}
 
-        yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='hdfs')
+        yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='hdfs')
         response = yarn_cluster_req.post()
         if 'task_id' in response['hdfs']:
             task_id = response['hdfs']['task_id']
@@ -410,7 +412,7 @@ class HadoopCluster(object):
             logging.error(response['hdfs']['message'])
             exit(error_fatal)
         logging.log(SUMMARY, ' Starting file transfer')
-        result = task_message(task_id, self.escience_token, wait_timer_delete,
+        result = task_message(task_id, self.escience_token, self.server_url, wait_timer_delete,
                                   task='has_progress_bar')
         if result == 0:
             stdout.flush()
@@ -519,7 +521,7 @@ class UserClusterInfo(object):
     
     def list(self):
         try:
-            self.data.extend(get_user_clusters(self.opts['token']))
+            self.data.extend(get_user_clusters(self.opts['token'], self.opts['server_url']))
         except ClientError, e:
             logging.error(e.message)
             exit(error_fatal)
@@ -590,7 +592,7 @@ class ImagesInfo(object):
                 available_images.append(image['name'])
         available_images.sort()
         for image in available_images:
-            print image
+            print "{:<2}\"{name}\"".format('',name=image)
     
 def main():
     """
@@ -605,8 +607,10 @@ def main():
                                 datefmt='%H:%M:%S')
     try:
         kamaki_token = get_from_kamaki_conf('cloud "~okeanos"', 'token')
+        kamaki_base_url = get_from_kamaki_conf('orka','base_url')
     except ClientError, e:
         kamaki_token = ' '
+        kamaki_base_url = ' '
         logging.warning(e.message)
     
     orka_subparsers = orka_parser.add_subparsers(help='Choose Hadoop cluster action')
@@ -619,6 +623,9 @@ def main():
     common_parser.add_argument("--auth_url", metavar='auth_url', default=auth_url,
                               help='Synnefo authentication url. Default is ' +
                               auth_url)
+    common_parser.add_argument("--server_url", metavar='server_url', default=kamaki_base_url,
+                              help='Application server url.  Default read from .kamakirc')
+
     # images
     parser_images = orka_subparsers.add_parser('images', parents=[common_parser],
                                      help='List available images.')
@@ -677,12 +684,11 @@ def main():
                               ' Default is HadoopImage (overrides image selection)',
                               nargs='?', metavar='hadoop_image_name', default=None,
                               const='Hadoop-2.5.2')
-        parser_create.add_argument("replication_factor", help='Replication factor for HDFS. Must be between 1 and number of slave nodes (cluster_size -1)',
-                              type=checker.positive_num_is)
-        parser_create.add_argument("dfs_blocksize", help='Dfs_blocksize at HDFS in megabytes',
-                              type=checker.positive_num_is)      
-
-
+        parser_create.add_argument("--replication_factor", metavar='replication_factor', default=2, type=checker.positive_num_is,
+                              help='Replication factor for HDFS. Must be between 1 and number of slave nodes (cluster_size -1). Default is 2.')
+        parser_create.add_argument("--dfs_blocksize", metavar='dfs_blocksize', default=128, type=checker.positive_num_is,
+                              help='Dfs_blocksize at HDFS in megabytes. Default is 128.') 
+        
         parser_destroy.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
 
@@ -737,11 +743,9 @@ def main():
         opts = vars(orka_parser.parse_args(argv[1:]))
         c_hadoopcluster = HadoopCluster(opts)
         c_userclusters = UserClusterInfo(opts)
-        images_info = ImagesInfo(opts)
+        c_imagesinfo = ImagesInfo(opts)
         verb = argv[1]
-        if verb == 'images':
-            images_info.list_images()
-        elif verb == 'create':
+        if verb == 'create':
             if opts['cluster_size'] == 2:
                 if opts['replication_factor'] != 1:
                     logging.warning(' Replication factor cannot exceed the number of slave nodes; defaulting to 1')
@@ -754,6 +758,8 @@ def main():
             c_hadoopcluster.create()
         elif verb == 'destroy':
             c_hadoopcluster.destroy()
+        elif verb == 'images':
+            c_imagesinfo.list_images()
         elif verb == 'list' or verb == 'info':
             if verb == 'info':
                 opts['verbose'] = True
