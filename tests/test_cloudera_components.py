@@ -104,22 +104,22 @@ class ClouderaTest(unittest.TestCase):
                                     , stderr=FNULL, shell=True)
         self.assertEqual(response, 0) # OK
 
-    def test_hive_count_rows_in_table_not_exists(self):
+    def test_hive_count_rows_in_table_not_exist(self):
         """
         Count Hive rows in a table that does not exist
         """
         response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
-                                    "hive -e 'select count(*) from table_not_exists';" + "\""
+                                    "hive -e 'select count(*) from table_not_exist';" + "\""
                                     , stderr=FNULL, shell=True)
         self.assertEqual(response, 17) # ERROR table not found
 
-    def test_hbase_table_not_exists(self):
+    def test_hbase_table_not_exist(self):
         """
         Check if a table in Hbase does not exist
         """
         baseurl = "http://" + self.master_IP + ":60050"
         # check for a table that does not exist
-        request = requests.get(baseurl + "/" + "table_not_exists" + "/schema")
+        request = requests.get(baseurl + "/" + "table_not_exist" + "/schema")
         self.assertEqual(request.status_code, 404) # NOT FOUND
 
     def test_hbase_table_exists(self):

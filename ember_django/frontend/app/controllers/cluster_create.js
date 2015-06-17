@@ -18,7 +18,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	default_replication_factor: '2', // Deafault replication_factor for hdfs
 	dfs_blocksize : '', 		// Hadoop dfs_blocksize
 	default_dfs_blocksize: '128', // Deafault dfs_blocksize for hdfs  is 128MB
-	operating_system : '', // Preselected OS
+	operating_system : 'Debian Base', // Preselected OS
 	disk_temp : '', 	// Initial storage selection, common for master and slaves friendly to  user name
 	cluster_size_zero : false, 	// for checking the available VMs, cluster size
 	message : '', 			// message when user presses the create cluster button
@@ -748,7 +748,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('master_disk_selection', 0);
 		this.set('slaves_disk_selection', 0);
 		this.set('cluster_name', '');
-		this.set('operating_system', '');
+		this.set('operating_system', 'Debian Base');
 		this.set('disk_temp', '');
 		this.set('vm_flavor_selection_master', '');
 		this.set('vm_flavor_selection_slaves', '');

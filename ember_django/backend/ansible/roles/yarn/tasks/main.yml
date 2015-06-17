@@ -178,6 +178,8 @@
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$HBASE_HOME/bin'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export SPARK_HOME=/usr/local/spark'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$SPARK_HOME/bin'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export OOZIE_HOME=/usr/local/oozie'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$OOZIE_HOME/bin'" }
       - { dest: '.bashrc', state: 'present', insertafter: 'EOF', line: "'export SPARK_HOME=/usr/local/spark'" }
       - { dest: '.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$SPARK_HOME/bin'" }
       - { dest: '/usr/local/hbase/conf/hbase-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle/"' }
@@ -222,6 +224,7 @@
     template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
     with_items:
       - { src: 'regionservers.j2', dest: '/usr/local/hbase/conf/regionservers', owner: 'hduser', group: 'hadoop' }
+      - { src: 'regionservers.j2', dest: '/usr/local/hadoop/etc/hadoop/regionservers', owner: 'hduser', group: 'hadoop' }
       - { src: 'hbase-site.j2', dest: '/usr/local/hbase/conf/hbase-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'hive-site.j2', dest: '/usr/local/hive/conf/hive-site.xml', owner: 'hduser', group: 'hadoop' }
 

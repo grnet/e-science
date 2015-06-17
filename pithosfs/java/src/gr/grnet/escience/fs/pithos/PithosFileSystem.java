@@ -7,8 +7,10 @@ import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
 import org.apache.hadoop.conf.Configuration;
@@ -38,7 +40,6 @@ public class PithosFileSystem extends FileSystem {
     private Path workingDir;
     private String pathToString;
     private PithosPath pithosPath;
-    private PithosPath commitPithosPath;
     private static String filename;
     private String[] filesList;
     private boolean isDir = false;
@@ -59,7 +60,7 @@ public class PithosFileSystem extends FileSystem {
     private String[] files = null;
     private FileStatus[] resultsArr = null;
     private PithosOutputStream pithosOutputStreamInstance = null;
-    private final long DEFAULT_HDFS_BLOCK_SIZE = 128 * 1024 * 1024;
+    private static final long DEFAULT_HDFS_BLOCK_SIZE = (long) 128 * 1024 * 1024;
     private String fromAttemptDirectory = null;
     private String toOutputRootDirectory = null;
     private String[] resultFileName = null;
@@ -68,6 +69,7 @@ public class PithosFileSystem extends FileSystem {
     private FileStatus[] resultFilesList = null;
     private int resultFilesCounter = 0;
     private boolean commitCalled = false;
+    private PithosPath commitPithosPath = null;
 
     public PithosFileSystem() {
     }
@@ -245,7 +247,8 @@ public class PithosFileSystem extends FileSystem {
                     && (obj.matches("Content-Type") || obj
                             .matches("Content_Type"))) {
                 for (String fileType : metadata.getResponseData().get(obj)) {
-                    if (fileType.contains("application/directory")) {
+                    if (fileType.contains("application/directory")
+                            || fileType.contains("application/folder")) {
                         isDir = true;
                         break;
                     } else {
@@ -437,7 +440,7 @@ public class PithosFileSystem extends FileSystem {
                 .substring(
                         0,
                         getCommitPithosPath().getObjectAbsolutePath().indexOf(
-                                "/"));
+                                "/_temporary"));
 
         try {
             // - Get the file status by all available files into selected
@@ -468,7 +471,7 @@ public class PithosFileSystem extends FileSystem {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Utils.dbgPrint("commitFinalResult error: ", e);
         }
 
         // - Iterate on all results files
@@ -510,6 +513,19 @@ public class PithosFileSystem extends FileSystem {
      * @param args
      */
     public static void main(String[] args) {
+        // Stub so we can create a 'runnable jar' export for packing
+        // dependencies
+        String out = null;
+        String hashAlgo = "SHA-256";
+        try {
+            out = Utils.computeHash("Lorem ipsum dolor sit amet.", hashAlgo);
+        } catch (NoSuchAlgorithmException e) {
+            Utils.dbgPrint("invalid hash algorithm:" + hashAlgo, e);
+        } catch (UnsupportedEncodingException e) {
+            Utils.dbgPrint("invalid encoding", e);
+        }
+        Utils.dbgPrint("Pithos FileSystem Connector loaded.");
+        Utils.dbgPrint("Hash Test:", out);
     }
 
 }

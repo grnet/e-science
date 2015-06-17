@@ -51,10 +51,8 @@ def install_yarn(*args):
         ansible_manage_cluster(cluster_id, 'start')
         
         if args[4] == 'hue':
-            ansible_manage_cluster(cluster_id, 'HDFSMkdir')
             ansible_manage_cluster(cluster_id, 'HUEstart')
         if args[4] == 'ecosystem':
-            ansible_manage_cluster(cluster_id, 'HDFSMkdir')
             ansible_manage_cluster(cluster_id, 'ECOSYSTEMstart')
             ansible_manage_cluster(cluster_id, 'HUEstart')
         elif args[4] == 'cloudera':
@@ -125,13 +123,15 @@ def ansible_manage_cluster(cluster_id, action):
         state = ' %s %s' %(HADOOP_STATUS_ACTIONS[action][1], cluster.cluster_name)
         current_task.update_state(state=state)
         db_hadoop_update(cluster_id, 'Pending', state)
+        debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
+        ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
         ansible_code_generic = 'ansible-playbook -i {0} {1} {2} -e "choose_role={3} manage_cluster={3}" -t'.format(hosts_filename, ansible_playbook, ansible_verbosity, role)
 
         if action == "format" and pre_action_status == const_hadoop_status_started:
             # format request for started cluster > stop [> clean ]> format > start
             # stop
             for hadoop_action in ['stop', action, 'start']:
-               ansible_code = '{0} {1}'.format(ansible_code_generic, hadoop_action)
+               ansible_code = '{0} {1} {2}'.format(ansible_code_generic, hadoop_action, ansible_log)
                execute_ansible_playbook(ansible_code)
 
             msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
@@ -139,7 +139,7 @@ def ansible_manage_cluster(cluster_id, action):
             return msg
 
         else: # other actions including format request when hadoop is stopped
-            ansible_code = '{0} {1}'.format(ansible_code_generic, action)
+            ansible_code = '{0} {1} {2}'.format(ansible_code_generic, action, ansible_log)
             execute_ansible_playbook(ansible_code)
             msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
             db_hadoop_update(cluster_id, current_hadoop_status, msg)
@@ -186,17 +186,6 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     '-f {0} -e "choose_role={1} ssh_file_name={2} token={3} '.format(str(cluster_size), role, ssh_file, token) + \
     'dfs_blocksize={0}m dfs_replication={1} uuid={2} " {3}'.format(dfs_blocksize, replication_factor, uuid, tags)
 
-    # hadoop_image flag(bare/Hadoop only/Hadoop + Hue)
-    if hadoop_image == 'hue':
-        # Hue -> use an available image (Hadoop and Hue pre-installed)
-        ansible_code += ' -t postconfig,hueconfig'
-    elif hadoop_image == 'hadoopbase':
-        # Hadoop -> use an available image (Hadoop pre-installed)
-        ansible_code += ' -t postconfig'
-    else:
-        ansible_code += ' -t preconfig,postconfig'
-
-    # If above checks are false, will create a cluster with Debian Base image and install Hadoop
 
     # Execute ansible
     ansible_code += ansible_log

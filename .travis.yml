@@ -9,9 +9,12 @@ env:
 addons:
 - postgresql: '9.1'
 before_install:
+<<<<<<< HEAD
 - openssl aes-256-cbc -K $encrypted_cb048492c181_key -iv $encrypted_cb048492c181_iv
+=======
+- openssl aes-256-cbc -K $encrypted_b7bd3aa10e46_key -iv $encrypted_b7bd3aa10e46_iv
+>>>>>>> gtzelepis/develop
   -in .private/.config.txt.enc -out .private/.config.txt -d
-
 install:
 - pip install kamaki==0.13.1
 - pip install paramiko
@@ -41,4 +44,7 @@ before_script:
 - ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
 script:
 - nosetests -sv tests/test_create_cluster.py
-- bash tests/test_integration_hdpbase.sh
+- bash tests/integration/test_integration_hdpbase.sh
+# bash tests/integration/test_integration_hue.sh
+# bash tests/integration/test_integration_ecosystem.sh
+- bash tests/integration/test_integration_cdh.sh

@@ -34,7 +34,6 @@ public class PithosRESTAPI implements Serializable {
     private String X_Auth_Token = "";
     private transient HttpURLConnection con = null;
     private String username = "";
-    private static final Utils util = new Utils();
 
     public PithosRESTAPI(String url, String X_Auth_Token, String username) {
         this.url = url;
@@ -115,10 +114,10 @@ public class PithosRESTAPI implements Serializable {
 
         } catch (MalformedURLException e) {
             // TODO Auto-generated catch block
-            util.dbgPrint("Error-->Malformed URL...", e);
+            Utils.dbgPrint("Error-->Malformed URL...", e);
         } catch (IOException e) {
             // TODO Auto-generated catch block
-            util.dbgPrint("Error-->Invalid Input for connection...", e);
+            Utils.dbgPrint("Error-->Invalid Input for connection...", e);
         }
     }
 
@@ -235,9 +234,9 @@ public class PithosRESTAPI implements Serializable {
 
         if (checkConf()) {
             configureConnection(getUrl(), "GET", parameters, headers);
-            System.out.println("Listing sharing accounts for user with token:"
-                    + getX_Auth_Token());
-            System.out.println("Sending 'GET' request to URL : " + getUrl());
+            Utils.dbgPrint("Listing sharing accounts for user with token:"
+                    , getX_Auth_Token());
+            Utils.dbgPrint("Sending 'GET' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 200) {
@@ -251,18 +250,18 @@ public class PithosRESTAPI implements Serializable {
                     response.append(inputLine);
                 }
                 in.close();
-                System.out.println(getConnection().getHeaderFields());
+                Utils.dbgPrint(getConnection().getHeaderFields());
                 return response.toString();
 
             } else {
-                System.out.println(getConnection().getHeaderFields());
+                Utils.dbgPrint(getConnection().getHeaderFields());
                 return String.valueOf(responseCode);
 
             }
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -292,16 +291,15 @@ public class PithosRESTAPI implements Serializable {
         if (checkConf()) {
 
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
 
             String urlCloned = getUrl() + "/" + getUsername();
             configureConnection(urlCloned, "HEAD", parameters, headers);
-            System.out
-                    .println("Retrieving account metadata for user with token:"
-                            + getX_Auth_Token());
-            System.out.println("Sending 'HEAD' request to URL : " + getUrl());
+            Utils.dbgPrint("Retrieving account metadata for user with token:"
+                            , getX_Auth_Token());
+            Utils.dbgPrint("Sending 'HEAD' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 204) {
@@ -309,13 +307,13 @@ public class PithosRESTAPI implements Serializable {
                 return getConnection().getHeaderFields();
 
             } else {
-                System.err.println(String.valueOf(responseCode));
+                Utils.dbgPrint(String.valueOf(responseCode));
 
                 return getConnection().getHeaderFields();
             }
 
         } else {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -347,15 +345,14 @@ public class PithosRESTAPI implements Serializable {
 
         if (checkConf()) {
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
             String urlCloned = getUrl() + "/" + getUsername();
             configureConnection(urlCloned, "GET", parameters, headers);
-            System.out
-                    .println("Listing containers for the account of user:"
-                            + getUsername());
-            System.out.println("Sending 'GET' request to URL : " + getUrl());
+            Utils.dbgPrint("Listing containers for the account of user:"
+                            , getUsername());
+            Utils.dbgPrint("Sending 'GET' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 200) {
@@ -369,17 +366,17 @@ public class PithosRESTAPI implements Serializable {
                     response.append(inputLine);
                 }
                 in.close();
-                System.out.println(getConnection().getHeaderFields());
+                Utils.dbgPrint(getConnection().getHeaderFields());
                 return response.toString();
 
             } else {
-                System.out.println(getConnection().getHeaderFields());
+                Utils.dbgPrint(getConnection().getHeaderFields());
                 return String.valueOf(responseCode);
 
             }
 
         } else {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -411,25 +408,24 @@ public class PithosRESTAPI implements Serializable {
 
         if (checkConf()) {
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
             String urlCloned = getUrl() + "/" + getUsername();
             parameters.put("update", "True");
             configureConnection(urlCloned, "POST", parameters, headers);
-            System.out
-                    .println("Updating account metadata for the account of user:"
-                            + getUsername());
-            System.out.println("Sending 'POST' request to URL : " + getUrl());
+            Utils.dbgPrint("Updating account metadata for the account of user:"
+                            , getUsername());
+            Utils.dbgPrint("Sending 'POST' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
 
-            System.out.println(getConnection().getHeaderFields());
+            Utils.dbgPrint(getConnection().getHeaderFields());
             return String.valueOf(responseCode);
 
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -478,16 +474,15 @@ public class PithosRESTAPI implements Serializable {
                 container = "pithos";
 
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container;
             configureConnection(urlCloned, "HEAD", parameters, headers);
-            System.out
-                    .println("Retrieving container metadata for the container:"
-                            + container + " of user:"
-                            + getUsername());
-            System.out.println("Sending 'HEAD' request to URL : " + getUrl());
+            Utils.dbgPrint("Retrieving container metadata for the container:"
+                            , container , " of user:"
+                            , getUsername());
+            Utils.dbgPrint("Sending 'HEAD' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 204) {
@@ -496,14 +491,14 @@ public class PithosRESTAPI implements Serializable {
 
             } else {
 
-                System.err.println(String.valueOf(responseCode));
+                Utils.dbgPrint(String.valueOf(responseCode));
                 return getConnection().getHeaderFields();
             }
 
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -585,16 +580,14 @@ public class PithosRESTAPI implements Serializable {
 
         if (checkConf()) {
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container;
             configureConnection(urlCloned, "GET", parameters, headers);
-            System.out
-                    .println("Listing objects for the container:" + container
-                            + " of the account of user:"
-                            + getUsername());
-            System.out.println("Sending 'GET' request to URL : " + getUrl());
+            Utils.dbgPrint("Listing objects for the container:", container,
+                    " of the account of user:", getUsername());
+            Utils.dbgPrint("Sending 'GET' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 200) {
@@ -609,11 +602,11 @@ public class PithosRESTAPI implements Serializable {
                     response.append(System.lineSeparator());
                 }
                 in.close();
-                System.out.println(getConnection().getHeaderFields());
+                Utils.dbgPrint(getConnection().getHeaderFields());
                 return response.toString();
 
             } else {
-                System.out.println(getConnection().getHeaderFields());
+                Utils.dbgPrint(getConnection().getHeaderFields());
                 return String.valueOf(responseCode);
 
             }
@@ -621,7 +614,7 @@ public class PithosRESTAPI implements Serializable {
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -655,24 +648,23 @@ public class PithosRESTAPI implements Serializable {
 
         if (checkConf()) {
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container;
             configureConnection(urlCloned, "PUT", parameters, headers);
-            System.out
-                    .println("Creating/Updating the container:" + container
-                            + " of the account of user:"
-                            + getUsername());
-            System.out.println("Sending 'PUT' request to URL : " + getUrl());
+            Utils.dbgPrint("Creating/Updating the container:" , container
+                            , " of the account of user:"
+                            , getUsername());
+            Utils.dbgPrint("Sending 'PUT' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
-            System.out.println(getConnection().getHeaderFields());
+            Utils.dbgPrint(getConnection().getHeaderFields());
             return String.valueOf(responseCode);
 
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -714,23 +706,23 @@ public class PithosRESTAPI implements Serializable {
 
         if (checkConf()) {
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container;
             configureConnection(urlCloned, "POST", parameters, headers);
-            System.out.println("Updating metadata of the container:"
-                    + container + " of the account of user:"
-                    + getUsername());
-            System.out.println("Sending 'POST' request to URL : " + getUrl());
+            Utils.dbgPrint("Updating metadata of the container:"
+                    , container , " of the account of user:"
+                    , getUsername());
+            Utils.dbgPrint("Sending 'POST' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
-            System.out.println(getConnection().getHeaderFields());
+            Utils.dbgPrint(getConnection().getHeaderFields());
             return String.valueOf(responseCode);
 
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -763,24 +755,23 @@ public class PithosRESTAPI implements Serializable {
 
         if (checkConf()) {
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container;
             configureConnection(urlCloned, "DELETE", parameters, headers);
-            System.out
-                    .println("Deleting the container:" + container
-                            + " of the account of user:"
-                            + getUsername());
-            System.out.println("Sending 'DELETE' request to URL : " + getUrl());
+            Utils.dbgPrint("Deleting the container:" , container
+                            , " of the account of user:"
+                            , getUsername());
+            Utils.dbgPrint("Sending 'DELETE' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
-            System.out.println(getConnection().getHeaderFields());
+            Utils.dbgPrint(getConnection().getHeaderFields());
             return String.valueOf(responseCode);
 
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -838,15 +829,15 @@ public class PithosRESTAPI implements Serializable {
                 container = "pithos";
 
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container
                     + "/" + filename;
             configureConnection(urlCloned, "HEAD", parameters, headers);
-            System.out.println("Retrieving the metadata for the item:"
-                    + filename + " of user:" + getUsername());
-            System.out.println("Sending 'HEAD' request to URL : " + getUrl());
+            Utils.dbgPrint("Retrieving the metadata for the item:"
+                    , filename , " of user:" , getUsername());
+            Utils.dbgPrint("Sending 'HEAD' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 200) {
@@ -854,15 +845,14 @@ public class PithosRESTAPI implements Serializable {
                 return getConnection().getHeaderFields();
 
             } else {
-
-                System.err.println(String.valueOf(responseCode));
+                Utils.dbgPrint(String.valueOf(responseCode));
                 return getConnection().getHeaderFields();
             }
 
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -952,17 +942,16 @@ public class PithosRESTAPI implements Serializable {
                 container = "pithos";
 
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container
                     + "/" + filename;
             configureConnection(urlCloned, "GET", parameters, headers);
-            System.out
-                    .println("Reading object:" + filename
-                            + " of the account of user:"
-                            + getUsername());
-            System.out.println("Sending 'GET' request to URL : " + getUrl());
+            Utils.dbgPrint("Reading object:" , filename
+                            , " of the account of user:"
+                            , getUsername());
+            Utils.dbgPrint("Sending 'GET' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 200 || responseCode == 206) {
@@ -984,7 +973,7 @@ public class PithosRESTAPI implements Serializable {
                         response.append(inputLine);
                     }
                     in.close();
-                    System.out.println(getConnection().getHeaderFields());
+                    Utils.dbgPrint(getConnection().getHeaderFields());
                     return response.toString();
 
                 } else {
@@ -1010,24 +999,24 @@ public class PithosRESTAPI implements Serializable {
                             outputStream.close();
 
                         } catch (IOException e) {
-                            util.dbgPrint(e.getMessage(), e);
+                            Utils.dbgPrint(e.getMessage(), e);
                             return null;
                         }
 
                     }
 
                 }
-                System.out.println(getConnection().getHeaderFields());
+                Utils.dbgPrint(getConnection().getHeaderFields());
                 return outfile;
 
             } else {
-                System.err.println(responseCode);
+                Utils.dbgPrint(responseCode);
                 return null;
             }
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -1066,23 +1055,23 @@ public class PithosRESTAPI implements Serializable {
                 container = "pithos";
 
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container
                     + "/" + filename;
             configureConnection(urlCloned, "DELETE", parameters, headers);
-            System.out.println("Deleting the item:" + filename
-                    + " of user:" + getUsername());
-            System.out.println("Sending 'DELETE' request to URL : " + getUrl());
+            Utils.dbgPrint("Deleting the item:" , filename
+                    , " of user:" , getUsername());
+            Utils.dbgPrint("Sending 'DELETE' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
-            System.out.println(getConnection().getHeaderFields());
+            Utils.dbgPrint(getConnection().getHeaderFields());
             return String.valueOf(responseCode);
 
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -1171,7 +1160,7 @@ public class PithosRESTAPI implements Serializable {
                 container = "pithos";
 
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
 
@@ -1191,16 +1180,14 @@ public class PithosRESTAPI implements Serializable {
 
                         int clength = Integer.parseInt(contentLength);
                         if (clength < 0) {
-                            System.err
-                                    .println("Conten-Length should be greater to zero when uploading a file.");
+                            Utils.dbgPrint("Conten-Length should be greater to zero when uploading a file.");
                             return null;
                         }
                         if (clength > 0)
                             this.getConnection().setFixedLengthStreamingMode(
                                     clength);
                         if (clength == 0) {
-                            System.err
-                                    .println("Content-Length must be greater than zero when uploading a file.");
+                            Utils.dbgPrint("Content-Length must be greater than zero when uploading a file.");
                             return null;
                         }
                     }
@@ -1210,10 +1197,10 @@ public class PithosRESTAPI implements Serializable {
 
                 if (file2upload != null) {
 
-                    System.out.println("Uploading file:" + f2uload.getName()
-                            + " of user:" + getUsername());
-                    System.out.println("Sending 'PUT' request to URL : "
-                            + getUrl());
+                    Utils.dbgPrint("Uploading file:" , f2uload.getName()
+                            , " of user:" , getUsername());
+                    Utils.dbgPrint("Sending 'PUT' request to URL : "
+                            , getUrl());
 
                     int read = 0;
                     byte[] bytes = new byte[1024];
@@ -1229,7 +1216,7 @@ public class PithosRESTAPI implements Serializable {
                     fileInputStream.close();
 
                     int responseCode = getConnection().getResponseCode();
-                    System.out.println(getConnection().getHeaderFields());
+                    Utils.dbgPrint(getConnection().getHeaderFields());
                     return String.valueOf(responseCode);
 
                 }
@@ -1248,8 +1235,7 @@ public class PithosRESTAPI implements Serializable {
 
                         int clength = Integer.parseInt(contentLength);
                         if (clength < 0) {
-                            System.err
-                                    .println("Content-Length should be greater to zero.");
+                            Utils.dbgPrint("Content-Length should be greater to zero.");
                             return null;
                         }
                         if (clength > 0)
@@ -1261,12 +1247,11 @@ public class PithosRESTAPI implements Serializable {
                 }
                 this.getConnection().setDoOutput(true);
 
-                System.out.println("Creating folder:" + folderName
-                        + " of user:" + getUsername());
-                System.out
-                        .println("Sending 'PUT' request to URL : " + getUrl());
+                Utils.dbgPrint("Creating folder:" , folderName
+                        , " of user:" , getUsername());
+                Utils.dbgPrint("Sending 'PUT' request to URL : " , getUrl());
                 int responseCode = getConnection().getResponseCode();
-                System.out.println(getConnection().getHeaderFields());
+                Utils.dbgPrint(getConnection().getHeaderFields());
                 return String.valueOf(responseCode);
 
             } else
@@ -1275,7 +1260,7 @@ public class PithosRESTAPI implements Serializable {
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -1326,7 +1311,7 @@ public class PithosRESTAPI implements Serializable {
                 toContainer = "pithos";
 
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
 
@@ -1342,18 +1327,18 @@ public class PithosRESTAPI implements Serializable {
 
             this.getConnection().setDoOutput(true);
 
-            System.out.println("Copying the item:" + from
-                    + " of user:" + getUsername() + " to:" + to);
-            System.out.println("Sending 'PUT' request to URL : " + getUrl());
+            Utils.dbgPrint("Copying the item:" , from
+                    , " of user:" , getUsername() , " to:" , to);
+            Utils.dbgPrint("Sending 'PUT' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
-            System.out.println(getConnection().getHeaderFields());
+            Utils.dbgPrint(getConnection().getHeaderFields());
 
             return String.valueOf(responseCode);
 
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -1404,7 +1389,7 @@ public class PithosRESTAPI implements Serializable {
                 toContainer = "pithos";
 
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
 
@@ -1420,18 +1405,18 @@ public class PithosRESTAPI implements Serializable {
 
             this.getConnection().setDoOutput(true);
 
-            System.out.println("Moving the item:" + from
-                    + " of user:" + getUsername() + " to:" + to);
-            System.out.println("Sending 'PUT' request to URL : " + getUrl());
+            Utils.dbgPrint("Moving the item:" , from
+                    , " of user:" , getUsername() , " to:" , to);
+            Utils.dbgPrint("Sending 'PUT' request to URL : " , getUrl());
             int responseCode = getConnection().getResponseCode();
 
-            System.out.println(getConnection().getHeaderFields());
+            Utils.dbgPrint(getConnection().getHeaderFields());
             return String.valueOf(responseCode);
 
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -1530,7 +1515,7 @@ public class PithosRESTAPI implements Serializable {
                 container = "pithos";
 
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
 
@@ -1548,7 +1533,7 @@ public class PithosRESTAPI implements Serializable {
                 wr.flush();
                 wr.close();
             } else {
-                System.out.println("Truncating file:" + filename);
+                Utils.dbgPrint("Truncating file:" , filename);
 
                 headers.put("X-Source-Object", "/" + container + "/" + filename);
                 configureConnection(urlCloned, "POST", parameters, headers);
@@ -1556,11 +1541,11 @@ public class PithosRESTAPI implements Serializable {
                 this.getConnection().setDoOutput(true);
             }
 
-            System.out.println("Updating the item:" + filename
-                    + " of user:" + getUsername());
-            System.out.println("Sending 'POST' request to URL : " + getUrl());
+            Utils.dbgPrint("Updating the item:" , filename
+                    , " of user:" , getUsername());
+            Utils.dbgPrint("Sending 'POST' request to URL : " , getUrl());
 
-            System.out.println(getConnection().getHeaderFields());
+            Utils.dbgPrint(getConnection().getHeaderFields());
             int responseCode = getConnection().getResponseCode();
 
             return String.valueOf(responseCode);
@@ -1568,7 +1553,7 @@ public class PithosRESTAPI implements Serializable {
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -1644,7 +1629,7 @@ public class PithosRESTAPI implements Serializable {
                 container = "pithos";
 
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
 
@@ -1653,11 +1638,11 @@ public class PithosRESTAPI implements Serializable {
 
             configureConnection(urlCloned, "POST", parameters, headers);
 
-            System.out.println("Adding metadata to the item:" + filename
-                    + " of user:" + getUsername());
-            System.out.println("Sending 'POST' request to URL : " + getUrl());
+            Utils.dbgPrint("Adding metadata to the item:" , filename
+                    , " of user:" , getUsername());
+            Utils.dbgPrint("Sending 'POST' request to URL : " , getUrl());
 
-            System.out.println(getConnection().getHeaderFields());
+            Utils.dbgPrint(getConnection().getHeaderFields());
             int responseCode = getConnection().getResponseCode();
 
             return String.valueOf(responseCode);
@@ -1665,7 +1650,7 @@ public class PithosRESTAPI implements Serializable {
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -1729,7 +1714,7 @@ public class PithosRESTAPI implements Serializable {
                 container = "pithos";
 
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
 
@@ -1739,11 +1724,11 @@ public class PithosRESTAPI implements Serializable {
             headers.put("X-Object-Public", "True");
             configureConnection(urlCloned, "POST", parameters, headers);
 
-            System.out.println("Publishing the item:" + filename
-                    + " of user:" + getUsername());
-            System.out.println("Sending 'POST' request to URL : " + getUrl());
+            Utils.dbgPrint("Publishing the item:" , filename
+                    , " of user:" , getUsername());
+            Utils.dbgPrint("Sending 'POST' request to URL : " , getUrl());
 
-            System.out.println(getConnection().getHeaderFields());
+            Utils.dbgPrint(getConnection().getHeaderFields());
             int responseCode = getConnection().getResponseCode();
 
             return String.valueOf(responseCode);
@@ -1751,7 +1736,7 @@ public class PithosRESTAPI implements Serializable {
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
@@ -1816,7 +1801,7 @@ public class PithosRESTAPI implements Serializable {
                 container = "pithos";
 
             if (getUsername().equals("")) {
-                System.err.println("Username is not defined.");
+                Utils.dbgPrint("Username is not defined.");
                 return null;
             }
 
@@ -1826,11 +1811,11 @@ public class PithosRESTAPI implements Serializable {
             headers.put("X-Object-Public", "False");
             configureConnection(urlCloned, "POST", parameters, headers);
 
-            System.out.println("Publishing the item:" + filename
-                    + " of user:" + getUsername());
-            System.out.println("Sending 'POST' request to URL : " + getUrl());
+            Utils.dbgPrint("Publishing the item:" , filename
+                    , " of user:" , getUsername());
+            Utils.dbgPrint("Sending 'POST' request to URL : " , getUrl());
 
-            System.out.println(getConnection().getHeaderFields());
+            Utils.dbgPrint(getConnection().getHeaderFields());
             int responseCode = getConnection().getResponseCode();
 
             return String.valueOf(responseCode);
@@ -1838,7 +1823,7 @@ public class PithosRESTAPI implements Serializable {
         } else
 
         {
-            System.err.println("ERROR: X-Auth-Token is empty");
+            Utils.dbgPrint("ERROR: X-Auth-Token is empty");
             return null;
         }
 
