@@ -155,10 +155,12 @@ class HadoopCluster(object):
                 logging.error(response['clusterchoice']['message'])
                 exit(error_fatal)
             result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
-            logging.log(SUMMARY, " YARN Cluster is active.You can access it through {0}:8088/cluster".format(result['master_IP']))
-            stdout.write("Your Cluster has the following properties:\ncluster_id: {0}\nmaster_IP: {1}\n"
+            logging.log(SUMMARY, " YARN Cluster is active, you can access it through {0}:8088/cluster,"
+                                 " and has the following properties:".format(result['master_IP']))
+            stdout.write("cluster_id: {0}\nmaster_IP: {1}\n"
                          "root password: {2}\n".format(result['cluster_id'], result['master_IP'],
                                                         result['master_VM_password']))
+
             exit(SUCCESS)
 
         except Exception, e:
