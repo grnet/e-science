@@ -141,7 +141,7 @@
       - { name: 'hbase-rest', state: 'stopped' }
       - { name: 'spark-master', state: 'stopped' }
       - { name: 'spark-history-server', state: 'stopped' }
-      - { name: 'hue', state: 'stopped' }
+      #- { name: 'hue', state: 'stopped' }
       - { name: 'oozie', state: 'stopped' }
       - { name: 'hive-metastore', state: 'stopped' }
       - { name: 'hive-server2', state: 'stopped' }
