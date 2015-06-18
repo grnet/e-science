@@ -592,7 +592,7 @@ class ImagesInfo(object):
                 available_images.append(image['name'])
         available_images.sort()
         for image in available_images:
-            print "{:<2}\"{name}\"".format('',name=image)
+            print "\"{name}\"".format(name=image)
     
 def main():
     """

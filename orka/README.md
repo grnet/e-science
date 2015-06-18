@@ -48,6 +48,13 @@ Optional arguments for all orka commands:
     --auth_url="authentication url (default value='https://accounts.okeanos.grnet.gr/identity/v2.0')",
     --token="an ~okeanos token (default value read from ~/.kamakirc)",
 
+## "images" command
+###{orka images} command example
+
+example for retrieving the available images:
+
+	orka images
+	
 ## "create" command
 
 Required positional arguments for create command:
@@ -208,7 +215,7 @@ example for local filesystem source:
 Also, with
 
     orka -h
-    orka { create | destroy | list | info | hadoop | file } -h
+    orka { images | create | destroy | list | info | hadoop | file } -h
 
 helpful information about the orka CLI is depicted and
 
