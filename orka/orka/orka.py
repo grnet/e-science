@@ -683,7 +683,7 @@ def main():
         parser_create.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
                               ' Default is HadoopImage (overrides image selection)',
                               nargs='?', metavar='hadoop_image_name', default=None,
-                              const='Hadoop-2.5.2')
+                              const='Hadoop-2.5.2-Debian-8.0')
         parser_create.add_argument("--replication_factor", metavar='replication_factor', default=2, type=checker.positive_num_is,
                               help='Replication factor for HDFS. Must be between 1 and number of slave nodes (cluster_size -1). Default is 2.')
         parser_create.add_argument("--dfs_blocksize", metavar='dfs_blocksize', default=128, type=checker.positive_num_is,
