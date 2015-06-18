@@ -118,10 +118,6 @@
        - { name: 'hive' }
        - { name: 'spark' }
 
-#  - name: Make sure Hue is stopped
-#    tags: postconfig
-#    shell: kill $(ps aux | grep '[s]upervisor' | awk '{print $2}')
-
   - name: Copy Livy server shell script
     tags: postconfig
     copy: src=cloudera_livy.sh dest=/etc/init.d/livy-server mode=0755
@@ -141,7 +137,6 @@
       - { name: 'hbase-rest', state: 'stopped' }
       - { name: 'spark-master', state: 'stopped' }
       - { name: 'spark-history-server', state: 'stopped' }
-      #- { name: 'hue', state: 'stopped' }
       - { name: 'oozie', state: 'stopped' }
       - { name: 'hive-metastore', state: 'stopped' }
       - { name: 'hive-server2', state: 'stopped' }
@@ -159,3 +154,13 @@
   - name: Create oozie db schema
     tags: postconfig
     shell: ./ooziedb.sh create -run chdir=/usr/lib/oozie/bin/
+
+  - name: Correct permissions to oozie log files
+    tags: postconfig
+    file: "path={{item.path}} owner={{item.owner}} group={{item.group}}"
+    with_items:
+      - { path: '/var/log/oozie/oozie-audit.log', owner: 'oozie',group: 'oozie' }
+      - { path: '/var/log/oozie/oozie-instrumentation.log',  owner: 'oozie',group: 'oozie' }
+      - { path: '/var/log/oozie/oozie-jpa.log', owner: 'oozie',group: 'oozie' }
+      - { path: '/var/log/oozie/oozie.log', owner: 'oozie',group: 'oozie' }
+      - { path: '/var/log/oozie/oozie-ops.log',  owner: 'oozie',group: 'oozie' }

@@ -425,7 +425,7 @@ class YarnCluster(object):
             logging.error(' Created cluster and resources will be deleted')
             # If error in Yarn cluster, update cluster status as destroyed
             set_cluster_state(self.opts['token'], self.cluster_id, 'Error')
-            self.destroy()
+            #self.destroy()
             raise
 
         finally:
