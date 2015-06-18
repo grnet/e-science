@@ -118,9 +118,9 @@
        - { name: 'hive' }
        - { name: 'spark' }
 
-  - name: Make sure Hue is stopped
-    tags: postconfig
-    shell: kill $(ps aux | grep '[s]upervisor' | awk '{print $2}')
+#  - name: Make sure Hue is stopped
+#    tags: postconfig
+#    shell: kill $(ps aux | grep '[s]upervisor' | awk '{print $2}')
 
   - name: Copy Livy server shell script
     tags: postconfig

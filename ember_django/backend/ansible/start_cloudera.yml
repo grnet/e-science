@@ -88,7 +88,7 @@
     when: is_slave
 
   - name: Copy oozie sharelib
-    tags: copyooziesharelib
+    tags: CLOUDstart
     shell: oozie-setup sharelib create -fs hdfs://{{hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:9000 -locallib /usr/lib/oozie/oozie-sharelib-yarn
     when: is_master
 
