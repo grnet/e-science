@@ -144,7 +144,7 @@ def get_ready_for_reroute(hostname_master, password):
                                    MASTER_SSH_PORT)
     try:
         exec_command(ssh_client, 'apt-get update')
-        #exec_command(ssh_client, 'apt-get -y install python-pip')
+        exec_command(ssh_client, 'apt-get -y install python-pip')
         exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv4/ip_forward')
         exec_command(ssh_client, 'iptables --table nat --append POSTROUTING '
                                  '--out-interface eth1 -j MASQUERADE')
@@ -249,7 +249,7 @@ def reroute_ssh_to_slaves(dport, slave_ip, hostname_master, password, master_VM_
     try:
         exec_command(ssh_client, 'route add default gw 192.168.0.2')
         exec_command(ssh_client, 'apt-get update')
-        #exec_command(ssh_client, 'apt-get -y install python-pip')
+        exec_command(ssh_client, 'apt-get -y install python-pip')
 
     finally:
         ssh_client.close()

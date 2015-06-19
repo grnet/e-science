@@ -105,7 +105,7 @@
       - { name: 'oozie', state: 'restarted' }
       - { name: 'hive-metastore', state: 'restarted' }
       - { name: 'hive-server2', state: 'restarted' }
-      #- { name: 'livy-server', state: 'started' }
+      - { name: 'livy-server', state: 'started' }
       - { name: 'hbase-regionserver', state: 'restarted' }
     when: is_master
 

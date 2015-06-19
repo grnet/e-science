@@ -80,16 +80,14 @@ const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
 HADOOP_STATUS_ACTIONS = {"stop": ["0", "Stopping", "Stopped"],
                          "start": ["1", "Starting", "Started"],
                          "format": ["2", "Formatting", "Formatted"],
-                         "HDFSMkdir": ["3", "Creating HDFS home directory", "Created home"],
                          "HUEstart": ["4", "Starting Hue", "Started Hue"],
                          "ECOSYSTEMstart": ["5", "Starting Ecosystem", "Started Ecosystem"],
-                         "CLOUDstart": ["6", "Starting Cloudera Components", "Started Cloudera Components"],
-                         "copyooziesharelib": ["7", "Copying Oozie share library", "Copied Oozie share library"]}
+                         "CLOUDstart": ["6", "Starting Cloudera Components", "Started Cloudera Components"]}
 
 REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}
 
 # List of Hadoop actions that do not update the  state field in database
-NON_STATE_HADOOP_ACTIONS = ['format','HDFSMkdir','HUEstart','ECOSYSTEMstart','copyooziesharelib','CLOUDstart']
+NON_STATE_HADOOP_ACTIONS = ['format','HUEstart','ECOSYSTEMstart','CLOUDstart']
 # Dictionary of Ansible tags of the hadoop images
 hadoop_images_ansible_tags = {"hadoopbase": {"stop": "stop", "start": "start", "format": "format"},
                               "hue": {"start": "start,HUEstart", "stop": "stop,HUEstop", "format": "format"},
