@@ -251,8 +251,8 @@ def reroute_ssh_to_slaves(dport, slave_ip, hostname_master, password, master_VM_
 
     ssh_client = establish_connect(hostname_master, 'root', password, dport)
     try:
-        exec_command(ssh_client, 'echo "route add default gw 192.168.0.2" >> ~/.bashrc; . ~/.bashrc')
-        exec_command(ssh_client, 'echo "route add default gw 192.168.0.2" >> ~/.profile')
+        exec_command(ssh_client, 'sed -i "4iroute add default gw 192.168.0.2\n" /etc/network/if-up.d/upstart')
+        exec_command(ssh_client, 'service networking restart')
         exec_command(ssh_client, 'apt-get update')
         exec_command(ssh_client, 'apt-get -y install python-pip')
 
