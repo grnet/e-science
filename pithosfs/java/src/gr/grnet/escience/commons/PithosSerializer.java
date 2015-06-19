@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 public class PithosSerializer {
 
@@ -30,15 +31,18 @@ public class PithosSerializer {
     public static String inputStreamToString(InputStream is) throws IOException {
 
         try {
-            sb = new StringBuilder();
-            inputStreamReader = new InputStreamReader(is);
+            sb = new StringBuilder(8192);
+            inputStreamReader = new InputStreamReader(is, StandardCharsets.UTF_8);
             br = new BufferedReader(inputStreamReader);
 
             while ((line = br.readLine()) != null) {
                 sb.append(line);
             }
 
-        } finally {
+        }catch (IOException ex){
+            Utils.dbgPrint("inputStreamToString error:",ex.getMessage());
+        }
+        finally {
             if (br != null) {
                 br.close();
             }
@@ -48,7 +52,6 @@ public class PithosSerializer {
         }
 
         return sb.toString();
-
     }
 
     /**

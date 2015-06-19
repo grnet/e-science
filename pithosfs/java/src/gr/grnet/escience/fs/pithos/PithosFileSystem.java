@@ -102,8 +102,12 @@ public class PithosFileSystem extends FileSystem {
     @Override
     public void initialize(URI uri, Configuration conf) throws IOException {
         super.initialize(uri, conf);
-        Utils.dbgPrint("initialize");
         setConf(conf);
+        if (conf.get("fs.pithos.debug") != null){
+            Boolean debug = Boolean.valueOf(conf.get("fs.pithos.debug"));
+            Utils.setDebug(debug);
+        }
+        Utils.dbgPrint("initialize");
         this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
         Utils.dbgPrint("uri >", this.uri);
         // this.workingDir = new Path("/user", System.getProperty("user.name"));

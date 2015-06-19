@@ -42,7 +42,7 @@ public class PithosObject implements Serializable {
     private transient ByteArrayOutputStream bytes = null;
     private transient DataOutputStream out = null;
     private transient ByteArrayInputStream serializedInputStream = null;
-    private static InputStream buffer = null;;
+    private static InputStream buffer = null;
     private static ObjectInput input = null;
 
     /** Create a Pithos Object **/
