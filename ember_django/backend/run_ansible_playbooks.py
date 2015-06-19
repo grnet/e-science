@@ -101,11 +101,13 @@ def map_command_to_ansible_actions(action, image, pre_action_status):
     tags that will run.
     """
     ansible_tags = hadoop_images_ansible_tags[image]
+    # format request for started cluster > stop [> clean ]> format > start
+    # if stopped cluster, then only format
     if action == "format" and pre_action_status == const_hadoop_status_started:
         return ['stop', 'CLOUDstop', action, 'start', 'CLOUDstart'] if 'cloudera' in image else \
             [ansible_tags['stop'], action, ansible_tags['start']]
 
-    elif action == "format":
+    elif action == "format" and pre_action_status != const_hadoop_status_started:
         return ['format']
 
     else:
@@ -133,7 +135,7 @@ def ansible_manage_cluster(cluster_id, action):
 
     elif 'hue' in cluster.os_image.lower():
         ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, 'hue', pre_action_status)
-        
+
     else:
         ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, 'hadoopbase', pre_action_status)
 
@@ -147,15 +149,13 @@ def ansible_manage_cluster(cluster_id, action):
         ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
         ansible_code_generic = 'ansible-playbook -i {0} {1} {2} -e "choose_role={3} manage_cluster={3}" -t'.format(hosts_filename, ansible_playbook, ansible_verbosity, role)
 
-        # format request for started cluster > stop [> clean ]> format > start
-        # stop
         for hadoop_action in ANSIBLE_SEQUENCE:
             ansible_code = '{0} {1} {2}'.format(ansible_code_generic, hadoop_action, ansible_log)
             execute_ansible_playbook(ansible_code)
 
-            msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
-            db_hadoop_update(cluster_id, current_hadoop_status, msg)
-            return msg
+        msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
+        db_hadoop_update(cluster_id, current_hadoop_status, msg)
+        return msg
 
 
     else:
