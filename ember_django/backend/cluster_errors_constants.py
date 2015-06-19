@@ -89,8 +89,8 @@ REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}
 # List of Hadoop actions that do not update the  state field in database
 NON_STATE_HADOOP_ACTIONS = ['format','HUEstart','ECOSYSTEMstart','CLOUDstart']
 # Dictionary of Ansible tags of the hadoop images
-hadoop_images_ansible_tags = {"hadoopbase": {"stop": "stop", "start": "start", "format": "format"},
-                              "hue": {"start": "start,HUEstart", "stop": "stop,HUEstop", "format": "format"},
+hadoop_images_ansible_tags = {"hadoopbase": {"stop": "stop", "start": "start"},
+                              "hue": {"start": "start,HUEstart", "stop": "stop,HUEstop"},
                               "ecosystem": {"start": "start,ECOSYSTEMstart,HUEstart",
-                                            "stop": "stop,ECOSYSTEMstop,HUEstop", "format": "format"},
-                              "cloudera": {"start": "start,CLOUDstart", "stop": "stop,CLOUDstop", "format": "format"}}
+                                            "stop": "stop,ECOSYSTEMstop,HUEstop"},
+                              "cloudera": {"start": "start,CLOUDstart", "stop": "stop,CLOUDstop"}}
