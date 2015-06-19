@@ -683,7 +683,7 @@ def main():
         parser_create.add_argument("--replication_factor", metavar='replication_factor', default=2, type=checker.positive_num_is,
                               help='Replication factor for HDFS. Must be between 1 and number of slave nodes (cluster_size -1). Default is 2.')
         parser_create.add_argument("--dfs_blocksize", metavar='dfs_blocksize', default=128, type=checker.positive_num_is,
-                              help='Dfs_blocksize at HDFS in megabytes. Default is 128.') 
+                              help='HDFS block size (in MB). Default is 128.') 
         
         parser_destroy.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
