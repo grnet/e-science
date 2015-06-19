@@ -14,10 +14,12 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import gr.grnet.escience.commons.Utils;
 
 /**
@@ -1529,7 +1531,14 @@ public class PithosRESTAPI implements Serializable {
                 this.getConnection().setDoOutput(true);
                 DataOutputStream wr = new DataOutputStream(getConnection()
                         .getOutputStream());
-                wr.write(content.getBytes("UTF-8"));
+                byte[] decBytes = null;
+                try {
+                    decBytes = Base64.getDecoder().decode(content);
+                } catch (IllegalArgumentException e) {
+                    Utils.dbgPrint("PithosRESTAPI#update_append_truncate_object exception:", e.getMessage());
+                    decBytes = content.getBytes("UTF-8");
+                } 
+                wr.write(decBytes);
                 wr.flush();
                 wr.close();
             } else {

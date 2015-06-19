@@ -1,23 +1,20 @@
 package gr.grnet.escience.commons;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 public class PithosSerializer {
 
-    private static BufferedReader br = null;
-    private static StringBuilder sb = null;
-    private static String line = null;
     private static FileInputStream fileInputStream = null;
+    private static ByteArrayOutputStream baos = null;
+    private static byte[] buffer = null;
     private static byte[] blockDataBytes = null;
     private static int bytesRead = 0;
-    private static InputStreamReader inputStreamReader = null;
 
     private PithosSerializer() {
     }
@@ -26,32 +23,22 @@ public class PithosSerializer {
      * 
      * @param is
      *            : the input stream
-     * @return the inputstream as string
+     * @return the inputstream as Base64 encoded string
      */
     public static String inputStreamToString(InputStream is) throws IOException {
 
         try {
-            sb = new StringBuilder(8192);
-            inputStreamReader = new InputStreamReader(is, StandardCharsets.UTF_8);
-            br = new BufferedReader(inputStreamReader);
-
-            while ((line = br.readLine()) != null) {
-                sb.append(line);
+            baos = new ByteArrayOutputStream();
+            buffer = new byte[1024];
+            int length = 0;
+            while ((length = is.read(buffer)) != -1) {
+                baos.write(buffer, 0, length);
             }
-
-        }catch (IOException ex){
-            Utils.dbgPrint("inputStreamToString error:",ex.getMessage());
-        }
-        finally {
-            if (br != null) {
-                br.close();
-            }
-            if (inputStreamReader != null) {
-                inputStreamReader.close();
-            }
-        }
-
-        return sb.toString();
+        } catch (IOException e) {
+            Utils.dbgPrint("PithosSerializer#inputStreamToString error >",e.getMessage());
+            throw new IOException(e);
+        } 
+        return Base64.getEncoder().encodeToString(baos.toByteArray());
     }
 
     /**
