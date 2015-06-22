@@ -1,5 +1,7 @@
 package gr.grnet.escience.fs.pithos;
 
+import gr.grnet.escience.commons.Utils;
+
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -117,6 +119,7 @@ public class PithosInputStream extends FSInputStream {
     @Override
     public synchronized void seek(long targetPos) throws IOException {
         if (targetPos > fileLength) {
+            Utils.dbgPrint("Cannot seek after EOF");
             throw new IOException("Cannot seek after EOF");
         }
         pos = targetPos;
@@ -154,6 +157,7 @@ public class PithosInputStream extends FSInputStream {
     public synchronized int read(byte[] buf, int off, int len)
             throws IOException {
         if (closed) {
+            Utils.dbgPrint("Stream closed");
             throw new IOException("Stream closed");
         }
         if (pos < fileLength) {
@@ -205,7 +209,7 @@ public class PithosInputStream extends FSInputStream {
 
     @Override
     public void reset() throws IOException {
-        Job.getInstance().killJob();
+        Utils.dbgPrint("Mark not supported");
         throw new IOException("Mark not supported");
     }
 

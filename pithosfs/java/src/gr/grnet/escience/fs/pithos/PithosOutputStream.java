@@ -100,7 +100,6 @@ public class PithosOutputStream extends OutputStream {
      */
     public PithosOutputStream(Configuration conf, PithosPath path,
             long blocksize, int buffersize) throws IOException {
-        Utils.dbgPrint("PithosOutputStream ENTRY", path, blocksize, buffersize);
 
         this.conf = conf;
         this.pithosPath = path;
@@ -120,13 +119,13 @@ public class PithosOutputStream extends OutputStream {
      */
     private File newBackupFile() throws IOException {
         dir = new File(conf.get("hadoop.tmp.dir"));
-        Utils.dbgPrint("newBackupFile >", dir);
         if (!dir.exists() && !dir.mkdirs()) {
+            Utils.dbgPrint("Cannot create local pithos buffer directory: "
+                    + dir);
             throw new IOException(
                     "Cannot create local pithos buffer directory: " + dir);
         }
         result = File.createTempFile("output-", ".tmp", dir);
-        Utils.dbgPrint("newBackupFile > result:", result);
         result.deleteOnExit();
 
         return result;
@@ -138,9 +137,9 @@ public class PithosOutputStream extends OutputStream {
 
     @Override
     public synchronized void write(int b) throws IOException {
-        Utils.dbgPrint("write(int)");
 
         if (isClosed()) {
+            Utils.dbgPrint(ERR_STREAM_CLOSED);
             throw new IOException(ERR_STREAM_CLOSED);
         }
 
@@ -155,6 +154,7 @@ public class PithosOutputStream extends OutputStream {
     public synchronized void write(byte[] b, int off, int len)
             throws IOException {
         if (isClosed()) {
+            Utils.dbgPrint(ERR_STREAM_CLOSED);
             throw new IOException(ERR_STREAM_CLOSED);
         }
         while (len > 0) {
@@ -181,6 +181,7 @@ public class PithosOutputStream extends OutputStream {
     public synchronized void flush() throws IOException {
         // util.dbgPrint("flush");
         if (isClosed()) {
+            Utils.dbgPrint(ERR_STREAM_CLOSED);
             throw new IOException(ERR_STREAM_CLOSED);
         }
 
@@ -236,8 +237,6 @@ public class PithosOutputStream extends OutputStream {
         nextBlockOutputStream();
 
         // - Append Pithos Block on the existing object
-        Utils.dbgPrint("endBlock nextBlock.length >",
-                nextBlock.getBlockLength());
         PithosFileSystem.getHadoopPithosConnector().appendPithosBlock(
                 pithosPath.getContainer(), pithosPath.getObjectAbsolutePath(),
                 nextBlock);
@@ -262,13 +261,11 @@ public class PithosOutputStream extends OutputStream {
         container = pithosPath.getContainer();
         hashAlgo = PithosFileSystem.getHadoopPithosConnector()
                 .getPithosContainerHashAlgorithm(container);
-        Utils.dbgPrint("nextBlockOutputStream", hashAlgo);
+
         try {
             blockHash = Utils.computeHash(blockData, hashAlgo);
             if (!PithosFileSystem.getHadoopPithosConnector()
                     .pithosObjectBlockExists(container, blockHash)) {
-                Utils.dbgPrint("nextBlockOutputStream bytesWrittenToBlock >",
-                        bytesWrittenToBlock);
                 nextBlock = new PithosBlock(blockHash, bytesWrittenToBlock,
                         blockData);
                 // blocks.add(nextBlock);
@@ -288,9 +285,6 @@ public class PithosOutputStream extends OutputStream {
         if (isClosed()) {
             return;
         }
-        Utils.dbgPrint("=================================================");
-        Utils.dbgPrint("OUTPUTSTREAM CLOSE CALLED");
-        Utils.dbgPrint("=================================================");
 
         flush();
         if (filePos == 0 || bytesWrittenToBlock != 0) {
@@ -301,15 +295,14 @@ public class PithosOutputStream extends OutputStream {
         backupFile.delete();
 
         super.close();
-        Utils.dbgPrint("super.close");
         setClosed(true);
     }
 
     public static boolean isClosed() {
         return closed;
     }
-    
-    public static void setClosed(boolean flag){
+
+    public static void setClosed(boolean flag) {
         closed = flag;
     }
 
