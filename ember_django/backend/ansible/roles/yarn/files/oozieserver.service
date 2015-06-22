@@ -1,0 +1,12 @@
+[Unit]
+Description=oozieserver
+
+[Service]
+Type=oneshot
+ExecStart=/etc/init.d/oozieserver start
+ExecStop=/etc/init.d/oozieserver stop
+ExecReload=/etc/init.d/oozieserver restart
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
