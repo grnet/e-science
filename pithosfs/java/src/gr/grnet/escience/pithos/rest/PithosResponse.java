@@ -31,7 +31,6 @@ public class PithosResponse {
 
     @Override
     public String toString() {
-        // TODO Auto-generated method stub
         return (new Gson()).toJson(this);
     }
 }

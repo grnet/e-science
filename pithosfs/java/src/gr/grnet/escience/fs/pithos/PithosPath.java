@@ -24,7 +24,7 @@ public class PithosPath {
     }
 
     public PithosPath(String pithosContainer, String pithosObjectPath) {
-        // TODO Do not parse the path as a string, instead use Path api
+        // Do not parse the path as a string, instead use Path api
         // and take into account type of requested resource and pithos container
         // / authority elements.
         this.container = pithosContainer;
@@ -83,6 +83,7 @@ public class PithosPath {
                 this.folderAbsolutePath = getObjectAbsolutePath().substring(
                         getObjectAbsolutePath().lastIndexOf("/") + 1,
                         getObjectAbsolutePath().length());
+
                 // - Essentially the object name for Pithos FS is the extracted
                 // absolute path
                 this.objectName = getObjectAbsolutePath();
