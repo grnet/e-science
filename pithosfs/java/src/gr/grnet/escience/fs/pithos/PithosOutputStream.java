@@ -17,6 +17,7 @@ import org.apache.hadoop.conf.Configuration;
 public class PithosOutputStream extends OutputStream {
 
     private static String ERR_STREAM_CLOSED = "Stream closed";
+
     /**
      * Hadoop configuration
      */

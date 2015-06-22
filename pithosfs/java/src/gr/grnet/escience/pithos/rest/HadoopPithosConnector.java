@@ -743,7 +743,9 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             // - Check if exists and if no, then create it
             if (!getFileList(pithos_container)
                     .contains(pithos_object.getName())) {
-
+                // - Create the file
+                createEmptyPithosObject(pithos_container, pithos_object);
+                
                 // - This means that the object should be created
                 if (pithos_object.getObjectSize() <= 0) {
                     objectDataContent = "";

@@ -180,7 +180,6 @@ public class PithosInputStream extends FSInputStream {
     @Override
     public void close() throws IOException {
         if (closed) {
-            Job.getInstance().killJob();
             return;
         }
         if (blockStream != null) {
