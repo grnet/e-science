@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +66,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     private transient PithosBlock[] blocks = null;
     private transient PithosResponse resp = null;
     private String hashAlgo = null;
+    private String encString = null;
     private transient FSDataInputStream fsDataInputStream = null;
     private transient PithosInputStream pithosInputStream = null;
     private File pithosBlockData = null;
@@ -962,9 +964,9 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         getPithosRequest().getRequestHeaders().put("Content-Encoding", "UTF-8");
 
         try {
+            encString = Base64.getEncoder().encodeToString(newPithosBlock.getBlockData());
             return update_append_truncate_object(pithos_container,
-                    target_object, new String(newPithosBlock.getBlockData(),
-                            "UTF-8"),
+                    target_object, encString,
                     getPithosRequest().getRequestParameters(),
                     getPithosRequest().getRequestHeaders());
         } catch (UnsupportedEncodingException e) {
