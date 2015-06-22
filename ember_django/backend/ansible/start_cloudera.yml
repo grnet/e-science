@@ -31,7 +31,7 @@
     when: is_slave
 
   - name: Create mandatory directories in Hdfs
-    tags: start
+    tags: CLOUDstart
     action: command {{item}} chdir={{ cloudera_bin }}
     with_items:
       - sudo -u hdfs hadoop fs -mkdir -p /user
@@ -64,7 +64,7 @@
     when: is_master
 
   - name: start History Server
-    tags: start
+    tags: CLOUDstart
     service: "name={{item.name}} state={{item.state}}"
     with_items:
       - { name: 'hadoop-mapreduce-historyserver', state: 'restarted' }
@@ -96,17 +96,18 @@
     tags: CLOUDstart
     service: "name={{item.name}} state={{item.state}}"
     with_items:
+      - { name: 'zookeeper-server', state: 'restarted' }
       - { name: 'hbase-master', state: 'restarted' }
       - { name: 'hbase-thrift', state: 'restarted' }
       - { name: 'hbase-rest', state: 'restarted' }
-      - { name: 'zookeeper-server', state: 'restarted' }
+      - { name: 'hbase-regionserver', state: 'restarted' }
       - { name: 'spark-master', state: 'restarted' }
       - { name: 'spark-history-server', state: 'restarted' }
-      - { name: 'oozie', state: 'restarted' }
       - { name: 'hive-metastore', state: 'restarted' }
       - { name: 'hive-server2', state: 'restarted' }
+      - { name: 'oozie', state: 'restarted' }
       - { name: 'livy-server', state: 'started' }
-      - { name: 'hbase-regionserver', state: 'restarted' }
+      - { name: 'hue', state: 'restarted' }
     when: is_master
 
   - name: start Hbase regionservers and spark workers in cloudera cluster
@@ -117,25 +118,21 @@
       - { name: 'hbase-regionserver', state: 'restarted' }
     when: is_slave
 
-  - name: Start Hue
-    tags: CLOUDstart
-    command: sudo -u hue ./supervisor -d chdir=/usr/lib/hue/build/env/bin/
-    when: is_master
-
   - name: stop Hbase,spark,oozie and hive in cloudera cluster
     tags: CLOUDstop
     service: "name={{item.name}} state={{item.state}}"
     with_items:
-      - { name: 'zookeeper-server', state: 'stopped' }
-      - { name: 'hbase-master', state: 'stopped' }
-      - { name: 'hbase-thrift', state: 'stopped' }
-      - { name: 'hbase-rest', state: 'stopped' }
-      - { name: 'spark-master', state: 'stopped' }
-      - { name: 'spark-history-server', state: 'stopped' }
+      - { name: 'hue', state: 'stopped' }
       - { name: 'oozie', state: 'stopped' }
       - { name: 'hive-metastore', state: 'stopped' }
       - { name: 'hive-server2', state: 'stopped' }
+      - { name: 'hbase-master', state: 'stopped' }
+      - { name: 'hbase-thrift', state: 'stopped' }
+      - { name: 'hbase-rest', state: 'stopped' }
       - { name: 'hbase-regionserver', state: 'stopped' }
+      - { name: 'spark-master', state: 'stopped' }
+      - { name: 'spark-history-server', state: 'stopped' }
+      - { name: 'zookeeper-server', state: 'stopped' }
     when: is_master
 
   - name: stop Hbase regionservers and spark workers in cloudera cluster
@@ -145,11 +142,6 @@
       - { name: 'spark-worker', state: 'stopped' }
       - { name: 'hbase-regionserver', state: 'stopped' }
     when: is_slave
-
-  - name: Stop Hue
-    tags: CLOUDstop
-    shell: kill $(ps aux | grep '[s]upervisor' | awk '{print $2}')
-    when: is_master
 
   - name: Stop Livy Server
     tags: CLOUDstop

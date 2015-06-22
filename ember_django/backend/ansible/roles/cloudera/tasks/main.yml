@@ -122,27 +122,6 @@
     tags: postconfig
     copy: src=cloudera_livy.sh dest=/etc/init.d/livy-server mode=0755
 
-  - name: Make sure all cloudera daemons are stopped
-    tags: postconfig
-    service: "name={{item.name}} state={{item.state}}"
-    with_items:
-      - { name: 'hadoop-hdfs-namenode', state: 'stopped' }
-      - { name: 'hadoop-yarn-resourcemanager',  state: 'stopped' }
-      - { name: 'hadoop-mapreduce-historyserver', state: 'stopped' }
-      - { name: 'hadoop-hdfs-datanode', state: 'stopped' }
-      - { name: 'hadoop-yarn-nodemanager',  state: 'stopped' }
-      - { name: 'zookeeper-server', state: 'stopped' }
-      - { name: 'hbase-master', state: 'stopped' }
-      - { name: 'hbase-thrift', state: 'stopped' }
-      - { name: 'hbase-rest', state: 'stopped' }
-      - { name: 'spark-master', state: 'stopped' }
-      - { name: 'spark-history-server', state: 'stopped' }
-      - { name: 'oozie', state: 'stopped' }
-      - { name: 'hive-metastore', state: 'stopped' }
-      - { name: 'hive-server2', state: 'stopped' }
-      - { name: 'spark-worker', state: 'stopped' }
-      - { name: 'hbase-regionserver', state: 'stopped' }
-
   - name: Copy Java lib directory
     tags: postconfig
     copy: src=lib/ dest=/usr/lib/hadoop/lib/
