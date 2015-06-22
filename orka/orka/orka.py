@@ -241,24 +241,33 @@ class HadoopCluster(object):
             else:
                 logging.error(' You can take file actions on active clusters with started hadoop only.')
                 exit(error_fatal)
-            source_path = self.opts['source'].split("/")
-            self.source_filename = source_path[len(source_path)-1]
             if opt_fileput == True:
                 try:
-                    if is_period(self.opts['destination']) or is_default_dir(self.opts['destination']):
-                        self.opts['destination'] = self.source_filename
-                    file_protocol, remain = get_file_protocol(self.opts['source'], 'fileput', 'source')
-                    self.check_hdfs_destination(active_cluster)
-                    if file_protocol == 'http-ftp':
-                        self.put_from_server()
-                    elif file_protocol == 'file':
-                        self.put_from_local(active_cluster)
-                    elif file_protocol == 'pithos':
-                        kamaki_filespec = remain
-                        self.put_from_pithos(active_cluster,kamaki_filespec)
-                    else:
-                        logging.error(' Error: Unrecognized source filespec.')
-                        exit(error_fatal)
+                    sourcesLength = len(self.opts['destination'])
+                    sources = [self.opts['source']]
+                    if sourcesLength > 1:
+                        destination = self.opts['destination'][-1]
+                        for source in self.opts['destination'][:-1]:
+                            sources.append(source)
+                    for self.opts['source'] in sources:
+                        self.opts['destination'] = destination
+                        source_path = self.opts['source'].split("/")
+                        self.source_filename = source_path[len(source_path)-1]
+                        if is_period(self.opts['destination']) or is_default_dir(self.opts['destination']):
+                            self.opts['destination'] = self.source_filename
+                        file_protocol, remain = get_file_protocol(self.opts['source'], 'fileput', 'source')
+                        self.check_hdfs_destination(active_cluster)
+                        if file_protocol == 'http-ftp':
+                            self.put_from_server()
+                        elif file_protocol == 'file':
+                            self.put_from_local(active_cluster)
+                        elif file_protocol == 'pithos':
+                            kamaki_filespec = remain
+                            self.put_from_pithos(active_cluster,kamaki_filespec)
+                        else:
+                            logging.error(' Error: Unrecognized source filespec.')
+                            exit(error_fatal)
+                        
                 except Exception, e:
                     logging.error(str(e.args[0]))
                     exit(error_fatal)
@@ -390,7 +399,7 @@ class HadoopCluster(object):
 
         else:
             """ Streaming """
-            logging.log(SUMMARY, ' Start uploading file to hdfs' )
+            logging.log(SUMMARY, " Start uploading file '{0}' to hdfs".format(self.source_filename))
             ssh_stream_to_hadoop("hduser", cluster['master_IP'],
                                   self.opts['source'], self.opts['destination'])
 
@@ -719,7 +728,7 @@ def main():
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         parser_file_put.add_argument('source',
                               help='The file to be uploaded')
-        parser_file_put.add_argument('destination',
+        parser_file_put.add_argument('destination', nargs="+",
                               help='Destination in the Hadoop filesystem')
         parser_file_put.add_argument('--user',
                               help='Ftp-Http remote user')
