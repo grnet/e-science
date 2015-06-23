@@ -7,10 +7,8 @@ import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
 import org.apache.hadoop.conf.Configuration;
@@ -448,15 +446,6 @@ public class PithosFileSystem extends FileSystem {
     public static void main(String[] args) {
         // Stub so we can create a 'runnable jar' export for packing
         // dependencies
-        String out = null;
-        String hashAlgo = "SHA-256";
-        try {
-            out = Utils.computeHash("Lorem ipsum dolor sit amet.", hashAlgo);
-        } catch (NoSuchAlgorithmException e) {
-            Utils.dbgPrint("invalid hash algorithm:" + hashAlgo, e);
-        } catch (UnsupportedEncodingException e) {
-            Utils.dbgPrint("invalid encoding", e);
-        }
     }
 
 }

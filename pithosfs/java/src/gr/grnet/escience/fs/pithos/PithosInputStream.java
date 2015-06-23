@@ -12,7 +12,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSInputStream;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.mapreduce.Job;
 
 /**
  * This class implements the FSInputstream by extending Hadoop 2.5.2 API native
