@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +66,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     private transient PithosBlock[] blocks = null;
     private transient PithosResponse resp = null;
     private String hashAlgo = null;
+    private String encString = null;
     private transient FSDataInputStream fsDataInputStream = null;
     private transient PithosInputStream pithosInputStream = null;
     private File pithosBlockData = null;
@@ -80,11 +82,12 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
      */
     public HadoopPithosConnector(String pithosUrl, String pithosToken,
             String uuid) {
-        // - implement aPithos RESTAPI instance
-        // TODO: Refactor to use org.apache.hadoop.conf.Configuration
-        // and pass the conf object from PithosFileSystem instead of option
-        // literals
+        // - Implement aPithos RESTAPI instance
         super(pithosUrl, pithosToken, uuid);
+    }
+
+    public void terminateConnection() {
+        Utils.dbgPrint("ERROR: Unauthorized. Authentication Token is not valid.");        
     }
 
     /***
@@ -643,13 +646,10 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             // - Move the pointer one step forward
             block_location_pointer_counter++;
         }
-        Utils.dbgPrint("Object pointer = ", block_location_pointer_counter);
 
         // - Find the bytes range of the current block
         range = bytesRange(object_total_size, block_size, object_blocks_number,
                 block_location_pointer_counter);
-
-        Utils.dbgPrint("RANGE [", range[0], "-", range[1], "]");
 
         // - Check if the requested offset is between the actual range of the
         // block
@@ -688,11 +688,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                 }
             }
         } else {
-            Utils.dbgPrint(
-                    "The defined offset into seek Pithos Block is out of range...\n\t",
-                    "offset = ", offsetIntoPithosBlock, " | BlockRange[",
-                    range[0], "-", range[1], "]");
-
             return null;
         }
 
@@ -736,10 +731,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     public boolean pithosObjectBlockExists(String pithos_container,
             String blockHash) {
         // - Get all available object into the container
-        // TODO: Get all available objects on the container
-        // put them into List<String>
-        // for each object use the getPithosObjectBlockHashes(pithos_container,
-        // object_location) so as to check if the requested block hash exist
         return false;
     }
 
@@ -757,8 +748,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             if (!getFileList(pithos_container)
                     .contains(pithos_object.getName())) {
                 // - Create the file
-                String respStr = createEmptyPithosObject(pithos_container, pithos_object);
-                Utils.dbgPrint("storePithosObject#createEmptyPithosObject > ",respStr);
+                createEmptyPithosObject(pithos_container, pithos_object);
 
                 // - This means that the object should be created
                 if (pithos_object.getObjectSize() <= 0) {
@@ -808,8 +798,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
         // - Header Parameters
         // - Format of the uploaded file
-        getPithosRequest().getRequestHeaders()
-                .put("Content-Type", "application/octet-stream");
+        getPithosRequest().getRequestHeaders().put("Content-Type",
+                "application/octet-stream");
 
         try {
             // - Create pithos path
@@ -955,18 +945,18 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         contentLength = ((Integer) newPithosBlock.getBlockData().length)
                 .toString();
 
-        Utils.dbgPrint("appendPithosBlock content-length >", contentLength);
         getPithosRequest().getRequestHeaders().put("Content-Length",
                 contentLength);
 
         getPithosRequest().getRequestHeaders().put("Content-Encoding", "UTF-8");
 
         try {
+            encString = Base64.getEncoder().encodeToString(
+                    newPithosBlock.getBlockData());
             return update_append_truncate_object(pithos_container,
-                    target_object, new String(newPithosBlock.getBlockData(),
-                            "UTF-8"),
-                    getPithosRequest().getRequestParameters(),
-                    getPithosRequest().getRequestHeaders());
+                    target_object, encString, getPithosRequest()
+                            .getRequestParameters(), getPithosRequest()
+                            .getRequestHeaders());
         } catch (UnsupportedEncodingException e) {
             Utils.dbgPrint(e.getMessage(), e);
             return null;
@@ -1004,27 +994,24 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         } catch (IOException e) {
             Utils.dbgPrint(e.getMessage(), e);
             return null;
-        } 
+        }
     }
 
     @Override
     public String storePithosBlock(String pithos_container,
             String target_object, PithosBlock pithos_block, File backup_file) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public String pithosObjectOutputStream(String pithos_container,
             String object_name, PithosObject pithos_object) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public String pithosBlockOutputStream(String pithos_container,
             String target_object, PithosBlock pithos_block) {
-        // TODO Auto-generated method stub
         return null;
     }
 

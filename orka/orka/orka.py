@@ -97,8 +97,8 @@ def task_message(task_id, escience_token, server_url, wait_timer, task='not_prog
     while 'state' in response['job']:
         if response['job']['state'].replace('\r','') != previous_response['job']['state'].replace('\r',''):
             if task == 'has_progress_bar':
-                stdout.write('{0}\r'.format(response['job']['state']))
-                stdout.flush()
+                stderr.write(u'{0}\r'.format(response['job']['state']))
+                stderr.flush()
             else:
                 stderr.write('{0}'.format('\r'))
                 logging.log(SUMMARY, '{0}'.format(response['job']['state']))
@@ -354,7 +354,6 @@ class HadoopCluster(object):
                               sourcefile, self.opts['destination'])
         if pithos_url:
             self.opts['source'] = pithos_url
-            print self.opts['source']
             result = self.put_from_server()
             if result == 0:
                 logging.log(SUMMARY, ' Pithos+ file uploaded to Hadoop filesystem' )
@@ -606,7 +605,7 @@ class ImagesInfo(object):
                 available_images.append(image['name'])
         available_images.sort()
         for image in available_images:
-            print "{:<2}\"{name}\"".format('',name=image)
+            print "{name}".format(name=image)
     
 def main():
     """
@@ -694,14 +693,10 @@ def main():
         parser_create.add_argument("--image", help='OS for the cluster.'
                               ' Default is "Debian Base"', metavar='image',
                               default=default_image)
-        parser_create.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
-                              ' Default is HadoopImage (overrides image selection)',
-                              nargs='?', metavar='hadoop_image_name', default=None,
-                              const='Hadoop-2.5.2')
         parser_create.add_argument("--replication_factor", metavar='replication_factor', default=2, type=checker.positive_num_is,
                               help='Replication factor for HDFS. Must be between 1 and number of slave nodes (cluster_size -1). Default is 2.')
         parser_create.add_argument("--dfs_blocksize", metavar='dfs_blocksize', default=128, type=checker.positive_num_is,
-                              help='Dfs_blocksize at HDFS in megabytes. Default is 128.') 
+                              help='HDFS block size (in MB). Default is 128.') 
         
         parser_destroy.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
@@ -767,8 +762,6 @@ def main():
             if opts['cluster_size'] <= opts['replication_factor']:
                 logging.error('Replication factor must be between 1 and number of slave nodes (cluster_size -1)')
                 exit(error_replication_factor)
-            if opts['use_hadoop_image']:
-                opts['image'] = opts['use_hadoop_image']
             c_hadoopcluster.create()
         elif verb == 'destroy':
             c_hadoopcluster.destroy()

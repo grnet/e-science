@@ -408,7 +408,7 @@ class YarnCluster(object):
             raise
         # Update cluster info with the master VM root password.
         set_cluster_state(self.opts['token'], self.cluster_id,
-                          ' Configuring Yarn cluster node communication (2/3)',
+                          ' Configuring YARN cluster node communication (2/3)',
                           password=self.master_root_pass)
 
         try:
