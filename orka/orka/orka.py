@@ -245,8 +245,10 @@ class HadoopCluster(object):
                 try:
                     sourcesLength = len(self.opts['destination'])
                     sources = [self.opts['source']]
+                    destination = self.opts['destination'][-1]
                     if sourcesLength > 1:
-                        destination = self.opts['destination'][-1]
+                        if not destination.endswith("/"):
+                            destination += '/'
                         for source in self.opts['destination'][:-1]:
                             sources.append(source)
                     for self.opts['source'] in sources:
@@ -352,6 +354,7 @@ class HadoopCluster(object):
                               sourcefile, self.opts['destination'])
         if pithos_url:
             self.opts['source'] = pithos_url
+            print self.opts['source']
             result = self.put_from_server()
             if result == 0:
                 logging.log(SUMMARY, ' Pithos+ file uploaded to Hadoop filesystem' )
@@ -727,7 +730,7 @@ def main():
         parser_file_put.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         parser_file_put.add_argument('source',
-                              help='The file to be uploaded')
+                              help='The files (local, pithos, ftp) to be uploaded')
         parser_file_put.add_argument('destination', nargs="+",
                               help='Destination in the Hadoop filesystem')
         parser_file_put.add_argument('--user',
