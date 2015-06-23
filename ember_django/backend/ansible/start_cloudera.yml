@@ -145,5 +145,5 @@
 
   - name: Stop Livy Server
     tags: CLOUDstop
-    shell: kill $(ps aux | grep '[l]ivy' | awk '{print $2}')
+    shell: if pgrep livy; then pkill livy; fi
     when: is_master
