@@ -86,6 +86,10 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         super(pithosUrl, pithosToken, uuid);
     }
 
+    public void terminateConnection() {
+        Utils.dbgPrint("ERROR: Unauthorized. Authentication Token is not valid.");        
+    }
+
     /***
      * Pithos request
      */
@@ -745,7 +749,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                     .contains(pithos_object.getName())) {
                 // - Create the file
                 createEmptyPithosObject(pithos_container, pithos_object);
-                
+
                 // - This means that the object should be created
                 if (pithos_object.getObjectSize() <= 0) {
                     objectDataContent = "";
@@ -770,16 +774,12 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                                 getPithosRequest().getRequestParameters(),
                                 getPithosRequest().getRequestHeaders());
                     } else {
-                        Utils.dbgPrint("ERROR: Pithos cannot be empty.");
                         return "ERROR: Pithos cannot be empty.";
                     }
                 } else {
-                    Utils.dbgPrint("ERROR: Pithos object must contain a name.");
                     return "ERROR: Pithos object must contain a name.";
                 }
             } else {
-                Utils.dbgPrint("ERROR: Object <" + pithos_object.getName()
-                        + "> already exists.");
                 return "ERROR: Object <" + pithos_object.getName()
                         + "> already exists.";
             }
@@ -830,7 +830,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                             tmpFile2bUploaded.getName(),
                             path.getObjectFolderAbsolutePath(), null);
                 } else {
-                    Utils.dbgPrint("ERROR: Fail to create the object into the requested location");
                     return "ERROR: Fail to create the object into the requested location";
                 }
             } else {
