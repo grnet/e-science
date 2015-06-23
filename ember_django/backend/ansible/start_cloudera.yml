@@ -92,7 +92,7 @@
     shell: oozie-setup sharelib create -fs hdfs://{{hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:9000 -locallib /usr/lib/oozie/oozie-sharelib-yarn
     when: is_master
 
-  - name: start Hbase,spark,oozie and hive in cloudera cluster
+  - name: start Hbase,spark,oozie,hive and hue in cloudera cluster
     tags: CLOUDstart
     service: "name={{item.name}} state={{item.state}}"
     with_items:
@@ -118,7 +118,7 @@
       - { name: 'hbase-regionserver', state: 'restarted' }
     when: is_slave
 
-  - name: stop Hbase,spark,oozie and hive in cloudera cluster
+  - name: stop Hbase,spark,oozie,hive and hue in cloudera cluster
     tags: CLOUDstop
     service: "name={{item.name}} state={{item.state}}"
     with_items:
