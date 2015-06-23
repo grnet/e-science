@@ -86,6 +86,10 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         super(pithosUrl, pithosToken, uuid);
     }
 
+    public void terminateConnection() {
+        Utils.dbgPrint("ERROR: Unauthorized. Authentication Token is not valid.");        
+    }
+
     /***
      * Pithos request
      */
@@ -195,7 +199,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                             getPithosRequest().getRequestHeaders()));
 
         } catch (IOException e) {
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 198 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         }
 
@@ -220,7 +225,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                     .getRequestHeaders());
         } catch (IOException e) {
             // - Return the exception message as String
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 223 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         }
     }
@@ -242,7 +248,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                     getPithosRequest().getRequestParameters(),
                     getPithosRequest().getRequestHeaders());
         } catch (IOException e) {
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 245 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         }
     }
@@ -278,7 +285,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             }
         } catch (IOException e) {
             hashMapResp = null;
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 281 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return -1;
         }
     }
@@ -351,7 +359,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             // - Return the created pithos object
             return resultPithosBlock;
         } catch (IOException e) {
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 354 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         } finally {
             if (block_data != null) {
@@ -387,7 +396,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             // - Return the required value
             return hashMapResp.getBlockHashes().size();
         } catch (IOException e) {
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 390 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return -1;
         } finally {
             if (hashMapResp != null) {
@@ -420,7 +430,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             // - Return the required value
             return hashMapResp.getBlockHashes();
         } catch (IOException e) {
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 423 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         } finally {
             if (hashMapResp != null) {
@@ -479,7 +490,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             // - Return the required value
             return Long.parseLong(hashMapResp.getBlockSize());
         } catch (IOException e) {
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 482 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return -1;
         } finally {
             if (hashMapResp != null) {
@@ -544,7 +556,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             getPithosResponse().setResponseData(response_data);
 
         } catch (IOException e) {
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 547 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         }
 
@@ -571,7 +584,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             // - Return the input stream wrapped into a FSDataINputStream
             return fsDataInputStream;
         } catch (Exception e) {
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 574 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         } finally {
             // - Release potential unused data
@@ -607,7 +621,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             fsDataInputStream = new FSDataInputStream(pithosFileInputStream);
             return fsDataInputStream;
         } catch (IOException e) {
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 610 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         } finally {
             resultPithosBlock = null;
@@ -675,7 +690,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                 // -Return the actual data of after the block seek
                 return block_data;
             } catch (IOException e) {
-                Utils.dbgPrint(e.getMessage(), e);
+                Utils.dbgPrint("LINE 678 (HaddopPithosConnector.java)---> ",
+                        e.getMessage(), e);
                 return null;
             } finally {
                 if (block_data != null) {
@@ -701,7 +717,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                     getPithosRequest().getRequestParameters(),
                     getPithosRequest().getRequestHeaders());
         } catch (IOException e) {
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 704 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
         }
         return strResp;
     }
@@ -745,7 +762,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                     .contains(pithos_object.getName())) {
                 // - Create the file
                 createEmptyPithosObject(pithos_container, pithos_object);
-                
+
                 // - This means that the object should be created
                 if (pithos_object.getObjectSize() <= 0) {
                     objectDataContent = "";
@@ -838,7 +855,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             }
         } catch (IOException e) {
             // - Return the exception message as String
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 841 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         } finally {
             if (temp != null) {
@@ -880,7 +898,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
         } catch (IOException e) {
             // - Return the exception message as String
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 883 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         }
 
@@ -920,7 +939,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                     getPithosRequest().getRequestHeaders());
         } catch (IOException e) {
             // - Return the exception message as String
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 923 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         }
 
@@ -959,11 +979,13 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                             .getRequestParameters(), getPithosRequest()
                             .getRequestHeaders());
         } catch (UnsupportedEncodingException e) {
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 962 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         } catch (IOException e) {
             // - Return the exception message as String
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 966 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         }
 
@@ -993,7 +1015,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             // - Return the created pithos object
             return block_data;
         } catch (IOException e) {
-            Utils.dbgPrint(e.getMessage(), e);
+            Utils.dbgPrint("LINE 997 (HaddopPithosConnector.java)---> ",
+                    e.getMessage(), e);
             return null;
         }
     }

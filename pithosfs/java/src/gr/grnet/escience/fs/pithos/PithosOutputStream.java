@@ -109,7 +109,6 @@ public class PithosOutputStream extends OutputStream {
         this.backupStream = new FileOutputStream(backupFile);
         this.bufferSize = buffersize;
         this.outBuf = new byte[buffersize];
-        Utils.dbgPrint("PithosOutputStream EXIT");
     }
 
     /**
@@ -180,7 +179,6 @@ public class PithosOutputStream extends OutputStream {
 
     @Override
     public synchronized void flush() throws IOException {
-        // util.dbgPrint("flush");
         if (isClosed()) {
             Utils.dbgPrint(ERR_STREAM_CLOSED);
             throw new IOException(ERR_STREAM_CLOSED);

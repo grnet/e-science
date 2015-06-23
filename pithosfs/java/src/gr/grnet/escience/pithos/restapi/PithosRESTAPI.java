@@ -1,5 +1,8 @@
 package gr.grnet.escience.pithos.restapi;
 
+import gr.grnet.escience.commons.Utils;
+import gr.grnet.escience.fs.pithos.PithosFileSystem;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -19,8 +22,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import gr.grnet.escience.commons.Utils;
 
 /**
  * @author kostas vogias
@@ -236,9 +237,9 @@ public class PithosRESTAPI implements Serializable {
 
         if (checkConf()) {
             configureConnection(getUrl(), "GET", parameters, headers);
-            Utils.dbgPrint("Listing sharing accounts for user with token:"
-                    , getX_Auth_Token());
-            Utils.dbgPrint("Sending 'GET' request to URL : " , getUrl());
+            Utils.dbgPrint("Listing sharing accounts for user with token:",
+                    getX_Auth_Token());
+            Utils.dbgPrint("Sending 'GET' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 200) {
@@ -299,18 +300,21 @@ public class PithosRESTAPI implements Serializable {
 
             String urlCloned = getUrl() + "/" + getUsername();
             configureConnection(urlCloned, "HEAD", parameters, headers);
-            Utils.dbgPrint("Retrieving account metadata for user with token:"
-                            , getX_Auth_Token());
-            Utils.dbgPrint("Sending 'HEAD' request to URL : " , getUrl());
+            Utils.dbgPrint("Retrieving account metadata for user with token:",
+                    getX_Auth_Token());
+            Utils.dbgPrint("Sending 'HEAD' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 204) {
 
                 return getConnection().getHeaderFields();
 
+            } else if (responseCode == 401) {
+                PithosFileSystem.getHadoopPithosConnector()
+                        .terminateConnection();
+                return null;
             } else {
                 Utils.dbgPrint(String.valueOf(responseCode));
-
                 return getConnection().getHeaderFields();
             }
 
@@ -352,9 +356,9 @@ public class PithosRESTAPI implements Serializable {
             }
             String urlCloned = getUrl() + "/" + getUsername();
             configureConnection(urlCloned, "GET", parameters, headers);
-            Utils.dbgPrint("Listing containers for the account of user:"
-                            , getUsername());
-            Utils.dbgPrint("Sending 'GET' request to URL : " , getUrl());
+            Utils.dbgPrint("Listing containers for the account of user:",
+                    getUsername());
+            Utils.dbgPrint("Sending 'GET' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 200) {
@@ -416,9 +420,10 @@ public class PithosRESTAPI implements Serializable {
             String urlCloned = getUrl() + "/" + getUsername();
             parameters.put("update", "True");
             configureConnection(urlCloned, "POST", parameters, headers);
-            Utils.dbgPrint("Updating account metadata for the account of user:"
-                            , getUsername());
-            Utils.dbgPrint("Sending 'POST' request to URL : " , getUrl());
+            Utils.dbgPrint(
+                    "Updating account metadata for the account of user:",
+                    getUsername());
+            Utils.dbgPrint("Sending 'POST' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
 
             Utils.dbgPrint(getConnection().getHeaderFields());
@@ -481,16 +486,19 @@ public class PithosRESTAPI implements Serializable {
             }
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container;
             configureConnection(urlCloned, "HEAD", parameters, headers);
-            Utils.dbgPrint("Retrieving container metadata for the container:"
-                            , container , " of user:"
-                            , getUsername());
-            Utils.dbgPrint("Sending 'HEAD' request to URL : " , getUrl());
+            Utils.dbgPrint("Retrieving container metadata for the container:",
+                    container, " of user:", getUsername());
+            Utils.dbgPrint("Sending 'HEAD' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 204) {
 
                 return getConnection().getHeaderFields();
 
+            } else if (responseCode == 401) {
+                PithosFileSystem.getHadoopPithosConnector()
+                        .terminateConnection();
+                return null;
             } else {
 
                 Utils.dbgPrint(String.valueOf(responseCode));
@@ -589,7 +597,7 @@ public class PithosRESTAPI implements Serializable {
             configureConnection(urlCloned, "GET", parameters, headers);
             Utils.dbgPrint("Listing objects for the container:", container,
                     " of the account of user:", getUsername());
-            Utils.dbgPrint("Sending 'GET' request to URL : " , getUrl());
+            Utils.dbgPrint("Sending 'GET' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 200) {
@@ -655,10 +663,9 @@ public class PithosRESTAPI implements Serializable {
             }
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container;
             configureConnection(urlCloned, "PUT", parameters, headers);
-            Utils.dbgPrint("Creating/Updating the container:" , container
-                            , " of the account of user:"
-                            , getUsername());
-            Utils.dbgPrint("Sending 'PUT' request to URL : " , getUrl());
+            Utils.dbgPrint("Creating/Updating the container:", container,
+                    " of the account of user:", getUsername());
+            Utils.dbgPrint("Sending 'PUT' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
             Utils.dbgPrint(getConnection().getHeaderFields());
             return String.valueOf(responseCode);
@@ -713,10 +720,9 @@ public class PithosRESTAPI implements Serializable {
             }
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container;
             configureConnection(urlCloned, "POST", parameters, headers);
-            Utils.dbgPrint("Updating metadata of the container:"
-                    , container , " of the account of user:"
-                    , getUsername());
-            Utils.dbgPrint("Sending 'POST' request to URL : " , getUrl());
+            Utils.dbgPrint("Updating metadata of the container:", container,
+                    " of the account of user:", getUsername());
+            Utils.dbgPrint("Sending 'POST' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
             Utils.dbgPrint(getConnection().getHeaderFields());
             return String.valueOf(responseCode);
@@ -762,10 +768,9 @@ public class PithosRESTAPI implements Serializable {
             }
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container;
             configureConnection(urlCloned, "DELETE", parameters, headers);
-            Utils.dbgPrint("Deleting the container:" , container
-                            , " of the account of user:"
-                            , getUsername());
-            Utils.dbgPrint("Sending 'DELETE' request to URL : " , getUrl());
+            Utils.dbgPrint("Deleting the container:", container,
+                    " of the account of user:", getUsername());
+            Utils.dbgPrint("Sending 'DELETE' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
             Utils.dbgPrint(getConnection().getHeaderFields());
             return String.valueOf(responseCode);
@@ -837,15 +842,19 @@ public class PithosRESTAPI implements Serializable {
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container
                     + "/" + filename;
             configureConnection(urlCloned, "HEAD", parameters, headers);
-            Utils.dbgPrint("Retrieving the metadata for the item:"
-                    , filename , " of user:" , getUsername());
-            Utils.dbgPrint("Sending 'HEAD' request to URL : " , getUrl());
+            Utils.dbgPrint("Retrieving the metadata for the item:", filename,
+                    " of user:", getUsername());
+            Utils.dbgPrint("Sending 'HEAD' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 200) {
 
                 return getConnection().getHeaderFields();
 
+            } else if (responseCode == 401) {
+                PithosFileSystem.getHadoopPithosConnector()
+                        .terminateConnection();
+                return null;
             } else {
                 Utils.dbgPrint(String.valueOf(responseCode));
                 return getConnection().getHeaderFields();
@@ -950,10 +959,9 @@ public class PithosRESTAPI implements Serializable {
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container
                     + "/" + filename;
             configureConnection(urlCloned, "GET", parameters, headers);
-            Utils.dbgPrint("Reading object:" , filename
-                            , " of the account of user:"
-                            , getUsername());
-            Utils.dbgPrint("Sending 'GET' request to URL : " , getUrl());
+            Utils.dbgPrint("Reading object:", filename,
+                    " of the account of user:", getUsername());
+            Utils.dbgPrint("Sending 'GET' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
 
             if (responseCode == 200 || responseCode == 206) {
@@ -1063,9 +1071,9 @@ public class PithosRESTAPI implements Serializable {
             String urlCloned = getUrl() + "/" + getUsername() + "/" + container
                     + "/" + filename;
             configureConnection(urlCloned, "DELETE", parameters, headers);
-            Utils.dbgPrint("Deleting the item:" , filename
-                    , " of user:" , getUsername());
-            Utils.dbgPrint("Sending 'DELETE' request to URL : " , getUrl());
+            Utils.dbgPrint("Deleting the item:", filename, " of user:",
+                    getUsername());
+            Utils.dbgPrint("Sending 'DELETE' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
             Utils.dbgPrint(getConnection().getHeaderFields());
             return String.valueOf(responseCode);
@@ -1199,10 +1207,9 @@ public class PithosRESTAPI implements Serializable {
 
                 if (file2upload != null) {
 
-                    Utils.dbgPrint("Uploading file:" , f2uload.getName()
-                            , " of user:" , getUsername());
-                    Utils.dbgPrint("Sending 'PUT' request to URL : "
-                            , getUrl());
+                    Utils.dbgPrint("Uploading file:", f2uload.getName(),
+                            " of user:", getUsername());
+                    Utils.dbgPrint("Sending 'PUT' request to URL : ", getUrl());
 
                     int read = 0;
                     byte[] bytes = new byte[1024];
@@ -1249,9 +1256,9 @@ public class PithosRESTAPI implements Serializable {
                 }
                 this.getConnection().setDoOutput(true);
 
-                Utils.dbgPrint("Creating folder:" , folderName
-                        , " of user:" , getUsername());
-                Utils.dbgPrint("Sending 'PUT' request to URL : " , getUrl());
+                Utils.dbgPrint("Creating folder:", folderName, " of user:",
+                        getUsername());
+                Utils.dbgPrint("Sending 'PUT' request to URL : ", getUrl());
                 int responseCode = getConnection().getResponseCode();
                 Utils.dbgPrint(getConnection().getHeaderFields());
                 return String.valueOf(responseCode);
@@ -1329,9 +1336,9 @@ public class PithosRESTAPI implements Serializable {
 
             this.getConnection().setDoOutput(true);
 
-            Utils.dbgPrint("Copying the item:" , from
-                    , " of user:" , getUsername() , " to:" , to);
-            Utils.dbgPrint("Sending 'PUT' request to URL : " , getUrl());
+            Utils.dbgPrint("Copying the item:", from, " of user:",
+                    getUsername(), " to:", to);
+            Utils.dbgPrint("Sending 'PUT' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
             Utils.dbgPrint(getConnection().getHeaderFields());
 
@@ -1407,9 +1414,9 @@ public class PithosRESTAPI implements Serializable {
 
             this.getConnection().setDoOutput(true);
 
-            Utils.dbgPrint("Moving the item:" , from
-                    , " of user:" , getUsername() , " to:" , to);
-            Utils.dbgPrint("Sending 'PUT' request to URL : " , getUrl());
+            Utils.dbgPrint("Moving the item:", from, " of user:",
+                    getUsername(), " to:", to);
+            Utils.dbgPrint("Sending 'PUT' request to URL : ", getUrl());
             int responseCode = getConnection().getResponseCode();
 
             Utils.dbgPrint(getConnection().getHeaderFields());
@@ -1535,14 +1542,16 @@ public class PithosRESTAPI implements Serializable {
                 try {
                     decBytes = Base64.getDecoder().decode(content);
                 } catch (IllegalArgumentException e) {
-                    Utils.dbgPrint("PithosRESTAPI#update_append_truncate_object exception:", e.getMessage());
+                    Utils.dbgPrint(
+                            "PithosRESTAPI#update_append_truncate_object exception:",
+                            e.getMessage());
                     decBytes = content.getBytes("UTF-8");
-                } 
+                }
                 wr.write(decBytes);
                 wr.flush();
                 wr.close();
             } else {
-                Utils.dbgPrint("Truncating file:" , filename);
+                Utils.dbgPrint("Truncating file:", filename);
 
                 headers.put("X-Source-Object", "/" + container + "/" + filename);
                 configureConnection(urlCloned, "POST", parameters, headers);
@@ -1550,9 +1559,9 @@ public class PithosRESTAPI implements Serializable {
                 this.getConnection().setDoOutput(true);
             }
 
-            Utils.dbgPrint("Updating the item:" , filename
-                    , " of user:" , getUsername());
-            Utils.dbgPrint("Sending 'POST' request to URL : " , getUrl());
+            Utils.dbgPrint("Updating the item:", filename, " of user:",
+                    getUsername());
+            Utils.dbgPrint("Sending 'POST' request to URL : ", getUrl());
 
             Utils.dbgPrint(getConnection().getHeaderFields());
             int responseCode = getConnection().getResponseCode();
@@ -1647,9 +1656,9 @@ public class PithosRESTAPI implements Serializable {
 
             configureConnection(urlCloned, "POST", parameters, headers);
 
-            Utils.dbgPrint("Adding metadata to the item:" , filename
-                    , " of user:" , getUsername());
-            Utils.dbgPrint("Sending 'POST' request to URL : " , getUrl());
+            Utils.dbgPrint("Adding metadata to the item:", filename,
+                    " of user:", getUsername());
+            Utils.dbgPrint("Sending 'POST' request to URL : ", getUrl());
 
             Utils.dbgPrint(getConnection().getHeaderFields());
             int responseCode = getConnection().getResponseCode();
@@ -1733,9 +1742,9 @@ public class PithosRESTAPI implements Serializable {
             headers.put("X-Object-Public", "True");
             configureConnection(urlCloned, "POST", parameters, headers);
 
-            Utils.dbgPrint("Publishing the item:" , filename
-                    , " of user:" , getUsername());
-            Utils.dbgPrint("Sending 'POST' request to URL : " , getUrl());
+            Utils.dbgPrint("Publishing the item:", filename, " of user:",
+                    getUsername());
+            Utils.dbgPrint("Sending 'POST' request to URL : ", getUrl());
 
             Utils.dbgPrint(getConnection().getHeaderFields());
             int responseCode = getConnection().getResponseCode();
@@ -1820,9 +1829,9 @@ public class PithosRESTAPI implements Serializable {
             headers.put("X-Object-Public", "False");
             configureConnection(urlCloned, "POST", parameters, headers);
 
-            Utils.dbgPrint("Publishing the item:" , filename
-                    , " of user:" , getUsername());
-            Utils.dbgPrint("Sending 'POST' request to URL : " , getUrl());
+            Utils.dbgPrint("Publishing the item:", filename, " of user:",
+                    getUsername());
+            Utils.dbgPrint("Sending 'POST' request to URL : ", getUrl());
 
             Utils.dbgPrint(getConnection().getHeaderFields());
             int responseCode = getConnection().getResponseCode();
