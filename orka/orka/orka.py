@@ -97,8 +97,8 @@ def task_message(task_id, escience_token, server_url, wait_timer, task='not_prog
     while 'state' in response['job']:
         if response['job']['state'].replace('\r','') != previous_response['job']['state'].replace('\r',''):
             if task == 'has_progress_bar':
-                stdout.write('{0}\r'.format(response['job']['state']))
-                stdout.flush()
+                stderr.write(u'{0}\r'.format(response['job']['state']))
+                stderr.flush()
             else:
                 stderr.write('{0}'.format('\r'))
                 logging.log(SUMMARY, '{0}'.format(response['job']['state']))
@@ -110,7 +110,6 @@ def task_message(task_id, escience_token, server_url, wait_timer, task='not_prog
             sleep(wait_timer)
         response = yarn_cluster_logger.retrieve()
         stderr.flush()
-
 
     if 'success' in response['job']:
         stderr.write('{0}'.format('\r'))
@@ -245,8 +244,10 @@ class HadoopCluster(object):
                 try:
                     sourcesLength = len(self.opts['destination'])
                     sources = [self.opts['source']]
+                    destination = self.opts['destination'][-1]
                     if sourcesLength > 1:
-                        destination = self.opts['destination'][-1]
+                        if not destination.endswith("/"):
+                            destination += '/'
                         for source in self.opts['destination'][:-1]:
                             sources.append(source)
                     for self.opts['source'] in sources:
@@ -263,7 +264,7 @@ class HadoopCluster(object):
                             self.put_from_local(active_cluster)
                         elif file_protocol == 'pithos':
                             kamaki_filespec = remain
-                            self.put_from_pithos(active_cluster,kamaki_filespec)
+                            self.put_from_pithos(active_cluster, kamaki_filespec)
                         else:
                             logging.error(' Error: Unrecognized source filespec.')
                             exit(error_fatal)
@@ -723,8 +724,8 @@ def main():
         parser_file_put.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         parser_file_put.add_argument('source',
-                              help='The file to be uploaded')
-        parser_file_put.add_argument('destination',
+                              help='The files (local, pithos, ftp) to be uploaded')
+        parser_file_put.add_argument('destination', nargs="+",
                               help='Destination in the Hadoop filesystem')
         parser_file_put.add_argument('--user',
                               help='Ftp-Http remote user')
