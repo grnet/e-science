@@ -261,8 +261,9 @@ public interface PithosSystemStore {
      *            corresponds to 'Pithos'
      * @param objectLocation
      *            : the location of the object in Pithos
+     * @return response code
      */
-    public void deletePithosObject(String pithosContainer, String objectLocation);
+    public String deletePithosObject(String pithosContainer, String objectLocation);
 
     /**
      * Delete a block on Pithos storage system, by using its unique hash code

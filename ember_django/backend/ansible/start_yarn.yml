@@ -24,7 +24,7 @@
     when: is_master
 
   - name: Creates directory
-    tags: HDFSMkdir
+    tags: start
     action: command sudo -u hduser ./hadoop fs -mkdir -p /user/hduser chdir={{hadoop_home}}/bin
     when: is_master
 
@@ -37,6 +37,9 @@
     tags: ECOSYSTEMstart
     action: command {{item}} chdir={{hadoop_home}}/bin
     with_items:
+      - sudo -u hduser ./hadoop fs -mkdir -p /user/root
+      - sudo -u hduser ./hadoop fs -chown -R root:supergroup /user/root
+      - sudo -u hduser ./hadoop fs -chmod 1777 /user/root
       - sudo -u hduser ./hadoop fs -mkdir -p /user/oozie
       - sudo -u hduser ./hadoop fs -mkdir -p /tmp
       - sudo -u hduser ./hadoop fs -mkdir -p /user/hive/warehouse
@@ -56,22 +59,22 @@
 
   - name: Start Hadoop Ecosystem Servers
     tags: ECOSYSTEMstart
-    service: "name={{item.name}} state={{item.state}}"
+    shell: systemctl start {{item}}
     with_items:
-      - { name: 'hiveserver2', state: 'restarted' }
-      - { name: 'oozieserver', state: 'restarted' }
-      - { name: 'hbaseserver', state: 'restarted' }
-      - { name: 'livyserver', state: 'restarted' }
+      - hiveserver2
+      - livyserver
+      - hbaseserver
+      - oozieserver
     when: is_master
 
   - name: Stop Hadoop Ecosystem Servers
     tags: ECOSYSTEMstop
-    service: "name={{item.name}} state={{item.state}}"
+    shell: systemctl stop {{item}}
     with_items:
-      - { name: 'hiveserver2', state: 'stopped' }
-      - { name: 'oozieserver', state: 'stopped' }
-      - { name: 'hbaseserver', state: 'stopped' }
-      - { name: 'livyserver', state: 'stopped' }
+      - hiveserver2
+      - livyserver
+      - hbaseserver
+      - oozieserver
     when: is_master
 
   - name: Stop spark master and slaves
@@ -81,7 +84,7 @@
 
   - name: Stop Hue
     tags: HUEstop
-    shell: kill `ps -A | grep supervisor | cut -d " " -f2`
+    shell: if pgrep supervisor; then pkill supervisor; fi
     when: is_master
 
   - name: Stop dfs

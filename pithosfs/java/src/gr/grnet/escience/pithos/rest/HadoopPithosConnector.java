@@ -1,6 +1,5 @@
 package gr.grnet.escience.pithos.rest;
 
-import gr.grnet.escience.commons.LoggerServer;
 import gr.grnet.escience.commons.PithosSerializer;
 import gr.grnet.escience.commons.Utils;
 import gr.grnet.escience.fs.pithos.PithosBlock;
@@ -15,6 +14,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +41,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         PithosSystemStore {
 
     private static final long serialVersionUID = 1L;
-    private transient LoggerServer loggerServer = null;
     private transient PithosRequest request;
     private transient PithosResponse response;
     private transient Object srcFile2bUploaded;
@@ -51,7 +50,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     private String objectDataContent;
     private String responseStr;
     private transient PithosPath path;
-    private transient Thread loggerThread = null;
     private long[] range = { 0, 0 };
     // - Create
     private long current_size = 0;
@@ -68,6 +66,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     private transient PithosBlock[] blocks = null;
     private transient PithosResponse resp = null;
     private String hashAlgo = null;
+    private String encString = null;
     private transient FSDataInputStream fsDataInputStream = null;
     private transient PithosInputStream pithosInputStream = null;
     private File pithosBlockData = null;
@@ -83,26 +82,12 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
      */
     public HadoopPithosConnector(String pithosUrl, String pithosToken,
             String uuid) {
-        // - implement aPithos RESTAPI instance
-        // TODO: Refactor to use org.apache.hadoop.conf.Configuration
-        // and pass the conf object from PithosFileSystem instead of option
-        // literals
+        // - Implement aPithos RESTAPI instance
         super(pithosUrl, pithosToken, uuid);
+    }
 
-        // - Perform additional check for unused references
-        //System.gc();
-
-        // - Initialize the loggerServer
-        loggerThread = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                loggerServer = new LoggerServer();
-            }
-        });
-        // - Start logger into a separated thread
-        loggerThread.start();
-
+    public void terminateConnection() {
+        Utils.dbgPrint("ERROR: Unauthorized. Authentication Token is not valid.");        
     }
 
     /***
@@ -203,7 +188,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         try {
             // - If container argument is empty the initialize it with the
             // default value
-            if (pithos_container.equals("")) {
+            if ("".equals(pithos_container)) {
                 pithos_container = "pithos";
             }
 
@@ -281,12 +266,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
         // - Read data object
         try {
-            // - Get response data in json format
-            // String json = (String) read_object_data(object_location,
-            // pithos_container,
-            // getPithosRequest().getRequestParameters(),
-            // getPithosRequest().getRequestHeaders());
-
             // -Serialize json response into Java object PithosResponseHashmap
             hashMapResp = (new Gson()).fromJson(
                     (String) read_object_data(object_location,
@@ -402,11 +381,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
         // - Read data object
         try {
-            // - Get response data in json format
-            // String json = (String) read_object_data(object_location,
-            // pithos_container,
-            // getPithosRequest().getRequestParameters(),
-            // getPithosRequest().getRequestHeaders());
             // -Serialize json response into Java object PithosResponseHashmap
             hashMapResp = (new Gson()).fromJson(
                     (String) read_object_data(object_location,
@@ -440,11 +414,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
         // - Read data object
         try {
-            // - Get response data in json format
-            // String json = (String) read_object_data(object_location,
-            // pithos_container,
-            // getPithosRequest().getRequestParameters(),
-            // getPithosRequest().getRequestHeaders());
             // -Serialize json response into Java object PithosResponseHashmap
             hashMapResp = (new Gson()).fromJson(
                     (String) read_object_data(object_location,
@@ -504,12 +473,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
         // - Read data object
         try {
-            // - Get response data in json format
-            // String json = (String) read_object_data(object_location,
-            // pithos_container,
-            // getPithosRequest().getRequestParameters(),
-            // getPithosRequest().getRequestHeaders());
-            // System.out.println(json);
             // -Serialize json response into Java object PithosResponseHashmap
             hashMapResp = (new Gson()).fromJson(
                     (String) read_object_data(object_location,
@@ -533,7 +496,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     @Override
     public long getPithosBlockDefaultSize(String pithos_container) {
         // - Create response object
-        PithosResponse resp = (new Gson()).fromJson(
+        resp = (new Gson()).fromJson(
                 (new Gson()).toJson(getContainerInfo(pithos_container)),
                 PithosResponse.class);
 
@@ -684,14 +647,9 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             block_location_pointer_counter++;
         }
 
-        System.out
-                .println("Object pointer = " + block_location_pointer_counter);
-
         // - Find the bytes range of the current block
         range = bytesRange(object_total_size, block_size, object_blocks_number,
                 block_location_pointer_counter);
-
-        System.out.println("RANGE [" + range[0] + "-" + range[1] + "]");
 
         // - Check if the requested offset is between the actual range of the
         // block
@@ -730,26 +688,26 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                 }
             }
         } else {
-            System.err
-                    .println("The defined offset into seek Pithos Block is out of range...\n\t"
-                            + "offset = "
-                            + offsetIntoPithosBlock
-                            + " | BlockRange["
-                            + range[0]
-                            + "-"
-                            + range[1]
-                            + "]");
-
             return null;
         }
 
     }
 
     @Override
-    public void deletePithosObject(String pithos_container,
+    public String deletePithosObject(String pithos_container,
             String object_location) {
-        // TODO Auto-generated method stub
+        // - Create Pithos request
+        setPithosRequest(new PithosRequest());
 
+        String strResp = "";
+        try {
+            strResp = delete_object(object_location, pithos_container,
+                    getPithosRequest().getRequestParameters(),
+                    getPithosRequest().getRequestHeaders());
+        } catch (IOException e) {
+            Utils.dbgPrint(e.getMessage(), e);
+        }
+        return strResp;
     }
 
     @Override
@@ -773,10 +731,6 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     public boolean pithosObjectBlockExists(String pithos_container,
             String blockHash) {
         // - Get all available object into the container
-        // TODO: Get all available objects on the container
-        // put them into List<String>
-        // for each object use the getPithosObjectBlockHashes(pithos_container,
-        // object_location) so as to check if the requested block hash exist
         return false;
     }
 
@@ -798,7 +752,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
                 // - This means that the object should be created
                 if (pithos_object.getObjectSize() <= 0) {
-                    objectDataContent = " ";
+                    objectDataContent = "";
                 } else {
                     // - Create String from inputstream that corresponds to the
                     // serialized object
@@ -844,8 +798,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
         // - Header Parameters
         // - Format of the uploaded file
-        getPithosRequest().getRequestHeaders()
-                .put("Content-Type", "text/plain");
+        getPithosRequest().getRequestHeaders().put("Content-Type",
+                "application/octet-stream");
 
         try {
             // - Create pithos path
@@ -868,7 +822,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
 
             // - Check if file should be moved from root pithos to another
             // folder
-            if ((!path.getObjectFolderAbsolutePath().isEmpty())) {
+            if (!path.getObjectFolderAbsolutePath().isEmpty()) {
                 // - If the file is successfully upload to the root of pithos
                 // container
                 if (responseStr.contains("201")) {
@@ -954,7 +908,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                 // - Header Parameters
                 // - Format of the uploaded file
                 getPithosRequest().getRequestHeaders().put("Content-Type",
-                        "text/plain");
+                        "application/octet-stream");
             }
 
             // - If there is successful renaming of the object into the required
@@ -991,18 +945,18 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         contentLength = ((Integer) newPithosBlock.getBlockData().length)
                 .toString();
 
-        Utils.dbgPrint("appendPithosBlock content-length >", contentLength);
         getPithosRequest().getRequestHeaders().put("Content-Length",
                 contentLength);
 
         getPithosRequest().getRequestHeaders().put("Content-Encoding", "UTF-8");
 
         try {
+            encString = Base64.getEncoder().encodeToString(
+                    newPithosBlock.getBlockData());
             return update_append_truncate_object(pithos_container,
-                    target_object, new String(newPithosBlock.getBlockData(),
-                            "UTF-8"),
-                    getPithosRequest().getRequestParameters(),
-                    getPithosRequest().getRequestHeaders());
+                    target_object, encString, getPithosRequest()
+                            .getRequestParameters(), getPithosRequest()
+                            .getRequestHeaders());
         } catch (UnsupportedEncodingException e) {
             Utils.dbgPrint(e.getMessage(), e);
             return null;
@@ -1040,27 +994,24 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         } catch (IOException e) {
             Utils.dbgPrint(e.getMessage(), e);
             return null;
-        } 
+        }
     }
 
     @Override
     public String storePithosBlock(String pithos_container,
             String target_object, PithosBlock pithos_block, File backup_file) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public String pithosObjectOutputStream(String pithos_container,
             String object_name, PithosObject pithos_object) {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public String pithosBlockOutputStream(String pithos_container,
             String target_object, PithosBlock pithos_block) {
-        // TODO Auto-generated method stub
         return null;
     }
 

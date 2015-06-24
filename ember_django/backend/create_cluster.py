@@ -75,23 +75,17 @@ class YarnCluster(object):
         list_current_images = self.plankton.list_public(True, 'default')
         for image in list_current_images:
             if self.opts['os_choice'] == image['name']:
-                try:
-                    if image['properties']['escienceconf']:
-                        image_metadata = json.loads(image['properties']['escienceconf'])
-                        if image_metadata['ecosystem'] == 'True':
-                            self.hadoop_image = 'ecosystem'
-                        if 'cloudera' in image_metadata:
-                            if image_metadata['cloudera'] == 'True':
-                                self.hadoop_image = 'cloudera'
-                        elif image_metadata['hadoop'] == 'True' and image_metadata['hue'] == 'True':
-                            self.hadoop_image = 'hue'
-                        elif image_metadata['hadoop'] == 'False':
-                            self.hadoop_image = 'debianbase'
-                        else:
-                            self.hadoop_image = 'hadoopbase'
-
-                except:
-                    # if property hasn't been set then hadoop_image flag is false
+                if 'escienceconf' in image['properties']:
+                    image_metadata = json.loads(image['properties']['escienceconf'])
+                    if image_metadata['ecosystem'] == 'True':
+                        self.hadoop_image = 'ecosystem'
+                    elif image_metadata['cloudera'] == 'True':
+                        self.hadoop_image = 'cloudera'
+                    elif image_metadata['hadoop'] == 'True' and image_metadata['hue'] == 'True':
+                        self.hadoop_image = 'hue'
+                    else:
+                        self.hadoop_image = 'hadoopbase'
+                else:
                     self.hadoop_image = 'debianbase'
 
         self._DispatchCheckers = {}
@@ -414,14 +408,14 @@ class YarnCluster(object):
             raise
         # Update cluster info with the master VM root password.
         set_cluster_state(self.opts['token'], self.cluster_id,
-                          ' Configuring Yarn cluster node communication (2/3)',
+                          ' Configuring YARN cluster node communication (2/3)',
                           password=self.master_root_pass)
 
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
                                              self.HOSTNAME_MASTER_IP)
             set_cluster_state(self.opts['token'], self.cluster_id,
-                          ' Installing and configuring Yarn (3/3)')
+                          ' Installing and configuring YARN (3/3)')
 
             install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.cluster_name_postfix_id, self.hadoop_image, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'])
@@ -438,7 +432,7 @@ class YarnCluster(object):
             if self.ssh_file != 'no_ssh_key_selected':
                 os.system('rm ' + self.ssh_file)
 
-        return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass
+        return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass, self.cluster_id
 
     def destroy(self):
         """Destroy Cluster"""

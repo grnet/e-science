@@ -10,6 +10,7 @@ start() {
     	echo "Service already running"
   	else
     	echo "Starting $SERVICE..."
+    	export PATH=$PATH:/usr/local/spark/bin
     	$CMD >> "$LOG" &
     	echo $! > "$PID"
     	if ! [ -f "$PID" ] && ps `cat "$PID"` > /dev/null 2>&1; then
