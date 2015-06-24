@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import gr.grnet.escience.commons.Utils;
+import gr.grnet.escience.fs.pithos.PithosFileSystem;
 
 /**
  * @author kostas vogias
