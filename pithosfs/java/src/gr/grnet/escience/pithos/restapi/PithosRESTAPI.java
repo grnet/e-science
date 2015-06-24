@@ -308,6 +308,10 @@ public class PithosRESTAPI implements Serializable {
 
                 return getConnection().getHeaderFields();
 
+            } else if (responseCode == 401) {
+                PithosFileSystem.getHadoopPithosConnector()
+                        .terminateConnection();
+                return null;
             } else {
                 Utils.dbgPrint(String.valueOf(responseCode));
 
@@ -491,6 +495,10 @@ public class PithosRESTAPI implements Serializable {
 
                 return getConnection().getHeaderFields();
 
+            } else if (responseCode == 401) {
+                PithosFileSystem.getHadoopPithosConnector()
+                        .terminateConnection();
+                return null;
             } else {
 
                 Utils.dbgPrint(String.valueOf(responseCode));
@@ -846,6 +854,10 @@ public class PithosRESTAPI implements Serializable {
 
                 return getConnection().getHeaderFields();
 
+            } else if (responseCode == 401) {
+                PithosFileSystem.getHadoopPithosConnector()
+                        .terminateConnection();
+                return null;
             } else {
                 Utils.dbgPrint(String.valueOf(responseCode));
                 return getConnection().getHeaderFields();

@@ -84,7 +84,7 @@
 
   - name: Stop Hue
     tags: HUEstop
-    shell: kill $(ps aux | grep '[s]upervisor' | awk '{print $2}')
+    shell: if pgrep supervisor; then pkill supervisor; fi
     when: is_master
 
   - name: Stop dfs
