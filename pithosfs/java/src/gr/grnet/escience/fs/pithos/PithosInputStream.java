@@ -38,7 +38,7 @@ public class PithosInputStream extends FSInputStream {
     private FileSystem.Statistics stats = null;
     private static final Log LOG = LogFactory.getLog(FSInputStream.class
             .getName());
-    private final long DEFAULT_BLOCK_SIZE = (long) 128 * 1024 * 1024;
+    private static final long DEFAULT_BLOCK_SIZE = (long) 128 * 1024 * 1024;
     private long pithosContainerBlockSize = 0;
     private int result = -1;
     private Configuration conf = new Configuration();
@@ -118,6 +118,7 @@ public class PithosInputStream extends FSInputStream {
     @Override
     public synchronized void seek(long targetPos) throws IOException {
         if (targetPos > fileLength) {
+            Utils.dbgPrint("Cannot seek after EOF");
             throw new IOException("Cannot seek after EOF");
         }
         pos = targetPos;
@@ -155,6 +156,7 @@ public class PithosInputStream extends FSInputStream {
     public synchronized int read(byte[] buf, int off, int len)
             throws IOException {
         if (closed) {
+            Utils.dbgPrint("Stream closed");
             throw new IOException("Stream closed");
         }
         if (pos < fileLength) {
@@ -162,14 +164,14 @@ public class PithosInputStream extends FSInputStream {
                 blockSeekTo(pos);
             }
             int realLen = (int) Math.min(len, blockEnd - pos + 1L);
-            int result = blockStream.read(buf, off, realLen);
-            if (result >= 0) {
-                pos += result;
+            int iresult = blockStream.read(buf, off, realLen);
+            if (iresult >= 0) {
+                pos += iresult;
             }
-            if (stats != null && result > 0) {
-                stats.incrementBytesRead(result);
+            if (stats != null && iresult > 0) {
+                stats.incrementBytesRead(iresult);
             }
-            return result;
+            return iresult;
         }
         return -1;
     }
@@ -205,6 +207,7 @@ public class PithosInputStream extends FSInputStream {
 
     @Override
     public void reset() throws IOException {
+        Utils.dbgPrint("Mark not supported");
         throw new IOException("Mark not supported");
     }
 

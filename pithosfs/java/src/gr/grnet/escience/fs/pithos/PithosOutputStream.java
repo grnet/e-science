@@ -17,6 +17,7 @@ import org.apache.hadoop.conf.Configuration;
 public class PithosOutputStream extends OutputStream {
 
     private static String ERR_STREAM_CLOSED = "Stream closed";
+
     /**
      * Hadoop configuration
      */
@@ -48,14 +49,9 @@ public class PithosOutputStream extends OutputStream {
     private OutputStream backupStream;
 
     /**
-     * instance of HadoopPithosConnector
-     */
-    // private HadoopPithosConnector hadoopConnector;
-
-    /**
      * flag if stream closed
      */
-    private boolean closed;
+    private static boolean closed;
 
     /**
      * current position
@@ -105,37 +101,31 @@ public class PithosOutputStream extends OutputStream {
      */
     public PithosOutputStream(Configuration conf, PithosPath path,
             long blocksize, int buffersize) throws IOException {
-        Utils.dbgPrint("PithosOutputStream ENTRY", path, blocksize, buffersize);
 
         this.conf = conf;
         this.pithosPath = path;
         this.blockSize = blocksize;
-        // this.hadoopConnector = new HadoopPithosConnector(
-        // conf.get("fs.pithos.url"), conf.get("auth.pithos.token"),
-        // conf.get("auth.pithos.uuid"));
         this.backupFile = newBackupFile();
         this.backupStream = new FileOutputStream(backupFile);
         this.bufferSize = buffersize;
         this.outBuf = new byte[buffersize];
-        Utils.dbgPrint("PithosOutputStream EXIT");
     }
 
     /**
-     * method for creating backup file of 4mb for buffering before streaming to
-     * pithos
+     * method for creating backup file for buffering before streaming to pithos
      * 
      * @return File
      * @throws IOException
      */
     private File newBackupFile() throws IOException {
         dir = new File(conf.get("hadoop.tmp.dir"));
-        Utils.dbgPrint("newBackupFile >", dir);
         if (!dir.exists() && !dir.mkdirs()) {
+            Utils.dbgPrint("Cannot create local pithos buffer directory: "
+                    + dir);
             throw new IOException(
                     "Cannot create local pithos buffer directory: " + dir);
         }
         result = File.createTempFile("output-", ".tmp", dir);
-        Utils.dbgPrint("newBackupFile > result:", result);
         result.deleteOnExit();
 
         return result;
@@ -147,9 +137,9 @@ public class PithosOutputStream extends OutputStream {
 
     @Override
     public synchronized void write(int b) throws IOException {
-        Utils.dbgPrint("write(int)");
 
-        if (closed) {
+        if (isClosed()) {
+            Utils.dbgPrint(ERR_STREAM_CLOSED);
             throw new IOException(ERR_STREAM_CLOSED);
         }
 
@@ -163,7 +153,8 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void write(byte[] b, int off, int len)
             throws IOException {
-        if (closed) {
+        if (isClosed()) {
+            Utils.dbgPrint(ERR_STREAM_CLOSED);
             throw new IOException(ERR_STREAM_CLOSED);
         }
         while (len > 0) {
@@ -188,8 +179,8 @@ public class PithosOutputStream extends OutputStream {
 
     @Override
     public synchronized void flush() throws IOException {
-        // util.dbgPrint("flush");
-        if (closed) {
+        if (isClosed()) {
+            Utils.dbgPrint(ERR_STREAM_CLOSED);
             throw new IOException(ERR_STREAM_CLOSED);
         }
 
@@ -245,8 +236,6 @@ public class PithosOutputStream extends OutputStream {
         nextBlockOutputStream();
 
         // - Append Pithos Block on the existing object
-        Utils.dbgPrint("endBlock nextBlock.length",
-                nextBlock.getBlockData().length);
         PithosFileSystem.getHadoopPithosConnector().appendPithosBlock(
                 pithosPath.getContainer(), pithosPath.getObjectAbsolutePath(),
                 nextBlock);
@@ -271,13 +260,11 @@ public class PithosOutputStream extends OutputStream {
         container = pithosPath.getContainer();
         hashAlgo = PithosFileSystem.getHadoopPithosConnector()
                 .getPithosContainerHashAlgorithm(container);
-        Utils.dbgPrint("nextBlockOutputStream", hashAlgo);
+
         try {
             blockHash = Utils.computeHash(blockData, hashAlgo);
             if (!PithosFileSystem.getHadoopPithosConnector()
                     .pithosObjectBlockExists(container, blockHash)) {
-                Utils.dbgPrint("nextBlockOutputStream bytesWrittenToBlock >",
-                        bytesWrittenToBlock);
                 nextBlock = new PithosBlock(blockHash, bytesWrittenToBlock,
                         blockData);
                 // blocks.add(nextBlock);
@@ -294,7 +281,7 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void close() throws IOException {
         Utils.dbgPrint("close");
-        if (closed) {
+        if (isClosed()) {
             return;
         }
 
@@ -305,9 +292,17 @@ public class PithosOutputStream extends OutputStream {
 
         backupStream.close();
         backupFile.delete();
-        
-        super.close();
 
-        closed = true;        
+        super.close();
+        setClosed(true);
     }
+
+    public static boolean isClosed() {
+        return closed;
+    }
+
+    public static void setClosed(boolean flag) {
+        closed = flag;
+    }
+
 }

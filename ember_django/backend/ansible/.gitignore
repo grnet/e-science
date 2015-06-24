@@ -1,1 +1,3 @@
 ansible_hosts*
+dist/
+lib/

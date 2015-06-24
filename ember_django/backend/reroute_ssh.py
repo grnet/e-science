@@ -242,12 +242,17 @@ def reroute_ssh_to_slaves(dport, slave_ip, hostname_master, password, master_VM_
                                  + slave_ip + ':22')
         exec_command(ssh_client, 'iptables -A FORWARD -p tcp -d '
                                  + slave_ip + ' --dport 22 -j ACCEPT')
+        exec_command(ssh_client, 'iptables-save > /etc/iptables.conf')
+        exec_command(ssh_client, 'printf "#!/bin/sh -e\necho 1 > /proc/sys/net/ipv4/ip_forward\
+                                \niptables-restore < /etc/iptables.conf" > /etc/network/if-pre-up.d/iptables-permanent')
+        exec_command(ssh_client, 'chmod 755 /etc/network/if-pre-up.d/iptables-permanent')
     finally:
         ssh_client.close()
 
     ssh_client = establish_connect(hostname_master, 'root', password, dport)
     try:
-        exec_command(ssh_client, 'route add default gw 192.168.0.2')
+        exec_command(ssh_client, 'echo "route add default gw 192.168.0.2" >> ~/.bashrc; . ~/.bashrc')
+        exec_command(ssh_client, 'echo "route add default gw 192.168.0.2" >> ~/.profile')
         exec_command(ssh_client, 'apt-get update')
         exec_command(ssh_client, 'apt-get -y install python-pip')
 

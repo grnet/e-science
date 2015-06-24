@@ -54,7 +54,7 @@ App.Usercluster = DS.Model.extend({
         var images_with_hdfs_browser = ['Hue', 'Cloudera', 'Ecosystem'];
 
         if (images_with_hdfs_browser.some(function(v) { return self.get('os_image').indexOf(v) > -1; })) {
-            hdfs_explorer_default = ':8888' ;
+            hdfs_explorer_default = ':8888/filebrowser' ;
         }
 		return 'http://' + this.get('master_IP') + hdfs_explorer_default;
 	}.property('master_IP', 'os_image'),
