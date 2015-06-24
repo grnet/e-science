@@ -163,6 +163,10 @@
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export YARN_HOME=$HADOOP_INSTALL'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_CONF_DIR=$HADOOP_INSTALL/etc/hadoop'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export FLUME_HOME=/usr/local/flume'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export FLUME_CONF_DIR=$FLUME_HOME/conf'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export FLUME_CLASS_PATH=$FLUME_CONF_DIR'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$FLUME_HOME/bin'" }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle"' }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export HADOOP_PREFIX=/usr/local/hadoop"' }
 
@@ -213,6 +217,22 @@
       - { src: 'hdfs-site.j2', dest: '/usr/local/hadoop/etc/hadoop/hdfs-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'yarn-site.j2', dest: '/usr/local/hadoop/etc/hadoop/yarn-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'kamakirc.j2', dest: '/home/hduser/.kamakirc', owner: 'hduser', group: 'hadoop' }
+
+  - name: Change ownership to hduser for flume
+    tags: postconfig
+    file: path={{item.path}} owner={{item.owner}} group={{item.group}} recurse=yes state=directory
+    with_items:
+      - { path: '/usr/local/flume/', owner: 'hduser', group: 'hadoop' }
+      - { path: '/var/log/flume', owner: 'hduser', group: 'hadoop' }
+      - { path: '/var/run/flume', owner: 'hduser', group: 'hadoop' }
+
+  - name: Copy Flume services to /etc/init.d
+    tags: postconfig
+    copy: "src={{item.src}} dest={{item.dest}} mode={{item.mode}}"
+    with_items:
+      - { src: 'flume-agent', dest: '/etc/init.d/flume-agent', mode: '0755' }
+      - { src: 'flume-agent.service', dest: '/lib/systemd/system/flume-agent.service', mode: '644' }
+    when: is_master
 
   - name: copy hue.ini in master node
     tags: hueconfig

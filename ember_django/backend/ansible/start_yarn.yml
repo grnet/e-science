@@ -28,6 +28,16 @@
     action: command sudo -u hduser ./hadoop fs -mkdir -p /user/hduser chdir={{hadoop_home}}/bin
     when: is_master
 
+  - name: Enable flume-agent to run by default
+    tags: start
+    command: sudo systemctl enable flume-agent
+    when: is_master
+
+  - name: Start Flume
+    tags: start
+    service: name=flume-agent state=restarted
+    when: is_master
+
   - name: Start Hue
     tags: HUEstart
     command: sudo -u hduser ./supervisor -d chdir=/usr/local/hue/build/env/bin/
