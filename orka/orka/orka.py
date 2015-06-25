@@ -665,7 +665,7 @@ def main():
     parser_file = orka_subparsers.add_parser('file', parents=[common_parser],
                                         help='File operations between various file sources and Hadoop-Yarn filesystem.')
     file_subparsers = parser_file.add_subparsers(help='Choose file action put, get or list')
-    parser_file_put = file_subparsers.add_parser('put', usage='%(prog)s source [source ...] destination',
+    parser_file_put = file_subparsers.add_parser('put', usage='%(prog)s cluster_id source [source ...] destination',
                                      help='Put/Upload a file from <source> to the Hadoop-Yarn filesystem.')
     parser_file_get = file_subparsers.add_parser('get',
                                      help='Get/Download a file from the Hadoop-Yarn filesystem to <destination>.')
