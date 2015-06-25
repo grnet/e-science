@@ -65,7 +65,7 @@ class OrkaTest(unittest.TestCase):
                 logging.error(' You can take file actions on active clusters with started hadoop only.')
                 exit(error_fatal)
             self.opts = {'source': '', 'destination': '', 'token': self.token, 'cluster_id': self.active_cluster['id'],
-                         'auth_url': self.auth_url, 'user': '', 'password': ''}
+                         'auth_url': self.auth_url, 'user': '', 'password': '', 'server_url': self.base_url}
         except NoSectionError:
             self.token = 'INVALID_TOKEN'
             self.auth_url = "INVALID_AUTH_URL"
@@ -114,17 +114,44 @@ class OrkaTest(unittest.TestCase):
         """
         subprocess.call('echo "this is a unit test file for local to hdfs orka-cli put." > {0}'.format(SOURCE_LOCAL_TO_HDFS_FILE),
                         stderr=FNULL, shell=True)
-        self.opts.update({'source': SOURCE_LOCAL_TO_HDFS_FILE, 'destination': DEST_LOCAL_TO_HDFS_FILE})
-        HadoopCluster(self.opts).put_from_local(self.active_cluster)
+        self.opts.update({'source': SOURCE_LOCAL_TO_HDFS_FILE, 'destination': [DEST_LOCAL_TO_HDFS_FILE],
+                         'fileput': True})
+        HadoopCluster(self.opts).file_action()
         exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
-                                             ' dfs -test -e {0}'.format(self.opts['destination']),
+                                             ' dfs -test -e {0}'.format(DEST_LOCAL_TO_HDFS_FILE),
                                              hadoop_path=self.hdfs_path)
         zero_check_status = ssh_call_hadoop(self.user, self.master_IP,
-                                            ' dfs -test -z {0}'.format(self.opts['destination']),
+                                            ' dfs -test -z {0}'.format(DEST_LOCAL_TO_HDFS_FILE),
                                             hadoop_path=self.hdfs_path)
         self.assertEqual(exist_check_status, 0) and self.assertEqual(zero_check_status, 1)
-        self.addCleanup(self.delete_hdfs_files, self.opts['destination'])
+        self.addCleanup(self.delete_hdfs_files, DEST_LOCAL_TO_HDFS_FILE)
         self.addCleanup(self.delete_local_files, self.opts['source'])
+
+    def test_put_from_local_recursive(self):
+        """
+        functional test to put files inside a folder from local to hdfs and check all the files now exist in hdfs and is not zero size.
+        """
+        list_of_files = []
+        for i in range(10):
+            subprocess.call('echo "this is the unit test file {0} for local to hdfs orka-cli put." > {0}{1}'.format(i, SOURCE_LOCAL_TO_HDFS_FILE),
+                            stderr=FNULL, shell=True)
+            list_of_files.append('{0}{1}'.format(i, SOURCE_LOCAL_TO_HDFS_FILE))
+        list_of_files.append('/user/hduser')
+        list_of_files.remove('0{0}'.format(SOURCE_LOCAL_TO_HDFS_FILE))
+        self.opts.update({'source': '0{0}'.format(SOURCE_LOCAL_TO_HDFS_FILE), 'destination': list_of_files,
+                         'fileput': True})
+        HadoopCluster(self.opts).file_action()
+        list_of_files.insert(0, '0{0}'.format(SOURCE_LOCAL_TO_HDFS_FILE))
+        for file in list_of_files[:-1]:
+            exist_check_status = ssh_call_hadoop(self.user, self.master_IP,
+                                                 ' dfs -test -e {0}'.format(file),
+                                                 hadoop_path=self.hdfs_path)
+            zero_check_status = ssh_call_hadoop(self.user, self.master_IP,
+                                                ' dfs -test -z {0}'.format(file),
+                                                hadoop_path=self.hdfs_path)
+            self.assertEqual(exist_check_status, 0) and self.assertEqual(zero_check_status, 1)
+            self.addCleanup(self.delete_hdfs_files, '/user/hduser/{0}'.format(file))
+            self.addCleanup(self.delete_local_files, file)
 
     def test_get_from_hdfs_to_pithos(self):
         """
