@@ -37,7 +37,7 @@ public class PithosInputStream extends FSInputStream {
     private static final Log LOG = LogFactory.getLog(FSInputStream.class
             .getName());
     private static final long DEFAULT_BLOCK_SIZE = (long) 128 * 1024 * 1024;
-    private long pithosContainerBlockSize = 0;
+    private long pithosContainerBlockSize = (long) 4 * 1024 * 1024;
     private int result = -1;
     private Configuration conf = new Configuration();
 

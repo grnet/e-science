@@ -47,7 +47,7 @@ public class PithosFileSystem extends FileSystem {
     private PithosPath dstPiPath = null;
     private String srcName = null;
     private String dstName = null;
-    private String resp = null;
+    private String response = null;
     private FSDataOutputStream fsDataOutputStreamInstance = null;
     private String urlEsc;
     private PithosResponse metadata = null;
@@ -59,6 +59,7 @@ public class PithosFileSystem extends FileSystem {
     private FileStatus[] resultsArr = null;
     private PithosOutputStream pithosOutputStreamInstance = null;
     private static final long DEFAULT_HDFS_BLOCK_SIZE = (long) 128 * 1024 * 1024;
+    private static long hdfsBlockSize = DEFAULT_HDFS_BLOCK_SIZE;
     private String fromAttemptDirectory = null;
     private String toOutputRootDirectory = null;
     private String[] resultFileName = null;
@@ -107,7 +108,7 @@ public class PithosFileSystem extends FileSystem {
         }
         this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
         setWorkingDirectory(new Path("/user", System.getProperty("user.name")));
-
+        hdfsBlockSize = conf.getLongBytes("dfs.blocksize", DEFAULT_HDFS_BLOCK_SIZE);
         if (hadoopPithosConnector == null) {
             setHadoopPithosConnector(new HadoopPithosConnector(
                     conf.get("fs.pithos.url"), conf.get("auth.pithos.token"),
@@ -171,9 +172,9 @@ public class PithosFileSystem extends FileSystem {
     public boolean delete(Path f, boolean recursive) throws IOException {
         Utils.dbgPrint("delete > path, recurse ", f, recursive);
         pithosPath = new PithosPath(f);
-        resp = getHadoopPithosConnector().deletePithosObject(
+        response = getHadoopPithosConnector().deletePithosObject(
                 pithosPath.getContainer(), pithosPath.getObjectAbsolutePath());
-        if (resp.contains("204")) {
+        if (response.contains("204")) {
             return true;
         }
         return false;
@@ -231,7 +232,7 @@ public class PithosFileSystem extends FileSystem {
         }
         if (isDir) {
             pithosFileStatus = new PithosFileStatus(true,
-                    DEFAULT_HDFS_BLOCK_SIZE, false, targetPath);
+                    hdfsBlockSize, false, targetPath);
         } else {
             for (String obj : metadata.getResponseData().keySet()) {
                 if (obj != null && obj.matches("Content-Length")) {
@@ -244,7 +245,7 @@ public class PithosFileSystem extends FileSystem {
                     .get(0);
 
             pithosFileStatus = new PithosFileStatus(length,
-                    DEFAULT_HDFS_BLOCK_SIZE, Utils.dateTimeToEpoch(
+                    hdfsBlockSize, Utils.dateTimeToEpoch(
                             modificationTime, ""), targetPath);
         }
         return pithosFileStatus;
@@ -296,11 +297,11 @@ public class PithosFileSystem extends FileSystem {
     public boolean mkdirs(Path f, FsPermission permission) throws IOException {
         pithosPath = new PithosPath(f);
 
-        resp = getHadoopPithosConnector().uploadFileToPithos(
+        response = getHadoopPithosConnector().uploadFileToPithos(
                 pithosPath.getContainer(),
                 pithosPath.getObjectFolderAbsolutePath(), true);
 
-        if (resp != null && resp.contains("201")) {
+        if (response != null && response.contains("201")) {
             return true;
         }
 
@@ -333,10 +334,10 @@ public class PithosFileSystem extends FileSystem {
         srcName = srcPiPath.getObjectAbsolutePath();
         dstName = dstPiPath.getObjectAbsolutePath();
 
-        resp = getHadoopPithosConnector().movePithosObjectToFolder(
+        response = getHadoopPithosConnector().movePithosObjectToFolder(
                 srcPiPath.getContainer(), srcName, "", dstName);
 
-        if (resp.contains("201")) {
+        if (response.contains("201")) {
             return true;
         } else {
             return false;
@@ -444,6 +445,7 @@ public class PithosFileSystem extends FileSystem {
      * @param args
      */
     public static void main(String[] args) {
+        // empty entry point method used to facilitate alternate packaging
     }
 
 }

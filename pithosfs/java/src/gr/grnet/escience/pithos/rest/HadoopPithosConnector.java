@@ -45,7 +45,7 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     private transient PithosResponse response;
     private transient Object srcFile2bUploaded;
     private File temp;
-    private File block_data;
+    private File blockData;
     private transient InputStream pithosFileInputStream;
     private String objectDataContent;
     private String responseStr;
@@ -55,13 +55,13 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
     private long current_size = 0;
     private transient Map<String, List<String>> response_data = null;
     private transient PithosResponseHashmap hashMapResp = null;
-    private long object_total_size = 0;
-    private long block_size = 0;
-    private int object_blocks_number = 0;
-    private long[] block_bytes_range = null;
-    private transient Collection<String> object_block_hashes = null;
-    int block_location_pointer_counter = 1;
-    int block_location_pointer = 0;
+    private long objectTotalSize = 0;
+    private long blockSize = 0;
+    private int objectBlocksNumber = 0;
+    private long[] blockBytesRange = null;
+    private transient Collection<String> objectBlockHashes = null;
+    int blockLocationPointerCounter = 1;
+    int blockLocationPointer = 0;
     private transient PithosBlock resultPithosBlock = null;
     private transient PithosBlock[] blocks = null;
     private transient PithosResponse resp = null;
@@ -292,34 +292,34 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             String object_location, String block_hash) {
 
         // - Get required info for the object and the block
-        object_total_size = getPithosObjectSize(pithos_container,
+        objectTotalSize = getPithosObjectSize(pithos_container,
                 object_location);
-        block_size = getPithosObjectBlockSize(pithos_container, object_location);
-        object_blocks_number = getPithosObjectBlocksNumber(pithos_container,
+        blockSize = getPithosObjectBlockSize(pithos_container, object_location);
+        objectBlocksNumber = getPithosObjectBlocksNumber(pithos_container,
                 object_location);
 
-        object_block_hashes = getPithosObjectBlockHashes(pithos_container,
+        objectBlockHashes = getPithosObjectBlockHashes(pithos_container,
                 object_location);
 
         // - Iterate on available hashes
-        block_location_pointer_counter = 1;
-        block_location_pointer = 0;
+        blockLocationPointerCounter = 1;
+        blockLocationPointer = 0;
 
-        for (String hash : object_block_hashes) {
+        for (String hash : objectBlockHashes) {
             // - If the hash is the requested hash
             if (hash.equals(block_hash)) {
                 // - Get the location of the block
-                block_location_pointer = block_location_pointer_counter;
+                blockLocationPointer = blockLocationPointerCounter;
                 break;
             }
             // - Move the pointer one step forward
-            block_location_pointer_counter++;
+            blockLocationPointerCounter++;
         }
 
         // - Get the Range of the byte for the requested block
-        block_bytes_range = null;
-        block_bytes_range = bytesRange(object_total_size, block_size,
-                object_blocks_number, block_location_pointer);
+        blockBytesRange = null;
+        blockBytesRange = bytesRange(objectTotalSize, blockSize,
+                objectBlocksNumber, blockLocationPointer);
 
         // - Create byte array for the object
         // - Create Pithos request
@@ -330,27 +330,27 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         getPithosRequest().getRequestParameters().put("format", "json");
         // - Add requested parameter for the range
         // - If it is not requested the last block, the add specific range
-        if (block_bytes_range[1] != object_total_size - 1) {
+        if (blockBytesRange[1] != objectTotalSize - 1) {
             getPithosRequest().getRequestHeaders().put(
                     "Range",
-                    "bytes=" + block_bytes_range[0] + "-"
-                            + block_bytes_range[1]);
+                    "bytes=" + blockBytesRange[0] + "-"
+                            + blockBytesRange[1]);
         } else {
             getPithosRequest().getRequestHeaders().put("Range",
-                    "bytes=" + block_bytes_range[0] + "-");
+                    "bytes=" + blockBytesRange[0] + "-");
         }
 
         // - Read data object
         try {
             // - Get the chunk of the pithos object as a file
-            block_data = (File) read_object_data(object_location,
+            blockData = (File) read_object_data(object_location,
                     pithos_container,
                     getPithosRequest().getRequestParameters(),
                     getPithosRequest().getRequestHeaders());
 
             resultPithosBlock = new PithosBlock(block_hash,
-                    block_data.length(),
-                    PithosSerializer.serializeFile(block_data));
+                    blockData.length(),
+                    PithosSerializer.serializeFile(blockData));
 
             // - Return the created pithos object
             return resultPithosBlock;
@@ -358,8 +358,8 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             Utils.dbgPrint(e.getMessage(), e);
             return null;
         } finally {
-            if (block_data != null) {
-                block_data = null;
+            if (blockData != null) {
+                blockData = null;
             }
             if (resultPithosBlock != null) {
                 resultPithosBlock = null;
@@ -627,29 +627,29 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
             long offsetIntoPithosBlock) {
 
         // - Get required info for the object and the block
-        object_total_size = getPithosObjectSize(pithos_container,
+        objectTotalSize = getPithosObjectSize(pithos_container,
                 object_location);
-        block_size = getPithosObjectBlockSize(pithos_container, object_location);
-        object_blocks_number = getPithosObjectBlocksNumber(pithos_container,
+        blockSize = getPithosObjectBlockSize(pithos_container, object_location);
+        objectBlocksNumber = getPithosObjectBlocksNumber(pithos_container,
                 object_location);
 
-        object_block_hashes = getPithosObjectBlockHashes(pithos_container,
+        objectBlockHashes = getPithosObjectBlockHashes(pithos_container,
                 object_location);
 
         // - Iterate on available hashes
-        block_location_pointer_counter = 1;
-        for (String hash : object_block_hashes) {
+        blockLocationPointerCounter = 1;
+        for (String hash : objectBlockHashes) {
             // - If the hash is the requested hash
             if (hash.equals(block_hash)) {
                 break;
             }
             // - Move the pointer one step forward
-            block_location_pointer_counter++;
+            blockLocationPointerCounter++;
         }
 
         // - Find the bytes range of the current block
-        range = bytesRange(object_total_size, block_size, object_blocks_number,
-                block_location_pointer_counter);
+        range = bytesRange(objectTotalSize, blockSize, objectBlocksNumber,
+                blockLocationPointerCounter);
 
         // - Check if the requested offset is between the actual range of the
         // block
@@ -671,20 +671,20 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
                         "bytes=" + offsetIntoPithosBlock + "-" + range[1]);
 
                 // - Get the chunk of the pithos object as a file
-                block_data = (File) read_object_data(object_location,
+                blockData = (File) read_object_data(object_location,
                         pithos_container, getPithosRequest()
                                 .getRequestParameters(), getPithosRequest()
                                 .getRequestHeaders());
 
                 // -Return the actual data of after the block seek
-                return block_data;
+                return blockData;
             } catch (IOException e) {
                 Utils.dbgPrint(e.getMessage(), e);
                 return null;
             } finally {
-                if (block_data != null) {
-                    block_data.delete();
-                    block_data = null;
+                if (blockData != null) {
+                    blockData.delete();
+                    blockData = null;
                 }
             }
         } else {
@@ -984,12 +984,12 @@ public class HadoopPithosConnector extends PithosRESTAPI implements
         // - Read data object
         try {
             // - Get the chunk of the pithos object as a file
-            block_data = (File) read_object_data(targetObject, pithosContainer,
+            blockData = (File) read_object_data(targetObject, pithosContainer,
                     getPithosRequest().getRequestParameters(),
                     getPithosRequest().getRequestHeaders());
 
             // - Return the created pithos object
-            return block_data;
+            return blockData;
         } catch (IOException e) {
             Utils.dbgPrint(e.getMessage(), e);
             return null;
