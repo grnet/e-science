@@ -97,6 +97,11 @@
     shell: if pgrep supervisor; then pkill supervisor; fi
     when: is_master
 
+  - name: Stop Flume
+    tags: stop
+    service: name=flume-agent state=stopped
+    when: is_master
+
   - name: Stop dfs
     tags: stop
     command: sudo -u hduser ./stop-dfs.sh chdir={{hadoop_home}}/sbin
