@@ -22,34 +22,56 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Utility class for generic operations not specific to hadoop.
+ */
 public class Utils {
+
     private static boolean DEBUG = false;
-    private static LoggerClient loggerClient = new LoggerClient();
-    private static StringBuilder logStrBuilder = null;
+
     private static Pattern pSha = null;
+
     private static Matcher mSha = null;
+
     private static MessageDigest digest = null;
+
     private static byte[] byteData = null;
+
     private static StringBuilder sb = null;
+
     private static URI uri = null;
+
     private static DateTimeFormatter dtf = null;
+
     private static Long epoch = null;
+
     private static LocalDateTime ldt = null;
+
     private static ZonedDateTime zdt = null;
+
     private static String formatter = null;
+
     private static StringTokenizer srtTokenizer = null;
+
     private static List<String> filesList = new ArrayList<String>();
+
     private static PithosResponse pithosResponse;
+
     private static boolean isDir = false;
 
+    /**
+     * Instantiates a new utils.
+     */
     public Utils() {
     }
 
     /**
-     * Fix the hash algorithm name
-     * 
-     * @param hashAlgorithm
-     * @return unsquelch pithos X-Container-Block-Hash data
+     * Convert hash algorithm names as returned by Python to Java MessageDigest
+     * compatible names.
+     *
+     * @param hashAlgorithm :
+     *            the hash algorithm name
+     * @return hashAlgorithm : unsquelch pithos X-Container-Block-Hash data
      */
     public static String fixPithosHashName(String hashAlgorithm) {
         pSha = Pattern.compile("^(sha)([0-9]+)$", Pattern.CASE_INSENSITIVE);
@@ -62,16 +84,18 @@ public class Utils {
     }
 
     /**
-     * Get the hash container
-     * 
+     * Get the hash container.
+     *
      * @param byteData
      *            : the byte array to get the digest of
      * @param hashAlgorithm
      *            : the name of the hash algorithm to use
-     * @return bytestring hash representation of the input digest
+     * @return bytestring : hash representation of the input digest
+     * @throws NoSuchAlgorithmException
+     *             : invalid hashAlgorithm param
      */
     public static String computeHash(byte[] byteData, String hashAlgorithm)
-            throws NoSuchAlgorithmException, UnsupportedEncodingException {
+            throws NoSuchAlgorithmException {
         /** eg. hash_algorithm = "SHA-256"; */
         digest = MessageDigest.getInstance(hashAlgorithm);
         digest.reset();
@@ -87,21 +111,25 @@ public class Utils {
     }
 
     /**
-     * Get the hash container
-     * 
-     * @param utf
-     *            -8 string : the string to get the digest of
+     * Get the hash container.
+     *
+     * @param inputString
+     *            : the input data as a string
      * @param hashAlgorithm
      *            : the name of the hash algorithm to use
-     * @return bytestring hash representation of the input digest
+     * @return bytestring : hash representation of the input digest
+     * @throws NoSuchAlgorithmException
+     *             : invalid hashAlgorithm param
+     * @throws UnsupportedEncodingException
+     *             : unsupported input string encoding
      */
-    public static String computeHash(String input, String hashAlgorithm)
+    public static String computeHash(String inputString, String hashAlgorithm)
             throws NoSuchAlgorithmException, UnsupportedEncodingException {
         /** eg. hash_algorithm = "SHA-256"; */
         digest = MessageDigest.getInstance(hashAlgorithm);
         digest.reset();
 
-        byteData = digest.digest(input.getBytes("UTF-8"));
+        byteData = digest.digest(inputString.getBytes("UTF-8"));
         sb = new StringBuilder();
 
         for (int i = 0; i < byteData.length; i++) {
@@ -112,11 +140,13 @@ public class Utils {
     }
 
     /**
-     * Return an escaped url using form encoding and character replacement
-     * 
+     * Return an escaped url using form encoding and character replacement.
+     *
      * @param url
+     *            the url
      * @return url escaped path
      * @throws UnsupportedEncodingException
+     *             : unsupported url encoding
      */
     public static String urlEscape(String url)
             throws UnsupportedEncodingException {
@@ -128,17 +158,19 @@ public class Utils {
 
     /**
      * Construct a URI from passed components and return the escaped and encoded
-     * url
-     * 
+     * url.
+     *
      * @param scheme
      *            : can be null for partial path
      * @param host
      *            : can be null for partial path
      * @param path
+     *            the path
      * @param fragment
      *            : can be null for partial path
-     * @return url escaped path
+     * @return url : escaped path
      * @throws URISyntaxException
+     *             : not valid uri components
      */
     public static String urlEscape(String scheme, String host, String path,
             String fragment) throws URISyntaxException {
@@ -146,6 +178,11 @@ public class Utils {
         return uri.toASCIIString();
     }
 
+    /**
+     * Gets the current timestamp in ISO format
+     *
+     * @return the current timestamp
+     */
     public static String getCurrentTimestamp() {
         // - Create and return a unique timestamp
         LocalDateTime ldt = LocalDateTime.now();
@@ -154,8 +191,8 @@ public class Utils {
     }
 
     /**
-     * Convert dateTime String to long epoch time in milliseconds
-     * 
+     * Convert dateTime String to long epoch time in milliseconds.
+     *
      * @param dtString
      *            : datetime as String invalid datetime string will use current
      *            datetime
@@ -214,14 +251,16 @@ public class Utils {
         // -
         System.err.format(formatter + "\n", args);
 
-        // - Create builder
-        logStrBuilder = new StringBuilder(String.format(formatter, args));
-
-        // - Write to centralized logger
-        loggerClient.getClient().debug(logStrBuilder.toString());
-
     }
 
+    /**
+     * Extract object list.
+     *
+     * @param fileListStr
+     *            : 'separator' separated string of file objects
+     * @param separator
+     * @return filesList : array of filepaths.
+     */
     public static String[] extractObjectList(String fileListStr,
             String separator) {
         // - Initialize Tokenizer instance
@@ -235,7 +274,17 @@ public class Utils {
         return filesList.toArray(new String[filesList.size()]);
     }
 
-    public static boolean isDirectory(String pithos_container,
+    /**
+     * Returns if pithos+ object should be considered a directory.
+     *
+     * @param pithosContainer
+     * @param targetObject
+     *            : pithos+ object relative path as string
+     * @param connector
+     *            : interface to pithos+ REST api
+     * @return true, if is directory
+     */
+    public static boolean isDirectory(String pithosContainer,
             String targetObject, HadoopPithosConnector connector) {
 
         // - re-initialiaze the flag
@@ -245,11 +294,11 @@ public class Utils {
         // purposes. Please check TestPithosFileStatus.java
         if (connector == null) {
             pithosResponse = PithosFileSystem.getHadoopPithosConnector()
-                    .getPithosObjectMetaData(pithos_container, targetObject,
+                    .getPithosObjectMetaData(pithosContainer, targetObject,
                             PithosResponseFormat.JSON);
         } else {
-            pithosResponse = connector.getPithosObjectMetaData(
-                    pithos_container, targetObject, PithosResponseFormat.JSON);
+            pithosResponse = connector.getPithosObjectMetaData(pithosContainer,
+                    targetObject, PithosResponseFormat.JSON);
         }
 
         if (pithosResponse.getResponseData().get("Content-Type")
@@ -261,8 +310,14 @@ public class Utils {
 
         return isDir;
     }
-    
-    public static void setDebug(boolean flag){
+
+    /**
+     * Debug setter
+     *
+     * @param flag
+     *            the new debug
+     */
+    public static void setDebug(boolean flag) {
         DEBUG = flag;
     }
 

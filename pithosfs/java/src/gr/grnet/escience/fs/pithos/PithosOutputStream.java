@@ -12,92 +12,79 @@ import java.security.NoSuchAlgorithmException;
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * Wraps OutputStream for streaming data into Pithos
+ * Wraps OutputStream for streaming data into Pithos.
  */
 public class PithosOutputStream extends OutputStream {
 
     private static String ERR_STREAM_CLOSED = "Stream closed";
 
-    /**
-     * Hadoop configuration
-     */
+    /** Hadoop configuration. */
     private Configuration conf;
 
-    /**
-     * buffer size
-     */
     private int bufferSize;
 
-    /**
-     * Destination path
-     */
+    /** Destination path. */
     private PithosPath pithosPath;
 
-    /**
-     * size of block
-     */
+    /** pithos block size. */
     private long blockSize;
 
-    /**
-     * backup where data is writing before streaming in pithos
-     */
+    /** temporary file buffer. */
     private File backupFile;
 
-    /**
-     * output stream
-     */
+    /** stream connected to temporary file buffer. */
     private OutputStream backupStream;
 
-    /**
-     * flag if stream closed
-     */
+    /** holds the state of the backupFile stream. */
     private static boolean closed;
 
-    /**
-     * current position
-     */
+    /** current position. */
     private int pos = 0;
 
-    /**
-     * file position
-     */
+    /** file position. */
     private long filePos = 0;
 
-    /**
-     * written bytes
-     */
     private int bytesWrittenToBlock = 0;
 
-    /**
-     * output buffer
-     */
     private byte[] outBuf = null;
 
-    /**
-     * current block to store to pithos
-     */
+    /** holds reference to next block to stream to pithos. */
     private PithosBlock nextBlock = null;
 
-    private File dir = null;
-    private File result = null;
+    /** holds path to temporary folder used for file buffer. */
+    private File tmpDir = null;
+
+    private File tmpBackupFile = null;
+
     private int remaining = 0;
+
     private int toWrite = 0;
+
     private int workingPos = 0;
+
     private byte[] blockData = null;
+
     private String blockHash = null;
+
+    /** pithos container. */
     private String container = null;
+
+    /** The hash algorithm name. */
     private String hashAlgo = null;
 
     /**
+     * Instantiates a new pithos output stream.
+     *
      * @param conf
-     *            FS conf
+     *            HDFS configuration
      * @param path
-     *            file path
+     *            pithos file path
      * @param blocksize
      *            size of block
      * @param buffersize
      *            size of buffer
      * @throws IOException
+     *             backupFile stream failed to open.
      */
     public PithosOutputStream(Configuration conf, PithosPath path,
             long blocksize, int buffersize) throws IOException {
@@ -112,27 +99,33 @@ public class PithosOutputStream extends OutputStream {
     }
 
     /**
-     * method for creating backup file for buffering before streaming to pithos
-     * 
+     * Creates a backup file for buffering before streaming to pithos.
+     *
      * @return File
      * @throws IOException
+     *             create file failed.
      */
     private File newBackupFile() throws IOException {
-        dir = new File(conf.get("hadoop.tmp.dir"));
-        if (!dir.exists() && !dir.mkdirs()) {
+        tmpDir = new File(conf.get("hadoop.tmp.dir"));
+        if (!tmpDir.exists() && !tmpDir.mkdirs()) {
             throw new IOException(
-                    "Cannot create local pithos buffer directory: " + dir);
+                    "Cannot create local pithos buffer directory: " + tmpDir);
         }
-        result = File.createTempFile("output-", ".tmp", dir);
-        result.deleteOnExit();
+        tmpBackupFile = File.createTempFile("output-", ".tmp", tmpDir);
+        tmpBackupFile.deleteOnExit();
 
-        return result;
+        return tmpBackupFile;
     }
 
     public long getPos() throws IOException {
         return filePos;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.io.OutputStream#write(int)
+     */
     @Override
     public synchronized void write(int b) throws IOException {
 
@@ -147,6 +140,11 @@ public class PithosOutputStream extends OutputStream {
         filePos++;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.io.OutputStream#write(byte[], int, int)
+     */
     @Override
     public synchronized void write(byte[] b, int off, int len)
             throws IOException {
@@ -173,6 +171,11 @@ public class PithosOutputStream extends OutputStream {
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.io.OutputStream#flush()
+     */
     @Override
     public synchronized void flush() throws IOException {
 
@@ -190,11 +193,12 @@ public class PithosOutputStream extends OutputStream {
     }
 
     /**
-     * Flushes data to output buffer
-     * 
+     * Flushes data to output buffer.
+     *
      * @param maxPos
      *            position to which backup data
      * @throws IOException
+     *             write to backupFile failed.
      */
     private synchronized void flushData(int maxPos) throws IOException {
         workingPos = Math.min(pos, maxPos);
@@ -216,18 +220,15 @@ public class PithosOutputStream extends OutputStream {
     }
 
     /**
-     * Stores block in pithos
-     * 
+     * Streams block to pithos when file buffer full. Prepares next file buffer.
+     *
      * @throws IOException
+     *             backupFile not found.
      */
     private synchronized void endBlock() throws IOException {
-        Utils.dbgPrint("endBlock");
-        //
-        // Done with local copy
-        //
+
         backupStream.close();
 
-        //
         // - Load file bytes
         nextBlockOutputStream();
 
@@ -247,9 +248,10 @@ public class PithosOutputStream extends OutputStream {
     }
 
     /**
-     * Creates next block for output stream
-     * 
+     * Creates output stream for next block of data.
+     *
      * @throws IOException
+     *             serialization or block hash calculation error.
      */
     private synchronized void nextBlockOutputStream() throws IOException {
         blockData = PithosSerializer.serializeFile(backupFile);
@@ -263,7 +265,6 @@ public class PithosOutputStream extends OutputStream {
                     .pithosObjectBlockExists(container, blockHash)) {
                 nextBlock = new PithosBlock(blockHash, bytesWrittenToBlock,
                         blockData);
-                // blocks.add(nextBlock);
                 bytesWrittenToBlock = 0;
             }
         } catch (NoSuchAlgorithmException e) {
@@ -274,6 +275,11 @@ public class PithosOutputStream extends OutputStream {
         }
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.io.OutputStream#close()
+     */
     @Override
     public synchronized void close() throws IOException {
 

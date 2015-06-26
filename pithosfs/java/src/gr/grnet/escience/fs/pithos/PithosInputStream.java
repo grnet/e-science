@@ -12,38 +12,66 @@ import org.apache.hadoop.fs.FSInputStream;
 import org.apache.hadoop.fs.FileSystem;
 
 /**
- * This class implements the FSInputstream by extending Hadoop 2.5.2 API native
- * FSInputStream class The class has been structured by taking into account the
- * structure of the corresponding one in the Amazon S3 API
- * 
- * @since March, 2015
- * @author Dimitris G. Kelaidonis (kelaidonis@gmail.com) & Ioannis Stenos
+ * Implements the PithosInputStream by extending Hadoop 2.5.2 API native
+ * FSInputStream class. The class was initially modeled after the Amazon S3
+ * implementation.
+ *
+ * @author Dimitris G. Kelaidonis (kelaidonis@gmail.com) and Ioannis Stenos
  *         (johnstenos83@gmail.com)
  * @version 0.1
- * 
+ * @since March, 2015
  */
 public class PithosInputStream extends FSInputStream {
 
     private int hadoopToPithosBlock = 0;
+
     private boolean closed = false;
+
     private long fileLength = 0;
+
     private long pos = 0;
+
     private File blockFile = null;
+
     private DataInputStream blockStream = null;
+
     private String pithosContainer = null;
+
     private String pithosObject = null;
+
     private long blockEnd = -1;
+
     private FileSystem.Statistics stats = null;
+
     private static final Log LOG = LogFactory.getLog(FSInputStream.class
             .getName());
-    private static final long DEFAULT_BLOCK_SIZE = (long) 128 * 1024 * 1024;
+
+    private static final long HDFS_DEFAULT_BLOCK_SIZE = (long) 128 * 1024 * 1024;
+
+    /**
+     * The pithos container block size. Value is updated through pithos
+     * connector call.
+     */
     private long pithosContainerBlockSize = (long) 4 * 1024 * 1024;
+
     private int result = -1;
+
     private Configuration conf = new Configuration();
 
+    /**
+     * Instantiates a new pithos input stream.
+     */
     public PithosInputStream() {
     }
 
+    /**
+     * Instantiates a new pithos input stream.
+     *
+     * @param pithosContainerIn
+     *            : pithos container as String
+     * @param pithosObjectIn
+     *            : pithos object name as String
+     */
     public PithosInputStream(String pithosContainerIn, String pithosObjectIn) {
         // - Initialize local variables
         this.pithosContainer = pithosContainerIn;
@@ -68,9 +96,12 @@ public class PithosInputStream extends FSInputStream {
         return pithosContainerBlockSize;
     }
 
+    /**
+     * Calculates HDFS blocksize to pithos container blocksize ratio.
+     */
     private void setHadoopToPithosBlock() {
         this.hadoopToPithosBlock = (int) (conf.getLongBytes("dfs.blocksize",
-                DEFAULT_BLOCK_SIZE) / getPithosContainerBlockSize());
+                HDFS_DEFAULT_BLOCK_SIZE) / getPithosContainerBlockSize());
     }
 
     private String getRequestedContainer() {
@@ -81,6 +112,14 @@ public class PithosInputStream extends FSInputStream {
         return pithosObject;
     }
 
+    /**
+     * Seeks to target in block.
+     *
+     * @param target
+     *            : target byte
+     * @throws IOException
+     *             : failed to read the blockFile.
+     */
     private synchronized void blockSeekTo(long target) throws IOException {
 
         long targetBlockEnd = 0;
@@ -103,16 +142,31 @@ public class PithosInputStream extends FSInputStream {
 
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.hadoop.fs.FSInputStream#getPos()
+     */
     @Override
     public synchronized long getPos() throws IOException {
         return pos;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.io.InputStream#available()
+     */
     @Override
     public synchronized int available() throws IOException {
         return (int) (fileLength - pos);
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.hadoop.fs.FSInputStream#seek(long)
+     */
     @Override
     public synchronized void seek(long targetPos) throws IOException {
         if (targetPos > fileLength) {
@@ -122,12 +176,22 @@ public class PithosInputStream extends FSInputStream {
         blockEnd = -1;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.hadoop.fs.FSInputStream#seekToNewSource(long)
+     */
     @Override
     public synchronized boolean seekToNewSource(long targetPos)
             throws IOException {
         return false;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.io.InputStream#read()
+     */
     @Override
     public synchronized int read() throws IOException {
         if (closed) {
@@ -149,6 +213,11 @@ public class PithosInputStream extends FSInputStream {
         return result;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.io.InputStream#read(byte[], int, int)
+     */
     @Override
     public synchronized int read(byte[] buf, int off, int len)
             throws IOException {
@@ -172,6 +241,11 @@ public class PithosInputStream extends FSInputStream {
         return -1;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.io.InputStream#close()
+     */
     @Override
     public void close() throws IOException {
         if (closed) {
@@ -191,16 +265,31 @@ public class PithosInputStream extends FSInputStream {
         closed = true;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.io.InputStream#markSupported()
+     */
     @Override
     public boolean markSupported() {
         return false;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.io.InputStream#mark(int)
+     */
     @Override
     public void mark(int readLimit) {
         // Do nothing
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.io.InputStream#reset()
+     */
     @Override
     public void reset() throws IOException {
         throw new IOException("Mark not supported");

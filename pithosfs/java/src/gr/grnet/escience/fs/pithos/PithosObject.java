@@ -1,21 +1,3 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package gr.grnet.escience.fs.pithos;
 
 import gr.grnet.escience.commons.Utils;
@@ -31,28 +13,46 @@ import java.io.ObjectInputStream;
 import java.io.Serializable;
 
 /**
- * PithosObject constructor
+ * Stores pithos object information.
  */
 public class PithosObject implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    
     private transient PithosBlock[] objectBlocks = null;
+    
     private String objectName = null;
+    
     private long totalSize = -1;
+    
     private transient ByteArrayOutputStream bytes = null;
+    
     private transient DataOutputStream out = null;
+    
     private transient ByteArrayInputStream serializedInputStream = null;
+    
     private static InputStream buffer = null;
+    
     private static ObjectInput input = null;
 
-    /** Create a Pithos Object **/
+    /**
+     *  Create a Pithos Object *.
+     *
+     * @param name : object name - String
+     * @param blocks : PithosBlock array
+     */
     public PithosObject(String name, PithosBlock[] blocks) {
         // - Initialize object name & blocks of the object
         this.objectName = name;
         this.objectBlocks = blocks;
     }
 
-    /** Create a Pithos Object **/
+    /**
+     *  Create a Pithos Object *.
+     *
+     * @param path the path
+     * @param blocks the blocks
+     */
     public PithosObject(PithosPath path, PithosBlock[] blocks) {
         // - Extract Object Absolute Name by excluding Scheme & container
         this.objectName = path.getObjectName();
@@ -63,18 +63,10 @@ public class PithosObject implements Serializable {
         return objectName;
     }
 
-    /**
-     * 
-     * @return the array of all blocks that comprise the Pithos Object
-     */
     public PithosBlock[] getBlocks() {
         return objectBlocks;
     }
 
-    /**
-     * 
-     * @return the total number of the blocks that comprise the Pithos Object
-     */
     public int getBlocksNumber() {
         // - Check if there are available blocks
         if (getBlocks() == null) {
@@ -86,8 +78,9 @@ public class PithosObject implements Serializable {
     }
 
     /**
-     * 
-     * @return the total object size in Bytes
+     * Gets the object size.
+     *
+     * @return totalSize: the total object size in Bytes
      */
     public long getObjectSize() {
         // - Check if there are available blocks
@@ -104,12 +97,12 @@ public class PithosObject implements Serializable {
         return totalSize;
     }
 
-    /****
+    /**
      * Serialize a Pithos Object so as to perform various actions, such as to
-     * copy it to the pithos dfs
-     * 
-     * @return
-     * @throws IOException
+     * copy it to the pithos FS.
+     *
+     * @return the input stream
+     * @throws IOException : Failure to write to OutputStream
      */
     public InputStream serialize() throws IOException {
         // - Initialize parameters for stream
@@ -149,13 +142,12 @@ public class PithosObject implements Serializable {
 
     }
 
-    /***
-     * Deserialize a Pithos Object that is received from the pithos dfs
-     * 
-     * @param {inputStreamForObject: the inputstream that corresponds to
-     *        PithosObject bytes}
-     * @return
-     * @throws IOException
+    /**
+     * *
+     * Deserialize a Pithos Object that is received from the pithos FS.
+     *
+     * @param inputStreamForObject the input stream for object
+     * @return the pithos object
      */
     public static PithosObject deserialize(InputStream inputStreamForObject) {
         if (inputStreamForObject == null) {
