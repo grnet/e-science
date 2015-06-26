@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  */
 public class Utils {
 
-    private static boolean DEBUG = false;
+    private static boolean DEBUG = true;
 
     private static Pattern pSha = null;
 
