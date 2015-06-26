@@ -59,13 +59,6 @@ example for listing available images using defaults from .kamakirc
 
     orka images 
 
-## "images" command
-###{orka images} command example
-
-example for retrieving the available images:
-
-	orka images
-	
 ## "create" command
 
 Required positional arguments for create command:

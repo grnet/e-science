@@ -26,6 +26,7 @@ THIS_TEST="${FULLNAME%.*}"
 
 oneTimeSetUp(){
 	# runs before whole test suite
+	checkPrereqs
 	if [ -z "${STAGING_IP}" ]; then
 		STAGING_IP=http://83.212.115.45
 	fi
@@ -57,9 +58,9 @@ testClusterCreate(){
 		# orka create name_of_cluster size_of_cluster master_cpus master_ram master_disksize slave_cpus slave_ram slave_disksize disk_template project_name
 		( $(orka create cdh_integration_test 3 4 4096 5 2 4096 10 standard escience.grnet.gr --image Hadoop_2\.6\.0\-Cloudera\-CDH\-5\.4\.2 >_tmp.txt 2> /dev/null) ) & keepAlive $! " Working"
 		declare -a ARR_RESULT=($(cat _tmp.txt))
-		CLUSTER_ID=${ARR_RESULT[7]}
-		MASTER_IP=${ARR_RESULT[9]}
-		export SSHPASS=${ARR_RESULT[12]}
+		CLUSTER_ID=${ARR_RESULT[1]}
+		MASTER_IP=${ARR_RESULT[3]}
+		export SSHPASS=${ARR_RESULT[6]}
 		if [ -n "$MASTER_IP" ]; then
 			HOST=hdfs@$MASTER_IP
 			ROOTHOST=root@$MASTER_IP

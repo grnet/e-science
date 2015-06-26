@@ -11,20 +11,15 @@ import org.apache.hadoop.fs.FSDataInputStream;
 
 public interface PithosSystemStore {
 
-    /**************************
-     * PITHOS CONTAINER LEVEL
-     **************************/
     /**
      * 
      * @param pithosContainer
      * @return Pithos response in JSON format that includes information about a
      *         selected container on +Pithos as they are identified into the
-     *         specifications / API {@link https
-     *         ://www.synnefo.org/docs/synnefo/latest/object-api-guide.html}
+     *         specifications / API 
+     * @see <a href="https://www.synnefo.org/docs/synnefo/latest/object-api-guide.html">object-api-guide.html</a>
      * @throws IOException
-     *             TODO
      */
-
     public PithosResponse getContainerInfo(String pithosContainer)
             throws IOException;
 
@@ -33,13 +28,9 @@ public interface PithosSystemStore {
      * @param pithosContainer
      * @return The list of available files into the selected container.
      * @throws IOException
-     *             TODO
      */
     public String getFileList(String pithosContainer) throws IOException;
 
-    /**************************
-     * PITHOS OBJECT LEVEL
-     **************************/
     /***
      * Downloads and stores on the defined destination location, the overall
      * object from pithos, without the definition of particular chunk
@@ -50,7 +41,7 @@ public interface PithosSystemStore {
      *            coresponds to 'Pithos'
      * @param objectLocation
      *            : the location of the object into the Pithos default container
-     * @param object_destination_location
+     * @param destinationFile
      *            : the location where the requested Pithos object will be
      *            downloaded and stored
      */
@@ -70,7 +61,7 @@ public interface PithosSystemStore {
      * @return the total size in bytes of the requested Pithos Object
      */
     public long getPithosObjectSize(String pithosContainer,
-            String objectLocation);   
+            String objectLocation);
 
     /**
      * Downloads and stores on the defined destination location, a chunk of the
@@ -154,7 +145,6 @@ public interface PithosSystemStore {
      *            Leave it blank so as to refer to the default container that
      *            corresponds to 'Pithos'
      * @throws IOException
-     *             TODO
      */
     public long getPithosBlockDefaultSize(String pithosContainer)
             throws IOException;
@@ -168,12 +158,10 @@ public interface PithosSystemStore {
      *            : the Pithos container queried
      * @return : name of hash algorithm used
      * @throws IOException
-     *             TODO
      */
     public String getPithosContainerHashAlgorithm(String pithosContainer)
             throws IOException;
-   
-    
+
     /***
      * Method to get the meta-data that correspond to a Pithos object stored
      * under the default ("Pithos")
@@ -263,7 +251,8 @@ public interface PithosSystemStore {
      *            : the location of the object in Pithos
      * @return response code
      */
-    public String deletePithosObject(String pithosContainer, String objectLocation);
+    public String deletePithosObject(String pithosContainer,
+            String objectLocation);
 
     /**
      * Delete a block on Pithos storage system, by using its unique hash code
@@ -283,15 +272,11 @@ public interface PithosSystemStore {
      *            : the Pithos container on which the action will be performed.
      *            Leave it blank so as to refer to the default container that
      *            corresponds to 'Pithos'
-     * @param objectName
-     *            : the name of the object that will be created on Pithos system
-     *            Store
      * @param pithosObject
      *            : the Pithos Object structured class object that packs the
      *            data into Pithos object structure and it will be stored on
      *            Pithos storage systme
      * @throws IOException
-     *             TODO
      */
     public String storePithosObject(String pithosContainer,
             PithosObject pithosObject) throws IOException;
@@ -312,8 +297,7 @@ public interface PithosSystemStore {
      * @return A string that actually is the response code and message that
      *         identifies the result of the current process based on the
      *         corresponding response codes as they are described into
-     *         {@link https
-     *         ://www.synnefo.org/docs/synnefo/latest/object-api-guide.html}
+     * @see <a href="https://www.synnefo.org/docs/synnefo/latest/object-api-guide.html">object-api-guide.html</a>
      */
     public String storePithosBlock(String pithosContainer, String targetObject,
             PithosBlock pithosBlock, File backupFile);
@@ -332,10 +316,8 @@ public interface PithosSystemStore {
      * @return A string that actually is the response code and message that
      *         identifies the result of the current process based on the
      *         corresponding response codes as they are described into
-     *         {@link https
-     *         ://www.synnefo.org/docs/synnefo/latest/object-api-guide.html}
+     * @see <a href="https://www.synnefo.org/docs/synnefo/latest/object-api-guide.html">object-api-guide.html</a>
      * @throws IOException
-     *             TODO
      */
     public String appendPithosBlock(String pithosContainer,
             String targetObject, PithosBlock newPithosBlock) throws IOException;
@@ -352,42 +334,37 @@ public interface PithosSystemStore {
      * @return A string that actually is the response code and message that
      *         identifies the result of the current process based on the
      *         corresponding response codes as they are described into
-     *         {@link https
-     *         ://www.synnefo.org/docs/synnefo/latest/object-api-guide.html}
+     * @see <a href="https://www.synnefo.org/docs/synnefo/latest/object-api-guide.html">object-api-guide.html</a>
      * @throws IOException
-     *             TODO
      */
-    public String uploadFileToPithos(String pithosContainer, String sourceFile, boolean isDir)
-            throws IOException;
+    public String uploadFileToPithos(String pithosContainer, String sourceFile,
+            boolean isDir) throws IOException;
 
     /**
      * @throws IOException
-     *             TODO Stream primitive data as bytes to Pithos storage system.
-     *             It should be identified the type of the data that is going to
-     *             be uploaded to Pithos, so as the outputstream to be
-     *             configured appropriately.
+     *             Stream primitive data as bytes to Pithos storage system. It
+     *             should be identified the type of the data that is going to be
+     *             uploaded to Pithos, so as the outputstream to be configured
+     *             appropriately.
      * 
      * @param pithosContainer
      *            : the Pithos container on which the action will be performed.
      *            Leave it blank so as to refer to the default container that
      *            corresponds to 'Pithos'
-     * @param objectLocation
+     * @param pithosObject
      *            : the path (including the name of the new file) that will be
      *            created on pithos
-     * @return A string that actually is the response code and message that
-     *         identifies the result of the current process based on the
-     *         corresponding response codes as they are described into
-     *         {@link https
-
+     * @return response code and message that identifies the result of the current 
+     *         process based on the corresponding http response codes
      */
     public String createEmptyPithosObject(String pithosContainer,
             PithosObject pithosObject) throws IOException;
 
     /**
      * @throws IOException
-     *             TODO Performs the move of a selected pithos object that is in
-     *             the root of the selected container, to a specific target
-     *             folder into the same (selected) container
+     *             Performs the move of a selected pithos object that is in the
+     *             root of the selected container, to a specific target folder
+     *             into the same (selected) container
      * 
      * @param pithosContainer
      *            : the Pithos container on which the action will be performed.
@@ -399,14 +376,12 @@ public interface PithosSystemStore {
      *            : the full path of the folder that the object will be moved
      * @param targetObject
      *            : the name of the destination object (optional)
-     * @return A string that actually is the response code and message that
-     *         identifies the result of the current process based on the
-     *         corresponding response codes as they are described into
-     *         {@link https
-
+     * @return response code and message that identifies the result of the current 
+     *         process based on the corresponding http response codes
      */
     public String movePithosObjectToFolder(String pithosContainer,
-            String sourceObject, String targetFolderPath, String targetObject) throws IOException;
+            String sourceObject, String targetFolderPath, String targetObject)
+            throws IOException;
 
     /**
      * This method gets as input the container of the Pithos storage system, the
@@ -424,8 +399,7 @@ public interface PithosSystemStore {
      * @return A string that actually is the response code and message that
      *         identifies the result of the current process based on the
      *         corresponding response codes as they are described into
-     *         {@link https
-     *         ://www.synnefo.org/docs/synnefo/latest/object-api-guide.html}
+     * @see <a href="https://www.synnefo.org/docs/synnefo/latest/object-api-guide.html">object-api-guide.html</a>
      */
     public String pithosObjectOutputStream(String pithosContainer,
             String objectName, PithosObject pithosObject);
@@ -448,8 +422,7 @@ public interface PithosSystemStore {
      * @return A string that actually is the response code and message that
      *         identifies the result of the current process based on the
      *         corresponding response codes as they are described into
-     *         {@link https
-     *         ://www.synnefo.org/docs/synnefo/latest/object-api-guide.html}
+     * @see <a href="https://www.synnefo.org/docs/synnefo/latest/object-api-guide.html">object-api-guide.html</a>
      */
     public String pithosBlockOutputStream(String pithosContainer,
             String targetObject, PithosBlock pithosBlock);
@@ -460,7 +433,6 @@ public interface PithosSystemStore {
      * @param pithosObjectName
      * @return <b>true</b> if the object exists and <b>false</b> if not
      * @throws IOException
-     *             TODO
      */
     public boolean pithosObjectExists(String pithosContainer,
             String pithosObjectName) throws IOException;
