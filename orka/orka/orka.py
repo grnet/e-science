@@ -111,6 +111,7 @@ def task_message(task_id, escience_token, server_url, wait_timer, task='not_prog
         response = yarn_cluster_logger.retrieve()
         stderr.flush()
 
+
     if 'success' in response['job']:
         stderr.write('{0}'.format('\r'))
         return response['job']['success']
@@ -163,6 +164,7 @@ class HadoopCluster(object):
             exit(SUCCESS)
 
         except Exception, e:
+            stderr.write('{0}'.format('\r'))
             logging.error(' Fatal error: ' + str(e.args[0]))
             exit(error_fatal)
 
@@ -185,6 +187,7 @@ class HadoopCluster(object):
             logging.log(SUMMARY, ' Cluster with name "{0}" and all its resources deleted'.format(result))
             exit(SUCCESS)
         except Exception, e:
+            stderr.write('{0}'.format('\r'))
             logging.error(str(e.args[0]))
             exit(error_fatal)
             
@@ -218,6 +221,7 @@ class HadoopCluster(object):
             logging.log(SUMMARY, result)
             exit(SUCCESS)
         except Exception, e:
+            stderr.write('{0}'.format('\r'))
             logging.error(str(e.args[0]))
             exit(error_fatal)
     
@@ -270,6 +274,7 @@ class HadoopCluster(object):
                             exit(error_fatal)
                         
                 except Exception, e:
+                    stderr.write('{0}'.format('\r'))
                     logging.error(str(e.args[0]))
                     exit(error_fatal)
             elif opt_fileget == True:
@@ -285,6 +290,7 @@ class HadoopCluster(object):
                         logging.error(' Error: Unrecognized destination filespec.')
                         exit(error_fatal)
                 except Exception, e:
+                    stderr.write('{0}'.format('\r'))
                     logging.error(str(e.args[0]))
             
                 
@@ -659,7 +665,7 @@ def main():
     parser_file = orka_subparsers.add_parser('file', parents=[common_parser],
                                         help='File operations between various file sources and Hadoop-Yarn filesystem.')
     file_subparsers = parser_file.add_subparsers(help='Choose file action put, get or list')
-    parser_file_put = file_subparsers.add_parser('put', usage='%(prog)s source [source ...] destination',
+    parser_file_put = file_subparsers.add_parser('put', usage='%(prog)s cluster_id source [source ...] destination',
                                      help='Put/Upload a file from <source> to the Hadoop-Yarn filesystem.')
     parser_file_get = file_subparsers.add_parser('get',
                                      help='Get/Download a file from the Hadoop-Yarn filesystem to <destination>.')
