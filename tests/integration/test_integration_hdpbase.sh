@@ -26,11 +26,7 @@ THIS_TEST="${FULLNAME%.*}"
 
 oneTimeSetUp(){
 	# runs before whole test suite
-	if [ -z "${STAGING_IP}" ]; then
-		STAGING_IP=http://83.212.115.45
-	fi
-	local OKEANOS_TOKEN=$(cat .private/.config.txt | grep "token" |cut -d' ' -f3)
-	echo -e '[global]\ndefault_cloud = ~okeanos\nignore_ssl = on\n[cloud "~okeanos"]\nurl = https://accounts.okeanos.grnet.gr/identity/v2.0\ntoken = '$OKEANOS_TOKEN'\n[orka]\nbase_url = '$STAGING_IP > ~/.kamakirc	
+	checkPrereqs
 }
 
 oneTimeTearDown(){
@@ -38,7 +34,7 @@ oneTimeTearDown(){
 	kamaki file delete out_teragen -r --yes
 	rm -f _tmp.txt
 	unset SSHPASS
-	rm -f ~/.kamakirc
+	[ "$KAMAKI_CLEANUP" = "true" ] && { rm -f ~/.kamakirc; }
 }
 
 tearDown(){
@@ -52,15 +48,15 @@ tearDown(){
 testClusterCreate(){
 	# arrange
 	# act
-	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ]; then
+	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		# orka create name_of_cluster size_of_cluster master_cpus master_ram master_disksize slave_cpus slave_ram slave_disksize disk_template project_name
 		( $(orka create hdp_integration_test 3 4 4096 5 2 4096 10 standard escience.grnet.gr --image Hadoop\-2\.5\.2\-Debian\-8\.0 >_tmp.txt 2> /dev/null) ) & keepAlive $! " Working"
 		declare -a ARR_RESULT=($(cat _tmp.txt))
-		# Your Cluster has the following properties: cluster_id: xx master_IP: x.x.x.x root password: xxxxxxxx 
-		# (13 items, 0-based array, so relevant items at positions 7(cluster_id), 9(master_IP), 12(password))
-		CLUSTER_ID=${ARR_RESULT[7]}
-		MASTER_IP=${ARR_RESULT[9]}
-		export SSHPASS=${ARR_RESULT[12]}
+		# cluster_id: xx\nmaster_IP: x.x.x.x\nroot password: xxxx
+		# (7 items, 0-based array, so relevant items at positions 1(cluster_id), 3(master_IP), 6(password))
+		CLUSTER_ID=${ARR_RESULT[1]}
+		MASTER_IP=${ARR_RESULT[3]}
+		export SSHPASS=${ARR_RESULT[6]}
 		if [ -n "$MASTER_IP" ]; then
 			HOST=hduser@$MASTER_IP
 			ROOTHOST=root@$MASTER_IP
@@ -80,7 +76,7 @@ testClusterCreate(){
 
 # 02
 testHadoopStop(){
-	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ]; then
+	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		orka hadoop stop $CLUSTER_ID
 		RESULT="$?"
 	else
@@ -91,7 +87,7 @@ testHadoopStop(){
 
 # 03
 testHadoopFormat(){
-	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ]; then
+	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		orka hadoop format $CLUSTER_ID
 		RESULT="$?"
 	else
@@ -102,7 +98,7 @@ testHadoopFormat(){
 
 # 04
 testHadoopRestart(){
-	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ]; then
+	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		orka hadoop start $CLUSTER_ID
 		RESULT="$?"
 	else
@@ -113,7 +109,7 @@ testHadoopRestart(){
 
 # 05 runPI
 testHDFSrunPI(){
-	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ]; then
+	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
 		'/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi 2 10000' > _tmp.txt 2>&1
 		RESULT=$(cat _tmp.txt | grep "Estimated value of Pi is" |cut -d' ' -f6)
@@ -126,7 +122,7 @@ testHDFSrunPI(){
 
 # 06 wordcount
 testHDFSwordcount(){
-	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ]; then
+	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
 		'/usr/local/hadoop/bin/hdfs dfs -put /usr/local/hadoop/LICENSE.txt LICENSE.txt' > _tmp.txt 2>&1
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
@@ -142,7 +138,7 @@ testHDFSwordcount(){
 
 # 07 teragen
 testHDFSteragen(){
-	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ]; then
+	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
 		'/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar teragen 2684354 out_teragen' > _tmp.txt 2>&1
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
@@ -156,7 +152,7 @@ testHDFSteragen(){
 
 # 08 pithosFS registered
 testRegisteredpithosFS(){
-	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ]; then
+	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
 		'/usr/local/hadoop/bin/hdfs dfs -ls pithos://pithos/WordCount/' > _tmp.txt 2>&1
 		# RESULT=$(grep -i "found [0-9]* items" _tmp.txt)
@@ -170,7 +166,7 @@ testRegisteredpithosFS(){
 
 # 09. wordcount pithosFS
 testpithosFSwordcount(){
-	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ]; then
+	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 #		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
 #		'/usr/local/hadoop/bin/hdfs dfs -put /usr/lib/hadoop/LICENSE.txt LICENSE.txt' > _tmp.txt 2>&1
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
@@ -186,7 +182,7 @@ testpithosFSwordcount(){
 
 # 10. teragen pithosFS
 testpithosFSteragen(){
-	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ]; then
+	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
 		'/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar teragen 1342177 pithos://pithos/out_teragen/' > _tmp.txt 2>&1
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
@@ -200,7 +196,7 @@ testpithosFSteragen(){
 
 # 11 Destroy
 testClusterDestroy(){
-	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ]; then
+	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		orka destroy $CLUSTER_ID
 		RESULT="$?"
 	else

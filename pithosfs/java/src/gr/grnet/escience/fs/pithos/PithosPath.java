@@ -4,25 +4,55 @@ import java.io.FileNotFoundException;
 
 import org.apache.hadoop.fs.Path;
 
+/**
+ * Produce a pithos path structure from an HDFS path reference or pithos path
+ * components Used with Hadoop FS API.
+ */
 public class PithosPath {
 
     private String container;
+
     private String objectName;
+
     private String objectAbsolutePath;
+
     private String folderAbsolutePath;
+
     private PithosFileSystem pithosFs = new PithosFileSystem();
-    private Path pithosFSPath;
-    private String fsPathStr;
+
+    private Path pithosFsPath;
+
+    private String hdfsPathStr;
+
+    /** The given path str. */
     private String givenPathStr = null;
 
+    /**
+     * Instantiates an empty pithos path.
+     */
     public PithosPath() {
     }
 
+    /**
+     * Instantiates a new pithos path from hadoop path.
+     *
+     * @param hadoopPath
+     *            the hadoop path
+     * @throws FileNotFoundException
+     */
     public PithosPath(Path hadoopPath) throws FileNotFoundException {
-        this.pithosFSPath = hadoopPath;
+        this.pithosFsPath = hadoopPath;
         convertHadoopFSPathToPithosFSPath(getPithosFSPath());
     }
 
+    /**
+     * Instantiates a new pithos path.
+     *
+     * @param pithosContainer
+     *            the pithos container
+     * @param pithosObjectPath
+     *            the pithos object path
+     */
     public PithosPath(String pithosContainer, String pithosObjectPath) {
         // Do not parse the path as a string, instead use Path api
         // and take into account type of requested resource and pithos container
@@ -48,6 +78,12 @@ public class PithosPath {
         }
     }
 
+    /**
+     * Convert hadoop fs path to pithos fs path.
+     *
+     * @param givenPath
+     *            the given path
+     */
     private void convertHadoopFSPathToPithosFSPath(Path givenPath) {
 
         givenPathStr = givenPath.toString();
@@ -72,8 +108,7 @@ public class PithosPath {
                 // - Extract only the pithos path to the directory on pithos FS
                 this.folderAbsolutePath = getObjectAbsolutePath().substring(0,
                         getObjectAbsolutePath().lastIndexOf("/"));
-                // - Essentially the object name for Pithos FS is the extracted
-                // absolute path
+                // object name for Pithos FS is the extracted absolute path
                 this.objectName = getObjectAbsolutePath();
 
             }
@@ -132,19 +167,29 @@ public class PithosPath {
         this.objectName = objectName;
     }
 
+    /**
+     * Creates the full pithosFS path from object path and default components.
+     *
+     * @return the path
+     */
     public Path createFSPath() {
-        fsPathStr = pithosFs.getScheme().concat("://").concat(getContainer())
+        hdfsPathStr = pithosFs.getScheme().concat("://").concat(getContainer())
                 .concat("/").concat(getObjectAbsolutePath());
 
-        this.pithosFSPath = new Path(fsPathStr);
+        this.pithosFsPath = new Path(hdfsPathStr);
 
         return getPithosFSPath();
     }
 
     public Path getPithosFSPath() {
-        return pithosFSPath;
+        return pithosFsPath;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#toString()
+     */
     @Override
     public String toString() {
         return getPithosFSPath().toString();

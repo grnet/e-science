@@ -2,15 +2,19 @@ package gr.grnet.escience.pithos.rest;
 
 import java.util.Collection;
 
+/**
+ * Used for serializing a json object into a java object.
+ */
 public class PithosResponseHashmap {
-    private String block_hash;
-    private String block_size;
+
+    private String blockHash;
+
+    private String blockSize;
+
     private String bytes;
+
     private Collection<String> hashes;
 
-    /**
-     * Object Hashes list
-     */
     public Collection<String> getBlockHashes() {
         return hashes;
     }
@@ -20,19 +24,19 @@ public class PithosResponseHashmap {
     }
 
     public String getBlockHash() {
-        return block_hash;
+        return blockHash;
     }
 
-    public void setBlockHash(String block_hash) {
-        this.block_hash = block_hash;
+    public void setBlockHash(String blockHash) {
+        this.blockHash = blockHash;
     }
 
     public String getBlockSize() {
-        return block_size;
+        return blockSize;
     }
 
-    public void setBlockSize(String block_size) {
-        this.block_size = block_size;
+    public void setBlockSize(String blockSize) {
+        this.blockSize = blockSize;
     }
 
     public String getObjectSize() {
