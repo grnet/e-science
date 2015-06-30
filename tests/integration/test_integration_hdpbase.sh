@@ -1,4 +1,4 @@
-/#! /bin/bash
+#! /bin/bash
 # file: tests/test_integration_hdpbase.sh
 
 # shunit2 compatible unittest file, requires shunit2 installed (apt-get install shunit2)
