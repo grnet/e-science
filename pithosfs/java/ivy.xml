@@ -17,9 +17,6 @@
 		
 		<!-- JUnit dependencies -->
 		<dependency org="junit" name="junit" rev="4.11"/>
-				
-		<!-- Apache commons IO -->
-		<dependency org="commons-io" name="commons-io" rev="2.4"/>
-		
+					
 	</dependencies>
 </ivy-module>

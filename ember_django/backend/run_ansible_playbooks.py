@@ -38,7 +38,8 @@ def install_yarn(*args):
     cluster_id = args[3].rsplit('-', 1)[1]
     # Create ansible_hosts file
     try:
-        hosts_filename = create_ansible_hosts(args[3], list_of_hosts, args[2])
+        hosts_filename = create_ansible_hosts(args[3], list_of_hosts,
+                                              args[2])
         # Run Ansible playbook
         ansible_create_cluster(hosts_filename, cluster_size, args[4], args[5], args[0], args[6], args[7])
         # Format and start Hadoop cluster
