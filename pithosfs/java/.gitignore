@@ -1,5 +1,11 @@
 *.sh
+*.properties
+.classpath
 bin/
 .classpath
 .project
-testOutput.txt
+*.txt
+*.pdf
+*.properties
+*.xml
+orka-pithos.jardesc

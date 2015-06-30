@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <jardesc>
-    <jar path="pithosFS/dist/orka-pithos.jar"/>
-    <options buildIfNeeded="true" compress="true" descriptionLocation="/pithosFS/orka-pithos.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <jar path="e-science/pithosfs/java/dist/orka-pithos.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/pithosFS/orka-pithos.jardesc" exportErrors="false" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
     <manifest generateManifest="true" mainClassHandleIdentifier="=pithosFS/src&lt;gr.grnet.escience.fs.pithos{PithosFileSystem.java[PithosFileSystem" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">

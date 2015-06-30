@@ -4,125 +4,195 @@ import java.io.FileNotFoundException;
 
 import org.apache.hadoop.fs.Path;
 
+/**
+ * Produce a pithos path structure from an HDFS path reference or pithos path
+ * components Used with Hadoop FS API.
+ */
 public class PithosPath {
 
-	private String container;
-	private String object_name;
-	private String object_absolute_path;
-	private String folder_absolute_path;
-	private PithosFileSystem pithosFs = new PithosFileSystem();
-	private Path pithosFSPath;
-	private String fsPathStr;
-	private String[] pathParts;
+    private String container;
 
-	public PithosPath() {
-	}
+    private String objectName;
 
-	public PithosPath(Path hadoopPath) throws FileNotFoundException {
-		this.pithosFSPath = hadoopPath;
-		convertHadoopFSPathToPithosFSPath(getPithosFSPath());
-	}
+    private String objectAbsolutePath;
 
-	public PithosPath(String pithos_container, String pithos_object_path) {
-		this.container = pithos_container;
-		this.object_absolute_path = pithos_object_path;
+    private String folderAbsolutePath;
 
-		// - If the given object absolute path does not refer to folder, then
-		// extract file name if exists
-		if (getObjectAbsolutePath().contains("/")) {
-			if (!getObjectAbsolutePath().endsWith("/")) {
-				// - Get the folder absolute path
-				this.folder_absolute_path = getObjectAbsolutePath().substring(
-						0, getObjectAbsolutePath().lastIndexOf("/"));
-				// - Get the actual name of the object
-				this.object_name = getObjectAbsolutePath().substring(
-						getObjectFolderAbsolutePath().length() + 1);
+    private PithosFileSystem pithosFs = new PithosFileSystem();
 
-			}
-		} else {
-			this.folder_absolute_path = "";
-			this.object_name = getObjectAbsolutePath();
-		}
-	}
+    private Path pithosFsPath;
 
-	private void convertHadoopFSPathToPithosFSPath(Path hadoopPath) {
-		fsPathStr = hadoopPath.toString();
+    private String hdfsPathStr;
 
-		fsPathStr = fsPathStr.substring(pithosFs.getScheme().toString()
-				.concat("://").length());
+    /** The given path str. */
+    private String givenPathStr = null;
 
-		pathParts = fsPathStr.split("/");
+    /**
+     * Instantiates an empty pithos path.
+     */
+    public PithosPath() {
+    }
 
-		this.container = pathParts[0];
-		this.object_absolute_path = fsPathStr
-				.substring(getContainer().length() + 1);
+    /**
+     * Instantiates a new pithos path from hadoop path.
+     *
+     * @param hadoopPath
+     *            the hadoop path
+     * @throws FileNotFoundException
+     */
+    public PithosPath(Path hadoopPath) throws FileNotFoundException {
+        this.pithosFsPath = hadoopPath;
+        convertHadoopFSPathToPithosFSPath(getPithosFSPath());
+    }
 
-		// - If the given object absolute path does not refer to folder, then
-		// extract file name if exists
-		if (getObjectAbsolutePath().contains("/")) {
-			if (!getObjectAbsolutePath().endsWith("/")) {
-				// - Get the folder absolute path
-				this.folder_absolute_path = getObjectAbsolutePath().substring(
-						0, getObjectAbsolutePath().lastIndexOf("/"));
-				// - Get the actual name of the object
-				this.object_name = getObjectAbsolutePath().substring(
-						getObjectFolderAbsolutePath().length() + 1);
+    /**
+     * Instantiates a new pithos path.
+     *
+     * @param pithosContainer
+     *            the pithos container
+     * @param pithosObjectPath
+     *            the pithos object path
+     */
+    public PithosPath(String pithosContainer, String pithosObjectPath) {
+        // Do not parse the path as a string, instead use Path api
+        // and take into account type of requested resource and pithos container
+        // / authority elements.
+        this.container = pithosContainer;
+        this.objectAbsolutePath = pithosObjectPath;
 
-			}
-		} else {
-			this.folder_absolute_path = "";
-			this.object_name = getObjectAbsolutePath();
-		}
-	}
+        // - If the given object absolute path does not refer to folder, then
+        // extract file name if exists
+        if (getObjectAbsolutePath().contains("/")) {
+            if (!getObjectAbsolutePath().endsWith("/")) {
+                // - Get the folder absolute path
+                this.folderAbsolutePath = getObjectAbsolutePath().substring(0,
+                        getObjectAbsolutePath().lastIndexOf("/"));
+                // - Get the actual name of the object
+                this.objectName = getObjectAbsolutePath().substring(
+                        getObjectFolderAbsolutePath().length() + 1);
 
-	public String getContainer() {
-		return container;
-	}
+            }
+        } else {
+            this.folderAbsolutePath = "";
+            this.objectName = getObjectAbsolutePath();
+        }
+    }
 
-	public void setContainer(String container) {
-		this.container = container;
-	}
+    /**
+     * Convert hadoop fs path to pithos fs path.
+     *
+     * @param givenPath
+     *            the given path
+     */
+    private void convertHadoopFSPathToPithosFSPath(Path givenPath) {
 
-	public String getObjectAbsolutePath() {
-		return object_absolute_path;
-	}
+        givenPathStr = givenPath.toString();
 
-	public void setObjectAbsolutePath(String object_path) {
-		this.object_absolute_path = object_path;
-	}
+        // - Check if contains scheme and remove it
+        if (givenPathStr.contains("://")) {
+            givenPathStr = givenPathStr.substring(pithosFs.getScheme()
+                    .toString().concat("://").length());
+        }
 
-	public String getObjectFolderAbsolutePath() {
-		return folder_absolute_path;
-	}
+        // - Get the defined container
+        this.container = givenPathStr.substring(0, givenPathStr.indexOf("/"));
 
-	public void setObjectFolderAbsolutePath(String folder_path) {
-		this.folder_absolute_path = folder_path;
-	}
+        this.objectAbsolutePath = givenPathStr.substring(getContainer()
+                .length() + 1);
 
-	public String getObjectName() {
-		return object_name;
-	}
+        // - Check what is requested in terms of files and directories on Pithos
+        // FS
+        if (getObjectAbsolutePath().contains("/")) {
+            // - check if it is not a directory
+            if (!getObjectAbsolutePath().endsWith("/")) {
+                // - Extract only the pithos path to the directory on pithos FS
+                this.folderAbsolutePath = getObjectAbsolutePath().substring(0,
+                        getObjectAbsolutePath().lastIndexOf("/"));
+                // object name for Pithos FS is the extracted absolute path
+                this.objectName = getObjectAbsolutePath();
 
-	public void setObjectName(String object_name) {
-		this.object_name = object_name;
-	}
+            }
+            // - else if it is a directory
+            else {
+                // - Get the path of the directory specified
+                this.folderAbsolutePath = getObjectAbsolutePath().substring(
+                        getObjectAbsolutePath().lastIndexOf("/") + 1,
+                        getObjectAbsolutePath().length());
 
-	public Path createFSPath() {
-		fsPathStr = pithosFs.getScheme().concat("://").concat(getContainer())
-				.concat("/").concat(getObjectAbsolutePath());
+                // - Essentially the object name for Pithos FS is the extracted
+                // absolute path
+                this.objectName = getObjectAbsolutePath();
+            }
+        } else {
+            // - Essentially the object name for Pithos FS is the extracted
+            // absolute path
+            this.objectName = getObjectAbsolutePath();
+        }
 
-		this.pithosFSPath = new Path(fsPathStr);
+    }
 
-		return getPithosFSPath();
-	}
+    public String getContainer() {
+        return container;
+    }
 
-	public Path getPithosFSPath() {
-		return pithosFSPath;
-	}
+    public String getParent() {
+        return this.folderAbsolutePath;
+    }
 
-	@Override
-	public String toString() {
-		return getPithosFSPath().toString();
-	}
+    public void setContainer(String container) {
+        this.container = container;
+    }
+
+    public String getObjectAbsolutePath() {
+        return objectAbsolutePath;
+    }
+
+    public void setObjectAbsolutePath(String objectPath) {
+        this.objectAbsolutePath = objectPath;
+    }
+
+    public String getObjectFolderAbsolutePath() {
+        return folderAbsolutePath;
+    }
+
+    public void setObjectFolderAbsolutePath(String folderPath) {
+        this.folderAbsolutePath = folderPath;
+    }
+
+    public String getObjectName() {
+        return objectName;
+    }
+
+    public void setObjectName(String objectName) {
+        this.objectName = objectName;
+    }
+
+    /**
+     * Creates the full pithosFS path from object path and default components.
+     *
+     * @return the path
+     */
+    public Path createFSPath() {
+        hdfsPathStr = pithosFs.getScheme().concat("://").concat(getContainer())
+                .concat("/").concat(getObjectAbsolutePath());
+
+        this.pithosFsPath = new Path(hdfsPathStr);
+
+        return getPithosFSPath();
+    }
+
+    public Path getPithosFSPath() {
+        return pithosFsPath;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return getPithosFSPath().toString();
+    }
 
 }

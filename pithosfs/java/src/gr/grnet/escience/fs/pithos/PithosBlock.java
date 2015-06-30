@@ -1,31 +1,52 @@
 package gr.grnet.escience.fs.pithos;
 
+/**
+ * Stores pithos block information.
+ */
 public class PithosBlock {
-	private String blockHash;
-	private long blockLength;
-	private byte[] blockData;
 
-	public PithosBlock(String _blockHash, long _blockLength, byte[] _blockData) {
-		this.blockHash = _blockHash;
-		this.blockLength = _blockLength;
-		this.blockData = _blockData;
-	}
+    private String blockHash;
 
-	public String getBlockHash() {
-		return blockHash;
-	}
+    private long blockLength;
 
-	public long getBlockLength() {
-		return blockLength;
-	}
+    private byte[] blockData;
 
-	public byte[] getBlockData() {
-		return blockData;
-	}
+    /**
+     * Instantiates a new pithos block.
+     *
+     * @param blockHash
+     *            : the block hash as a string
+     * @param blockLength
+     *            : block length as int
+     * @param blockData
+     *            : the block data as byte array
+     */
+    public PithosBlock(String blockHash, long blockLength, byte[] blockData) {
+        this.blockHash = blockHash;
+        this.blockLength = blockLength;
+        this.blockData = blockData;
+    }
 
-	@Override
-	public String toString() {
-		return "ObjectBlock[" + getBlockHash() + ", " + getBlockLength() + "]";
-	}
+    public String getBlockHash() {
+        return blockHash;
+    }
+
+    public long getBlockLength() {
+        return blockLength;
+    }
+
+    public byte[] getBlockData() {
+        return blockData;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "ObjectBlock[" + getBlockHash() + ", " + getBlockLength() + "]";
+    }
 
 }

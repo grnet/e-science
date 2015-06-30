@@ -2,44 +2,48 @@ package gr.grnet.escience.pithos.rest;
 
 import java.util.Collection;
 
+/**
+ * Used for serializing a json object into a java object.
+ */
 public class PithosResponseHashmap {
-	private String block_hash;
-	private String block_size;
-	private String bytes;
-	private Collection<String> hashes;
 
-	/**
-	 * Object Hashes list
-	 */
-	public Collection<String> getBlockHashes() {
-		return hashes;
-	}
+    private String blockHash;
 
-	public void setBlockHashes(Collection<String> _hashes) {
-		this.hashes = _hashes;
-	}
+    private String blockSize;
 
-	public String getBlockHash() {
-		return block_hash;
-	}
+    private String bytes;
 
-	public void setBlockHash(String block_hash) {
-		this.block_hash = block_hash;
-	}
+    private Collection<String> hashes;
 
-	public String getBlockSize() {
-		return block_size;
-	}
+    public Collection<String> getBlockHashes() {
+        return hashes;
+    }
 
-	public void setBlockSize(String block_size) {
-		this.block_size = block_size;
-	}
+    public void setBlockHashes(Collection<String> hashes) {
+        this.hashes = hashes;
+    }
 
-	public String getObjectSize() {
-		return bytes;
-	}
+    public String getBlockHash() {
+        return blockHash;
+    }
 
-	public void setObjectSize(String bytes) {
-		this.bytes = bytes;
-	}
+    public void setBlockHash(String blockHash) {
+        this.blockHash = blockHash;
+    }
+
+    public String getBlockSize() {
+        return blockSize;
+    }
+
+    public void setBlockSize(String blockSize) {
+        this.blockSize = blockSize;
+    }
+
+    public String getObjectSize() {
+        return bytes;
+    }
+
+    public void setObjectSize(String bytes) {
+        this.bytes = bytes;
+    }
 }

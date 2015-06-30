@@ -3,7 +3,7 @@
 
 """orka.orka: provides entry point main()."""
 import logging
-from sys import argv, stdout
+from sys import argv, stdout, stderr
 from kamaki.clients import ClientError
 from kamaki.clients.pithos import PithosClient
 from kamaki.clients.astakos import AstakosClient
@@ -14,7 +14,8 @@ from utils import ClusterRequest, ConnectionError, authenticate_escience, get_us
     custom_sort_factory, custom_sort_list, custom_date_format, get_from_kamaki_conf, \
     ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to_hadoop, \
     read_replication_factor, ssh_stream_from_hadoop, parse_hdfs_dest, get_file_protocol, \
-    ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, is_period, is_default_dir
+    ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, is_period, is_default_dir, \
+    check_credentials, endpoints_and_user_id, init_plankton
 from time import sleep
 
 
@@ -84,34 +85,39 @@ class _ArgCheck(object):
             raise ArgumentTypeError(" %s must containt at least one letter." % val)
 
 
-def task_message(task_id, escience_token, wait_timer, task='not_progress_bar'):
+def task_message(task_id, escience_token, server_url, wait_timer, task='not_progress_bar'):
     """
     Function to check create and destroy celery tasks running from orka-CLI
     and log task state messages.
     """
     payload = {"job": {"task_id": task_id}}
-    yarn_cluster_logger = ClusterRequest(escience_token, payload, action='job')
+    yarn_cluster_logger = ClusterRequest(escience_token, server_url, payload, action='job')
     previous_response = {'job': {'state': 'placeholder'}}
     response = yarn_cluster_logger.retrieve()
     while 'state' in response['job']:
         if response['job']['state'].replace('\r','') != previous_response['job']['state'].replace('\r',''):
             if task == 'has_progress_bar':
-                stdout.write('{0}\r'.format(response['job']['state']))
-                stdout.flush()
+                stderr.write(u'{0}\r'.format(response['job']['state']))
+                stderr.flush()
             else:
-                logging.log(SUMMARY, response['job']['state'])
-                logging.log(SUMMARY, ' Waiting for cluster status update...')
+                stderr.write('{0}'.format('\r'))
+                logging.log(SUMMARY, '{0}'.format(response['job']['state']))
+
             previous_response = response
 
         else:
+            stderr.write('{0}'.format('.'))
             sleep(wait_timer)
         response = yarn_cluster_logger.retrieve()
+        stderr.flush()
 
 
     if 'success' in response['job']:
+        stderr.write('{0}'.format('\r'))
         return response['job']['success']
 
     elif 'error' in response['job']:
+        stderr.write('{0}'.format('\r'))
         logging.error(response['job']['error'])
         exit(error_fatal)
 
@@ -121,7 +127,8 @@ class HadoopCluster(object):
     def __init__(self, opts):
         self.opts = opts
         try: 
-            self.escience_token = authenticate_escience(self.opts['token'])
+            self.escience_token = authenticate_escience(self.opts['token'], self.opts['server_url'])
+            self.server_url = self.opts['server_url']
         except ConnectionError:
             logging.error(' e-science server unreachable or down.')
             exit(error_fatal)
@@ -138,28 +145,33 @@ class HadoopCluster(object):
                                         "cpu_master": self.opts['cpu_master'], "ram_master": self.opts['ram_master'],
                                         "disk_master": self.opts['disk_master'], "cpu_slaves": self.opts['cpu_slave'],
                                         "ram_slaves": self.opts['ram_slave'], "disk_slaves": self.opts['disk_slave'],
-                                        "disk_template": self.opts['disk_template'], "os_choice": self.opts['image']}}
-            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
+                                        "disk_template": self.opts['disk_template'], "os_choice": self.opts['image'],
+                                        "replication_factor": self.opts['replication_factor'], "dfs_blocksize": self.opts['dfs_blocksize']}}
+            yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='cluster')
             response = yarn_cluster_req.create_cluster()
             if 'task_id' in response['clusterchoice']:
                 task_id = response['clusterchoice']['task_id']
             else:
                 logging.error(response['clusterchoice']['message'])
                 exit(error_fatal)
-            result = task_message(task_id, self.escience_token, wait_timer_create)
-            logging.log(SUMMARY, " Yarn Cluster is active.You can access it through " +
-                        result['master_IP'] + ":8088/cluster")
-            logging.log(SUMMARY, " The root password of your master VM is " + result['master_VM_password'])
+            result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
+            logging.log(SUMMARY, " YARN Cluster is active, you can access it through {0}:8088/cluster,"
+                                 " and has the following properties:".format(result['master_IP']))
+            stdout.write("cluster_id: {0}\nmaster_IP: {1}\n"
+                         "root password: {2}\n".format(result['cluster_id'], result['master_IP'],
+                                                        result['master_VM_password']))
 
+            exit(SUCCESS)
 
         except Exception, e:
+            stderr.write('{0}'.format('\r'))
             logging.error(' Fatal error: ' + str(e.args[0]))
             exit(error_fatal)
 
 
     def destroy(self):
         """ Method for deleting Hadoop clusters in~okeanos."""
-        clusters = get_user_clusters(self.opts['token'])
+        clusters = get_user_clusters(self.opts['token'], self.opts['server_url'])
         for cluster in clusters:
             if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == const_cluster_status_active:
                 break
@@ -168,12 +180,14 @@ class HadoopCluster(object):
             exit(error_fatal)
         try:
             payload = {"clusterchoice":{"id": self.opts['cluster_id']}}
-            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
+            yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='cluster')
             response = yarn_cluster_req.delete_cluster()
             task_id = response['clusterchoice']['task_id']
-            result = task_message(task_id, self.escience_token, wait_timer_delete)
-            logging.log(SUMMARY, ' Cluster with name "%s" and all its resources deleted' %(result))
+            result = task_message(task_id, self.escience_token, self.server_url, wait_timer_delete)
+            logging.log(SUMMARY, ' Cluster with name "{0}" and all its resources deleted'.format(result))
+            exit(SUCCESS)
         except Exception, e:
+            stderr.write('{0}'.format('\r'))
             logging.error(str(e.args[0]))
             exit(error_fatal)
             
@@ -181,7 +195,7 @@ class HadoopCluster(object):
     def hadoop_action(self):
         """ Method for applying an action to a Hadoop cluster"""
         action = str.lower(self.opts['hadoop_status'])
-        clusters = get_user_clusters(self.opts['token'])
+        clusters = get_user_clusters(self.opts['token'], self.opts['server_url'])
         active_cluster = None
         for cluster in clusters:
             if (cluster['id'] == self.opts['cluster_id']):
@@ -191,7 +205,7 @@ class HadoopCluster(object):
         else:
             logging.error(' Hadoop can only be managed for an active cluster.')
             exit(error_fatal)
-        if active_cluster:            
+        if active_cluster:
             if (active_cluster['hadoop_status'] == const_hadoop_status_started and action == "start"):
                 logging.error(' Hadoop already started.')
                 exit(error_fatal)
@@ -200,12 +214,14 @@ class HadoopCluster(object):
                 exit(error_fatal)
         try:
             payload = {"clusterchoice":{"id": self.opts['cluster_id'], "hadoop_status": action}}
-            yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='cluster')
+            yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='cluster')
             response = yarn_cluster_req.create_cluster()
             task_id = response['clusterchoice']['task_id']
-            result = task_message(task_id, self.escience_token, wait_timer_delete)
+            result = task_message(task_id, self.escience_token, self.server_url, wait_timer_delete)
             logging.log(SUMMARY, result)
+            exit(SUCCESS)
         except Exception, e:
+            stderr.write('{0}'.format('\r'))
             logging.error(str(e.args[0]))
             exit(error_fatal)
     
@@ -218,7 +234,7 @@ class HadoopCluster(object):
         if opt_filelist == True:
             self.list_pithos_files()
         else:
-            clusters = get_user_clusters(self.opts['token'])
+            clusters = get_user_clusters(self.opts['token'], self.opts['server_url'])
             active_cluster = None
             for cluster in clusters:
                 if (cluster['id'] == self.opts['cluster_id']):
@@ -228,25 +244,37 @@ class HadoopCluster(object):
             else:
                 logging.error(' You can take file actions on active clusters with started hadoop only.')
                 exit(error_fatal)
-            source_path = self.opts['source'].split("/")
-            self.source_filename = source_path[len(source_path)-1]
             if opt_fileput == True:
                 try:
-                    if is_period(self.opts['destination']) or is_default_dir(self.opts['destination']):
-                        self.opts['destination'] = self.source_filename
-                    file_protocol, remain = get_file_protocol(self.opts['source'], 'fileput', 'source')
-                    self.check_hdfs_destination(active_cluster)
-                    if file_protocol == 'http-ftp':
-                        self.put_from_server()
-                    elif file_protocol == 'file':
-                        self.put_from_local(active_cluster)
-                    elif file_protocol == 'pithos':
-                        kamaki_filespec = remain
-                        self.put_from_pithos(active_cluster,kamaki_filespec)
-                    else:
-                        logging.error(' Error: Unrecognized source filespec.')
-                        exit(error_fatal)
+                    sourcesLength = len(self.opts['destination'])
+                    sources = [self.opts['source']]
+                    destination = self.opts['destination'][-1]
+                    if sourcesLength > 1:
+                        if not destination.endswith("/"):
+                            destination += '/'
+                        for source in self.opts['destination'][:-1]:
+                            sources.append(source)
+                    for self.opts['source'] in sources:
+                        self.opts['destination'] = destination
+                        source_path = self.opts['source'].split("/")
+                        self.source_filename = source_path[len(source_path)-1]
+                        if is_period(self.opts['destination']) or is_default_dir(self.opts['destination']):
+                            self.opts['destination'] = self.source_filename
+                        file_protocol, remain = get_file_protocol(self.opts['source'], 'fileput', 'source')
+                        self.check_hdfs_destination(active_cluster)
+                        if file_protocol == 'http-ftp':
+                            self.put_from_server()
+                        elif file_protocol == 'file':
+                            self.put_from_local(active_cluster)
+                        elif file_protocol == 'pithos':
+                            kamaki_filespec = remain
+                            self.put_from_pithos(active_cluster, kamaki_filespec)
+                        else:
+                            logging.error(' Error: Unrecognized source filespec.')
+                            exit(error_fatal)
+                        
                 except Exception, e:
+                    stderr.write('{0}'.format('\r'))
                     logging.error(str(e.args[0]))
                     exit(error_fatal)
             elif opt_fileget == True:
@@ -262,6 +290,7 @@ class HadoopCluster(object):
                         logging.error(' Error: Unrecognized destination filespec.')
                         exit(error_fatal)
                 except Exception, e:
+                    stderr.write('{0}'.format('\r'))
                     logging.error(str(e.args[0]))
             
                 
@@ -283,6 +312,7 @@ class HadoopCluster(object):
         objects = pithos_client.list_objects()
         for object in objects:
             is_dir = 'application/directory' in object.get('content_type', object.get('content-type', ''))
+            is_dir = 'application/folder' in object.get('content_type', object.get('content-type', ''))
             if not is_dir:
                 print u"{:>12s} \"pithos:/{:s}/{:s}\"".format(bytes_to_shorthand(object['bytes']),
                                                               pithos_container,object['name'])
@@ -376,7 +406,7 @@ class HadoopCluster(object):
 
         else:
             """ Streaming """
-            logging.log(SUMMARY, ' Start uploading file to hdfs' )
+            logging.log(SUMMARY, " Start uploading file '{0}' to hdfs".format(self.source_filename))
             ssh_stream_to_hadoop("hduser", cluster['master_IP'],
                                   self.opts['source'], self.opts['destination'])
 
@@ -392,7 +422,7 @@ class HadoopCluster(object):
                                         "dest": "\'{0}\'".format(self.opts['destination']), "user": self.opts['user'],
                                         "password": self.opts['password']}}
 
-        yarn_cluster_req = ClusterRequest(self.escience_token, payload, action='hdfs')
+        yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='hdfs')
         response = yarn_cluster_req.post()
         if 'task_id' in response['hdfs']:
             task_id = response['hdfs']['task_id']
@@ -400,7 +430,7 @@ class HadoopCluster(object):
             logging.error(response['hdfs']['message'])
             exit(error_fatal)
         logging.log(SUMMARY, ' Starting file transfer')
-        result = task_message(task_id, self.escience_token, wait_timer_delete,
+        result = task_message(task_id, self.escience_token, self.server_url, wait_timer_delete,
                                   task='has_progress_bar')
         if result == 0:
             stdout.flush()
@@ -509,7 +539,7 @@ class UserClusterInfo(object):
     
     def list(self):
         try:
-            self.data.extend(get_user_clusters(self.opts['token']))
+            self.data.extend(get_user_clusters(self.opts['token'], self.opts['server_url']))
         except ClientError, e:
             logging.error(e.message)
             exit(error_fatal)
@@ -557,6 +587,31 @@ class UserClusterInfo(object):
         else:
             print 'No user cluster Information available.'
 
+class ImagesInfo(object):
+    """ Class holding info for available images
+    """
+    def __init__(self, opts):
+        self.opts = opts
+
+    # List available images
+    def list_images(self):
+        auth = check_credentials(self.opts['token'])
+        endpoints, user_id = endpoints_and_user_id(auth)    
+        plankton = init_plankton(endpoints['plankton'], self.opts['token'])
+        list_current_images = plankton.list_public(True, 'default')
+        available_images = []
+        for image in list_current_images:
+            # owner of image will be checked based on the uuid
+            if image['owner'] == const_escience_uuid:
+                image_properties = image['properties']
+                if image_properties.has_key('escienceconf'):
+                    available_images.append(image['name'])
+            elif image['name'] == "Debian Base":
+                available_images.append(image['name'])
+        available_images.sort()
+        for image in available_images:
+            print "{name}".format(name=image)
+    
 def main():
     """
     Entry point of orka package. Parses user arguments and return
@@ -570,8 +625,10 @@ def main():
                                 datefmt='%H:%M:%S')
     try:
         kamaki_token = get_from_kamaki_conf('cloud "~okeanos"', 'token')
+        kamaki_base_url = get_from_kamaki_conf('orka','base_url')
     except ClientError, e:
         kamaki_token = ' '
+        kamaki_base_url = ' '
         logging.warning(e.message)
     
     orka_subparsers = orka_parser.add_subparsers(help='Choose Hadoop cluster action')
@@ -584,6 +641,12 @@ def main():
     common_parser.add_argument("--auth_url", metavar='auth_url', default=auth_url,
                               help='Synnefo authentication url. Default is ' +
                               auth_url)
+    common_parser.add_argument("--server_url", metavar='server_url', default=kamaki_base_url,
+                              help='Application server url.  Default read from .kamakirc')
+
+    # images
+    parser_images = orka_subparsers.add_parser('images', parents=[common_parser],
+                                     help='List available images.')
     # cluster actions group
     parser_create = orka_subparsers.add_parser('create', parents=[common_parser],
                                      help='Create a Hadoop-Yarn cluster'
@@ -602,7 +665,7 @@ def main():
     parser_file = orka_subparsers.add_parser('file', parents=[common_parser],
                                         help='File operations between various file sources and Hadoop-Yarn filesystem.')
     file_subparsers = parser_file.add_subparsers(help='Choose file action put, get or list')
-    parser_file_put = file_subparsers.add_parser('put',
+    parser_file_put = file_subparsers.add_parser('put', usage='%(prog)s cluster_id source [source ...] destination',
                                      help='Put/Upload a file from <source> to the Hadoop-Yarn filesystem.')
     parser_file_get = file_subparsers.add_parser('get',
                                      help='Get/Download a file from the Hadoop-Yarn filesystem to <destination>.')
@@ -635,12 +698,11 @@ def main():
         parser_create.add_argument("--image", help='OS for the cluster.'
                               ' Default is "Debian Base"', metavar='image',
                               default=default_image)
-        parser_create.add_argument("--use_hadoop_image", help='Use a pre-stored hadoop image for the cluster.'
-                              ' Default is HadoopImage (overrides image selection)',
-                              nargs='?', metavar='hadoop_image_name', default=None,
-                              const='Hadoop-2.5.2')       
-
-
+        parser_create.add_argument("--replication_factor", metavar='replication_factor', default=2, type=checker.positive_num_is,
+                              help='Replication factor for HDFS. Must be between 1 and number of slave nodes (cluster_size -1). Default is 2.')
+        parser_create.add_argument("--dfs_blocksize", metavar='dfs_blocksize', default=128, type=checker.positive_num_is,
+                              help='HDFS block size (in MB). Default is 128.') 
+        
         parser_destroy.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
 
@@ -668,8 +730,8 @@ def main():
         parser_file_put.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         parser_file_put.add_argument('source',
-                              help='The file to be uploaded')
-        parser_file_put.add_argument('destination',
+                              help='The files (local, pithos, ftp) to be uploaded')
+        parser_file_put.add_argument('destination', nargs="+",
                               help='Destination in the Hadoop filesystem')
         parser_file_put.add_argument('--user',
                               help='Ftp-Http remote user')
@@ -695,13 +757,21 @@ def main():
         opts = vars(orka_parser.parse_args(argv[1:]))
         c_hadoopcluster = HadoopCluster(opts)
         c_userclusters = UserClusterInfo(opts)
+        c_imagesinfo = ImagesInfo(opts)
         verb = argv[1]
         if verb == 'create':
-            if opts['use_hadoop_image']:
-                opts['image'] = opts['use_hadoop_image']
+            if opts['cluster_size'] == 2:
+                if opts['replication_factor'] != 1:
+                    logging.warning(' Replication factor cannot exceed the number of slave nodes; defaulting to 1')
+                    opts['replication_factor'] = 1
+            if opts['cluster_size'] <= opts['replication_factor']:
+                logging.error('Replication factor must be between 1 and number of slave nodes (cluster_size -1)')
+                exit(error_replication_factor)
             c_hadoopcluster.create()
         elif verb == 'destroy':
             c_hadoopcluster.destroy()
+        elif verb == 'images':
+            c_imagesinfo.list_images()
         elif verb == 'list' or verb == 'info':
             if verb == 'info':
                 opts['verbose'] = True

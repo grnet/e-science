@@ -18,8 +18,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 	default_replication_factor: '2', // Deafault replication_factor for hdfs
 	dfs_blocksize : '', 		// Hadoop dfs_blocksize
 	default_dfs_blocksize: '128', // Deafault dfs_blocksize for hdfs  is 128MB
-	operating_system : '', // Preselected OS
-	disk_temp : 'Archipelago', 	// Initial storage selection, common for master and slaves friendly to  user name
+	operating_system : 'Debian Base', // Preselected OS
+	disk_temp : '', 	// Initial storage selection, common for master and slaves friendly to  user name
 	cluster_size_zero : false, 	// for checking the available VMs, cluster size
 	message : '', 			// message when user presses the create cluster button
 	alert_mes_master_cpu : '', 	// alert message for master cpu buttons (if none selected)
@@ -28,6 +28,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	alert_mes_slaves_cpu : '', 	// alert message for slaves cpu buttons (if none selected)
 	alert_mes_slaves_ram : '', 	// alert message for slaves ram buttons (if none selected)
 	alert_mes_slaves_disk : '', 	// alert message for slaves disk buttons (if none selected)
+	alert_mes_disk_template:'',		// alert message for disk template buttons (if none selected)
 	alert_mes_cluster_name : '', 	// alert message for cluster name (if none selected)
 	alert_mes_cluster_size : '', 	// alert message for cluster size (if none selected)
 	alert_mes_replication_factor: '', // alert message for replication factor (if not integer or greater than slaves number)
@@ -679,17 +680,25 @@ App.ClusterCreateController = Ember.Controller.extend({
 	storage_buttons : function() {
 		var elements = document.getElementsByName("storage_button");
 		var length = elements.length;
-		for (var i = 0; i < length; i++) {
-			elements[i].style.color = "initial";
-			var choice = document.getElementById(this.get('disk_temp'));
-			choice.style.color = "white";
-		}
-
-		var elements = document.getElementsByName("storage_button");
-		var length = elements.length;
-		var disks = this.get('content').objectAt(this.get('project_index')).get('disk_template');
-		for (var i = 0; i < length; i++) {
-			elements[i].disabled = false;
+		if (length == 1) {
+          elements[0].style.color = "white";
+          this.set('disk_temp',elements[0].value);
+         }
+		else{
+			for (var i = 0; i < length; i++) {
+				elements[i].style.color = "initial";
+			if (this.get('disk_temp') != '') {
+					var choice = document.getElementById(this.get('disk_temp'));
+					choice.style.color = "white";
+				}
+			}
+	
+			var elements = document.getElementsByName("storage_button");
+			var length = elements.length;
+			var disks = this.get('content').objectAt(this.get('project_index')).get('disk_template');
+			for (var i = 0; i < length; i++) {
+				elements[i].disabled = false;
+			}
 		}
 	},
 
@@ -739,8 +748,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('master_disk_selection', 0);
 		this.set('slaves_disk_selection', 0);
 		this.set('cluster_name', '');
-		this.set('operating_system', '');
-		this.set('disk_temp', 'Archipelago');
+		this.set('operating_system', 'Debian Base');
+		this.set('disk_temp', '');
 		this.set('vm_flavor_selection_master', '');
 		this.set('vm_flavor_selection_slaves', '');
 		this.set('message', '');
@@ -756,6 +765,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('alert_mes_slaves_cpu', '');
 		this.set('alert_mes_slaves_ram', '');
 		this.set('alert_mes_slaves_disk', '');
+		this.set('alert_mes_disk_template', '');
 		this.set('alert_mes_cluster_name', '');
 		this.set('alert_mes_cluster_size', '');
 		this.set('alert_mes_replication_factor', '');
@@ -909,7 +919,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 					this.set('master_cpu_selection', this.flavor_settings['Large']['cpu']);
 					this.set('master_ram_selection', this.flavor_settings['Large']['ram']);
 					this.set('master_disk_selection', this.flavor_settings['Large']['disk']);
-					this.send('disk_template_selection', 'Archipelago', "storage_button");
 				}
 			}
 			if (name == "vm_flavor_button_slaves") {
@@ -927,8 +936,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				if (value == "Large") {				
 					this.set('slaves_cpu_selection', this.flavor_settings['Large']['cpu']);				
 					this.set('slaves_ram_selection', this.flavor_settings['Large']['ram']);				
-					this.set('slaves_disk_selection', this.flavor_settings['Large']['disk']);
-					this.send('disk_template_selection', 'Archipelago', "storage_button");	
+					this.set('slaves_disk_selection', this.flavor_settings['Large']['disk']);	
 				}
 			}			
 		},
@@ -991,14 +999,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		},
 
 		// When a disk button is clicked, the selected role's disk selection takes the corresponding value
-		disk_selection : function(value, name) {
-			// if the selected disk size is >20 GB
-			// then select 'Archipelago'
-			if(value > 20)
-			{
-				this.send('disk_template_selection', 'Archipelago', "storage_button");
-			}
-			
+		disk_selection : function(value, name) {		
 			if (this.get('master_disk_selection') == 0) {
 				var master_disk = this.get('content').objectAt(this.get('project_index')).get('disk_choices')[0];
 			} else {
@@ -1148,6 +1149,11 @@ App.ClusterCreateController = Ember.Controller.extend({
 				// scroll to message
 				var elem = document.getElementById("slaves_settings");
 				window.scrollTo(elem.offsetLeft, elem.offsetTop);
+			} else if (this.get('disk_temp') == '') {
+				this.set('alert_mes_disk_template', 'Please select disk template');
+				// scroll to message
+				var elem = document.getElementById("common_settings");
+				window.scrollTo(elem.offsetLeft, elem.offsetTop);	
 			} else if (this.get('cluster_name') == '') {
 				this.set('alert_mes_cluster_name', 'Please input cluster name');
 				// scroll to message

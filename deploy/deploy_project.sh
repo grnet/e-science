@@ -20,8 +20,9 @@ if [ $# -lt 3 ]
 	echo ""
 	echo "Exiting"
 	echo ""
-	return 1 # exit script without closing terminal if user ran it sourced: . script.sh
-	exit 1 # exit if user executed it: ./script.sh
+	# terminate script without closing terminal if user ran it sourced: . script.sh
+	# exit if user executed it: ./script.sh
+	return 1 2>/dev/null || exit 1
 fi
 START=$(date +"%s")
 kamaki -k ip create --project-id=$PROJECTGUID 2>&1 | tee tmp_ip.txt
@@ -33,8 +34,7 @@ if [ -z "$IP" ]
 	echo "Couldn't get a floating IP"
 	echo "Exiting"
 	echo ""
-	return 1
-	exit 1
+	return 1 2>/dev/null || exit 1
 fi
 sleep 5
 kamaki -k server create --project-id=$PROJECTGUID --name=$SERVERNAME \
@@ -49,8 +49,7 @@ if [ -z "$VM" ]
 	echo "Couldn't create a VM"
 	echo "Exiting"
 	echo ""
-	return 1
-	exit 1
+	return 1 2>/dev/null || exit 1
 fi
 HOST="root@"$VM
 echo "Waiting a minute for VM to be reachable..."

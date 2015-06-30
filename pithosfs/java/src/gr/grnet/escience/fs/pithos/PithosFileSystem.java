@@ -5,16 +5,12 @@ import gr.grnet.escience.pithos.rest.HadoopPithosConnector;
 import gr.grnet.escience.pithos.rest.PithosResponse;
 import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -25,309 +21,586 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.util.Progressable;
 
 /**
- * This class implements a custom file system based on FIleSystem class of
- * Hadoop 2.5.2. Essentially the main idea here, respects to the development of
- * a custom File System that will be able to allow the interaction between
- * hadoop and pithos storage system.
- * 
- * @since March, 2015
+ * Implements a (partially) Hadoop Compatible File System using pithos+ as the
+ * storage backend.
+ *
  * @author eScience Dev Team
  * @version 0.1
- * 
+ * @since March, 2015
  */
 public class PithosFileSystem extends FileSystem {
 
-	private URI uri;
-	private static HadoopPithosConnector hadoopPithosConnector;
-	private static long defaultBlockSize = 128 * 1024 * 1024;
-	private Path workingDir;
-	private String pathToString;
-	private PithosPath pithosPath;
-	static String filename;
+    private URI uri;
 
-	private String[] filesList;
-	private boolean isDir = false;
-	private long length = 0;
-	private PithosFileStatus pithosFileStatus;
-	private static final Log LOG = LogFactory.getLog(PithosFileSystem.class);
-	private final Utils util = new Utils();
+    /** Interface to pithos+ REST API. */
+    private static HadoopPithosConnector hadoopPithosConnector;
 
-	public PithosFileSystem() {
-	}
+    private Path workingDir;
 
-	private String getConfig(String param) {
-		Configuration conf = new Configuration();
-		String result = conf.get(param);
-		return result;
-	}
+    /** holds string representation of a Path variable. */
+    private String pathToString;
 
-	/**
-	 * @return the instance of hadoop - pithos connector
-	 */
-	public static HadoopPithosConnector getHadoopPithosConnector() {
-		return hadoopPithosConnector;
-	}
+    private PithosPath pithosPath;
 
-	/**
-	 * Set the instance of hadoop - pithos connector
-	 */
-	public static void setHadoopPithosConnector(
-			HadoopPithosConnector hadoopPithosConnector) {
-		PithosFileSystem.hadoopPithosConnector = hadoopPithosConnector;
-	}
+    private static String filename;
 
-	@Override
-	public String getScheme() {
-		util.dbgPrint("getScheme >", "pithos");
-		return "pithos";
-	}
+    private String[] filesList;
 
-	@Override
-	public URI getUri() {
-		util.dbgPrint("getUri >", uri);
-		return uri;
-	}
+    private boolean isDir = false;
 
-	@Override
-	public void initialize(URI uri, Configuration conf) throws IOException {
-		super.initialize(uri, conf);
-		util.dbgPrint("initialize");
-		setConf(conf);
-		this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
-		util.dbgPrint("uri >", this.uri);
-		this.workingDir = new Path("/user", System.getProperty("user.name"));
-		util.dbgPrint("workingDir >", this.workingDir);
-		util.dbgPrint("Create System Store connector");
+    private long length = 0;
 
-		// - Create instance of Hadoop connector
-		setHadoopPithosConnector(new HadoopPithosConnector(
-				getConfig("fs.pithos.url"), getConfig("auth.pithos.token"),
-				getConfig("auth.pithos.uuid")));
+    private PithosFileStatus pithosFileStatus;
 
-	}
+    private PithosPath srcPiPath = null;
 
-	@Override
-	public Path getWorkingDirectory() {
-		util.dbgPrint("getWorkingDirectory", workingDir);
-		return workingDir;
-	}
+    private PithosPath dstPiPath = null;
 
-	@Override
-	public void setWorkingDirectory(Path dir) {
-		workingDir = makeAbsolute(dir);
-		util.dbgPrint("setWorkingDirectory >", workingDir);
-	}
+    private String srcName = null;
 
-	private Path makeAbsolute(Path path) {
-		if (path.isAbsolute()) {
-			return path;
-		}
-		return new Path(workingDir, path);
-	}
+    private String dstName = null;
 
-	/** This optional operation is not yet supported. */
-	@Override
-	public FSDataOutputStream append(Path f, int bufferSize,
-			Progressable progress) throws IOException {
-		util.dbgPrint("append");
-		throw new IOException("Not supported");
-	}
+    /** Holds HTTP response codes or strings. */
+    private String response = null;
 
-	@Override
-	public long getDefaultBlockSize() {
-		util.dbgPrint("getDefaultBlockSize >",
-				getConf().getLongBytes("dfs.blocksize", defaultBlockSize));
-		return getConf().getLongBytes("dfs.blocksize", defaultBlockSize);
-	}
+    private FSDataOutputStream fsDataOutputStreamInstance = null;
 
-	@Override
-	public String getCanonicalServiceName() {
-		util.dbgPrint("getCanonicalServiceName");
-		// Does not support Token
-		return null;
-	}
+    /** Holds an urlsafe escaped string. */
+    private String urlEsc;
 
-	@Override
-	public FSDataOutputStream create(Path f, FsPermission permission,
-			boolean overwrite, int bufferSize, short replication,
-			long blockSize, Progressable progress) throws IOException {
-		util.dbgPrint("create >", f, pithosPath, blockSize, bufferSize);
-		return new FSDataOutputStream(new PithosOutputStream(getConf(),
-				pithosPath, blockSize, bufferSize), statistics);
-	}
+    private PithosResponse metadata = null;
 
-	@Override
-	public boolean delete(Path f, boolean recursive) throws IOException {
-		util.dbgPrint("delete");
-		// TODO Auto-generated method stub
-		return false;
-	}
+    /** Holds an escaped Path string. */
+    private String pathEsc = null;
 
-	public boolean containerExistance(String container) {
-		PithosResponse containerInfo = getHadoopPithosConnector()
-				.getContainerInfo(container);
-		if (containerInfo.toString().contains("HTTP/1.1 404 NOT FOUND")) {
-			return false;
-		} else {
-			return true;
-		}
-	}
+    private String modificationTime = null;
 
-	@Override
-	public PithosFileStatus getFileStatus(Path targetPath) throws IOException {
-		util.dbgPrint("getFileStatus", "ENTRY");
-		util.dbgPrint("targetPath >", targetPath);
-		// - Process the given path
-		pithosPath = new PithosPath(targetPath);
-		util.dbgPrint("pithosPath >", pithosPath.getObjectAbsolutePath());
-		String urlEsc = null;
-		try {
-			urlEsc = util.urlEscape(null, null,
-					pithosPath.getObjectAbsolutePath(), null);
-		} catch (URISyntaxException e) {
-			util.dbgPrint("getFileStatus > invalid pithosPath");
-			throw new IOException(e);
-		}
-		PithosResponse metadata = getHadoopPithosConnector()
-				.getPithosObjectMetaData(pithosPath.getContainer(), urlEsc,
-						PithosResponseFormat.JSON);
+    private ArrayList<FileStatus> results = null;
 
-		if (metadata.toString().contains("HTTP/1.1 404 NOT FOUND")) {
-			util.dbgPrint("File does not exist in Pithos FS. (If filename contains spaces, add Quotation Marks)");
-			throw new IOException("File does not exist in Pithos FS.");
-		}
-		for (String obj : metadata.getResponseData().keySet()) {
-			if (obj != null) {
-				if (obj.matches("Content-Type") || obj.matches("Content_Type")) {
-					for (String fileType : metadata.getResponseData().get(obj)) {
-						if (fileType.contains("application/directory")) {
-							isDir = true;
-							break;
-						} else {
-							isDir = false;
-						}
-					}
-				}
-			}
-		}
-		if (isDir) {
-			pithosFileStatus = new PithosFileStatus(true, 0L, false, targetPath);
-		} else {
-			for (String obj : metadata.getResponseData().keySet()) {
-				if (obj != null) {
-					if (obj.matches("Content-Length")) {
-						for (String lengthStr : metadata.getResponseData().get(
-								obj)) {
-							length = Long.parseLong(lengthStr);
-						}
-					}
-				}
-			}
-			pithosFileStatus = new PithosFileStatus(length,
-					getDefaultBlockSize(), 123, targetPath);
-		}
-		util.dbgPrint("getFileStatus", "EXIT");
-		util.dbgPrint("pithos_file_status >", pithosFileStatus);
-		return pithosFileStatus;
-	}
+    private FileStatus fileStatus = null;
 
-	@Override
-	public FileStatus[] listStatus(Path f) throws IOException {
-		util.dbgPrint("listStatus");
+    private String[] files = null;
 
-		filename = "";
-		pithosPath = new PithosPath(f);
-		pathToString = pithosPath.toString();
+    private FileStatus[] resultsArr = null;
 
-		pathToString = pathToString.substring(this.getScheme().toString()
-				.concat("://").length());
+    private PithosOutputStream pithosOutputStreamInstance = null;
 
-		filesList = pathToString.split("/");
-		filename = filesList[filesList.length - 1];
-		int count = 2;
-		while (!filesList[filesList.length - count].equals(pithosPath
-				.getContainer())) {
-			filename = filesList[filesList.length - count] + "/" + filename;
-			count++;
-		}
+    /** Default HDFS block size. */
+    private static final long DEFAULT_HDFS_BLOCK_SIZE = (long) 128 * 1024 * 1024;
 
-		final List<FileStatus> result = new ArrayList<FileStatus>();
-		FileStatus fileStatus;
+    /** Actual configured HDFS block size */
+    private static long hdfsBlockSize = DEFAULT_HDFS_BLOCK_SIZE;
 
-		String files[] = getHadoopPithosConnector().getFileList(
-				pithosPath.getContainer()).split("\\r?\\n");
-		// - Iterate on available files in the container
-		for (int i = 0; i < files.length; i++) {
-			String file = files[i].substring(files[i].lastIndexOf("/") + 1);
-			files[i] = files[i].substring(0,
-					(files[i].length() - file.length()));
-			if ((filename + "/").equals(files[i])) {
-				Path path = new Path("pithos://" + pithosPath.getContainer()
-						+ "/" + filename + "/" + file);
-				fileStatus = getFileStatus(path);
-				result.add(fileStatus);
-			}
-		}
+    /** mapreduce jobs input folder */
+    private String fromAttemptDirectory = null;
 
-		// - Return the list of the available files
-		if (!result.isEmpty()) {
-			return result.toArray(new FileStatus[result.size()]);
-		} else {
-			return null;
-		}
-	}
+    /** mapreduce jobs output root folder. */
+    private String toOutputRootDirectory = null;
 
-	@Override
-	public boolean mkdirs(Path f, FsPermission permission) throws IOException {
-		util.dbgPrint("mkdirs");
-		// TODO Auto-generated method stub
-		return false;
-	}
+    private String[] resultFileName = null;
 
-	@Override
-	public FSDataInputStream open(Path targetFile, int buffer_size)
-			throws IOException {
-		pithosPath = new PithosPath(targetFile);
+    private String copyFromFullPath = null;
 
-		String pathEsc = null;
-		try {
-			pathEsc = util.urlEscape(null, null,
-					pithosPath.getObjectAbsolutePath(), null);
-		} catch (URISyntaxException e) {
-			util.dbgPrint("open > invalid targetFile");
-			throw new IOException(e);
-		}
+    private String copyToFullPath = null;
 
-		return getHadoopPithosConnector().pithosObjectInputStream(
-				pithosPath.getContainer(), pathEsc);
-	}
+    private FileStatus[] resultFilesList = null;
 
-	@Override
-	public boolean rename(Path src, Path dst) throws IOException {
-		util.dbgPrint("rename");
-		// TODO Auto-generated method stub
-		return false;
-	}
+    private int resultFilesCounter = 0;
 
-	/**
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		// Stub so we can create a 'runnable jar' export for packing
-		// dependencies
-		Utils util = new Utils();
-		String out = null;
-		String hashAlgo = "SHA-256";
-		try {
-			out = util.computeHash("Lorem ipsum dolor sit amet.", hashAlgo);
-		} catch (NoSuchAlgorithmException e) {
-			util.dbgPrint("invalid hash algorithm:" + hashAlgo);
-		} catch (UnsupportedEncodingException e) {
-			util.dbgPrint("invalid encoding");
-		}
-		util.dbgPrint("Pithos FileSystem Connector loaded.");
-		util.dbgPrint("Hash Test:", out);
-	}
+    /** Signifies mapreduce job end state. */
+    private boolean commitCalled = false;
+
+    private PithosPath commitPithosPath = null;
+
+    /**
+     * Instantiates a new pithos file system.
+     */
+    public PithosFileSystem() {
+    }
+
+    /**
+     * Gets the hadoop pithos connector.
+     *
+     * @return the instance of hadoop - pithos connector
+     */
+    public static HadoopPithosConnector getHadoopPithosConnector() {
+        return hadoopPithosConnector;
+    }
+
+    /**
+     * Set the instance of hadoop - pithos connector.
+     *
+     * @param hadoopPithosConnectorIn
+     *            the new hadoop pithos connector
+     */
+    public static void setHadoopPithosConnector(
+            HadoopPithosConnector hadoopPithosConnectorIn) {
+        PithosFileSystem.hadoopPithosConnector = hadoopPithosConnectorIn;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.hadoop.fs.FileSystem#getScheme()
+     */
+    @Override
+    public String getScheme() {
+        return "pithos";
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.hadoop.fs.FileSystem#getUri()
+     */
+    @Override
+    public URI getUri() {
+        return uri;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.hadoop.fs.FileSystem#initialize(java.net.URI,
+     * org.apache.hadoop.conf.Configuration)
+     */
+    @Override
+    public void initialize(URI uri, Configuration conf) throws IOException {
+        super.initialize(uri, conf);
+        setConf(conf);
+        if (conf.get("fs.pithos.debug") != null) {
+            Boolean debug = Boolean.valueOf(conf.get("fs.pithos.debug"));
+            Utils.setDebug(debug);
+        }
+        this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
+        setWorkingDirectory(new Path("/user", System.getProperty("user.name")));
+        hdfsBlockSize = conf.getLongBytes("dfs.blocksize",
+                DEFAULT_HDFS_BLOCK_SIZE);
+        if (hadoopPithosConnector == null) {
+            setHadoopPithosConnector(new HadoopPithosConnector(
+                    conf.get("fs.pithos.url"), conf.get("auth.pithos.token"),
+                    conf.get("auth.pithos.uuid")));
+        }
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.hadoop.fs.FileSystem#getWorkingDirectory()
+     */
+    @Override
+    public Path getWorkingDirectory() {
+        return workingDir;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.apache.hadoop.fs.FileSystem#setWorkingDirectory(org.apache.hadoop
+     * .fs.Path)
+     */
+    @Override
+    public void setWorkingDirectory(Path dir) {
+        workingDir = makeAbsolute(dir);
+    }
+
+    /**
+     * Make absolute.
+     *
+     * @param path
+     *            the path
+     * @return the path
+     */
+    private Path makeAbsolute(Path path) {
+        if (path.isAbsolute()) {
+            return path;
+        }
+        return new Path(workingDir, path);
+    }
+
+    /**
+     * This optional operation is not yet supported.
+     *
+     * @param f
+     *            the f
+     * @param bufferSize
+     *            the buffer size
+     * @param progress
+     *            the progress
+     * @return the FS data output stream
+     * @throws IOException
+     *             Signals that an I/O exception has occurred.
+     */
+    @Override
+    public FSDataOutputStream append(Path f, int bufferSize,
+            Progressable progress) throws IOException {
+        throw new IOException("Not supported");
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.hadoop.fs.FileSystem#create(org.apache.hadoop.fs.Path,
+     * org.apache.hadoop.fs.permission.FsPermission, boolean, int, short, long,
+     * org.apache.hadoop.util.Progressable)
+     */
+    @Override
+    public FSDataOutputStream create(Path f, FsPermission permission,
+            boolean overwrite, int bufferSize, short replication,
+            long blockSize, Progressable progress) throws IOException {
+
+        // - Initialize & release previously allocated memory
+        pithosOutputStreamInstance = null;
+        fsDataOutputStreamInstance = null;
+
+        pithosPath = new PithosPath(f);
+
+        // - Create empty object on Pithos FS with the given name by using the
+        // path
+        getHadoopPithosConnector().storePithosObject(pithosPath.getContainer(),
+                new PithosObject(new PithosPath(f), null));
+
+        pithosOutputStreamInstance = new PithosOutputStream(getConf(),
+                pithosPath, getHadoopPithosConnector()
+                        .getPithosBlockDefaultSize(pithosPath.getContainer()),
+                1 * 1024 * 1024);
+
+        fsDataOutputStreamInstance = new FSDataOutputStream(
+                pithosOutputStreamInstance, statistics);
+
+        return fsDataOutputStreamInstance;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.hadoop.fs.FileSystem#delete(org.apache.hadoop.fs.Path,
+     * boolean)
+     */
+    @Override
+    public boolean delete(Path f, boolean recursive) throws IOException {
+        Utils.dbgPrint("delete > path, recurse ", f, recursive);
+        pithosPath = new PithosPath(f);
+        response = getHadoopPithosConnector().deletePithosObject(
+                pithosPath.getContainer(), pithosPath.getObjectAbsolutePath());
+        if (response.contains("204")) {
+            return true;
+        }
+        return false;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.hadoop.fs.FileSystem#exists(org.apache.hadoop.fs.Path)
+     */
+    @Override
+    public boolean exists(Path f) throws IOException {
+        // keep for debug purposes
+        return super.exists(f);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.apache.hadoop.fs.FileSystem#getFileStatus(org.apache.hadoop.fs.Path)
+     */
+    @Override
+    public PithosFileStatus getFileStatus(Path targetPath) throws IOException {
+
+        // - Process the given path
+        pithosPath = new PithosPath(targetPath);
+
+        // - Check if it is the final call from outputstream and perform the
+        // final action for the result file(s) movement
+        if (PithosOutputStream.isClosed() && !isCommitCalled()) {
+            // - Set the current path as the one that constitutes the commit
+            // directory for Hadoop outpustream
+            setCommitPithosPath(pithosPath);
+
+            // - Perform the final commit by moving the result files to the root
+            // output folder
+            commitFinalResult();
+        }
+
+        urlEsc = null;
+        try {
+            urlEsc = Utils.urlEscape(null, null,
+                    pithosPath.getObjectAbsolutePath(), null);
+        } catch (URISyntaxException e) {
+            throw new IOException(e);
+        }
+        metadata = getHadoopPithosConnector().getPithosObjectMetaData(
+                pithosPath.getContainer(), urlEsc, PithosResponseFormat.JSON);
+        if (metadata.toString().contains("HTTP/1.1 404 NOT FOUND")) {
+            throw new FileNotFoundException("File does not exist in Pithos FS.");
+        }
+        for (String obj : metadata.getResponseData().keySet()) {
+            if (obj != null
+                    && (obj.matches("Content-Type") || obj
+                            .matches("Content_Type"))) {
+                for (String fileType : metadata.getResponseData().get(obj)) {
+                    if (fileType.contains("application/directory")
+                            || fileType.contains("application/folder")) {
+                        isDir = true;
+                        break;
+                    } else {
+                        isDir = false;
+                    }
+                }
+            }
+        }
+        if (isDir) {
+            pithosFileStatus = new PithosFileStatus(true, hdfsBlockSize, false,
+                    targetPath);
+        } else {
+            for (String obj : metadata.getResponseData().keySet()) {
+                if (obj != null && obj.matches("Content-Length")) {
+                    for (String lengthStr : metadata.getResponseData().get(obj)) {
+                        length = Long.parseLong(lengthStr);
+                    }
+                }
+            }
+            modificationTime = metadata.getResponseData().get("Last-Modified")
+                    .get(0);
+
+            pithosFileStatus = new PithosFileStatus(length, hdfsBlockSize,
+                    Utils.dateTimeToEpoch(modificationTime, ""), targetPath);
+        }
+        return pithosFileStatus;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.apache.hadoop.fs.FileSystem#listStatus(org.apache.hadoop.fs.Path)
+     */
+    @Override
+    public FileStatus[] listStatus(Path f) throws IOException {
+
+        filename = "";
+        pithosPath = new PithosPath(f);
+        pathToString = pithosPath.toString();
+
+        pathToString = pathToString.substring(this.getScheme().toString()
+                .concat("://").length());
+
+        filesList = pathToString.split("/");
+        filename = filesList[filesList.length - 1];
+
+        int count = 2;
+        while (!filesList[filesList.length - count].equals(pithosPath
+                .getContainer())) {
+            filename = filesList[filesList.length - count] + "/" + filename;
+            count++;
+        }
+
+        results = new ArrayList<FileStatus>();
+
+        files = getHadoopPithosConnector().getFileList(
+                pithosPath.getContainer()).split("\\r?\\n");
+
+        // - Iterate on available files in the container
+        for (int i = 0; i < files.length; i++) {
+            String file = files[i].substring(files[i].lastIndexOf("/") + 1);
+            files[i] = files[i].substring(0, files[i].length() - file.length());
+            if ((filename + "/").equals(files[i])) {
+                Path path = new Path("pithos://" + pithosPath.getContainer()
+                        + "/" + filename + "/" + file);
+                fileStatus = getFileStatus(path);
+                results.add(fileStatus);
+            }
+        }
+        // - Return the list of the available files
+        resultsArr = new FileStatus[results.size()];
+
+        return results.toArray(resultsArr);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.hadoop.fs.FileSystem#mkdirs(org.apache.hadoop.fs.Path,
+     * org.apache.hadoop.fs.permission.FsPermission)
+     */
+    @Override
+    public boolean mkdirs(Path f, FsPermission permission) throws IOException {
+        pithosPath = new PithosPath(f);
+
+        response = getHadoopPithosConnector().uploadFileToPithos(
+                pithosPath.getContainer(),
+                pithosPath.getObjectFolderAbsolutePath(), true);
+
+        if (response != null && response.contains("201")) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.hadoop.fs.FileSystem#open(org.apache.hadoop.fs.Path, int)
+     */
+    @Override
+    public FSDataInputStream open(Path targetFile, int bufferSize)
+            throws IOException {
+        pithosPath = new PithosPath(targetFile);
+        pathEsc = null;
+
+        try {
+            pathEsc = Utils.urlEscape(null, null,
+                    pithosPath.getObjectAbsolutePath(), null);
+        } catch (URISyntaxException e) {
+            Utils.dbgPrint("open > invalid targetFile, error: ", e);
+            throw new IOException(e);
+        }
+
+        return getHadoopPithosConnector().pithosObjectInputStream(
+                pithosPath.getContainer(), pathEsc);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.apache.hadoop.fs.FileSystem#rename(org.apache.hadoop.fs.Path,
+     * org.apache.hadoop.fs.Path)
+     */
+    @Override
+    public boolean rename(Path src, Path dst) throws IOException {
+
+        srcPiPath = new PithosPath(src);
+        dstPiPath = new PithosPath(dst);
+        srcName = srcPiPath.getObjectAbsolutePath();
+        dstName = dstPiPath.getObjectAbsolutePath();
+
+        response = getHadoopPithosConnector().movePithosObjectToFolder(
+                srcPiPath.getContainer(), srcName, "", dstName);
+
+        if (response.contains("201")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * * Additional utility methods for finalizing result files to output
+     * directory.
+     * 
+     * @return the commit pithos path
+     */
+
+    /**
+     * 
+     * @return: the full path of the temp files during the output-stream example
+     */
+    private PithosPath getCommitPithosPath() {
+        return commitPithosPath;
+    }
+
+    /**
+     * Sets the commit pithos path.
+     *
+     * @param _path
+     *            the new commit pithos path
+     */
+    private void setCommitPithosPath(PithosPath _path) {
+        this.commitPithosPath = _path;
+    }
+
+    /**
+     * Checks if is commit called.
+     *
+     * @return true, if is commit called
+     * @return: check if the commit method has been already called, in order to
+     *          avoid any potential problems due to the recursive behavior of
+     *          listStatus method
+     */
+    private boolean isCommitCalled() {
+        return commitCalled;
+    }
+
+    /**
+     * Perform the move of the final result files from the temp files to the
+     * root output file, and delete the remaining unused temp files.
+     */
+    private void commitFinalResult() {
+
+        // - Avoid the impact due to the recursive behavior
+        this.commitCalled = true;
+
+        // - Get the attempt folder of the output result
+        fromAttemptDirectory = getCommitPithosPath().getObjectAbsolutePath();
+
+        // - Get the root folder
+        toOutputRootDirectory = getCommitPithosPath().getObjectAbsolutePath()
+                .substring(
+                        0,
+                        getCommitPithosPath().getObjectAbsolutePath().indexOf(
+                                "/_temporary"));
+
+        try {
+            // - Get the file status by all available files into selected
+            // results directory
+            resultFilesList = listStatus(getCommitPithosPath()
+                    .getPithosFSPath());
+
+            // - Initialize the string array that includes the file names of the
+            // result files
+            resultFileName = new String[resultFilesList.length];
+
+            // - Iterate on results directory contents
+            resultFilesCounter = 0;
+
+            // - Iterate on file status array results so as to get one-by-one
+            // the available result file names
+            for (FileStatus resultFileFStatus : resultFilesList) {
+                // - Get the file name
+                resultFileName[resultFilesCounter] = resultFileFStatus
+                        .getPath().getName();
+
+                // - increase the counter of the files
+                resultFilesCounter++;
+            }
+
+        } catch (IOException e) {
+            Utils.dbgPrint("commitFinalResult error: ", e);
+        }
+
+        // - Iterate on all results files
+        for (String resultFile : resultFileName) {
+            // - Create the full From --> To paths that will be used by PithosFS
+            // methods so as to perform the move of the result files into pithos
+            // file storage
+            copyFromFullPath = fromAttemptDirectory.concat("/").concat(
+                    resultFile);
+            copyToFullPath = toOutputRootDirectory.concat("/").concat(
+                    resultFile);
+
+            // - Perform the move from the current temp directory to the root
+            // output directory - on PithosFS
+            PithosFileSystem.getHadoopPithosConnector()
+                    .movePithosObjectToFolder("pithos", // container
+                            copyFromFullPath, // source object
+                            "", // folder path
+                            copyToFullPath); // target object
+        }
+
+    }
+
+    /**
+     * Allows alternative packaging of dependencies into orka-pithos.jar.
+     *
+     * @param args
+     */
+    public static void main(String[] args) {
+        // empty entry point method used to facilitate alternate packaging
+    }
 
 }

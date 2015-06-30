@@ -10,7 +10,7 @@ import datetime
 from time import sleep
 import logging
 import subprocess
-import os
+import json
 from os.path import join, expanduser
 from reroute_ssh import reroute_ssh_prep
 from kamaki.clients import ClientError
@@ -21,6 +21,7 @@ from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
 from django_db_after_login import db_cluster_create
 from cluster_errors_constants import *
 from celery import current_task
+import os
 
 
 class YarnCluster(object):
@@ -70,19 +71,23 @@ class YarnCluster(object):
         # Get resources of pending clusters
         self.pending_quota = retrieve_pending_clusters(self.opts['token'],
                                                        self.opts['project_name'])
-        # check hadoopconf flag and set hadoop_image accordingly
+        # check escienceconf flag and set hadoop_image accordingly
         list_current_images = self.plankton.list_public(True, 'default')
         for image in list_current_images:
             if self.opts['os_choice'] == image['name']:
-                try:
-                    if image['properties']['hadoopconf'] == 'true': 
-                        self.hadoop_image = True
+                if 'escienceconf' in image['properties']:
+                    image_metadata = json.loads(image['properties']['escienceconf'])
+                    if image_metadata['ecosystem'] == 'True':
+                        self.hadoop_image = 'ecosystem'
+                    elif image_metadata['cloudera'] == 'True':
+                        self.hadoop_image = 'cloudera'
+                    elif image_metadata['hadoop'] == 'True' and image_metadata['hue'] == 'True':
+                        self.hadoop_image = 'hue'
                     else:
-                        self.hadoop_image = False
-                except:
-                    # if hadoopconf hasn't been set then hadoop_image flag is false
-                    self.hadoop_image = False
-                        
+                        self.hadoop_image = 'hadoopbase'
+                else:
+                    self.hadoop_image = 'debianbase'
+
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_cluster_size_quotas
@@ -403,14 +408,14 @@ class YarnCluster(object):
             raise
         # Update cluster info with the master VM root password.
         set_cluster_state(self.opts['token'], self.cluster_id,
-                          ' Configuring Yarn cluster node communication (2/3)',
+                          ' Configuring YARN cluster node communication (2/3)',
                           password=self.master_root_pass)
 
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
                                              self.HOSTNAME_MASTER_IP)
             set_cluster_state(self.opts['token'], self.cluster_id,
-                          ' Installing and configuring Yarn (3/3)')
+                          ' Installing and configuring YARN (3/3)')
 
             install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.cluster_name_postfix_id, self.hadoop_image, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'])
@@ -427,7 +432,7 @@ class YarnCluster(object):
             if self.ssh_file != 'no_ssh_key_selected':
                 os.system('rm ' + self.ssh_file)
 
-        return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass
+        return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass, self.cluster_id
 
     def destroy(self):
         """Destroy Cluster"""
