@@ -3,7 +3,7 @@
 // Allows us to have logic to handle slower loading routes or errors in a generic way.
 
 App.ApplicationRoute = Ember.Route.extend({
-	actions : {
+    actions : {
 		loading : function(transition, route) {
 			if (transition.targetName == 'cluster.create') {
 				this.set('loaderTitle', 'Computing available resources');
