@@ -3,23 +3,23 @@ pithosFS Connector for Hadoop
 
 ##Overview
 
-The pithosFS Connector plugin for Hadoop, is a plugin for Hadoop that provides the ability to use [pithos+](https://okeanos.grnet.gr/services/pithos/) as an input source and/or output destination.
+The pithosFS Connector plugin for Hadoop, is a plugin for Hadoop that provides the ability to use [pithos+](https://okeanos.grnet.gr/services/pithos/) as an input source and/or output destination.  
 The source code is available on [Github](https://github.com/grnet/e-science/tree/develop/pithosfs/java).
 
 
 ##Contents
 
-- [Benefits of using the connector](#how-to-run-orka-commands)
+- [Benefits of using the connector](#benefits-of-using-the-connector)
 - [Getting the connector](#getting-the-connector)
 - [Configuring the connector](#configuring-the-connector)
 - [Manually installing the connector](#manually-installing-the-connector)
 
 ##Benefits of using the connector
 
-- **Direct data access**. 
-Store your data in pithos+ and access it directly, with no need to transfer it into HDFS first.
+- **Direct data access**.  
+Store your data in pithos+ and access it directly, with no need to transfer it into HDFS first.  
 Urls containing pithos:// scheme are automatically handled by the connector.
-- **Data accessibility**.
+- **Data accessibility**.  
 When you shut down a Hadoop cluster, you still have access to your data in pithos+, unlike HDFS.
 
 ##Getting the connector
