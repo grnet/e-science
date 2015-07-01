@@ -130,7 +130,7 @@ class HadoopCluster(object):
             self.escience_token = authenticate_escience(self.opts['token'], self.opts['server_url'])
             self.server_url = self.opts['server_url']
         except ConnectionError:
-            logging.error(' e-science server unreachable or down.')
+            logging.error('e-science server unreachable or down.')
             exit(error_fatal)
         except ClientError, e:
             logging.error(e.message)
@@ -155,7 +155,7 @@ class HadoopCluster(object):
                 logging.error(response['clusterchoice']['message'])
                 exit(error_fatal)
             result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
-            logging.log(SUMMARY, " YARN Cluster is active, you can access it through {0}:8088/cluster,"
+            logging.log(SUMMARY, "YARN Cluster is active, you can access it through {0}:8088/cluster,"
                                  " and has the following properties:".format(result['master_IP']))
             stdout.write("cluster_id: {0}\nmaster_IP: {1}\n"
                          "root password: {2}\n".format(result['cluster_id'], result['master_IP'],
@@ -165,7 +165,7 @@ class HadoopCluster(object):
 
         except Exception, e:
             stderr.write('{0}'.format('\r'))
-            logging.error(' Fatal error: ' + str(e.args[0]))
+            logging.error(str(e.args[0]))
             exit(error_fatal)
 
 
@@ -176,7 +176,7 @@ class HadoopCluster(object):
             if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == const_cluster_status_active:
                 break
         else:
-            logging.error(' Only active clusters can be destroyed.')
+            logging.error('Only active clusters can be destroyed.')
             exit(error_fatal)
         try:
             payload = {"clusterchoice":{"id": self.opts['cluster_id']}}
@@ -184,7 +184,7 @@ class HadoopCluster(object):
             response = yarn_cluster_req.delete_cluster()
             task_id = response['clusterchoice']['task_id']
             result = task_message(task_id, self.escience_token, self.server_url, wait_timer_delete)
-            logging.log(SUMMARY, ' Cluster with name "{0}" and all its resources deleted'.format(result))
+            logging.log(SUMMARY, 'Cluster with name "{0}" and all its resources deleted'.format(result))
             exit(SUCCESS)
         except Exception, e:
             stderr.write('{0}'.format('\r'))
@@ -203,14 +203,14 @@ class HadoopCluster(object):
                 if cluster['cluster_status'] == const_cluster_status_active:
                     break
         else:
-            logging.error(' Hadoop can only be managed for an active cluster.')
+            logging.error('Hadoop can only be managed for an active cluster.')
             exit(error_fatal)
         if active_cluster:
             if (active_cluster['hadoop_status'] == const_hadoop_status_started and action == "start"):
-                logging.error(' Hadoop already started.')
+                logging.error('Hadoop already started.')
                 exit(error_fatal)
             elif (active_cluster['hadoop_status'] == const_hadoop_status_stopped and action == "stop"):
-                logging.error(' Hadoop already stopped.')
+                logging.error('Hadoop already stopped.')
                 exit(error_fatal)
         try:
             payload = {"clusterchoice":{"id": self.opts['cluster_id'], "hadoop_status": action}}
@@ -242,7 +242,7 @@ class HadoopCluster(object):
                         active_cluster = cluster
                         break
             else:
-                logging.error(' You can take file actions on active clusters with started hadoop only.')
+                logging.error('You can take file actions on active clusters with started hadoop only.')
                 exit(error_fatal)
             if opt_fileput == True:
                 try:
@@ -270,7 +270,7 @@ class HadoopCluster(object):
                             kamaki_filespec = remain
                             self.put_from_pithos(active_cluster, kamaki_filespec)
                         else:
-                            logging.error(' Error: Unrecognized source filespec.')
+                            logging.error('Unrecognized source filespec.')
                             exit(error_fatal)
                         
                 except Exception, e:
@@ -287,7 +287,7 @@ class HadoopCluster(object):
                     elif file_protocol == 'file' or file_protocol == "folder":
                         self.get_from_hadoop_to_local(active_cluster)
                     else:
-                        logging.error(' Error: Unrecognized destination filespec.')
+                        logging.error('Unrecognized destination filespec.')
                         exit(error_fatal)
                 except Exception, e:
                     stderr.write('{0}'.format('\r'))
@@ -302,7 +302,7 @@ class HadoopCluster(object):
             auth = AstakosClient(auth_url, token)
             auth.authenticate()
         except ClientError:
-            msg = ' Authentication error: Invalid Token'
+            msg = 'Authentication error: Invalid Token'
             logging.error(msg)
             exit(error_fatal)
         pithos_endpoint = auth.get_endpoint_url('object-store')
@@ -327,7 +327,7 @@ class HadoopCluster(object):
             try:
                 self.check_hdfs_path(cluster['master_IP'], parsed_path, '-d')
             except SystemExit:
-                msg = ' Target directory does not exist. Aborting upload'
+                msg = 'Target directory does not exist. Aborting upload'
                 raise RuntimeError(msg)
             try:
                 self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
@@ -342,7 +342,7 @@ class HadoopCluster(object):
             try:
                 self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-d')
             except SystemExit:
-                msg = ' Target directory does not exist. Aborting upload'
+                msg = 'Target directory does not exist. Aborting upload'
                 raise RuntimeError(msg)
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'] + self.source_filename, '-e')
             self.opts['destination'] += self.source_filename
@@ -354,16 +354,16 @@ class HadoopCluster(object):
     def put_from_pithos(self, cluster, sourcefile):
         """ Method for transferring pithos+ files to Hadoop filesystem """
         """ Streaming """
-        logging.log(SUMMARY, ' Start transferring pithos file to hdfs' )
+        logging.log(SUMMARY, 'Start transferring pithos file to hdfs' )
         pithos_url = ssh_pithos_stream_to_hadoop("hduser", cluster['master_IP'],
                               sourcefile, self.opts['destination'])
         if pithos_url:
             self.opts['source'] = pithos_url
             result = self.put_from_server()
             if result == 0:
-                logging.log(SUMMARY, ' Pithos+ file uploaded to Hadoop filesystem' )
+                logging.log(SUMMARY, 'Pithos+ file uploaded to Hadoop filesystem' )
             else:
-                logging.log(SUMMARY, ' There was a problem uploading to Hadoop')
+                logging.log(SUMMARY, 'There was a problem uploading to Hadoop')
             # cleanup
             ssh_pithos_stream_to_hadoop("hduser", cluster['master_IP'],
                               sourcefile, self.opts['destination'], False)
@@ -375,7 +375,7 @@ class HadoopCluster(object):
         """
         path_exists = ssh_call_hadoop("hduser", master_IP, " dfs -test " + option + " " + "\'" + dest + "\'")
         if option == '-e' and path_exists == 0:
-            logging.error(' File already exists. Aborting upload.')
+            logging.error('File already exists. Aborting upload.')
             exit(error_fatal)
         elif option == '-d' and path_exists != 0:
             exit(error_fatal)
@@ -401,16 +401,16 @@ class HadoopCluster(object):
 
         # check if file can be uploaded to hdfs
         if file_size * replication_factor > int(dfs_remaining):
-            logging.log(SUMMARY, ' File too big to be uploaded' )
+            logging.log(SUMMARY, 'File too big to be uploaded' )
             exit(error_fatal)
 
         else:
             """ Streaming """
-            logging.log(SUMMARY, " Start uploading file '{0}' to hdfs".format(self.source_filename))
+            logging.log(SUMMARY, "Start uploading file '{0}' to hdfs".format(self.source_filename))
             ssh_stream_to_hadoop("hduser", cluster['master_IP'],
                                   self.opts['source'], self.opts['destination'])
 
-            logging.log(SUMMARY, ' Local file uploaded to Hadoop filesystem' )
+            logging.log(SUMMARY, 'Local file uploaded to Hadoop filesystem' )
 
 
     def put_from_server(self):
@@ -429,12 +429,12 @@ class HadoopCluster(object):
         else:
             logging.error(response['hdfs']['message'])
             exit(error_fatal)
-        logging.log(SUMMARY, ' Starting file transfer')
+        logging.log(SUMMARY, 'Starting file transfer')
         result = task_message(task_id, self.escience_token, self.server_url, wait_timer_delete,
                                   task='has_progress_bar')
         if result == 0:
             stdout.flush()
-            logging.log(SUMMARY, ' Transfered file to Hadoop filesystem')
+            logging.log(SUMMARY, 'Transfered file to Hadoop filesystem')
             return result
     
     def get_from_hadoop_to_pithos(self, cluster, destination_path):
@@ -443,11 +443,11 @@ class HadoopCluster(object):
             file_exists = ssh_call_hadoop("hduser", cluster['master_IP'],
                                       " dfs -test -e " + "\'{0}\'".format(self.opts['source']))
             if file_exists == 0:
-                logging.log(SUMMARY, ' Start downloading file from hdfs')
+                logging.log(SUMMARY, 'Start downloading file from hdfs')
                 from_hdfs_to_pithos("hduser", cluster['master_IP'],
                                   self.opts['source'], destination_path)
             else:
-                logging.error(' File does not exist.')
+                logging.error('File does not exist.')
                 exit(error_fatal) 
         except Exception, e:
             logging.error(str(e.args[0]))
@@ -458,7 +458,7 @@ class HadoopCluster(object):
         source = self.opts['source']
         destination = self.opts['destination']
         try:
-            logging.log(SUMMARY, " Checking if \'{0}\' exists in Hadoop filesystem.".format(source))
+            logging.log(SUMMARY, "Checking if \'{0}\' exists in Hadoop filesystem.".format(source))
             src_file_exists = ssh_call_hadoop("hduser", cluster['master_IP'],
                                       " dfs -test -e " + "\'{0}\'".format(source))
             
@@ -467,12 +467,12 @@ class HadoopCluster(object):
                 dest_base_folder, dest_top_file_or_folder = os.path.split(destination)
                 if os.path.exists(destination):
                     if os.path.isfile(destination):
-                        logging.log(SUMMARY, " \'{0}\' already exists.".format(destination))
+                        logging.log(SUMMARY, "\'{0}\' already exists.".format(destination))
                         exit(error_fatal)
                     elif os.path.isdir(destination):
                         destination = os.path.join(destination,src_file)
                         if os.path.exists(destination):
-                            logging.log(SUMMARY, " \'{0}\' already exists.".format(destination))
+                            logging.log(SUMMARY, "\'{0}\' already exists.".format(destination))
                             exit(error_fatal)
                 else:
                     try:
@@ -486,21 +486,21 @@ class HadoopCluster(object):
                             else:
                                 destination = dest_top_file_or_folder
                     except OSError:
-                        logging.error(' Choose another destination path-directory.')
+                        logging.error('Choose another destination path-directory.')
                         exit(error_fatal)
                 
-                logging.log(SUMMARY, ' Start downloading file from hdfs')
+                logging.log(SUMMARY, 'Start downloading file from hdfs')
                 ssh_stream_from_hadoop("hduser", cluster['master_IP'],
                                        source, destination)
                 
             else:
-                logging.error(' Source file does not exist.')
+                logging.error('Source file does not exist.')
                 exit(error_fatal) 
 
             if os.path.exists(destination):
-                logging.log(SUMMARY, ' File downloaded from Hadoop filesystem.')
+                logging.log(SUMMARY, 'File downloaded from Hadoop filesystem.')
             else:
-                logging.error(' Error while downloading from Hadoop filesystem.')
+                logging.error('Error while downloading from Hadoop filesystem.')
         
         except Exception, e:
             logging.error(str(e.args[0]))
@@ -524,8 +524,8 @@ class UserClusterInfo(object):
         self.cluster_short_list = {'id':True, 'cluster_name':True, 'action_date':True, 'cluster_size':True,
                                    'cluster_status':True, 'hadoop_status':True, 'master_IP':True}
         self.cluster_skip_list = {'task_id':True, 'state':True}
-        self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0'}
-        self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED'}
+        self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0', 'FAILED':'3'}
+        self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED', '3':'FAILED'}
         self.hdp_status_id_to_status_desc = {'0':'STOPPED','1':'STARTED','2':'FORMAT'}
         self.hdp_status_desc_to_status_id = {'STOPPED':'0','STARTED':'1','FORMAT':'2'}
         self.disk_template_to_label = {'ext_vlmc':'Archipelago', 'drbd':'Standard'}
@@ -620,9 +620,9 @@ def main():
     orka_parser = ArgumentParser(description='Manage a Hadoop-Yarn'
                                         ' cluster in ~okeanos')
     checker = _ArgCheck()
-    logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
+    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                                 level=checker.logging_levels['summary'],
-                                datefmt='%H:%M:%S')
+                                datefmt='%Y-%m-%d %H:%M:%S')
     try:
         kamaki_token = get_from_kamaki_conf('cloud "~okeanos"', 'token')
         kamaki_base_url = get_from_kamaki_conf('orka','base_url')
@@ -762,7 +762,7 @@ def main():
         if verb == 'create':
             if opts['cluster_size'] == 2:
                 if opts['replication_factor'] != 1:
-                    logging.warning(' Replication factor cannot exceed the number of slave nodes; defaulting to 1')
+                    logging.warning('Replication factor cannot exceed the number of slave nodes; defaulting to 1')
                     opts['replication_factor'] = 1
             if opts['cluster_size'] <= opts['replication_factor']:
                 logging.error('Replication factor must be between 1 and number of slave nodes (cluster_size -1)')

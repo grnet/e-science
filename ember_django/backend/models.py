@@ -30,6 +30,8 @@ class UserInfo(models.Model):
                                      help_text="Okeanos Authentication Token ")
     master_vm_password = models.CharField("Master VM Password", max_length=255,
                                blank=True, help_text="Root password of master VM")
+    error_message = models.CharField("Error Message", max_length=255,
+                               blank=True, help_text="Error message when status is failed")
 
 
     def is_authenticated(self):
@@ -175,6 +177,7 @@ CLUSTER_STATUS_CHOICES = (
     ("0", "Destroyed"),
     ("1", "Active"),
     ("2", "Pending"),
+    ("3", "Failed"),
 )
 
 HADOOP_STATUS_CHOICES = (

@@ -119,7 +119,7 @@ def db_hadoop_update(cluster_id, hadoop_status, state):
     cluster.save()
         
 
-def db_cluster_update(token, status, cluster_id, master_IP='', state='', password=''):
+def db_cluster_update(token, status, cluster_id, master_IP='', state='', password='', error=''):
     """
     Updates DB when cluster is created or deleted from pending status and
     when cluster state changes.
@@ -132,13 +132,18 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
         raise ObjectDoesNotExist(msg)
     if password:
         user.master_vm_password = u'The root password of \"{0}\"({1}) master VM is {2}'.format(cluster.cluster_name,cluster.id,password)
+    if error:
+        user.error_message = u'Cluster \"{0}\"({1}) creation failed due to error: {2}'.format(cluster.cluster_name,cluster.id, error)
 
     if status == "Active":
         cluster.cluster_status = const_cluster_status_active
         user.master_vm_password = ''
 
-    if status == "Pending":
+    elif status == "Pending":
         cluster.cluster_status = const_cluster_status_pending
+    
+    elif status == "Failed":
+        cluster.cluster_status = const_cluster_status_failed
 
     elif status == "Destroyed":
         cluster.cluster_status = const_cluster_status_destroyed
