@@ -10,9 +10,10 @@ Urls for backend ember-django application.
 from django.conf import settings
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
-from views import SessionView, StatusView, JobsView, HdfsView
+from views import SessionView, StatusView, JobsView, HdfsView, MainPageView, StatisticsView
 
-urlpatterns = patterns('', url(r'^$', 'backend.views.main_page'),
+urlpatterns = patterns('', url(r'^$', MainPageView.as_view()),
+                       url(r'^api/homes', StatisticsView.as_view()),
                        url(r'^admin', include(admin.site.urls)),
                        url(r'^api/users', SessionView.as_view()),
                        url(r'^api/clusters', StatusView.as_view()),

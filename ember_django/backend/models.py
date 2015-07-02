@@ -186,6 +186,14 @@ HADOOP_STATUS_CHOICES = (
      ("2", "Pending"),
  )
 
+
+class ClusterStatistics(models.Model):
+    """Definition of Cluster statistics."""
+    spawned_clusters = models.IntegerField("Spawned Clusters", null=True,
+                                     help_text="Total number of spawned clusters")
+    active_clusters = models.IntegerField("Active Clusters", null=True,
+                                     help_text="Total number of active clusters")
+
 class ClusterInfo(models.Model):
     """Definition of a Hadoop Cluster object model."""
     cluster_name = models.CharField("Cluster Name", max_length=255, null=False,

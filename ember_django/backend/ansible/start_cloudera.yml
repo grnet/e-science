@@ -30,6 +30,11 @@
       - { name: 'hadoop-yarn-nodemanager',  state: 'restarted' }
     when: is_slave
 
+  - name: Start Flume
+    tags: start
+    service: name=flume-ng-agent state=restarted
+    when: is_master
+
   - name: Create mandatory directories in Hdfs
     tags: CLOUDstart
     action: command {{item}} chdir={{ cloudera_bin }}
@@ -68,6 +73,11 @@
     service: "name={{item.name}} state={{item.state}}"
     with_items:
       - { name: 'hadoop-mapreduce-historyserver', state: 'restarted' }
+    when: is_master
+
+  - name: Stop Flume
+    tags: stop
+    service: name=flume-ng-agent state=stopped
     when: is_master
 
   - name: stop Namenode, Resource Manager and History Server

@@ -8,7 +8,21 @@ Serializers file for django rest framework.
 """
 
 from rest_framework import serializers
-from backend.models import UserInfo, ClusterInfo, ClusterCreationParams
+from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics
+
+class StatisticsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for spawned and active clusters
+    """
+    id = serializers.SerializerMethodField('get_ember_id')
+    
+    class Meta:
+        model = ClusterStatistics
+        fields = ('id','spawned_clusters', 'active_clusters')
+    
+    def get_ember_id(self, obj):
+        """"Always returns id 1 for ember.js"""
+        return 1
 
 
 class PGArrayField(serializers.WritableField):
