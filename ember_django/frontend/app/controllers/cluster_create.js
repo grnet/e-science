@@ -55,6 +55,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	selected_project : '',	
 	selected_image : '',
 	selected_storage : '',
+	hue_login_message : '',
 	alert_mes_last_conf : '',	// alert message when resources are not enough to apply last configuration
 	flavor_settings : {'Small': {'cpu': 2, 'ram': 2048, 'disk': 10}, 'Medium': {'cpu': 4, 'ram': 2048, 'disk': 20}, 'Large': {'cpu': 4, 'ram': 4096, 'disk': 40}}, // Small Medium and Large predefined flavors	
 	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
@@ -795,6 +796,21 @@ App.ClusterCreateController = Ember.Controller.extend({
 		}
 		return this.get('warning_mes_dfs_blocksize');
 	}.property('dfs_blocksize'),
+	
+	CDH : false,
+	
+	message_hue_login : function(){
+			if (/Ecosystem/.test(this.get('operating_system')) || /Hue/.test(this.get('operating_system'))){
+				this.set('hue_login_message', '<b>Hue first login</b><br><span class="text text-info">username : hduser</span>');
+			}else if (/CDH/.test(this.get('operating_system'))){
+				this.set('hue_login_message', '<b>Hue first login</b><br><span class="text text-info">username : hdfs</span>');
+				this.set('CDH', true);
+			}
+			else {
+				this.set('hue_login_message', '');
+			}	
+			this.get('controllers.clusterManagement').send('help_hue_login_post', this.get('hue_login_message'));
+	}.property('operating_system'),
 
 	actions : {
 		// action to focus project selection view
@@ -805,6 +821,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 		default_hdfs_configuration : function(){
 			this.set('replication_factor', this.get('default_replication_factor'));
 			this.set('dfs_blocksize', this.get('default_dfs_blocksize'));
+		},
+		help_hue_login : function(){
+			this.get('message_hue_login');
 		},
 		// action to apply last cluster configuration
 		// trigger when the corresponding button is pressed
@@ -1212,6 +1231,15 @@ App.ClusterCreateController = Ember.Controller.extend({
 						'replication_factor' : self.get('replication_factor'),
 						'dfs_blocksize': self.get('dfs_blocksize')
 					}).save();
+					
+					if (this.get('message_hue_login') !== ''){
+						if (this.get('CDH')==true){
+							var msg = {'msg_type':'warning','msg_text':'Login in Hue browser with username : hdfs'};
+						} else {
+							var msg = {'msg_type':'warning','msg_text':'Login in Hue browser with username : hduser'};
+						}
+						self.get('controllers.userWelcome').send('addMessage',msg);				
+					}
 
 					cluster_selection.then(function(clusterchoice) {
 						// Set the response to user's create cluster click when put succeeds.

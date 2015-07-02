@@ -39,11 +39,11 @@ App.Usercluster = DS.Model.extend({
 		inverse : 'clusters'
 	}),
 	cluster_url : function() {
-		return 'http://' + this.get('master_IP') + ':8088/cluster';
+		return 'http://%@:8088/cluster'.fmt(this.get('master_IP'));
 	}.property('master_IP'),
 	hdfs_overview : function() {
 		// overview for hdfs URL=master_IP:50070
-		return 'http://' + this.get('master_IP') + ':50070';
+		return 'http://%@:50070'.fmt(this.get('master_IP'));
 	}.property('master_IP'),
 	selected_image : function() {
 		// Images with functional HDFS browser
@@ -62,7 +62,7 @@ App.Usercluster = DS.Model.extend({
         if (this.get('selected_image') > -1) {
             hdfs_explorer_default = ':8888/filebrowser' ;
         }
-		return 'http://' + this.get('master_IP') + hdfs_explorer_default;
+		return 'http://%@%@'.fmt(this.get('master_IP'), hdfs_explorer_default);
 	}.property('master_IP'),
 	ecosystem_or_cloudera : function() {
 		if (this.get('selected_image') > -1 && this.get('selected_image') < 2) {
@@ -73,21 +73,21 @@ App.Usercluster = DS.Model.extend({
 	}.property('os_image'),
 	oozie : function() {
 		var oozie_browser = ':11000';
-		return 'http://' + this.get('master_IP') + oozie_browser;
+		return 'http://%@%@'.fmt(this.get('master_IP'), oozie_browser);
 	}.property('master_IP'),
 	hbase : function() {
 		var hbase_browser = ':16010';
         if (this.get('selected_image') == 1) {
             hbase_browser = ':9095' ;
         }
-		return 'http://' + this.get('master_IP') + hbase_browser;
+		return 'http://%@%@'.fmt(this.get('master_IP'), hbase_browser);
 	}.property('master_IP'),
 	spark : function() {
 		var spark_browser = ':8080';
         if (this.get('selected_image') == 1) {
             spark_browser = ':18080' ;
         }
-		return 'http://' + this.get('master_IP') + spark_browser;
+		return 'http://%@%@'.fmt(this.get('master_IP'), spark_browser);
 	}.property('master_IP'),
 	cluster_status_verbose : function() {
 		var status = this.get('cluster_status');
