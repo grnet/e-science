@@ -11,7 +11,7 @@ App.ApplicationController = Ember.Controller.extend({
 				that.set('name_of_user', user.get('user_name'));
 			});
 			this.store.find('cluster').then(function(cluster) {
-				console.log(cluster)
+				console.log(cluster);
 			});
 			return '';
 		}else {

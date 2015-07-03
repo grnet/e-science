@@ -49,7 +49,7 @@ class StatisticsView(APIView):
     """
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (AllowAny, )
-    resource_name = 'home'
+    resource_name = 'homepage'
 
     def get(self, request, *args, **kwargs):
         """
