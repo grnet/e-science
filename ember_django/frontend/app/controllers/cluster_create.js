@@ -756,6 +756,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('message', '');
 		this.set('replication_factor', '');		
 		this.set('dfs_blocksize', '');
+		this.set('hue_login_message', '');
 		this.init_alerts();
 	},
 	// initialize alert messages
@@ -802,11 +803,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 	message_hue_login : function(){
 			if (/Ecosystem/.test(this.get('operating_system')) || /Hue/.test(this.get('operating_system'))){
 				this.set('hue_login_message', '<b>Hue first login</b><br><span class="text text-info">username : hduser</span>');
+				this.set('CDH', false);
 			}else if (/CDH/.test(this.get('operating_system'))){
 				this.set('hue_login_message', '<b>Hue first login</b><br><span class="text text-info">username : hdfs</span>');
 				this.set('CDH', true);
 			}else if (/Debian/.test(this.get('operating_system')) || /Hadoop/.test(this.get('operating_system'))){
 				this.set('hue_login_message', '');
+				this.set('CDH', false);
 			}	
 			this.get('controllers.clusterManagement').send('help_hue_login', this.get('hue_login_message'));
 	}.property('operating_system'),
@@ -1232,7 +1235,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 					}).save();
 					
 					if (this.get('message_hue_login') !== ''){
-						if (this.get('CDH')==true){
+						if (this.get('CDH') === true){
 							var msg = {'msg_type':'warning','msg_text':' IMPORTANT: Login in Hue browser with username : hdfs'};
 						} else {
 							var msg = {'msg_type':'warning','msg_text':' IMPORTANT: Login in Hue browser with username : hduser'};

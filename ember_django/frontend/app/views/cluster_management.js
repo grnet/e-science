@@ -1,5 +1,5 @@
 // ClusterManagement View
-App.ClusterManagementsView = Ember.View.extend({
+App.ClusterManagementView = Ember.View.extend({
 	didInsertElement : function() {
 		$(function() {
 			$('[data-toggle="popover"]').popover();
