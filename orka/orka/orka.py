@@ -231,6 +231,7 @@ class HadoopCluster(object):
         opt_filelist = self.opts.get('filelist', False)
         opt_fileput = self.opts.get('fileput', False)
         opt_fileget = self.opts.get('fileget', False)
+        opt_filemkdir = self.opts.get('filemkdir', False)
         if opt_filelist == True:
             self.list_pithos_files()
         else:
@@ -292,6 +293,28 @@ class HadoopCluster(object):
                 except Exception, e:
                     stderr.write('{0}'.format('\r'))
                     logging.error(str(e.args[0]))
+                    exit(error_fatal)
+            elif opt_filemkdir == True:
+                try:
+                    file_protocol, remain = get_file_protocol(self.opts['directory'], 'filemkdir', 'destination')
+                    if file_protocol == "hdfs":
+                        if self.opts['recursive'] == True:
+                            str_command = " dfs -mkdir -p \"{0}\"".format(remain)
+                        else:
+                            str_command = " dfs -mkdir \"{0}\"".format(remain)
+                        retcode = ssh_call_hadoop("hduser", active_cluster['master_IP'], str_command)
+                        if str(retcode) == str(SUCCESS):
+                            logging.log(SUMMARY, " \"{0}\" created.".format(remain))
+                            exit(SUCCESS)
+                        else:
+                            logging.log(SUMMARY, " \"{0}\" not created. Use -p for a nested destination.".format(remain))
+                    else:
+                        logging.error(' Invalid destination filesystem.')
+                        exit(error_fatal)
+                except Exception, e:
+                    stderr.write('{0}'.format('\r'))
+                    logging.error(str(e.args[0]))
+                    exit(error_fatal)
             
                 
     def list_pithos_files(self):
@@ -667,6 +690,8 @@ def main():
     file_subparsers = parser_file.add_subparsers(help='Choose file action put, get or list')
     parser_file_put = file_subparsers.add_parser('put', usage='%(prog)s cluster_id source [source ...] destination',
                                      help='Put/Upload a file from <source> to the Hadoop-Yarn filesystem.')
+    parser_file_mkdir = file_subparsers.add_parser('mkdir',
+                                                   help='Create a directory on the Hadoop-Yarn filesystem')
     parser_file_get = file_subparsers.add_parser('get',
                                      help='Get/Download a file from the Hadoop-Yarn filesystem to <destination>.')
     parser_file_list = file_subparsers.add_parser('list',
@@ -737,6 +762,15 @@ def main():
                               help='Ftp-Http remote user')
         parser_file_put.add_argument('--password',
                               help='Ftp-Http password')
+        
+        parser_file_mkdir.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='filemkdir')
+        parser_file_mkdir.add_argument('cluster_id',
+                                       help='The id of the Hadoop cluster', type=checker.positive_num_is)
+        parser_file_mkdir.add_argument('directory',
+                                       help='Directory to create on HDFS')
+        parser_file_mkdir.add_argument('-p', action='store_true', dest='recursive',
+                                       help='Recursive target directory creation')
+        
         # hidden argument with default value so we can set opts['fileget'] 
         # when ANY 'orka file get' command is invoked
         parser_file_get.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='fileget')
