@@ -1,9 +1,9 @@
 App.HomepageRoute = Ember.Route.extend({
-    controllerName: 'homepage',
-    // model for cluster management route
+
+    // model for homepage route (Cluster Statistics)
     model : function(params) {
         var that = this;
-        // find the correct cluster
+        // Perform GET request for cluster statistics
         this.store.find('homepage', 1).then(function(homepage) {
             
             that.controller.set('spawned_clusters', homepage.get('spawned_clusters'));
