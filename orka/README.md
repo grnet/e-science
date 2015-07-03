@@ -180,9 +180,9 @@ Pithos destination is differentiated by prepending "pithos://" to the object des
 
 ####{orka file get} command examples
 
-    orka file get <hdfs_file_path> <local_file_path>
+    orka file get <cluster_id> <hdfs_file_path> <local_file_path>
     
-    orka file get <hdfs_file_path> pithos://<pithos_file_path>
+    orka file get <cluster_id> <hdfs_file_path> pithos://<pithos_file_path>
     
 ###"file put" command
 
@@ -206,11 +206,32 @@ example for pithos source:
 
 example for remote server source:
 
-    orka file put <remote_http_or_ftp_url> <hdfs_file_path>
+    orka file put <cluster_id> <remote_http_or_ftp_url> <hdfs_file_path>
     
 example for local filesystem source:
 
-    orka file put <local_file_path> <hdfs_file_path>
+    orka file put <cluster_id> <local_file_path> <hdfs_file_path>
+
+###"file mkdir" command
+
+Required positional arguments for file mkdir command:
+
+    cluster_id: "Cluster id in e-science database"
+    directory: "destination directory on HDFS"
+    
+Optional arguments for file put command:
+
+    -p (recursive folder creation)
+
+####{orka file mkdir} command examples
+
+example for HDFS folder creation in HDFS home:
+
+    orka file mkdir <cluster_id> <directory>
+    
+example for recursive HDFS folder creation:
+
+    orka file mkdir -p <cluster_id> <directory_with_non_existant_parent>
 
 ## Getting help
 
