@@ -69,10 +69,7 @@
             <div class="form-horizontal">
                 <div class="form-group">
                     <label for="os_systems" class="control-label col-sm-5"> Available Images </label>
-                    <div class="col col-sm-7" id = "help_hue_login" data-container="body" 
-                    data-toggle="popover" data-placement="top" data-trigger="hover focus" data-html=true 
-                    {{bind-attr data-content=hue_login_message}}
-                    {{action "help_hue_login"}}>
+                    <div class="col col-sm-7">
                         {{view Ember.Select contentBinding="project_current.os_choices"
                         valueBinding="operating_system" id="os_systems"
                         selectionBinding="selected_image"
