@@ -116,8 +116,8 @@
 			   	 <tr>
 			   	 	<td class="col-sm-2"><b>HDFS Browse</b></td>
 			   	 	<td class="col-sm-2"><a {{bind-attr href='model.browse_hdfs'}} target="_blank" data-toggle="popover" 
-			     		data-placement="top" data-trigger="hover" data-html=true {{bind-attr title=hue_login_message}}
-			     		{{action "help_hue_login"}}><span class="text text-info">{{model.browse_hdfs}}</span></a></td>
+			     		data-placement="top" data-trigger="hover" data-html=true {{bind-attr title=hue_login_message}} data-container="body">
+			     		<span class="text text-info">{{model.browse_hdfs}}</span></a></td>
 			   	 </tr>
 			   	 {{#if model.ecosystem_or_cloudera}}
 			   	 <tr>

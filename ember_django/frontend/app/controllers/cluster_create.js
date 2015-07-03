@@ -1,7 +1,7 @@
 // Cluster Create controller
 App.ClusterCreateController = Ember.Controller.extend({
 
-	needs : 'userWelcome',
+	needs : ['userWelcome', 'clusterManagement'],
 	project_index : 0, 		// index (position in the array) of the project
 	project_current : '', 		// current project
 	project_name : '', 		// name of the project
@@ -805,11 +805,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}else if (/CDH/.test(this.get('operating_system'))){
 				this.set('hue_login_message', '<b>Hue first login</b><br><span class="text text-info">username : hdfs</span>');
 				this.set('CDH', true);
-			}
-			else {
+			}else if (/Debian/.test(this.get('operating_system')) || /Hadoop/.test(this.get('operating_system'))){
 				this.set('hue_login_message', '');
 			}	
-			this.get('controllers.clusterManagement').send('help_hue_login_post', this.get('hue_login_message'));
+			this.get('controllers.clusterManagement').send('help_hue_login', this.get('hue_login_message'));
 	}.property('operating_system'),
 
 	actions : {
@@ -1234,11 +1233,11 @@ App.ClusterCreateController = Ember.Controller.extend({
 					
 					if (this.get('message_hue_login') !== ''){
 						if (this.get('CDH')==true){
-							var msg = {'msg_type':'warning','msg_text':'Login in Hue browser with username : hdfs'};
+							var msg = {'msg_type':'warning','msg_text':' IMPORTANT: Login in Hue browser with username : hdfs'};
 						} else {
-							var msg = {'msg_type':'warning','msg_text':'Login in Hue browser with username : hduser'};
+							var msg = {'msg_type':'warning','msg_text':' IMPORTANT: Login in Hue browser with username : hduser'};
 						}
-						self.get('controllers.userWelcome').send('addMessage',msg);				
+						this.get('controllers.userWelcome').send('addMessage',msg);				
 					}
 
 					cluster_selection.then(function(clusterchoice) {
