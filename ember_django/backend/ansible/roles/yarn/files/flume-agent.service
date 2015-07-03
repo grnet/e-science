@@ -1,0 +1,13 @@
+[Unit]
+Description=Flume NG Agent daemon
+
+[Service]
+Type=oneshot
+EnvironmentFile=/usr/local/flume/conf/flume-env.sh
+ExecStart=/etc/init.d/flume-agent start
+ExecStop=/etc/init.d/flume-agent stop
+ExecReload=/etc/init.d/flume-agent restart
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

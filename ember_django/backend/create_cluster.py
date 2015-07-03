@@ -353,7 +353,7 @@ class YarnCluster(object):
         server_home_path = expanduser('~')
         server_ssh_keys = join(server_home_path, ".ssh/id_rsa.pub")
         pub_keys_path = ''
-        logging.log(SUMMARY, ' Authentication verified')
+        logging.log(SUMMARY, 'Authentication verified')
         current_task.update_state(state="Authenticated")
 
         flavor_master, flavor_slaves, image_id = self.check_user_resources()
@@ -383,14 +383,14 @@ class YarnCluster(object):
                               image_id, self.opts['cluster_size'],
                               self.net_client, self.auth, self.project_id)
 
-            set_cluster_state(self.opts['token'], self.cluster_id, " Creating ~okeanos cluster (1/3)")
+            set_cluster_state(self.opts['token'], self.cluster_id, "Creating ~okeanos cluster (1/3)")
 
             self.HOSTNAME_MASTER_IP, self.server_dict = \
                 cluster.create(server_ssh_keys, pub_keys_path, '')
             sleep(15)
-        except Exception:
+        except Exception, e:
             # If error in bare cluster, update cluster status as destroyed
-            set_cluster_state(self.opts['token'], self.cluster_id, 'Error', status='Destroyed')
+            set_cluster_state(self.opts['token'], self.cluster_id, 'Error', status='Failed', error=str(e.args[0]))
             os.system('rm ' + self.ssh_file)
             raise
         # Get master VM root password
@@ -401,31 +401,31 @@ class YarnCluster(object):
     def create_yarn_cluster(self):
         """Create Yarn cluster"""
         try:
-            current_task.update_state(state=" Started")
+            current_task.update_state(state="Started")
             self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
         except Exception, e:
-            logging.error(' Fatal error: ' + str(e.args[0]))
+            logging.error(str(e.args[0]))
             raise
         # Update cluster info with the master VM root password.
         set_cluster_state(self.opts['token'], self.cluster_id,
-                          ' Configuring YARN cluster node communication (2/3)',
+                          'Configuring YARN cluster node communication (2/3)',
                           password=self.master_root_pass)
 
         try:
             list_of_hosts = reroute_ssh_prep(self.server_dict,
                                              self.HOSTNAME_MASTER_IP)
             set_cluster_state(self.opts['token'], self.cluster_id,
-                          ' Installing and configuring YARN (3/3)')
+                          'Installing and configuring YARN (3/3)')
 
             install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.cluster_name_postfix_id, self.hadoop_image, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'])
 
         except Exception, e:
-            logging.error(' Fatal error:' + str(e.args[0]))
-            logging.error(' Created cluster and resources will be deleted')
+            logging.error(str(e.args[0]))
+            logging.error('Created cluster and resources will be deleted')
             # If error in Yarn cluster, update cluster status as destroyed
-            set_cluster_state(self.opts['token'], self.cluster_id, 'Error')
-            self.destroy()
+            set_cluster_state(self.opts['token'], self.cluster_id, 'Error', status='Failed', error=str(e.args[0]))
+            self.destroy('Failed')
             raise
 
         finally:
@@ -434,6 +434,6 @@ class YarnCluster(object):
 
         return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass, self.cluster_id
 
-    def destroy(self):
+    def destroy(self, status):
         """Destroy Cluster"""
-        destroy_cluster(self.opts['token'], self.cluster_id, master_IP=self.HOSTNAME_MASTER_IP)
+        destroy_cluster(self.opts['token'], self.cluster_id, master_IP=self.HOSTNAME_MASTER_IP, status=status)

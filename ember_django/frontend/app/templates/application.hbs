@@ -45,7 +45,7 @@
 					<li>
 						<div class="btn-group navbar-btn">
 							{{#if loggedIn}}
-							{{#link-to 'user.logout' id="id_logout" class="btn btn-primary"}}<i class="glyphicon glyphicon-user"></i> Logout{{/link-to}}
+							{{#link-to 'user.logout' id="id_logout" class="btn btn-primary"}}<i class="glyphicon glyphicon-user"></i>({{user_name}}{{name_of_user}})Logout{{/link-to}}
 							{{else}}
 							{{#link-to 'user.login' id="id_login" class="btn btn-primary"}}<i class="glyphicon glyphicon-log-in"></i> Login{{/link-to}}	
 							{{/if}}

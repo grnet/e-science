@@ -7,9 +7,10 @@ Views for django rest framework .
 @author: Ioannis Stenos, Nick Vrionis
 """
 import logging
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.permissions import AllowAny
 from kamaki.clients import ClientError
 from authenticate_user import *
 from django.views import generic
@@ -18,7 +19,7 @@ from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
     DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, \
-    HdfsSerializer
+    HdfsSerializer, StatisticsSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async, \
@@ -36,11 +37,31 @@ logging_level = REPORT
 logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
                    level=logging_level, datefmt='%H:%M:%S')
 
+
 class MainPageView(generic.TemplateView):
     """Load the template file"""
     template_name = 'index.html'
 
-main_page = MainPageView.as_view()
+
+class StatisticsView(APIView):
+    """
+    View to handle requests from ember for cluster statistics on main page
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (AllowAny, )
+    resource_name = 'homepage'
+
+    def get(self, request, *args, **kwargs):
+        """
+        Return cluster statistics for all users from database.
+        """
+        destroyed_clusters = ClusterInfo.objects.all().filter(cluster_status=0).count()
+        active_clusters = ClusterInfo.objects.all().filter(cluster_status=1).count()
+        spawned_clusters = active_clusters + destroyed_clusters
+        cluster_statistics = ClusterStatistics.objects.create(spawned_clusters=spawned_clusters,
+                                                             active_clusters=active_clusters)
+        serializer_class = StatisticsSerializer(cluster_statistics)
+        return Response(serializer_class.data)
 
 
 class HdfsView(APIView):

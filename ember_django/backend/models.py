@@ -30,6 +30,8 @@ class UserInfo(models.Model):
                                      help_text="Okeanos Authentication Token ")
     master_vm_password = models.CharField("Master VM Password", max_length=255,
                                blank=True, help_text="Root password of master VM")
+    error_message = models.CharField("Error Message", max_length=255,
+                               blank=True, help_text="Error message when status is failed")
 
 
     def is_authenticated(self):
@@ -175,6 +177,7 @@ CLUSTER_STATUS_CHOICES = (
     ("0", "Destroyed"),
     ("1", "Active"),
     ("2", "Pending"),
+    ("3", "Failed"),
 )
 
 HADOOP_STATUS_CHOICES = (
@@ -182,6 +185,14 @@ HADOOP_STATUS_CHOICES = (
      ("1", "Started"),
      ("2", "Pending"),
  )
+
+
+class ClusterStatistics(models.Model):
+    """Definition of Cluster statistics."""
+    spawned_clusters = models.IntegerField("Spawned Clusters", null=True,
+                                     help_text="Total number of spawned clusters")
+    active_clusters = models.IntegerField("Active Clusters", null=True,
+                                     help_text="Total number of active clusters")
 
 class ClusterInfo(models.Model):
     """Definition of a Hadoop Cluster object model."""
