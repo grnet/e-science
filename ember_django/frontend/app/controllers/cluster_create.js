@@ -798,6 +798,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	}.property('dfs_blocksize'),
 	
 	message_hue_login : function(){
+		this.get('controllers.clusterManagement').send('help_hue_login', this.get('operating_system'));
 		if (this.get('hue_message') === 'CDH'){
 			var msg = {'msg_type':'warning','msg_text':' IMPORTANT: Login in Hue browser with username : hdfs'};
 			this.get('controllers.userWelcome').send('addMessage',msg);
