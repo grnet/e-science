@@ -8,7 +8,17 @@ Serializers file for django rest framework.
 """
 
 from rest_framework import serializers
-from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics
+from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, PublicNewsItem
+
+
+class NewsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for news
+    """   
+    class Meta:
+        model = PublicNewsItem
+        fields = ('id', 'news_date', 'news_message', 'news_category')
+        
 
 class StatisticsSerializer(serializers.ModelSerializer):
     """

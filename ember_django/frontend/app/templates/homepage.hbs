@@ -24,10 +24,10 @@
 			STATISTICS
 		</p>
 		<p class="col-lg-6">
-			Spawned Clusters: {{spawned_clusters}}
+			Spawned Clusters: <span class="h4 text-lg text-info">{{printBigNum spawned_clusters}}</span>
 		</p>
 		<p class="col-lg-6">
-			Active Clusters: {{active_clusters}}
+			Active Clusters: <span class="h4 text-lg text-success">{{printBigNum active_clusters}}</span>
 		</p>
 	</div>
 </div>
@@ -38,12 +38,9 @@
 			<p>
 				LATEST NEWS
 			</p>
-			<p>
-				29 Jun 2015: Flume installed on all existing pre-cooked Hadoop images
-			</p>
-			<p>
-			15 Jun 2015: Ecosystem, Hue, Cloudera images available
-		    </p>
+		    {{#each newsitem in news_items}}
+		    <p>{{formatDate newsitem.news_date format='shortdatemon'}} : {{newsitem.news_message}}</p>
+		    {{/each}}
 		</div>
 		<div class="col-lg-6">
 

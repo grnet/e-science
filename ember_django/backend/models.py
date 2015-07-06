@@ -186,6 +186,17 @@ HADOOP_STATUS_CHOICES = (
      ("2", "Pending"),
  )
 
+class PublicNewsItem(models.Model):
+    """Definition of homepage News Items."""
+    id = models.AutoField("Newsitem ID", primary_key=True, null=False,
+                               help_text="Auto-increment newsitem id")
+    news_date = models.DateTimeField("News Item Date", null=False,
+                                       help_text="Date and time for"
+                                       " the creation of this entry")
+    news_message = models.CharField("News Item Text", max_length=255, null=False,
+                                    help_text="News Item")
+    news_category = models.IntegerField("News Item Category", null=True, blank=True,
+                                     help_text="Category ID for News Item")
 
 class ClusterStatistics(models.Model):
     """Definition of Cluster statistics."""

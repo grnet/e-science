@@ -19,7 +19,7 @@ from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
     DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, \
-    HdfsSerializer, StatisticsSerializer
+    HdfsSerializer, StatisticsSerializer, NewsSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async, \
@@ -42,14 +42,29 @@ class MainPageView(generic.TemplateView):
     """Load the template file"""
     template_name = 'index.html'
 
-
-class StatisticsView(APIView):
+class NewsView(APIView):
     """
-    View to handle requests from ember for cluster statistics on main page
+    View to handle requests from ember for public news on homepage
     """
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (AllowAny, )
-    resource_name = 'homepage'
+    resource_name = 'newsitem'
+
+    def get(self, request, *args, **kwargs):
+        """
+        Return news items.
+        """
+        public_news = PublicNewsItem.objects.all()
+        serializer_class = NewsSerializer(public_news, many=True)
+        return Response(serializer_class.data)
+
+class StatisticsView(APIView):
+    """
+    View to handle requests from ember for cluster statistics on homepage
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (AllowAny, )
+    resource_name = 'statistic'
 
     def get(self, request, *args, **kwargs):
         """
