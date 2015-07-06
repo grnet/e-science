@@ -9,7 +9,7 @@ INVALID_DEST_DIR = 'a_directory_that_by_all_means_should_not_exist'
 # Source and destination file names for functional tests
 # Put Local to Hdfs
 SOURCE_LOCAL_TO_HDFS_FILE = 'test_file_local_to_hdfs.txt'
-DEST_LOCAL_TO_HDFS_FILE = 'test_file_hdfs_from_local.txt'
+DEST_LOCAL_TO_HDFS_FILE = '/user/hduser/test_file_local_to_hdfs.txt'
 
 # Get from Hdfs to Local
 SOURCE_HDFS_TO_LOCAL_FILE = 'test_file_hdfs_to_local.txt'

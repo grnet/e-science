@@ -48,13 +48,13 @@ def retrieve_pending_clusters(token, project_name):
 
     return pending_quota
 
-def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', password=''):
+def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', password='', error=''):
     """
     Logs a cluster state message and updates the celery and escience database
     state.
     """
     logging.log(SUMMARY, state)
-    db_cluster_update(token, status, cluster_id, master_IP, state=state, password=password)
+    db_cluster_update(token, status, cluster_id, master_IP, state=state, password=password, error=error)
     if len(state) >= const_truncate_limit:
         state = state[:(const_truncate_limit-2)] + '..'
     current_task.update_state(state=state)
@@ -89,7 +89,7 @@ def get_project_id(token, project_name):
     raise ClientError(msg, error_proj_id)
 
 
-def destroy_cluster(token, cluster_id, master_IP=''):
+def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     """
     Destroys cluster and deletes network and floating ip. Finds the machines
     that belong to the cluster from the cluster id that is given. Cluster id
@@ -135,14 +135,14 @@ def destroy_cluster(token, cluster_id, master_IP=''):
             break
     # Show an error message and exit if not valid ip or network
     if not master_id:
-        msg = ' [%s] is not the valid public ip of the master' % \
+        msg = '[%s] is not the valid public ip of the master' % \
             float_ip_to_delete
         raise ClientError(msg, error_get_ip)
 
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
-        set_cluster_state(token, cluster_id, " Deleted master VM", status='Destroyed')
-        msg = ' A valid network of master and slaves was not found.'\
+        set_cluster_state(token, cluster_id, " Deleted master VM", status=status)
+        msg = 'A valid network of master and slaves was not found.'\
             'Deleting the master VM only'
         raise ClientError(msg, error_cluster_corrupt)
 
@@ -154,12 +154,12 @@ def destroy_cluster(token, cluster_id, master_IP=''):
                 break
     cluster_name = servers_to_delete[0]['name'].rsplit("-", 1)[0]
     number_of_nodes = len(servers_to_delete)
-    set_cluster_state(token, cluster_id, " Starting deletion of requested cluster")
+    set_cluster_state(token, cluster_id, "Starting deletion of requested cluster")
     # Start cluster deleting
     try:
         for server in servers_to_delete:
             cyclades.delete_server(server['id'])
-        state= ' Deleting %d servers ' % number_of_nodes
+        state= 'Deleting %d servers ' % number_of_nodes
         set_cluster_state(token, cluster_id, state)
         # Wait for every server of the cluster to be deleted
         for server in servers_to_delete:
@@ -167,41 +167,41 @@ def destroy_cluster(token, cluster_id, master_IP=''):
                                               current_status='ACTIVE',
                                               max_wait=MAX_WAIT)
             if new_status != 'DELETED':
-                logging.error(' Error deleting server [%s]' % server['name'])
+                logging.error('Error deleting server [%s]' % server['name'])
                 list_of_errors.append(error_cluster_corrupt)
         set_cluster_state(token, cluster_id, ' Deleting cluster network and public ip')
     except ClientError:
-        logging.exception(' Error in deleting server')
+        logging.exception('Error in deleting server')
         list_of_errors.append(error_cluster_corrupt)
 
     try:
         nc.delete_network(network_to_delete_id)
-        state= ' Network with id [%s] is deleted' % network_to_delete_id
+        state= 'Network with id [%s] is deleted' % network_to_delete_id
         set_cluster_state(token, cluster_id, state)
         sleep(10)  # Take some time to ensure it is deleted
     except ClientError:
-        logging.exception(' Error in deleting network')
+        logging.exception('Error in deleting network')
         list_of_errors.append(error_cluster_corrupt)
 
     # Delete the floating ip of deleted cluster
     try:
         nc.delete_floatingip(float_ip_to_delete_id)
-        state= ' Floating ip [%s] is deleted' % float_ip_to_delete
+        state= 'Floating ip [%s] is deleted' % float_ip_to_delete
         logging.log(SUMMARY, state)
         set_cluster_state(token, cluster_id, state)
     except ClientError:
-        logging.exception(' Error in deleting floating ip [%s]' %
+        logging.exception('Error in deleting floating ip [%s]' %
                           float_ip_to_delete)
         list_of_errors.append(error_cluster_corrupt)
 
-    state= ' Cluster with public IP [%s] was deleted ' % float_ip_to_delete
-    set_cluster_state(token, cluster_id, state, status='Destroyed')
+    state= 'Cluster with public IP [%s] was deleted ' % float_ip_to_delete
+    set_cluster_state(token, cluster_id, state, status=status)
     # Everything deleted as expected
     if not list_of_errors:
         return cluster_name
     # There was one or more errors, return error message
     else:
-        msg = ' Error while deleting cluster'
+        msg = 'Error while deleting cluster'
         raise ClientError(msg, list_of_errors[0])
 
 

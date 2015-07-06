@@ -33,6 +33,13 @@ App.UserWelcomeController = Ember.Controller.extend({
 			this.send('addMessage',msg);
 		}
 	}.observes('content.master_vm_password'),
+	error_message : function(){
+	    var err_message = this.get('content.error_message');
+        if (!Ember.isBlank(err_message)){
+            var msg = {'msg_type':'danger','msg_text':err_message};
+            this.send('addMessage',msg);
+        }
+    }.observes('content.error_message'),
 	no_messages : function(){
 		var num_messages = Number(this.get('user_messages').get('length'));
 		return (num_messages==0 || Ember.isEmpty(num_messages));

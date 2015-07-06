@@ -756,6 +756,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('message', '');
 		this.set('replication_factor', '');		
 		this.set('dfs_blocksize', '');
+		this.set('hue_message', '');
 		this.init_alerts();
 	},
 	// initialize alert messages
@@ -855,6 +856,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 						self.set('slaves_ram_selection', clusterdata.ram_slaves);
 						self.set('master_disk_selection', clusterdata.disk_master);
 						self.set('slaves_disk_selection', clusterdata.disk_slaves);	
+						self.message_hue_login();
 					}
 					else{
 						self.set('alert_mes_last_conf', 'Lack of available resources.');

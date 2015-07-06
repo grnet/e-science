@@ -247,8 +247,8 @@ def ssh_call_hadoop(user, master_IP, func_arg, hadoop_path=HADOOP_PATH):
         SSH to master VM
         and make Hadoop calls
     """
-    response = subprocess.call( "ssh " + user + "@" + master_IP + " \"" + hadoop_path
-                     + func_arg + "\"", stderr=FNULL, shell=True)
+    response = subprocess.call( "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + user + "@" + master_IP + " \'" + hadoop_path
+                     + func_arg + "\'", stderr=FNULL, shell=True)
     
     return response
 
@@ -258,8 +258,8 @@ def ssh_check_output_hadoop(user, master_IP, func_arg, hadoop_path=HADOOP_PATH):
         SSH to master VM
         and check output of Hadoop calls
     """
-    response = subprocess.check_output( "ssh " + user + "@" + master_IP + " \"" + hadoop_path
-                     + func_arg + "\"", stderr=FNULL, shell=True).splitlines()
+    response = subprocess.check_output( "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + user + "@" + master_IP + " \'" + hadoop_path
+                     + func_arg + "\'", stderr=FNULL, shell=True).splitlines()
     
     return response
 
@@ -362,8 +362,8 @@ def parse_hdfs_dest(regex, path):
 def get_file_protocol(filespec, fileaction="fileput", direction="source"):
     """ 
     Method to determine the file protocol (http/ftp, file, pithos etc)
-    :input filespec, ['fileput|fileget'], ['source'|'destination']
-    :output 'http-ftp|pithos|file|unknown', ['path_without_protocol']
+    :input filespec, ['fileput|fileget|filemkdir'], ['source'|'destination']
+    :output 'http-ftp|pithos|file|hdfs|unknown', ['path_without_protocol']
     """
     if fileaction == "fileput": # put <source> file to Hadoop FS.
         if direction == "source":
@@ -400,6 +400,17 @@ def get_file_protocol(filespec, fileaction="fileput", direction="source"):
             if result:
                 return "folder", result.group(0)
             return "unknown", None
+        elif direction=="source":
+            return "unknown", None
+    elif fileaction == "filemkdir": # create directory on Hadoop FS
+        if direction == "destination":
+            # detect the existence of either of these patterns: //  \\ :// which would make this an invalid hdfs filespec
+            bad_hdfs_regex = re.compile("(?iu)(.*)((?://)+|(?:\\\\)+|(?:\://?)+)(.*)")
+            result = bad_hdfs_regex.match(filespec)
+            if result:
+                return "unknown", None
+            else:
+                return "hdfs", filespec
         elif direction=="source":
             return "unknown", None
 
