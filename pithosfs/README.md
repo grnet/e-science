@@ -49,7 +49,7 @@ See [above](#getting-the-connector).
 
 Placing the connector in the proper subdirectory of the Hadoop installation is sufficient for the Hadoop class to load it. 
 Copy the orka-pithos.jar file to $HADOOP_HOME/share/hadoop/hdfs/lib/ on the cluster machine.
-Copy any external libraries needed found at [Github](ttps://github.com/grnet/e-science/tree/develop/pithosfs/java/lib) /lib folder to $HADOOP_HOME/share/hadoop/common/lib/ on the cluster machine.
+Copy any external libraries needed found at [Github](https://github.com/grnet/e-science/tree/develop/pithosfs/java/lib) /lib folder to $HADOOP_HOME/share/hadoop/common/lib/ on the cluster machine.
 
 ###Configure Hadoop
 
