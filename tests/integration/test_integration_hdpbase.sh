@@ -50,7 +50,7 @@ testClusterCreate(){
 	# act
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		# orka create name_of_cluster size_of_cluster master_cpus master_ram master_disksize slave_cpus slave_ram slave_disksize disk_template project_name
-		( $(orka create hdp_integration_test 3 4 4096 5 2 4096 10 standard escience.grnet.gr --image Hadoop\-2\.5\.2\-Debian\-8\.0 >_tmp.txt 2> /dev/null) ) & keepAlive $! " Working"
+		( $(orka create hdp_integration_test 3 4 4096 5 2 4096 10 standard ${OKEANOS_PROJECT} --image Hadoop\-2\.5\.2\-Debian\-8\.0 >_tmp.txt 2> /dev/null) ) & keepAlive $! " Working"
 		declare -a ARR_RESULT=($(cat _tmp.txt))
 		# cluster_id: xx\nmaster_IP: x.x.x.x\nroot password: xxxx
 		# (7 items, 0-based array, so relevant items at positions 1(cluster_id), 3(master_IP), 6(password))
