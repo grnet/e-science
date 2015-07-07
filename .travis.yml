@@ -2,14 +2,10 @@ language: python
 services: postgresql
 python:
 - '2.7'
-env:
-  global:
-  - secure: K+JlJYjqHmO/5bRvkKSJoh6YfZGYf9/kyqM/j3HNUG0o5gvTa6zTcI2kjxpnnYvEpz64n58YcinusNTimUM4Y1eIaoxcKlCW0MyWkQcBAg8jB8mxttH3Igw0dSblo8XZcxLBMFr7mm6I9Z0cbRRyrDr+ebp6t/+m7xf/3hMozh4=
-  - secure: X6F9qYcVNhPYHSHF15WnTmOgR3GToC0DISFhCyTD0Lb3qsoxu4PuNWA3X6LazQ57U5we/7keZuwVJAhJzy3JiVUYPOIM6AnYmG/qqdmvuTwyzqqXR9E0ULBWPTtA4HKaz/3P3RjkAyQ3WjcD2dHbRaGA+cFvXoTRAzsUmWYBTx8=
 addons:
 - postgresql: '9.1'
 before_install:
-- openssl aes-256-cbc -K $encrypted_b7bd3aa10e46_key -iv $encrypted_b7bd3aa10e46_iv
+- openssl aes-256-cbc -K $encrypted_b4362692ecb3_key -iv $encrypted_b4362692ecb3_iv
   -in .private/.config.txt.enc -out .private/.config.txt -d
 install:
 - pip install kamaki==0.13.1
