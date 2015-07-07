@@ -193,6 +193,15 @@ class ClusterStatistics(models.Model):
                                      help_text="Total number of spawned clusters")
     active_clusters = models.IntegerField("Active Clusters", null=True,
                                      help_text="Total number of active clusters")
+    
+class OsImage(models.Model):
+    """Definition of Cluster operating system image"""
+    image_name = models.CharField("OS Image", max_length=255, null=False,
+                                help_text="Operating system of the cluster")
+    
+    def __unicode__(self):
+
+        return ("%s") % (self.image_name)
 
 class ClusterInfo(models.Model):
     """Definition of a Hadoop Cluster object model."""
@@ -229,8 +238,8 @@ class ClusterInfo(models.Model):
     disk_template = models.CharField("Disk Template", max_length=255, null=False,
                                      help_text="Disk Template of the cluster")
 
-    os_image = models.CharField("OS Image", max_length=255, null=False,
-                                help_text="Operating system of the cluster")
+    os_image = models.ForeignKey(OsImage, null=False,
+                                    help_text="Operating system of the cluster")
     master_IP = models.CharField("Master IP", max_length=255, blank=True,
                                  help_text="IP address of Master's node")
     user_id = models.ForeignKey(UserInfo, null=False, related_name='clusters',
@@ -258,12 +267,54 @@ class ClusterInfo(models.Model):
     dfs_blocksize = models.CharField("HDFS blocksize in bytes", max_length=255, null=False,
                                       help_text="HDFS blocksize in bytes")
     
-
     class Meta:
         verbose_name = "Cluster"
         app_label = 'backend'
-
+        
     def __unicode__(self):
 
         return ("%d, %s, %d, %s , %s") % (self.id, self.cluster_name, self.cluster_size,
                                           self.cluster_status, self.hadoop_status)
+    
+class MetadataComponents(models.Model):
+    """Definition of Components metadata object model."""
+    os_image = models.ForeignKey(OsImage, null=False, related_name='Image',
+                                help_text="Operating system of the cluster")
+    
+    debian = models.CharField("Debian version", max_length=30, null=False,
+                                    help_text="Debian Version")
+    
+    hadoop = models.CharField("Hadoop version", max_length=30, null=False,
+                                    help_text="Version of Hadoop")
+    
+    flume = models.CharField("Component flume", max_length=30, null=True,
+                                    help_text="Version of flume component")
+    
+    oozie = models.CharField("Component oozie", max_length=30, null=True,
+                                    help_text="Version of oozie component")
+    
+    spark = models.CharField("Component spark", max_length=30, null=True,
+                                    help_text="Version of spark component")
+    
+    pig = models.CharField("Component pig", max_length=30, null=True,
+                                    help_text="Version of pig component")
+    
+    hive = models.CharField("Component hive", max_length=30, null=True,
+                                    help_text="Version of hive component")
+    
+    hbase = models.CharField("Component hbase", max_length=30, null=True,
+                                    help_text="Version of hbase component")
+    
+    hue = models.CharField("Hue version", max_length=30, null=True,
+                                    help_text="Version of hue component")
+    
+    cloudera = models.CharField("Cloudera version", max_length=30, null=True,
+                                    help_text="Version of cloudera")
+    
+    class Meta:
+        verbose_name = "Image"
+        app_label = 'backend'
+        
+    def __unicode__(self):
+
+        return ("%d, %s") % (self.id, self.os_image)
