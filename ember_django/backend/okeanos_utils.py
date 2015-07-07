@@ -16,7 +16,7 @@ from kamaki.clients.cyclades import CycladesClient, CycladesNetworkClient
 from time import sleep
 from cluster_errors_constants import *
 from celery import current_task
-from django_db_after_login import db_cluster_update, get_user_id
+from django_db_after_login import db_cluster_update, get_user_id, db_server_update
 from backend.models import UserInfo, ClusterInfo
 import re
 import subprocess
@@ -58,6 +58,18 @@ def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', 
     if len(state) >= const_truncate_limit:
         state = state[:(const_truncate_limit-2)] + '..'
     current_task.update_state(state=state)
+    
+    
+def set_server_state(token, id, state, status='Pending', server_IP=''):
+    """
+    Logs a server state message and updates the celery and escience database
+    state.
+    """
+    logging.log(SUMMARY, state)
+    db_server_update(token, status, id, server_IP, state=state)
+    if len(state) >= const_truncate_limit:
+        state = state[:(const_truncate_limit-2)] + '..'
+    current_task.update_state(state=state)
 
 
 def parse_hdfs_dest(regex, path):
@@ -88,6 +100,17 @@ def get_project_id(token, project_name):
     msg = ' No project id was found for ' + project_name
     raise ClientError(msg, error_proj_id)
 
+
+def destroy_server(token, id, master_IP=''):
+    """Destroys single okeanos server."""
+    current_task.update_state(state="Started")    
+    auth = check_credentials(token)
+    current_task.update_state(state="Authenticated")
+    endpoints, user_id = endpoints_and_user_id(auth)
+    cyclades = init_cyclades(endpoints['cyclades'], token)
+    nc = init_cyclades_netclient(endpoints['network'], token)
+    cyclades.delete_server(server_id)
+    
 
 def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     """
@@ -434,6 +457,27 @@ def init_cyclades(endpoint, token):
         msg = ' Failed to initialize cyclades client'
         raise ClientError(msg)
 
+  
+def get_float_network_id(cyclades_network_client, project_id):
+        """
+        Gets an Ipv4 floating network id from the list of public networks Ipv4
+        """
+        pub_net_list = cyclades_network_client.list_networks()
+        float_net_id = 1
+        i = 1
+        for lst in pub_net_list:
+            if(lst['status'] == 'ACTIVE' and
+               lst['name'] == 'Public IPv4 Network'):
+                float_net_id = lst['id']
+                try:
+                    cyclades_network_client.create_floatingip(float_net_id, project_id=project_id)
+                    return 0
+                except ClientError:
+                    if i < len(pub_net_list):
+                        i = i+1
+
+        return error_get_ip
+
 
 class Cluster(object):
     """
@@ -451,26 +495,6 @@ class Cluster(object):
         self.flavor_id_master, self.auth = flavor_id_master, auth_cl
         self.flavor_id_slave, self.image_id = flavor_id_slave, image_id
         self.project_id = project_id
-
-    def get_flo_net_id(self):
-        """
-        Gets an Ipv4 floating network id from the list of public networks Ipv4
-        """
-        pub_net_list = self.nc.list_networks()
-        float_net_id = 1
-        i = 1
-        for lst in pub_net_list:
-            if(lst['status'] == 'ACTIVE' and
-               lst['name'] == 'Public IPv4 Network'):
-                float_net_id = lst['id']
-                try:
-                    self.nc.create_floatingip(float_net_id, project_id=self.project_id)
-                    return 0
-                except ClientError:
-                    if i < len(pub_net_list):
-                        i = i+1
-
-        return error_get_ip
 
     def _personality(self, ssh_keys_path='', pub_keys_path=''):
         """Personality injects ssh keys to the virtual machines we create"""
@@ -578,14 +602,14 @@ class Cluster(object):
                                                       ['floating_network_id'],
                                                       project_id=self.project_id)
                         except ClientError:
-                            if self.get_flo_net_id() != 0:
+                            if get_float_network_id(self.nc, project_id=self.project_id) != 0:
                                 self.clean_up(network=new_network)
                                 msg = ' Error in creating float ip'
                                 raise ClientError(msg, error_get_ip)
         else:
             # No existing ips,so we create a new one
             # with the floating  network id
-            if self.get_flo_net_id() != 0:
+            if get_float_network_id(self.nc, project_id=self.project_id) != 0:
                 self.clean_up(network=new_network)
                 msg = ' Error in creating float ip'
                 raise ClientError(msg, error_get_ip)

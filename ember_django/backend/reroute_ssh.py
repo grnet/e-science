@@ -98,6 +98,14 @@ class HdfsRequest(object):
             self.ssh_client.close()
 
 
+def start_drupal(server_ip, password):
+    """
+    Start drupal
+    """
+    ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
+    exec_command(ssh_client, 'docker start db')
+    exec_command(ssh_client, 'docker start drupal')
+    
 
 def reroute_ssh_prep(server, master_ip):
     """

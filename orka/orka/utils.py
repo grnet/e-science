@@ -56,6 +56,9 @@ def get_from_kamaki_conf(section, option, action=None):
             if action == 'hdfs':
                 url_hdfs = '{0}{1}'.format(option_value, hdfs_endpoint)
                 return url_hdfs
+            if action == 'vre':
+                url_vre = '{0}{1}'.format(option_value, vre_endpoint)
+                return url_vre
             else:
                 logging.log(SUMMARY, ' Url to be returned from .kamakirc not specified')
                 return 0

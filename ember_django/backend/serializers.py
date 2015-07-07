@@ -127,7 +127,7 @@ class ClusterchoicesSerializer(serializers.Serializer):
     
     hadoop_status = serializers.CharField(required=False)
 
-
+      
 class ClusterInfoSerializer(serializers.ModelSerializer):
     """ Serializer for ember request with user's available clusters."""
     class Meta:

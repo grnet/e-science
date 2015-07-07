@@ -12,16 +12,19 @@ import logging
 import subprocess
 import json
 from os.path import join, expanduser
-from reroute_ssh import reroute_ssh_prep
+from reroute_ssh import reroute_ssh_prep, start_drupal
 from kamaki.clients import ClientError
 from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
     init_cyclades, init_cyclades_netclient, init_plankton, get_project_id, \
-    destroy_cluster, get_user_quota, set_cluster_state, retrieve_pending_clusters
-from django_db_after_login import db_cluster_create
+    destroy_cluster, get_user_quota, set_cluster_state, retrieve_pending_clusters, get_float_network_id, \
+    set_server_state
+from django_db_after_login import db_cluster_create, db_server_create
 from cluster_errors_constants import *
 from celery import current_task
 import os
+from rest_framework import status
+
 
 
 class YarnCluster(object):
@@ -234,46 +237,25 @@ class YarnCluster(object):
             # print checker.__name__ + ":" + str(retval) #debug
         return retval
 
-    def get_flavor_id_master(self, cyclades_client):
+    def get_flavor_id(self, role):
         """
-        Return the flavor id for the master based on cpu,ram,disk_size and
-        disk template
+        Return the flavor id for a virtual machine based on cpu,ram,disk_size and
+        disk template.
         """
         try:
-            flavor_list = cyclades_client.list_flavors(True)
+            flavor_list = self.cyclades.list_flavors(True)
         except ClientError:
             msg = 'Could not get list of flavors'
             raise ClientError(msg, error_flavor_list)
         flavor_id = 0
         for flavor in flavor_list:
-            if flavor['ram'] == self.opts['ram_master'] and \
+            if flavor['ram'] == self.opts['ram_{0}'.format(role)] and \
                                 flavor['SNF:disk_template'] == self.opts['disk_template'] and \
-                                flavor['vcpus'] == self.opts['cpu_master'] and \
-                                flavor['disk'] == self.opts['disk_master']:
+                                flavor['vcpus'] == self.opts['cpu_{0}'.format(role)] and \
+                                flavor['disk'] == self.opts['disk_{0}'.format(role)]:
                     flavor_id = flavor['id']
 
         return flavor_id
-
-    def get_flavor_id_slave(self, cyclades_client):
-        """
-        Return the flavor id for the slave based on cpu,ram,disk_size and
-        disk template
-        """
-        try:
-            flavor_list = cyclades_client.list_flavors(True)
-        except ClientError:
-            msg = 'Could not get list of flavors'
-            raise ClientError(msg, error_flavor_list)
-        flavor_id = 0
-        for flavor in flavor_list:
-            if flavor['ram'] == self.opts['ram_slaves'] and \
-                                flavor['SNF:disk_template'] == self.opts['disk_template'] and \
-                                flavor['vcpus'] == self.opts['cpu_slaves'] and \
-                                flavor['disk'] == self.opts['disk_slaves']:
-                    flavor_id = flavor['id']
-
-        return flavor_id
-
 
     def check_project_quota(self):
         """Checks that for a given project actual quota exist"""
@@ -323,31 +305,83 @@ class YarnCluster(object):
     def check_user_resources(self):
         """
         Checks user resources before the starting cluster creation.
-        Also, returns the flavor id of master and slave VMS and the id of
+        Also, returns the flavor id of master and slave VMs and the id of
         the image chosen by the user.
         """
-        chosen_image = {}
-        flavor_master = self.get_flavor_id_master(self.cyclades)
-        flavor_slaves = self.get_flavor_id_slave(self.cyclades)
+        flavor_master = self.get_flavor_id('master')
+        flavor_slaves = self.get_flavor_id('slaves')
         if flavor_master == 0 or flavor_slaves == 0:
             msg = 'Combination of cpu, ram, disk and disk_template do' \
                 ' not match an existing id'
             raise ClientError(msg, error_flavor_id)
-
+        retval = self.check_all_resources()
+        image_id = self.get_image_id()
+            
+        return flavor_master, flavor_slaves, image_id
+    
+    def get_image_id(self):
+        """
+        Return id of given image
+        """
+        chosen_image = {}
         list_current_images = self.plankton.list_public(True, 'default')
         # Check availability of resources
-        retval = self.check_all_resources()
+        
         # Find image id of the operating system arg given
         for lst in list_current_images:
             if lst['name'] == self.opts['os_choice']:
                 chosen_image = lst
-                break
+                return chosen_image['id']
         if not chosen_image:
             msg = self.opts['os_choice']+' is not a valid image'
             raise ClientError(msg, error_image_id)
-
-        return flavor_master, flavor_slaves, chosen_image['id']
-
+       
+    def create_vre_server(self):
+        """
+        Create Vre machine in ~okeanos
+        """        
+        flavor_id = self.get_flavor_id('master')
+        image_id = self.get_image_id()
+        retval = self.check_all_resources()
+        # Create name of Vre server with [orka] prefix
+        vre_server_name = '%s%s%s' % ('[orka]', '-', self.opts['cluster_name'])
+       
+        try:
+            server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, project_id=self.project_id)
+        except ClientError, e:
+            # If no public ip is free, get a new one
+            if e.status == status.HTTP_409_CONFLICT:
+                get_float_network_id(self.net_client, project_id=self.project_id)
+                server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, project_id=self.project_id)
+            else:
+                raise
+        sleep(15)
+        # Get Vre VM root password
+        server_pass = server ['adminPass']
+        # Placeholder for Vre VM public ip
+        server_ip = '127.0.0.1'
+        # Update db with server status as pending
+        task_id = current_task.request.id
+        server_id = db_server_create(vre_server_name, server['id'], self.opts, task_id)
+        new_state = "Started creation of Virtual Research Environment server {0}".format(vre_server_name)
+        set_server_state(self.opts['token'], server_id, new_state)
+        new_status = self.cyclades.wait_server(server['id'], max_wait=MAX_WAIT)
+        if new_status == 'ACTIVE':
+            server_details = self.cyclades.get_server_details(server['id'])
+            for attachment in server_details['attachments']:
+                if attachment['OS-EXT-IPS:type'] == 'floating':
+                        server_ip = attachment['ipv4']
+        else:
+            self.cyclades.delete_server(server['id'])
+            set_server_state(self.opts['token'],server_id,'Error',status='Failed')
+            msg = ' Status for server {0} is {1}'.format(server['name'], new_status)
+            raise ClientError(msg, error_create_server)
+            
+        set_server_state(self.opts['token'],server_id,state='Vre Server is active',status='Active',server_IP=server_ip)
+        start_drupal(server_ip,server_pass)
+        return server_id, server_pass, server_ip
+        
+        
     def create_bare_cluster(self):
         """Creates a bare ~okeanos cluster."""
         server_home_path = expanduser('~')

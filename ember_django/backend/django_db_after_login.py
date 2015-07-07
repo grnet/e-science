@@ -104,6 +104,56 @@ def db_cluster_create(choices, task_id):
 
     return new_cluster.id
 
+
+def db_server_create(name, server_id, choices, task_id):
+    """Updates DB after user request for Vre Server creation"""
+    user =  UserInfo.objects.get(okeanos_token=choices['token'])
+    new_server = VreServer.objects.create(server_name=name,server_id=server_id,action_date=timezone.now(),
+                    server_status=const_cluster_status_pending,
+                    cpu=choices['cpu_master'],
+                    ram=choices['ram_master'],
+                    disk=choices['disk_master'],
+                    disk_template=choices['disk_template'],
+                    os_image=choices['os_choice'], user_id=user,
+                    project_name=choices['project_name'],
+                    task_id=task_id,
+                    state='Authenticated')
+
+    return new_server.id
+
+
+def db_server_update(token, status, id, server_IP='', state=''):
+    """
+    Updates DB when Vre server is created or deleted from pending status.
+    """
+    try:
+        user = UserInfo.objects.get(okeanos_token=token)
+        server = VreServer.objects.get(id=id)
+    except ObjectDoesNotExist:
+        msg = 'Server with given name does not exist in pending state'
+        raise ObjectDoesNotExist(msg)
+
+    if status == "Active":
+        server.server_status = const_cluster_status_active
+
+    elif status == "Pending":
+        server.server_status = const_cluster_status_pending
+    
+    elif status == "Failed":
+        server.server_status = const_cluster_status_failed
+
+    elif status == "Destroyed":
+        server.server_status = const_cluster_status_destroyed
+        server.server_IP = ''
+        server.state= 'Deleted'
+
+    if state:
+        server.state = state
+    if server_IP:
+        server.server_IP = server_IP
+    server.save()
+
+
 def db_hadoop_update(cluster_id, hadoop_status, state):
     try:
         cluster = ClusterInfo.objects.get(id=cluster_id)

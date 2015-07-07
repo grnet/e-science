@@ -135,6 +135,41 @@ class HadoopCluster(object):
         except ClientError, e:
             logging.error(e.message)
             exit(error_fatal)
+    
+    def create_vre_machine(self):
+        """ Method for creating VRE machine in~okeanos."""
+        try:
+            payload = {"vreserver":{"project_name": self.opts['project_name'], "cluster_name": self.opts['name'],
+                                        "cpu_master": self.opts['cpu_master'], "ram_master": self.opts['ram_master'],
+                                        "disk_master": self.opts['disk_master'], "disk_template": self.opts['disk_template'], "os_choice": self.opts['image']}}
+            yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='vre')
+            response = yarn_cluster_req.post()
+            if 'task_id' in response['vreserver']:
+                task_id = response['vreserver']['task_id']
+            else:
+                logging.error(response['vreserver']['message'])
+                exit(error_fatal)
+            result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
+            logging.log(SUMMARY, "VRE machine is active and has the following properties:")
+            stdout.write("id: {0}\nserver_IP: {1}\n"
+                         "root password: {2}\n".format(result['server_id'], result['server_IP'],
+                                                        result['vre_VM_password']))
+            exit(SUCCESS)
+
+        except Exception, e:
+            stderr.write('{0}'.format('\r'))
+            logging.error(str(e.args[0]))
+            exit(error_fatal)
+    
+    def vre_action(self):
+        """ Method for taking an action for a Virtual Research Environment machine."""
+        opt_vre_create = self.opts.get('vre_create', False)
+        opt_vre_destroy = self.opts.get('vre_destroy', False)
+
+        if opt_vre_create == True:
+            self.create_vre_machine()
+        else:
+            print 'Not supported for now'
         
 
     def create(self):
@@ -641,7 +676,7 @@ def main():
     appropriate messages for success or error.
     """
     orka_parser = ArgumentParser(description='Manage a Hadoop-Yarn'
-                                        ' cluster in ~okeanos')
+                                        ' cluster or a Virtual Research Environment machine in ~okeanos ')
     checker = _ArgCheck()
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                                 level=checker.logging_levels['summary'],
@@ -654,7 +689,7 @@ def main():
         kamaki_base_url = ' '
         logging.warning(e.message)
     
-    orka_subparsers = orka_parser.add_subparsers(help='Choose Hadoop cluster action')
+    orka_subparsers = orka_parser.add_subparsers(help='Choose Hadoop cluster or VRE machine action')
     orka_parser.add_argument("-V", "--version", action='version',
                         version=('orka %s' % __version__))
     # add commands shared by all subparsers so we don't have to duplicate them
@@ -666,14 +701,45 @@ def main():
                               auth_url)
     common_parser.add_argument("--server_url", metavar='server_url', default=kamaki_base_url,
                               help='Application server url.  Default read from .kamakirc')
+    
+    common_create_parser = ArgumentParser(add_help=False)
+    
+    common_create_parser.add_argument("name", help='The specified name of the cluster or Virtual Research Environment'
+                              ' machine. Will be prefixed by [orka]', type=checker.a_string_is)
+    
+    common_create_parser.add_argument("cpu_master", help='Number of CPU cores for the master node of a cluster'
+                                      ' or a single VRE machine', type=checker.positive_num_is)
+    common_create_parser.add_argument("ram_master", help='Size of RAM (MB) for the master node of a cluster'
+                              ' or a single VRE machine', type=checker.positive_num_is)
+    
+    common_create_parser.add_argument("disk_master", help='Disk size (GB) for the master node of a cluster'
+                              ' or a single VRE machine', type=checker.five_or_larger_is)
+    
+    common_create_parser.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
+                              metavar='disk_template', choices=['Standard', 'Archipelago'], 
+                              type=str.capitalize)
+    common_create_parser.add_argument("project_name", help='~okeanos project name'
+                              ' to request resources from ', type=checker.a_string_is)
+    common_create_parser.add_argument("--image", help='OS for the virtual machine.'
+                              ' Default is "Debian Base"', metavar='image',
+                              default=default_image)
 
     # images
     parser_images = orka_subparsers.add_parser('images', parents=[common_parser],
                                      help='List available images.')
     # cluster actions group
-    parser_create = orka_subparsers.add_parser('create', parents=[common_parser],
+    parser_create = orka_subparsers.add_parser('create', parents=[common_parser, common_create_parser],
                                      help='Create a Hadoop-Yarn cluster'
+                                   ' on ~okeanos.')
+    parser_vre = orka_subparsers.add_parser('vre', help='Operations for Virtual Research Environment machines'
                                      ' on ~okeanos.')
+    vre_subparsers = parser_vre.add_subparsers(help='Choose VRE machine action create or destroy')
+    # create VRE machine
+    parser_vre_create = vre_subparsers.add_parser('create', parents=[common_parser, common_create_parser],
+                                                  help='Create a Virtual Research Environment machine'
+                                     ' on ~okeanos.')
+    parser_vre_create.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='vre_create')
+    
     parser_destroy = orka_subparsers.add_parser('destroy', parents=[common_parser],
                                      help='Destroy a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
@@ -698,31 +764,16 @@ def main():
                                              help='List pithos+ files.')
     
     if len(argv) > 1:
-
-        parser_create.add_argument("name", help='The specified name of the cluster.'
-                              ' Will be prefixed by [orka]', type=checker.a_string_is)
+        
         parser_create.add_argument("cluster_size", help='Total number of cluster nodes',
                               type=checker.two_or_larger_is)
-        parser_create.add_argument("cpu_master", help='Number of CPU cores for the master node',
-                              type=checker.positive_num_is)
-        parser_create.add_argument("ram_master", help='Size of RAM (MB) for the master node',
-                              type=checker.positive_num_is)
-        parser_create.add_argument("disk_master", help='Disk size (GB) for the master node',
-                              type=checker.five_or_larger_is)
         parser_create.add_argument("cpu_slave", help='Number of CPU cores for the slave node(s)',
                               type=checker.positive_num_is)
         parser_create.add_argument("ram_slave", help='Size of RAM (MB) for the slave node(s)',
                               type=checker.positive_num_is)
         parser_create.add_argument("disk_slave", help='Disk size (GB) for the slave node(s)',
                               type=checker.five_or_larger_is)
-        parser_create.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
-                              metavar='disk_template', choices=['Standard', 'Archipelago'], 
-                              type=str.capitalize)
-        parser_create.add_argument("project_name", help='~okeanos project name'
-                              ' to request resources from ', type=checker.a_string_is)
-        parser_create.add_argument("--image", help='OS for the cluster.'
-                              ' Default is "Debian Base"', metavar='image',
-                              default=default_image)
+        
         parser_create.add_argument("--replication_factor", metavar='replication_factor', default=2, type=checker.positive_num_is,
                               help='Replication factor for HDFS. Must be between 1 and number of slave nodes (cluster_size -1). Default is 2.')
         parser_create.add_argument("--dfs_blocksize", metavar='dfs_blocksize', default=128, type=checker.positive_num_is,
@@ -815,6 +866,8 @@ def main():
             c_hadoopcluster.hadoop_action()
         elif verb == 'file':
             c_hadoopcluster.file_action()
+        elif verb == 'vre':
+            c_hadoopcluster.vre_action()
 
     else:
         logging.error('No arguments were given')
