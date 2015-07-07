@@ -56,7 +56,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	selected_image : '',
 	selected_storage : '',
 	alert_mes_last_conf : '',	// alert message when resources are not enough to apply last configuration
-	flavor_settings : {'Small': {'cpu': 2, 'ram': 2048, 'disk': 10}, 'Medium': {'cpu': 4, 'ram': 2048, 'disk': 20}, 'Large': {'cpu': 4, 'ram': 4096, 'disk': 40}}, // Small Medium and Large predefined flavors	
+	flavor_settings : {'Small': {'cpu': 2, 'ram': 2048, 'disk': 10}, 'Medium': {'cpu': 4, 'ram': 4096, 'disk': 20}, 'Large': {'cpu': 4, 'ram': 6144, 'disk': 40}}, // Small Medium and Large predefined flavors	
 	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
 	list_of_flavors : ['cpu', 'ram', 'disk'], // List of flavors from kamaki except storage space
 	number_of_flavors : 3,
