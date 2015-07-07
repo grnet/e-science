@@ -3,6 +3,18 @@
 App.ApplicationController = Ember.Controller.extend({
 	needs : 'userWelcome',
 	loggedIn : false,
+	name_of_user : '',
+	user_name : function() { // todo: review 3-Jun-2015
+		if (this.get('loggedIn')){
+			var that = this;
+			this.store.find('user', 1).then(function(user) {
+				that.set('name_of_user', user.get('user_name'));
+				return user.get('user_name');
+			});
+		}else {
+			return '';
+		}
+	}.property('loggedIn'),
 	homeURL : function() {
 		if (this.get('loggedIn')){
 			return "#/user/welcome";

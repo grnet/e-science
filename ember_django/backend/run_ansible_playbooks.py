@@ -43,7 +43,7 @@ def install_yarn(*args):
         ansible_create_cluster(hosts_filename, cluster_size, args[4], args[5], args[0], args[6], args[7])
         # Format and start Hadoop cluster
         set_cluster_state(args[0], cluster_id,
-                          ' Yarn Cluster is active', status='Active',
+                          'Yarn Cluster is active', status='Active',
                           master_IP=args[2])
         ansible_manage_cluster(cluster_id, 'format')
         ansible_manage_cluster(cluster_id, 'start')
@@ -53,7 +53,7 @@ def install_yarn(*args):
         raise RuntimeError(msg, error_ansible_playbook)
     finally:
         os.system('rm /tmp/master_' + master_hostname + '_pub_key_* ')
-    logging.log(SUMMARY, ' Yarn Cluster is active. You can access it through '
+    logging.log(SUMMARY, 'Yarn Cluster is active. You can access it through '
                 + args[2] + ':8088/cluster')
 
 
@@ -141,7 +141,7 @@ def ansible_manage_cluster(cluster_id, action):
     cluster_name_postfix_id = '%s%s%s' % (cluster.cluster_name, '-', cluster_id)
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name_postfix_id.replace(" ", "_")
     if isfile(hosts_filename):
-        state = ' %s %s' %(HADOOP_STATUS_ACTIONS[action][1], cluster.cluster_name)
+        state = '%s %s' %(HADOOP_STATUS_ACTIONS[action][1], cluster.cluster_name)
         current_task.update_state(state=state)
         db_hadoop_update(cluster_id, 'Pending', state)
         debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
@@ -152,13 +152,13 @@ def ansible_manage_cluster(cluster_id, action):
             ansible_code = '{0} {1} {2}'.format(ansible_code_generic, hadoop_action, ansible_log)
             execute_ansible_playbook(ansible_code)
 
-        msg = ' Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
+        msg = 'Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
         db_hadoop_update(cluster_id, current_hadoop_status, msg)
         return msg
 
 
     else:
-        msg = ' Ansible hosts file [%s] does not exist' % hosts_filename
+        msg = 'Ansible hosts file [%s] does not exist' % hosts_filename
         raise RuntimeError(msg)
 
 
@@ -210,7 +210,7 @@ def execute_ansible_playbook(ansible_command):
     """
     exit_status = os.system(ansible_command)
     if exit_status != 0:
-        msg = ' Ansible failed with exit status %d' % exit_status
+        msg = 'Ansible failed with exit status %d' % exit_status
         raise RuntimeError(msg, exit_status)
 
     return 0

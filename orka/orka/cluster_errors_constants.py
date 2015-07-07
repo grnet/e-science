@@ -64,6 +64,7 @@ wait_timer_delete = 5
 const_cluster_status_destroyed = "0"
 const_cluster_status_active = "1"
 const_cluster_status_pending = "2"
+const_cluster_status_failed = "3"
 const_hadoop_status_started = "1"
 const_hadoop_status_stopped = "0"
 const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"

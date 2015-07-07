@@ -70,6 +70,7 @@ hdfs_endpoint = '/api/hdfs'
 const_cluster_status_destroyed = "0"
 const_cluster_status_active = "1"
 const_cluster_status_pending = "2"
+const_cluster_status_failed = "3"
 const_hadoop_status_stopped = "0"
 const_hadoop_status_started = "1"
 const_hadoop_status_format = "2"

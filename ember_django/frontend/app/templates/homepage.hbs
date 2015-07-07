@@ -5,6 +5,7 @@
 			<span data-toggle="tooltip" data-placement="auto-right" data-trigger='hover focus click' data-title="Infrastructure as a Service">IaaS</span>.
 		</p>
 		<p>Currently the codenamed <b>orka</b> CLI and Web interfaces enable ~okeanos users to create Hadoop 2.x (YARN) multi-node clusters in order to run their big data algorithms.</p>
+		<p>Furthermore, a number of other pre-cooked images with Hadoop-centered software is available for faster, easier and friendlier development: Ecosystem (Pig, Hive, HBase, Oozie, Flume, Spark), Cloudera, Hue.</p>
 		<p>Researchers, university students and teachers can fully exploit the MapReduce (as well as others) programming paradigm without wasting time and resources in hardware, software setup, etc.</p>
 	</div>
 	<div class="col-lg-8 col-md-8 hidden-sm hidden-xs pull-right">
@@ -13,20 +14,20 @@
 </div>
 <div class="row">
 	<div class="col-lg-6">
-		<p>
+		<p class="h4">
 			WELCOME TO ORKA!
 		</p>
 		<h5>This is GRNET's Hadoop service, for the Greek Research and Academic Community. With ~orka you are one click away from your own Virtual Hadoop environment.</h5>
 	</div>
 	<div class="col-lg-6">
-		<p>
+		<p class="h4">
 			STATISTICS
 		</p>
 		<p class="col-lg-6">
-			Spawned Clusters
+			Spawned Clusters: <span class="h4 text-lg text-info">{{printBigNum spawned_clusters separator=','}}</span>
 		</p>
 		<p class="col-lg-6">
-			Active Clusters
+			Active Clusters: <span class="h4 text-lg text-success">{{printBigNum active_clusters separator=','}}</span>
 		</p>
 	</div>
 </div>
@@ -34,12 +35,12 @@
 	<div class="col-lg-12">
 		<hr/>
 		<div class="col-lg-6">
-			<p>
+			<p class="h4">
 				LATEST NEWS
 			</p>
-			<p>
-				5 months, 1 week ago, by okeanos
-			</p>
+		    {{#each newsitem in news_items}}
+		    <p>{{formatDate newsitem.news_date format='shortdatemon'}} : {{newsitem.news_message}}</p>
+		    {{/each}}
 		</div>
 		<div class="col-lg-6">
 

@@ -12,7 +12,8 @@ App.User = DS.Model.extend({
 	}), 						// user cluster records
 	cluster : attr(),
 	escience_token : attr(),
-    master_vm_password: attr('string')
+    master_vm_password: attr('string'),
+    error_message: attr('string')
 });
 
 // Information about user's clusters
@@ -67,6 +68,8 @@ App.Usercluster = DS.Model.extend({
 			return "ACTIVE";
 		case "2":
 			return "PENDING";
+		case "3":
+			return "FAILED";
 		default:
 			return "UNKNOWN";
 		}
@@ -76,11 +79,13 @@ App.Usercluster = DS.Model.extend({
 		var status = this.get('cluster_status');
 		switch (status) {
 		case "0":
-			return "glyphicon glyphicon-remove text-danger";
+			return "glyphicon glyphicon-trash text-danger";
 		case "1":
 			return "glyphicon glyphicon-ok text-success";
 		case "2":
 			return "glyphicon glyphicon-time text-warning";
+		case "3":
+			return "glyphicon glyphicon-remove text-danger";
 
 		default:
 			return "glyphicon glyphicon-question-sign text-muted";
@@ -105,7 +110,7 @@ App.Usercluster = DS.Model.extend({
 	cluster_status_class_destroy : function(){
 		var status = this.get('cluster_status_active');
 		if (status){
-			return "glyphicon glyphicon-remove text-danger";
+			return "glyphicon glyphicon-trash text-danger";
 		}else{
 			return '';
 		}
