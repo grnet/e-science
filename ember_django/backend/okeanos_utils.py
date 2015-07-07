@@ -95,7 +95,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     that belong to the cluster from the cluster id that is given. Cluster id
     is the unique integer that each cluster has in escience database.
     """
-    current_task.update_state(state=" Started")
+    current_task.update_state(state="Started")
     servers_to_delete = []
     cluster_to_delete = ClusterInfo.objects.get(id=cluster_id)
     if cluster_to_delete.master_IP:
@@ -108,7 +108,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     float_ip_to_delete_id = None
     new_status = 'placeholder'
     auth = check_credentials(token)
-    current_task.update_state(state=" Authenticated")
+    current_task.update_state(state="Authenticated")
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
     nc = init_cyclades_netclient(endpoints['network'], token)
@@ -141,7 +141,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
 
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
-        set_cluster_state(token, cluster_id, " Deleted master VM", status=status)
+        set_cluster_state(token, cluster_id, "Deleted master VM", status=status)
         msg = 'A valid network of master and slaves was not found.'\
             'Deleting the master VM only'
         raise ClientError(msg, error_cluster_corrupt)
