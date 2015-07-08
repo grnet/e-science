@@ -69,7 +69,7 @@ App.Usercluster = DS.Model.extend({
 		case "2":
 			return "PENDING";
 		case "3":
-            return "FAILED";
+			return "FAILED";
 		default:
 			return "UNKNOWN";
 		}
@@ -85,7 +85,7 @@ App.Usercluster = DS.Model.extend({
 		case "2":
 			return "glyphicon glyphicon-time text-warning";
 		case "3":
-            return "glyphicon glyphicon-remove text-danger";
+			return "glyphicon glyphicon-remove text-danger";
 
 		default:
 			return "glyphicon glyphicon-question-sign text-muted";

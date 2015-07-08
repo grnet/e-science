@@ -8,7 +8,17 @@ Serializers file for django rest framework.
 """
 
 from rest_framework import serializers
-from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, VreServer
+from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, PublicNewsItem, VreServer
+
+
+class NewsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for news
+    """   
+    class Meta:
+        model = PublicNewsItem
+        fields = ('id', 'news_date', 'news_message', 'news_category')
+        
 
 class StatisticsSerializer(serializers.ModelSerializer):
     """
@@ -135,7 +145,7 @@ class ClusterchoicesSerializer(serializers.Serializer):
     
     hadoop_status = serializers.CharField(required=False)
 
-      
+
 class ClusterInfoSerializer(serializers.ModelSerializer):
     """ Serializer for ember request with user's available clusters."""
     class Meta:

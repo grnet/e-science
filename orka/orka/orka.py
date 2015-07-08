@@ -361,12 +361,12 @@ class HadoopCluster(object):
                             str_command = " dfs -mkdir \"{0}\"".format(remain)
                         retcode = ssh_call_hadoop("hduser", active_cluster['master_IP'], str_command)
                         if str(retcode) == str(SUCCESS):
-                            logging.log(SUMMARY, " \"{0}\" created.".format(remain))
+                            logging.log(SUMMARY, "\"{0}\" created.".format(remain))
                             exit(SUCCESS)
                         else:
-                            logging.log(SUMMARY, " \"{0}\" not created. Use -p for a nested destination.".format(remain))
+                            logging.log(SUMMARY, "\"{0}\" not created. Use -p for a nested destination.".format(remain))
                     else:
-                        logging.error(' Invalid destination filesystem.')
+                        logging.error('Invalid destination filesystem.')
                         exit(error_fatal)
                 except Exception, e:
                     stderr.write('{0}'.format('\r'))

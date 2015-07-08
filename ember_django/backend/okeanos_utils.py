@@ -183,7 +183,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
 
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
-        set_cluster_state(token, cluster_id, " Deleted master VM", status=status)
+        set_cluster_state(token, cluster_id, "Deleted master VM", status=status)
         msg = 'A valid network of master and slaves was not found.'\
             'Deleting the master VM only'
         raise ClientError(msg, error_cluster_corrupt)
