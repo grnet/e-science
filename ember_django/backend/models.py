@@ -298,7 +298,7 @@ class VreServer(models.Model):
                                 help_text="Operating system of the Vre VM")
     server_IP = models.CharField("Vre Server IP", max_length=255, blank=True,
                                  help_text="IP address of Vre VM")
-    user_id = models.ForeignKey(UserInfo, null=False, related_name='Vre Servers',
+    user_id = models.ForeignKey(UserInfo, null=False, related_name='vreservers',
                                 help_text="User ID "
                                 "(user ID who owns the vre server)")
 
@@ -313,7 +313,7 @@ class VreServer(models.Model):
                                blank=True, help_text="Celery task state")
     
     class Meta:
-        verbose_name = "Vre Server"
+        verbose_name = "Vreserver"
         app_label = 'backend'
 
     def __unicode__(self):

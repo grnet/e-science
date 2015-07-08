@@ -17,7 +17,7 @@ from time import sleep
 from cluster_errors_constants import *
 from celery import current_task
 from django_db_after_login import db_cluster_update, get_user_id, db_server_update
-from backend.models import UserInfo, ClusterInfo
+from backend.models import UserInfo, ClusterInfo, VreServer
 import re
 import subprocess
 
@@ -101,16 +101,38 @@ def get_project_id(token, project_name):
     raise ClientError(msg, error_proj_id)
 
 
-def destroy_server(token, id, master_IP=''):
-    """Destroys single okeanos server."""
-    current_task.update_state(state="Started")    
+def destroy_server(token, id):
+    """Destroys single Vre server in ~okeanos ."""
+    current_task.update_state(state="Started")
+    vre_server = VreServer.objects.get(id=id)    
     auth = check_credentials(token)
     current_task.update_state(state="Authenticated")
+    set_server_state(token, id, 'Deleting Vre server and public ip')
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
     nc = init_cyclades_netclient(endpoints['network'], token)
-    cyclades.delete_server(server_id)
+    cyclades.delete_server(vre_server.server_id)
+    new_status = cyclades.wait_server(vre_server.server_id,current_status='ACTIVE',max_wait=MAX_WAIT)
+    if new_status != 'DELETED':
+        state = 'Error while deleting Vre server'
+        set_server_state(token, id, state,status='Destroyed')
+        raise ClientError('Error while deleting Vre server', error_fatal)
+    ip_to_delete = get_publicIP_id(nc,vre_server.server_IP)
+    nc.delete_floatingip(ip_to_delete['id'])
     
+    state= 'Vre server {0} and its public IP {1} were deleted'.format(vre_server.server_name,vre_server.server_IP)
+    set_server_state(token, id, state, status='Destroyed')
+
+    return vre_server.server_name
+
+
+def get_publicIP_id(cyclades_network_client,float_ip):  
+    """Return IP of a ~okeanos public IP"""
+    list_of_ips = cyclades_network_client.list_floatingips()
+    for ip in list_of_ips:
+        if ip['floating_ip_address'] == float_ip:
+            return ip
+
 
 def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     """
@@ -118,7 +140,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     that belong to the cluster from the cluster id that is given. Cluster id
     is the unique integer that each cluster has in escience database.
     """
-    current_task.update_state(state=" Started")
+    current_task.update_state(state="Started")
     servers_to_delete = []
     cluster_to_delete = ClusterInfo.objects.get(id=cluster_id)
     if cluster_to_delete.master_IP:
@@ -131,31 +153,28 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     float_ip_to_delete_id = None
     new_status = 'placeholder'
     auth = check_credentials(token)
-    current_task.update_state(state=" Authenticated")
+    current_task.update_state(state="Authenticated")
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
     nc = init_cyclades_netclient(endpoints['network'], token)
     # Get list of servers and public ips
     try:
         list_of_servers = cyclades.list_servers(detail=True)
-        list_of_ips = nc.list_floatingips()
     except ClientError:
         msg = 'Could not get list of resources.'\
             'Cannot delete cluster'
         raise ClientError(msg, error_get_list_servers)
 
-    # Get master virtual machine and network from ip
-    for ip in list_of_ips:
-        if ip['floating_ip_address'] == float_ip_to_delete:
-            master_id = ip['instance_id']
-            float_ip_to_delete_id = ip['id']
-            master_server = cyclades.get_server_details(master_id)
-            for attachment in master_server['attachments']:
-                if (attachment['OS-EXT-IPS:type'] == 'fixed' and
-                        not attachment['ipv6']):
-                    network_to_delete_id = attachment['network_id']
-                    break
+    # Get master virtual machine and network from ip   
+    ip = get_publicIP_id(nc, float_ip_to_delete)
+    float_ip_to_delete_id = ip['id']
+    master_id = ip['instance_id']          
+    master_server = cyclades.get_server_details(master_id)
+    for attachment in master_server['attachments']:
+         if (attachment['OS-EXT-IPS:type'] == 'fixed' and not attachment['ipv6']):
+            network_to_delete_id = attachment['network_id']
             break
+
     # Show an error message and exit if not valid ip or network
     if not master_id:
         msg = '[%s] is not the valid public ip of the master' % \

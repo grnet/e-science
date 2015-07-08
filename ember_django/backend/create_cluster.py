@@ -344,8 +344,8 @@ class YarnCluster(object):
         image_id = self.get_image_id()
         retval = self.check_all_resources()
         # Create name of Vre server with [orka] prefix
-        vre_server_name = '%s%s%s' % ('[orka]', '-', self.opts['cluster_name'])
-       
+        vre_server_name = '{0}-{1}'.format('[orka]',self.opts['server_name'])
+        self.opts['server_name'] = vre_server_name
         try:
             server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, project_id=self.project_id)
         except ClientError, e:
@@ -362,7 +362,7 @@ class YarnCluster(object):
         server_ip = '127.0.0.1'
         # Update db with server status as pending
         task_id = current_task.request.id
-        server_id = db_server_create(vre_server_name, server['id'], self.opts, task_id)
+        server_id = db_server_create(server['id'], self.opts, task_id)
         new_state = "Started creation of Virtual Research Environment server {0}".format(vre_server_name)
         set_server_state(self.opts['token'], server_id, new_state)
         new_status = self.cyclades.wait_server(server['id'], max_wait=MAX_WAIT)
@@ -377,8 +377,12 @@ class YarnCluster(object):
             msg = ' Status for server {0} is {1}'.format(server['name'], new_status)
             raise ClientError(msg, error_create_server)
             
-        set_server_state(self.opts['token'],server_id,state='Vre Server is active',status='Active',server_IP=server_ip)
-        start_drupal(server_ip,server_pass)
+        set_server_state(self.opts['token'],server_id,state='Vre Server created',status='Active',server_IP=server_ip)
+        try:
+            start_drupal(server_ip,server_pass)
+        except RuntimeError, e:
+            raise RuntimeError('{0}. Your Vre server has the following properties id:{1} root_password:{2} server_IP:{3}'
+                               .format(e.args[0],server_id,server_pass,server_ip),error_create_server)
         return server_id, server_pass, server_ip
         
         

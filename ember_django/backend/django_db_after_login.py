@@ -105,14 +105,14 @@ def db_cluster_create(choices, task_id):
     return new_cluster.id
 
 
-def db_server_create(name, server_id, choices, task_id):
+def db_server_create(server_id, choices, task_id):
     """Updates DB after user request for Vre Server creation"""
     user =  UserInfo.objects.get(okeanos_token=choices['token'])
-    new_server = VreServer.objects.create(server_name=name,server_id=server_id,action_date=timezone.now(),
+    new_server = VreServer.objects.create(server_name=choices['server_name'],server_id=server_id,action_date=timezone.now(),
                     server_status=const_cluster_status_pending,
-                    cpu=choices['cpu_master'],
-                    ram=choices['ram_master'],
-                    disk=choices['disk_master'],
+                    cpu=choices['cpu'],
+                    ram=choices['ram'],
+                    disk=choices['disk'],
                     disk_template=choices['disk_template'],
                     os_image=choices['os_choice'], user_id=user,
                     project_name=choices['project_name'],
@@ -130,7 +130,7 @@ def db_server_update(token, status, id, server_IP='', state=''):
         user = UserInfo.objects.get(okeanos_token=token)
         server = VreServer.objects.get(id=id)
     except ObjectDoesNotExist:
-        msg = 'Server with given name does not exist in pending state'
+        msg = 'Server with given name does not exist'
         raise ObjectDoesNotExist(msg)
 
     if status == "Active":
@@ -145,7 +145,6 @@ def db_server_update(token, status, id, server_IP='', state=''):
     elif status == "Destroyed":
         server.server_status = const_cluster_status_destroyed
         server.server_IP = ''
-        server.state= 'Deleted'
 
     if state:
         server.state = state
@@ -155,6 +154,7 @@ def db_server_update(token, status, id, server_IP='', state=''):
 
 
 def db_hadoop_update(cluster_id, hadoop_status, state):
+    """Update Hadoop status of a Cluster"""
     try:
         cluster = ClusterInfo.objects.get(id=cluster_id)
     except ObjectDoesNotExist:

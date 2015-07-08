@@ -108,7 +108,7 @@ class ClusterRequest(object):
         
 
 
-def get_user_clusters(token, server_url):
+def get_user_clusters(token, server_url, choice='clusters'):
     """
     Get the clusters of the user
     """
@@ -123,7 +123,7 @@ def get_user_clusters(token, server_url):
     payload = {"user": {"id": 1}}
     orka_request = ClusterRequest(escience_token, server_url, payload, action='login')
     user_data = orka_request.retrieve()
-    user_clusters = user_data['user']['clusters']
+    user_clusters = user_data['user']['{0}'.format(choice)]
     return user_clusters
 
 

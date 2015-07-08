@@ -139,9 +139,9 @@ class HadoopCluster(object):
     def create_vre_machine(self):
         """ Method for creating VRE machine in~okeanos."""
         try:
-            payload = {"vreserver":{"project_name": self.opts['project_name'], "cluster_name": self.opts['name'],
-                                        "cpu_master": self.opts['cpu_master'], "ram_master": self.opts['ram_master'],
-                                        "disk_master": self.opts['disk_master'], "disk_template": self.opts['disk_template'], "os_choice": self.opts['image']}}
+            payload = {"vreserver":{"project_name": self.opts['project_name'], "server_name": self.opts['name'],
+                                        "cpu": self.opts['cpu_master'], "ram": self.opts['ram_master'],
+                                        "disk": self.opts['disk_master'], "disk_template": self.opts['disk_template'], "os_choice": self.opts['image']}}
             yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='vre')
             response = yarn_cluster_req.post()
             if 'task_id' in response['vreserver']:
@@ -150,12 +150,34 @@ class HadoopCluster(object):
                 logging.error(response['vreserver']['message'])
                 exit(error_fatal)
             result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
-            logging.log(SUMMARY, "VRE machine is active and has the following properties:")
+            logging.log(SUMMARY, "Vre machine is active and has the following properties:")
             stdout.write("id: {0}\nserver_IP: {1}\n"
                          "root password: {2}\n".format(result['server_id'], result['server_IP'],
                                                         result['vre_VM_password']))
             exit(SUCCESS)
 
+        except Exception, e:
+            stderr.write('{0}'.format('\r'))
+            logging.error(str(e.args[0]))
+            exit(error_fatal)
+            
+    def destroy_vre_machine(self):
+        """ Method for deleting Vre machines in~okeanos."""
+        vre_servers = get_user_clusters(self.opts['token'], self.opts['server_url'], choice='vreservers')
+        for server in vre_servers:
+            if (server['id'] == self.opts['server_id']) and server['server_status'] == const_cluster_status_active:
+                break
+        else:
+            logging.error('Only active Vre servers can be destroyed.')
+            exit(error_fatal)
+        try:
+            payload = {"vreserver":{"id": self.opts['server_id']}}
+            yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='vre')
+            response = yarn_cluster_req.delete_cluster()
+            task_id = response['vreserver']['task_id']
+            result = task_message(task_id, self.escience_token, self.server_url, wait_timer_delete)
+            logging.log(SUMMARY, 'Vre machine with name "{0}" and its IP were deleted'.format(result))
+            exit(SUCCESS)
         except Exception, e:
             stderr.write('{0}'.format('\r'))
             logging.error(str(e.args[0]))
@@ -168,8 +190,8 @@ class HadoopCluster(object):
 
         if opt_vre_create == True:
             self.create_vre_machine()
-        else:
-            print 'Not supported for now'
+        elif opt_vre_destroy == True:
+            self.destroy_vre_machine()
         
 
     def create(self):
@@ -738,8 +760,9 @@ def main():
     parser_vre_create = vre_subparsers.add_parser('create', parents=[common_parser, common_create_parser],
                                                   help='Create a Virtual Research Environment machine'
                                      ' on ~okeanos.')
-    parser_vre_create.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='vre_create')
-    
+    parser_vre_destroy = vre_subparsers.add_parser('destroy', parents=[common_parser],
+                                                  help='Destroy a Virtual Research Environment machine'
+                                     ' on ~okeanos.')
     parser_destroy = orka_subparsers.add_parser('destroy', parents=[common_parser],
                                      help='Destroy a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
@@ -781,8 +804,14 @@ def main():
         
         parser_destroy.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
-
-      
+        
+        parser_vre_create.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='vre_create')
+        
+        parser_vre_destroy.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='vre_destroy')
+        
+        parser_vre_destroy.add_argument('server_id',
+                              help='The id of a Vre machine', type=checker.positive_num_is)
+     
         parser_list.add_argument('--status', help='Filter by status ({%(choices)s})'
                               ' Default is all: no filtering.', type=str.upper,
                               metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
@@ -796,7 +825,6 @@ def main():
         parser_hadoop.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
 
-        
         parser_info.add_argument('cluster_id',
                                  help='The id of the Hadoop cluster', type=checker.positive_num_is)
 
