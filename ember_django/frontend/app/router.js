@@ -16,6 +16,14 @@ App.Router.map(function() {
 		// /cluster/cluster_id
 		this.route('management', { path: "/:usercluster.id" });
 	});
+	this.resource('help', function() {
+		// /help/images
+		this.route('images');
+		// /help/components
+		this.route('components');
+		// /help/images
+		this.route('hue');
+	});
 	// Route to enforce login policy
 	// other routes that require login extend this
 	this.route('restricted');

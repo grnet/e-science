@@ -19,7 +19,7 @@ from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
     DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, \
-    HdfsSerializer, StatisticsSerializer
+    HdfsSerializer, StatisticsSerializer, ImagesSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async, \
@@ -41,6 +41,22 @@ logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
 class MainPageView(generic.TemplateView):
     """Load the template file"""
     template_name = 'index.html'
+
+class ImagesView(APIView):
+    """
+    View to handle requests from ember for images on homepage
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (AllowAny, )
+    resource_name = 'okeanosimage'
+
+    def get(self, request, *args, **kwargs):
+        """
+        Return images.
+        """
+        images_info = OkeanosImages.objects.all()
+        serializer_class = ImagesSerializer(images_info,many=True)
+        return Response(serializer_class.data)
 
 
 class StatisticsView(APIView):
