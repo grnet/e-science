@@ -186,6 +186,19 @@ HADOOP_STATUS_CHOICES = (
      ("2", "Pending"),
  )
 
+class OrkaImage(models.Model):
+    """Definition of homepage News Items."""
+    id = models.AutoField("OrkaImage ID", primary_key=True, null=False,
+                               help_text="Auto-increment orkaimage id")
+    image_name = models.CharField("Pithos image name", max_length=255, null=False,
+                                    help_text="Pithos Image Name")
+    image_pithos_uuid = models.CharField("Linked pithos image unique identifier", unique=True, max_length=255, null=False, blank=False,
+                                    help_text="Pithos Image UUID")
+    image_components = models.CharField("OrkaImage components metadata", max_length=4080, null=True, blank=True,
+                                        help_text="OrkaImage components metadata as a json dump")
+    def __unicode__(self):
+        return ("%d, %s : %s") % (self.id, self.image_name, self.image_pithos_uuid)
+
 class PublicNewsItem(models.Model):
     """Definition of homepage News Items."""
     id = models.AutoField("Newsitem ID", primary_key=True, null=False,
