@@ -379,7 +379,7 @@ class YarnCluster(object):
             
         set_server_state(self.opts['token'],server_id,state='Vre Server created',status='Active',server_IP=server_ip)
         try:
-            start_drupal(server_ip,server_pass)
+            start_drupal(server_ip,server_pass,self.opts['token'])
         except RuntimeError, e:
             raise RuntimeError('{0}. Your Vre server has the following properties id:{1} root_password:{2} server_IP:{3}'
                                .format(e.args[0],server_id,server_pass,server_ip),error_create_server)

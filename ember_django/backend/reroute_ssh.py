@@ -98,13 +98,14 @@ class HdfsRequest(object):
             self.ssh_client.close()
 
 
-def start_drupal(server_ip, password):
+def start_drupal(server_ip, password, token):
     """
     Start drupal
     """
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
-    exec_command(ssh_client, 'docker start db')
-    exec_command(ssh_client, 'docker start drupal')
+    exec_command(ssh_client, "docker start db")
+    #exec_command(ssh_client,"docker exec db mysqladmin -u root -p'@test123' password '{0}'".format(token))
+    exec_command(ssh_client, "docker start drupal")
     
 
 def reroute_ssh_prep(server, master_ip):

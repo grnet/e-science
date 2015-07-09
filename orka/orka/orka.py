@@ -140,8 +140,8 @@ class HadoopCluster(object):
         """ Method for creating VRE machine in~okeanos."""
         try:
             payload = {"vreserver":{"project_name": self.opts['project_name'], "server_name": self.opts['name'],
-                                        "cpu": self.opts['cpu_master'], "ram": self.opts['ram_master'],
-                                        "disk": self.opts['disk_master'], "disk_template": self.opts['disk_template'], "os_choice": self.opts['image']}}
+                                        "cpu": self.opts['cpu'], "ram": self.opts['ram'],
+                                        "disk": self.opts['disk'], "disk_template": self.opts['disk_template'], "os_choice": self.opts['image']}}
             yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='vre')
             response = yarn_cluster_req.post()
             if 'task_id' in response['vreserver']:
@@ -725,23 +725,9 @@ def main():
                               help='Application server url.  Default read from .kamakirc')
     
     common_create_parser = ArgumentParser(add_help=False)
-    
+      
     common_create_parser.add_argument("name", help='The specified name of the cluster or Virtual Research Environment'
                               ' machine. Will be prefixed by [orka]', type=checker.a_string_is)
-    
-    common_create_parser.add_argument("cpu_master", help='Number of CPU cores for the master node of a cluster'
-                                      ' or a single VRE machine', type=checker.positive_num_is)
-    common_create_parser.add_argument("ram_master", help='Size of RAM (MB) for the master node of a cluster'
-                              ' or a single VRE machine', type=checker.positive_num_is)
-    
-    common_create_parser.add_argument("disk_master", help='Disk size (GB) for the master node of a cluster'
-                              ' or a single VRE machine', type=checker.five_or_larger_is)
-    
-    common_create_parser.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
-                              metavar='disk_template', choices=['Standard', 'Archipelago'], 
-                              type=str.capitalize)
-    common_create_parser.add_argument("project_name", help='~okeanos project name'
-                              ' to request resources from ', type=checker.a_string_is)
     common_create_parser.add_argument("--image", help='OS for the virtual machine.'
                               ' Default is "Debian Base"', metavar='image',
                               default=default_image)
@@ -756,7 +742,7 @@ def main():
     parser_vre = orka_subparsers.add_parser('vre', help='Operations for Virtual Research Environment machines'
                                      ' on ~okeanos.')
     vre_subparsers = parser_vre.add_subparsers(help='Choose VRE machine action create or destroy')
-    # create VRE machine
+    # create VRE machine parser
     parser_vre_create = vre_subparsers.add_parser('create', parents=[common_parser, common_create_parser],
                                                   help='Create a Virtual Research Environment machine'
                                      ' on ~okeanos.')
@@ -790,12 +776,24 @@ def main():
         
         parser_create.add_argument("cluster_size", help='Total number of cluster nodes',
                               type=checker.two_or_larger_is)
+        parser_create.add_argument("cpu_master", help='Number of CPU cores for the master node of a cluster',
+                                   type=checker.positive_num_is)
+        parser_create.add_argument("ram_master", help='Size of RAM (MB) for the master node of a cluster',
+                                   type=checker.positive_num_is)
+    
+        parser_create.add_argument("disk_master", help='Disk size (GB) for the master node of a cluster',
+                                   type=checker.five_or_larger_is)
         parser_create.add_argument("cpu_slave", help='Number of CPU cores for the slave node(s)',
                               type=checker.positive_num_is)
         parser_create.add_argument("ram_slave", help='Size of RAM (MB) for the slave node(s)',
                               type=checker.positive_num_is)
         parser_create.add_argument("disk_slave", help='Disk size (GB) for the slave node(s)',
                               type=checker.five_or_larger_is)
+        parser_create.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
+                              metavar='disk_template', choices=['Standard', 'Archipelago'], 
+                              type=str.capitalize)
+        parser_create.add_argument("project_name", help='~okeanos project name'
+                              ' to request resources from ', type=checker.a_string_is)
         
         parser_create.add_argument("--replication_factor", metavar='replication_factor', default=2, type=checker.positive_num_is,
                               help='Replication factor for HDFS. Must be between 1 and number of slave nodes (cluster_size -1). Default is 2.')
@@ -806,6 +804,18 @@ def main():
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         
         parser_vre_create.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='vre_create')
+        parser_vre_create.add_argument("cpu", help='Number of CPU cores for Vre server',
+                                   type=checker.positive_num_is)
+        parser_vre_create.add_argument("ram", help='Size of RAM (MB) for Vre server',
+                                   type=checker.positive_num_is)
+    
+        parser_vre_create.add_argument("disk", help='Disk size (GB) for Vre server',
+                                   type=checker.five_or_larger_is)
+        parser_vre_create.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
+                              metavar='disk_template', choices=['Standard', 'Archipelago'], 
+                              type=str.capitalize)
+        parser_vre_create.add_argument("project_name", help='~okeanos project name'
+                              ' to request resources from ', type=checker.a_string_is)
         
         parser_vre_destroy.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='vre_destroy')
         
