@@ -30,6 +30,10 @@ App.ApplicationController = Ember.Controller.extend({
         var admin_url = window.location.origin + "/admin";
         return admin_url;
     }.property(),
+    dataLoader : function(){
+        this.send('refresh_orkaimages_data');
+        return '';
+    }.property(),
     
     actions : {
         change_theme : function(cssUrl) {
