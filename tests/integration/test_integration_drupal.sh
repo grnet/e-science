@@ -58,7 +58,7 @@ testDrupalCreate(){
 # 02 Destroy
 testDrupalDestroy(){
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
-		orka destroy $SERVER_ID
+		orka vre destroy $SERVER_ID
 		RESULT="$?"
 	else
 		startSkipping
