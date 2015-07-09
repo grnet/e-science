@@ -2,6 +2,7 @@
 App.ClusterCreateController = Ember.Controller.extend({
 
 	needs : ['userWelcome', 'clusterManagement'],
+	STATIC_URL : DJANGO_STATIC_URL,
 	project_index : 0, 		// index (position in the array) of the project
 	project_current : '', 		// current project
 	project_name : '', 		// name of the project
@@ -798,6 +799,11 @@ App.ClusterCreateController = Ember.Controller.extend({
 		return this.get('warning_mes_dfs_blocksize');
 	}.property('dfs_blocksize'),
 	
+	image_name : function(){
+		console.log('Test '+this.get('operating_system'));
+		return this.get('operating_system');
+	}.property('operating_system'),
+	
 	message_hue_login : function(){
 		this.get('controllers.clusterManagement').send('help_hue_login', this.get('operating_system'));
 		if (this.get('hue_message') === 'CDH'){
@@ -916,6 +922,20 @@ App.ClusterCreateController = Ember.Controller.extend({
 				console.log(reason.message);
 			});
 		},	
+		componentVersions : function(){
+			var self = this;
+			// Perform GET request for images
+			this.store.fetch('okeanosimage', {}).then(function(images) {
+				for (var i = 0; i < images.get('content').length; i++) {
+					var dbImage = images.get('content').objectAt(i).get('image_name');
+					if (dbImage == self.get('image_name')){
+						console.log(dbImage);
+					}					
+				}
+			}, function(reason) {
+				console.log(reason.message);
+			});
+		},
 		vm_flavor_selection : function(value, name) {
 			if (name == "vm_flavor_button_master") {
 				this.set('vm_flavor_selection_master', value);

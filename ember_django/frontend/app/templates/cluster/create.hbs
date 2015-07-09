@@ -74,6 +74,18 @@
                         valueBinding="operating_system" id="os_systems"
                         selectionBinding="selected_image"
                         class="btn btn-primary btn-sm"}}
+                        {{#if project_current.os_choices}}
+                    	<button class="btn btn-primary btn-sm" 
+                        id=infoButton 
+                        data-container="body"
+                        data-toggle="popover" 
+                        data-placement="top" 
+                        data-trigger="hover focus" 
+                        data-html=true 
+                        {{bind-attr data-content=operating_system}} 
+               			>
+               			<b class="glyphicon glyphicon-info-sign"></b></button>
+						{{/if}}
                     </div>
                 </div>
                 <div class="form-group">
