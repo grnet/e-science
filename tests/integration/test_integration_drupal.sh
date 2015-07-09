@@ -47,8 +47,7 @@ testDrupalCreate(){
 		# (7 items, 0-based array, so relevant items at positions 1(server_id), 3(server_IP), 6(password))
 		SERVER_ID=${ARR_RESULT[1]}
 		SERVER_IP=${ARR_RESULT[3]}
-		export SSHPASS=${ARR_RESULT[6]}		
-		fi
+		export SSHPASS=${ARR_RESULT[6]}
 	else
 		startSkipping
 	fi
