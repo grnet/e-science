@@ -9,15 +9,27 @@ administrator backend of Django.
 from django.contrib import admin
 from django import forms
 from django.forms import Textarea
+from django.core import validators
+from django.core.validators import MaxLengthValidator
+from django.core.exceptions import ValidationError
+from json import loads
 from backend.models import *
+
+
+def validateJSON(payload):
+    try:
+        json_object = loads(payload, 'utf-8')
+    except ValueError, e:
+        raise ValidationError('%s is not valid Json' % payload)
 
 # Customize Django admin image_components form field for long text.
 class OrkaImageForm(forms.ModelForm):
+    image_components = forms.CharField(validators=[MaxLengthValidator(4080),validateJSON], \
+                                       widget=Textarea(attrs={'cols':'80'}), \
+                                       help_text='Component metadata info in json.dumps format.')
     class Meta:
         model = OrkaImage
         fields = '__all__'
-        widgets = {'image_components': forms.Textarea(attrs={'cols':'80'}),} # 'rows':10 is default
-        help_texts = {'image_components': 'Component metadata in json.dumps format.',}
  
 class OrkaImageAdmin(admin.ModelAdmin):
     form = OrkaImageForm
