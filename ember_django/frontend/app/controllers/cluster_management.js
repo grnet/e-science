@@ -3,6 +3,7 @@ App.ClusterManagementController = Ember.Controller.extend({
 	needs : 'clusterCreate',
 	hue_login_message : '',
 	hue_message : '',
+	orkaImages : [],
 	
 	actions : {
 		help_hue_login : function(os_image){

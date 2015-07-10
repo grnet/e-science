@@ -10,7 +10,7 @@ App.ClusterCreateRoute = App.RestrictedRoute.extend({
 		error: function(err) {
 			// to catch errors
 			// for example 401 responses
-			console.log(err.TypeError);
+			console.log(err['message']);
 			this.transitionTo('user.logout');
     	},
     	didTransition: function(transition) {

@@ -5,206 +5,57 @@
 	</div>
 </div>
 <ul id="myTab" class="nav nav-tabs">
+	{{#each image in orkaImages}}
+	{{#if image.active_image}}
 	<li class="active">
-		<a href="#Cloudera" data-toggle="tab">Cloudera</a>
+		<a  {{bind-attr href="image.image_href"}} data-toggle="tab">{{image.image_name}}</a>
 	</li>
+	{{else}}
 	<li>
-		<a href="#DebianBase" data-toggle="tab">Debian Base</a>
+		<a {{bind-attr href="image.image_href"}} data-toggle="tab">{{image.image_name}}</a>
 	</li>
-	<li>
-		<a href="#Ecosystem" data-toggle="tab">Ecosystem</a>
-	</li>
-	<li>
-		<a href="#Hadoop" data-toggle="tab">Hadoop</a>
-	</li>
-	<li>
-		<a href="#Hue" data-toggle="tab">Hue</a>
-	</li>
+	{{/if}}
+	{{/each}}
 </ul>
 <div id="TabContent" class="tab-content">
-	<div class="tab-pane fade in active" id="Cloudera">
+	{{#each image in orkaImages}}
+	{{#if image.active_image}}
+	<div {{bind-attr id="image.image_pithos_uuid"}} class="tab-pane fade in active">
+		<div class="row">
+			<table class="table table-striped table-hover table-border">
+				<tr>
+					<td class="col-sm-4 text-center"><em><b>Name</b></em></td>
+					<td class="col-sm-4 text-center"><em><b>Version</b></em></td>
+					<td class="col-sm-4 text-center"><b>Helpfull_link</b></td>
+				</tr>
+				{{#each component in image.image_components}}
+				<tr>
+					<td class="col-sm-4 text-center"><b>{{component.name}}</b></td>
+					<td class="col-sm-4 text-center"><b class="text-success">{{component.property.version}}</b></td>
+					<td class="col-sm-4 text-center"><a class="text-info" {{bind-attr href="component.property.help"}} target="_blank">{{component.property.help}}</s></td>
+				</tr>
+				{{/each}}
+			</table>
+		</div>
+	</div>
+	{{else}}
+	<div {{bind-attr  id="image.image_pithos_uuid"}} class="tab-pane fade">
 		<table class="table table-striped table-hover table-border">
 			<tr>
 				<td class="col-sm-4 text-center"><em><b>Name</b></em></td>
 				<td class="col-sm-4 text-center"><em><b>Version</b></em></td>
-				<td class="col-sm-4 text-center"><em><b>Port</b></em></td>
+				<td class="col-sm-4 text-center"><b>Helpfull_link</b></td>
 			</tr>
+			{{#each component in image.image_components}}
 			<tr>
-				<td class="col-sm-4 text-center"><b>Debian</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">7.8</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
+				<td class="col-sm-4 text-center"><b>{{component.name}}</b></td>
+				<td class="col-sm-4 text-center"><b class="text-success">{{component.property.version}}</b></td>
+				<td class="col-sm-4 text-center"><a class="text-info" {{bind-attr href="component.property.help"}} target="_blank">{{component.property.help}}</s></td>
 			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Cloudera</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">5.4.2</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Hadoop</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">Hadoop 2.6.0-cdh5.4.2</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Hue</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">3.7.0</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Flume</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">1.5.0-cdh5.4.2</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Pig</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">0.12.0-cdh5.4.2</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Hive</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">1.1.0+cdh5.4.2</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Hbase</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">1.0.0-cdh5.4.2</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">9095</b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Oozie</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">4.1.0-cdh5.4.2</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">11000</b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Spark</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">1.3.1</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">18080</b></td>
-			</tr>
+			{{/each}}
 		</table>
 	</div>
-	<div class="tab-pane fade" id="DebianBase">
-		<table class="table table-striped table-hover table-border">
-			<tr>
-				<td class="col-sm-4 text-center"><em><b>Name</b></em></td>
-				<td class="col-sm-4 text-center"><em><b>Version</b></em></td>
-				<td class="col-sm-4 text-center"><em><b>Port</b></em></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Debian</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">8.0</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Hadoop</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">2.5.2</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">8088/cluster</b></td>
-			</tr>
-		</table>
-	</div>
-	<div class="tab-pane fade" id="Ecosystem">
-		<table class="table table-striped table-hover table-border">
-			<tr>
-				<td class="col-sm-4 text-center"><em><b>Name</b></em></td>
-				<td class="col-sm-4 text-center"><em><b>Version</b></em></td>
-				<td class="col-sm-4 text-center"><em><b>Port</b></em></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Debian</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">8.0</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Hadoop</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">2.5.2</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">8088/cluster</b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Hue</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">3.8.0</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info"s>8888</b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Flume</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">1.6</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Pig</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">0.15.0</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Hive</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">1.2.0</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Hbase</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">1.0.1.1</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">16010</b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Oozie</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">4.1.0</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">11000</b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Spark</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">1.3.1</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">8080</b></td>
-			</tr>
-		</table>
-	</div>
-	<div class="tab-pane fade" id="Hadoop">
-		<table class="table table-striped table-hover table-border">
-			<tr>
-				<td class="col-sm-4 text-center"><em><b>Name</b></em></td>
-				<td class="col-sm-4 text-center"><em><b>Version</b></em></td>
-				<td class="col-sm-4 text-center"><em><b>Port</b></em></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Debian</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">8.0</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Hadoop</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">2.5.2</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">8088/cluster</b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Flume</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">1.6</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-		</table>
-	</div>
-	<div class="tab-pane fade" id="Hue">
-		<table class="table table-striped table-hover table-border">
-			<tr>
-				<td class="col-sm-4 text-center"><em><b>Name</b></em></td>
-				<td class="col-sm-4 text-center"><em><b>Version</b></em></td>
-				<td class="col-sm-4 text-center"><em><b>Port</b></em></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Debian</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">8.0</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Hadoop</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">2.5.2</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">8088/cluster</b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Hue</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">3.8.0</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">8888</b></td>
-			</tr>
-			<tr>
-				<td class="col-sm-4 text-center"><b>Flume</b></td>
-				<td class="col-sm-4 text-center"><b class="text-info">1.6</b></td>
-				<td class="col-sm-4 text-center"><b></b></td>
-			</tr>
-		</table>
-	</div>
+	{{/if}}
+	{{/each}}
+</div>
 </div>

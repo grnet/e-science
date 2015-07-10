@@ -49,8 +49,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			this.controllerFor('userWelcome').send('sortBy', user_clusters, lastsort);
 			this.controllerFor('userWelcome').send('sortBy', user_clusters, lastsort);
 		} else {
-			this.controllerFor('userWelcome').send('sortBy', user_clusters, 'action_date');
-			this.controllerFor('userWelcome').send('sortBy', user_clusters, 'action_date');
+			this.controllerFor('userWelcome').send('sortBy', user_clusters, 'cluster_status');
 		}
 		if ((user.get('user_theme') !== "") && (user.get('user_theme') !== undefined) && (user.get('user_theme') !== null)) {
 			changeCSS(user.get('user_theme'), 0);

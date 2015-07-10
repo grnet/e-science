@@ -2,7 +2,6 @@
 App.ClusterCreateController = Ember.Controller.extend({
 
 	needs : ['userWelcome', 'clusterManagement'],
-	STATIC_URL : DJANGO_STATIC_URL,
 	project_index : 0, 		// index (position in the array) of the project
 	project_current : '', 		// current project
 	project_name : '', 		// name of the project
@@ -50,6 +49,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	vm_flav_slave_Medium_disabled : false, 
 	vm_flav_slave_Large_disabled : false,
 	hue_message : '', 		// variable for Hue first login popover message
+	version_message : '',  // message for components versions
 	last_cluster_conf_checked: false,	// flag for last cluster configuration (when it is selected)
 	last_conf_message : '',			// last configuration in message to be displayed on screen
 	// selected project, image, cluster size, storage, from last configuration 
@@ -58,7 +58,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	selected_image : '',
 	selected_storage : '',
 	alert_mes_last_conf : '',	// alert message when resources are not enough to apply last configuration
-	flavor_settings : {'Small': {'cpu': 2, 'ram': 2048, 'disk': 10}, 'Medium': {'cpu': 4, 'ram': 2048, 'disk': 20}, 'Large': {'cpu': 4, 'ram': 4096, 'disk': 40}}, // Small Medium and Large predefined flavors	
+	flavor_settings : {'Small': {'cpu': 2, 'ram': 2048, 'disk': 10}, 'Medium': {'cpu': 4, 'ram': 4096, 'disk': 20}, 'Large': {'cpu': 4, 'ram': 6144, 'disk': 40}}, // Small Medium and Large predefined flavors	
 	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
 	list_of_flavors : ['cpu', 'ram', 'disk'], // List of flavors from kamaki except storage space
 	number_of_flavors : 3,
@@ -800,7 +800,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 	}.property('dfs_blocksize'),
 	
 	image_name : function(){
-		console.log('Test '+this.get('operating_system'));
 		return this.get('operating_system');
 	}.property('operating_system'),
 	
@@ -929,9 +928,33 @@ App.ClusterCreateController = Ember.Controller.extend({
 				for (var i = 0; i < images.get('content').length; i++) {
 					var dbImage = images.get('content').objectAt(i).get('image_name');
 					if (dbImage == self.get('image_name')){
-						console.log(dbImage);
+						var component_length = Ember.keys(images.get('content').objectAt(i).get('data')).length;
+						var popover_message = {};
+						for (var j = 2; j < component_length; j++){
+							var component_key = Ember.keys(images.get('content').objectAt(i).get('data'))[j];
+							var component_value = images.get('content').objectAt(i).get(component_key);
+							//if (component_value !== "null"){
+							popover_message[component_key] = component_value;
+							//}
+						}
+						//console.log(JSON.stringify(popover_message));
+						popover_message = JSON.stringify(popover_message);
+						var msg = '';
+						var json = $.parseJSON(popover_message);
+						$.each(json, function(key, value){
+							if (value !== "null"){
+								msg = '%@<b>%@</b>: <span class="text text-info">%@</span><br>'.fmt(msg, key, value);
+							}
+						});
+						self.set('version_message', msg);
+						//var component = Ember.keys(images.get('content').objectAt(i).get('data'))[i+2];
+						//console.log(images.get('content').objectAt(i).get(component));
+						//var componentsdata = '<b>'+ component +'</b>: <span class="text text-info">' + images.get('content').objectAt(i).get(component) + '</span>';
+						//self.set('version_message', componentsdata);
+						//console.log(this.get('version_message'));
 					}					
 				}
+				console.log(self.get('version_message'));
 			}, function(reason) {
 				console.log(reason.message);
 			});

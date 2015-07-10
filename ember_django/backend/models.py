@@ -186,6 +186,30 @@ HADOOP_STATUS_CHOICES = (
      ("2", "Pending"),
  )
 
+class OrkaImage(models.Model):
+    """Definition of homepage News Items."""
+    id = models.AutoField("OrkaImage ID", primary_key=True, null=False,
+                               help_text="Auto-increment orkaimage id")
+    image_name = models.CharField("Pithos image name", max_length=255, null=False,
+                                    help_text="Pithos Image Name")
+    image_pithos_uuid = models.CharField("Linked pithos image unique identifier", unique=True, max_length=255, null=False, blank=False,
+                                    help_text="Pithos Image UUID")
+    image_components = models.CharField("OrkaImage components metadata", max_length=4080, null=True, blank=True,
+                                        help_text="OrkaImage components metadata as a json dump")
+    def __unicode__(self):
+        return ("%s : %s") % (self.image_pithos_uuid, self.image_name)
+
+class PublicNewsItem(models.Model):
+    """Definition of homepage News Items."""
+    id = models.AutoField("Newsitem ID", primary_key=True, null=False,
+                               help_text="Auto-increment newsitem id")
+    news_date = models.DateTimeField("News Item Date", null=False,
+                                       help_text="Date and time for"
+                                       " the creation of this entry")
+    news_message = models.CharField("News Item Text", max_length=255, null=False,
+                                    help_text="News Item")
+    news_category = models.IntegerField("News Item Category", null=True, blank=True,
+                                     help_text="Category ID for News Item")
 
 class ClusterStatistics(models.Model):
     """Definition of Cluster statistics."""
@@ -267,51 +291,3 @@ class ClusterInfo(models.Model):
 
         return ("%d, %s, %d, %s , %s") % (self.id, self.cluster_name, self.cluster_size,
                                           self.cluster_status, self.hadoop_status)
-    
-class OkeanosImages(models.Model):
-    """
-    Definition of Components metadata object model.
-    """
-    id = models.AutoField("Metadata_ID", primary_key=True, null=False,
-                               help_text="Auto-increment newsitem id")
-
-    image_name = models.CharField("OS Image", max_length=255, null=False,
-                                help_text="Operating system of the cluster")
-
-    debian = models.CharField("Debian version", max_length=30, null=False,
-                                    help_text="Debian Version")
-
-    hadoop = models.CharField("Hadoop version", max_length=30, null=False,
-                                    help_text="Version of Hadoop")
-
-    flume = models.CharField("Component flume", max_length=30, null=True,
-                                    help_text="Version of flume component")
-
-    oozie = models.CharField("Component oozie", max_length=30, null=True,
-                                    help_text="Version of oozie component")
-
-    spark = models.CharField("Component spark", max_length=30, null=True,
-                                    help_text="Version of spark component")
-
-    pig = models.CharField("Component pig", max_length=30, null=True,
-                                    help_text="Version of pig component")
-
-    hive = models.CharField("Component hive", max_length=30, null=True,
-                                    help_text="Version of hive component")
-
-    hbase = models.CharField("Component hbase", max_length=30, null=True,
-                                    help_text="Version of hbase component")
-
-    hue = models.CharField("Hue version", max_length=30, null=True,
-                                    help_text="Version of hue component")
-
-    cloudera = models.CharField("Cloudera version", max_length=30, null=True,
-                                    help_text="Version of cloudera")
-
-    class Meta:
-        verbose_name = "OkeanosImage"
-        app_label = 'backend'
-
-    def __unicode__(self):
-
-        return ("%d, %s") % (self.id, self.image_name)

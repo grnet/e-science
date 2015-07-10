@@ -19,10 +19,6 @@ App.Router.map(function() {
 	this.resource('help', function() {
 		// /help/images
 		this.route('images');
-		// /help/components
-		this.route('components');
-		// /help/images
-		this.route('hue');
 	});
 	// Route to enforce login policy
 	// other routes that require login extend this
