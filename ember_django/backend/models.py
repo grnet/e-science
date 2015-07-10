@@ -280,42 +280,42 @@ class ClusterInfo(models.Model):
                                           self.cluster_status, self.hadoop_status)
        
 class VreServer(models.Model):
-    """Definition of a Vre Server object model."""
+    """Definition of a VRE Server object model."""
     server_name = models.CharField("Server Name", max_length=255, null=False,
-                                    help_text="Name of the Vre VM")
+                                    help_text="Name of the VRE server")
     server_id = models.IntegerField("Server Id", null=False,
-                                     help_text="Cyclades Server Id of Vre machine")
+                                     help_text="Cyclades Server Id of VRE server")
     action_date = models.DateTimeField("Action Date", null=False,
                                        help_text="Date and time for"
                                        " the creation of this entry")
     server_status = models.CharField("Server Status", max_length=1,
                                       choices=CLUSTER_STATUS_CHOICES,
                                       null=False, help_text="Destroyed/Active/Pending/Failed"
-                                      " status of the Vre VM")
+                                      " status of the VRE server")
 
     cpu = models.IntegerField("Cpu", null=False,
-                                     help_text="Cpu number of Vre VM")
+                                     help_text="Cpu number of VRE server")
 
     ram = models.IntegerField("Ram", null=False,
-                                     help_text="Ram of Vre VM")
+                                     help_text="Ram of VRE server")
 
     disk = models.IntegerField("Disksize", null=False,
-                                      help_text="Disksize of Vre VM")
+                                      help_text="Disksize of VRE server")
 
     disk_template = models.CharField("Disk Template", max_length=255, null=False,
-                                     help_text="Disk Template of the Vre VM")
+                                     help_text="Disk Template of the VRE server")
 
     os_image = models.CharField("OS Image", max_length=255, null=False,
-                                help_text="Operating system of the Vre VM")
-    server_IP = models.CharField("Vre Server IP", max_length=255, blank=True,
-                                 help_text="IP address of Vre VM")
+                                help_text="Operating system of the VRE server")
+    server_IP = models.CharField("VRE Server IP", max_length=255, blank=True,
+                                 help_text="IP address of VRE server")
     user_id = models.ForeignKey(UserInfo, null=False, related_name='vreservers',
                                 help_text="User ID "
-                                "(user ID who owns the vre server)")
+                                "(user ID who owns the VRE server)")
 
     project_name = models.CharField("Project Name", max_length=255, null=False,
                                     help_text="Project Name where"
-                                    " Vre VM was created")
+                                    " VRE server was created")
 
     task_id = models.CharField("Task Id", max_length=255,
                                blank=True, help_text="Celery task id")
@@ -324,7 +324,7 @@ class VreServer(models.Model):
                                blank=True, help_text="Celery task state")
     
     class Meta:
-        verbose_name = "Vreserver"
+        verbose_name = "VREserver"
         app_label = 'backend'
 
     def __unicode__(self):

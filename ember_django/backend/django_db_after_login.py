@@ -106,7 +106,7 @@ def db_cluster_create(choices, task_id):
 
 
 def db_server_create(server_id, choices, task_id):
-    """Updates DB after user request for Vre Server creation"""
+    """Updates DB after user request for VRE Server creation"""
     user =  UserInfo.objects.get(okeanos_token=choices['token'])
     new_server = VreServer.objects.create(server_name=choices['server_name'],server_id=server_id,action_date=timezone.now(),
                     server_status=const_cluster_status_pending,
@@ -124,7 +124,7 @@ def db_server_create(server_id, choices, task_id):
 
 def db_server_update(token, status, id, server_IP='', state=''):
     """
-    Updates DB when Vre server is created or deleted from pending status.
+    Updates DB when VRE server is created or deleted from pending status.
     """
     try:
         user = UserInfo.objects.get(okeanos_token=token)

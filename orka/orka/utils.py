@@ -110,7 +110,8 @@ class ClusterRequest(object):
 
 def get_user_clusters(token, server_url, choice='clusters'):
     """
-    Get the clusters of the user
+    Get by default the clusters of the user. If choice argument is different
+    e.g vreservers, returns info of user's VRE servers.
     """
     try:
         escience_token = authenticate_escience(token, server_url)

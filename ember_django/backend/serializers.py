@@ -157,7 +157,7 @@ class ClusterInfoSerializer(serializers.ModelSerializer):
 
        
 class VreServerSerializer(serializers.ModelSerializer):
-    """ Serializer for Vre server model."""
+    """ Serializer for VRE server model."""
     class Meta:
         model = VreServer
         fields = ('id', 'server_name', 'action_date', 'server_status','cpu', 'ram', 'disk', 'disk_template',

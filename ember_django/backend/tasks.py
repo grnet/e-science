@@ -55,17 +55,17 @@ def put_hdfs_async(opts):
 @task()
 def create_server_async(choices):
     """
-    Asynchronous create server task.
+    Asynchronous create VRE server task.
     """
     new_vre_server = YarnCluster(choices)
     server_id, server_pass, server_ip = new_vre_server.create_vre_server()
-    task_result = {"server_IP": server_ip, "vre_VM_password": server_pass, "server_id": server_id}
+    task_result = {"server_IP": server_ip, "VRE_VM_password": server_pass, "server_id": server_id}
     return task_result
 
 @task()
 def destroy_server_async(token, id):
     """
-    Asynchronous destroy server task.
+    Asynchronous destroy VRE server task.
     """
     result = destroy_server(token, id)
     return result

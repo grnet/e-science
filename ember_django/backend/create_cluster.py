@@ -338,29 +338,28 @@ class YarnCluster(object):
        
     def create_vre_server(self):
         """
-        Create Vre machine in ~okeanos
+        Create VRE server in ~okeanos
         """        
         flavor_id = self.get_flavor_id('master')
         image_id = self.get_image_id()
         retval = self.check_all_resources()
-        # Create name of Vre server with [orka] prefix
+        # Create name of VRE server with [orka] prefix
         vre_server_name = '{0}-{1}'.format('[orka]',self.opts['server_name'])
         self.opts['server_name'] = vre_server_name
         try:
             server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, project_id=self.project_id)
         except ClientError, e:
-            # If no public ip is free, get a new one
+            # If no public IP is free, get a new one
             if e.status == status.HTTP_409_CONFLICT:
                 get_float_network_id(self.net_client, project_id=self.project_id)
                 server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, project_id=self.project_id)
             else:
                 raise
-        sleep(15)
-        # Get Vre VM root password
+        # Get VRE server root password
         server_pass = server ['adminPass']
-        # Placeholder for Vre VM public ip
+        # Placeholder for VRe server public IP
         server_ip = '127.0.0.1'
-        # Update db with server status as pending
+        # Update DB with server status as pending
         task_id = current_task.request.id
         server_id = db_server_create(server['id'], self.opts, task_id)
         new_state = "Started creation of Virtual Research Environment server {0}".format(vre_server_name)
@@ -374,14 +373,18 @@ class YarnCluster(object):
         else:
             self.cyclades.delete_server(server['id'])
             set_server_state(self.opts['token'],server_id,'Error',status='Failed')
-            msg = ' Status for server {0} is {1}'.format(server['name'], new_status)
+            msg = ' Status for VRE server {0} is {1}'.format(server['name'], new_status)
             raise ClientError(msg, error_create_server)
             
-        set_server_state(self.opts['token'],server_id,state='Vre Server created',status='Active',server_IP=server_ip)
+        set_server_state(self.opts['token'],server_id,state='VRE Server created',status='Active',server_IP=server_ip)
+        # Wait for VRE server to be pingable
+        sleep(15)
         try:
             start_drupal(server_ip,server_pass,self.opts['token'])
         except RuntimeError, e:
-            raise RuntimeError('{0}. Your Vre server has the following properties id:{1} root_password:{2} server_IP:{3}'
+            # Exception is raised if a VRE start command is not executed correctly and informs user of its VRE properties
+            # so user can ssh connect to the VRE server or delete the server from orkaCLI.
+            raise RuntimeError('{0}. Your VRE server has the following properties id:{1} root_password:{2} server_IP:{3}'
                                .format(e.args[0],server_id,server_pass,server_ip),error_create_server)
         return server_id, server_pass, server_ip
         

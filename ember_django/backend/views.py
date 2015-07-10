@@ -286,7 +286,7 @@ class SessionView(APIView):
             
 class VreServerView(APIView):
     """
-    View to handle requests for Virtual Research Environment machines.
+    View to handle requests for Virtual Research Environment servers.
     """
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticated, )
@@ -295,7 +295,7 @@ class VreServerView(APIView):
     
     def post(self, request, *args, **kwargs):
         """
-        Handles requests with user's Vre server creation parameters.
+        Handles requests with user's VRE server creation parameters.
         """
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
@@ -318,7 +318,7 @@ class VreServerView(APIView):
     
     def delete(self, request, *args, **kwargs):
         """
-        Delete Vre server from ~okeanos.
+        Delete VRE server from ~okeanos.
         """ 
         serializer = DeleteClusterSerializer(data=request.DATA)
         if serializer.is_valid():
