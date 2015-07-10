@@ -117,7 +117,7 @@ def destroy_server(token, id):
         state = 'Error while deleting VRE server'
         set_server_state(token, id, state,status='Destroyed')
         raise ClientError('Error while deleting VRE server', error_fatal)
-    ip_to_delete = get_publicIP_id(nc,vre_server.server_IP)
+    ip_to_delete = get_public_ip_id(nc,vre_server.server_IP)
     nc.delete_floatingip(ip_to_delete['id'])
     
     state= 'VRE server {0} and its public IP {1} were deleted'.format(vre_server.server_name,vre_server.server_IP)
@@ -126,7 +126,7 @@ def destroy_server(token, id):
     return vre_server.server_name
 
 
-def get_publicIP_id(cyclades_network_client,float_ip):  
+def get_public_ip_id(cyclades_network_client,float_ip):  
     """Return IP dictionary of an ~okeanos public IP"""
     list_of_ips = cyclades_network_client.list_floatingips()
     for ip in list_of_ips:
@@ -166,7 +166,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
         raise ClientError(msg, error_get_list_servers)
 
     # Get master virtual machine and network from IP   
-    ip = get_publicIP_id(nc, float_ip_to_delete)
+    ip = get_public_ip_id(nc, float_ip_to_delete)
     float_ip_to_delete_id = ip['id']
     master_id = ip['instance_id']          
     master_server = cyclades.get_server_details(master_id)
