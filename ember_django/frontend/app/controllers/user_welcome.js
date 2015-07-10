@@ -18,6 +18,7 @@ App.UserWelcomeController = Ember.Controller.extend({
     sortbysize : false,
     sortbyurl : false,
     ip_of_master : '',
+    orkaImages: [],
     sortedCollection : function() {
         // sorts content (clusters) based on properties
         return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, {

@@ -43,14 +43,7 @@
 		    {{/each}}
 		</div>
 		<div class="col-lg-6">
-            {{#each image in orkaImages}}
-                <p>{{image.image_name}}</p>
-                <ul>
-                {{#each component in image.image_components}}
-                    <li>{{component.name}} : {{component.property.version}} : {{component.property.help}} : {{component.property.url}}</li>
-                {{/each}}
-                </ul>
-            {{/each}}
+
 		</div>
 	</div>
 </div>

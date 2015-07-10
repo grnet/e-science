@@ -2,11 +2,13 @@
 // loggedIn, homeURL, adminURL, STATIC_URL
 App.ApplicationController = Ember.Controller.extend({
     STATIC_URL : DJANGO_STATIC_URL,
-    needs : ['userWelcome', 'homepage'],
+    // other controllers that need to be accessible from this one
+    // for .set or .get
+    needs : ['userWelcome', 'homepage', 'clusterManagement'],
     loggedIn : false,
     name_of_user : '',
     userTheme : user_themes,
-    orkaImageData : {},
+    orkaImageData : {}, // stores raw OrkaImage data in object format
 
     user_name : function() {
         if (this.get('loggedIn')) {
@@ -30,12 +32,16 @@ App.ApplicationController = Ember.Controller.extend({
         var admin_url = window.location.origin + "/admin";
         return admin_url;
     }.property(),
-    // property for use on 
+    
+    // controller property for use on template to load OrkaImage data to the store
+    // application route activation > template render > sends refresh_orkaimage_data action
+    // which GET(s) the data to the store and controller.application.orkaImageData.  
     dataLoader : function() {
         this.send('refresh_orkaimages_data');
         return '';
     }.property(),
     
+    // utility function for transforming OrkaImage data from object format to others
     dataTransformImages : function(images, strtype) {
         switch (strtype) {
         case "array":
@@ -70,11 +76,23 @@ App.ApplicationController = Ember.Controller.extend({
                 });
             }
         },
+        // GET(s) orka image data from the backend.
+        // On successful promise resolution [transform and] load to other controllers
+        // for use on templates. Requires an orkaImages array to be set on other controllers
+        // and populated from here.
+        // It can then be referenced in templates as
+        // {{#each image in orkaImages}}
+        //   {{image.image_name}}{{image.image_pithos_uuid}}
+        //     {{#each component in image.image_components}}{{component.name}}{{component.property.version}}{{component.property.help}}{{/each}}
+        // {{/each}}
         refresh_orkaimages_data : function() {
             var that = this;
             this.store.fetch('orkaimage', {}).then(function(data) {
                 that.set('orkaImageData', data.get('content'));
-                that.get('controllers.homepage').set('orkaImages', that.get('dataTransformImages')(that.get('orkaImageData'),'array'));
+                var transformedData = that.get('dataTransformImages')(that.get('orkaImageData'),'array');
+                that.get('controllers.homepage').set('orkaImages', transformedData);
+                that.get('controllers.userWelcome').set('orkaImages', transformedData);
+                that.get('controllers.clusterManagement').set('orkaImages', transformedData);
             }, function(reason) {
                 console.log(reason.message);
             });

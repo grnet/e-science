@@ -197,7 +197,7 @@ class OrkaImage(models.Model):
     image_components = models.CharField("OrkaImage components metadata", max_length=4080, null=True, blank=True,
                                         help_text="OrkaImage components metadata as a json dump")
     def __unicode__(self):
-        return ("%d, %s : %s") % (self.id, self.image_name, self.image_pithos_uuid)
+        return ("%s : %s") % (self.image_pithos_uuid, self.image_name)
 
 class PublicNewsItem(models.Model):
     """Definition of homepage News Items."""

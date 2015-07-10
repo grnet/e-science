@@ -1,1 +1,3 @@
-App.ClusterManagementController = Ember.Controller.extend({});
+App.ClusterManagementController = Ember.Controller.extend({
+    orkaImages : []
+});
