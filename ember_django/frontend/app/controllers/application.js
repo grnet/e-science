@@ -4,7 +4,7 @@ App.ApplicationController = Ember.Controller.extend({
     STATIC_URL : DJANGO_STATIC_URL,
     // other controllers that need to be accessible from this one
     // for .set or .get
-    needs : ['userWelcome', 'homepage', 'clusterManagement', 'helpImages'],
+    needs : ['userWelcome', 'homepage', 'clusterManagement', 'helpImages', 'clusterCreate'],
     loggedIn : false,
     name_of_user : '',
     userTheme : user_themes,
@@ -94,6 +94,7 @@ App.ApplicationController = Ember.Controller.extend({
                 that.get('controllers.userWelcome').set('orkaImages', transformedData);
                 that.get('controllers.clusterManagement').set('orkaImages', transformedData);
                 that.get('controllers.helpImages').set('orkaImages', transformedData);
+                that.get('controllers.clusterCreate').set('orkaImages', transformedData);
             }, function(reason) {
                 console.log(reason.message);
             });

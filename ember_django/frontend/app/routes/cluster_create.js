@@ -19,7 +19,7 @@ App.ClusterCreateRoute = App.RestrictedRoute.extend({
 			this.controllerFor('clusterCreate').reset_project();
 			// last cluster config
 			this.controllerFor('clusterCreate').set('last_cluster_conf_checked', false);
-			this.controllerFor('clusterCreate').send('findLastCluster'); 
+			this.controllerFor('clusterCreate').send('findLastCluster');
 			this.controllerFor('clusterCreate').send('componentVersions');
     	}
 	}
