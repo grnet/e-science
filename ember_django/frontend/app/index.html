@@ -48,6 +48,7 @@
 		<script src="{{ STATIC_URL }}controllers/user_login.js"></script>
 		<script src="{{ STATIC_URL }}controllers/cluster_create.js"></script>
 		<script src="{{ STATIC_URL }}controllers/cluster_management.js"></script>
+		<script src="{{ STATIC_URL }}controllers/help_images.js"></script>
 
 		<!--routers-->
 		<script src="{{ STATIC_URL }}router.js"></script>
@@ -58,6 +59,7 @@
 		<script src="{{ STATIC_URL }}routes/user_logout.js"></script>        
 		<script src="{{ STATIC_URL }}routes/user_welcome.js"></script>        
 		<script src="{{ STATIC_URL }}routes/cluster_create.js"></script>
+		<script src="{{ STATIC_URL }}routes/help_images.js"></script>
 		<script src="{{ STATIC_URL }}routes/cluster_management.js"></script>
 		<script src="{{ STATIC_URL }}routes/homepage.js"></script>
 		
@@ -73,6 +75,7 @@
 		<script src="{{ STATIC_URL }}views/create_cluster_button.js"></script>
 		<script src="{{ STATIC_URL }}views/destroy_cluster_button.js"></script>
 		<script src="{{ STATIC_URL }}views/vm_flavor_selection_button.js"></script>
+		<script src="{{ STATIC_URL }}views/cluster_management.js"></script>
 
 		<!--store for ember-->
 		<script src="{{ STATIC_URL }}store.js"></script> 
@@ -85,7 +88,7 @@
 		<script src="{{ STATIC_URL }}models/orkaimage.js"></script>
 		<!--load templates-->
 		<script>EmberHandlebarsLoader.loadTemplates([
-			'application', 'homepage', 'user/login', 'user/welcome', 'cluster/create', 'user/_userclusters', 'cluster/management'
+			'application', 'homepage', 'user/login', 'user/welcome', 'cluster/create', 'user/_userclusters', 'cluster/management', 'help/images'
 		]);</script>
 	
 	</body>
