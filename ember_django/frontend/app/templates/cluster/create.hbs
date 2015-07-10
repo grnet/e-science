@@ -69,25 +69,21 @@
             <div class="form-horizontal">
                 <div class="form-group">
                     <label for="os_systems" class="control-label col-sm-5"> Available Images </label>
-                    <div id="testid" class="col col-sm-7">
+                    <div class="col col-sm-7">
                         {{view Ember.Select contentBinding="project_current.os_choices"
                         valueBinding="operating_system" id="os_systems"
                         selectionBinding="selected_image"
                         class="btn btn-primary btn-sm"}}
-                        {{#if project_current.os_choices}}
                     	<button class="btn btn-primary btn-sm" 
                         id=infoButton 
-                        title="lala"
-                        data-container="#testid"
                         data-toggle="popover" 
-                        data-placement="top" 
-                        data-trigger="hover focus click" 
+                        data-placement="bottom" 
+                        data-trigger="hover focus" 
                         data-html=true 
-                        {{bind-attr data-content=version_message}} 
-                        {{action "componentVersions"}}
+                        data-title='<b>Component</b>: <span class="text text-info"><b>Version</b></span>'
+                        {{bind-attr data-content=version_message class="isVisible:enabled:hide"}} 
                			>
                			<b class="glyphicon glyphicon-info-sign"></b></button>
-						{{/if}}
                     </div>
                 </div>
                 <div class="form-group">

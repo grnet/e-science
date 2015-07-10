@@ -3,6 +3,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 	needs : ['userWelcome', 'clusterManagement'],
 	orkaImages : [],
+	isVisible : false,
 	project_index : 0, 		// index (position in the array) of the project
 	project_current : '', 		// current project
 	project_name : '', 		// name of the project
@@ -807,18 +808,22 @@ App.ClusterCreateController = Ember.Controller.extend({
 	version_message : function(){
 		var image_name = this.get('image_name');
 		var arr_images = this.get('orkaImages');
+		var popover_data = {};
 		for (i=0; i<arr_images.length; i++){
 			if (arr_images.objectAt(i).get('image_name') == image_name){
-				var popover_message = '<b>Components</b>: <b>Version</b>';
-				for (component in Ember.toArray(arr_images.objectAt(i).get('image_components'))){
-					console.log(component);
+				for (j=0;j<arr_images.objectAt(i).get('image_components').length;j++){
+					popover_data[arr_images.objectAt(i).get('image_components').objectAt(j).name] = arr_images.objectAt(i).get('image_components').objectAt(j).property['version'];
 				}
 			}
 		}
+		var msg = '';
+		var json = $.parseJSON(JSON.stringify(popover_data));
+		$.each(json, function(key, value){
+			msg = '%@<b>%@</b>: <span class="text text-info">%@</span><br>'.fmt(msg, key, value);
+		});
+		this.set('isVisible', true);
+		return msg;
 	}.property('image_name'),
-	
-	//var label = '<b>Projects</b>: <span class="text text-info">' + clusterdata.project_name + '</span>'
-	//			+ '<br><b>Available Images</b>: <span class="text text-info">' + clusterdata.os_image + '</span>'
 	
 	message_hue_login : function(){
 		this.get('controllers.clusterManagement').send('help_hue_login', this.get('operating_system'));
@@ -938,45 +943,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 				console.log(reason.message);
 			});
 		},	
-		componentVersions : function(){
-			console.log(this.get('orkaImages').objectAt(0).get('image_name'));
-			// var self = this;
-			// // Perform GET request for images
-			// this.store.fetch('okeanosimage', {}).then(function(images) {
-				// for (var i = 0; i < images.get('content').length; i++) {
-					// var dbImage = images.get('content').objectAt(i).get('image_name');
-					// if (dbImage == self.get('image_name')){
-						// var component_length = Ember.keys(images.get('content').objectAt(i).get('data')).length;
-						// var popover_message = {};
-						// for (var j = 2; j < component_length; j++){
-							// var component_key = Ember.keys(images.get('content').objectAt(i).get('data'))[j];
-							// var component_value = images.get('content').objectAt(i).get(component_key);
-							// //if (component_value !== "null"){
-							// popover_message[component_key] = component_value;
-							// //}
-						// }
-						// //console.log(JSON.stringify(popover_message));
-						// popover_message = JSON.stringify(popover_message);
-						// var msg = '';
-						// var json = $.parseJSON(popover_message);
-						// $.each(json, function(key, value){
-							// if (value !== "null"){
-								// msg = '%@<b>%@</b>: <span class="text text-info">%@</span><br>'.fmt(msg, key, value);
-							// }
-						// });
-						// self.set('version_message', msg);
-						// //var component = Ember.keys(images.get('content').objectAt(i).get('data'))[i+2];
-						// //console.log(images.get('content').objectAt(i).get(component));
-						// //var componentsdata = '<b>'+ component +'</b>: <span class="text text-info">' + images.get('content').objectAt(i).get(component) + '</span>';
-						// //self.set('version_message', componentsdata);
-						// //console.log(this.get('version_message'));
-					// }					
-				// }
-				// console.log(self.get('version_message'));
-			// }, function(reason) {
-				// console.log(reason.message);
-			// });
-		},
 		vm_flavor_selection : function(value, name) {
 			if (name == "vm_flavor_button_master") {
 				this.set('vm_flavor_selection_master', value);
