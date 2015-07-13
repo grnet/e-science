@@ -1,0 +1,59 @@
+<p></p>
+<div class="well well-lg text-center v-center">
+	<div class="row">
+		<h2 id = 'id_title_help_images'>Image Components Information</h2>
+	</div>
+</div>
+<ul id="id_available_images" class="nav nav-tabs">
+	{{#each image in orkaImages}}
+	{{#if image.active_image}}
+	<li class="active">
+		<a  {{bind-attr href="image.image_href"}} data-toggle="tab">{{image.image_name}}</a>
+	</li>
+	{{else}}
+	<li>
+		<a {{bind-attr href="image.image_href"}} data-toggle="tab">{{image.image_name}}</a>
+	</li>
+	{{/if}}
+	{{/each}}
+</ul>
+<div id="id_image_components" class="tab-content">
+	{{#each image in orkaImages}}
+	{{#if image.active_image}}
+	<div {{bind-attr id="image.image_pithos_uuid"}} class="tab-pane fade in active">
+		<table class="table table-striped table-hover table-border">
+			<tr>
+				<td class="col-sm-4 text-center"><b>Name</b></td>
+				<td class="col-sm-4 text-center"><b>Version</b></td>
+				<td class="col-sm-4 text-center"><b>Homepage</b></td>
+			</tr>
+			{{#each component in image.image_components}}
+			<tr>
+				<td class="col-sm-4 text-center"><b>{{component.name}}</b></td>
+				<td class="col-sm-4 text-center"><b class="text-success">{{component.property.version}}</b></td>
+				<td class="col-sm-4 text-center"><a class="text-info" {{bind-attr href="component.property.help"}} target="_blank">{{component.property.help}}</td>
+			</tr>
+			{{/each}}
+		</table>
+	</div>
+	{{else}}
+	<div {{bind-attr  id="image.image_pithos_uuid"}} class="tab-pane fade">
+		<table class="table table-striped table-hover table-border">
+			<tr>
+				<td class="col-sm-4 text-center"><b>Name</b></td>
+				<td class="col-sm-4 text-center"><b>Version</b></td>
+				<td class="col-sm-4 text-center"><b>Homepage</b></td>
+			</tr>
+			{{#each component in image.image_components}}
+			<tr>
+				<td class="col-sm-4 text-center"><b>{{component.name}}</b></td>
+				<td class="col-sm-4 text-center"><b class="text-success">{{component.property.version}}</b></td>
+				<td class="col-sm-4 text-center"><a class="text-info" {{bind-attr href="component.property.help"}} target="_blank">{{component.property.help}}</td>
+			</tr>
+			{{/each}}
+		</table>
+	</div>
+	{{/if}}
+	{{/each}}
+</div>
+</div>

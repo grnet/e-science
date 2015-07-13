@@ -1548,7 +1548,7 @@ public class PithosRESTAPI implements Serializable {
                 try {
                     decBytes = Base64.getDecoder().decode(content);
                 } catch (IllegalArgumentException e) {
-                    Utils.dbgPrint("PithosRESTAPI#update_append_truncate_object exception:", e.getMessage());
+                    Utils.dbgPrint("PithosRESTAPI#update_append_truncate_object exception:", e);
                     decBytes = content.getBytes("UTF-8");
                 } 
                 wr.write(decBytes);

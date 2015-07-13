@@ -19,7 +19,7 @@ from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
     DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, \
-    HdfsSerializer, StatisticsSerializer, NewsSerializer
+    HdfsSerializer, StatisticsSerializer, NewsSerializer, OrkaImagesSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async, \
@@ -40,6 +40,22 @@ logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
 class MainPageView(generic.TemplateView):
     """Load the template file"""
     template_name = 'index.html'
+
+class OrkaImagesView(APIView):
+    """
+    View to handle requests from ember for image metadata
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (AllowAny, )
+    resource_name = 'orkaimage'
+
+    def get(self, request, *args, **kwargs):
+        """
+        Return news items.
+        """
+        image_data = OrkaImage.objects.all()
+        serializer_class = OrkaImagesSerializer(image_data, many=True)
+        return Response(serializer_class.data)
 
 class NewsView(APIView):
     """

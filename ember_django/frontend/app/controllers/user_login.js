@@ -72,7 +72,7 @@ App.UserLoginController = Ember.Controller.extend({
 			self.set('controllers.application.loggedIn', false);
 			self.set('token', '');
 			self.transitionToRoute('user.logout');
-        }, 3600000));
+        }, 14400000));
 	},
 	
 	cancelRunTimer : function(){

@@ -10,7 +10,7 @@ App.ClusterCreateRoute = App.RestrictedRoute.extend({
 		error: function(err) {
 			// to catch errors
 			// for example 401 responses
-			console.log(err.TypeError);
+			console.log(err['message']);
 			this.transitionTo('user.logout');
     	},
     	didTransition: function(transition) {
@@ -19,8 +19,8 @@ App.ClusterCreateRoute = App.RestrictedRoute.extend({
 			this.controllerFor('clusterCreate').reset_project();
 			// last cluster config
 			this.controllerFor('clusterCreate').set('last_cluster_conf_checked', false);
-			this.controllerFor('clusterCreate').send('findLastCluster'); 
-		
+			this.controllerFor('clusterCreate').send('findLastCluster');
+
     	}
 	}
 });

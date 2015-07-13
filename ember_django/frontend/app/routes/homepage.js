@@ -1,5 +1,4 @@
 App.HomepageRoute = Ember.Route.extend({
-    news_items : [],
     actions : {
         didTransition : function(transition) {
             var that = this;

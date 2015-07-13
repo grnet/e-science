@@ -1,4 +1,4 @@
-<span id="string_pixel_count" style="visibility:hidden"></span>
+<span id="string_pixel_count" style="visibility:hidden">{{dataLoader}}</span>
 <div id="wrap">
 	<div class="navbar navbar-default navbar-fixed-top">
 		<div class="container">
@@ -29,20 +29,16 @@
 						</ul>
 					</li>
 				</ul>
-				{{#if loggedIn}}				
 				<ul class="nav navbar-nav">
 					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_themes_dd">Themes <b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							{{#each theme in userTheme}}
+						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_info_dd">Information <b class="caret"></b></a>
+						<ul class="dropdown-menu">							
 							<li>
-                                <a href="#" id="myCurrentPage" {{action "change_theme" theme.url}}>{{theme.name}}</a>
-							</li>
-							{{/each}}													
+								{{#link-to 'help.images' id="id_help_images"}}<i class="glyphicon glyphicon-list-alt"></i> Image Components</a>{{/link-to}}
+							</li>						
 						</ul>
 					</li>
 				</ul>
-				{{/if}}
 				<ul class="nav navbar-nav navbar-right">
 					{{#if loggedIn}}
 					<li class="dropdown">
@@ -59,6 +55,20 @@
 					    {{#link-to 'user.login' id="id_login" class="btn btn-primary navbar-btn"}}<i class="glyphicon glyphicon-log-in"></i> Login{{/link-to}}	
 					{{/if}}
 				</ul>
+				{{#if loggedIn}}                
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_themes_dd">Theme <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            {{#each theme in userTheme}}
+                            <li>
+                                <a href="#" id="myCurrentPage" {{action "change_theme" theme.url}}>{{theme.name}}</a>
+                            </li>
+                            {{/each}}                                                   
+                        </ul>
+                    </li>
+                </ul>
+                {{/if}}
 			</div>
 		</div>
 	</div>
