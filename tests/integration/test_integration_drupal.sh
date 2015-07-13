@@ -40,7 +40,7 @@ testDrupalCreate(){
 	# act
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		# orka vre create name_of_server server_cpus server_ram server_disksize disk_template project_name
-		local COMMAND='orka vre create drupal_integration_test 2 2048 20 Standard '"${OKEANOS_PROJECT}"' --image Deb8\-Drupal\-Final >_tmp.txt 2> /dev/null'
+		local COMMAND='orka vre create drupal_integration_test 2 2048 20 Standard '"${OKEANOS_PROJECT}"' Deb8\-Drupal\-Final >_tmp.txt 2> /dev/null'
 		( $(eval $COMMAND) ) & keepAlive $! " Working"
 		declare -a ARR_RESULT=($(cat _tmp.txt))
 		# server_id: xx\nserver_IP: x.x.x.x\nroot password: xxxx

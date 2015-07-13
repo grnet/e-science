@@ -242,18 +242,16 @@ Required positional arguments for vre create command:
     ram: "ram in MB of VRE server",
     disk: "hard drive in GB of VRE server",
     disk_template: "Standard or Archipelago",
-    project_name: "name of a ~okeanos project, to pull resources from"
+    project_name: "name of a ~okeanos project, to pull resources from",
+    image: "name of VRE image. Only Deb8-Drupal-Final exists for now"
     
-Optional arguments for create vre command:
 
-    --image="Operating System (default value='Debian Base').For vre create this argument must not be left to default"
-(available images can be found with **orka images** command)
 
 ### {orka vre create} command examples
 
 example for orka vre create with a specific Drupal image:
 
-    orka vre create Drupal_Test 2 2048 20 Standard <project_name>  --image Deb8-Drupal-Final
+    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Deb8-Drupal-Final
     
 ##"vre destroy" command
 
@@ -269,16 +267,27 @@ example for orka vre destroy:
     orka vre destroy <server_id>
     
 ## Docker Info
-Access to a docker container's bash:
 
-    docker exec -t -i container_name bash
+VRE images are built using widely used Docker images pulled from hub.docker.com Repository. Components (i.e. Docker layers) inside the VM are not directly accessible from the root login. For example, in order to access the mysql layer in the Drupal image type:
+
+    docker exec -t -i db  bash 
+    mysql -p
+    
+and give the ~okeanos token when prompt for password.
+
+In general, in order to access a docker container's bash:
+
+    docker exec -t -i <container_name> bash
 
 Useful links:
 
-    https://www.docker.com/
-    https://docs.docker.com/articles/basics/
-    https://docs.docker.com/reference/commandline/exec/
-    https://github.com/wsargent/docker-cheat-sheet
+https://www.docker.com/
+
+https://docs.docker.com/articles/basics/
+
+https://docs.docker.com/reference/commandline/exec/
+
+https://github.com/wsargent/docker-cheat-sheet
 
 ## Getting help
 
