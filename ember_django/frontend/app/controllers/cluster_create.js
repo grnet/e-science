@@ -237,7 +237,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		aryButtons.each(function(i, button){
 			button.disabled = flag;
 		});
-		var aryControlIDs = ['os_systems','size_of_cluster','cluster_name','ssh_key','replication_factor','dfs_blocksize'];
+		var aryControlIDs = ['os_systems','size_of_cluster','cluster_name','ssh_key','replication_factor','dfs_blocksize', 'id_components_info', 'id_hdfs_configuration'];
 		$.each(aryControlIDs,function(i, elementID){
 			var element = $('#'+elementID);
 			element.prop('disabled',flag);
@@ -807,37 +807,40 @@ App.ClusterCreateController = Ember.Controller.extend({
 	}.property('operating_system','project_details'),
 	
 	version_message : function(){
-		var image_name = this.get('image_name');
-		var selected = $('#os_systems').val();
-        if (Ember.isBlank(selected)){
-            this.set('info_popover_visible', false);
-        }else{
-            this.set('info_popover_visible', true);
+		var that = this;
+        Ember.run.later(function() {
+            var selected = $('#os_systems').val();
+            if (Ember.isBlank(selected)) {
+                that.set('info_popover_visible', false);
+            } else {
+                that.set('info_popover_visible', true);
+            }         
+        }, 500);
+        var image_name = this.get('image_name');
+        var arr_images = this.get('orkaImages');
+        var popover_data = {};
+        for ( i = 0; i < arr_images.length; i++) {
+            if (arr_images.objectAt(i).get('image_name') == image_name) {
+                for ( j = 0; j < arr_images.objectAt(i).get('image_components').length; j++) {
+                    popover_data[arr_images.objectAt(i).get('image_components').objectAt(j).name] = arr_images.objectAt(i).get('image_components').objectAt(j).property['version'];
+                }
+                break;
+            }
         }
-		var arr_images = this.get('orkaImages');
-		var popover_data = {};
-		for (i=0; i<arr_images.length; i++){
-			if (arr_images.objectAt(i).get('image_name') == image_name){
-				for (j=0;j<arr_images.objectAt(i).get('image_components').length;j++){
-					popover_data[arr_images.objectAt(i).get('image_components').objectAt(j).name] = arr_images.objectAt(i).get('image_components').objectAt(j).property['version'];
-				}
-				break;
-			}
-		}
-		var msg = '';
-		for (key in popover_data){
-		    msg = '%@<b>%@</b>: <span class="text text-info">%@</span><br>'.fmt(msg, key, popover_data[key]);
-		}
-		return msg;
+        var msg = '';
+        for (key in popover_data) {
+            msg = '%@<b>%@</b>: <span class="text text-info">%@</span><br>'.fmt(msg, key, popover_data[key]);
+        }
+        return msg; 
 	}.property('image_name'),
 	
 	message_hue_login : function(){
 		this.get('controllers.clusterManagement').send('help_hue_login', this.get('operating_system'));
 		if (this.get('hue_message') === 'CDH'){
-			var msg = {'msg_type':'warning','msg_text':'IMPORTANT: Login in Hue browser with username : hdfs'};
+			var msg = {'msg_type':'warning','msg_text':'IMPORTANT: First login in Hue browser with username : hdfs'};
 			this.get('controllers.userWelcome').send('addMessage',msg);
 		} else if (this.get('hue_message') === 'HUE'){
-			var msg = {'msg_type':'warning','msg_text':'IMPORTANT: Login in Hue browser with username : hduser'};
+			var msg = {'msg_type':'warning','msg_text':'IMPORTANT: First login in Hue browser with username : hduser'};
 			this.get('controllers.userWelcome').send('addMessage',msg);
 		}
 	},
