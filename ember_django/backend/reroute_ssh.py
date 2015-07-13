@@ -100,14 +100,14 @@ class HdfsRequest(object):
 
 def start_drupal(server_ip, password, token):
     """Start Drupal"""
-    command = "cd /var/lib/docker/containers/`docker inspect drupal | grep \"Id\" | sed 's/[\" ,:]//g' "\
-    "| sed 's/Id//g'`;service docker stop;""find . -name config.json -exec sed -i 's/@test123/{0}/g' {{}} +;"\
-    "service docker start;docker start db;docker exec -d db mysqladmin -u root -p'@test123' password '{0}';"\
-    "docker start drupal".format(token)
+    command = "cd /var/lib/docker/containers/`/usr/bin/docker inspect drupal | grep \"Id\" | sed 's/[\" ,:]//g' "\
+    "| sed 's/Id//g'`;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/@test123/{0}/g' {{}} +;"\
+    "/etc/init.d/docker start;/usr/bin/docker start db;/usr/bin/docker exec -d db /usr/bin/mysqladmin -u root -p'@test123' password '{0}';"\
+    "/usr/bin/docker start drupal".format(token)
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
     exec_command(ssh_client, command)
     
-
+    
 def reroute_ssh_prep(server, master_ip):
     """
     Creates list of host and ip-tables for reroute ssh to all slaves
