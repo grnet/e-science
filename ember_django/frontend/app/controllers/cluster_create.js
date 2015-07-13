@@ -1,7 +1,9 @@
 // Cluster Create controller
 App.ClusterCreateController = Ember.Controller.extend({
 
-	needs : 'userWelcome',
+	needs : ['userWelcome', 'clusterManagement'],
+	orkaImages : [],
+	info_popover_visible : false,
 	project_index : 0, 		// index (position in the array) of the project
 	project_current : '', 		// current project
 	project_name : '', 		// name of the project
@@ -48,6 +50,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 	vm_flav_slave_Small_disabled : false, 
 	vm_flav_slave_Medium_disabled : false, 
 	vm_flav_slave_Large_disabled : false,
+	hue_message : '', 		// variable for Hue first login popover message
+	version_message : '',  // message for components versions
 	last_cluster_conf_checked: false,	// flag for last cluster configuration (when it is selected)
 	last_conf_message : '',			// last configuration in message to be displayed on screen
 	// selected project, image, cluster size, storage, from last configuration 
@@ -149,6 +153,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('project_current', model.objectAt(i));
 				this.set('project_name', model.objectAt(i).get('project_name'));
 				this.set('project_index', i);
+				
 				break;
 			}
 		}
@@ -755,6 +760,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('message', '');
 		this.set('replication_factor', '');		
 		this.set('dfs_blocksize', '');
+		this.set('hue_message', '');
 		this.init_alerts();
 	},
 	// initialize alert messages
@@ -795,6 +801,49 @@ App.ClusterCreateController = Ember.Controller.extend({
 		}
 		return this.get('warning_mes_dfs_blocksize');
 	}.property('dfs_blocksize'),
+	
+	image_name : function(){
+		return this.get('operating_system');
+	}.property('operating_system','project_details'),
+	
+	version_message : function(){
+		var that = this;
+        Ember.run.later(function() {
+            var selected = $('#os_systems').val();
+            if (Ember.isBlank(selected)) {
+                that.set('info_popover_visible', false);
+            } else {
+                that.set('info_popover_visible', true);
+            }         
+        }, 500);
+        var image_name = this.get('image_name');
+        var arr_images = this.get('orkaImages');
+        var popover_data = {};
+        for ( i = 0; i < arr_images.length; i++) {
+            if (arr_images.objectAt(i).get('image_name') == image_name) {
+                for ( j = 0; j < arr_images.objectAt(i).get('image_components').length; j++) {
+                    popover_data[arr_images.objectAt(i).get('image_components').objectAt(j).name] = arr_images.objectAt(i).get('image_components').objectAt(j).property['version'];
+                }
+                break;
+            }
+        }
+        var msg = '';
+        for (key in popover_data) {
+            msg = '%@<b>%@</b>: <span class="text text-info">%@</span><br>'.fmt(msg, key, popover_data[key]);
+        }
+        return msg; 
+	}.property('image_name'),
+	
+	message_hue_login : function(){
+		this.get('controllers.clusterManagement').send('help_hue_login', this.get('operating_system'));
+		if (this.get('hue_message') === 'CDH'){
+			var msg = {'msg_type':'warning','msg_text':'IMPORTANT: First login in Hue browser with username : hdfs'};
+			this.get('controllers.userWelcome').send('addMessage',msg);
+		} else if (this.get('hue_message') === 'HUE'){
+			var msg = {'msg_type':'warning','msg_text':'IMPORTANT: First login in Hue browser with username : hduser'};
+			this.get('controllers.userWelcome').send('addMessage',msg);
+		}
+	},
 
 	actions : {
 		// action to focus project selection view
@@ -843,6 +892,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 						self.set('slaves_ram_selection', clusterdata.ram_slaves);
 						self.set('master_disk_selection', clusterdata.disk_master);
 						self.set('slaves_disk_selection', clusterdata.disk_slaves);	
+						self.message_hue_login();
 					}
 					else{
 						self.set('alert_mes_last_conf', 'Lack of available resources.');
@@ -1212,7 +1262,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 						'replication_factor' : self.get('replication_factor'),
 						'dfs_blocksize': self.get('dfs_blocksize')
 					}).save();
-
+					
+					this.message_hue_login();
+					
 					cluster_selection.then(function(clusterchoice) {
 						// Set the response to user's create cluster click when put succeeds.
 						$.loader.close(true);

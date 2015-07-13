@@ -40,25 +40,56 @@ App.Usercluster = DS.Model.extend({
 		inverse : 'clusters'
 	}),
 	cluster_url : function() {
-		return 'http://' + this.get('master_IP') + ':8088/cluster';
+		return 'http://%@:8088/cluster'.fmt(this.get('master_IP'));
 	}.property('master_IP'),
 	hdfs_overview : function() {
 		// overview for hdfs URL=master_IP:50070
-		return 'http://' + this.get('master_IP') + ':50070';
+		return 'http://%@:50070'.fmt(this.get('master_IP'));
 	}.property('master_IP'),
+	selected_image : function() {
+		// Images with functional HDFS browser
+		var images_with_hdfs_browser = [/Ecosystem/, /CDH/, /Hue/];
+		for (var i = 0; i < images_with_hdfs_browser.length; i++) {
+	        if (images_with_hdfs_browser[i].test(this.get('os_image'))) {
+	            return i;
+	        }
+		}
+		return -1;
+	}.property('os_image'),
 	browse_hdfs : function() {
 		// hdfs browse URL=master_IP:50070/explorer.html#/ if not Hue image
         // If Hue image, then browse URL=master_IP:8888/
         var hdfs_explorer_default = ':50070/explorer.html#/' ;
-        var self = this ;
-        // Images with functional HDFS browser
-        var images_with_hdfs_browser = ['Hue', 'Cloudera', 'Ecosystem'];
-
-        if (images_with_hdfs_browser.some(function(v) { return self.get('os_image').indexOf(v) > -1; })) {
+        if (this.get('selected_image') > -1) {
             hdfs_explorer_default = ':8888/filebrowser' ;
         }
-		return 'http://' + this.get('master_IP') + hdfs_explorer_default;
-	}.property('master_IP', 'os_image'),
+		return 'http://%@%@'.fmt(this.get('master_IP'), hdfs_explorer_default);
+	}.property('master_IP'),
+	ecosystem_or_cloudera : function() {
+		if (this.get('selected_image') > -1 && this.get('selected_image') < 2) {
+            return true;
+        }else{
+        	return false;
+        }
+	}.property('os_image'),
+	oozie : function() {
+		var oozie_browser = ':11000';
+		return 'http://%@%@'.fmt(this.get('master_IP'), oozie_browser);
+	}.property('master_IP'),
+	hbase : function() {
+		var hbase_browser = ':16010';
+        if (this.get('selected_image') == 1) {
+            hbase_browser = ':9095' ;
+        }
+		return 'http://%@%@'.fmt(this.get('master_IP'), hbase_browser);
+	}.property('master_IP'),
+	spark : function() {
+		var spark_browser = ':8080';
+        if (this.get('selected_image') == 1) {
+            spark_browser = ':18080' ;
+        }
+		return 'http://%@%@'.fmt(this.get('master_IP'), spark_browser);
+	}.property('master_IP'),
 	cluster_status_verbose : function() {
 		var status = this.get('cluster_status');
 		switch (status) {

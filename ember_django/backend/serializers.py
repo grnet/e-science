@@ -8,8 +8,15 @@ Serializers file for django rest framework.
 """
 
 from rest_framework import serializers
-from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, PublicNewsItem, VreServer
+from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, PublicNewsItem, OrkaImage, VreServer
 
+class OrkaImagesSerializer(serializers.ModelSerializer):
+    """
+    Serializer for OrkaImages metadata
+    """   
+    class Meta:
+        model = OrkaImage
+        fields = ('id', 'image_name', 'image_pithos_uuid', 'image_components')
 
 class NewsSerializer(serializers.ModelSerializer):
     """

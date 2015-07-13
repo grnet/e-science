@@ -3,6 +3,7 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 	// model for cluster management route
 	model: function(params) {
 
+		var that = this;
 		// find the correct cluster
 		var selected_cluster = this.store.fetch('user', 1).then(function(user) {
 	
@@ -14,6 +15,7 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 					// check for the cluster id
 					if (clusters.objectAt(i).get('id') == params["usercluster.id"])
 					{
+						that.controllerFor('clusterManagement').send('help_hue_login', clusters.objectAt(i).get('os_image'));						
 					 	return clusters.objectAt(i);
 					}
 				}
