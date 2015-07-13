@@ -1,4 +1,6 @@
 *.sh
+*.properties
+.classpath
 bin/
 .classpath
 .project
@@ -6,3 +8,4 @@ bin/
 *.pdf
 *.properties
 *.xml
+orka-pithos.jardesc

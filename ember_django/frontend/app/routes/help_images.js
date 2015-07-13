@@ -1,2 +1,2 @@
 // Help Images route
-App.HelpImagesRoute = Ember.Route.extend({});
+App.HelpImagesRoute = App.RestrictedRoute.extend({});

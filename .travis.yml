@@ -2,14 +2,10 @@ language: python
 services: postgresql
 python:
 - '2.7'
-env:
-  global:
-  - secure: K+JlJYjqHmO/5bRvkKSJoh6YfZGYf9/kyqM/j3HNUG0o5gvTa6zTcI2kjxpnnYvEpz64n58YcinusNTimUM4Y1eIaoxcKlCW0MyWkQcBAg8jB8mxttH3Igw0dSblo8XZcxLBMFr7mm6I9Z0cbRRyrDr+ebp6t/+m7xf/3hMozh4=
-  - secure: X6F9qYcVNhPYHSHF15WnTmOgR3GToC0DISFhCyTD0Lb3qsoxu4PuNWA3X6LazQ57U5we/7keZuwVJAhJzy3JiVUYPOIM6AnYmG/qqdmvuTwyzqqXR9E0ULBWPTtA4HKaz/3P3RjkAyQ3WjcD2dHbRaGA+cFvXoTRAzsUmWYBTx8=
 addons:
-- postgresql: "9.1"
+- postgresql: '9.1'
 before_install:
-- openssl aes-256-cbc -K $encrypted_26ec65b631b7_key -iv $encrypted_26ec65b631b7_iv
+- openssl aes-256-cbc -K $encrypted_d970304f6e82_key -iv $encrypted_d970304f6e82_iv
   -in .private/.config.txt.enc -out .private/.config.txt -d
 install:
 - pip install kamaki==0.13.1
@@ -27,6 +23,7 @@ install:
 - pip install requests
 - pip install django-celery
 - sudo apt-get install sshpass
+- sudo apt-get install shunit2
 before_script:
 - psql -c 'create user developer with createdb;' -U postgres
 - psql -c 'create database escience with owner developer;' -U postgres
@@ -35,8 +32,11 @@ before_script:
 - python setup.py install
 - cd ..
 - npm install testem -g
-- export DISPLAY=:99.0
-- sh -e /etc/init.d/xvfb start
-- nohup bash -c "webdriver-manager start 2>&1 &"
+- "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1920x1080x16"
+- ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
 script:
 - nosetests -sv tests/test_create_cluster.py
+- bash tests/integration/test_integration_hdpbase.sh
+- bash tests/integration/test_integration_hue.sh
+- bash tests/integration/test_integration_ecosystem.sh
+- bash tests/integration/test_integration_cdh.sh

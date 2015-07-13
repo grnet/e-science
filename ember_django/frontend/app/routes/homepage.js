@@ -1,5 +1,4 @@
 App.HomepageRoute = Ember.Route.extend({
-    news_items : [],
     actions : {
         didTransition : function(transition) {
             var that = this;
@@ -17,14 +16,5 @@ App.HomepageRoute = Ember.Route.extend({
                 console.log(reason.message);
             });
         }
-		//didTransition : function(transition) {
-			//var that = this;
-			//// Perform GET request for images
-			//this.store.fetch('okeanosimage', {}).then(function(images) {
-			//	console.log(images.get('content'));
-			//}, function(reason) {
-			//	console.log(reason.message);
-			//});
-		//}
     }
 });

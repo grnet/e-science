@@ -31,9 +31,9 @@ checkPrereqs()
 	if [ "$HOST" = 0 ]; then # on Travis CI
 		[ -f .private/.config.txt ] || { echo "ERROR: .private/.config.txt required but not found. Aborting." >&2; exit 1; }
 		if [ -z "${STAGING_IP}" ]; then
-			STAGING_IP=http://83.212.117.226
+			STAGING_IP=http://83.212.115.45
 		fi
-		local OKEANOS_TOKEN=$(cat .private/.config.txt | grep "token" |cut -d' ' -f3)
+		local OKEANOS_TOKEN=$(cat .private/.config.txt | grep "^token" |cut -d' ' -f3)
 		echo -e '[global]\ndefault_cloud = ~okeanos\nignore_ssl = on\n[cloud "~okeanos"]\nurl = https://accounts.okeanos.grnet.gr/identity/v2.0\ntoken = '$OKEANOS_TOKEN'\n[orka]\nbase_url = '$STAGING_IP > ~/.kamakirc
 		KAMAKI_CLEANUP=true
 		FULL_TESTSUITE=false
@@ -43,5 +43,12 @@ checkPrereqs()
 		[ -z "$BASE_URL" ] && { echo "WARNING: no base_url found in .kamakirc. base_url = http://x.x.x.x expected." >&2; }
 		KAMAKI_CLEANUP=false
 		FULL_TESTSUITE=true
+	fi
+	if [ -z "${OKEANOS_PROJECT}" ]; then
+		OKEANOS_PROJECT=$(cat .private/.config.txt | grep "^name" |cut -d' ' -f3)
+	fi
+	if [ -z "${OKEANOS_PROJECT}" ]; then
+		echo "WARNING: no okeanos project found in environment or .config.txt. Setting default." >&2;
+		OKEANOS_PROJECT=escience.grnet.gr
 	fi
 }

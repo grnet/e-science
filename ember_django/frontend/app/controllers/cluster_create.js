@@ -3,7 +3,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 
 	needs : ['userWelcome', 'clusterManagement'],
 	orkaImages : [],
-	isVisible : false,
+	info_popover_visible : false,
 	project_index : 0, 		// index (position in the array) of the project
 	project_current : '', 		// current project
 	project_name : '', 		// name of the project
@@ -153,6 +153,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				this.set('project_current', model.objectAt(i));
 				this.set('project_name', model.objectAt(i).get('project_name'));
 				this.set('project_index', i);
+				
 				break;
 			}
 		}
@@ -803,10 +804,16 @@ App.ClusterCreateController = Ember.Controller.extend({
 	
 	image_name : function(){
 		return this.get('operating_system');
-	}.property('operating_system'),
+	}.property('operating_system','project_details'),
 	
 	version_message : function(){
 		var image_name = this.get('image_name');
+		var selected = $('#os_systems').val();
+        if (Ember.isBlank(selected)){
+            this.set('info_popover_visible', false);
+        }else{
+            this.set('info_popover_visible', true);
+        }
 		var arr_images = this.get('orkaImages');
 		var popover_data = {};
 		for (i=0; i<arr_images.length; i++){
@@ -814,14 +821,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 				for (j=0;j<arr_images.objectAt(i).get('image_components').length;j++){
 					popover_data[arr_images.objectAt(i).get('image_components').objectAt(j).name] = arr_images.objectAt(i).get('image_components').objectAt(j).property['version'];
 				}
+				break;
 			}
 		}
 		var msg = '';
-		var json = $.parseJSON(JSON.stringify(popover_data));
-		$.each(json, function(key, value){
-			msg = '%@<b>%@</b>: <span class="text text-info">%@</span><br>'.fmt(msg, key, value);
-		});
-		this.set('isVisible', true);
+		for (key in popover_data){
+		    msg = '%@<b>%@</b>: <span class="text text-info">%@</span><br>'.fmt(msg, key, popover_data[key]);
+		}
 		return msg;
 	}.property('image_name'),
 	

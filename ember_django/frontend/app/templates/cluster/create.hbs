@@ -74,14 +74,14 @@
                         valueBinding="operating_system" id="os_systems"
                         selectionBinding="selected_image"
                         class="btn btn-primary btn-sm"}}
-                    	<button class="btn btn-primary btn-sm" 
-                        id=infoButton 
+                    	<button
+                        id=id_components_info 
                         data-toggle="popover" 
                         data-placement="bottom" 
-                        data-trigger="hover focus" 
+                        data-trigger="hover focus click" 
                         data-html=true 
                         data-title='<b>Component</b>: <span class="text text-info"><b>Version</b></span>'
-                        {{bind-attr data-content=version_message class="isVisible:enabled:hide"}} 
+                        {{bind-attr data-content=version_message class="info_popover_visible:btn:hide info_popover_visible:btn-primary:hide info_popover_visible:btn-sm:hide"}} 
                			>
                			<b class="glyphicon glyphicon-info-sign"></b></button>
                     </div>

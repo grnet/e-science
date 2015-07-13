@@ -4,12 +4,11 @@ App.ApplicationController = Ember.Controller.extend({
     STATIC_URL : DJANGO_STATIC_URL,
     // other controllers that need to be accessible from this one
     // for .set or .get
-    needs : ['userWelcome', 'homepage', 'clusterManagement', 'helpImages', 'clusterCreate'],
+    needs : ['userLogin', 'userWelcome', 'homepage', 'clusterManagement', 'helpImages', 'clusterCreate'],
     loggedIn : false,
     name_of_user : '',
     userTheme : user_themes,
     orkaImageData : {}, // stores raw OrkaImage data in object format
-
     user_name : function() {
         if (this.get('loggedIn')) {
             var that = this;
@@ -44,7 +43,7 @@ App.ApplicationController = Ember.Controller.extend({
     // utility function for transforming OrkaImage data from object format to others
     dataTransformImages : function(images, strtype) {
         switch (strtype) {
-        case "array":
+        case "handlebars":
             var arrImages = Ember.makeArray(images);
             for (i=0;i<arrImages.length;i++){
                 var components = JSON.parse(arrImages[i].get('image_components'));
@@ -57,7 +56,7 @@ App.ApplicationController = Ember.Controller.extend({
             return arrImages;
             break;
         default:
-            return obj;
+            return images;
         }
     },
 
@@ -89,12 +88,12 @@ App.ApplicationController = Ember.Controller.extend({
             var that = this;
             this.store.fetch('orkaimage', {}).then(function(data) {
                 that.set('orkaImageData', data.get('content'));
-                var transformedData = that.get('dataTransformImages')(that.get('orkaImageData'),'array');
-                that.get('controllers.homepage').set('orkaImages', transformedData);
-                that.get('controllers.userWelcome').set('orkaImages', transformedData);
-                that.get('controllers.clusterManagement').set('orkaImages', transformedData);
-                that.get('controllers.helpImages').set('orkaImages', transformedData);
-                that.get('controllers.clusterCreate').set('orkaImages', transformedData);
+                var handlebarsData = that.get('dataTransformImages')(that.get('orkaImageData'),'handlebars');
+                that.get('controllers.homepage').set('orkaImages', handlebarsData);
+                that.get('controllers.userWelcome').set('orkaImages', handlebarsData);
+                that.get('controllers.clusterManagement').set('orkaImages', handlebarsData);
+                that.get('controllers.helpImages').set('orkaImages', handlebarsData);
+                that.get('controllers.clusterCreate').set('orkaImages', handlebarsData);
             }, function(reason) {
                 console.log(reason.message);
             });
