@@ -187,7 +187,7 @@ HADOOP_STATUS_CHOICES = (
  )
 
 class OrkaImage(models.Model):
-    """Definition of homepage News Items."""
+    """Definition of orka image Components."""
     id = models.AutoField("OrkaImage ID", primary_key=True, null=False,
                                help_text="Auto-increment orkaimage id")
     image_name = models.CharField("Pithos image name", max_length=255, null=False,
