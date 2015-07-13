@@ -8,7 +8,7 @@ This script contains the celery tasks that will be executed from django views.
 """
 from celery.task import task
 from create_cluster import YarnCluster
-from okeanos_utils import destroy_cluster
+from okeanos_utils import destroy_cluster, destroy_server
 from run_ansible_playbooks import ansible_manage_cluster
 from reroute_ssh import HdfsRequest
 
@@ -50,4 +50,22 @@ def put_hdfs_async(opts):
     """
     put_file_request = HdfsRequest(opts)
     result = put_file_request.put_file_hdfs()
+    return result
+
+@task()
+def create_server_async(choices):
+    """
+    Asynchronous create VRE server task.
+    """
+    new_vre_server = YarnCluster(choices)
+    server_id, server_pass, server_ip = new_vre_server.create_vre_server()
+    task_result = {"server_IP": server_ip, "VRE_VM_password": server_pass, "server_id": server_id}
+    return task_result
+
+@task()
+def destroy_server_async(token, id):
+    """
+    Asynchronous destroy VRE server task.
+    """
+    result = destroy_server(token, id)
     return result

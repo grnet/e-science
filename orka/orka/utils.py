@@ -56,6 +56,9 @@ def get_from_kamaki_conf(section, option, action=None):
             if action == 'hdfs':
                 url_hdfs = '{0}{1}'.format(option_value, hdfs_endpoint)
                 return url_hdfs
+            if action == 'vre':
+                url_vre = '{0}{1}'.format(option_value, vre_endpoint)
+                return url_vre
             else:
                 logging.log(SUMMARY, ' Url to be returned from .kamakirc not specified')
                 return 0
@@ -105,9 +108,10 @@ class ClusterRequest(object):
         
 
 
-def get_user_clusters(token, server_url):
+def get_user_clusters(token, server_url, choice='clusters'):
     """
-    Get the clusters of the user
+    Get by default the clusters of the user. If choice argument is different
+    e.g vreservers, returns info of user's VRE servers.
     """
     try:
         escience_token = authenticate_escience(token, server_url)
@@ -120,7 +124,7 @@ def get_user_clusters(token, server_url):
     payload = {"user": {"id": 1}}
     orka_request = ClusterRequest(escience_token, server_url, payload, action='login')
     user_data = orka_request.retrieve()
-    user_clusters = user_data['user']['clusters']
+    user_clusters = user_data['user']['{0}'.format(choice)]
     return user_clusters
 
 
