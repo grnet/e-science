@@ -23,7 +23,7 @@ from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async, \
-    hadoop_cluster_action_async, put_hdfs_async
+    hadoop_cluster_action_async, put_hdfs_async, create_server_async, destroy_server_async
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
 from reroute_ssh import HdfsRequest
@@ -36,7 +36,6 @@ logger = logging.getLogger("report")
 logging_level = REPORT
 logging.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s',
                    level=logging_level, datefmt='%H:%M:%S')
-
 
 class MainPageView(generic.TemplateView):
     """Load the template file"""
@@ -300,3 +299,51 @@ class SessionView(APIView):
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
+            
+class VreServerView(APIView):
+    """
+    View to handle requests for Virtual Research Environment servers.
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (IsAuthenticated, )
+    resource_name = 'vreserver'
+    serializer_class = ClusterchoicesSerializer
+    
+    def post(self, request, *args, **kwargs):
+        """
+        Handles requests with user's VRE server creation parameters.
+        """
+        serializer = self.serializer_class(data=request.DATA)
+        if serializer.is_valid():
+            user_token = Token.objects.get(key=request.auth)
+            user = UserInfo.objects.get(user_id=user_token.user.user_id)
+
+            # Dictionary of VreServer arguments
+            choices = dict()
+            choices = serializer.data.copy()
+            choices.update({'token': user.okeanos_token, 'cluster_size': 1,"cpu_slaves": 0,"ram_slaves": 0,
+                            "disk_slaves": 0,"cpu_master": choices['cpu'],"ram_master": choices['ram'],
+                            "disk_master": choices['disk']})
+            c_server = create_server_async.delay(choices)
+            task_id = c_server.id
+            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+
+        # This will be send if user's parameters are not de-serialized
+        # correctly.
+        return Response(serializer.errors)
+    
+    def delete(self, request, *args, **kwargs):
+        """
+        Delete VRE server from ~okeanos.
+        """ 
+        serializer = DeleteClusterSerializer(data=request.DATA)
+        if serializer.is_valid():
+            user_token = Token.objects.get(key=request.auth)
+            user = UserInfo.objects.get(user_id=user_token.user.user_id)
+            d_server = destroy_server_async.delay(user.okeanos_token, serializer.data['id'])
+            task_id = d_server.id
+            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+        # This will be send if user's delete server parameters are not de-serialized
+        # correctly.
+        return Response(serializer.errors)
+    

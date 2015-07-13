@@ -59,6 +59,7 @@ login_endpoint = '/api/users'
 cluster_endpoint = '/api/clusterchoices'
 job_endpoint = '/api/jobs'
 hdfs_endpoint = '/api/hdfs'
+vre_endpoint = '/api/vreservers'
 wait_timer_create = 30
 wait_timer_delete = 5
 const_cluster_status_destroyed = "0"

@@ -8,7 +8,7 @@ Serializers file for django rest framework.
 """
 
 from rest_framework import serializers
-from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, PublicNewsItem, OrkaImage
+from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, PublicNewsItem, OrkaImage, VreServer
 
 class OrkaImagesSerializer(serializers.ModelSerializer):
     """
@@ -111,10 +111,18 @@ class ClusterchoicesSerializer(serializers.Serializer):
     choices for cluster creation.
     """
     cluster_name = serializers.CharField(required=False)
+    
+    server_name = serializers.CharField(required=False)
 
     id = serializers.CharField(required=False)
 
     cluster_size = serializers.IntegerField(required=False)
+    
+    cpu = serializers.IntegerField(required=False)
+
+    ram = serializers.IntegerField(required=False)
+
+    disk = serializers.IntegerField(required=False)
 
     cpu_master = serializers.IntegerField(required=False)
 
@@ -154,6 +162,14 @@ class ClusterInfoSerializer(serializers.ModelSerializer):
                    'ram_slaves', 'disk_slaves', 'disk_template', 'os_image',
                    'master_IP', 'project_name', 'replication_factor', 'dfs_blocksize', 'task_id', 'state', 'hadoop_status')
 
+       
+class VreServerSerializer(serializers.ModelSerializer):
+    """ Serializer for VRE server model."""
+    class Meta:
+        model = VreServer
+        fields = ('id', 'server_name', 'action_date', 'server_status','cpu', 'ram', 'disk', 'disk_template',
+                  'os_image','server_IP', 'project_name', 'task_id', 'state')
+
 
 class UserInfoSerializer(serializers.ModelSerializer):
     """
@@ -164,11 +180,12 @@ class UserInfoSerializer(serializers.ModelSerializer):
     escience_token = serializers.RelatedField()
     id = serializers.SerializerMethodField('get_ember_id')
     clusters = ClusterInfoSerializer(many=True)
+    vreservers = VreServerSerializer(many=True)
 
     class Meta:
         model = UserInfo
         fields = ('id', 'user_id', 'user_name', 'user_theme', 'cluster', 'master_vm_password', 'error_message',
-                  'escience_token', 'clusters')
+                  'escience_token', 'clusters', 'vreservers')
 
     def number_of_clusters(self, obj):
         """
