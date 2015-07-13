@@ -99,11 +99,10 @@ class HdfsRequest(object):
 
 
 def start_drupal(server_ip, password, token):
-    """Start Drupal"""
-    command = "cd /var/lib/docker/containers/`/usr/bin/docker inspect drupal | grep \"Id\" | sed 's/[\" ,:]//g' "\
-    "| sed 's/Id//g'`;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/@test123/{0}/g' {{}} +;"\
-    "/etc/init.d/docker start;/usr/bin/docker start db;/usr/bin/docker exec -d db /usr/bin/mysqladmin -u root -p'@test123' password '{0}';"\
-    "/usr/bin/docker start drupal".format(token)
+    """Start Drupal and change mysql password to user token"""
+    command = "cd; myvar=$(docker inspect db | grep \"Id\" | sed 's/[\" ,:]//g' | sed 's/Id//g'); cd /var/lib/docker/containers/$myvar;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/@test123/"+token+"/g' {{}} +;"\
+    "/etc/init.d/docker start;/usr/bin/docker start db;docker inspect --format '{{ .NetworkSettings.IPAddress }}:9200' db | xargs wget --retry-connrefused --tries=5 -q --wait=3 --spider;/usr/bin/docker exec -d db /usr/bin/mysqladmin -u root -p'@test123' password '"+token+"';"\
+    "/usr/bin/docker start drupal"
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
     exec_command(ssh_client, command)
     
