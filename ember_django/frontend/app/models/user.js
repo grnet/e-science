@@ -39,6 +39,9 @@ App.Usercluster = DS.Model.extend({
 	user : DS.belongsTo('user', {
 		inverse : 'clusters'
 	}),
+	workflow_link : function(){
+		return 'http://%@:8888/oozie/editor/workflow/new/'.fmt(this.get('master_IP'));
+	}.property('master_IP'),
 	cluster_url : function() {
 		return 'http://%@:8088/cluster'.fmt(this.get('master_IP'));
 	}.property('master_IP'),
