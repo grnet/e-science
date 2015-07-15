@@ -57,7 +57,7 @@ sleep 60
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
 'apt-get update;
 apt-get install -y git python python-dev python-pip;
-pip install ansible==1.7.2;
+pip install ansible==1.9.2;
 pip install kamaki==0.13.1;
 exit'
 echo "Information" > $SERVERNAME.txt

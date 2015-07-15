@@ -14,7 +14,7 @@ before_install:
 install:
 - pip install kamaki==0.13.1
 - pip install paramiko
-- pip install ansible==1.7.2
+- pip install ansible==1.9.2
 - pip install django
 - pip install djorm-pgarray
 - pip install psycopg2
