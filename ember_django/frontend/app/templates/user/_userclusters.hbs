@@ -21,8 +21,8 @@ Grid should be sort-able by status & size -->
                             	<i {{bind-attr class="sortbyhdpstatusarrow:glyphicon:hide sortbyhdpstatusarrow:small:hide sortbyhdpstatus:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td><a href="#" {{action 'sortBy' content.clusters 'cluster_size'}}>Size</a>
                             	<i {{bind-attr class="sortbysizearrow:glyphicon:hide sortbysizearrow:small:hide sortbysize:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                            <td><a href="#" {{action 'sortBy' content.clusters 'cluster_size'}}>Workflow</a>
-                            	<i {{bind-attr class="sortbysizearrow:glyphicon:hide sortbysizearrow:small:hide sortbysize:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                            <td class="col col-sm-2"><a href="#" {{action 'sortBy' content.clusters 'workflow_enabled'}}>Workflow-enabled</a>
+                            	<i {{bind-attr class="sortbyworkflowarrow:glyphicon:hide sortbyworkflowarrow:small:hide sortbyworkflow:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td><a href="#" {{action 'sortBy' content.clusters 'master_IP'}}>Active IP</a>
                             	<i {{bind-attr class="sortbyurlarrow:glyphicon:hide sortbyurlarrow:small:hide sortbyurl:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td class="col col-sm-2"><a class="nounder">Actions</a></td>
@@ -39,9 +39,13 @@ Grid should be sort-able by status & size -->
                             </td>
                             <td><i {{bind-attr id='usercluster.hadoop_status_id' class="usercluster.cluster_hadoop_status_class"}}></i>{{usercluster.hadoop_status_verbose}}</td>
                             <td>{{usercluster.cluster_size}}</td>
+                            {{#if usercluster.hadoop_status_active}}
                             {{#if usercluster.ecosystem_or_cloudera}}
-                            <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover' data-title='Oozie Workflow Enabled'><a {{bind-attr href="usercluster.workflow_link"}} 
-                            	target="_blank" class="btn btn-primary btn-xs"><b class="glyphicon glyphicon-tasks"> Oozie</b></a></span></td>
+                            <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' {{bind-attr data-title='usercluster.workflow_tooltip_msg'}}><a {{bind-attr href="usercluster.workflow_link"}} 
+                            	target="_blank"><b class="glyphicon glyphicon-ok text-warning"></b></a></span></td>
+                            {{else}}
+                            <td></td>
+                            {{/if}}
                             {{else}}
                             <td></td>
                             {{/if}}
@@ -87,6 +91,16 @@ Grid should be sort-able by status & size -->
                             </td>
                             <td><i {{bind-attr id='usercluster.hadoop_status_id' class="usercluster.cluster_hadoop_status_class"}}></i>{{usercluster.hadoop_status_verbose}}</td>
                             <td>{{usercluster.cluster_size}}</td>
+                            {{#if usercluster.hadoop_status_active}}
+                            {{#if usercluster.ecosystem_or_cloudera}}
+                            <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' {{bind-attr data-title='usercluster.workflow_tooltip_msg'}}><a {{bind-attr href="usercluster.workflow_link"}} 
+                            	target="_blank"><b class="glyphicon glyphicon-ok text-warning"></b></a></span></td>
+                            {{else}}
+                            <td></td>
+                            {{/if}}
+                            {{else}}
+                            <td></td>
+                            {{/if}}
                             {{#if usercluster.hadoop_status_active}}
                             	<td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
                             {{else}}
