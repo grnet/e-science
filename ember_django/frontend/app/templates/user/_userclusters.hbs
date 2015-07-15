@@ -21,7 +21,7 @@ Grid should be sort-able by status & size -->
                             	<i {{bind-attr class="sortbyhdpstatusarrow:glyphicon:hide sortbyhdpstatusarrow:small:hide sortbyhdpstatus:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td><a href="#" {{action 'sortBy' content.clusters 'cluster_size'}}>Size</a>
                             	<i {{bind-attr class="sortbysizearrow:glyphicon:hide sortbysizearrow:small:hide sortbysize:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                            <td class="col col-sm-2"><a href="#" {{action 'sortBy' content.clusters 'workflow_enabled'}}>Workflow-enabled</a>
+                            <td><a href="#" {{action 'sortBy' content.clusters 'workflow_enabled'}}>Workflow-enabled</a>
                             	<i {{bind-attr class="sortbyworkflowarrow:glyphicon:hide sortbyworkflowarrow:small:hide sortbyworkflow:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                             <td><a href="#" {{action 'sortBy' content.clusters 'master_IP'}}>Active IP</a>
                             	<i {{bind-attr class="sortbyurlarrow:glyphicon:hide sortbyurlarrow:small:hide sortbyurl:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
@@ -41,7 +41,7 @@ Grid should be sort-able by status & size -->
                             <td>{{usercluster.cluster_size}}</td>
                             {{#if usercluster.hadoop_status_active}}
                             {{#if usercluster.ecosystem_or_cloudera}}
-                            <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' {{bind-attr data-title='usercluster.workflow_tooltip_msg'}}><a {{bind-attr href="usercluster.workflow_link"}} 
+                            <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover' {{bind-attr data-title='usercluster.workflow_tooltip_msg'}}><a {{bind-attr href="usercluster.workflow_link"}} 
                             	target="_blank"><b class="glyphicon glyphicon-ok text-warning"></b></a></span></td>
                             {{else}}
                             <td></td>
@@ -93,7 +93,7 @@ Grid should be sort-able by status & size -->
                             <td>{{usercluster.cluster_size}}</td>
                             {{#if usercluster.hadoop_status_active}}
                             {{#if usercluster.ecosystem_or_cloudera}}
-                            <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' {{bind-attr data-title='usercluster.workflow_tooltip_msg'}}><a {{bind-attr href="usercluster.workflow_link"}} 
+                            <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover' {{bind-attr data-title='usercluster.workflow_tooltip_msg'}}><a {{bind-attr href="usercluster.workflow_link"}} 
                             	target="_blank"><b class="glyphicon glyphicon-ok text-warning"></b></a></span></td>
                             {{else}}
                             <td></td>
