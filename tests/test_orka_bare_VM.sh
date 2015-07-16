@@ -26,7 +26,7 @@ mkdir .virtualenvs;
 cd .virtualenvs;
 virtualenv --system-site-packages orkaenv;
 . ~/.virtualenvs/orkaenv/bin/activate;
-pip install ansible==1.7.2;
+pip install ansible==1.9.2;
 cd ~;
 git clone '$GITREPO' -b develop;
 cd e-science/orka;

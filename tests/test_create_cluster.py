@@ -12,7 +12,7 @@ import sys
 import os
 from os.path import join, dirname, abspath
 
-sys.path.append(join(dirname(abspath(__file__)), '../ember_django'))
+sys.path.append(join(dirname(abspath(__file__)), '../webapp'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 # import objects we aim to test
 from backend.create_cluster import YarnCluster, ClientError, current_task, retrieve_pending_clusters

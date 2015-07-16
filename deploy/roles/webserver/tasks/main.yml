@@ -60,11 +60,11 @@
     tags: postimage
 
   - name: Django project syncdb
-    django_manage: command=syncdb app_path={{project_path}}/{{ember_django_dir}}
+    django_manage: command=syncdb app_path={{project_path}}/{{webapp_dir}}
     tags: postimage
 
   - name: Django project migrate
-    django_manage: command=migrate app_path={{project_path}}/{{ember_django_dir}}
+    django_manage: command=migrate app_path={{project_path}}/{{webapp_dir}}
     tags: postimage
 
   - name: Revert pg_hba.conf to default
@@ -78,7 +78,7 @@
     tags: postimage
 
   - name: Create Django superuser
-    shell: echo "from django.contrib.auth.models import User; User.objects.create_superuser('{{django_admin_name}}', '{{django_admin_email}}', '{{django_admin_password}}')" | python manage.py shell chdir={{my_project_dir}}/{{my_project_name}}/{{ember_django_dir}}
+    shell: echo "from django.contrib.auth.models import User; User.objects.create_superuser('{{django_admin_name}}', '{{django_admin_email}}', '{{django_admin_password}}')" | python manage.py shell chdir={{my_project_dir}}/{{my_project_name}}/{{webapp_dir}}
     tags: postimage
 
   - name: Copy uwsgi.ini file
@@ -112,14 +112,14 @@
     tags: postimage
     command: uwsgi --ini {{user_home}}/conf/uwsgi.ini
     args:
-      chdir: "{{project_path}}/{{ember_django_dir}}"
+      chdir: "{{project_path}}/{{webapp_dir}}"
 
   - name: Run collectstatic command
     tags: postimage
-    django_manage: command=collectstatic app_path={{project_path}}/{{ember_django_dir}}
+    django_manage: command=collectstatic app_path={{project_path}}/{{webapp_dir}}
 
   - name: Run celery as a daemon
     tags: postimage
     command: celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%h.log
     args:
-      chdir: "{{project_path}}/{{ember_django_dir}}"
+      chdir: "{{project_path}}/{{webapp_dir}}"

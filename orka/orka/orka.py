@@ -728,9 +728,6 @@ def main():
       
     common_create_parser.add_argument("name", help='The specified name of the cluster or Virtual Research Environment'
                               ' server. Will be prefixed by [orka]', type=checker.a_string_is)
-    common_create_parser.add_argument("--image", help='OS for the virtual machine.'
-                              ' Default is "Debian Base"', metavar='image',
-                              default=default_image)
 
     # images
     parser_images = orka_subparsers.add_parser('images', parents=[common_parser],
@@ -794,11 +791,15 @@ def main():
                               type=str.capitalize)
         parser_create.add_argument("project_name", help='~okeanos project name'
                               ' to request resources from ', type=checker.a_string_is)
+        parser_create.add_argument("--image", help='OS for the cluster.'
+                              ' Default is "Debian Base"', metavar='image',
+                              default=default_image)
         
         parser_create.add_argument("--replication_factor", metavar='replication_factor', default=2, type=checker.positive_num_is,
                               help='Replication factor for HDFS. Must be between 1 and number of slave nodes (cluster_size -1). Default is 2.')
         parser_create.add_argument("--dfs_blocksize", metavar='dfs_blocksize', default=128, type=checker.positive_num_is,
-                              help='HDFS block size (in MB). Default is 128.') 
+                              help='HDFS block size (in MB). Default is 128.')
+        
         
         parser_destroy.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
@@ -816,6 +817,7 @@ def main():
                               type=str.capitalize)
         parser_vre_create.add_argument("project_name", help='~okeanos project name'
                               ' to request resources from ', type=checker.a_string_is)
+        parser_vre_create.add_argument("image", help='OS for the VRE server.', metavar='image')
         
         parser_vre_destroy.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='vre_destroy')
         

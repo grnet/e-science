@@ -8,7 +8,7 @@ This script tests login from web form using selenium
 from selenium import webdriver
 import sys, os
 from os.path import join, dirname, abspath
-sys.path.append(join(dirname(abspath(__file__)), '../../ember_django'))
+sys.path.append(join(dirname(abspath(__file__)), '../../webapp'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
