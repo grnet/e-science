@@ -849,6 +849,7 @@ App.ClusterCreateController = Ember.Controller.extend({
                 that.set('info_popover_visible', false);
             } else {
                 that.set('info_popover_visible', true);
+                that.set('image_name', selected);
             }         
         }, 500);
         var image_name = this.get('image_name');
