@@ -12,7 +12,7 @@ import logging
 from backend.models import ClusterInfo, UserInfo
 from django_db_after_login import db_hadoop_update
 from celery import current_task
-from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS, NON_STATE_HADOOP_ACTIONS, REPORT, SUMMARY, \
+from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS,  REPORT, SUMMARY, \
     error_ansible_playbook, const_hadoop_status_started, hadoop_images_ansible_tags
 from okeanos_utils import set_cluster_state
 
@@ -120,7 +120,7 @@ def ansible_manage_cluster(cluster_id, action):
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
     pre_action_status = cluster.hadoop_status
-    if action in NON_STATE_HADOOP_ACTIONS:
+    if action == 'format':
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
         current_hadoop_status = action
@@ -135,8 +135,10 @@ def ansible_manage_cluster(cluster_id, action):
     elif 'hue' in cluster.os_image.lower():
         ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, 'hue', pre_action_status)
 
-    else:
+    elif 'hadoop' in cluster.os_image.lower():
         ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, 'hadoopbase', pre_action_status)
+    else:
+        ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, 'debianbase', pre_action_status)
 
     cluster_name_postfix_id = '%s%s%s' % (cluster.cluster_name, '-', cluster_id)
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name_postfix_id.replace(" ", "_")

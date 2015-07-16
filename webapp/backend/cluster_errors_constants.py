@@ -80,18 +80,14 @@ const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
 const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
 HADOOP_STATUS_ACTIONS = {"stop": ["0", "Stopping", "Stopped"],
                          "start": ["1", "Starting", "Started"],
-                         "format": ["2", "Formatting", "Formatted"],
-                         "HUEstart": ["4", "Starting Hue", "Started Hue"],
-                         "ECOSYSTEMstart": ["5", "Starting Ecosystem", "Started Ecosystem"],
-                         "CLOUDstart": ["6", "Starting Cloudera Components", "Started Cloudera Components"]}
+                         "format": ["2", "Formatting", "Formatted"]}
 
 REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}
 
-# List of Hadoop actions that do not update the  state field in database
-NON_STATE_HADOOP_ACTIONS = ['format','HUEstart','ECOSYSTEMstart','CLOUDstart']
 # Dictionary of Ansible tags of the hadoop images
-hadoop_images_ansible_tags = {"hadoopbase": {"stop": "stop", "start": "start"},
-                              "hue": {"start": "start,HUEstart", "stop": "stop,HUEstop"},
-                              "ecosystem": {"start": "start,ECOSYSTEMstart,HUEstart",
-                                            "stop": "stop,ECOSYSTEMstop,HUEstop"},
+hadoop_images_ansible_tags = {"debianbase": {"stop": "stop", "start": "start"},
+                              "hadoopbase": {"stop": "stop,FLUMEstop", "start": "start,FLUMEstart"},
+                              "hue": {"start": "start,FLUMEstart,HUEstart", "stop": "stop,FLUMEstop,HUEstop"},
+                              "ecosystem": {"start": "start,FLUMEstart,ECOSYSTEMstart,HUEstart",
+                                            "stop": "stop,FLUMEstop,ECOSYSTEMstop,HUEstop"},
                               "cloudera": {"start": "start,CLOUDstart", "stop": "stop,CLOUDstop"}}
