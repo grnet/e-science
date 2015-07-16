@@ -69,6 +69,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	list_of_roles : ['master', 'slaves'], // Possible roles for vms
 	number_of_roles : 2,
 	workflow_filter: false, // workflow_filter initial status
+	workflow_filter_empty : 'no images available',
 
 	// utility function takes String 'pattern' and numeric count
 	// and returns 'pattern' concatenated 'count' times.
@@ -198,7 +199,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			images = pithos_orka_images;
 		}
 		if (images.length == 0){
-			images.push('no images available');
+			images.push(this.get('workflow_filter_empty'));
 		}
 		return images;
 	}.property('workflow_filter', 'project_name'),
@@ -271,7 +272,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		aryButtons.each(function(i, button){
 			button.disabled = flag;
 		});
-		var aryControlIDs = ['os_systems','size_of_cluster','cluster_name','ssh_key','replication_factor','dfs_blocksize', 'id_components_info', 'id_hdfs_configuration'];
+		var aryControlIDs = ['os_systems','size_of_cluster','cluster_name','ssh_key','replication_factor','dfs_blocksize', 'id_components_info', 'id_hdfs_configuration', 'oozie_filter'];
 		$.each(aryControlIDs,function(i, elementID){
 			var element = $('#'+elementID);
 			element.prop('disabled',flag);
@@ -844,7 +845,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		var that = this;
         Ember.run.later(function() {
             var selected = $('#os_systems').val();
-            if (Ember.isBlank(selected)) {
+            if (Ember.isBlank(selected) || (selected == that.get('workflow_filter_empty'))) {
                 that.set('info_popover_visible', false);
             } else {
                 that.set('info_popover_visible', true);
@@ -866,7 +867,7 @@ App.ClusterCreateController = Ember.Controller.extend({
             msg = '%@<b>%@</b>: <span class="text text-info">%@</span><br>'.fmt(msg, key, popover_data[key]);
         }
         return msg; 
-	}.property('image_name'),
+	}.property('image_name', 'workflow_filter'),
 	
 	message_hue_login : function(){
 		this.get('controllers.clusterManagement').send('help_hue_login', this.get('operating_system'));

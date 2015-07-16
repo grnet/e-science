@@ -85,9 +85,11 @@
 						>
 							<b class="glyphicon glyphicon-info-sign"></b>
 						</button>
+						{{#if project_current.os_choices}}
 						<label>
-						{{view Ember.Checkbox checkedBinding="workflow_filter"}} Workflow Filter
+						{{view Ember.Checkbox checkedBinding="workflow_filter" id="oozie_filter"}} Workflow Filter
 						</label>
+						{{/if}}
 					</div>
 				</div>
 				<div class="form-group">
