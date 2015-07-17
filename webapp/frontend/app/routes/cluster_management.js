@@ -1,35 +1,51 @@
 App.ClusterManagementRoute = App.RestrictedRoute.extend({
 
 	// model for cluster management route
-	model: function(params) {
+	needs: ['clusterManagement','userWelcome'],
+	model: function(params, transition) {
 
 		var that = this;
 		// find the correct cluster
-		var selected_cluster = this.store.fetch('user', 1).then(function(user) {
+		var promise = this.store.fetch('user', 1).then(function(user) {
 	
 			// find all clusters of user
 			var clusters = user.get('clusters');
 			var length = clusters.get('length');
 			if (length > 0) {
+			    var bPending = false;
 				for (var i = 0; i < length; i++) {
 					// check for the cluster id
 					if (clusters.objectAt(i).get('id') == params["usercluster.id"])
 					{
-						that.controllerFor('clusterManagement').send('help_hue_login', clusters.objectAt(i).get('os_image'));						
-					 	return clusters.objectAt(i);
+					    var this_cluster = clusters.objectAt(i);
+						that.controllerFor('clusterManagement').send('help_hue_login', this_cluster.get('os_image'));
+                        if ((this_cluster.get('cluster_status') == '2') || (this_cluster.get('hadoop_status') == '2')) {
+                            that.controllerFor('clusterManagement').send('timer', true, that.store);
+                            bPending = true;
+                        }else{
+                            that.controllerFor('clusterManagement').send('timer',false);
+                        }
+					 	return this_cluster;
 					}
+				}
+				if (!bPending){
+				    that.controllerFor('clusterManagement').send('timer',false);
 				}
 			}
 	
  		}, function(reason) {
 			console.log(reason.message);
+			that.controllerFor('clusterManagement').send('timer',false);
 		});
-
-	 	return selected_cluster;
+	 	return promise;
 	},
 	
 	// possible actions
 	actions: {
+	    willTransition : function(transition) {
+            // leaving this route
+            this.controller.send('timer', false);
+        },
 		
 		takeAction : function(cluster) {
 			var self = this;
@@ -42,13 +58,12 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 					var count = self.controller.get('count');
 					var extend = Math.max(5, count);
 					self.controller.set('count', extend);
-					self.controller.set('create_cluster_start', true);
 					self.controller.send('timer', true, store);
 				}, function(reason) {
 					console.log(reason.message);
 					if (!Ember.isBlank(reason.message)){
 						var msg = {'msg_type':'danger','msg_text':reason.message};
-                        self.controller.send('addMessage',msg);
+                        self.controllerFor('userWelcome').send('addMessage',msg);
 					}
 				});
 				break;
@@ -58,13 +73,12 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 					var count = self.controller.get('count');
 					var extend = Math.max(5, count);
 					self.controller.set('count', extend);
-					self.controller.set('create_cluster_start', true);
 					self.controller.send('timer', true, store);
 				},function(reason){
 					console.log(reason.message);
 					if (!Ember.isBlank(reason.message)){
 						var msg = {'msg_type':'danger','msg_text':reason.message};
-                        self.controller.send('addMessage',msg);
+                        self.controllerFor('userWelcome').send('addMessage',msg);
 					}
 				});
 				break;
@@ -74,13 +88,12 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 					var count = self.controller.get('count');
 					var extend = Math.max(5, count);
 					self.controller.set('count', extend);
-					self.controller.set('create_cluster_start', true);
 					self.controller.send('timer', true, store);
 				},function(reason){
 					console.log(reason.message);
 					if (!Ember.isBlank(reason.message)){
 						var msg = {'msg_type':'danger','msg_text':reason.message};
-                        self.controller.send('addMessage',msg);
+                        self.controllerFor('userWelcome').send('addMessage',msg);
 					}
 				});
 				break;
@@ -90,13 +103,12 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 					var count = self.controller.get('count');
 					var extend = Math.max(5, count);
 					self.controller.set('count', extend);
-					self.controller.set('create_cluster_start', true);
 					self.controller.send('timer', true, store);
 				},function(reason){
 					console.log(reason.message);
 					if (!Ember.isBlank(reason.message)){
 						var msg = {'msg_type':'danger','msg_text':reason.message};
-                        self.controller.send('addMessage',msg);
+                        self.controllerFor('userWelcome').send('addMessage',msg);
 					}
 				});
 				break;
@@ -106,6 +118,10 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 		confirmAction : function(cluster, value) {
 			cluster.set('cluster_confirm_action', value);
 		}	
-	}
+	},
+	deactivate : function() {
+        // left this route
+        this.controller.send('timer', false);
+    }
 	  
 });
