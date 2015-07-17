@@ -200,6 +200,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 		}
 		if (images.length == 0){
 			images.push(this.get('workflow_filter_empty'));
+		} else {
+			this.set('operating_system', images[0]);
 		}
 		return images;
 	}.property('workflow_filter', 'project_name'),
@@ -796,6 +798,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('replication_factor', '');		
 		this.set('dfs_blocksize', '');
 		this.set('hue_message', '');
+		this.set('workflow_filter', false);
 		this.init_alerts();
 	},
 	// initialize alert messages
@@ -849,7 +852,6 @@ App.ClusterCreateController = Ember.Controller.extend({
                 that.set('info_popover_visible', false);
             } else {
                 that.set('info_popover_visible', true);
-                that.set('image_name', selected);
             }         
         }, 500);
         var image_name = this.get('image_name');
@@ -868,7 +870,7 @@ App.ClusterCreateController = Ember.Controller.extend({
             msg = '%@<b>%@</b>: <span class="text text-info">%@</span><br>'.fmt(msg, key, popover_data[key]);
         }
         return msg; 
-	}.property('image_name', 'workflow_filter'),
+	}.property('image_name'),
 	
 	message_hue_login : function(){
 		this.get('controllers.clusterManagement').send('help_hue_login', this.get('operating_system'));
