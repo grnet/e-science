@@ -80,18 +80,20 @@ const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
 const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
 HADOOP_STATUS_ACTIONS = {"stop": ["0", "Stopping", "Stopped"],
                          "start": ["1", "Starting", "Started"],
-                         "format": ["2", "Formatting", "Formatted"],
-                         "HUEstart": ["4", "Starting Hue", "Started Hue"],
-                         "ECOSYSTEMstart": ["5", "Starting Ecosystem", "Started Ecosystem"],
-                         "CLOUDstart": ["6", "Starting Cloudera Components", "Started Cloudera Components"]}
+                         "format": ["2", "Formatting", "Formatted"]}
 
 REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}
 
-# List of Hadoop actions that do not update the  state field in database
-NON_STATE_HADOOP_ACTIONS = ['format','HUEstart','ECOSYSTEMstart','CLOUDstart']
 # Dictionary of Ansible tags of the hadoop images
-hadoop_images_ansible_tags = {"hadoopbase": {"stop": "stop", "start": "start"},
-                              "hue": {"start": "start,HUEstart", "stop": "stop,HUEstop"},
-                              "ecosystem": {"start": "start,ECOSYSTEMstart,HUEstart",
-                                            "stop": "stop,ECOSYSTEMstop,HUEstop"},
+hadoop_images_ansible_tags = {"debianbase": {"stop": "stop", "start": "start"},
+                              "hadoopbase": {"stop": "stop,FLUMEstop", "start": "start,FLUMEstart"},
+                              "hue": {"start": "start,FLUMEstart,HUEstart", "stop": "stop,FLUMEstop,HUEstop"},
+                              "ecosystem": {"start": "start,FLUMEstart,ECOSYSTEMstart,HUEstart",
+                                            "stop": "stop,FLUMEstop,ECOSYSTEMstop,HUEstop"},
                               "cloudera": {"start": "start,CLOUDstart", "stop": "stop,CLOUDstop"}}
+# Dictionary of pithos images UUIDs with their corresponding properties
+pithos_images_uuids_properties = {"d3782488-1b6d-479d-8b9b-363494064c52": {"role":"yarn", "tags":"-t preconfig,postconfig", "image":"debianbase"},
+                             "3f1f5195-7769-44ba-a4c2-418d86e30f97": {"role":"yarn", "tags":"-t postconfig", "image":"hadoopbase"},
+                             "7a8423da-0cfb-414c-9491-1dcb81a87eb6": {"role":"yarn", "tags":"-t postconfig,hueconfig", "image":"hue"},
+                             "dc171a3d-09bf-469d-9b7a-d3fb5c0afebc": {"role":"yarn", "tags":"-t postconfig,hueconfig,ecoconfig", "image":"ecosystem"},
+                             "05f23bb1-5415-4da3-8e8a-93daa384b2f8": {"role":"cloudera", "tags":"-t preconfig,postconfig", "image":"cloudera"}}
