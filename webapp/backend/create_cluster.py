@@ -18,7 +18,7 @@ from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
     init_cyclades, init_cyclades_netclient, init_plankton, get_project_id, \
     destroy_cluster, get_user_quota, set_cluster_state, retrieve_pending_clusters, get_float_network_id, \
-    set_server_state
+    set_server_state, personality
 from django_db_after_login import db_cluster_create, db_server_create
 from cluster_errors_constants import *
 from celery import current_task
@@ -334,11 +334,12 @@ class YarnCluster(object):
         flavor_id = self.get_flavor_id('master')
         image_id = self.get_image_id()
         retval = self.check_all_resources()
+        server_ssh_keys = join(server_home_path, ".ssh/id_rsa.pub")
         # Create name of VRE server with [orka] prefix
         vre_server_name = '{0}-{1}'.format('[orka]',self.opts['server_name'])
         self.opts['server_name'] = vre_server_name
         try:
-            server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, project_id=self.project_id)
+            server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality(server_ssh_keys), project_id=self.project_id)
         except ClientError, e:
             # If no public IP is free, get a new one
             if e.status == status.HTTP_409_CONFLICT:
