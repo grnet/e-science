@@ -74,14 +74,6 @@ class YarnCluster(object):
         # Get resources of pending clusters
         self.pending_quota = retrieve_pending_clusters(self.opts['token'],
                                                        self.opts['project_name'])
-
-        # check image metadata in database and pithos and set orka_image_uuid accordingly
-        self.orka_image_uuid = OrkaImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
-        list_current_images = self.plankton.list_public(True, 'default')
-        for image in list_current_images:
-            if self.orka_image_uuid == image['id']:
-                break
-
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_cluster_size_quotas
@@ -306,9 +298,16 @@ class YarnCluster(object):
                 ' not match an existing id'
             raise ClientError(msg, error_flavor_id)
         retval = self.check_all_resources()
-        image_id = self.get_image_id()
-            
-        return flavor_master, flavor_slaves, image_id
+         # check image metadata in database and pithos and set orka_image_uuid accordingly
+        self.orka_image_uuid = OrkaImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
+        list_current_images = self.plankton.list_public(True, 'default')
+        for image in list_current_images:
+            if self.orka_image_uuid == image['id']:
+                return flavor_master, flavor_slaves, image['id']
+        msg = 'Image {0} exists on database but cannot be found or has different id'
+        ' on Pithos+'.format(self.opts['os_choice'])
+        raise ClientError(msg, error_flavor_id)         
+        
     
     def get_image_id(self):
         """
