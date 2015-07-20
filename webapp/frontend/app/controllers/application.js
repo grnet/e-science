@@ -93,6 +93,8 @@ App.ApplicationController = Ember.Controller.extend({
                 that.get('controllers.userWelcome').set('orkaImages', handlebarsData);
                 that.get('controllers.clusterManagement').set('orkaImages', handlebarsData);
                 that.get('controllers.helpImages').set('orkaImages', handlebarsData);
+                // decorate the model with an active_image property and set it to the first image loaded
+                that.get('controllers.helpImages').send('setActiveImage', handlebarsData.objectAt(0).get('image_pithos_uuid'));
                 that.get('controllers.clusterCreate').set('orkaImages', handlebarsData);
             }, function(reason) {
                 console.log(reason.message);
