@@ -24,7 +24,7 @@ from cluster_errors_constants import *
 from celery import current_task
 import os
 from rest_framework import status
-
+from backend.models import OrkaImage
 
 
 class YarnCluster(object):
@@ -39,7 +39,7 @@ class YarnCluster(object):
         self.HOSTNAME_MASTER_IP = '127.0.0.1'
         # master VM root password file, placeholder value
         self.pass_file = 'PLACEHOLDER'
-        self.hadoop_image = False
+        self.orka_image_uuid = False
         # List of cluster VMs
         self.server_dict = {}
         if self.opts['disk_template'] == 'Archipelago':
@@ -74,22 +74,13 @@ class YarnCluster(object):
         # Get resources of pending clusters
         self.pending_quota = retrieve_pending_clusters(self.opts['token'],
                                                        self.opts['project_name'])
-        # check escienceconf flag and set hadoop_image accordingly
+
+        # check image metadata in database and pithos and set orka_image_uuid accordingly
+        self.orka_image_uuid = OrkaImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
         list_current_images = self.plankton.list_public(True, 'default')
         for image in list_current_images:
-            if self.opts['os_choice'] == image['name']:
-                if 'escienceconf' in image['properties']:
-                    image_metadata = json.loads(image['properties']['escienceconf'])
-                    if image_metadata['ecosystem'] == 'True':
-                        self.hadoop_image = 'ecosystem'
-                    elif image_metadata['cloudera'] == 'True':
-                        self.hadoop_image = 'cloudera'
-                    elif image_metadata['hadoop'] == 'True' and image_metadata['hue'] == 'True':
-                        self.hadoop_image = 'hue'
-                    else:
-                        self.hadoop_image = 'hadoopbase'
-                else:
-                    self.hadoop_image = 'debianbase'
+            if self.orka_image_uuid == image['id']:
+                break
 
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
@@ -459,7 +450,7 @@ class YarnCluster(object):
                           'Installing and configuring YARN (3/3)')
 
             install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
-                         self.cluster_name_postfix_id, self.hadoop_image, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'])
+                         self.cluster_name_postfix_id, self.orka_image_uuid, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'])
 
         except Exception, e:
             logging.error(str(e.args[0]))

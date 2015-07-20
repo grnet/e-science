@@ -29,12 +29,12 @@
     when: is_master
 
   - name: Enable flume-agent to run by default
-    tags: start
+    tags: FLUMEstart
     command: sudo systemctl enable flume-agent
     when: is_master
 
   - name: Start Flume
-    tags: start
+    tags: FLUMEstart
     service: name=flume-agent state=restarted
     when: is_master
 
@@ -98,7 +98,7 @@
     when: is_master
 
   - name: Stop Flume
-    tags: stop
+    tags: FLUMEstop
     service: name=flume-agent state=stopped
     when: is_master
 

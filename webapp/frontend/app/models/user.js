@@ -39,6 +39,23 @@ App.Usercluster = DS.Model.extend({
 	user : DS.belongsTo('user', {
 		inverse : 'clusters'
 	}),
+	workflow_link : function(){
+		return 'http://%@:8888/oozie/editor/workflow/new/'.fmt(this.get('master_IP'));
+	}.property('master_IP'),
+	workflow_enabled : function(){
+		if (this.get('ecosystem_or_cloudera') && (this.get('hadoop_status_active'))){
+			return 'a';
+		}else{
+			return 'b';
+		}
+	}.property('ecosystem_or_cloudera', 'hadoop_status_active'),
+	workflow_tooltip_msg : function(){
+		if (this.get('selected_image') == 0){
+			return 'First login in Hue with username hduser';
+		} else if (this.get('selected_image') == 1){
+			return 'First login in Hue with username hdfs';
+		}
+	}.property('selected_image'),
 	cluster_url : function() {
 		return 'http://%@:8088/cluster'.fmt(this.get('master_IP'));
 	}.property('master_IP'),

@@ -16,6 +16,7 @@ App.UserWelcomeController = Ember.Controller.extend({
     sortbystatus : false,
     sortbyhdpstatus : false,
     sortbysize : false,
+    sortbyworkflow : false,
     sortbyurl : false,
     ip_of_master : '',
     orkaImages: [],
@@ -37,7 +38,7 @@ App.UserWelcomeController = Ember.Controller.extend({
                 }
             }
         });
-    }.property('sortdir', 'sortbyname', 'sortbydate', 'sortbystatus', 'sortbyhdpstatus', 'sortbysize', 'sortbyurl'),
+    }.property('sortdir', 'sortbyname', 'sortbydate', 'sortbystatus', 'sortbyhdpstatus', 'sortbysize', 'sortbyurl', 'sortbyworkflow'),
     master_vm_password_msg : function() {
         var pwd_message = this.get('content.master_vm_password');
         if (!Ember.isBlank(pwd_message)) {
@@ -72,6 +73,7 @@ App.UserWelcomeController = Ember.Controller.extend({
             this.set('sortbyhdpstatusarrow', false);
             this.set('sortbysizearrow', false);
             this.set('sortbyurlarrow', false);
+            this.set('sortbyworkflowarrow', false);
             this.set('sortedclusters', clusters);
             this.set('column', column);
             switch (column) {
@@ -104,6 +106,11 @@ App.UserWelcomeController = Ember.Controller.extend({
                 this.set('sortbyurlarrow', true);
                 this.set('sortbyurl', !this.get('sortbyurl'));
                 this.set('sortdir', this.get('sortbyurl'));
+                break;
+            case 'workflow_enabled':
+            	this.set('sortbyworkflowarrow', true);
+                this.set('sortbyworkflow', !this.get('sortbyworkflow'));
+                this.set('sortdir', this.get('sortbyworkflow'));
                 break;
             }
         },
