@@ -12,9 +12,10 @@ import logging
 from backend.models import ClusterInfo, UserInfo
 from django_db_after_login import db_hadoop_update
 from celery import current_task
-from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS,  REPORT, SUMMARY, \
-    error_ansible_playbook, const_hadoop_status_started, hadoop_images_ansible_tags
+from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS, REPORT, SUMMARY, \
+    error_ansible_playbook, const_hadoop_status_started, hadoop_images_ansible_tags, pithos_images_uuids_properties
 from okeanos_utils import set_cluster_state
+from backend.models import OrkaImage
 
 # Definitions of return value errors
 # Ansible constants
@@ -29,7 +30,7 @@ def install_yarn(*args):
     Calls ansible playbook for the installation of yarn and all
     required dependencies. Also  formats and starts yarn or cloudera hadoop distribution.
     Takes positional arguments as args tuple.
-    args: token, hosts_list, master_ip, cluster_name, hadoop_image, ssh_file, replication_factor, dfs_blocksize
+    args: token, hosts_list, master_ip, cluster_name, orka_image_uuid, ssh_file, replication_factor, dfs_blocksize
     """
 
     list_of_hosts = args[1]
@@ -124,21 +125,10 @@ def ansible_manage_cluster(cluster_id, action):
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
         current_hadoop_status = action
-    role = 'yarn'
-    if 'cdh' in cluster.os_image.lower():
-        role = 'cloudera'
-        ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, 'cloudera', pre_action_status)
-
-    elif 'ecosystem' in cluster.os_image.lower():
-        ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, 'ecosystem', pre_action_status)
-
-    elif 'hue' in cluster.os_image.lower():
-        ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, 'hue', pre_action_status)
-
-    elif 'hadoop' in cluster.os_image.lower():
-        ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, 'hadoopbase', pre_action_status)
-    else:
-        ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, 'debianbase', pre_action_status)
+    orka_image = OrkaImage.objects.get(image_name=cluster.os_image)
+    chosen_image = pithos_images_uuids_properties[orka_image.image_pithos_uuid]
+    role = chosen_image['role']
+    ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, chosen_image['image'], pre_action_status)
 
     cluster_name_postfix_id = '%s%s%s' % (cluster.cluster_name, '-', cluster_id)
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name_postfix_id.replace(" ", "_")
@@ -164,7 +154,7 @@ def ansible_manage_cluster(cluster_id, action):
         raise RuntimeError(msg)
 
 
-def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file, token, replication_factor,
+def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_file, token, replication_factor,
                            dfs_blocksize):
     """
     Calls the ansible playbook that installs and configures
@@ -177,19 +167,8 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     logging.log(REPORT, ' Ansible starts Yarn installation on master and '
                         'slave nodes')
     level = logging.getLogger().getEffectiveLevel()
-    role = 'yarn'
-    tags = '-t preconfig,postconfig'
-    if hadoop_image == 'hue':
-        # Hue -> use an available image (Hadoop and Hue pre-installed)
-        tags = '-t postconfig,hueconfig'
-    elif hadoop_image == 'hadoopbase':
-        # Hadoop -> use an available image (Hadoop pre-installed)
-        tags = '-t postconfig'
-    elif hadoop_image == 'cloudera':
-        role = 'cloudera'
-    elif hadoop_image == 'ecosystem':
-        # Ecosystem -> use an available image (Hadoop, Hue, Hive, Oozie, HBase, Pig, Spark pre-installed)
-        tags = '-t postconfig,hueconfig,ecoconfig'
+    # chosen image includes role and tags properties
+    chosen_image = pithos_images_uuids_properties[orka_image_uuid]
     # Create debug file for ansible
     debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
     ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
@@ -197,9 +176,8 @@ def ansible_create_cluster(hosts_filename, cluster_size, hadoop_image, ssh_file,
     uuid = UserInfo.objects.get(okeanos_token=token).uuid
     # Create command that executes ansible playbook
     ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
-    '-f {0} -e "choose_role={1} ssh_file_name={2} token={3} '.format(str(cluster_size), role, ssh_file, token) + \
-    'dfs_blocksize={0}m dfs_replication={1} uuid={2} " {3}'.format(dfs_blocksize, replication_factor, uuid, tags)
-
+    '-f {0} -e "choose_role={1} ssh_file_name={2} token={3} '.format(str(cluster_size), chosen_image['role'], ssh_file, token) + \
+    'dfs_blocksize={0}m dfs_replication={1} uuid={2} " {3}'.format(dfs_blocksize, replication_factor, uuid, chosen_image['tags'])
 
     # Execute ansible
     ansible_code += ansible_log
