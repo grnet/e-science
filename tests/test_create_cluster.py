@@ -18,6 +18,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 from backend.create_cluster import YarnCluster, ClientError, current_task, retrieve_pending_clusters
 from backend.cluster_errors_constants import error_quotas_cluster_size, error_quotas_network, \
     error_get_ip, error_quotas_cpu, error_quotas_ram, error_quotas_cyclades_disk
+from backend.models import OrkaImage
 
 def mock_createcluster(*args):
     """ :returns proper master_ip and image list types with dummy values. """
