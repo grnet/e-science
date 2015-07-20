@@ -177,6 +177,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
     added fields.
     """
     cluster = serializers.SerializerMethodField('number_of_clusters')
+    vrenum = serializers.SerializerMethodField('number_of_vres')
     escience_token = serializers.RelatedField()
     id = serializers.SerializerMethodField('get_ember_id')
     clusters = ClusterInfoSerializer(many=True)
@@ -184,7 +185,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserInfo
-        fields = ('id', 'user_id', 'user_name', 'user_theme', 'cluster', 'master_vm_password', 'error_message',
+        fields = ('id', 'user_id', 'user_name', 'user_theme', 'cluster', 'vrenum', 'master_vm_password', 'error_message',
                   'escience_token', 'clusters', 'vreservers')
 
     def number_of_clusters(self, obj):
@@ -194,6 +195,14 @@ class UserInfoSerializer(serializers.ModelSerializer):
         clusters = ClusterInfo.objects.all().filter(user_id=obj.user_id). \
             filter(cluster_status=1).count()
         return clusters
+    
+    def number_of_vres(self, obj):
+        """
+        Function that calculates the number of active VREs of a UserInfo instance.
+        """
+        vres = VreServer.objects.all().filter(user_id=obj.user_id). \
+            filter(server_status=1).count()
+        return vres
 
     def get_ember_id(self, obj):
         """"Always returns id 1 for ember.js"""

@@ -130,6 +130,9 @@ App.UserSerializer = DS.RESTSerializer.extend(DS.EmbeddedRecordsMixin, {
     attrs : {
         clusters : {
             embedded : 'always',
+        },
+        vreservers : {
+            embedded : 'always',
         }
     },
 });

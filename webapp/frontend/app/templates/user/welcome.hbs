@@ -5,7 +5,7 @@
 	<div class="col col-sm-3"></div>
 	<div class="alert alert-dismissable alert-success col-sm-6">
 		<button type="button" class="close" data-dismiss="alert">×</button>
-		You are <strong>logged in.</strong> You can {{#link-to 'cluster.create'}}create cluster{{/link-to}}  from the Services menu.
+		You are <strong>logged in.</strong> You can create a {{#link-to 'cluster.create'}}cluster{{/link-to}} or {{#link-to 'cluster.create' class="disabled"}}<s> VRE </s>{{/link-to}} from the Services menu.
 	</div>
 	<div class="col col-sm-3"></div>
 	</div>
@@ -19,6 +19,9 @@
 		  <li class="list-group-item text-md">
 		  	<span class="badge">{{model.cluster}}</span><span class="h4">Active Clusters: </h4>
 		  </li>
+		  <li class="list-group-item text-md">
+            <span class="badge">{{model.vrenum}}</span><span class="h4">Active VREs: </h4>
+          </li>
 		</ul>
 	</div>
 	<div class="col col-sm-7 pull-right">
