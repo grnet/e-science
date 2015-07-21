@@ -1,0 +1,22 @@
+# Define a memory channel on agent.
+agent.channels.memory-channel.type = memory
+
+# Define a source on agent and connect to channel memory-channel.
+agent.sources.source-dir.type=spooldir
+agent.sources.source-dir.spoolDir=/usr/local/flume/tmp
+agent.sources.source-dir.channels = memory-channel
+
+# Define a sink that outputs to logger.
+agent.sinks.log-sink.channel = memory-channel
+agent.sinks.log-sink.type = logger
+
+# Define a sink that outputs to hdfs.
+agent.sinks.hdfs-sink.channel = memory-channel
+agent.sinks.hdfs-sink.type = hdfs
+agent.sinks.hdfs-sink.hdfs.path = hdfs://{{ hostvars[groups['master'][0]].inventory_hostname_short}}:9000/user/hduser/flume/
+agent.sinks.hdfs-sink.hdfs.fileType = DataStream
+
+# Activate.
+agent.channels = memory-channel
+agent.sources = source-dir
+agent.sinks = hdfs-sink

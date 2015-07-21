@@ -1,0 +1,57 @@
+<div class="table-responsive">
+    <table class="table table-striped table-hover table-border">
+        <thead class="h4 text-left">
+            <tr>
+                <td class="col col-sm-2"><a href="#" {{action 'sortBy' content.vreservers 'server_name'}}>Name</a> 
+                	<i {{bind-attr class="sortbynamearrow:glyphicon:hide sortbynamearrow:small:hide sortbyname:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                <td><a href="#" {{action 'sortBy' content.vreservers 'action_date'}}>Creation Date</a> 
+                	<i {{bind-attr class="sortbydatearrow:glyphicon:hide sortbydatearrow:small:hide sortbydate:glyphicon-arrow-up:glyphicon-arrow-down"}}></i> </td>
+                <td id="id_label_vre_status"><a href="#" {{action 'sortBy' content.vreservers 'server_status'}}>Server Status</a> 
+                	<i {{bind-attr class="sortbystatusarrow:glyphicon:hide sortbystatusarrow:small:hide sortbystatus:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                <td><a href="#" {{action 'sortBy' content.vreservers 'project_name'}}>Project Name</a>
+                	<i {{bind-attr class="sortbyworkflowarrow:glyphicon:hide sortbyworkflowarrow:small:hide sortbyworkflow:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                <td><a href="#" {{action 'sortBy' content.vreservers 'server_IP'}}>Access IP</a>
+                	<i {{bind-attr class="sortbyurlarrow:glyphicon:hide sortbyurlarrow:small:hide sortbyurl:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                <td class="col col-sm-2"><a class="nounder">Actions</a></td>
+            </tr>
+        </thead>
+        <tbody class="text-left">
+            {{#each vreserver in model.vreservers}}
+            <tr>
+            	<td {{bind-attr id='usercluster.cluster_name_id'}}>{{#link-to 'cluster.management' vreserver.id}}{{vreserver.server_name}}{{/link-to}}</td>
+                <td>{{formatDate vreserver.action_date format='shortdatetime'}}</td>
+                <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='usercluster.cluster_status_verbose'}}> 
+                	<i {{bind-attr id='usercluster.cluster_status_id' class='usercluster.cluster_status_class'}}></i> {{usercluster.cluster_status_pending}}</span>
+                </td>
+                <td><i {{bind-attr id='usercluster.hadoop_status_id' class="usercluster.cluster_hadoop_status_class"}}></i>{{usercluster.hadoop_status_verbose}}</td>
+                {{#if usercluster.hadoop_status_active}}
+                	<td><a {{bind-attr id='usercluster.cluster_ip_id' href='usercluster.cluster_url'}} target="_blank">{{usercluster.master_IP}}</a></td>
+                {{else}}
+                	<td><span class="text-muted">{{usercluster.master_IP}}</span></td>
+                {{/if}}
+                <td>
+                {{#if usercluster.cluster_status_active}}
+                {{#if usercluster.cluster_confirm_action}}
+                <div class="btn-group  btn-block">
+				    <a role="button" {{bind-attr id='usercluster.cluster_confirm_id'}} {{action 'takeAction' usercluster}} class="btn btn-danger btn-xs active">{{usercluster.cluster_confirm_action_verbose}}</a>
+				    <a role="button" {{action 'confirmAction' usercluster false}} class="btn btn-danger btn-xs active">x</a>
+				</div>
+                {{else}}
+                <div class='btn-group btn-block'>
+                	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY CLUSTER' ><button {{bind-attr id='usercluster.cluster_destroy_id'}} class="btn btn-xs btn-default"{{action 'confirmAction' usercluster 'cluster_delete'}}>
+                		<b {{bind-attr class='usercluster.cluster_status_class_destroy'}}></b> </button></div>
+                </div>
+                {{/if}}	
+                {{/if}}
+                </td>
+            </tr>
+            </tr>
+            {{else}}
+            <tr>
+                <td colspan="7" class="text-center text-info">No user VREs found</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
+
