@@ -186,10 +186,23 @@ HADOOP_STATUS_CHOICES = (
      ("2", "Pending"),
  )
 
+class VreImage(models.Model):
+    """Definition of orka VRE image Components."""
+    id = models.AutoField("VreImage ID", primary_key=True, null=False,
+                               help_text="Auto-increment VreImage id")
+    image_name = models.CharField("Pithos image name", max_length=255, null=False,
+                                    help_text="Pithos Image Name")
+    image_pithos_uuid = models.CharField("Linked pithos image unique identifier", unique=True, max_length=255, null=False, blank=False,
+                                    help_text="Pithos Image UUID")
+    image_components = models.CharField("VreImage components metadata", max_length=4080, null=True, blank=True,
+                                        help_text="VreImage components metadata as a json dump")
+    def __unicode__(self):
+        return ("%s : %s") % (self.image_pithos_uuid, self.image_name)
+
 class OrkaImage(models.Model):
-    """Definition of orka image Components."""
+    """Definition of orka VM image Components."""
     id = models.AutoField("OrkaImage ID", primary_key=True, null=False,
-                               help_text="Auto-increment orkaimage id")
+                               help_text="Auto-increment orkaimage VM id")
     image_name = models.CharField("Pithos image name", max_length=255, null=False,
                                     help_text="Pithos Image Name")
     image_pithos_uuid = models.CharField("Linked pithos image unique identifier", unique=True, max_length=255, null=False, blank=False,

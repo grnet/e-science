@@ -188,6 +188,7 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
     if status == "Active":
         cluster.cluster_status = const_cluster_status_active
         user.master_vm_password = ''
+        user.error_message = ''
 
     elif status == "Pending":
         cluster.cluster_status = const_cluster_status_pending

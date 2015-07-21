@@ -10,10 +10,10 @@ App.User = DS.Model.extend({
 		async : true,
 		inverse : 'user'
 	}), 					      // user cluster records
-	vreservers : DS.hasMany('vreserver', {
+	vreservers : DS.hasMany('uservreserver', {
 	    async : true,
 	    inverse : 'user'
-	}),                           // user VRE records
+	}),                           // user VRE server records
 	cluster : attr(), // number of user active clusters
 	vrenum : attr(), // number of user active VREs 
 	escience_token : attr(),
@@ -22,7 +22,7 @@ App.User = DS.Model.extend({
 });
 
 // Information about user's VREs
-App.Vreserver = DS.Model.extend({
+App.Uservreserver = DS.Model.extend({
     server_name : attr('string'), 
     action_date : attr('isodate'), 
     server_status : attr('string'),
@@ -39,6 +39,8 @@ App.Vreserver = DS.Model.extend({
     user : DS.belongsTo('user', {
         inverse : 'vreservers'
     }),
+    // computed properties
+    
 });
 
 // Information about user's clusters
