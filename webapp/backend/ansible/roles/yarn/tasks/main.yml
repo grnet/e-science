@@ -200,13 +200,14 @@
     tags: postconfig
     shell: find -name '.gitignore' | xargs rm chdir={{hadoop_home}}
 
-  - name: create app/hadoop/tmp to store HDFS
+  - name: create app/hadoop/tmp to store HDFS and /usr/local/flume for Debian Base
     tags: postconfig
     action: command {{item}}
     with_items:
       - mkdir -p /app/hadoop/tmp
       - chown hduser:hadoop /app/hadoop/tmp
       - chmod 750 /app/hadoop/tmp
+      - mkdir -p /usr/local/flume/conf
 
   - name: copy yarn configuration xml and kamakirc files in every node
     tags: postconfig
