@@ -497,7 +497,7 @@ def get_float_network_id(cyclades_network_client, project_id):
 
         return error_get_ip
     
-def personality(self, ssh_keys_path='', pub_keys_path=''):
+def personality(ssh_keys_path='', pub_keys_path=''):
         """Personality injects ssh keys to the virtual machines we create"""
         personality = []
         if ssh_keys_path and pub_keys_path:
@@ -639,7 +639,7 @@ class Cluster(object):
         try:
             servers.append(self.client.create_server(
                 server_name, self.flavor_id_master, self.image_id,
-                personality=self.personality(ssh_k_path, pub_k_path),
+                personality=personality(ssh_k_path, pub_k_path),
                 project_id=self.project_id))
         except ClientError:
             self.clean_up(servers=servers, network=new_network)
@@ -652,7 +652,7 @@ class Cluster(object):
                 server_name = '%s%s%s' % (self.prefix, '-', i)
                 servers.append(self.client.create_server(
                     server_name, self.flavor_id_slave, self.image_id,
-                    personality=self.personality(ssh_k_path, pub_k_path),
+                    personality=personality(ssh_k_path, pub_k_path),
                     networks=empty_ip_list, project_id=self.project_id))
 
             except ClientError:

@@ -47,13 +47,6 @@ def mock_createpassfile(*args):
 def mock_sleep(*args):
     """ Noop time.sleep(). Returns immediately. """
     print 'in mock sleep'
-    
-def mock_OrkaImage_get(image_name):
-    """ """
-    print 'in mock OrkaImage'
-    d = dict()
-    d['image_pithos_uuid'] = 'uuid'
-    return d.keys()
 
 
 class MockAstakos():
@@ -169,7 +162,6 @@ def mock_get_project_id(*args):
 @patch('backend.create_cluster.reroute_ssh_prep', mock_reroute_ssh_prep)
 @patch('backend.create_cluster.install_yarn', mock_install_yarn)
 @patch('backend.create_cluster.sleep', mock_sleep)
-@patch('backend.create_cluster.OrkaImage.objects.get', mock_OrkaImage_get)
 class TestCreateCluster(TestCase):
     """ Test cases with separate un-managed resources mocked. """
     # initialize objects common to all tests in this test case
@@ -354,7 +346,6 @@ class TestCreateCluster(TestCase):
     @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
     @patch('backend.create_cluster.init_cyclades_netclient', mock_init_cyclades_netclient)
     @patch('backend.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
-    @patch('backend.create_cluster.OrkaImage.objects.get', mock_OrkaImage_get)
     def test_check_all_resources(self):
         # arrange
         c_yarn_cluster = YarnCluster(self.opts)
