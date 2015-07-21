@@ -44,4 +44,24 @@
 	</div>
 </div>
 <hr>
-{{partial 'user/userclusters'}}
+<div class="row">
+    <div class="col col-sm-12">
+        <ul id="id_user_tabs" class="nav nav-tabs">
+            <li class="active">
+                <a data-toggle="tab" href="#id_userclusters_tab"><span class="h4 text-left">User Clusters ({{model.clusters.length}})</span></a>
+            </li>
+            <li>
+                <a data-toggle="tab" href="#id_uservres_tab"><span class="h4 text-left">User VREs ({{model.vreservers.length}})</span></a>
+            </li>
+        </ul>
+        <div id="id_clusters_and_vres" class="tab-content">
+            <div id="id_userclusters_tab" class="tab-pane active">
+                {{partial 'user/userclusters'}}
+            </div>
+            <div id="id_uservres_tab" class="tab-pane">
+                {{partial 'user/uservres'}}
+            </div>
+        </div>
+    </div>
+</div>
+

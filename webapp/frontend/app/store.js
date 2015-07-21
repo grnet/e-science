@@ -70,6 +70,14 @@ App.UserclusterAdapter = DS.ActiveModelAdapter.extend({
     }
 });
 
+App.VreserverSerializer = DS.RESTSerializer.extend({
+   attrs : {
+       server_IP : {
+           key : 'server_IP'
+       }
+   } 
+});
+
 App.UserclusterSerializer = DS.RESTSerializer.extend({
     attrs : {
         master_IP : {
