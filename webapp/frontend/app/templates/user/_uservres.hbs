@@ -18,28 +18,28 @@
         <tbody class="text-left">
             {{#each vreserver in model.vreservers}}
             <tr>
-            	<td {{bind-attr id='vreserver.server_name_id'}}>{{#link-to 'vreserver.management' vreserver.id}}{{vreserver.server_name}}{{/link-to}}</td>
+            	<td {{bind-attr id='vreserver.id_server_name'}}>{{#link-to 'vreserver.management' vreserver.id}}{{vreserver.server_name}}{{/link-to}}</td>
                 <td>{{formatDate vreserver.action_date format='shortdatetime'}}</td>
-                <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='vreserver.server_status_verbose'}}> 
-                	<i {{bind-attr id='vreserver.server_status_id' class='vreserver.server_status_class'}}></i> {{vreserver.server_status_pending}}</span>
+                <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='vreserver.description_vre_status'}}> 
+                	<i {{bind-attr id='vreserver.id_server_status' class='vreserver.class_vre_status'}}></i> {{vreserver.message_vre_status_pending}}</span>
                 </td>
-                <td><i {{bind-attr id='vreserver.hadoop_status_id' class="vreserver.cluster_hadoop_status_class"}}></i>{{vreserver.project_name}}</td>
-                {{#if vreserver.server_status_active}}
-                	<td><a {{bind-attr id='vreserver.server_ip_id' href='vreserver.server_url'}} target="_blank">{{vreserver.server_IP}}</a></td>
+                <td>{{vreserver.project_name}}</td>
+                {{#if vreserver.boolean_vre_status_active}}
+                	<td><a {{bind-attr id='vreserver.id_server_ip' href='vreserver.vre_access_url'}} target="_blank">{{vreserver.server_IP}}</a></td>
                 {{else}}
                 	<td><span class="text-muted">{{vreserver.server_IP}}</span></td>
                 {{/if}}
                 <td>
-                {{#if vreserver.server_status_active}}
-                {{#if vreserver.server_confirm_action}}
+                {{#if vreserver.boolean_vre_status_active}}
+                {{#if vreserver.action_server_confirm}}
                 <div class="btn-group  btn-block">
-				    <a role="button" {{bind-attr id='usercluster.cluster_confirm_id'}} {{action 'takeAction' vreserver}} class="btn btn-danger btn-xs active">{{vreserver.server_confirm_action_verbose}}</a>
-				    <a role="button" {{action 'confirmAction' usercluster false}} class="btn btn-danger btn-xs active">x</a>
+				    <a role="button" {{bind-attr id='vreserver.id_server_confirm'}} {{action 'takeVreAction' vreserver}} class="btn btn-danger btn-xs active">{{vreserver.description_action_server_confirm}}</a>
+				    <a role="button" {{action 'confirmVreAction' vreserver false}} class="btn btn-danger btn-xs active">x</a>
 				</div>
                 {{else}}
                 <div class='btn-group btn-block'>
-                	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY SERVER'><button {{bind-attr id='vreserver.server_destroy_id'}} class="btn btn-xs btn-default"{{action 'confirmAction' vreserver 'server_delete'}}>
-                		<b {{bind-attr class='vreserver.server_status_class_destroy'}}></b> </button></div>
+                	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY SERVER'><button {{bind-attr id='vreserver.id_server_destroy'}} class="btn btn-xs btn-default"{{action 'confirmVreAction' vreserver 'server_delete'}}>
+                		<b {{bind-attr class='vreserver.class_button_vre_destroy'}}></b> </button></div>
                 </div>
                 {{/if}}	
                 {{/if}}
