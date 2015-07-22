@@ -26,12 +26,12 @@ App.Uservreserver = DS.Model.extend({
     server_name : attr('string'), 
     action_date : attr('isodate'), 
     server_status : attr('string'),
+    server_IP : attr('string'),
     cpu : attr(), 
     ram : attr(), 
     disk : attr(), 
     disk_template : attr(),
     os_image : attr(),
-    server_IP : attr(), 
     project_name : attr(), 
     task_id : attr(), 
     state : attr(),
@@ -40,7 +40,89 @@ App.Uservreserver = DS.Model.extend({
         inverse : 'vreservers'
     }),
     // computed properties
-    
+    vre_access_url : function(){
+        return 'http://%@'.fmt(this.get('server_IP'));
+    }.property('server_IP'),
+    class_vre_status : function (){
+        var status = this.get('server_status');
+        switch (status) {
+        case "0":  //destroyed
+            return "glyphicon glyphicon-trash text-danger";
+        case "1":  //active
+            return "glyphicon glyphicon-ok text-success";
+        case "2":  //pending
+            return "glyphicon glyphicon-time text-warning";
+        case "3":  //failed
+            return "glyphicon glyphicon-remove text-danger";
+        default:   //unknown
+            return "glyphicon glyphicon-question-sign text-muted";
+        }
+    }.property('server_status'),
+    description_vre_status : function(){
+        var status = this.get('server_status');
+        switch (status) {
+        case "0":
+            return "DESTROYED";
+        case "1":
+            return "ACTIVE";
+        case "2":
+            return "PENDING";
+        case "3":
+            return "FAILED";
+        default:
+            return "UNKNOWN";
+        }
+    }.property('server_status'),
+    boolean_vre_status_active : function(){
+        return this.get('server_status') == "1" ? true : false;
+    }.property('server_status'),
+    boolean_vre_status_pending : function(){
+        return this.get('server_status') == "1" ? true : false;
+    }.property('server_status'),
+    class_button_vre_destroy : function(){
+        return this.get('boolean_vre_status_active') ? "glyphicon glyphicon-trash text-danger" : "";
+    }.property('boolean_vre_status_active'),
+    message_vre_status_pending : function(){
+        var status = this.get('server_status');
+        if (status == '2'){ // pending
+            return this.get('state') || 'Pending...'; // message from celery if set
+        }else{
+            return '';
+        }
+    }.property('server_status'),
+    action_server_confirm : function(key, value){
+        this.set('confirm_action', value);
+        return this.get('confirm_action');
+    }.property(),
+    description_action_server_confirm : function(key, value){
+        var confirm_action = this.get('action_server_confirm');
+        switch(confirm_action){
+        case 'server_delete':
+            return 'Destroy Server';
+        default:
+            return 'Confirm';
+        }
+    }.property('action_server_confirm'),
+    // create dynamic html element ids
+    server_name_noprefix : function(){
+        // remove the '[orka]-' prefix
+        return this.get('server_name').slice(7);
+    }.property('server_name'),
+    id_server_name : function(key){
+        return '%@%@'.fmt(key,this.get('server_name_noprefix'));
+    }.property('server_name_noprefix'),
+    id_server_status :function(key){
+        return '%@%@'.fmt(key,this.get('server_name_noprefix'));
+    }.property('server_name_noprefix'),
+    id_server_ip : function(key){
+        return '%@%@'.fmt(key,this.get('server_name_noprefix'));
+    }.property('server_name_noprefix'),
+    id_server_confirm : function(key){
+        return '%@%@'.fmt(key,this.get('server_name_noprefix'));
+    }.property('server_name_noprefix'),
+    id_server_destroy : function(key){
+        return '%@%@'.fmt(key,this.get('server_name_noprefix'));
+    }.property('server_name_noprefix')
 });
 
 // Information about user's clusters

@@ -5,7 +5,7 @@ App.VreserverManagementRoute = App.RestrictedRoute.extend({
 	model: function(params, transition) {
 
 		var that = this;
-		// find the correct cluster
+		// find the correct vre server
 		var promise = this.store.fetch('user', 1).then(function(user) {
 	
 			// find all clusters of user
@@ -47,31 +47,30 @@ App.VreserverManagementRoute = App.RestrictedRoute.extend({
             this.controller.send('timer', false);
         },
 		
-		takeAction : function(vreserver) {
+		takeVreAction : function(vreserver) {
 			var self = this;
-			var store = this.store;
-			var action = vreserver.get('cluster_confirm_action');
-			vreserver.set('cluster_confirm_action', false);
-			switch(action) {
-			case 'server_delete':
-				vreserver.destroyRecord().then(function(data) {
-					var count = self.controller.get('count');
-					var extend = Math.max(5, count);
-					self.controller.set('count', extend);
-					self.controller.send('timer', true, store);
-				}, function(reason) {
-					console.log(reason.message);
-					if (!Ember.isBlank(reason.message)){
-						var msg = {'msg_type':'danger','msg_text':reason.message};
+            var store = this.store;
+            var action = vreserver.get('action_server_confirm');
+            vreserver.set('action_server_confirm', false);
+            switch(action) {
+            case 'server_delete':
+                vreserver.destroyRecord().then(function(data) {
+                    var count = self.controller.get('count');
+                    var extend = Math.max(5, count);
+                    self.controller.set('count', extend);
+                    self.controller.send('timer', true, store);
+                }, function(reason) {
+                    console.log(reason.message);
+                    if (!Ember.isBlank(reason.message)){
+                        var msg = {'msg_type':'danger','msg_text':reason.message};
                         self.controllerFor('userWelcome').send('addMessage',msg);
-					}
-				});
-				break;
-			}
+                    }
+                });
+                break;
+            }
 		},
-		
-		confirmAction : function(vreserver, value) {
-			vreserver.set('cluster_confirm_action', value);
+		confirmVreAction : function(vreserver, value) {
+			vreserver.set('action_server_confirm', value);
 		}	
 	},
 	deactivate : function() {

@@ -1,7 +1,7 @@
 // User Welcome controller
 App.UserWelcomeController = Ember.Controller.extend({
 
-    needs : 'clusterCreate',
+    needs : ['clusterCreate','vreserverCreate'],
     user_messages : [],
     // blacklist user messages explicitly removed during polling
     blacklist_messages : {},
@@ -20,6 +20,7 @@ App.UserWelcomeController = Ember.Controller.extend({
     sortbyurl : false,
     ip_of_master : '',
     orkaImages: [],
+    vreImages: [],
     sortedCollection : function() {
         // sorts content (clusters) based on properties
         return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, {

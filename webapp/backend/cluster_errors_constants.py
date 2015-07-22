@@ -97,3 +97,7 @@ pithos_images_uuids_properties = {"d3782488-1b6d-479d-8b9b-363494064c52": {"role
                              "7a8423da-0cfb-414c-9491-1dcb81a87eb6": {"role":"yarn", "tags":"-t postconfig,hueconfig", "image":"hue"},
                              "dc171a3d-09bf-469d-9b7a-d3fb5c0afebc": {"role":"yarn", "tags":"-t postconfig,hueconfig,ecoconfig", "image":"ecosystem"},
                              "05f23bb1-5415-4da3-8e8a-93daa384b2f8": {"role":"cloudera", "tags":"-t preconfig,postconfig", "image":"cloudera"}}
+# Dictionary of pithos vre images UUIDs with their corresponding actions
+pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"action":"drupal", "image":"drupal"},
+                               "745ca905-dfa1-4da4-b956-bb59601112aa": {"action":"", "image":"redmine"},
+                               "63f0fee9-49b6-48db-baef-5e53a35ddc39": {"action":""}, "image":"mediawiki"}

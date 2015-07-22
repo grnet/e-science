@@ -24,7 +24,7 @@ from cluster_errors_constants import *
 from celery import current_task
 import os
 from rest_framework import status
-from backend.models import OrkaImage
+from backend.models import OrkaImage, VreImage
 
 
 class YarnCluster(object):
@@ -378,7 +378,17 @@ class YarnCluster(object):
         # Wait for VRE server to be pingable
         sleep(15)
         try:
-            start_drupal(server_ip,server_pass,self.opts['token'])
+            vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
+#             list_current_images = self.plankton.list_public(True, 'default')
+#             for image in list_current_images:
+            if vre_image_uuid == server['image']['id']:
+                chosen_vre_image = pithos_vre_images_uuids_actions[vre_image_uuid]
+                if chosen_vre_image['action'] == 'drupal':
+                    start_drupal(server_ip,server_pass,self.opts['token'])
+            else:
+                msg = 'Image {0} exists on database but cannot be found or has different id'
+                ' on Pithos+'.format(self.opts['os_choice'])
+                raise ClientError(msg, error_flavor_id) 
         except RuntimeError, e:
             # Exception is raised if a VRE start command is not executed correctly and informs user of its VRE properties
             # so user can ssh connect to the VRE server or delete the server from orkaCLI.
