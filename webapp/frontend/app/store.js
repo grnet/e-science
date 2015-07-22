@@ -70,6 +70,14 @@ App.UserclusterAdapter = DS.ActiveModelAdapter.extend({
     }
 });
 
+App.VreserverSerializer = DS.RESTSerializer.extend({
+   attrs : {
+       server_IP : {
+           key : 'server_IP'
+       }
+   } 
+});
+
 App.UserclusterSerializer = DS.RESTSerializer.extend({
     attrs : {
         master_IP : {
@@ -129,6 +137,9 @@ App.UserclusterSerializer = DS.RESTSerializer.extend({
 App.UserSerializer = DS.RESTSerializer.extend(DS.EmbeddedRecordsMixin, {
     attrs : {
         clusters : {
+            embedded : 'always',
+        },
+        vreservers : {
             embedded : 'always',
         }
     },
