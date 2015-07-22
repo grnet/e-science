@@ -1,16 +1,16 @@
 App.VreserverManagementController = Ember.Controller.extend({
 	
-	needs : ['vreserverCreate','helpImages'],
+	needs : ['vreserverCreate','helpVreimages'],
     count : 0,
-    orkaImages : [],
+    vreImages : [],
 	
 	actions : {
 		
 		visitActiveImage : function(os_image){
-		    for (i=0;i<this.get('orkaImages').length;i++){
-		        if (this.get('orkaImages').objectAt(i).get('image_name') == os_image){
-		            this.get('controllers.helpImages').send('setActiveImage',this.get('orkaImages').objectAt(i).get('image_pithos_uuid'));
-		            this.transitionToRoute('help.images');
+		    for (i=0;i<this.get('vreImages').length;i++){
+		        if (this.get('vreImages').objectAt(i).get('image_name') == os_image){
+		            this.get('controllers.helpVreimages').send('setActiveImage',this.get('vreImages').objectAt(i).get('image_pithos_uuid'));
+		            this.transitionToRoute('help.vreimages');
 		            break;
 		        }
 		    }

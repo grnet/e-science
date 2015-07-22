@@ -4,7 +4,7 @@ App.ApplicationController = Ember.Controller.extend({
     STATIC_URL : DJANGO_STATIC_URL,
     // other controllers that need to be accessible from this one
     // for .set or .get
-    needs : ['userLogin', 'userWelcome', 'homepage', 'clusterManagement', 'helpImages', 'helpVreimages', 'clusterCreate'],
+    needs : ['homepage', 'userLogin', 'userWelcome', 'clusterCreate', 'clusterManagement', 'helpImages', 'vreserverCreate', 'vreserverManagement', 'helpVreimages'],
     loggedIn : false,
     name_of_user : '',
     userTheme : user_themes,
@@ -109,11 +109,11 @@ App.ApplicationController = Ember.Controller.extend({
                 var handlebarsData = that.get('dataTransformImages')(that.get('vreImageData'),'handlebars');
                 that.get('controllers.homepage').set('vreImages', handlebarsData);
                 that.get('controllers.userWelcome').set('vreImages', handlebarsData);
-                that.get('controllers.clusterManagement').set('vreImages', handlebarsData);
+                that.get('controllers.vreserverManagement').set('vreImages', handlebarsData);
                 that.get('controllers.helpVreimages').set('vreImages', handlebarsData);
                 // decorate the model with an active_image property and set it to the first image loaded
                 that.get('controllers.helpVreimages').send('setActiveImage', handlebarsData.objectAt(0).get('image_pithos_uuid'));
-                that.get('controllers.clusterCreate').set('vreImages', handlebarsData);
+                that.get('controllers.vreserverCreate').set('vreImages', handlebarsData);
             }, function(reason) {
                 console.log(reason.message);
             });

@@ -23,8 +23,8 @@
                 <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='vreserver.server_status_verbose'}}> 
                 	<i {{bind-attr id='vreserver.server_status_id' class='vreserver.server_status_class'}}></i> {{vreserver.server_status_pending}}</span>
                 </td>
-                <td><i {{bind-attr id='usercluster.hadoop_status_id' class="usercluster.cluster_hadoop_status_class"}}></i>{{usercluster.hadoop_status_verbose}}</td>
-                {{#if usercluster.hadoop_status_active}}
+                <td><i {{bind-attr id='vreserver.hadoop_status_id' class="vreserver.cluster_hadoop_status_class"}}></i>{{vreserver.project_name}}</td>
+                {{#if vreserver.server_status_active}}
                 	<td><a {{bind-attr id='vreserver.server_ip_id' href='vreserver.server_url'}} target="_blank">{{vreserver.server_IP}}</a></td>
                 {{else}}
                 	<td><span class="text-muted">{{vreserver.server_IP}}</span></td>
@@ -38,13 +38,12 @@
 				</div>
                 {{else}}
                 <div class='btn-group btn-block'>
-                	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY SERVER' ><button {{bind-attr id='vreserver.server_destroy_id'}} class="btn btn-xs btn-default"{{action 'confirmAction' vreserver 'server_delete'}}>
+                	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY SERVER'><button {{bind-attr id='vreserver.server_destroy_id'}} class="btn btn-xs btn-default"{{action 'confirmAction' vreserver 'server_delete'}}>
                 		<b {{bind-attr class='vreserver.server_status_class_destroy'}}></b> </button></div>
                 </div>
                 {{/if}}	
                 {{/if}}
                 </td>
-            </tr>
             </tr>
             {{else}}
             <tr>
