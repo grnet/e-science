@@ -163,7 +163,7 @@
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export YARN_HOME=$HADOOP_INSTALL'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_OPTS=-Djava.net.preferIPv4Stack=true'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_CONF_DIR=$HADOOP_INSTALL/etc/hadoop'" }
-      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export FLUME_HOME=/usr/local/flume'" }
+      - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export FLUME_HOME={{flume_home}}'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export FLUME_CONF_DIR=$FLUME_HOME/conf'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export FLUME_CLASS_PATH=$FLUME_CONF_DIR'" }
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$FLUME_HOME/bin'" }
@@ -200,14 +200,14 @@
     tags: postconfig
     shell: find -name '.gitignore' | xargs rm chdir={{hadoop_home}}
 
-  - name: create app/hadoop/tmp to store HDFS and /usr/local/flume for Debian Base
+  - name: create app/hadoop/tmp to store HDFS and Flume Home configuration folder for Debian Base
     tags: postconfig
     action: command {{item}}
     with_items:
       - mkdir -p /app/hadoop/tmp
       - chown hduser:hadoop /app/hadoop/tmp
       - chmod 750 /app/hadoop/tmp
-      - mkdir -p /usr/local/flume/conf
+      - mkdir -p {{flume_home}}/conf
 
   - name: copy yarn configuration xml and kamakirc files in every node
     tags: postconfig
@@ -218,13 +218,13 @@
       - { src: 'hdfs-site.j2', dest: '/usr/local/hadoop/etc/hadoop/hdfs-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'yarn-site.j2', dest: '/usr/local/hadoop/etc/hadoop/yarn-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'kamakirc.j2', dest: '/home/hduser/.kamakirc', owner: 'hduser', group: 'hadoop' }
-      - { src: 'flume.j2', dest: '/usr/local/flume/conf/flume.conf', owner: 'hduser', group: 'hadoop' }
+      - { src: 'flume.j2', dest: '{{flume_home}}/conf/flume.conf', owner: 'hduser', group: 'hadoop' }
 
   - name: Change ownership to hduser for flume
     tags: postconfig
     file: path={{item.path}} owner={{item.owner}} group={{item.group}} recurse=yes state=directory
     with_items:
-      - { path: '/usr/local/flume/', owner: 'hduser', group: 'hadoop' }
+      - { path: '{{flume_home}}', owner: 'hduser', group: 'hadoop' }
       - { path: '/var/log/flume', owner: 'hduser', group: 'hadoop' }
       - { path: '/var/run/flume', owner: 'hduser', group: 'hadoop' }
 
