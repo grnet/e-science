@@ -41,9 +41,10 @@
       - sudo -u hdfs hadoop fs -chown root /user/root
       - sudo -u hdfs hadoop fs -mkdir -p /user/mapred
       - sudo -u hdfs hadoop fs -chown mapred /user/mapred
-      - sudo -u hdfs hadoop fs -mkdir -p /user/hdfs/flume
-      - sudo -u hdfs hadoop fs -chown hdfs /user/hdfs/flume
+      - sudo -u hdfs hadoop fs -mkdir -p /user/hdfs
       - sudo -u hdfs hadoop fs -chown hdfs /user/hdfs
+      - sudo -u hdfs hadoop fs -mkdir -p /user/flume
+      - sudo -u hdfs hadoop fs -chown flume:flume /user/flume
       - sudo -u hdfs hadoop fs -mkdir -p /tmp
       - sudo -u hdfs hadoop fs -chmod -R 1777 /tmp
       - sudo -u hdfs hadoop fs -mkdir -p /user/history
