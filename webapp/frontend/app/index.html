@@ -48,7 +48,10 @@
 		<script src="{{ STATIC_URL }}controllers/user_login.js"></script>
 		<script src="{{ STATIC_URL }}controllers/cluster_create.js"></script>
 		<script src="{{ STATIC_URL }}controllers/cluster_management.js"></script>
+		<script src="{{ STATIC_URL }}controllers/vreserver_create.js"></script>
+		<script src="{{ STATIC_URL }}controllers/vreserver_management.js"></script>
 		<script src="{{ STATIC_URL }}controllers/help_images.js"></script>
+		<script src="{{ STATIC_URL }}controllers/help_vreimages.js"></script>
 
 		<!--routers-->
 		<script src="{{ STATIC_URL }}router.js"></script>
@@ -59,8 +62,11 @@
 		<script src="{{ STATIC_URL }}routes/user_logout.js"></script>        
 		<script src="{{ STATIC_URL }}routes/user_welcome.js"></script>        
 		<script src="{{ STATIC_URL }}routes/cluster_create.js"></script>
-		<script src="{{ STATIC_URL }}routes/help_images.js"></script>
 		<script src="{{ STATIC_URL }}routes/cluster_management.js"></script>
+		<script src="{{ STATIC_URL }}routes/vreserver_create.js"></script>
+		<script src="{{ STATIC_URL }}routes/vreserver_management.js"></script>
+		<script src="{{ STATIC_URL }}routes/help_images.js"></script>
+		<script src="{{ STATIC_URL }}routes/help_vreimages.js"></script>
 		<script src="{{ STATIC_URL }}routes/homepage.js"></script>
 		
 		<!--views-->
@@ -83,12 +89,18 @@
 		<!--models-->
 		<script src="{{ STATIC_URL }}models/user.js"></script>
 		<script src="{{ STATIC_URL }}models/cluster.js"></script>
+		<script src="{{ STATIC_URL }}models/vreserver.js"></script>
 		<script src="{{ STATIC_URL }}models/cluster_choice.js"></script>
 		<script src="{{ STATIC_URL }}models/homepage.js"></script>
 		<script src="{{ STATIC_URL }}models/orkaimage.js"></script>
+		<script src="{{ STATIC_URL }}models/vreimage.js"></script>
 		<!--load templates-->
 		<script>EmberHandlebarsLoader.loadTemplates([
-			'application', 'homepage', 'user/login', 'user/welcome', 'cluster/create', 'user/_userclusters', 'cluster/management', 'help/images'
+			'application', 'homepage', 
+			'user/login', 'user/welcome',  'user/_userclusters', 'user/_uservres', 
+			'cluster/create', 'cluster/management', 
+			'vreserver/create', 'vreserver/management', 
+			'help/images', 'help/vreimages'
 		]);</script>
 	
 	</body>

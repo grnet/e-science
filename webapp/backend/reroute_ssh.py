@@ -106,6 +106,13 @@ def start_drupal(server_ip, password, token):
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
     exec_command(ssh_client, command)
     
+
+def mediawiki_database_pass(server_ip, password, token):
+    """Change mediawiki mysql password to user token"""
+    command = 'docker exec -t -i db bash -c \"mysqladmin -p$MYSQL_ROOT_PASSWORD password {0} &>/dev/null\"'.format(token)
+    ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
+    exec_command(ssh_client, command)
+    
     
 def reroute_ssh_prep(server, master_ip):
     """
@@ -259,8 +266,8 @@ def reroute_ssh_to_slaves(dport, slave_ip, hostname_master, password, master_VM_
 
     ssh_client = establish_connect(hostname_master, 'root', password, dport)
     try:
-        exec_command(ssh_client, 'echo "route add default gw 192.168.0.2" >> ~/.bashrc; . ~/.bashrc')
-        exec_command(ssh_client, 'echo "route add default gw 192.168.0.2" >> ~/.profile')
+        exec_command(ssh_client, 'echo "route add default gw 192.168.0.2 &>/dev/null" >> ~/.bashrc; . ~/.bashrc')
+        exec_command(ssh_client, 'echo "route add default gw 192.168.0.2 &>/dev/null" >> ~/.profile')
         exec_command(ssh_client, 'apt-get update')
         exec_command(ssh_client, 'apt-get -y install python-pip')
 

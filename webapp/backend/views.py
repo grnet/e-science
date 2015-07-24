@@ -19,7 +19,8 @@ from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
     DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, \
-    HdfsSerializer, StatisticsSerializer, NewsSerializer, OrkaImagesSerializer
+    HdfsSerializer, StatisticsSerializer, NewsSerializer, \
+    OrkaImagesSerializer, VreImagesSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async, \
@@ -41,9 +42,25 @@ class MainPageView(generic.TemplateView):
     """Load the template file"""
     template_name = 'index.html'
 
+class VreImagesView(APIView):
+    """
+    View to handle requests from ember for VRE image metadata
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (AllowAny, )
+    resource_name = 'vreimage'
+
+    def get(self, request, *args, **kwargs):
+        """
+        Return news items.
+        """
+        image_data = VreImage.objects.all()
+        serializer_class = VreImagesSerializer(image_data, many=True)
+        return Response(serializer_class.data)
+
 class OrkaImagesView(APIView):
     """
-    View to handle requests from ember for image metadata
+    View to handle requests from ember for VM image metadata
     """
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (AllowAny, )
@@ -308,6 +325,18 @@ class VreServerView(APIView):
     permission_classes = (IsAuthenticated, )
     resource_name = 'vreserver'
     serializer_class = ClusterchoicesSerializer
+    
+    def get(self, request, *args, **kwargs):
+        """
+        Return a serialized Vreserver model with information
+        retrieved by kamaki calls. User with corresponding status will be
+        found by the escience token.
+        """
+        user_token = Token.objects.get(key=request.auth)
+        self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
+        retrieved_server_info = project_list_flavor_quota(self.user)
+        serializer = ClusterCreationParamsSerializer(retrieved_server_info, many=True)
+        return Response(serializer.data)
     
     def post(self, request, *args, **kwargs):
         """
