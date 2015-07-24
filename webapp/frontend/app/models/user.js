@@ -3,22 +3,35 @@ attr = App.attr;
 App.User = DS.Model.extend({
 	token : attr('string'), 			// okeanos token
 	user_id : attr('number'), 			// user_id in backend database
-	// may have more than one clusters
-	user_name : attr('string'),          // user name or email
+	user_name : attr('string'),         // user name or email
 	user_theme : attr('string'),        // user's theme in backend database
-	clusters : DS.hasMany('usercluster', {
-		async : true,
-		inverse : 'user'
-	}), 					      // user cluster records
-	vreservers : DS.hasMany('uservreserver', {
-	    async : true,
-	    inverse : 'user'
-	}),                           // user VRE server records
 	cluster : attr(), // number of user active clusters
 	vrenum : attr(), // number of user active VREs 
 	escience_token : attr(),
     master_vm_password: attr('string'),
-    error_message: attr('string')
+    error_message: attr('string'),
+    clusters : DS.hasMany('usercluster', {
+        async : true,
+        inverse : 'user'
+    }),                           // user cluster records
+    vreservers : DS.hasMany('uservreserver', {
+        async : true,
+        inverse : 'user'
+    }),                           // user VRE server records
+    sortable_clusters : function(){
+        return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, 
+            {content : this.get('clusters').filterBy('id'),
+             sortProperties : ['resorted_status','action_date'],
+             sortAscending : true,
+             short_model_name : 'uc'});
+    }.property('clusters.[]','clusters.isLoaded'),
+    sortable_vreservers : function(){
+        return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin,
+            {content : this.get('vreservers').filterBy('id'),
+             sortProperties : ['resorted_status','action_date'],
+             sortAscending : true,
+             short_model_name : 'uv'});
+    }.property('vreservers.[]','vreservers.isLoaded')
 });
 
 // Information about user's VREs
@@ -73,6 +86,12 @@ App.Uservreserver = DS.Model.extend({
             return "UNKNOWN";
         }
     }.property('server_status'),
+    resorted_status : function(){
+        // pending > active > destroyed > failed 
+        // 0 < 2(pending), 1 < 1(active), 2 < 0(destroyed), 3 < 3(failed)
+        var priority = {"0":"2","1":"1","2":"0","3":"3"};
+        return priority[this.get('server_status')];
+    }.property('server_status'),
     boolean_vre_status_active : function(){
         return this.get('server_status') == "1" ? true : false;
     }.property('server_status'),
@@ -122,7 +141,7 @@ App.Uservreserver = DS.Model.extend({
     }.property('server_name_noprefix'),
     id_server_destroy : function(key){
         return '%@%@'.fmt(key,this.get('server_name_noprefix'));
-    }.property('server_name_noprefix')
+    }.property('server_name_noprefix'),
 });
 
 // Information about user's clusters
@@ -248,6 +267,12 @@ App.Usercluster = DS.Model.extend({
 			return "glyphicon glyphicon-question-sign text-muted";
 		}
 	}.property('cluster_status'),
+	resorted_status : function(){
+        // pending > active > destroyed > failed 
+        // 0 < 2(pending), 1 < 1(active), 2 < 0(destroyed), 3 < 3(failed)
+        var priority = {"0":"2","1":"1","2":"0","3":"3"};
+        return priority[this.get('cluster_status')];
+    }.property('cluster_status'),
 	cluster_status_pending : function(){
 		var status = this.get('cluster_status');
 		if (status == '2'){

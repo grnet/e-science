@@ -3,8 +3,6 @@
 App.UserWelcomeRoute = App.RestrictedRoute.extend({
 	//"user" model for the welcome route
 	needs : 'userWelcome',
-	userclusters : [],
-	uservreservers : [],
 	model : function(params, transition) {
 		$.loader.close(true);
 		// Return user record with id 1.
@@ -18,8 +16,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			var user_vreservers = user.get('vreservers');
 			var num_cluster_records = user_clusters.get('length');
 			var num_vre_records = user_vreservers.get('length');
-			that.set('userclusters', user_clusters);
-			that.set('uservreservers', user_vreservers);
 			// console.log('route > model > num_records ' + num_records);
 			var bPending = false;
 			for ( i = 0; i < num_cluster_records; i++) {
@@ -54,15 +50,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 	afterModel : function(user, transition) {
 		// if we came from a link-to helper that doesn't fire the model hook
 		// console.log(user.get('clusters').get('length'));
-		var user_clusters = user.get('clusters');
-		var user_vreservers = user.get('vreservers');
-		var lastsort = this.controllerFor('userWelcome').get('column');
-		if (!Ember.isBlank(lastsort)) {
-			this.controllerFor('userWelcome').send('sortBy', user_clusters, lastsort);
-			this.controllerFor('userWelcome').send('sortBy', user_clusters, lastsort);
-		} else {
-			this.controllerFor('userWelcome').send('sortBy', user_clusters, 'cluster_status');
-		}
 		if ((user.get('user_theme') !== "") && (user.get('user_theme') !== undefined) && (user.get('user_theme') !== null)) {
 			changeCSS(user.get('user_theme'), 0);
 		}
