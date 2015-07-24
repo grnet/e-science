@@ -4,8 +4,8 @@
 # shunit2 compatible unittest file, requires shunit2 installed (apt-get install shunit2)
 
 # Tests
-# 01. Create Vre Drupal server
-# 02. Destroy Vre Drupal server
+# 01. Create Vre server
+# 02. Destroy Vre server
 
 # Load test helpers
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -35,12 +35,12 @@ tearDown(){
 }
 
 # 01 
-testDrupalCreate(){
+testVreCreate(){
 	# arrange
 	# act
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		# orka vre create name_of_server server_cpus server_ram server_disksize disk_template project_name
-		local COMMAND='orka vre create drupal_integration_test 2 2048 20 Standard '"${OKEANOS_PROJECT}"' Deb8\-Drupal\-Final >_tmp.txt 2> /dev/null'
+		local COMMAND='orka vre create vre_integration_test 2 2048 20 Standard '"${OKEANOS_PROJECT}"' '"${VRE_IMAGE}"'>_tmp.txt 2> /dev/null'
 		( $(eval $COMMAND) ) & keepAlive $! " Working"
 		declare -a ARR_RESULT=($(cat _tmp.txt))
 		# server_id: xx\nserver_IP: x.x.x.x\nroot password: xxxx
@@ -52,18 +52,18 @@ testDrupalCreate(){
 		startSkipping
 	fi
 	# assert (assert* "fail message" <success_condition>)
-	assertTrue 'Create Drupal Vre Server Failed' '[ -n "$SERVER_ID" ]'
+	assertTrue 'Create ${VRE_IMAGE} Server Failed' '[ -n "$SERVER_ID" ]'
 }
 
 # 02 Destroy
-testDrupalDestroy(){
+testVreDestroy(){
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		orka vre destroy $SERVER_ID
 		RESULT="$?"
 	else
 		startSkipping
 	fi
-	assertTrue 'Destroy Drupal Vre Server Failed' '[ "$RESULT" -eq 0 ]'
+	assertTrue 'Destroy ${VRE_IMAGE} Server Failed' '[ "$RESULT" -eq 0 ]'
 }
 
 . shunit2
