@@ -100,4 +100,4 @@ pithos_images_uuids_properties = {"d3782488-1b6d-479d-8b9b-363494064c52": {"role
 # Dictionary of pithos vre images UUIDs with their corresponding actions
 pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"action":"drupal", "image":"drupal"},
                                "745ca905-dfa1-4da4-b956-bb59601112aa": {"action":"", "image":"redmine"},
-                               "63f0fee9-49b6-48db-baef-5e53a35ddc39": {"action":""}, "image":"mediawiki"}
+                               "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"action":"mediawiki"}, "image":"mediawiki"}
