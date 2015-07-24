@@ -2,14 +2,32 @@
 App.UserWelcomeController = Ember.Controller.extend({
 
     needs : ['clusterCreate','vreserverCreate'],
+    // flag to denote transition from a create action
+    create_cluster_start : false,
+    count : 0,
     orkaImages: [],
     vreImages: [],
     user_messages : [],
     // blacklist user messages explicitly removed during polling
     blacklist_messages : {},
-    // flag to denote transition from create cluster button
-    create_cluster_start : false,
-    count : 0,
+    sortable_clusters : function(){
+        var _sortProperties = !Ember.isEmpty(this.get('sorting_info.last_sort')) ? [this.get('sorting_info.last_sort'),'action_date'] : ['resorted_status','action_date'];
+        var _sortAscending = !Ember.isEmpty(this.get('sorting_info.last_sort_dir')) ? this.get('sorting_info.last_sort_dir') : true;
+        return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, 
+            {content : this.get('content.clusters').filterBy('id'),
+             sortProperties : _sortProperties,
+             sortAscending : _sortAscending,
+             short_model_name : 'uc'});
+    }.property('model.clusters.[]','model.clusters.isLoaded'),
+    sortable_vreservers : function(){
+        var _sortProperties = !Ember.isEmpty(this.get('sorting_info.last_sort')) ? [this.get('sorting_info.last_sort'),'action_date'] : ['resorted_status','action_date'];
+        var _sortAscending = !Ember.isEmpty(this.get('sorting_info.last_sort_dir')) ? this.get('sorting_info.last_sort_dir') : true;
+        return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin,
+            {content : this.get('content.vreservers').filterBy('id'),
+             sortProperties : _sortProperties,
+             sortAscending : _sortAscending,
+             short_model_name : 'uv'});
+    }.property('model.vreservers.[]','model.vreservers.isLoaded'),
     master_vm_password_msg : function() {
         var pwd_message = this.get('content.master_vm_password');
         if (!Ember.isBlank(pwd_message)) {
@@ -35,17 +53,17 @@ App.UserWelcomeController = Ember.Controller.extend({
         return (num_messages == 0 || Ember.isEmpty(num_messages));
     }.property('user_messages.@each'),
     get_sorting_info : function(short_model_name, sortdir, column){
-        var last_sort = '%@_%@'.fmt(short_model_name,column);
         var prop_arrow_show = '%@_%@_show'.fmt(short_model_name,column);
         var prop_arrow_dir = '%@_%@_dir'.fmt(short_model_name,column);
         var obj = {};
         obj[prop_arrow_show] = true;
         obj[prop_arrow_dir] = sortdir;
         obj.last_sort = column;
+        obj.last_sort_dir = sortdir;
         return {'sorting_info': obj};
     },
     actions : {
-        sortBy2 : function(model, column){
+        sortBy : function(model, column){
             model.set('sortProperties',[column]);
             model.set('sortAscending', !model.get('sortAscending'));
             this.setProperties(this.get_sorting_info(model.get('short_model_name'),model.get('sortAscending'),column));
@@ -141,14 +159,12 @@ App.UserWelcomeController = Ember.Controller.extend({
                                 for ( i = 0; i < num_cluster_records; i++) {
                                     if ((user_clusters.objectAt(i).get('cluster_status') == '2') || (user_clusters.objectAt(i).get('hadoop_status') == '2')) {
                                         bPending = true;
-                                        // TODO: sort
                                         break;
                                     }
                                 }
                                 for ( i = 0; i < num_vre_records; i++ ) {
                                     if (user_vreservers.objectAt(i).get('server_status') == '2'){
                                         bPending = true;
-                                        // TODO: sort
                                         break;
                                     }
                                 }

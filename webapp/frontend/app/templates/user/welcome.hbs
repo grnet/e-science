@@ -5,7 +5,7 @@
 	<div class="col col-sm-3"></div>
 	<div class="alert alert-dismissable alert-success col-sm-6">
 		<button type="button" class="close" data-dismiss="alert">×</button>
-		You are <strong>logged in.</strong> You can create a {{#link-to 'cluster.create'}}cluster{{/link-to}} or {{#link-to 'vreserver.create' class="disabled"}} VRE {{/link-to}} from the Services menu.
+		You can create a {{#link-to 'cluster.create'}}Hadoop Cluster{{/link-to}} or a {{#link-to 'vreserver.create' class="disabled"}}Virtual Research Environment{{/link-to}} (VRE) Server from the Services menu.
 	</div>
 	<div class="col col-sm-3"></div>
 	</div>
@@ -48,10 +48,10 @@
     <div class="col col-sm-12">
         <ul id="id_user_tabs" class="nav nav-tabs">
             <li class="active">
-                <a data-toggle="tab" href="#id_userclusters_tab"><span class="h4 text-left">User Clusters ({{model.clusters.length}})</span></a>
+                <a data-toggle="tab" href="#id_userclusters_tab"><span class="h4 text-left">User Clusters (<span class="text text-success">{{model.cluster}}</span>/<span class="text text-muted small">{{model.clusters.length}}</span>)</span></a>
             </li>
             <li>
-                <a data-toggle="tab" href="#id_uservres_tab"><span class="h4 text-left">User VREs ({{model.vreservers.length}})</span></a>
+                <a data-toggle="tab" href="#id_uservres_tab"><span class="h4 text-left">User VREs (<span class="text text-success">{{model.vrenum}}</span>/<span class="text text-muted small">{{model.vreservers.length}}</span>)</span></a>
             </li>
         </ul>
         <div id="id_clusters_and_vres" class="tab-content">

@@ -2,25 +2,25 @@
     <table class="table table-striped table-hover table-border">
         <thead class="h4 text-left">
             <tr>
-                <td class="col col-sm-2"><a href="#" {{action 'sortBy2' content.sortable_clusters 'cluster_name'}}>Name</a> 
+                <td class="col col-sm-2"><a href="#" {{action 'sortBy' controller.sortable_clusters 'cluster_name'}}>Name</a> 
                 	<i {{bind-attr class="sorting_info.uc_cluster_name_show:glyphicon:hide sorting_info.uc_cluster_name_show:small:hide sorting_info.uc_cluster_name_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                <td><a href="#" {{action 'sortBy2' content.sortable_clusters 'action_date'}}>Creation Date</a> 
+                <td><a href="#" {{action 'sortBy' controller.sortable_clusters 'action_date'}}>Creation Date</a> 
                 	<i {{bind-attr class="sorting_info.uc_action_date_show:glyphicon:hide sorting_info.uc_action_date_show:small:hide sorting_info.uc_action_date_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i> </td>
-                <td id="id_label_status"><a href="#" {{action 'sortBy2' content.sortable_clusters 'resorted_status'}}>Cluster Status</a> 
+                <td id="id_label_status"><a href="#" {{action 'sortBy' controller.sortable_clusters 'resorted_status'}}>Cluster Status</a> 
                 	<i {{bind-attr class="sorting_info.uc_resorted_status_show:glyphicon:hide sorting_info.uc_resorted_status_show:small:hide sorting_info.uc_resorted_status_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                <td id="id_label_hdp_status"><a href="#" {{action 'sortBy2' content.sortable_clusters 'hadoop_status'}}>Hadoop Status</a>
+                <td id="id_label_hdp_status"><a href="#" {{action 'sortBy' controller.sortable_clusters 'hadoop_status'}}>Hadoop Status</a>
                 	<i {{bind-attr class="sorting_info.uc_hadoop_status_show:glyphicon:hide sorting_info.uc_hadoop_status_show:small:hide sorting_info.uc_hadoop_status_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                <td><a href="#" {{action 'sortBy2' content.sortable_clusters 'cluster_size'}}>Size</a>
+                <td><a href="#" {{action 'sortBy' controller.sortable_clusters 'cluster_size'}}>Size</a>
                 	<i {{bind-attr class="sorting_info.uc_cluster_size_show:glyphicon:hide sorting_info.uc_cluster_size_show:small:hide sorting_info.uc_cluster_size_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                <td><a href="#" {{action 'sortBy2' content.sortable_clusters 'workflow_enabled'}}>Workflow-enabled</a>
+                <td><a href="#" {{action 'sortBy' controller.sortable_clusters 'workflow_enabled'}}>Workflow-enabled</a>
                 	<i {{bind-attr class="sorting_info.uc_workflow_enabled_show:glyphicon:hide sorting_info.uc_workflow_enabled_show:small:hide sorting_info.uc_workflow_enabled_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                <td><a href="#" {{action 'sortBy2' content.sortable_clusters 'master_IP'}}>Active IP</a>
+                <td><a href="#" {{action 'sortBy' controller.sortable_clusters 'master_IP'}}>Active IP</a>
                 	<i {{bind-attr class="sorting_info.uc_master_IP_show:glyphicon:hide sorting_info.uc_master_IP_show:small:hide sorting_info.uc_master_IP_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                 <td class="col col-sm-2"><a class="nounder">Actions</a></td>
             </tr>
         </thead>
         <tbody class="text-left">
-            {{#each usercluster in model.sortable_clusters}}
+            {{#each usercluster in controller.sortable_clusters}}
             <tr>
             	<td {{bind-attr id='usercluster.cluster_name_id'}}>{{#link-to 'cluster.management' usercluster.id}}{{usercluster.cluster_name}}{{/link-to}}</td>
                 <td>{{formatDate usercluster.action_date format='shortdatetime'}}</td>
@@ -53,7 +53,7 @@
 				</div>
                 {{else}}
                 <div class='btn-group btn-block'>
-                	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY CLUSTER' ><button {{bind-attr id='usercluster.cluster_destroy_id'}} class="btn btn-xs btn-default"{{action 'confirmClusterAction' usercluster 'cluster_delete'}}>
+                	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY CLUSTER'><button {{bind-attr id='usercluster.cluster_destroy_id'}} class="btn btn-xs btn-default"{{action 'confirmClusterAction' usercluster 'cluster_delete'}}>
                 		<b {{bind-attr class='usercluster.cluster_status_class_destroy'}}></b> </button></div>
                 	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='START HADOOP'><button {{bind-attr id='usercluster.hadoop_start_id'}} class="btn btn-xs btn-default" {{action 'confirmClusterAction' usercluster 'hadoop_start'}}{{bind-attr disabled=usercluster.hadoop_action_start_disabled}}> 
                 		<b {{bind-attr class='usercluster.hadoop_status_class_start'}}></b> </button></div>

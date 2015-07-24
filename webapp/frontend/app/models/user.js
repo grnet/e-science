@@ -17,21 +17,7 @@ App.User = DS.Model.extend({
     vreservers : DS.hasMany('uservreserver', {
         async : true,
         inverse : 'user'
-    }),                           // user VRE server records
-    sortable_clusters : function(){
-        return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, 
-            {content : this.get('clusters').filterBy('id'),
-             sortProperties : ['resorted_status','action_date'],
-             sortAscending : true,
-             short_model_name : 'uc'});
-    }.property('clusters.[]','clusters.isLoaded'),
-    sortable_vreservers : function(){
-        return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin,
-            {content : this.get('vreservers').filterBy('id'),
-             sortProperties : ['resorted_status','action_date'],
-             sortAscending : true,
-             short_model_name : 'uv'});
-    }.property('vreservers.[]','vreservers.isLoaded')
+    })                           // user VRE server records
 });
 
 // Information about user's VREs
@@ -96,7 +82,7 @@ App.Uservreserver = DS.Model.extend({
         return this.get('server_status') == "1" ? true : false;
     }.property('server_status'),
     boolean_vre_status_pending : function(){
-        return this.get('server_status') == "1" ? true : false;
+        return this.get('server_status') == "2" ? true : false;
     }.property('server_status'),
     class_button_vre_destroy : function(){
         return this.get('boolean_vre_status_active') ? "glyphicon glyphicon-trash text-danger" : "";
