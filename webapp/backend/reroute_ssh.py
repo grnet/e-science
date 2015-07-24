@@ -112,6 +112,12 @@ def mediawiki_database_pass(server_ip, password, token):
     command = 'docker exec -t -i db bash -c \"mysqladmin -p$MYSQL_ROOT_PASSWORD password {0} &>/dev/null\"'.format(token)
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
     exec_command(ssh_client, command)
+
+def redmine_goes_up(server_ip, password, token):
+    """Change mediawiki mysql password to user token"""
+    command = 'docker exec -t -i db bash -c \"mysqladmin -p$MYSQL_ROOT_PASSWORD password {0} &>/dev/null\"'.format(token)
+    ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
+    exec_command(ssh_client, command)
     
     
 def reroute_ssh_prep(server, master_ip):
