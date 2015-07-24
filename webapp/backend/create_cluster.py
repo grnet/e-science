@@ -12,7 +12,7 @@ import logging
 import subprocess
 import json
 from os.path import join, expanduser
-from reroute_ssh import reroute_ssh_prep, start_drupal, mediawiki_database_pass
+from reroute_ssh import reroute_ssh_prep, start_vre
 from kamaki.clients import ClientError
 from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
@@ -379,14 +379,9 @@ class YarnCluster(object):
         sleep(15)
         try:
             vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
-#             list_current_images = self.plankton.list_public(True, 'default')
-#             for image in list_current_images:
             if vre_image_uuid == server['image']['id']:
                 chosen_vre_image = pithos_vre_images_uuids_actions[vre_image_uuid]
-                if chosen_vre_image['action'] == 'drupal':
-                    start_drupal(server_ip,server_pass,self.opts['token'])
-                elif chosen_vre_image['action'] == 'mediawiki':
-                    mediawiki_database_pass(server_ip,server_pass,self.opts['token'])
+                start_vre(server_ip,server_pass,self.opts['token'], chosen_vre_image['image'])
             else:
                 msg = 'Image {0} exists on database but cannot be found or has different id'
                 ' on Pithos+'.format(self.opts['os_choice'])
