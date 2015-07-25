@@ -11,23 +11,25 @@ App.UserWelcomeController = Ember.Controller.extend({
     // blacklist user messages explicitly removed during polling
     blacklist_messages : {},
     sortable_clusters : function(){
-        var _sortProperties = !Ember.isEmpty(this.get('sorting_info.last_sort')) ? [this.get('sorting_info.last_sort'),'action_date'] : ['resorted_status','action_date'];
-        var _sortAscending = !Ember.isEmpty(this.get('sorting_info.last_sort_dir')) ? this.get('sorting_info.last_sort_dir') : true;
+        var _sort_model = !Ember.isEmpty(this.get('sorting_info.last_sort_model')) ? this.get('sorting_info.last_sort_model') : '';
+        var _sortProperties = !Ember.isEmpty(this.get('sorting_info.last_sort')) && _sort_model=='uc' ? [this.get('sorting_info.last_sort'),'action_date'] : ['resorted_status','action_date'];
+        var _sortAscending = !Ember.isEmpty(this.get('sorting_info.last_sort_dir')) && _sort_model=='uc' ? this.get('sorting_info.last_sort_dir') : true;
         return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, 
             {content : this.get('content.clusters').filterBy('id'),
              sortProperties : _sortProperties,
              sortAscending : _sortAscending,
              short_model_name : 'uc'});
-    }.property('model.clusters.[]','model.clusters.isLoaded'),
+    }.property('content.clusters.[]','content.clusters.isLoaded'),
     sortable_vreservers : function(){
-        var _sortProperties = !Ember.isEmpty(this.get('sorting_info.last_sort')) ? [this.get('sorting_info.last_sort'),'action_date'] : ['resorted_status','action_date'];
-        var _sortAscending = !Ember.isEmpty(this.get('sorting_info.last_sort_dir')) ? this.get('sorting_info.last_sort_dir') : true;
+        var _sort_model = !Ember.isEmpty(this.get('sorting_info.last_sort_model')) ? this.get('sorting_info.last_sort_model') : '';
+        var _sortProperties = !Ember.isEmpty(this.get('sorting_info.last_sort')) && _sort_model=='uv' ? [this.get('sorting_info.last_sort'),'action_date'] : ['resorted_status','action_date'];
+        var _sortAscending = !Ember.isEmpty(this.get('sorting_info.last_sort_dir')) && _sort_model=='uv' ? this.get('sorting_info.last_sort_dir') : true;
         return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin,
             {content : this.get('content.vreservers').filterBy('id'),
              sortProperties : _sortProperties,
              sortAscending : _sortAscending,
              short_model_name : 'uv'});
-    }.property('model.vreservers.[]','model.vreservers.isLoaded'),
+    }.property('content.vreservers.[]','content.vreservers.isLoaded'),
     master_vm_password_msg : function() {
         var pwd_message = this.get('content.master_vm_password');
         if (!Ember.isBlank(pwd_message)) {
@@ -52,6 +54,8 @@ App.UserWelcomeController = Ember.Controller.extend({
         var num_messages = Number(this.get('user_messages').get('length'));
         return (num_messages == 0 || Ember.isEmpty(num_messages));
     }.property('user_messages.@each'),
+    // utility function. we use it to create dynamic properties for storing on the controller to reference in templates 
+    // (eg. <short_name>_<column_name>_show on a template will automatically have the correct boolean value to show/hide a sorting arrow)
     get_sorting_info : function(short_model_name, sortdir, column){
         var prop_arrow_show = '%@_%@_show'.fmt(short_model_name,column);
         var prop_arrow_dir = '%@_%@_dir'.fmt(short_model_name,column);
@@ -60,6 +64,7 @@ App.UserWelcomeController = Ember.Controller.extend({
         obj[prop_arrow_dir] = sortdir;
         obj.last_sort = column;
         obj.last_sort_dir = sortdir;
+        obj.last_sort_model = short_model_name;
         return {'sorting_info': obj};
     },
     actions : {
