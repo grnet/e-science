@@ -66,6 +66,8 @@
       - { src: 'spark-slaves.j2', dest: '/etc/spark/conf/slaves' }
       - { src: 'spark-env.j2', dest: '/etc/spark/conf/spark-env.sh' }
       - { src: 'spark-defaults.j2', dest: '/etc/spark/conf/spark-defaults.conf' }
+      - { src: 'flume.j2', dest: '/usr/lib/flume-ng/conf/flume.conf' }
+      - { src: 'kamakirc.j2', dest: '/var/lib/flume-ng/.kamakirc' }
 
   - name: create slaves files in cloudera master node
     tags: postconfig
@@ -117,6 +119,7 @@
        - { name: 'hbase' }
        - { name: 'hive' }
        - { name: 'spark' }
+       - { name: 'flume' }
 
   - name: Copy Livy server shell script
     tags: postconfig
@@ -134,7 +137,7 @@
     tags: postconfig
     shell: sudo -u oozie /usr/lib/oozie/bin/ooziedb.sh create -run
 
-  - name: Correct permissions to oozie log files
+  - name: Correct permissions to oozie log files and flume tmp directory 
     tags: postconfig
     file: "path={{item.path}} owner={{item.owner}} group={{item.group}}"
     with_items:
@@ -143,3 +146,4 @@
       - { path: '/var/log/oozie/oozie-jpa.log', owner: 'oozie',group: 'oozie' }
       - { path: '/var/log/oozie/oozie.log', owner: 'oozie',group: 'oozie' }
       - { path: '/var/log/oozie/oozie-ops.log',  owner: 'oozie',group: 'oozie' }
+      - { path: '/usr/lib/flume-ng/tmp',  owner: 'flume',group: 'flume', mode: '777'}

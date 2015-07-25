@@ -25,16 +25,16 @@
 
   - name: Creates directory
     tags: start
-    action: command sudo -u hduser ./hadoop fs -mkdir -p /user/hduser chdir={{hadoop_home}}/bin
+    action: command sudo -u hduser ./hadoop fs -mkdir -p /user/hduser/flume chdir={{hadoop_home}}/bin
     when: is_master
 
   - name: Enable flume-agent to run by default
-    tags: start
-    command: sudo systemctl enable flume-agent
+    tags: FLUMEstart
+    command: systemctl start flume-agent
     when: is_master
 
   - name: Start Flume
-    tags: start
+    tags: FLUMEstart
     service: name=flume-agent state=restarted
     when: is_master
 
@@ -98,7 +98,7 @@
     when: is_master
 
   - name: Stop Flume
-    tags: stop
+    tags: FLUMEstop
     service: name=flume-agent state=stopped
     when: is_master
 
