@@ -30,7 +30,7 @@
 
   - name: Enable flume-agent to run by default
     tags: FLUMEstart
-    command: sudo systemctl enable flume-agent
+    command: systemctl start flume-agent
     when: is_master
 
   - name: Start Flume
