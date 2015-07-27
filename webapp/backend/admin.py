@@ -16,7 +16,7 @@ from json import loads
 from backend.models import *
 
 
-def validateJSON(payload):
+def validate_json(payload):
     try:
         json_object = loads(payload, 'utf-8')
     except ValueError, e:
@@ -24,15 +24,27 @@ def validateJSON(payload):
 
 # Customize Django admin image_components form field for long text.
 class OrkaImageForm(forms.ModelForm):
-    image_components = forms.CharField(validators=[MaxLengthValidator(4080),validateJSON], \
+    image_components = forms.CharField(validators=[MaxLengthValidator(4080),validate_json], \
                                        widget=Textarea(attrs={'cols':'80'}), \
-                                       help_text='Component metadata info in json.dumps format.')
+                                       help_text='VM Image Component metadata info in json.dumps format.')
     class Meta:
         model = OrkaImage
         fields = '__all__'
  
 class OrkaImageAdmin(admin.ModelAdmin):
     form = OrkaImageForm
+    
+# Customize Django admin image_components form field for long text.
+class VreImageForm(forms.ModelForm):
+    image_components = forms.CharField(validators=[MaxLengthValidator(4080),validate_json], \
+                                       widget=Textarea(attrs={'cols':'80'}), \
+                                       help_text='VRE Image Component metadata info in json.dumps format.')
+    class Meta:
+        model = VreImage
+        fields = '__all__'
+ 
+class VreImageAdmin(admin.ModelAdmin):
+    form = VreImageForm
     
 
 admin.site.register(UserInfo)
@@ -41,4 +53,5 @@ admin.site.register(ClusterInfo)
 admin.site.register(Token)
 admin.site.register(PublicNewsItem)
 admin.site.register(OrkaImage,OrkaImageAdmin)
+admin.site.register(VreImage,VreImageAdmin)
 admin.site.register(VreServer)

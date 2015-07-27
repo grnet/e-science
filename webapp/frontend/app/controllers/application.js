@@ -4,11 +4,12 @@ App.ApplicationController = Ember.Controller.extend({
     STATIC_URL : DJANGO_STATIC_URL,
     // other controllers that need to be accessible from this one
     // for .set or .get
-    needs : ['userLogin', 'userWelcome', 'homepage', 'clusterManagement', 'helpImages', 'clusterCreate'],
+    needs : ['homepage', 'userLogin', 'userWelcome', 'clusterCreate', 'clusterManagement', 'helpImages', 'vreserverCreate', 'vreserverManagement', 'helpVreimages'],
     loggedIn : false,
     name_of_user : '',
     userTheme : user_themes,
     orkaImageData : {}, // stores raw OrkaImage data in object format
+    vreImageData : {}, // stores raw VreImage data in object format
     user_name : function() {
         if (this.get('loggedIn')) {
             var that = this;
@@ -32,11 +33,12 @@ App.ApplicationController = Ember.Controller.extend({
         return admin_url;
     }.property(),
     
-    // controller property for use on template to load OrkaImage data to the store
-    // application route activation > template render > sends refresh_orkaimage_data action
-    // which GET(s) the data to the store and controller.application.orkaImageData.  
+    // controller property for use on template to load OrkaImage and VreImage data to the store
+    // application route activation > template render > sends refresh_*image_data action
+    // which GET(s) the data to the store and controller.application.*ImageData.  
     dataLoader : function() {
         this.send('refresh_orkaimages_data');
+        this.send('refresh_vreimages_data');
         return '';
     }.property(),
     
@@ -100,5 +102,21 @@ App.ApplicationController = Ember.Controller.extend({
                 console.log(reason.message);
             });
         },
+        refresh_vreimages_data : function() {
+            var that = this;
+            this.store.fetch('vreimage', {}).then(function(data) {
+                that.set('vreImageData', data.get('content'));
+                var handlebarsData = that.get('dataTransformImages')(that.get('vreImageData'),'handlebars');
+                that.get('controllers.homepage').set('vreImages', handlebarsData);
+                that.get('controllers.userWelcome').set('vreImages', handlebarsData);
+                that.get('controllers.vreserverManagement').set('vreImages', handlebarsData);
+                that.get('controllers.helpVreimages').set('vreImages', handlebarsData);
+                // decorate the model with an active_image property and set it to the first image loaded
+                that.get('controllers.helpVreimages').send('setActiveImage', handlebarsData.objectAt(0).get('image_pithos_uuid'));
+                that.get('controllers.vreserverCreate').set('vreImages', handlebarsData);
+            }, function(reason) {
+                console.log(reason.message);
+            });
+        }
     }
 });

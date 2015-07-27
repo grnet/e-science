@@ -60,13 +60,13 @@ def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', 
     current_task.update_state(state=state)
     
     
-def set_server_state(token, id, state, status='Pending', server_IP=''):
+def set_server_state(token, id, state, status='Pending', server_IP='', okeanos_server_id=''):
     """
     Logs a VRE server state message and updates the celery and escience database
     state.
     """
     logging.log(SUMMARY, state)
-    db_server_update(token, status, id, server_IP, state=state)
+    db_server_update(token, status, id, server_IP, state=state, okeanos_server_id=okeanos_server_id)
     if len(state) >= const_truncate_limit:
         state = state[:(const_truncate_limit-2)] + '..'
     current_task.update_state(state=state)
@@ -496,26 +496,8 @@ def get_float_network_id(cyclades_network_client, project_id):
                         i = i+1
 
         return error_get_ip
-
-
-class Cluster(object):
-    """
-    Cluster class represents an entire ~okeanos cluster.Instantiation of
-    cluster gets the following arguments: A CycladesClient object,a name-prefix
-    for the cluster,the flavors of master and slave machines,the image id of
-    their OS, the size of the cluster,a CycladesNetworkClient object, an
-    AstakosClient object and the project_id.
-    """
-    def __init__(self, cyclades, prefix, flavor_id_master, flavor_id_slave,
-                 image_id, size, net_client, auth_cl, project_id):
-        self.client = cyclades
-        self.nc = net_client
-        self.prefix, self.size = prefix, int(size)
-        self.flavor_id_master, self.auth = flavor_id_master, auth_cl
-        self.flavor_id_slave, self.image_id = flavor_id_slave, image_id
-        self.project_id = project_id
-
-    def _personality(self, ssh_keys_path='', pub_keys_path=''):
+    
+def personality(ssh_keys_path='', pub_keys_path=''):
         """Personality injects ssh keys to the virtual machines we create"""
         personality = []
         if ssh_keys_path and pub_keys_path:
@@ -544,6 +526,24 @@ class Cluster(object):
                     path='/root/.ssh/config',
                     owner='root', group='root', mode=0600))
         return personality
+
+
+class Cluster(object):
+    """
+    Cluster class represents an entire ~okeanos cluster.Instantiation of
+    cluster gets the following arguments: A CycladesClient object,a name-prefix
+    for the cluster,the flavors of master and slave machines,the image id of
+    their OS, the size of the cluster,a CycladesNetworkClient object, an
+    AstakosClient object and the project_id.
+    """
+    def __init__(self, cyclades, prefix, flavor_id_master, flavor_id_slave,
+                 image_id, size, net_client, auth_cl, project_id):
+        self.client = cyclades
+        self.nc = net_client
+        self.prefix, self.size = prefix, int(size)
+        self.flavor_id_master, self.auth = flavor_id_master, auth_cl
+        self.flavor_id_slave, self.image_id = flavor_id_slave, image_id
+        self.project_id = project_id
 
     def clean_up(self, servers=None, network=None):
         """Delete resources after a failed attempt to create a cluster"""
@@ -639,7 +639,7 @@ class Cluster(object):
         try:
             servers.append(self.client.create_server(
                 server_name, self.flavor_id_master, self.image_id,
-                personality=self._personality(ssh_k_path, pub_k_path),
+                personality=personality(ssh_k_path, pub_k_path),
                 project_id=self.project_id))
         except ClientError:
             self.clean_up(servers=servers, network=new_network)
@@ -652,7 +652,7 @@ class Cluster(object):
                 server_name = '%s%s%s' % (self.prefix, '-', i)
                 servers.append(self.client.create_server(
                     server_name, self.flavor_id_slave, self.image_id,
-                    personality=self._personality(ssh_k_path, pub_k_path),
+                    personality=personality(ssh_k_path, pub_k_path),
                     networks=empty_ip_list, project_id=self.project_id))
 
             except ClientError:

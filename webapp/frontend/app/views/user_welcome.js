@@ -6,7 +6,7 @@ App.UserWelcomeView = Ember.View.extend({
 		// $("[data-toggle='tooltip']").tooltip();
 		// });
 		var self = this;
-		this.addObserver('controller.sortdir', function() {
+		this.addObserver('controller.sorting_info', function() {
 			Ember.run.scheduleOnce('afterRender', self, function() {
 				$("[data-toggle='tooltip']").tooltip();
 			});
@@ -21,7 +21,7 @@ App.UserWelcomeView = Ember.View.extend({
 		});
 	},
 	willDestroyElement : function() {
-		this.removeObserver('controller.sortdir');
+		this.removeObserver('controller.sorting_info');
 		this.removeObserver('controller.count');
 	}
 });

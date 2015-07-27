@@ -16,6 +16,37 @@ App.ApplicationAdapter = DS.ActiveModelAdapter.extend({
     }.property("App.escience_token"),
 });
 
+App.UservreserverAdapter = DS.ActiveModelAdapter.extend({
+    headers : function() {
+        return {
+            "Authorization" : App.escience_token,
+        };
+    }.property("App.escience_token"),
+    deleteRecord : function(store, type, record) {
+        var data = this.serialize(record, {
+            includeId : true
+        });
+        var url = 'api/vreservers';
+        var headers = this.get('headers');
+
+        return new Ember.RSVP.Promise(function(resolve, reject) {
+            jQuery.ajax({
+                type : 'DELETE',
+                headers : headers,
+                url : url,
+                dataType : 'json',
+                data : data
+            }).then(function(data) {
+                Ember.run(null, resolve, data);
+            }, function(jqXHR) {
+                jqXHR.then = null;
+                // tame jQuery's ill mannered promises
+                Ember.run(null, reject, jqXHR);
+            });
+        });
+    }
+});
+    
 App.UserclusterAdapter = DS.ActiveModelAdapter.extend({
     headers : function() {
         return {
@@ -70,65 +101,56 @@ App.UserclusterAdapter = DS.ActiveModelAdapter.extend({
     }
 });
 
+App.UservreserverSerializer = DS.RESTSerializer.extend({
+    attrs : {
+        server_IP : {
+            key : 'master_IP'
+        },
+        server_name : {serialize : false},
+        action_date : {serialize : false},
+        server_status : {serialize : false},
+        cpu : {serialize : false},
+        ram : {serialize : false},
+        disk : {serialize : false},
+        disk_template : {serialize : false},
+        os_image : {serialize : false},
+        project_name : {serialize : false},
+        task_id : {serialize : false},
+        state : {serialize : false},
+        user : {serialize : false}
+    } 
+});
+
 App.UserclusterSerializer = DS.RESTSerializer.extend({
     attrs : {
         master_IP : {
             key : 'master_IP'
         },
-        cluster_name : {
-            serialize : false
-        },
-        action_date : {
-            serialize : false
-        },
-        cluster_size : {
-            serialize : false
-        },
-        cluster_status : {
-            serialize : false
-        },
-        cpu_master : {
-            serialize : false
-        },
-        ram_master : {
-            serialize : false
-        },
-        disk_master : {
-            serialize : false
-        },
-        cpu_slaves : {
-            serialize : false
-        },
-        ram_slaves : {
-            serialize : false
-        },
-        disk_slaves : {
-            serialize : false
-        },
-        disk_template : {
-            serialize : false
-        },
-        os_image : {
-            serialize : false
-        },
-        project_name : {
-            serialize : false
-        },
-        task_id : {
-            serialize : false
-        },
-        state : {
-            serialize : false
-        },
-        user : {
-            serialize : false
-        },
-    },
+        cluster_name : {serialize : false},
+        action_date : {serialize : false},
+        cluster_size : {serialize : false},
+        cluster_status : {serialize : false},
+        cpu_master : {serialize : false},
+        ram_master : {serialize : false},
+        disk_master : {serialize : false},
+        cpu_slaves : {serialize : false},
+        ram_slaves : {serialize : false},
+        disk_slaves : {serialize : false},
+        disk_template : {serialize : false},
+        os_image : {serialize : false},
+        project_name : {serialize : false},
+        task_id : {serialize : false},
+        state : {serialize : false},
+        user : {serialize : false},
+    }
 });
 
 App.UserSerializer = DS.RESTSerializer.extend(DS.EmbeddedRecordsMixin, {
     attrs : {
         clusters : {
+            embedded : 'always',
+        },
+        vreservers : {
             embedded : 'always',
         }
     },

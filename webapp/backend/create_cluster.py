@@ -12,19 +12,19 @@ import logging
 import subprocess
 import json
 from os.path import join, expanduser
-from reroute_ssh import reroute_ssh_prep, start_drupal
+from reroute_ssh import reroute_ssh_prep, start_vre
 from kamaki.clients import ClientError
 from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
     init_cyclades, init_cyclades_netclient, init_plankton, get_project_id, \
     destroy_cluster, get_user_quota, set_cluster_state, retrieve_pending_clusters, get_float_network_id, \
-    set_server_state
+    set_server_state, personality
 from django_db_after_login import db_cluster_create, db_server_create
 from cluster_errors_constants import *
 from celery import current_task
 import os
 from rest_framework import status
-from backend.models import OrkaImage
+from backend.models import OrkaImage, VreImage
 
 
 class YarnCluster(object):
@@ -247,14 +247,13 @@ class YarnCluster(object):
             return 0
         return error_project_quota
     
-    def ssh_key_file(self, cluster_name):
+    def ssh_key_file(self, name):
         """
         Creates a file named after the timestamped name of cluster
         containing the public ssh_key of the user.
         """
         ssh_info = self.ssh_key_list()
-        cluster_name = cluster_name.replace(" ", "_")
-        self.ssh_file = join(os.getcwd(), cluster_name + '_ssh_key')
+        self.ssh_file = join(os.getcwd(), name.replace(" ", "_") + '_ssh_key')
         for item in ssh_info:
             if item['name'] == self.opts['ssh_key_selection']:
                 with open(self.ssh_file, 'w') as f:
@@ -333,16 +332,27 @@ class YarnCluster(object):
         flavor_id = self.get_flavor_id('master')
         image_id = self.get_image_id()
         retval = self.check_all_resources()
+        pub_keys_path = ''
         # Create name of VRE server with [orka] prefix
         vre_server_name = '{0}-{1}'.format('[orka]',self.opts['server_name'])
         self.opts['server_name'] = vre_server_name
+        task_id = current_task.request.id
+        server_id = db_server_create(self.opts, task_id)
+        self.server_name_postfix_id = '{0}-{1}-vre'.format(self.opts['server_name'], server_id)
+
+        # Check if user chose ssh keys or not.
+        if self.opts['ssh_key_selection'] is None or self.opts['ssh_key_selection'] == 'no_ssh_key_selected':
+            self.ssh_file = 'no_ssh_key_selected'
+        else:
+            self.ssh_key_file(self.server_name_postfix_id)
+            pub_keys_path = self.ssh_file
         try:
-            server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, project_id=self.project_id)
+            server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path), project_id=self.project_id)
         except ClientError, e:
             # If no public IP is free, get a new one
             if e.status == status.HTTP_409_CONFLICT:
                 get_float_network_id(self.net_client, project_id=self.project_id)
-                server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, project_id=self.project_id)
+                server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path), project_id=self.project_id)
             else:
                 raise
         # Get VRE server root password
@@ -350,10 +360,8 @@ class YarnCluster(object):
         # Placeholder for VRe server public IP
         server_ip = '127.0.0.1'
         # Update DB with server status as pending
-        task_id = current_task.request.id
-        server_id = db_server_create(server['id'], self.opts, task_id)
         new_state = "Started creation of Virtual Research Environment server {0}".format(vre_server_name)
-        set_server_state(self.opts['token'], server_id, new_state)
+        set_server_state(self.opts['token'], server_id, new_state, okeanos_server_id=server['id'])
         new_status = self.cyclades.wait_server(server['id'], max_wait=MAX_WAIT)
         if new_status == 'ACTIVE':
             server_details = self.cyclades.get_server_details(server['id'])
@@ -370,7 +378,14 @@ class YarnCluster(object):
         # Wait for VRE server to be pingable
         sleep(15)
         try:
-            start_drupal(server_ip,server_pass,self.opts['token'])
+            vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
+            if vre_image_uuid == server['image']['id']:
+                chosen_vre_image = pithos_vre_images_uuids_actions[vre_image_uuid]
+                start_vre(server_ip,server_pass,self.opts['token'], chosen_vre_image['image'])
+            else:
+                msg = 'Image {0} exists on database but cannot be found or has different id'
+                ' on Pithos+'.format(self.opts['os_choice'])
+                raise ClientError(msg, error_flavor_id) 
         except RuntimeError, e:
             # Exception is raised if a VRE start command is not executed correctly and informs user of its VRE properties
             # so user can ssh connect to the VRE server or delete the server from orkaCLI.

@@ -51,4 +51,8 @@ checkPrereqs()
 		echo "WARNING: no okeanos project found in environment or .config.txt. Setting default." >&2;
 		OKEANOS_PROJECT=escience.grnet.gr
 	fi
+	if [ -z "${VRE_IMAGE}" ]; then
+		echo "WARNING: no vre image found in environment. Setting default." >&2;
+		VRE_IMAGE=Deb8-Mediawiki-Docker
+	fi
 }

@@ -1,0 +1,95 @@
+<p></p>
+
+<div class="well well-lg text-center v-center">
+	<div class="row">
+		<h2 id = 'id_title_server_create_route'>VRE Server Management</h2>
+		<h3 id = 'id_title_server_name'>{{model.server_name}}</h3>
+	</div>
+</div>
+
+<ul id="id_management_tabs" class="nav nav-tabs">
+	<li class="active">
+		<a href="#id_tab_info" data-toggle="tab">Info</a>
+	</li>
+	<li>
+		<a href="#id_tab_access" data-toggle="tab">Access</a>
+	</li>
+	<li>
+		<a href="#id_tab_manage" data-toggle="tab">Manage</a>
+	</li>
+</ul>
+<div id="id_management_tab_content" class="tab-content">
+   <div class="tab-pane fade in active" id="id_tab_info">
+   		<h4 class="list-group-item-heading">VRE Server</h4>
+       		<table class="table table-striped table-hover table-border">
+      			<tr>
+      				<td class="col-sm-2"> <b>ID :</b> </td>
+      				<td class="col-sm-2"><span class="text text-info"> {{model.id}} </span></td>
+      			</tr>
+      			<tr>
+      				<td class="col-sm-2"> <b>Creation Date :</b> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> {{formatDate model.action_date format='shortdatetime'}} </span> </td>
+      			</tr>
+      			<tr>
+      				<td class="col-sm-2"> <b>Server Status :</b> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> {{model.description_vre_status}} </span> </td>
+      			</tr>
+      			<tr>
+      			    <td class="col-sm-2"> <b>Image :</b> </td>
+                    <td class="col-sm-2"> <a href="#" {{action 'visitActiveImage' model.os_image}}><span class="text text-info"> {{model.os_image}} </span></a></td>
+      			</tr>
+      			<tr>
+      				<td class="col-sm-2"> <b>Server IP :</b> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> {{model.server_IP}} </span></td>
+      			</tr>
+                <tr>
+      				<td class="col-sm-2"> <b>~Okeanos Project :</b> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> {{model.project_name}} </span></td>
+      			</tr>
+ 			</table>
+      	<p></p>
+      	<p></p>
+      	<h4 class="list-group-item-heading">Properties</h4>
+       		<table class="table table-striped table-hover table-border">
+      			<tr> 
+      				<td class="col-sm-2"> <b>System Settings :</b> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> CPUs:{{model.cpu}}, RAM:{{model.ram}}MiB, 
+      					Disk size:{{model.disk}}GiB </span> </td>
+      			</tr>
+      		</table>
+      			
+   </div>
+   <div class="tab-pane fade" id="id_tab_access">
+      {{#if model.boolean_vre_status_active}}	    
+   		   <table class="table table-striped table-hover table-border">
+ 		     <tr>
+  			   <td class="col-sm-2"><b>VRE Server Access</b></td>
+  			   <td class="col-sm-2"><a {{bind-attr href='model.vre_access_url'}} target="_blank"><span class="text text-info">{{model.vre_access_url}}</span></a></td>
+  			 </tr>
+ 		   </table>
+       {{else}}
+	       <div class="text-warning text-center">No information available.</div>
+       {{/if}}
+   </div>
+   <div class="tab-pane fade col col-sm-2" id="id_tab_manage">
+		{{#if model.boolean_vre_status_active}}
+		 <div class='btn-group-vertical btn-group-sm'>
+				{{#ifeq model.action_server_confirm 'server_delete'}}
+				<div class='btn-toolbar-horizontal btn-toolbar-sm btn-block'>
+                    <div class='btn-group btn-group-sm'>
+					<a role="button" {{bind-attr id='model.id_server_confirm'}} {{action 'takeVreAction' model}} class="btn btn-danger btn-sm active">{{model.description_action_server_confirm}}</a>
+					<a role="button" {{action 'confirmVreAction' model false}} class="btn btn-danger btn-sm active">x</a>
+				    </div>
+                </div>
+				{{else}}
+    				<button {{bind-attr id='model.id_server_destroy'}} class="btn btn-sm btn-primary btn-block"{{action 'confirmVreAction' model 'server_delete'}}>
+                        Destroy Server <b {{bind-attr class='model.class_button_vre_destroy'}}></b>
+                    </button>
+				{{/ifeq}}
+			</div>
+	</div>
+		{{else}}
+			<div class="text-warning text-center">No actions available.</div>
+		{{/if}}
+
+</div>

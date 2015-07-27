@@ -1,4 +1,4 @@
-// Help Images route
-App.HelpImagesRoute = App.RestrictedRoute.extend({
+// Help VM Images route
+App.HelpImagesRoute = Ember.Route.extend({
 
 });
