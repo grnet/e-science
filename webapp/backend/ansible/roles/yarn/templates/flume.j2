@@ -1,5 +1,6 @@
 # Define a memory channel on agent.
 agent.channels.memory-channel.type = memory
+agent.channels.memory-channel.capacity = 1000000
 
 # Define a source on agent and connect to channel memory-channel.
 agent.sources.source-dir.type=spooldir
@@ -18,6 +19,7 @@ agent.sinks.hdfs-sink.hdfs.fileType = DataStream
 agent.sinks.hdfs-sink.hdfs.rollInterval = 0
 agent.sinks.hdfs-sink.hdfs.rollSize = 67108864
 agent.sinks.hdfs-sink.hdfs.rollCount = 0
+agent.sinks.hdfs-sink.hdfs.callTimeout = 180000
 
 # Activate.
 agent.channels = memory-channel
