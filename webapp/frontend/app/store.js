@@ -142,7 +142,6 @@ App.UserclusterSerializer = DS.RESTSerializer.extend({
         task_id : {serialize : false},
         state : {serialize : false},
         user : {serialize : false},
-        hadoop_status : {serialize : false}
     }
 });
 
