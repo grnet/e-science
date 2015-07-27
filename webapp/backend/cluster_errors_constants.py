@@ -98,6 +98,8 @@ pithos_images_uuids_properties = {"d3782488-1b6d-479d-8b9b-363494064c52": {"role
                              "dc171a3d-09bf-469d-9b7a-d3fb5c0afebc": {"role":"yarn", "tags":"-t postconfig,hueconfig,ecoconfig", "image":"ecosystem"},
                              "05f23bb1-5415-4da3-8e8a-93daa384b2f8": {"role":"cloudera", "tags":"-t preconfig,postconfig", "image":"cloudera"}}
 # Dictionary of pithos vre images UUIDs with their corresponding actions
-pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"action":"drupal", "image":"drupal"},
-                               "f64a11dc-97bd-44cb-a502-6c141cc42bfa": {"action":"redmine", "image":"redmine"},
-                               "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"action":"mediawiki", "image":"mediawiki"}}
+pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"image":"drupal"},
+                               "f64a11dc-97bd-44cb-a502-6c141cc42bfa": {"image":"redmine"},
+                               "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"image":"mediawiki"}}
+
+#/usr/local/redmine/docker-compose.yml
