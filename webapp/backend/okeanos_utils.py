@@ -401,15 +401,19 @@ def check_images(token, project_id):
     plankton = init_plankton(endpoints['plankton'], token)
     list_current_images = plankton.list_public(True, 'default')
     available_images = []
+    hadoop_images = []
+    vre_images = []
     for image in list_current_images:
         # owner of image will be checked based on the uuid
-        if image['owner'] == const_escience_uuid:
-            image_properties = image['properties']
-            if image_properties.has_key('escienceconf'):
-                available_images.append(image['name'])
-        elif image['owner'] == const_system_uuid and image['name'] == "Debian Base":
-            available_images.append(image['name'])
-                
+        if image['owner'] == const_escience_uuid or image['owner'] == const_system_uuid:
+            if pithos_images_uuids_properties.has_key(image['id']):
+                hadoop_images.append(image['name'])
+            if pithos_vre_images_uuids_actions.has_key(image['id']):
+                vre_images.append(image['name'])
+    # hadoop images at ordinal 0, vre images at 1
+    available_images.append(hadoop_images)
+    available_images.append(vre_images)
+            
     return available_images
 
 def endpoints_and_user_id(auth):

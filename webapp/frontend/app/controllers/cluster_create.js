@@ -179,7 +179,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		if (this.get('no_project_selected')) {
 			return [];
 		}
-		pithos_orka_images = this.get('content').objectAt(this.get('project_index')).get('os_choices');
+		pithos_orka_images = this.get('content').objectAt(this.get('project_index')).get('hadoop_choices');
 		for (var i=0; i< this.get('orkaImages').length; i++){
 			db_orka_images.push(this.get('orkaImages').objectAt(i).get('image_name'));
 		}
@@ -1180,7 +1180,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				imgUrl : DJANGO_STATIC_URL + "images/loading[size].gif",
 				onShow : function() {
 					$.loader.shown = true;
-					$('.loading_wrp').find('span').addClass('text-info strong');
+					$('.loading_wrp').find('span').addClass('text-primary big strong');
 				},
 				onClose : function() {
 					$.loader.shown = false;

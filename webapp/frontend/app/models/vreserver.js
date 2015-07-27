@@ -17,6 +17,14 @@ App.Vreserver = DS.Model.extend({
 	disk_choices : attr(),       	// disk choices
 	disk_template : attr(),      	// storage choices
 	os_choices : attr(),          	// Operating System choices
+	vre_choices : function(){
+	    return this.get('os_choices')[1];
+	}.property('os_choices','project_name'),       // Filter for VRE images
+	project_name_clean : function(){
+	    var project_name = this.get('project_name');
+	    var numchar = project_name.lastIndexOf(":");
+	    return numchar == -1 ? project_name : project_name.slice(0,numchar);
+	}.property('project_name'),     // Remove guid from system project name
 	vm_flavors_choices : ['Small', 'Medium', 'Large'],  //Predefined VM Flavors
 	ssh_keys_names : attr()         // ssh key's names
 });
