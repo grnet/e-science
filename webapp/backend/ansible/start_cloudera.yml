@@ -30,11 +30,6 @@
       - { name: 'hadoop-yarn-nodemanager',  state: 'restarted' }
     when: is_slave
 
-  - name: Start Flume
-    tags: start
-    service: name=flume-ng-agent state=restarted
-    when: is_master
-
   - name: Create mandatory directories in Hdfs
     tags: CLOUDstart
     action: command {{item}} chdir={{ cloudera_bin }}
@@ -49,6 +44,8 @@
       - sudo -u hdfs hadoop fs -mkdir -p /user/hdfs/flume
       - sudo -u hdfs hadoop fs -chown hdfs /user/hdfs/flume
       - sudo -u hdfs hadoop fs -chown hdfs /user/hdfs
+      - sudo -u hdfs hadoop fs -mkdir -p /user/flume
+      - sudo -u hdfs hadoop fs -chown flume:flume /user/flume
       - sudo -u hdfs hadoop fs -mkdir -p /tmp
       - sudo -u hdfs hadoop fs -chmod -R 1777 /tmp
       - sudo -u hdfs hadoop fs -mkdir -p /user/history
@@ -103,10 +100,11 @@
     shell: oozie-setup sharelib create -fs hdfs://{{hostvars[groups['master_cloud'][0]].inventory_hostname_short}}:9000 -locallib /usr/lib/oozie/oozie-sharelib-yarn
     when: is_master
 
-  - name: start Hbase,spark,oozie,hive and hue in cloudera cluster
+  - name: start Flume,Hbase,Spark,Oozie,Hive and Hue in Cloudera cluster
     tags: CLOUDstart
     service: "name={{item.name}} state={{item.state}}"
     with_items:
+      - { name: 'flume-ng-agent', state: 'restarted' }
       - { name: 'zookeeper-server', state: 'restarted' }
       - { name: 'hbase-master', state: 'restarted' }
       - { name: 'hbase-thrift', state: 'restarted' }

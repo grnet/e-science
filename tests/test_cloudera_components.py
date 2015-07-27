@@ -13,6 +13,7 @@ from constants_of_tests import *
 from orka.orka.cluster_errors_constants import error_fatal, const_hadoop_status_started, FNULL
 import requests
 import re
+import time
 
 BASE_DIR = join(dirname(abspath(__file__)), "../")
 JOB_PROPERTIES_PATH = join(dirname(abspath(__file__)), 'job.properties')
@@ -62,6 +63,33 @@ class ClouderaTest(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
 
+    def test_flume(self):
+        """
+        Checks Flume's operation.
+        Create a temp file and check that it is uploaded successfully to hdfs
+        """
+        # clear flume data directories
+        self.clear_flume_hdfs_folder()
+        self.clear_flume_tmp_folder()
+        # create the temp file in /usr/lib/flume-ng/tmp
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "sudo -u flume echo 'this is a test file'" +
+                                    " >  /usr/lib/flume-ng/tmp/tempfile.log" + 
+                                    "\""
+                                    , stderr=FNULL, shell=True)
+        # wait for flume to write data in hdfs
+        time.sleep(20)
+        # check hdfs for Flume Data
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "sudo -u hdfs hdfs dfs -test -e /user/flume/FlumeData.*" +
+                                    "\""
+                                    , stderr=FNULL, shell=True)
+#         self.assertEqual(response, 0) # Output exists in hdfs        
+        # clear flume hdfs folder
+        self.addCleanup(self.clear_flume_hdfs_folder)
+#         # clear flume local temp folder
+        self.addCleanup(self.clear_flume_tmp_folder)
+                        
     def test_oozie_status_normal(self):
         """
         Checks if Oozie status is normal.
@@ -275,6 +303,24 @@ class ClouderaTest(unittest.TestCase):
         """
         subprocess.call("ssh {0}@".format(self.user) + self.master_IP + " \"" + action +
                         "\"", stderr=FNULL, shell=True)
+
+    def clear_flume_hdfs_folder(self):
+        """
+        clear flume hdfs folder
+        """
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "sudo -u hdfs hdfs dfs -rm  /user/flume/*" +
+                                    "\""
+                                    , stderr=FNULL, shell=True)
+
+    def clear_flume_tmp_folder(self):
+        """
+        clear flume local temp folder
+        """
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "rm  /usr/lib/flume-ng/tmp/*" +
+                                    "\""
+                                    , stderr=FNULL, shell=True)
 
     def tearDown(self):
         """
