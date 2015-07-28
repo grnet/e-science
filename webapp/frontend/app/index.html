@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>GRNET e-Science</title>
+		<meta charset="utf-8"/>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="description" content="e-Science Orka the hadoop cluster creator">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/bootstrap.orka.css"/>
+
+		<link rel="stylesheet" href="{{ STATIC_URL }}styles/style.css">
+	</head>
+	<body class="" style="" onload="set_style_from_cookie()">
+		{% verbatim %}
+		<noscript>
+			<div style="display: table; margin: 0 auto; text-align: center;">
+				<h3>This site requires Javascript to function!</h3>
+				<br><a href="http://www.enable-javascript.com/" target="_blank">How to enable Javascript.</a>
+				<br><a href=".">Done! Reload for the full page.</a>
+			</div>
+		</noscript>
+		{% endverbatim %}
+		<!--Set static url variable-->
+		<script type="text/javascript">var DJANGO_STATIC_URL="{{ STATIC_URL }}";</script>
+		<!--main libraries-->
+		<script src="{{ STATIC_URL }}libs/jquery-1.11.2.js"></script>
+        <script src="{{ STATIC_URL }}libs/theme-switcher.js"></script>
+		<script src="{{ STATIC_URL }}libs/jquery-loader.js"></script>
+		<script src="{{ STATIC_URL }}libs/moment-2.9.0.js"></script>
+		<script src="{{ STATIC_URL }}libs/handlebars-v2.0.0.js"></script>
+		<script src="{{ STATIC_URL }}libs/ember-1.9.1.js"></script>
+		<script src="{{ STATIC_URL }}libs/ember-data-1.0.0-beta.14.1.js"></script>
+		<script src="{{ STATIC_URL }}libs/ember-handlebars-loader-0.0.1.js"></script>
+		<script src="{{ STATIC_URL }}styles/bootstrap.js"></script>
+	
+		<!--main app-->
+		<script src="{{ STATIC_URL }}app.js"></script>
+		<script src="{{ STATIC_URL }}timer.js"></script>
+		
+		<!--helpers-->
+		<script src="{{ STATIC_URL }}helpers/helpers.js"></script>
+		
+		<!--controllers-->
+		<script src="{{ STATIC_URL }}controllers/application.js"></script>
+		<script src="{{ STATIC_URL }}controllers/user_welcome.js"></script>
+		<script src="{{ STATIC_URL }}controllers/homepage.js"></script>
+		<script src="{{ STATIC_URL }}controllers/user_login.js"></script>
+		<script src="{{ STATIC_URL }}controllers/cluster_create.js"></script>
+		<script src="{{ STATIC_URL }}controllers/cluster_management.js"></script>
+		<script src="{{ STATIC_URL }}controllers/vreserver_create.js"></script>
+		<script src="{{ STATIC_URL }}controllers/vreserver_management.js"></script>
+		<script src="{{ STATIC_URL }}controllers/help_images.js"></script>
+		<script src="{{ STATIC_URL }}controllers/help_vreimages.js"></script>
+
+		<!--routers-->
+		<script src="{{ STATIC_URL }}router.js"></script>
+		<script src="{{ STATIC_URL }}routes/application.js"></script>
+		<script src="{{ STATIC_URL }}routes/index.js"></script>
+		<script src="{{ STATIC_URL }}routes/restricted.js"></script>
+		<script src="{{ STATIC_URL }}routes/user_login.js"></script>        
+		<script src="{{ STATIC_URL }}routes/user_logout.js"></script>        
+		<script src="{{ STATIC_URL }}routes/user_welcome.js"></script>        
+		<script src="{{ STATIC_URL }}routes/cluster_create.js"></script>
+		<script src="{{ STATIC_URL }}routes/cluster_management.js"></script>
+		<script src="{{ STATIC_URL }}routes/vreserver_create.js"></script>
+		<script src="{{ STATIC_URL }}routes/vreserver_management.js"></script>
+		<script src="{{ STATIC_URL }}routes/help_images.js"></script>
+		<script src="{{ STATIC_URL }}routes/help_vreimages.js"></script>
+		<script src="{{ STATIC_URL }}routes/homepage.js"></script>
+		
+		<!--views-->
+		<script src="{{ STATIC_URL }}views/homepage.js"></script>
+		<script src="{{ STATIC_URL }}views/user_login.js"></script>
+		<script src="{{ STATIC_URL }}views/user_welcome.js"></script>
+		<script src="{{ STATIC_URL }}views/cluster_create.js"></script>	
+		<script src="{{ STATIC_URL }}views/cpu_selection_button.js"></script>
+		<script src="{{ STATIC_URL }}views/ram_selection_button.js"></script>
+		<script src="{{ STATIC_URL }}views/disk_selection_button.js"></script>
+		<script src="{{ STATIC_URL }}views/storage_selection_button.js"></script>
+		<script src="{{ STATIC_URL }}views/create_cluster_button.js"></script>
+		<script src="{{ STATIC_URL }}views/destroy_cluster_button.js"></script>
+		<script src="{{ STATIC_URL }}views/vm_flavor_selection_button.js"></script>
+		<script src="{{ STATIC_URL }}views/cluster_management.js"></script>
+
+		<!--store for ember-->
+		<script src="{{ STATIC_URL }}store.js"></script> 
+
+		<!--models-->
+		<script src="{{ STATIC_URL }}models/user.js"></script>
+		<script src="{{ STATIC_URL }}models/cluster.js"></script>
+		<script src="{{ STATIC_URL }}models/vreserver.js"></script>
+		<script src="{{ STATIC_URL }}models/cluster_choice.js"></script>
+		<script src="{{ STATIC_URL }}models/homepage.js"></script>
+		<script src="{{ STATIC_URL }}models/orkaimage.js"></script>
+		<script src="{{ STATIC_URL }}models/vreimage.js"></script>
+		<!--load templates-->
+		<script>EmberHandlebarsLoader.loadTemplates([
+			'application', 'homepage', 
+			'user/login', 'user/welcome',  'user/_userclusters', 'user/_uservres', 
+			'cluster/create', 'cluster/management', 
+			'vreserver/create', 'vreserver/management', 
+			'help/images', 'help/vreimages'
+		]);</script>
+	
+	</body>
+</html>

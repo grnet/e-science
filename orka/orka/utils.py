@@ -56,6 +56,9 @@ def get_from_kamaki_conf(section, option, action=None):
             if action == 'hdfs':
                 url_hdfs = '{0}{1}'.format(option_value, hdfs_endpoint)
                 return url_hdfs
+            if action == 'vre':
+                url_vre = '{0}{1}'.format(option_value, vre_endpoint)
+                return url_vre
             else:
                 logging.log(SUMMARY, ' Url to be returned from .kamakirc not specified')
                 return 0
@@ -105,9 +108,10 @@ class ClusterRequest(object):
         
 
 
-def get_user_clusters(token, server_url):
+def get_user_clusters(token, server_url, choice='clusters'):
     """
-    Get the clusters of the user
+    Get by default the clusters of the user. If choice argument is different
+    e.g vreservers, returns info of user's VRE servers.
     """
     try:
         escience_token = authenticate_escience(token, server_url)
@@ -120,7 +124,7 @@ def get_user_clusters(token, server_url):
     payload = {"user": {"id": 1}}
     orka_request = ClusterRequest(escience_token, server_url, payload, action='login')
     user_data = orka_request.retrieve()
-    user_clusters = user_data['user']['clusters']
+    user_clusters = user_data['user']['{0}'.format(choice)]
     return user_clusters
 
 
@@ -247,8 +251,8 @@ def ssh_call_hadoop(user, master_IP, func_arg, hadoop_path=HADOOP_PATH):
         SSH to master VM
         and make Hadoop calls
     """
-    response = subprocess.call( "ssh " + user + "@" + master_IP + " \"" + hadoop_path
-                     + func_arg + "\"", stderr=FNULL, shell=True)
+    response = subprocess.call( "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + user + "@" + master_IP + " \'" + hadoop_path
+                     + func_arg + "\'", stderr=FNULL, shell=True)
     
     return response
 
@@ -258,8 +262,8 @@ def ssh_check_output_hadoop(user, master_IP, func_arg, hadoop_path=HADOOP_PATH):
         SSH to master VM
         and check output of Hadoop calls
     """
-    response = subprocess.check_output( "ssh " + user + "@" + master_IP + " \"" + hadoop_path
-                     + func_arg + "\"", stderr=FNULL, shell=True).splitlines()
+    response = subprocess.check_output( "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + user + "@" + master_IP + " \'" + hadoop_path
+                     + func_arg + "\'", stderr=FNULL, shell=True).splitlines()
     
     return response
 
@@ -362,8 +366,8 @@ def parse_hdfs_dest(regex, path):
 def get_file_protocol(filespec, fileaction="fileput", direction="source"):
     """ 
     Method to determine the file protocol (http/ftp, file, pithos etc)
-    :input filespec, ['fileput|fileget'], ['source'|'destination']
-    :output 'http-ftp|pithos|file|unknown', ['path_without_protocol']
+    :input filespec, ['fileput|fileget|filemkdir'], ['source'|'destination']
+    :output 'http-ftp|pithos|file|hdfs|unknown', ['path_without_protocol']
     """
     if fileaction == "fileput": # put <source> file to Hadoop FS.
         if direction == "source":
@@ -400,6 +404,17 @@ def get_file_protocol(filespec, fileaction="fileput", direction="source"):
             if result:
                 return "folder", result.group(0)
             return "unknown", None
+        elif direction=="source":
+            return "unknown", None
+    elif fileaction == "filemkdir": # create directory on Hadoop FS
+        if direction == "destination":
+            # detect the existence of either of these patterns: //  \\ :// which would make this an invalid hdfs filespec
+            bad_hdfs_regex = re.compile("(?iu)(.*)((?://)+|(?:\\\\)+|(?:\://?)+)(.*)")
+            result = bad_hdfs_regex.match(filespec)
+            if result:
+                return "unknown", None
+            else:
+                return "hdfs", filespec
         elif direction=="source":
             return "unknown", None
 

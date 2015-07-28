@@ -1,0 +1,149 @@
+---
+  - name: Disable ipv6
+    sysctl: "name={{item.name}} value={{item.value}} state={{item.state}}"
+    tags: postconfig
+    with_items:
+       - { name: 'net.ipv6.conf.all.disable_ipv6', value: '1', state: 'present' }
+       - { name: 'net.ipv6.conf.default.disable_ipv6', value: '1', state: 'present' }
+       - { name: 'net.ipv6.conf.lo.disable_ipv6', value: '1', state: 'present' }
+
+  - name: Change ssh_config to ssh from master with no StrictHostKeyCheck,command1
+    lineinfile: dest=/etc/ssh/ssh_config regexp='ask' line='StrictHostKeyChecking no' state=present
+    tags: postconfig
+
+  - name: Change ssh_config to ssh from master with no StrictHostKeyCheck,command2
+    lineinfile: dest=/etc/ssh/ssh_config line='UserKnownHostsFile=/dev/null' insertafter='EOF' state=present
+    tags: postconfig
+
+  - name: Remove second line of /etc/hosts
+    lineinfile: dest=/etc/hosts regexp='^127\.0\.1\.1' state=absent
+    tags: postconfig
+
+  - name: Add virtual machine private ips in /etc/hosts
+    template: src=hosts.j2 dest={{etchosts_filename}}
+    tags: postconfig
+
+  - name: Append the host file
+    shell: cat {{etchosts_filename}} >> /etc/hosts
+    tags: postconfig
+
+  - stat: path="{{ ssh_file_name }}"
+    tags: postconfig
+    register: p
+    delegate_to: 127.0.0.1
+
+  - name: create master vm root user ssh key
+    user: name=root generate_ssh_key=yes shell=/bin/bash state=present
+    tags: postconfig
+    when: is_master
+
+  - name: copy master root public ssh key to local box
+    tags: postconfig
+    fetch: src=/root/.ssh/id_rsa.pub dest=/tmp/{{master_key_cloudera}} flat=yes
+    when: is_master
+
+  - name: copy local box master root ssh key to root every VM
+    tags: postconfig
+    authorized_key: user=root key="{{ item }}"
+    with_file:
+      - /tmp/{{master_key_cloudera}}
+    when: is_slave
+
+  - name: copy yarn configuration xml and kamakirc files in every node
+    tags: postconfig
+    template: "src={{item.src}} dest={{item.dest}}"
+    with_items: 
+      - { src: 'core-site.j2', dest: '/etc/hadoop/conf/core-site.xml' }
+      - { src: 'mapred-site.j2', dest: '/etc/hadoop/conf/mapred-site.xml' }
+      - { src: 'hdfs-site.j2', dest: '/etc/hadoop/conf/hdfs-site.xml' }
+      - { src: 'yarn-site.j2', dest: '/etc/hadoop/conf/yarn-site.xml' }
+      - { src: 'hbase-site.j2', dest: '/etc/hbase/conf/hbase-site.xml' }
+      - { src: 'oozie-site.j2', dest: '/etc/oozie/conf/oozie-site.xml' }
+      - { src: 'hive-site.j2', dest: '/usr/lib/hive/conf/hive-site.xml' }
+      - { src: 'hue.j2', dest: '/etc/hue/conf/hue.ini' }
+      - { src: 'regionservers.j2', dest: '/etc/hbase/conf/regionservers' }
+      - { src: 'kamakirc.j2', dest: '/root/.kamakirc' }
+      - { src: 'spark-slaves.j2', dest: '/etc/spark/conf/slaves' }
+      - { src: 'spark-env.j2', dest: '/etc/spark/conf/spark-env.sh' }
+      - { src: 'spark-defaults.j2', dest: '/etc/spark/conf/spark-defaults.conf' }
+      - { src: 'flume.j2', dest: '/usr/lib/flume-ng/conf/flume.conf' }
+      - { src: 'kamakirc.j2', dest: '/var/lib/flume-ng/.kamakirc' }
+
+  - name: create slaves files in cloudera master node
+    tags: postconfig
+    template: src=slaves.j2 dest=/etc/hadoop/conf/slaves
+    when: is_master
+
+  - name: create local storage directories for namenode
+    tags: postconfig
+    command: install -d -m 0700 -o hdfs -g hdfs /data/1/dfs/nn /nfsmount/dfs/nn
+    when: is_master
+
+  - name: update ~/.bashrc and profile files
+    tags: postconfig
+    lineinfile: "dest={{item.dest}} state={{item.state}} insertafter={{item.insertafter}} line={{item.line}}"
+    with_items:
+      - { dest: '/root/.bashrc', state: 'present', insertafter: 'EOF', line: "'export JAVA_HOME=/usr/lib/jvm/java-8-oracle'"}
+      - { dest: '/root/.profile', state: 'present', insertafter: 'EOF', line: "'export JAVA_HOME=/usr/lib/jvm/java-8-oracle'" }
+
+  - name: create local storage directories for datanodes
+    tags: postconfig
+    command: install -d -m 0700 -o hdfs -g hdfs /data/1/dfs/dn /data/2/dfs/dn /data/3/dfs/dn /data/4/dfs/dn
+    when: is_slave
+
+  - name: create local storage directories for yarn
+    tags: postconfig
+    command: install -d -m 0755 -o yarn -g yarn /data/1/yarn/local /data/2/yarn/local /data/3/yarn/local /data/4/yarn/local /data/1/yarn/logs /data/2/yarn/logs /data/3/yarn/logs /data/4/yarn/logs
+
+  - name: Fix postgresql bug
+    tags: postconfig
+    file: "dest={{item.dest}} mode={{item.mode}} owner={{item.owner}} group={{item.group}} state={{item.state}}"
+    with_items:
+      - { dest: '/etc/ssl/certs/ssl-cert-snakeoil.pem', mode: '777', owner: 'postgres', group: 'postgres', state: 'file' }
+      - { dest: '/etc/ssl/private/ssl-cert-snakeoil.key', mode: '700', owner: 'postgres', group: 'postgres', state: 'file' }
+
+  - name: Restart postgresql service
+    tags: postconfig
+    service: name=postgresql state=restarted
+
+  - name: Copy hadoop conf files to oozie conf directory
+    tags: postconfig
+    shell: cp -rf /etc/hadoop/conf/* /etc/oozie/conf/hadoop-conf
+
+  - name: Add users to hadoop group
+    tags: postconfig
+    user: "name={{item.name}} groups=hadoop append=yes"
+    with_items:
+       - { name: 'oozie' }
+       - { name: 'hue' }
+       - { name: 'hbase' }
+       - { name: 'hive' }
+       - { name: 'spark' }
+       - { name: 'flume' }
+
+  - name: Copy Livy server shell script
+    tags: postconfig
+    copy: src=cloudera_livy.sh dest=/etc/init.d/livy-server mode=0755
+
+  - name: Copy Java lib directory
+    tags: postconfig
+    copy: src=lib/ dest=/usr/lib/hadoop/lib/
+
+  - name: Copy Java dist directory
+    tags: postconfig
+    copy: src=dist/ dest=/usr/lib/hadoop/lib/
+
+  - name: Create oozie db schema
+    tags: postconfig
+    shell: sudo -u oozie /usr/lib/oozie/bin/ooziedb.sh create -run
+
+  - name: Correct permissions to oozie log files and flume tmp directory 
+    tags: postconfig
+    file: "path={{item.path}} owner={{item.owner}} group={{item.group}}"
+    with_items:
+      - { path: '/var/log/oozie/oozie-audit.log', owner: 'oozie',group: 'oozie' }
+      - { path: '/var/log/oozie/oozie-instrumentation.log',  owner: 'oozie',group: 'oozie' }
+      - { path: '/var/log/oozie/oozie-jpa.log', owner: 'oozie',group: 'oozie' }
+      - { path: '/var/log/oozie/oozie.log', owner: 'oozie',group: 'oozie' }
+      - { path: '/var/log/oozie/oozie-ops.log',  owner: 'oozie',group: 'oozie' }
+      - { path: '/usr/lib/flume-ng/tmp',  owner: 'flume',group: 'flume', mode: '777'}

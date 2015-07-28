@@ -180,9 +180,9 @@ Pithos destination is differentiated by prepending "pithos://" to the object des
 
 ####{orka file get} command examples
 
-    orka file get <hdfs_file_path> <local_file_path>
+    orka file get <cluster_id> <hdfs_file_path> <local_file_path>
     
-    orka file get <hdfs_file_path> pithos://<pithos_file_path>
+    orka file get <cluster_id> <hdfs_file_path> pithos://<pithos_file_path>
     
 ###"file put" command
 
@@ -206,18 +206,95 @@ example for pithos source:
 
 example for remote server source:
 
-    orka file put <remote_http_or_ftp_url> <hdfs_file_path>
+    orka file put <cluster_id> <remote_http_or_ftp_url> <hdfs_file_path>
     
 example for local filesystem source:
 
-    orka file put <local_file_path> <hdfs_file_path>
+    orka file put <cluster_id> <local_file_path> <hdfs_file_path>
+
+###"file mkdir" command
+
+Required positional arguments for file mkdir command:
+
+    cluster_id: "Cluster id in e-science database"
+    directory: "destination directory on HDFS"
+    
+Optional arguments for file put command:
+
+    -p (recursive folder creation)
+
+####{orka file mkdir} command examples
+
+example for HDFS folder creation in HDFS home:
+
+    orka file mkdir <cluster_id> <directory>
+    
+example for recursive HDFS folder creation:
+
+    orka file mkdir -p <cluster_id> <directory_with_non_existant_parent>
+    
+##"vre create" command
+
+Required positional arguments for vre create command:
+        
+    name: "name of the VRE server", 
+    cpu: "number of CPU cores of VRE server", 
+    ram: "ram in MB of VRE server",
+    disk: "hard drive in GB of VRE server",
+    disk_template: "Standard or Archipelago",
+    project_name: "name of a ~okeanos project, to pull resources from",
+    image: "name of VRE image. Only Deb8-Drupal-Final exists for now"
+    
+
+
+### {orka vre create} command examples
+
+example for orka vre create with a specific Drupal image:
+
+    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Deb8-Drupal-Final
+    
+##"vre destroy" command
+
+Required positional arguments for vre destroy command:
+
+    server_id: "VRE Server id in e-science database" 
+(server_id is returned after creation of VRE server and will be added later to **orka vre list** command)
+
+### {orka vre destroy} command examples
+
+example for orka vre destroy:
+
+    orka vre destroy <server_id>
+    
+## Docker Info
+
+VRE images are built using widely used Docker images pulled from hub.docker.com Repository. Components (i.e. Docker layers) inside the VM are not directly accessible from the root login. For example, in order to access the mysql layer in the Drupal image type:
+
+    docker exec -t -i db  bash 
+    mysql -p
+    
+and give the ~okeanos token when prompt for password.
+
+In general, in order to access a docker container's bash:
+
+    docker exec -t -i <container_name> bash
+
+Useful links:
+
+https://www.docker.com/
+
+https://docs.docker.com/articles/basics/
+
+https://docs.docker.com/reference/commandline/exec/
+
+https://github.com/wsargent/docker-cheat-sheet
 
 ## Getting help
 
 Also, with
 
     orka -h
-    orka { images | create | destroy | list | info | hadoop | file } -h
+    orka { images | create | vre | destroy | list | info | hadoop | file } -h
 
 helpful information about the orka CLI is depicted and
 

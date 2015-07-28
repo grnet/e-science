@@ -12,7 +12,7 @@ import sys
 import os
 from os.path import join, dirname, abspath
 
-sys.path.append(join(dirname(abspath(__file__)), '../ember_django'))
+sys.path.append(join(dirname(abspath(__file__)), '../webapp'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 # import objects we aim to test
 from backend.create_cluster import YarnCluster, ClientError, current_task, retrieve_pending_clusters
@@ -153,8 +153,7 @@ def mock_get_project_id(*args):
 @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
 @patch('backend.create_cluster.endpoints_and_user_id', mock_endpoints_userid)
 @patch('backend.create_cluster.init_cyclades', mock_init_cyclades)
-@patch('backend.create_cluster.YarnCluster.get_flavor_id_master', mock_get_flavorid)
-@patch('backend.create_cluster.YarnCluster.get_flavor_id_slave', mock_get_flavorid)
+@patch('backend.create_cluster.YarnCluster.get_flavor_id', mock_get_flavorid)
 @patch('backend.create_cluster.retrieve_pending_clusters', mock_retrieve_pending_clusters)
 @patch('backend.create_cluster.current_task', mock_current_task)
 @patch('backend.create_cluster.get_project_id', mock_get_project_id)

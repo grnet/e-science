@@ -17,6 +17,5 @@
 		
 		<!-- JUnit dependencies -->
 		<dependency org="junit" name="junit" rev="4.11"/>
-					
 	</dependencies>
 </ivy-module>
