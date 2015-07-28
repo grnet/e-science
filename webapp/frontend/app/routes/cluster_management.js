@@ -47,7 +47,7 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
             this.controller.send('timer', false);
         },
 		
-		takeAction : function(cluster) {
+		takeClusterAction : function(cluster) {
 			var self = this;
 			var store = this.store;
 			var action = cluster.get('cluster_confirm_action');
@@ -115,7 +115,7 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 			}
 		},
 		
-		confirmAction : function(cluster, value) {
+		confirmClusterAction : function(cluster, value) {
 			cluster.set('cluster_confirm_action', value);
 		}	
 	},

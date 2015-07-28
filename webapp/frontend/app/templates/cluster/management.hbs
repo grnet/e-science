@@ -61,13 +61,13 @@
       			</tr>
       			<tr> 
       				<td class="col-sm-2"> <b>Master Settings :</b> </td>
-      				<td class="col-sm-2"> <span class="text text-info"> CPUs:{{model.cpu_master}}, RAM:{{model.ram_master}}, 
-      					Disk size:{{model.disk_master}} </span> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> CPUs:{{model.cpu_master}}, RAM:{{model.ram_master}}MiB, 
+      					Disk size:{{model.disk_master}}GiB </span> </td>
       			</tr>
       			<tr> 
       				<td class="col-sm-2"> <b>Slaves Settings :</b> </td> 
-      				<td class="col-sm-2"> <span class="text text-info"> CPUs:{{model.cpu_slaves}}, RAM:{{model.ram_slaves}}, 
-      					Disk size:{{model.disk_slaves}} </span> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> CPUs:{{model.cpu_slaves}}, RAM:{{model.ram_slaves}}MiB, 
+      					Disk size:{{model.disk_slaves}}GiB </span> </td>
       			</tr>
       		</table>
       			
@@ -145,48 +145,48 @@
 				{{#ifeq model.cluster_confirm_action 'hadoop_start'}}
 				<div class='btn-toolbar-horizontal btn-toolbar-sm btn-block'>
                     <div class='btn-group btn-group-sm'>
-    					<a role="button" {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</a>
-    					<a role="button" {{action 'confirmAction' model false}} class="btn btn-danger btn-sm active">x</a>
+    					<a role="button" {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeClusterAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</a>
+    					<a role="button" {{action 'confirmClusterAction' model false}} class="btn btn-danger btn-sm active">x</a>
     				</div>
                 </div>
 				{{else}}
-    				<button {{bind-attr id='model.hadoop_start_id'}} class="btn btn-sm btn-primary btn-block" {{action 'confirmAction' model 'hadoop_start'}}{{bind-attr disabled=model.hadoop_action_start_disabled}}>
+    				<button {{bind-attr id='model.hadoop_start_id'}} class="btn btn-sm btn-primary btn-block" {{action 'confirmClusterAction' model 'hadoop_start'}}{{bind-attr disabled=model.hadoop_action_start_disabled}}>
                         Start Hadoop <b {{bind-attr class='model.hadoop_status_class_start'}}></b>
                     </button>
 				{{/ifeq}}									
 				{{#ifeq model.cluster_confirm_action 'hadoop_stop'}}
 				<div class='btn-toolbar-horizontal btn-toolbar-sm btn-block'>
 				    <div class='btn-group btn-group-sm'>
-    					<button {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</button>
-    					<button {{action 'confirmAction' model false}} class="btn btn-danger btn-sm active">x</button>
+    					<button {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeClusterAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</button>
+    					<button {{action 'confirmClusterAction' model false}} class="btn btn-danger btn-sm active">x</button>
     				</div>
     			</div>
 				{{else}}
-                    <button {{bind-attr id='model.hadoop_stop_id'}} class="btn btn-sm btn-primary btn-block" {{action 'confirmAction' model 'hadoop_stop'}}{{bind-attr disabled=model.hadoop_action_stop_disabled}}>
+                    <button {{bind-attr id='model.hadoop_stop_id'}} class="btn btn-sm btn-primary btn-block" {{action 'confirmClusterAction' model 'hadoop_stop'}}{{bind-attr disabled=model.hadoop_action_stop_disabled}}>
                         Stop Hadoop <b {{bind-attr class='model.hadoop_status_class_stop'}}></b>
                     </button>				    
 				{{/ifeq}}					
 				{{#ifeq model.cluster_confirm_action 'hadoop_format'}}
 				<div class='btn-toolbar-horizontal btn-toolbar-sm btn-block'>
                     <div class='btn-group btn-group-sm'>
-					<a role="button" {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</a>
-					<a role="button" {{action 'confirmAction' model false}} class="btn btn-danger btn-sm active">x</a>
+					<a role="button" {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeClusterAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</a>
+					<a role="button" {{action 'confirmClusterAction' model false}} class="btn btn-danger btn-sm active">x</a>
 				    </div>
                 </div>
 				{{else}}
-    				<button {{bind-attr id='model.hadoop_format_id'}} class="btn btn-sm btn-primary btn-block" {{action 'confirmAction' model 'hadoop_format'}}{{bind-attr disabled=model.hadoop_action_format_disabled}}>
+    				<button {{bind-attr id='model.hadoop_format_id'}} class="btn btn-sm btn-primary btn-block" {{action 'confirmClusterAction' model 'hadoop_format'}}{{bind-attr disabled=model.hadoop_action_format_disabled}}>
                         Format HDFS <b {{bind-attr class='model.hadoop_status_class_format'}}></b>
                     </button>
 				{{/ifeq}}		   	    
 				{{#ifeq model.cluster_confirm_action 'cluster_delete'}}
 				<div class='btn-toolbar-horizontal btn-toolbar-sm btn-block'>
                     <div class='btn-group btn-group-sm'>
-					<a role="button" {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</a>
-					<a role="button" {{action 'confirmAction' model false}} class="btn btn-danger btn-sm active">x</a>
+					<a role="button" {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeClusterAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</a>
+					<a role="button" {{action 'confirmClusterAction' model false}} class="btn btn-danger btn-sm active">x</a>
 				    </div>
                 </div>
 				{{else}}
-    				<button {{bind-attr id='model.cluster_destroy_id'}} class="btn btn-sm btn-primary btn-block"{{action 'confirmAction' model 'cluster_delete'}}>
+    				<button {{bind-attr id='model.cluster_destroy_id'}} class="btn btn-sm btn-primary btn-block"{{action 'confirmClusterAction' model 'cluster_delete'}}>
                         Destroy Cluster <b {{bind-attr class='model.cluster_status_class_destroy'}}></b>
                     </button>
 				{{/ifeq}}

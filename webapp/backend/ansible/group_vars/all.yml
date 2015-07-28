@@ -9,6 +9,7 @@
   hue_home: /usr/local/hue
   hive_db_name: metastore
   hive_home: /usr/local/hive
+  flume_home: /usr/local/flume
   choose_role: webserver
 
   # Hadoop-yarn variables

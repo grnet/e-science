@@ -1,44 +1,35 @@
 // User Welcome controller
 App.UserWelcomeController = Ember.Controller.extend({
 
-    needs : 'clusterCreate',
+    needs : ['clusterCreate','vreserverCreate'],
+    // flag to denote transition from a create action
+    create_cluster_start : false,
+    count : 0,
+    orkaImages: [],
+    vreImages: [],
     user_messages : [],
     // blacklist user messages explicitly removed during polling
     blacklist_messages : {},
-    // flag to see if the transition is from create cluster button
-    create_cluster_start : false,
-    count : 0,
-    sortedclusters : [],
-    column : '',
-    sortdir : null,
-    sortbyname : false,
-    sortbydate : false,
-    sortbystatus : false,
-    sortbyhdpstatus : false,
-    sortbysize : false,
-    sortbyworkflow : false,
-    sortbyurl : false,
-    ip_of_master : '',
-    orkaImages: [],
-    sortedCollection : function() {
-        // sorts content (clusters) based on properties
-        return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, {
-            content : this.get('sortedclusters'),
-            sortProperties : [this.get('column')],
-            sortAscending : this.get('sortdir'),
-            sortFunction : function(item1, item2) {// custom sorter so pending > active > rest
-                if ((item1 == '2' && item2 in ['0', '1', '3']) 
-                    || (item1 == '1') && item2 in ['0', '3']) {
-                    return -1;
-                } else if ( (item1 in ['0', '1', '3'] && item2 == '2') 
-                    ||(item1 in ['0','3']) && item2 == '1') {
-                    return 1;
-                } else {
-                    return Ember.compare(item1, item2);
-                }
-            }
-        });
-    }.property('sortdir', 'sortbyname', 'sortbydate', 'sortbystatus', 'sortbyhdpstatus', 'sortbysize', 'sortbyurl', 'sortbyworkflow'),
+    sortable_clusters : function(){
+        var _sort_model = !Ember.isEmpty(this.get('sorting_info.last_sort_model')) ? this.get('sorting_info.last_sort_model') : '';
+        var _sortProperties = !Ember.isEmpty(this.get('sorting_info.last_sort')) && _sort_model=='uc' ? [this.get('sorting_info.last_sort'),'action_date'] : ['resorted_status','action_date'];
+        var _sortAscending = !Ember.isEmpty(this.get('sorting_info.last_sort_dir')) && _sort_model=='uc' ? this.get('sorting_info.last_sort_dir') : true;
+        return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, 
+            {content : this.get('content.clusters').filterBy('id'),
+             sortProperties : _sortProperties,
+             sortAscending : _sortAscending,
+             short_model_name : 'uc'});
+    }.property('content.clusters.[]','content.clusters.isLoaded'),
+    sortable_vreservers : function(){
+        var _sort_model = !Ember.isEmpty(this.get('sorting_info.last_sort_model')) ? this.get('sorting_info.last_sort_model') : '';
+        var _sortProperties = !Ember.isEmpty(this.get('sorting_info.last_sort')) && _sort_model=='uv' ? [this.get('sorting_info.last_sort'),'action_date'] : ['resorted_status','action_date'];
+        var _sortAscending = !Ember.isEmpty(this.get('sorting_info.last_sort_dir')) && _sort_model=='uv' ? this.get('sorting_info.last_sort_dir') : true;
+        return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin,
+            {content : this.get('content.vreservers').filterBy('id'),
+             sortProperties : _sortProperties,
+             sortAscending : _sortAscending,
+             short_model_name : 'uv'});
+    }.property('content.vreservers.[]','content.vreservers.isLoaded'),
     master_vm_password_msg : function() {
         var pwd_message = this.get('content.master_vm_password');
         if (!Ember.isBlank(pwd_message)) {
@@ -63,56 +54,24 @@ App.UserWelcomeController = Ember.Controller.extend({
         var num_messages = Number(this.get('user_messages').get('length'));
         return (num_messages == 0 || Ember.isEmpty(num_messages));
     }.property('user_messages.@each'),
+    // utility function. we use it to create dynamic properties for storing on the controller to reference in templates 
+    // (eg. <short_name>_<column_name>_show on a template will automatically have the correct boolean value to show/hide a sorting arrow)
+    get_sorting_info : function(short_model_name, sortdir, column){
+        var prop_arrow_show = '%@_%@_show'.fmt(short_model_name,column);
+        var prop_arrow_dir = '%@_%@_dir'.fmt(short_model_name,column);
+        var obj = {};
+        obj[prop_arrow_show] = true;
+        obj[prop_arrow_dir] = sortdir;
+        obj.last_sort = column;
+        obj.last_sort_dir = sortdir;
+        obj.last_sort_model = short_model_name;
+        return {'sorting_info': obj};
+    },
     actions : {
-        // sorts clusters based on selected column (name, date, status, size, IP)
-        sortBy : function(clusters, column) {
-            // flags used for showing/hiding arrows next to column names
-            this.set('sortbynamearrow', false);
-            this.set('sortbydatearrow', false);
-            this.set('sortbystatusarrow', false);
-            this.set('sortbyhdpstatusarrow', false);
-            this.set('sortbysizearrow', false);
-            this.set('sortbyurlarrow', false);
-            this.set('sortbyworkflowarrow', false);
-            this.set('sortedclusters', clusters);
-            this.set('column', column);
-            switch (column) {
-            case 'cluster_name':
-                this.set('sortbynamearrow', true);
-                this.set('sortbyname', !this.get('sortbyname'));
-                this.set('sortdir', this.get('sortbyname'));
-                break;
-            case 'action_date':
-                this.set('sortbydatearrow', true);
-                this.set('sortbydate', !this.get('sortbydate'));
-                this.set('sortdir', this.get('sortbydate'));
-                break;
-            case 'cluster_status':
-                this.set('sortbystatusarrow', true);
-                this.set('sortbystatus', !this.get('sortbystatus'));
-                this.set('sortdir', this.get('sortbystatus'));
-                break;
-            case 'hadoop_status':
-                this.set('sortbyhdpstatusarrow', true);
-                this.set('sortbyhdpstatus', !this.get('sortbyhdpstatus'));
-                this.set('sortdir', this.get('sortbyhdpstatus'));
-                break;
-            case 'cluster_size':
-                this.set('sortbysizearrow', true);
-                this.set('sortbysize', !this.get('sortbysize'));
-                this.set('sortdir', this.get('sortbysize'));
-                break;
-            case 'master_IP':
-                this.set('sortbyurlarrow', true);
-                this.set('sortbyurl', !this.get('sortbyurl'));
-                this.set('sortdir', this.get('sortbyurl'));
-                break;
-            case 'workflow_enabled':
-            	this.set('sortbyworkflowarrow', true);
-                this.set('sortbyworkflow', !this.get('sortbyworkflow'));
-                this.set('sortdir', this.get('sortbyworkflow'));
-                break;
-            }
+        sortBy : function(model, column){
+            model.set('sortProperties',[column]);
+            model.set('sortAscending', !model.get('sortAscending'));
+            this.setProperties(this.get_sorting_info(model.get('short_model_name'),model.get('sortAscending'),column));
         },
         addMessage : function(obj) {
             // routes/controllers > controller.send('addMessage',{'msg_type':'default|info|success|warning|danger', 'msg_text':'Lorem ipsum dolor sit amet, consectetur adipisicing elit'})
@@ -198,19 +157,19 @@ App.UserWelcomeController = Ember.Controller.extend({
                             promise.then(function(user) {
                                 // success
                                 var user_clusters = user.get('clusters');
-                                var num_records = user_clusters.get('length');
+                                var num_cluster_records = user_clusters.get('length');
+                                var user_vreservers = user.get('vreservers');
+                                var num_vre_records = user_vreservers.get('length');
                                 var bPending = false;
-                                for ( i = 0; i < num_records; i++) {
+                                for ( i = 0; i < num_cluster_records; i++) {
                                     if ((user_clusters.objectAt(i).get('cluster_status') == '2') || (user_clusters.objectAt(i).get('hadoop_status') == '2')) {
                                         bPending = true;
-                                        var lastsort = that.get('column');
-                                        if (!Ember.isBlank(lastsort)) {
-                                            that.send('sortBy', user_clusters, lastsort);
-                                            that.send('sortBy', user_clusters, lastsort);
-                                        } else {
-                                            that.send('sortBy', user_clusters, 'action_date');
-                                            that.send('sortBy', user_clusters, 'action_date');
-                                        }
+                                        break;
+                                    }
+                                }
+                                for ( i = 0; i < num_vre_records; i++ ) {
+                                    if (user_vreservers.objectAt(i).get('server_status') == '2'){
+                                        bPending = true;
                                         break;
                                     }
                                 }
