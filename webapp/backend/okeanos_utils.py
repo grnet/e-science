@@ -105,12 +105,12 @@ def destroy_server(token, id):
     """Destroys a VRE server in ~okeanos ."""
     current_task.update_state(state="Started")
     vre_server = VreServer.objects.get(id=id)    
-    auth = check_credentials(token)
+    auth = check_credentials(unmask_token('encrypt_key',token))
     current_task.update_state(state="Authenticated")
     set_server_state(token, id, 'Deleting VRE server and its public IP')
     endpoints, user_id = endpoints_and_user_id(auth)
-    cyclades = init_cyclades(endpoints['cyclades'], token)
-    nc = init_cyclades_netclient(endpoints['network'], token)
+    cyclades = init_cyclades(endpoints['cyclades'], unmask_token('encrypt_key',token))
+    nc = init_cyclades_netclient(endpoints['network'], unmask_token('encrypt_key',token))
     cyclades.delete_server(vre_server.server_id)
     new_status = cyclades.wait_server(vre_server.server_id,current_status='ACTIVE',max_wait=MAX_WAIT)
     if new_status != 'DELETED':
@@ -152,11 +152,11 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     network_to_delete_id = None
     float_ip_to_delete_id = None
     new_status = 'placeholder'
-    auth = check_credentials(token)
+    auth = check_credentials(unmask_token('encrypt_key',token))
     current_task.update_state(state="Authenticated")
     endpoints, user_id = endpoints_and_user_id(auth)
-    cyclades = init_cyclades(endpoints['cyclades'], token)
-    nc = init_cyclades_netclient(endpoints['network'], token)
+    cyclades = init_cyclades(endpoints['cyclades'], unmask_token('encrypt_key',token))
+    nc = init_cyclades_netclient(endpoints['network'], unmask_token('encrypt_key',token))
     # Get list of servers and public IPs
     try:
         list_of_servers = cyclades.list_servers(detail=True)
