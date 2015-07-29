@@ -47,11 +47,11 @@ class YarnCluster(object):
         elif self.opts['disk_template'] == 'Standard':
             self.opts['disk_template'] = 'drbd'
         # project id of project name given as argument
-        self.project_id = get_project_id(unmask_token('encrypt_key', self.opts['token']),
+        self.project_id = get_project_id(unmask_token(encrypt_key, self.opts['token']),
                                          self.opts['project_name'])
         self.status = {}
         # Instance of an AstakosClient object
-        self.auth = check_credentials(unmask_token('encrypt_key', self.opts['token']),
+        self.auth = check_credentials(unmask_token(encrypt_key, self.opts['token']),
                                       self.opts.get('auth_url',
                                                     auth_url))
         # Check if project has actual quota
@@ -64,15 +64,15 @@ class YarnCluster(object):
 
         # Instance of CycladesClient
         self.cyclades = init_cyclades(self.endpoints['cyclades'],
-                                      unmask_token('encrypt_key', self.opts['token']))
+                                      unmask_token(encrypt_key, self.opts['token']))
         # Instance of CycladesNetworkClient
         self.net_client = init_cyclades_netclient(self.endpoints['network'],
-                                                  unmask_token('encrypt_key', self.opts['token']))
+                                                  unmask_token(encrypt_key, self.opts['token']))
         # Instance of Plankton/ImageClient
         self.plankton = init_plankton(self.endpoints['plankton'],
-                                      unmask_token('encrypt_key', self.opts['token']))
+                                      unmask_token(encrypt_key, self.opts['token']))
         # Get resources of pending clusters
-        self.pending_quota = retrieve_pending_clusters(unmask_token('encrypt_key', self.opts['token']),
+        self.pending_quota = retrieve_pending_clusters(unmask_token(encrypt_key, self.opts['token']),
                                                        self.opts['project_name'])
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
@@ -263,7 +263,7 @@ class YarnCluster(object):
         """
         Get the ssh_key dictionary of a user
         """   
-        command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' +  unmask_token('encrypt_key', self.opts['token']) + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
+        command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' +  unmask_token(encrypt_key, self.opts['token']) + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
         p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
         out, err = p.communicate()
         output = out[2:-2].split('}, {')
@@ -381,7 +381,7 @@ class YarnCluster(object):
             vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
             if vre_image_uuid == server['image']['id']:
                 chosen_vre_image = pithos_vre_images_uuids_actions[vre_image_uuid]
-                start_vre(server_ip,server_pass,unmask_token('encrypt_key', self.opts['token']), chosen_vre_image)
+                start_vre(server_ip,server_pass,unmask_token(encrypt_key, self.opts['token']), chosen_vre_image)
             else:
                 msg = 'Image {0} exists on database but cannot be found or has different id'
                 ' on Pithos+'.format(self.opts['os_choice'])

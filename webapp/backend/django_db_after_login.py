@@ -52,7 +52,7 @@ def db_after_login(token, login=True):
     """
     given_uuid = get_user_id(token)
     cached_user_name = get_user_name(token)
-    masked_token = mask_token('encrypt_key', token)	#encrypt token
+    masked_token = mask_token(encrypt_key, token)
     try:
         existing_user = UserInfo.objects.get(uuid=given_uuid)
         logging.info(' The id of the user %s is %d', existing_user.uuid,
@@ -60,8 +60,8 @@ def db_after_login(token, login=True):
         # user already in db
         if login:
             db_login_entry(existing_user)
-        if existing_user.okeanos_token != masked_token: #encrypt token
-            existing_user.okeanos_token = masked_token  #encrypt token
+        if existing_user.okeanos_token != masked_token:
+            existing_user.okeanos_token = masked_token
             existing_user.save()
         if existing_user.user_name != cached_user_name:
             existing_user.user_name = cached_user_name

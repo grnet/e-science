@@ -7,7 +7,9 @@ This module contains the definitions of returned errors and package constants.
 @author: Ioannis Stenos, Nick Vrionis
 """
 import os
-import base64 #encrypt token
+import base64
+from encrypt_key import key #file with only one variable key = encrypt_key file is not in git repo
+encrypt_key = key
 
 # Definitions of return value errors
 error_syntax_clustersize = -1
@@ -107,7 +109,7 @@ pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"ima
                                "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"image":"mediawiki","db_name":"db","default_password":"@test123",
                                                                         "update_password":"/usr/bin/mysqladmin -u root -p\'@test123\' password \'{0}\'"}}
 
-#encrypt decrypt token
+#encrypt decrypt token in django db
 def mask_token(key, token):
     enc = []
     for i in range(len(token)):

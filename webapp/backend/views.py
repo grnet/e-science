@@ -246,7 +246,7 @@ class StatusView(APIView):
         if serializer.is_valid():
             user_token = Token.objects.get(key=request.auth)
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
-            d_cluster = destroy_cluster_async.delay(user.okeanos_token, serializer.data['id']) #decrypt token
+            d_cluster = destroy_cluster_async.delay(user.okeanos_token, serializer.data['id'])
             task_id = d_cluster.id
             return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
         # This will be send if user's delete cluster parameters are not de-serialized
