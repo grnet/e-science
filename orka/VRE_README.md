@@ -1,0 +1,108 @@
+###Virtual Research Environment (VRE) Images
+
+orka vre commands are used to manage VM appliances which cover a wide range of open-software stacks needed for everyday Research and Academic activities. These images are ~okeanos pre-cooked VMs created with Docker.
+
+##"vre create" command
+
+Required positional arguments for vre create command:
+
+    name: "name of the VRE server",
+    cpu: "number of CPU cores of VRE server",
+    ram: "ram in MB of VRE server",
+    disk: "hard drive in GB of VRE server",
+    disk_template: "Standard or Archipelago",
+    project_name: "name of a ~okeanos project, to pull resources from",
+    image: "name of VRE image"
+
+
+
+### {orka vre create} command examples
+
+example for orka vre create with Drupal image:
+
+    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Deb8-Drupal-Docker
+
+##"vre destroy" command
+
+Required positional arguments for vre destroy command:
+
+    server_id: "VRE Server id in e-science database"
+(server_id is returned after creation of VRE server and will be added later to **orka vre list** command)
+
+### {orka vre destroy} command examples
+
+example for orka vre destroy:
+
+    orka vre destroy <server_id>
+
+## General Docker Info
+
+VRE images are built using widely used Docker images pulled from http://hub.docker.com Repository. Components (i.e. Docker layers) inside the VM are not directly accessible from the Linux host's regular filesystem.
+In general, in order to access a docker container's bash, type:
+
+    docker exec -t -i <container_name> bash
+For example, to access the mysql layer (db) in the **Drupal** or **Mediawiki** image:
+
+    docker exec -t -i db bash
+    mysql -p
+
+and give the ~okeanos token when prompt for password.
+
+In order to change the mysql root password, type:
+
+    docker exec -t -i db bash -c "mysqladmin -p<old_password> password <new_password>"
+then, stop the docker service:
+
+    service docker stop
+and find the **config.json** of the corresponding container, open the file and change the variable MYSQL_ROOT_PASSWORD = *new_password*
+
+Finally, start docker and containers, as the drupal example below:
+
+    service docker start
+    docker start db
+    docker start drupal
+In case of **Redmine** image, to access the postgresql database:
+
+    docker exec -t -i redmine_postgresql_1 bash
+    psql -U redmine -d redmine_production -h localhost
+and give the ~okeanos token when prompt for password.
+
+In order to change the postgresql password, type:
+
+    docker exec -t -i redmine_postgresql_1 bash
+enter the postgresql prompt:
+
+    sudo -u postgres psql -U postgres -d redmine_production
+and change the password:
+
+    alter user redmine password '<new_password>';
+
+then, stop the docker service:
+
+    service docker stop
+and find the **config.json** of the corresponding container, open the file and change the variable DB_PASS = *new_password*. The same should be done for the file /usr/local/redmine/docker-compose.yml
+
+Finally, start docker and containers:
+
+    service docker start
+    docker start redmine_postgresql_1
+    docker start redmine_redmine_1
+Useful links:
+
+https://www.docker.com/
+
+https://docs.docker.com/articles/basics/
+
+https://docs.docker.com/reference/commandline/exec/
+
+
+##Access VRE servers
+In order to access Drupal and Mediawiki, just visit the VM's IP. To access Redmine visit the VM's IP:10083
+
+## Getting help
+
+Also, with
+
+    orka vre -h
+
+helpful information about the orka vre CLI is depicted.

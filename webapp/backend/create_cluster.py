@@ -381,7 +381,7 @@ class YarnCluster(object):
             vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
             if vre_image_uuid == server['image']['id']:
                 chosen_vre_image = pithos_vre_images_uuids_actions[vre_image_uuid]
-                start_vre(server_ip,server_pass,self.opts['token'], chosen_vre_image['image'])
+                start_vre(server_ip,server_pass,self.opts['token'], chosen_vre_image)
             else:
                 msg = 'Image {0} exists on database but cannot be found or has different id'
                 ' on Pithos+'.format(self.opts['os_choice'])
@@ -389,8 +389,8 @@ class YarnCluster(object):
         except RuntimeError, e:
             # Exception is raised if a VRE start command is not executed correctly and informs user of its VRE properties
             # so user can ssh connect to the VRE server or delete the server from orkaCLI.
-            raise RuntimeError('{0}. Your VRE server has the following properties id:{1} root_password:{2} server_IP:{3}'
-                               .format(e.args[0],server_id,server_pass,server_ip),error_create_server)
+            raise RuntimeError('Your VRE server has the following properties id:{0} root_password:{1} server_IP:{2}'
+                               ' but could not be started normally.'.format(server_id,server_pass,server_ip),error_create_server)
         return server_id, server_pass, server_ip
         
         
