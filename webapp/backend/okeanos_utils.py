@@ -514,15 +514,16 @@ def personality(ssh_keys_path='', pub_keys_path=''):
             except IOError:
                 msg = " No valid public ssh key(id_rsa.pub) in %s or %s" %((abspath(ssh_keys_path)),(abspath(pub_keys_path)))
                 raise IOError(msg)
-        elif ssh_keys_path:
+        elif ssh_keys_path or pub_keys_path:
             try:
-                with open(abspath(ssh_keys_path)) as f:
+                keys_path = ssh_keys_path if ssh_keys_path else pub_keys_path
+                with open(abspath(keys_path)) as f:
                     personality.append(dict(
                         contents=b64encode(f.read()),
                         path='/root/.ssh/authorized_keys',
                         owner='root', group='root', mode=0600))
             except IOError:
-                msg = " No valid public ssh key(id_rsa.pub) in " + (abspath(ssh_keys_path))
+                msg = " No valid public ssh key(id_rsa.pub) in " + (abspath(keys_path))
                 raise IOError(msg)
         if ssh_keys_path or pub_keys_path:
                 personality.append(dict(
