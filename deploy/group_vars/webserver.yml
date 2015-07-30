@@ -25,6 +25,7 @@
  path_to_java_dirs: "{{my_project_dir}}/{{my_project_name}}/pithosfs/java"
  orka_version: orka-0.1.1
  orka_db_sql_script: backend_insert_tables.sql
-
+ local_encrypt_file_path: "../{{webapp_dir}}/backend/encrypt_key.py" 
+ remote_encrypt_file_path: "{{settings_path}}/encrypt_key.py"
  # Paths for project
  project_path: "{{my_project_dir}}/{{my_project_name}}"

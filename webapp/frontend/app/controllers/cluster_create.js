@@ -64,7 +64,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
 	list_of_flavors : ['cpu', 'ram', 'disk'], // List of flavors from kamaki except storage space
 	number_of_flavors : 3,
-	list_of_flavor_sizes : ['Small', 'Medium', 'Large'], // List of sizes of the predefined falvors
+	list_of_flavor_sizes : ['Small', 'Medium', 'Large'], // List of sizes of the predefined flavors
 	number_of_flavor_sizes : 3,
 	list_of_roles : ['master', 'slaves'], // Possible roles for vms
 	number_of_roles : 2,
@@ -179,7 +179,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		if (this.get('no_project_selected')) {
 			return [];
 		}
-		pithos_orka_images = this.get('content').objectAt(this.get('project_index')).get('os_choices');
+		pithos_orka_images = this.get('content').objectAt(this.get('project_index')).get('hadoop_choices');
 		for (var i=0; i< this.get('orkaImages').length; i++){
 			db_orka_images.push(this.get('orkaImages').objectAt(i).get('image_name'));
 		}
@@ -1180,7 +1180,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				imgUrl : DJANGO_STATIC_URL + "images/loading[size].gif",
 				onShow : function() {
 					$.loader.shown = true;
-					$('.loading_wrp').find('span').addClass('text-info strong');
+					$('.loading_wrp').find('span').addClass('text-primary big strong');
 				},
 				onClose : function() {
 					$.loader.shown = false;
@@ -1315,6 +1315,7 @@ App.ClusterCreateController = Ember.Controller.extend({
                         }
 						self.set('controllers.userWelcome.create_cluster_start', true);
 						self.store.fetch('user', 1).then(function(user){
+						    self.get('controllers.userWelcome').send('setActiveTab','clusters');
 							self.transitionToRoute('user.welcome');
 						},function(reason){
 							console.log(reason.message);

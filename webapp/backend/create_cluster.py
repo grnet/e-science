@@ -374,9 +374,9 @@ class YarnCluster(object):
             msg = ' Status for VRE server {0} is {1}'.format(server['name'], new_status)
             raise ClientError(msg, error_create_server)
             
-        set_server_state(self.opts['token'],server_id,state='VRE Server created',status='Active',server_IP=server_ip)
         # Wait for VRE server to be pingable
         sleep(15)
+        set_server_state(self.opts['token'],server_id,state='VRE Server created',status='Active',server_IP=server_ip)
         try:
             vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
             if vre_image_uuid == server['image']['id']:
