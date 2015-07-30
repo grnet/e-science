@@ -47,18 +47,18 @@
 <div class="row">
     <div class="col col-sm-12">
         <ul id="id_user_tabs" class="nav nav-tabs">
-            <li class="active">
-                <a data-toggle="tab" href="#id_userclusters_tab"><span class="h4 text-left">User Clusters (<span class="text text-success">{{model.cluster}}</span>/<span class="text text-muted small">{{model.clusters.length}}</span>)</span></a>
+            <li {{bind-attr class="content_tabs.clusters.active:active"}}>
+                <a data-toggle="tab" {{bind-attr href="content_tabs.clusters.href"}}><span class="h4 text-left">{{content_tabs.clusters.name}} (<span class="text text-success">{{model.cluster}}</span>/<span class="text text-muted small">{{model.clusters.length}}</span>)</span></a>
             </li>
-            <li>
-                <a data-toggle="tab" href="#id_uservres_tab"><span class="h4 text-left">User VREs (<span class="text text-success">{{model.vrenum}}</span>/<span class="text text-muted small">{{model.vreservers.length}}</span>)</span></a>
+            <li {{bind-attr class="content_tabs.vreservers.active:active"}}>
+                <a data-toggle="tab" href="#id_uservres_tab"><span class="h4 text-left">{{content_tabs.vreservers.name}} (<span class="text text-success">{{model.vrenum}}</span>/<span class="text text-muted small">{{model.vreservers.length}}</span>)</span></a>
             </li>
         </ul>
         <div id="id_clusters_and_vres" class="tab-content">
-            <div id="id_userclusters_tab" class="tab-pane active">
+            <div {{bind-attr id="content_tabs.clusters.id" class=":tab-pane content_tabs.clusters.active:active"}}>
                 {{partial 'user/userclusters'}}
             </div>
-            <div id="id_uservres_tab" class="tab-pane">
+            <div {{bind-attr id="content_tabs.vreservers.id" class=":tab-pane content_tabs.vreservers.active:active"}}>
                 {{partial 'user/uservres'}}
             </div>
         </div>

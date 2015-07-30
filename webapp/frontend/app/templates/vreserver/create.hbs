@@ -23,12 +23,12 @@ Can also select server name, project name, flavor, ssh-key-->
         <div class="col col-lg-8">
             <div class="form-horizontal">
                 <div class="form-group">
-                    <label for="project_id" class="control-label col col-sm-4">Projects</label>
+                    <label for="id_project_id" class="control-label col col-sm-4">Projects</label>
                     <div class="col col-sm-8">
                         {{view "select" 
-                        content=model
+                        content=content
                         optionValuePath="content.id"
-                        optionLabelPath="content.project_name_clean"
+                        optionLabelPath="content.project_name_decorated"
                         value=selected_project_id
                         prompt="*Select project*"
                         id="id_project_id"
@@ -37,29 +37,26 @@ Can also select server name, project name, flavor, ssh-key-->
                 </div>                
             </div>
 	    	<div class="text-center text-danger">
-	    	    {{alert_mes_network}}
-	    	</div>
-	    	<div class="text-center text-danger">
-	    		{{alert_mes_float_ip}}
+	    		{{alert_no_float_ip}}
 	    	</div>
         </div>        
         <div class="col col-lg-4 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">
             <div class="text-left">
                 <button class="btn btn-primary btn-sm" 
-                id = id_apply_last_cluster
+                id = id_apply_last_server
                 data-container="body" 
                 data-toggle="popover" 
                 data-placement="bottom-auto"
                 data-trigger='hover focus click'
                 data-html=true
                 {{bind-attr data-content=last_conf_message}} 
-                {{action "applyLastCluster"}}
+                {{action "apply_last_config"}}
                 >
                 Apply Last VRE Server Configuration</button>
             </div>
 	        <div class="row text-center text-danger">
 	            <div class="col col-sm-8">
-	                {{alert_mes_last_conf}}
+	                {{alert_last_conf_no_resources}}
 	            </div>
 	        </div>            
         </div>
@@ -78,21 +75,10 @@ Can also select server name, project name, flavor, ssh-key-->
 					<div class="col col-sm-7">
 						{{view "select" 
                         content=vre_categories
-						value=selected_category_id
+						value=selected_category
 						prompt="*Select category*"
 						id="id_vre_category"
 						class="btn-primary btn-sm text-left"}}
-						<button
-						id=id_components_info
-						data-toggle="popover"
-						data-placement="bottom"
-						data-trigger="hover focus click"
-						data-html=true
-						data-title='<b>Component</b>: <span class="text text-info"><b>Version</b></span>'
-						{{bind-attr data-content=version_message class="info_popover_visible:btn:hide info_popover_visible:btn-primary:hide info_popover_visible:btn-sm:hide"}}
-						>
-							<b class="glyphicon glyphicon-info-sign"></b>
-						</button>
 					</div>
 				</div>
 				<div class="form-group">
@@ -100,15 +86,26 @@ Can also select server name, project name, flavor, ssh-key-->
 					<div class="col col-sm-7">
 						{{view "select" 
 						content=selected_project_images
-						value=selected_image_id
+						value=selected_image
 						prompt="*Select image*" 
 						id="id_vre_image"
 						class="btn-primary btn-sm text-left"}}
+						<button
+                        id=id_components_info
+                        data-toggle="popover"
+                        data-placement="bottom"
+                        data-trigger="hover focus click"
+                        data-html=true
+                        data-title='<b>Component</b>: <span class="text text-info"><b>Version</b></span>'
+                        {{bind-attr data-content=version_message class="info_popover_visible:btn:hide info_popover_visible:btn-primary:hide info_popover_visible:btn-sm:hide"}}
+                        >
+                            <b class="glyphicon glyphicon-info-sign"></b>
+                        </button>
 					</div>
 				</div>
 				<div class="row text-center text-danger">
 					<div class="col col-sm-6">
-						{{alert_mes_cluster_size}}
+						
 					</div>
 				</div>
 			</div>
@@ -116,24 +113,27 @@ Can also select server name, project name, flavor, ssh-key-->
 		<div class="col col-sm-6">
 			<div class="form-horizontal">
 				<div class="form-group">
-					<label for="cluster_name" class="control-label col-sm-4">VRE Server Name</label>
+					<label for="id_server_name" class="control-label col-sm-4">VRE Server Name</label>
 					<div class="col col-sm-8">
-						{{view Ember.TextField valueBinding="server_name"
-						id="id_server_name" class="input-sm form-control"
-						placeholder="server_name"}}
+					    {{input type="text" 
+					    value=vre_server_name
+					    placeholder="VRE server name"
+					    required="true"
+					    id="id_server_name"
+					    classNames="input-sm form-control"}}
 					</div>
 				</div>
 				<div class="row text-center text-danger">
 					<div id = "alert_mes_cluster_name" class="col col-sm-6">
-						{{alert_mes_cluster_name}}
+						{{alert_missing_server_name}}
 					</div>
 				</div>
 				<div class="form-group">
-					<label for="names_of_ssh_keys" class="control-label col-sm-4">public keys </label>
+					<label for="id_ssh_key" class="control-label col-sm-4">public keys </label>
 					<div class="col col-sm-8">
 						{{view "select"
 						content=selected_project_sshkeys
-						value=selected_ssh_key_id
+						value=selected_sshkey
 						prompt="Select public key" 
 						id="id_ssh_key"
 						class="btn-primary btn-sm text-left"}}
@@ -142,16 +142,16 @@ Can also select server name, project name, flavor, ssh-key-->
 				<div class="form-group">
 					<label class="control-label col-sm-4">Storage: </label>
 					<div class="col col-sm-8">
-						<div class="btn-group">
-							{{#each item in project_current.disk_template}}
-							{{#view App.StorageSelButView value=item
-							name="storage_button" class="btn btn-primary btn-sm"
-							disabled=storage_Not_Allow}}{{item}}{{/view}}
-							{{/each}}
-						</div>
+					    <div id="id_storage_choice" class="btn-group" data-toggle="buttons">
+                            {{#eachidx storage in selected_project_storage_choices}}
+                              <label class="btn btn-sm btn-primary" {{bind-attr id=storage}} {{action "pick_storage" index storage}}>
+                                <input type="radio" name="storage_choices" {{bind-attr id=index}}>{{storage}}
+                              </label>
+                            {{/eachidx}}
+                        </div>
 						<div class="row text-center text-danger">
 							<div id = "alert_mes_cluster_name" class="col col-sm-6">
-								{{alert_mes_disk_template}}
+								{{alert_missing_storage}}
 							</div>
 						</div>
 					</div>
@@ -162,7 +162,8 @@ Can also select server name, project name, flavor, ssh-key-->
 	<div class="panel-footer text-center">
 		<div class="row">
 			<div class="col col-sm-6">
-
+            ~okeanos project available VMs:
+            {{selected_project_available_vm}}
 			</div>
 			<div class="col col-sm-6">
             </div>
@@ -178,73 +179,73 @@ Can also select server name, project name, flavor, ssh-key-->
 	    <div class="row horizontal">
 	        <div class="col col-sm-3">
 	        </div>	
-	        <div class="col col-sm-5">
-	            <h4 id = "vm_flavors_Master" class="btn-group">Predefined VRE Flavors: </h4>
-                <div class="btn-group">
-	                {{#each item in project_current.vm_flavors_choices}}
-		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_master"
-		            class="btn btn-primary btn-sm" disabled = false}}
-		            {{item}}{{/view}}
-		            {{/each}}
+	        <div class="col col-sm-6">
+	            <label for="id_vre_flavors" class="h4">Predefined VRE Flavors: </label>
+                <div id="id_vre_flavors" class="btn-group" data-toggle="buttons">
+	                {{#eachidx flavor in vre_flavor_choices}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=flavor}} {{action "pick_flavor" index flavor}}>
+                        <input type="radio" name="flavors" {{bind-attr id=index}}>{{flavor}}
+                      </label>
+		            {{/eachidx}}
                 </div>
 	        </div>
-	        <div class="col col-sm-4">
+	        <div class="col col-sm-3">
 	        </div>
         </div>
         <div class="row">
             <div class="col col-sm-4">
-                <h4 id = "master_cpu_summary">CPUs: {{this.master_cpu_selection}} </h4>
-                <div class="btn-group">
-                    {{#each item in project_current.cpu_choices}}
-                    {{#view App.CPUSelButView value=item name="master_cpus_button"
-                    class="btn btn-primary btn-sm" disabled=master_cpus_Not_Allow}}
-                    {{item}}x{{/view}}
-                    {{/each}}
+                <h4 id="id_vre_cpu_summary">CPUs: {{selected_cpu_value}} </h4>
+                <div id="id_cpu_choice" class="btn-group" data-toggle="buttons">
+                    {{#eachidx cpu_choice in selected_project_cpu_choices}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=cpu_choice}} {{action "pick_cpu" index cpu_choice}}>
+                        <input type="radio" name="cpu_choices" {{bind-attr id=index}}>{{cpu_choice}}
+                      </label>
+                    {{/eachidx}}
                 </div>
             </div>
             <div class="col col-sm-4">
-                <h4 id="master_ram_summary">RAM: {{this.master_ram_selection}} </h4>
-                <div class="btn-group">
-                    {{#each item in project_current.ram_choices}}
-                    {{#view App.RAMSelButView value=item name="master_ram_button"
-                    class="btn btn-primary btn-sm" disabled=master_ram_Not_Allow}}
-                    {{item}}{{/view}}
-                    {{/each}}
+                <h4 id="id_vre_ram_summary">RAM: {{selected_ram_value}} </h4>
+                <div id="id_ram_choice" class="btn-group" data-toggle="buttons">
+                    {{#eachidx ram_choice in selected_project_ram_choices}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=ram_choice}} {{action "pick_ram" index ram_choice}}>
+                        <input type="radio" name="ram_choices" {{bind-attr id=index}}>{{ram_choice}}
+                      </label>
+                    {{/eachidx}}
                 </div>
             </div>
             <div class="col col-sm-4">
-                <h4 id="master_disk_summary">Disk Size: {{this.master_disk_selection}} </h4>
-                <div class="btn-group">
-                    {{#each item in project_current.disk_choices}}
-                    {{#view App.DiskSelButView value=item name="master_disk_button"
-                    class="btn btn-primary btn-sm" disabled=master_disk_Not_Allow}}
-                    {{item}}{{/view}}
-                    {{/each}}
+                <h4 id="id_vre_disk_summary">Disk Size: {{selected_disk_value}} </h4>
+                <div id="id_disk_choice" class="btn-group" data-toggle="buttons">
+                    {{#eachidx disk_choice in selected_project_disk_choices}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=disk_choice}} {{action "pick_disk" index disk_choice}}>
+                        <input type="radio" name="disk_choices" {{bind-attr id=index}}>{{disk_choice}}
+                      </label>
+                    {{/eachidx}}
                 </div>
             </div>
         </div>
         <div class="row text-center text-danger">
-            <div id = "alert_mes_master_cpu" class="col col-sm-4">
-                {{alert_mes_master_cpu}}
+            <div id = "id_alert_vre_cpu" class="col col-sm-4">
+                {{alert_missing_cpu}}
             </div>
-            <div id = "alert_mes_master_ram" class="col col-sm-4">
-                {{alert_mes_master_ram}}
+            <div id = "id_alert_vre_ram" class="col col-sm-4">
+                {{alert_missing_ram}}
             </div>
-            <div id = "alert_mes_master_disk" class="col col-sm-4">
-                {{alert_mes_master_disk}}
+            <div id = "id_alert_vre_disk" class="col col-sm-4">
+                {{alert_missing_disk}}
             </div>
         </div>
     </div>
     <div class="panel-footer text-center">
         <div class="row">
             <div class="col col-sm-4">
-                CPUs ({{this.cpu_available}} available)
+                CPUs ({{selected_project_available_cpu}} available)
             </div>
             <div class="col col-sm-4">
-                RAM size ({{this.ram_available}} MB available)
+                RAM size ({{selected_project_available_ram}} MiB available)
             </div>
             <div class="col col-sm-4">
-                Disk size ({{this.disk_available}} GB available)
+                Disk size ({{selected_project_available_disk}} GiB available)
             </div>
         </div>
     </div>
@@ -258,20 +259,11 @@ Can also select server name, project name, flavor, ssh-key-->
         </button>
     </div>
     <div class="col col-sm-6">
-        {{#view App.CreateClusterButView id="id_create_server"
-        class="btn btn-success btn-md btn-block"}}
-        Create VRE Server
-        {{/view}}
+        <button id="id_create_server" class="btn btn-success btn-md btn-block" {{action "submit_create"}}>
+            Create VRE Server
+        </button>
         <h4>{{message}}</h4>
     </div>
     <div class="col col-sm-2"></div>
 </div>
-<div id="test">
-    selected: {{selected_project_id}} {{selected_project_description}}<br />
-    choices: 
-    {{#each choice in selected_project_images}}{{choice}}{{/each}}
-    selected: {{selected_image_id}} {{selected_image_description}}
-    {{#each project in model}}
-    <p>{{project.ssh_keys_names}}</p>
-    {{/each}}
-</div>
+

@@ -10,6 +10,24 @@ App.UserWelcomeController = Ember.Controller.extend({
     user_messages : [],
     // blacklist user messages explicitly removed during polling
     blacklist_messages : {},
+    // tabs info for template
+    content_tabs : function(key,value){
+        var tabs_object = {
+            clusters: {id:'id_userclusters_tab',href:'#id_userclusters_tab',name:'User Clusters',active:true},
+            vreservers: {id:'id_uservres_tab',href:'#id_uservres_tab',name:'User VREs'}};
+        if (arguments.length>1){//setter
+            switch(value) {
+            case "clusters":
+                tabs_object["clusters"]["active"]=true;
+                tabs_object["vreservers"]["active"]=null;
+            case "vreservers":
+                tabs_object["vreservers"]["active"]=true;
+                tabs_object["clusters"]["active"]=null;
+            }
+            return tabs_object;
+        }
+        return tabs_object;
+    }.property(),
     sortable_clusters : function(){
         var _sort_model = !Ember.isEmpty(this.get('sorting_info.last_sort_model')) ? this.get('sorting_info.last_sort_model') : '';
         var _sortProperties = !Ember.isEmpty(this.get('sorting_info.last_sort')) && _sort_model=='uc' ? [this.get('sorting_info.last_sort'),'action_date'] : ['resorted_status','action_date'];
@@ -55,7 +73,7 @@ App.UserWelcomeController = Ember.Controller.extend({
         return (num_messages == 0 || Ember.isEmpty(num_messages));
     }.property('user_messages.@each'),
     // utility function. we use it to create dynamic properties for storing on the controller to reference in templates 
-    // (eg. <short_name>_<column_name>_show on a template will automatically have the correct boolean value to show/hide a sorting arrow)
+    // (eg. "<short_name>_<column_name>_show" on a template will automatically have the correct boolean value to show/hide a sorting arrow)
     get_sorting_info : function(short_model_name, sortdir, column){
         var prop_arrow_show = '%@_%@_show'.fmt(short_model_name,column);
         var prop_arrow_dir = '%@_%@_dir'.fmt(short_model_name,column);
@@ -72,6 +90,9 @@ App.UserWelcomeController = Ember.Controller.extend({
             model.set('sortProperties',[column]);
             model.set('sortAscending', !model.get('sortAscending'));
             this.setProperties(this.get_sorting_info(model.get('short_model_name'),model.get('sortAscending'),column));
+        },
+        setActiveTab : function(tab){
+            this.set('content_tabs',tab);  
         },
         addMessage : function(obj) {
             // routes/controllers > controller.send('addMessage',{'msg_type':'default|info|success|warning|danger', 'msg_text':'Lorem ipsum dolor sit amet, consectetur adipisicing elit'})

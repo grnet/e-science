@@ -26,6 +26,7 @@ App.Uservreserver = DS.Model.extend({
     action_date : attr('isodate'), 
     server_status : attr('string'),
     server_IP : attr('string'),
+    ssh_key_selection : attr('string'), // ssh_key_name
     cpu : attr(), 
     ram : attr(), 
     disk : attr(), 
@@ -149,6 +150,8 @@ App.Usercluster = DS.Model.extend({
 	task_id : attr(),
 	state : attr(),
 	hadoop_status : attr(),
+	replication_factor : attr(),
+	dfs_blocksize : attr(),
 	// user that created the cluster
 	user : DS.belongsTo('user', {
 		inverse : 'clusters'
