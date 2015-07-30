@@ -47,11 +47,11 @@ class YarnCluster(object):
         elif self.opts['disk_template'] == 'Standard':
             self.opts['disk_template'] = 'drbd'
         # project id of project name given as argument
-        self.project_id = get_project_id(self.opts['token'],
+        self.project_id = get_project_id(unmask_token(encrypt_key, self.opts['token']),
                                          self.opts['project_name'])
         self.status = {}
         # Instance of an AstakosClient object
-        self.auth = check_credentials(self.opts['token'],
+        self.auth = check_credentials(unmask_token(encrypt_key, self.opts['token']),
                                       self.opts.get('auth_url',
                                                     auth_url))
         # Check if project has actual quota
@@ -64,15 +64,15 @@ class YarnCluster(object):
 
         # Instance of CycladesClient
         self.cyclades = init_cyclades(self.endpoints['cyclades'],
-                                      self.opts['token'])
+                                      unmask_token(encrypt_key, self.opts['token']))
         # Instance of CycladesNetworkClient
         self.net_client = init_cyclades_netclient(self.endpoints['network'],
-                                                  self.opts['token'])
+                                                  unmask_token(encrypt_key, self.opts['token']))
         # Instance of Plankton/ImageClient
         self.plankton = init_plankton(self.endpoints['plankton'],
-                                      self.opts['token'])
+                                      unmask_token(encrypt_key, self.opts['token']))
         # Get resources of pending clusters
-        self.pending_quota = retrieve_pending_clusters(self.opts['token'],
+        self.pending_quota = retrieve_pending_clusters(unmask_token(encrypt_key, self.opts['token']),
                                                        self.opts['project_name'])
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
@@ -263,7 +263,7 @@ class YarnCluster(object):
         """
         Get the ssh_key dictionary of a user
         """   
-        command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' + self.opts['token'] + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
+        command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' +  unmask_token(encrypt_key, self.opts['token']) + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
         p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
         out, err = p.communicate()
         output = out[2:-2].split('}, {')
@@ -370,7 +370,7 @@ class YarnCluster(object):
                         server_ip = attachment['ipv4']
         else:
             self.cyclades.delete_server(server['id'])
-            set_server_state(self.opts['token'],server_id,'Error',status='Failed')
+            set_server_state( self.opts['token'],server_id,'Error',status='Failed')
             msg = ' Status for VRE server {0} is {1}'.format(server['name'], new_status)
             raise ClientError(msg, error_create_server)
             
@@ -381,7 +381,7 @@ class YarnCluster(object):
             vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
             if vre_image_uuid == server['image']['id']:
                 chosen_vre_image = pithos_vre_images_uuids_actions[vre_image_uuid]
-                start_vre(server_ip,server_pass,self.opts['token'], chosen_vre_image['image'])
+                start_vre(server_ip,server_pass,unmask_token(encrypt_key, self.opts['token']), chosen_vre_image)
             else:
                 msg = 'Image {0} exists on database but cannot be found or has different id'
                 ' on Pithos+'.format(self.opts['os_choice'])
@@ -389,8 +389,8 @@ class YarnCluster(object):
         except RuntimeError, e:
             # Exception is raised if a VRE start command is not executed correctly and informs user of its VRE properties
             # so user can ssh connect to the VRE server or delete the server from orkaCLI.
-            raise RuntimeError('{0}. Your VRE server has the following properties id:{1} root_password:{2} server_IP:{3}'
-                               .format(e.args[0],server_id,server_pass,server_ip),error_create_server)
+            raise RuntimeError('Your VRE server has the following properties id:{0} root_password:{1} server_IP:{2}'
+                               ' but could not be started normally.'.format(server_id,server_pass,server_ip),error_create_server)
         return server_id, server_pass, server_ip
         
         
@@ -464,7 +464,7 @@ class YarnCluster(object):
                           'Installing and configuring YARN (3/3)')
 
             install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
-                         self.cluster_name_postfix_id, self.orka_image_uuid, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'])
+                         self.cluster_name_postfix_id, self.orka_image_uuid, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'], self.opts['admin_password'])
 
         except Exception, e:
             logging.error(str(e.args[0]))
