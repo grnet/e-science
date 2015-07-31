@@ -4,8 +4,8 @@
 # shunit2 compatible unittest file, requires shunit2 installed (apt-get install shunit2)
 
 # Tests
-# 01. Create Vre Drupal server
-# 02. Destroy Vre Drupal server
+# 01. Create Vre server
+# 02. Destroy Vre server
 
 # Load test helpers
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -35,7 +35,7 @@ tearDown(){
 }
 
 # 01 
-testDrupalCreate(){
+testVreCreate(){
 	# arrange
 	# act
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
@@ -52,18 +52,18 @@ testDrupalCreate(){
 		startSkipping
 	fi
 	# assert (assert* "fail message" <success_condition>)
-	assertTrue 'Create ' "${VRE_IMAGE}" ' Server Failed' '[ -n "$SERVER_ID" ]'
+	assertTrue 'Create ${VRE_IMAGE} Server Failed' '[ -n "$SERVER_ID" ]'
 }
 
 # 02 Destroy
-testDrupalDestroy(){
+testVreDestroy(){
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		orka vre destroy $SERVER_ID
 		RESULT="$?"
 	else
 		startSkipping
 	fi
-	assertTrue 'Destroy ' "${VRE_IMAGE}" ' Server Failed' '[ "$RESULT" -eq 0 ]'
+	assertTrue 'Destroy ${VRE_IMAGE} Server Failed' '[ "$RESULT" -eq 0 ]'
 }
 
 . shunit2
