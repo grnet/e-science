@@ -37,7 +37,7 @@ Can also select server name, project name, flavor, ssh-key-->
                 </div>                
             </div>
 	    	<div class="text-center text-danger">
-	    		{{alert_no_float_ip}}
+	    		{{project_message}}{{alert_no_project_resources}}
 	    	</div>
         </div>        
         <div class="col col-lg-4 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">
@@ -262,8 +262,7 @@ Can also select server name, project name, flavor, ssh-key-->
         <button id="id_create_server" class="btn btn-success btn-md btn-block" {{action "submit_create"}}>
             Create VRE Server
         </button>
-        <h4>{{message}}</h4>
+        <h4 class="text text-center text-warning">{{message}}</h4>
     </div>
     <div class="col col-sm-2"></div>
 </div>
-

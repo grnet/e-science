@@ -7,7 +7,7 @@ App.VreserverCreateRoute = App.RestrictedRoute.extend({
 	},
 	deactivate : function(){
 	    // left this route
-	    this.controller.send('cancel');
+	    this.controller.send('reset');
 	},
 	actions : {
 		error : function(err) {
@@ -21,7 +21,7 @@ App.VreserverCreateRoute = App.RestrictedRoute.extend({
     	},
     	willTransition: function(){
     	    // leaving this route
-    	    this.controller.send('cancel');
+    	    this.controller.send('reset');
     	}
 	}
 });

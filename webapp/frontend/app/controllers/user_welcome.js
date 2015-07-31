@@ -28,26 +28,26 @@ App.UserWelcomeController = Ember.Controller.extend({
         }
         return tabs_object;
     }.property(),
-    sortable_clusters : function(){
-        var _sort_model = !Ember.isEmpty(this.get('sorting_info.last_sort_model')) ? this.get('sorting_info.last_sort_model') : '';
-        var _sortProperties = !Ember.isEmpty(this.get('sorting_info.last_sort')) && _sort_model=='uc' ? [this.get('sorting_info.last_sort'),'action_date'] : ['resorted_status','action_date'];
-        var _sortAscending = !Ember.isEmpty(this.get('sorting_info.last_sort_dir')) && _sort_model=='uc' ? this.get('sorting_info.last_sort_dir') : true;
-        return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, 
-            {content : this.get('content.clusters').filterBy('id'),
-             sortProperties : _sortProperties,
-             sortAscending : _sortAscending,
-             short_model_name : 'uc'});
+    // userclusters block
+    filtered_clusters : function(){
+        return this.get('content.clusters').filterBy('id');
     }.property('content.clusters.[]','content.clusters.isLoaded'),
-    sortable_vreservers : function(){
-        var _sort_model = !Ember.isEmpty(this.get('sorting_info.last_sort_model')) ? this.get('sorting_info.last_sort_model') : '';
-        var _sortProperties = !Ember.isEmpty(this.get('sorting_info.last_sort')) && _sort_model=='uv' ? [this.get('sorting_info.last_sort'),'action_date'] : ['resorted_status','action_date'];
-        var _sortAscending = !Ember.isEmpty(this.get('sorting_info.last_sort_dir')) && _sort_model=='uv' ? this.get('sorting_info.last_sort_dir') : true;
-        return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin,
-            {content : this.get('content.vreservers').filterBy('id'),
-             sortProperties : _sortProperties,
-             sortAscending : _sortAscending,
-             short_model_name : 'uv'});
+    sorted_clusters_prop : ['resorted_status:asc','action_date:desc'],
+    sorted_clusters_dir : true,
+    sorted_clusters : Ember.computed.sort('filtered_clusters','sorted_clusters_prop'),
+    sortable_clusters : function(){
+        return this.get('sorted_clusters');
+    }.property('filtered_clusters.[]'),
+    // uservreservers block
+    filtered_vreservers : function(){
+        return this.get('content.vreservers').filterBy('id');
     }.property('content.vreservers.[]','content.vreservers.isLoaded'),
+    sorted_vreservers_prop : ['resorted_status:asc','action_date:desc'],
+    sorted_vreservers_dir : true,
+    sorted_vreservers : Ember.computed.sort('filtered_vreservers','sorted_vreservers_prop'),
+    sortable_vreservers : function(){
+        return this.get('sorted_vreservers');
+    }.property('filtered_vreservers.[]'),
     master_vm_password_msg : function() {
         var pwd_message = this.get('content.master_vm_password');
         if (!Ember.isBlank(pwd_message)) {
@@ -86,10 +86,23 @@ App.UserWelcomeController = Ember.Controller.extend({
         return {'sorting_info': obj};
     },
     actions : {
-        sortBy : function(model, column){
-            model.set('sortProperties',[column]);
-            model.set('sortAscending', !model.get('sortAscending'));
-            this.setProperties(this.get_sorting_info(model.get('short_model_name'),model.get('sortAscending'),column));
+        sortBy : function(model, short_model_name, column){
+            var sortAscending = null;
+            switch(short_model_name){
+            case "uc":
+                this.set('sorted_clusters_dir',!this.get('sorted_clusters_dir'));
+                sortAscending = this.get('sorted_clusters_dir');
+                var primarysort = '%@:%@'.fmt(column,sortAscending && 'asc' || 'desc');
+                var sort_properties = (column == 'action_date') && [primarysort] || [primarysort,'action_date:desc'];
+                this.set('sorted_clusters_prop',sort_properties);
+            case "uv":
+                this.set('sorted_vreservers_dir',!this.get('sorted_vreservers_dir'));
+                sortAscending = this.get('sorted_vreservers_dir');
+                var primarysort = '%@:%@'.fmt(column,sortAscending && 'asc' || 'desc');
+                var sort_properties = (column == 'action_date') && [primarysort] || [primarysort,'action_date:desc'];
+                this.set('sorted_vreservers_prop',sort_properties);
+            }
+            this.setProperties(this.get_sorting_info(short_model_name,sortAscending,column));
         },
         setActiveTab : function(tab){
             this.set('content_tabs',tab);  

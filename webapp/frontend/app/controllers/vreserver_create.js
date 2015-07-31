@@ -34,9 +34,9 @@ App.VreserverCreateController = Ember.Controller.extend({
 	selected_project_name : function(){
 	    return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('project_name') : '';
 	}.property('selected_project_id'),
-	// vm  
+	// vm  get the last item of the array of available VMs
     selected_project_available_vm : function(){
-        return !this.get('boolean_no_project') ? Number(this.get('content').objectAt(this.get('selected_project_id')-1).get('vms_max')) : 0;
+        return !this.get('boolean_no_project') ? Number(this.get('content').objectAt(this.get('selected_project_id')-1).get('vms_av').get("lastObject")) || 0 : 0;
     }.property('selected_project_id'),
     // floating ip
     selected_project_available_ip : function(){
@@ -99,6 +99,16 @@ App.VreserverCreateController = Ember.Controller.extend({
 	    return !this.get('boolean_no_project') && !Ember.isEmpty(this.get('selected_storage_id')) ? 
         this.get('selected_project_storage_choices')[this.get('selected_storage_id')] : '';
 	}.property('selected_storage_id','selected_project_id'),
+	selected_storage_auto : function(){
+        var that = this;
+        Ember.run.later(function() {
+            if (that.get('selected_project_storage_choices').length == 1) {
+                that.send('pick_storage', 0, that.get('selected_project_storage_choices')[0]);
+            } else if (that.get('boolean_no_project')) {
+                that.set('selected_project_description', '');
+            }
+        }, 300);
+	}.observes('selected_project_storage_choices.[]'),
     /*
      * Flavors
      */
@@ -150,7 +160,11 @@ App.VreserverCreateController = Ember.Controller.extend({
         return !this.get('boolean_no_project') && !Ember.isEmpty(this.get('selected_disk_id')) ? 
         this.get('selected_project_disk_choices')[this.get('selected_disk_id')] : 
         this.set('selected_disk_id',null) && '';
-    }.property('selected_disk_id','selected_project_id'),    
+    }.property('selected_disk_id','selected_project_id'),
+    /*
+     * Utility Functions
+     */
+    
     /*
      * Actions
      */
@@ -195,7 +209,7 @@ App.VreserverCreateController = Ember.Controller.extend({
             console.log('clicked apply last');
         },
         submit_create : function(){
-            console.log('clicked create');
+            this.set('message',null);
             var that = this;
             var new_server = {
                 'project_name': that.get('selected_project_name'), 
@@ -207,9 +221,25 @@ App.VreserverCreateController = Ember.Controller.extend({
                 'os_image': that.get('selected_image'),
                 'ssh_key_selection': that.get('selected_sshkey')
             };
+            var property_elements = {
+                'project_name': '#id_project_id', 
+                'server_name': '#id_server_name',
+                'cpu': '#id_cpu_choice', 
+                'ram':'#id_ram_choice',
+                'disk':'#id_disk_choice',
+                'disk_template':'#id_storage_choice',
+                'os_image':'#id_vre_image'
+            };
+            for (property in new_server){
+                if (Ember.isEmpty(new_server[property])){
+                    this.set('message','Missing Input');
+                    var el = property_elements[property];
+                    $(el).focus();
+                    return false;
+                }
+            }
             this.store.fetch('user',1).then(function(user){
                 //success
-                console.log(new_server);
                 var new_record = that.store.createRecord('uservreserver',new_server);
                 new_record.save().then(function(data){
                     that.set('controllers.userWelcome.create_cluster_start', true);
@@ -223,9 +253,12 @@ App.VreserverCreateController = Ember.Controller.extend({
                 console.log(reason);
             });
         },
-        cancel : function(){
+        reset : function(){
             this.set('selected_project_id',null);
             this.set('vre_server_name',null);
+        },
+        cancel : function(){
+            this.send('reset');
             this.transitionToRoute('user.welcome');
         }
     }

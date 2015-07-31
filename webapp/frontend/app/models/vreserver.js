@@ -33,7 +33,7 @@ App.Vreserver = DS.Model.extend({
     	                   '<span class="col col-sm-2 text-right pull-left">CPU:%@</span>'+
     	                   '<span class="col col-sm-3 text-right pull-left">RAM:%@MB</span>'+
     	                   '<span class="col col-sm-2 text-right pull-left">Disk:%@GB</span>';
-	    var decorated_name = template_bs3.fmt(name,this.get('vms_max'),this.get('cpu_av'),this.get('ram_av'),this.get('disk_av'));
+	    var decorated_name = template_bs3.fmt(name,this.get('vms_av').get('lastObject') || 0,this.get('cpu_av'),this.get('ram_av'),this.get('disk_av'));
         return new safestr(decorated_name);
 	}.property('project_name_clean'), // decorate project name with project resource info in columns
 	ssh_keys_names : attr()         // ssh key's names
