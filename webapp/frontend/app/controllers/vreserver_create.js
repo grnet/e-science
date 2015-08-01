@@ -13,13 +13,24 @@ App.VreserverCreateController = Ember.Controller.extend({
 	    'Wiki' : ['Deb8-Mediawiki-Docker'],
 	    'Project Management': ['Deb8-Redmine-Docker'] 
 	},
-	// client-side only
+	// client-side only, eventually move to backend
 	vreFlavorLabels : ['Small', 'Medium', 'Large'],
 	vreFlavorData : [
 	   {cpu:1,ram:1024,disk:5}, //Small
 	   {cpu:2,ram:2048,disk:10},//Medium
 	   {cpu:4,ram:4096,disk:20} //Large
 	],
+	// mapping of uservreserver model properties to controller computed properties
+	model_to_controller_map : {
+        project_name: 'selected_project_name', 
+        server_name: 'vre_server_name',
+        cpu: 'selected_cpu_value', 
+        ram: 'selected_ram_value',
+        disk: 'selected_disk_value', 
+        disk_template: 'selected_storage_description',
+        os_image: 'selected_image',
+        ssh_key_selection: 'selected_sshkey'
+	},
 	/*
 	 * Project selection:
 	 */
@@ -30,7 +41,7 @@ App.VreserverCreateController = Ember.Controller.extend({
 	}.property('selected_project_id'),
 	selected_project_description : function(){
 	    return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('project_name_clean') : '';
-	}.property('boolean_no_project'),
+	}.property('selected_project_id'),
 	selected_project_name : function(){
 	    return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('project_name') : '';
 	}.property('selected_project_id'),
@@ -42,6 +53,9 @@ App.VreserverCreateController = Ember.Controller.extend({
     selected_project_available_ip : function(){
         return !this.get('boolean_no_project') ? Number(this.get('content').objectAt(this.get('selected_project_id')-1).get('floatip_av')) : 0;
     }.property('selected_project_id'),
+    selected_project_changed : function(){
+        this.send('clear_cached');
+    }.observes('selected_project_id'),
     /*
      * VRE Categories
      */
@@ -49,7 +63,7 @@ App.VreserverCreateController = Ember.Controller.extend({
     vre_categories : function(){
         return !this.get('boolean_no_project') ? this.get('vreCategoryLabels') : [];
     }.property('selected_project_id'),
-    selected_category_static : null,
+    selected_category_static : null, // need this one-way bound property to workaround ember #select bug
     selected_category : function(key,value){
         if (arguments.length>1){// setter
             this.set('selected_category_id_static',value);
@@ -62,7 +76,7 @@ App.VreserverCreateController = Ember.Controller.extend({
 	selected_project_images : function(){
 	    //TODO:  model data, not used at moment until we implement dynamic filtering on image category
 	    var arr_images = !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('vre_choices') : [];
-	    // return based on static data defined at top of controller, after verification with model data
+	    // return based on static data defined at top of controller, verify with model data
 	    var arr_filtered_by_category = !Ember.isEmpty(this.get('selected_category')) ? this.get('vreCategoryData')[this.get('selected_category')] : [];
 	    var arr_verified = arr_filtered_by_category.filter(function(item,index,self){// remove any statics not on model
 	        return arr_images.contains(item) ? true : false;
@@ -76,6 +90,9 @@ App.VreserverCreateController = Ember.Controller.extend({
         }
         return this.get('selected_image_static');// getter
     }.property('selected_image_static', 'selected_project_id'),
+    selected_image_changed : function(){
+        if (!Ember.isEmpty(this.get('selected_image'))) this.set('alert_missing_input_image',null);
+    }.observes('selected_image'),
     /*
      * SSH Keys
      */
@@ -116,13 +133,17 @@ App.VreserverCreateController = Ember.Controller.extend({
     vre_flavor_choices : function(){
         return !this.get('boolean_no_project') ? this.get('vreFlavorLabels') : [];
     }.property('boolean_no_project'),
-    selected_vre_flavor_data : function(){
-        return !this.get('boolean_no_project') && !Ember.isEmpty(this.get('selected_flavor_id')) ? this.get('vreFlavorData')[this.get('selected_flavor_id')] : [];
-    }.property('selected_flavor_id','selected_project_id'),	
+    selected_vre_flavor_changed : function(){
+        if (Ember.isEmpty(this.get('selected_flavor_id'))){
+            Ember.run.later(function(){
+                $('#id_vre_flavors > label').length > 0 && $('#id_vre_flavors > label').removeClass("active btn-success");
+            },300);
+        }
+    }.observes('selected_flavor_id'),
 	/*
 	 * VRE Hardware settings
 	 */
-	// cpu
+	// CPU
     selected_project_available_cpu : function(){
         var selected_cpu_value = Ember.isEmpty(this.get('selected_cpu_value')) ? 0 : Number(this.get('selected_cpu_value'));
         return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('cpu_av')-selected_cpu_value : 0;
@@ -135,7 +156,7 @@ App.VreserverCreateController = Ember.Controller.extend({
         this.get('selected_project_cpu_choices')[this.get('selected_cpu_id')] : 
         this.set('selected_cpu_id',null) && '';
     }.property('selected_cpu_id','selected_project_id'),
-    // ram
+    // RAM
     selected_project_available_ram : function(){
         var selected_ram_value = Ember.isEmpty(this.get('selected_ram_value')) ? 0 : Number(this.get('selected_ram_value'));
         return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('ram_av')-selected_ram_value : 0;
@@ -148,7 +169,7 @@ App.VreserverCreateController = Ember.Controller.extend({
         this.get('selected_project_ram_choices')[this.get('selected_ram_id')] : 
         this.set('selected_ram_id',null) && '';
     }.property('selected_ram_id','selected_project_id'),
-    // disk 
+    // DISK 
     selected_project_available_disk : function(){
         var selected_disk_value = Ember.isEmpty(this.get('selected_disk_value')) ? 0 : Number(this.get('selected_disk_value'));
         return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('disk_av')-selected_disk_value : 0;
@@ -164,79 +185,140 @@ App.VreserverCreateController = Ember.Controller.extend({
     /*
      * Utility Functions
      */
-    
+    alert_input_missing_boundto : {
+        // data column > alert message property, input control element id
+        project_name : ['alert_missing_input_project','#id_project_id'],
+        server_name : ['alert_missing_input_server_name','#id_server_name'],
+        cpu : ['alert_missing_input_cpu','#id_cpu_choice'],
+        ram : ['alert_missing_input_ram','#id_ram_choice'],
+        disk : ['alert_missing_input_disk','#id_disk_choice'],
+        disk_template : ['alert_missing_input_storage','#id_storage_choice'],
+        os_image : ['alert_missing_input_image','#id_vre_image']
+    },
+    alert_input_missing_text : {
+        // alert message property > message text
+        alert_missing_input_project : 'Please select an ~okeanos project with sufficient resources',
+        alert_missing_input_server_name : 'Please input a VRE server name',
+        alert_missing_input_cpu : 'Please select CPU cores',
+        alert_missing_input_ram : 'Please select RAM amount (MiB)',
+        alert_missing_input_disk : 'Please select Disk size (GiB)',     
+        alert_missing_input_storage : 'Please select a disk template',
+        alert_missing_input_image : 'Please select VRE category/image'
+    },
+    missing_input : function(that, new_server){
+        var self = that; // get the controller reference into self
+        // clear alerts on new check
+        for (alert in self.get('alert_input_missing_text')){
+            self.set(alert,null);
+        }
+        for (property in new_server) {
+            if (Ember.isEmpty(new_server[property])) {
+                var alert_prop_name = self.get('alert_input_missing_boundto')[property][0];
+                self.set(alert_prop_name,self.get('alert_input_missing_text')[alert_prop_name]);
+                var input_element = $(self.get('alert_input_missing_boundto')[property][1]);
+                window.scrollTo(input_element.offsetLeft, input_element.offsetTop);
+                input_element.focus();
+                return true;
+            }
+        }
+        return false;
+    },    
+    missing_resources : function(that, new_server){
+        var self = that; // get the controller reference into self
+        // clear message on new check
+        self.set('message',null);
+        var missing_resources = self.get('selected_project_available_vm') < 1 || self.get('selected_project_available_ip') < 1;
+        if (missing_resources) self.set('message','Insufficient project resources for VRE server creation');
+        return missing_resources;
+    },
     /*
      * Actions
      */
     actions : {
         focus_project_selection : function(){
-            $('#id_project_id').fadeTo(700,0.4).focus().fadeTo(300,1.0);
+            $('#id_project_id').focus().fadeTo(700,0.4).fadeTo(300,1.0);
         },
         pick_storage : function(index, value){
             this.set('selected_storage_id',index);
             $('#id_storage_choice > label').removeClass("active btn-success");
             var selector = '#id_storage_choice #%@'.fmt(value);
             $(selector).addClass("active btn-success");
+            this.set('alert_missing_input_storage',null);
         },
         pick_flavor : function(index, value){
             this.set('selected_flavor_id',index);
             $('#id_vre_flavors > label').removeClass("active btn-success");
             var selector = '#id_vre_flavors #%@'.fmt(value);
             $(selector).addClass("active btn-success");
-            this.send('pick_cpu',index,this.get('selected_project_cpu_choices')[index]);
-            this.send('pick_ram',index,this.get('selected_project_ram_choices')[index]);
-            this.send('pick_disk',index,this.get('selected_project_disk_choices')[index]);
+            var selected_flavor_data = this.get('vreFlavorData')[this.get('selected_flavor_id')];
+            var cpu_index = this.get('selected_project_cpu_choices').indexOf(selected_flavor_data['cpu']);
+            var ram_index = this.get('selected_project_ram_choices').indexOf(selected_flavor_data['ram']);
+            var disk_index = this.get('selected_project_disk_choices').indexOf(selected_flavor_data['disk']);
+            if (cpu_index >=0) this.send('pick_cpu',cpu_index,selected_flavor_data['cpu'],true);
+            if (ram_index >=0) this.send('pick_ram',ram_index,selected_flavor_data['ram'],true);
+            if (disk_index >=0) this.send('pick_disk',disk_index,selected_flavor_data['disk'],true);
         },
-        pick_cpu : function(index, value){
+        select_matching_flavor : function(resource,value){
+            var cpu = resource == 'cpu' && value || (this.get('selected_cpu_value') ||0);
+            var ram = resource == 'ram' && value || (this.get('selected_ram_value') ||0);
+            var disk = resource == 'disk' && value || (this.get('selected_disk_value') ||0);
+            var selected = {'cpu':cpu,'ram':ram,'disk':disk};
+            if (selected['cpu'] == 0 || selected['ram'] == 0 || selected['disk'] == 0){
+                this.set('selected_flavor_id',null);
+            }
+            var flavor_data = this.get('vreFlavorData');
+            for (i=0; i<flavor_data.length; i++){
+                if (selected['cpu'] == flavor_data[i]['cpu'] && selected['ram'] == flavor_data[i]['ram'] && selected['disk'] == flavor_data[i]['disk']){
+                    this.send('pick_flavor',i,this.get('vreFlavorLabels')[i]);
+                    return;
+                }
+            }
+            this.set('selected_flavor_id',null);
+        },
+        pick_cpu : function(index, value, from_flavor){
             this.set('selected_cpu_id',index);
             $('#id_cpu_choice > label').removeClass("active btn-success");
             var selector = '#id_cpu_choice #%@'.fmt(value);
             $(selector).addClass("active btn-success");
+            if (!from_flavor) this.send('select_matching_flavor','cpu',value);
+            this.set('alert_missing_input_cpu',null);
         },
-        pick_ram : function(index, value){
+        pick_ram : function(index, value, from_flavor){
             this.set('selected_ram_id',index);
             $('#id_ram_choice > label').removeClass("active btn-success");
             var selector = '#id_ram_choice #%@'.fmt(value);
             $(selector).addClass("active btn-success");
+            if (!from_flavor) this.send('select_matching_flavor','ram',value);
+            this.set('alert_missing_input_ram',null);
         },
-        pick_disk : function(index, value){
+        pick_disk : function(index, value, from_flavor){
             this.set('selected_disk_id',index);
             $('#id_disk_choice > label').removeClass("active btn-success");
             var selector = '#id_disk_choice #%@'.fmt(value);
             $(selector).addClass("active btn-success");
+            if (!from_flavor) this.send('select_matching_flavor','disk',value);
+            this.set('alert_missing_input_disk',null);
+        },
+        pick_server_name : function(){
+            if (!Ember.isEmpty(this.get('vre_server_name'))){
+                this.set('alert_missing_input_server_name',null);
+            }
         },
         apply_last_config : function(){
             console.log('clicked apply last');
         },
         submit_create : function(){
-            this.set('message',null);
             var that = this;
-            var new_server = {
-                'project_name': that.get('selected_project_name'), 
-                'server_name': that.get('vre_server_name'),
-                'cpu': that.get('selected_cpu_value'), 
-                'ram': that.get('selected_ram_value'),
-                'disk': that.get('selected_disk_value'), 
-                'disk_template': that.get('selected_storage_description'),
-                'os_image': that.get('selected_image'),
-                'ssh_key_selection': that.get('selected_sshkey')
-            };
-            var property_elements = {
-                'project_name': '#id_project_id', 
-                'server_name': '#id_server_name',
-                'cpu': '#id_cpu_choice', 
-                'ram':'#id_ram_choice',
-                'disk':'#id_disk_choice',
-                'disk_template':'#id_storage_choice',
-                'os_image':'#id_vre_image'
-            };
-            for (property in new_server){
-                if (Ember.isEmpty(new_server[property])){
-                    this.set('message','Missing Input');
-                    var el = property_elements[property];
-                    $(el).focus();
-                    return false;
-                }
+            var new_server = {};
+            for (model_property in this.get('model_to_controller_map')){
+                var bound_controller_property = this.get('model_to_controller_map')[model_property];
+                new_server[model_property] = this.get(bound_controller_property);
+            }
+            if (this.get('missing_resources')(that, new_server)){
+                return;
+            }
+            if (this.get('missing_input')(that, new_server)){
+                return;
             }
             this.store.fetch('user',1).then(function(user){
                 //success
@@ -252,6 +334,14 @@ App.VreserverCreateController = Ember.Controller.extend({
                 //error
                 console.log(reason);
             });
+        },
+        clear_cached : function(){
+            this.set('selected_storage_id',null);
+            this.set('selected_cpu_id',null);
+            this.set('selected_ram_id',null);
+            this.set('selected_disk_id',null);
+            this.set('selected_flavor_id',null);
+            this.set('message',null);
         },
         reset : function(){
             this.set('selected_project_id',null);

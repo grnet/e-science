@@ -7,7 +7,7 @@ Can also select server name, project name, flavor, ssh-key-->
 	<div class="col col-sm-3"></div>
 	{{#if boolean_no_project}}
 	<div id="id_alert_noproject" class="alert alert-dismissable alert-warning col-sm-6">
-		<button type="button" class="close" data-dismiss="alert">×</button>
+		<button type="button" class="close" data-dismiss="alert"></button>
 		Please <a href="#" {{action 'focus_project_selection'}}>select</a> a project.
 	</div>
 	{{/if}}
@@ -37,7 +37,7 @@ Can also select server name, project name, flavor, ssh-key-->
                 </div>                
             </div>
 	    	<div class="text-center text-danger">
-	    		{{project_message}}{{alert_no_project_resources}}
+	    		{{alert_missing_input_project}}{{alert_no_project_resources}}
 	    	</div>
         </div>        
         <div class="col col-lg-4 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">
@@ -61,6 +61,18 @@ Can also select server name, project name, flavor, ssh-key-->
 	        </div>            
         </div>
     </div>
+    <div class="panel-footer text-left">
+        <div class="row">
+            <div class="col col-sm-3"></div>
+            <div class="col col-sm-9">
+                {{#unless boolean_no_project}}
+                Selected project resources VMs:{{selected_project_available_vm}} IPs:{{selected_project_available_ip}}
+                {{else}}
+                <span class="text text-muted">~okeanos project resource info</span>
+                {{/unless}}
+            </div>
+        </div>
+    </div>    
 </div>
 
 <div class="panel panel-primary">
@@ -104,8 +116,8 @@ Can also select server name, project name, flavor, ssh-key-->
 					</div>
 				</div>
 				<div class="row text-center text-danger">
-					<div class="col col-sm-6">
-						
+					<div class="col col-sm">
+						{{alert_missing_input_image}}
 					</div>
 				</div>
 			</div>
@@ -120,12 +132,14 @@ Can also select server name, project name, flavor, ssh-key-->
 					    placeholder="VRE server name"
 					    required="true"
 					    id="id_server_name"
+					    action="pick_server_name"
+					    on="focus-out"
 					    classNames="input-sm form-control"}}
 					</div>
 				</div>
 				<div class="row text-center text-danger">
 					<div id = "alert_mes_cluster_name" class="col col-sm-6">
-						{{alert_missing_server_name}}
+						{{alert_missing_input_server_name}}
 					</div>
 				</div>
 				<div class="form-group">
@@ -151,7 +165,7 @@ Can also select server name, project name, flavor, ssh-key-->
                         </div>
 						<div class="row text-center text-danger">
 							<div id = "alert_mes_cluster_name" class="col col-sm-6">
-								{{alert_missing_storage}}
+								{{alert_missing_input_storage}}
 							</div>
 						</div>
 					</div>
@@ -159,16 +173,6 @@ Can also select server name, project name, flavor, ssh-key-->
 			</div>
 		</div>
 	</div>
-	<div class="panel-footer text-center">
-		<div class="row">
-			<div class="col col-sm-6">
-            ~okeanos project available VMs:
-            {{selected_project_available_vm}}
-			</div>
-			<div class="col col-sm-6">
-            </div>
-        </div>
-    </div>
 </div>
 
 <div class="panel panel-primary">
@@ -226,13 +230,13 @@ Can also select server name, project name, flavor, ssh-key-->
         </div>
         <div class="row text-center text-danger">
             <div id = "id_alert_vre_cpu" class="col col-sm-4">
-                {{alert_missing_cpu}}
+                {{alert_missing_input_cpu}}
             </div>
             <div id = "id_alert_vre_ram" class="col col-sm-4">
-                {{alert_missing_ram}}
+                {{alert_missing_input_ram}}
             </div>
             <div id = "id_alert_vre_disk" class="col col-sm-4">
-                {{alert_missing_disk}}
+                {{alert_missing_input_disk}}
             </div>
         </div>
     </div>
@@ -259,10 +263,10 @@ Can also select server name, project name, flavor, ssh-key-->
         </button>
     </div>
     <div class="col col-sm-6">
-        <button id="id_create_server" class="btn btn-success btn-md btn-block" {{action "submit_create"}}>
+        <button id="id_create_server" class="btn btn-success btn-md btn-block" {{bind-attr disabled="boolean_no_project"}} {{action "submit_create"}}>
             Create VRE Server
         </button>
-        <h4 class="text text-center text-warning">{{message}}</h4>
+        <h4 class="text-left text-warning">{{message}}</h4>
     </div>
     <div class="col col-sm-2"></div>
 </div>
