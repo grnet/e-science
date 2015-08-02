@@ -186,9 +186,9 @@ Can also select server name, project name, flavor, ssh-key-->
 	        <div class="col col-sm-6">
 	            <label for="id_vre_flavors" class="h4">Predefined VRE Flavors: </label>
                 <div id="id_vre_flavors" class="btn-group" data-toggle="buttons">
-	                {{#eachidx flavor in vre_flavor_choices}}
-                      <label class="btn btn-sm btn-primary" {{bind-attr id=flavor}} {{action "pick_flavor" index flavor}}>
-                        <input type="radio" name="flavors" {{bind-attr id=index}}>{{flavor}}
+	                {{#eachidx flavor in vre_flavor_available_choices}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=flavor.value disabled=flavor.disabled}} {{action "pick_flavor" index flavor.value}}>
+                        <input type="radio" name="flavors" {{bind-attr id=index}}>{{flavor.value}}
                       </label>
 		            {{/eachidx}}
                 </div>
@@ -200,9 +200,9 @@ Can also select server name, project name, flavor, ssh-key-->
             <div class="col col-sm-4">
                 <h4 id="id_vre_cpu_summary">CPUs: {{selected_cpu_value}} </h4>
                 <div id="id_cpu_choice" class="btn-group" data-toggle="buttons">
-                    {{#eachidx cpu_choice in selected_project_cpu_choices}}
-                      <label class="btn btn-sm btn-primary" {{bind-attr id=cpu_choice}} {{action "pick_cpu" index cpu_choice}}>
-                        <input type="radio" name="cpu_choices" {{bind-attr id=index}}>{{cpu_choice}}
+                    {{#eachidx cpu_choice in selected_project_cpu_choices_available}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=cpu_choice.value disabled=cpu_choice.disabled}} {{action "pick_cpu" index cpu_choice.value}}>
+                        <input type="radio" name="cpu_choices" {{bind-attr id=index}}>{{cpu_choice.value}}
                       </label>
                     {{/eachidx}}
                 </div>
@@ -210,9 +210,9 @@ Can also select server name, project name, flavor, ssh-key-->
             <div class="col col-sm-4">
                 <h4 id="id_vre_ram_summary">RAM: {{selected_ram_value}} </h4>
                 <div id="id_ram_choice" class="btn-group" data-toggle="buttons">
-                    {{#eachidx ram_choice in selected_project_ram_choices}}
-                      <label class="btn btn-sm btn-primary" {{bind-attr id=ram_choice}} {{action "pick_ram" index ram_choice}}>
-                        <input type="radio" name="ram_choices" {{bind-attr id=index}}>{{ram_choice}}
+                    {{#eachidx ram_choice in selected_project_ram_choices_available}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=ram_choice.value disabled=ram_choice.disabled}} {{action "pick_ram" index ram_choice.value}}>
+                        <input type="radio" name="ram_choices" {{bind-attr id=index}}>{{ram_choice.value}}
                       </label>
                     {{/eachidx}}
                 </div>
@@ -220,9 +220,9 @@ Can also select server name, project name, flavor, ssh-key-->
             <div class="col col-sm-4">
                 <h4 id="id_vre_disk_summary">Disk Size: {{selected_disk_value}} </h4>
                 <div id="id_disk_choice" class="btn-group" data-toggle="buttons">
-                    {{#eachidx disk_choice in selected_project_disk_choices}}
-                      <label class="btn btn-sm btn-primary" {{bind-attr id=disk_choice}} {{action "pick_disk" index disk_choice}}>
-                        <input type="radio" name="disk_choices" {{bind-attr id=index}}>{{disk_choice}}
+                    {{#eachidx disk_choice in selected_project_disk_choices_available}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=disk_choice.value disabled=disk_choice.disabled}} {{action "pick_disk" index disk_choice.value}}>
+                        <input type="radio" name="disk_choices" {{bind-attr id=index}}>{{disk_choice.value}}
                       </label>
                     {{/eachidx}}
                 </div>
@@ -266,7 +266,7 @@ Can also select server name, project name, flavor, ssh-key-->
         <button id="id_create_server" class="btn btn-success btn-md btn-block" {{bind-attr disabled="boolean_no_project"}} {{action "submit_create"}}>
             Create VRE Server
         </button>
-        <h4 class="text-left text-warning">{{message}}</h4>
+        <h4 class="text-left text-danger">{{message}}</h4>
     </div>
     <div class="col col-sm-2"></div>
 </div>

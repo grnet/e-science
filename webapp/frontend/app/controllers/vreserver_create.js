@@ -131,8 +131,19 @@ App.VreserverCreateController = Ember.Controller.extend({
      */
     // wrap flavor choices to a project selection check
     vre_flavor_choices : function(){
-        return !this.get('boolean_no_project') ? this.get('vreFlavorLabels') : [];
+        return this.get('vreFlavorLabels');
     }.property('boolean_no_project'),
+    vre_flavor_available_choices : function(){
+        var flavor_choices = this.get('vre_flavor_choices');
+        var flavor_data = this.get('vreFlavorData');
+        var flavor_choices_available = flavor_data.map(function(item,index){
+            var cpu_valid = item.cpu <= this.get('selected_project_available_cpu');
+            var ram_valid = item.ram <= this.get('selected_project_available_ram');
+            var disk_valid = item.disk <= this.get('selected_project_available_disk');
+            return (cpu_valid && ram_valid && disk_valid) && {value:flavor_choices[index], disabled:false} || {value:flavor_choices[index], disabled:true}; 
+        },this);
+        return !this.get('boolean_no_project') ? flavor_choices_available : [];
+    }.property('vre_flavor_choices.[]'),
     selected_vre_flavor_changed : function(){
         if (Ember.isEmpty(this.get('selected_flavor_id'))){
             Ember.run.later(function(){
@@ -151,6 +162,14 @@ App.VreserverCreateController = Ember.Controller.extend({
     selected_project_cpu_choices : function(){
         return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('cpu_choices') : [];
     }.property('selected_project_id'),
+    selected_project_cpu_choices_available : function(){
+        var cpu_choices = this.get('selected_project_cpu_choices');
+        var available_cpu = Number(this.get('selected_project_available_cpu'));
+        var cpu_choices_available = cpu_choices.map(function(item,index,original){
+            return Number(item)<=available_cpu && {value:item,disabled:false} || {value:item,disabled:true};
+        },this);
+        return cpu_choices_available; 
+    }.property('selected_project_cpu_choices.[]'),
     selected_cpu_value : function(){
         return !this.get('boolean_no_project') && !Ember.isEmpty(this.get('selected_cpu_id')) ? 
         this.get('selected_project_cpu_choices')[this.get('selected_cpu_id')] : 
@@ -164,6 +183,14 @@ App.VreserverCreateController = Ember.Controller.extend({
     selected_project_ram_choices : function(){
         return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('ram_choices') : [];
     }.property('selected_project_id'),
+    selected_project_ram_choices_available : function(){
+        var ram_choices = this.get('selected_project_ram_choices');
+        var available_ram = Number(this.get('selected_project_available_ram'));
+        var ram_choices_available = ram_choices.map(function(item,index,original){
+            return Number(item)<=available_ram && {value:item,disabled:false} || {value:item,disabled:true};
+        },this);
+        return ram_choices_available; 
+    }.property('selected_project_ram_choices.[]'),    
     selected_ram_value : function(){
         return !this.get('boolean_no_project') && !Ember.isEmpty(this.get('selected_ram_id')) ? 
         this.get('selected_project_ram_choices')[this.get('selected_ram_id')] : 
@@ -177,6 +204,14 @@ App.VreserverCreateController = Ember.Controller.extend({
     selected_project_disk_choices : function(){
         return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('disk_choices') : [];
     }.property('selected_project_id'),
+    selected_project_disk_choices_available : function(){
+        var disk_choices = this.get('selected_project_disk_choices');
+        var available_disk = Number(this.get('selected_project_available_disk'));
+        var disk_choices_available = disk_choices.map(function(item,index,original){
+            return Number(item)<=available_disk && {value:item,disabled:false} || {value:item,disabled:true};
+        },this);
+        return disk_choices_available; 
+    }.property('selected_project_disk_choices.[]'),
     selected_disk_value : function(){
         return !this.get('boolean_no_project') && !Ember.isEmpty(this.get('selected_disk_id')) ? 
         this.get('selected_project_disk_choices')[this.get('selected_disk_id')] : 
