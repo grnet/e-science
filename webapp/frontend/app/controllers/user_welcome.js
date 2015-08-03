@@ -11,10 +11,12 @@ App.UserWelcomeController = Ember.Controller.extend({
     // blacklist user messages explicitly removed during polling
     blacklist_messages : {},
     // tabs info for template
+    content_tabs_info : {
+        clusters: {id:'id_userclusters_tab',href:'#id_userclusters_tab',name:'User Clusters',active:true},
+        vreservers: {id:'id_uservres_tab',href:'#id_uservres_tab',name:'User VREs'}
+    },
     content_tabs : function(key,value){
-        var tabs_object = {
-            clusters: {id:'id_userclusters_tab',href:'#id_userclusters_tab',name:'User Clusters',active:true},
-            vreservers: {id:'id_uservres_tab',href:'#id_uservres_tab',name:'User VREs'}};
+        var tabs_object = this.get('content_tabs_info');
         if (arguments.length>1){//setter
             switch(value) {
             case "clusters":
@@ -48,6 +50,7 @@ App.UserWelcomeController = Ember.Controller.extend({
     sortable_vreservers : function(){
         return this.get('sorted_vreservers');
     }.property('filtered_vreservers.[]'),
+    // messages / feedback
     master_vm_password_msg : function() {
         var pwd_message = this.get('content.master_vm_password');
         if (!Ember.isBlank(pwd_message)) {
