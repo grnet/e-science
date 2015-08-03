@@ -20,6 +20,7 @@ App.VreserverCreateController = Ember.Controller.extend({
 	   {cpu:2,ram:2048,disk:10},//Medium
 	   {cpu:4,ram:4096,disk:20} //Large
 	],
+	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
 	// mapping of uservreserver model properties to controller computed properties
 	model_to_controller_map : {
         project_name: 'selected_project_name', 
@@ -104,7 +105,7 @@ App.VreserverCreateController = Ember.Controller.extend({
                     html_snippet = html_templ.fmt(html_snippet, arr_image_components[j]['name'], arr_image_components[j]['property']['version']);
                 }
                 var self = this;
-                Ember.run.later(function(){self.set('selected_image_popover',true);},300);
+                self.set('selected_image_popover',true);
                 return html_snippet;
             }
         }
@@ -241,6 +242,33 @@ App.VreserverCreateController = Ember.Controller.extend({
     /*
      * Utility Functions
      */
+    last_vre_popover_data : null,
+    set_vre_popover_data : function(){
+        if (!Ember.isEmpty(this.get('last_vre_server'))){
+            var last_data = this.get('last_vre_server');
+            var html_templ = '%@%@: <span class="text text-info pull-right">%@</span><br>';
+            var html_snippet = '<h5 class="strong">Option: <span class="text text-info pull-right">Value</span></h5>';
+            var category = null;
+            var category_data = this.get('vreCategoryData');
+            for (cat in category_data){
+                if (category_data[cat].contains(last_data.get('os_image'))){
+                    category = cat;
+                    break;
+                }
+            }
+            html_snippet = html_templ.fmt(html_snippet, 'Project', last_data.get('project_name'));
+            html_snippet = html_templ.fmt(html_snippet, 'Category', category);
+            html_snippet = html_templ.fmt(html_snippet, 'Image', last_data.get('os_image'));
+            html_snippet = html_templ.fmt(html_snippet, 'VRE Server Name', last_data.get('server_name'));
+            html_snippet = html_templ.fmt(html_snippet, 'Storage', this.get('reverse_storage_lookup')[last_data.get('disk_template')]);
+            html_snippet = html_templ.fmt(html_snippet, 'CPUs', last_data.get('cpu'));
+            html_snippet = html_templ.fmt(html_snippet, 'RAM', last_data.get('ram'));
+            html_snippet = html_templ.fmt(html_snippet, 'Disk Size', last_data.get('disk'));
+            this.set('last_vre_popover_data',html_snippet);
+        }else{
+            this.set('last_vre_popover_data',null);
+        }
+    }.observes('last_vre_server'),
     alert_input_missing_boundto : {
         // data column > alert message property, input control element id
         project_name : ['alert_missing_input_project','#id_project_id'],
@@ -260,7 +288,7 @@ App.VreserverCreateController = Ember.Controller.extend({
         alert_missing_input_disk : 'Please select Disk size (GiB)',     
         alert_missing_input_storage : 'Please select a disk template',
         alert_missing_input_image : 'Please select VRE category/image'
-    },
+    },    
     missing_input : function(that, new_server){
         var self = that; // get the controller reference into self
         // clear alerts on new check
@@ -359,6 +387,20 @@ App.VreserverCreateController = Ember.Controller.extend({
             if (!Ember.isEmpty(this.get('vre_server_name'))){
                 this.set('alert_missing_input_server_name',null);
             }
+        },
+        find_last_config : function(){
+            var filter_by = ['DESTROYED','ACTIVE'];
+            var self = this;
+            var store = this.get('store');
+            store.fetch('user',1).then(function(user){
+                var vreservers = user.get('vreservers').get('content');
+                var arr_filtered_servers = vreservers.filter(function(item,index,original){
+                    return filter_by.contains(item.get('description_vre_status'));
+                }).sortBy('action_date');
+                self.set('last_vre_server',arr_filtered_servers.get('lastObject'));
+            },function(reason){
+                console.log(reason.message);
+            });
         },
         apply_last_config : function(){
             console.log('clicked apply last');

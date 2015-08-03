@@ -18,6 +18,7 @@ App.VreserverCreateRoute = App.RestrictedRoute.extend({
     	},
     	didTransition : function(transition) {
             // came to this route
+            this.controller.send('find_last_config');
     	},
     	willTransition: function(){
     	    // leaving this route
