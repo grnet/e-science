@@ -415,7 +415,7 @@ App.VreserverCreateController = Ember.Controller.extend({
                     this.set('selected_project_id',project_id);
                     var category = this.get('category_from_image')(this, last_server.get('os_image'));
                     this.set('selected_category',category);
-                    this.set('selected_image',last_server.get('os_image'));
+                    Ember.run.later(function(){self.set('selected_image',last_server.get('os_image'));},100);
                     this.set('vre_server_name',last_server.get('server_name_noprefix'));
                     Ember.run.later(function(){
                         var cpu_index = self.get('selected_project_cpu_choices').indexOf(last_server.get('cpu'));
