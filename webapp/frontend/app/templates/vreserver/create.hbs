@@ -7,7 +7,7 @@ Can also select server name, project name, flavor, ssh-key-->
 	<div class="col col-sm-3"></div>
 	{{#if boolean_no_project}}
 	<div id="id_alert_noproject" class="alert alert-dismissable alert-warning col-sm-6">
-		<button type="button" class="close" data-dismiss="alert">×</button>
+		<button type="button" class="close" data-dismiss="alert"></button>
 		Please <a href="#" {{action 'focus_project_selection'}}>select</a> a project.
 	</div>
 	{{/if}}
@@ -37,7 +37,7 @@ Can also select server name, project name, flavor, ssh-key-->
                 </div>                
             </div>
 	    	<div class="text-center text-danger">
-	    		{{alert_no_float_ip}}
+	    		{{alert_missing_input_project}}{{alert_no_project_resources}}
 	    	</div>
         </div>        
         <div class="col col-lg-4 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">
@@ -49,7 +49,7 @@ Can also select server name, project name, flavor, ssh-key-->
                 data-placement="bottom-auto"
                 data-trigger='hover focus click'
                 data-html=true
-                {{bind-attr data-content=last_conf_message}} 
+                {{bind-attr data-content=last_vre_popover_data}}
                 {{action "apply_last_config"}}
                 >
                 Apply Last VRE Server Configuration</button>
@@ -61,6 +61,18 @@ Can also select server name, project name, flavor, ssh-key-->
 	        </div>            
         </div>
     </div>
+    <div class="panel-footer text-left">
+        <div class="row">
+            <div class="col col-sm-3"></div>
+            <div class="col col-sm-9">
+                {{#unless boolean_no_project}}
+                Selected project resources VMs:{{selected_project_available_vm}} IPs:{{selected_project_available_ip}}
+                {{else}}
+                <span class="text text-muted">~okeanos project resource info</span>
+                {{/unless}}
+            </div>
+        </div>
+    </div>    
 </div>
 
 <div class="panel panel-primary">
@@ -96,16 +108,15 @@ Can also select server name, project name, flavor, ssh-key-->
                         data-placement="bottom"
                         data-trigger="hover focus click"
                         data-html=true
-                        data-title='<b>Component</b>: <span class="text text-info"><b>Version</b></span>'
-                        {{bind-attr data-content=version_message class="info_popover_visible:btn:hide info_popover_visible:btn-primary:hide info_popover_visible:btn-sm:hide"}}
+                        {{bind-attr data-content=selected_image_components class="selected_image_popover:btn:hide selected_image_popover:btn-primary:hide selected_image_popover:btn-sm:hide"}}
                         >
                             <b class="glyphicon glyphicon-info-sign"></b>
                         </button>
 					</div>
 				</div>
 				<div class="row text-center text-danger">
-					<div class="col col-sm-6">
-						
+					<div class="col col-sm">
+						{{alert_missing_input_image}}
 					</div>
 				</div>
 			</div>
@@ -120,12 +131,14 @@ Can also select server name, project name, flavor, ssh-key-->
 					    placeholder="VRE server name"
 					    required="true"
 					    id="id_server_name"
+					    action="pick_server_name"
+					    on="focus-out"
 					    classNames="input-sm form-control"}}
 					</div>
 				</div>
 				<div class="row text-center text-danger">
 					<div id = "alert_mes_cluster_name" class="col col-sm-6">
-						{{alert_missing_server_name}}
+						{{alert_missing_input_server_name}}
 					</div>
 				</div>
 				<div class="form-group">
@@ -151,7 +164,7 @@ Can also select server name, project name, flavor, ssh-key-->
                         </div>
 						<div class="row text-center text-danger">
 							<div id = "alert_mes_cluster_name" class="col col-sm-6">
-								{{alert_missing_storage}}
+								{{alert_missing_input_storage}}
 							</div>
 						</div>
 					</div>
@@ -159,16 +172,6 @@ Can also select server name, project name, flavor, ssh-key-->
 			</div>
 		</div>
 	</div>
-	<div class="panel-footer text-center">
-		<div class="row">
-			<div class="col col-sm-6">
-            ~okeanos project available VMs:
-            {{selected_project_available_vm}}
-			</div>
-			<div class="col col-sm-6">
-            </div>
-        </div>
-    </div>
 </div>
 
 <div class="panel panel-primary">
@@ -182,9 +185,9 @@ Can also select server name, project name, flavor, ssh-key-->
 	        <div class="col col-sm-6">
 	            <label for="id_vre_flavors" class="h4">Predefined VRE Flavors: </label>
                 <div id="id_vre_flavors" class="btn-group" data-toggle="buttons">
-	                {{#eachidx flavor in vre_flavor_choices}}
-                      <label class="btn btn-sm btn-primary" {{bind-attr id=flavor}} {{action "pick_flavor" index flavor}}>
-                        <input type="radio" name="flavors" {{bind-attr id=index}}>{{flavor}}
+	                {{#eachidx flavor in vre_flavor_available_choices}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=flavor.value disabled=flavor.disabled}} {{action "pick_flavor" index flavor.value}}>
+                        <input type="radio" name="flavors" {{bind-attr id=index}}>{{flavor.value}}
                       </label>
 		            {{/eachidx}}
                 </div>
@@ -196,9 +199,9 @@ Can also select server name, project name, flavor, ssh-key-->
             <div class="col col-sm-4">
                 <h4 id="id_vre_cpu_summary">CPUs: {{selected_cpu_value}} </h4>
                 <div id="id_cpu_choice" class="btn-group" data-toggle="buttons">
-                    {{#eachidx cpu_choice in selected_project_cpu_choices}}
-                      <label class="btn btn-sm btn-primary" {{bind-attr id=cpu_choice}} {{action "pick_cpu" index cpu_choice}}>
-                        <input type="radio" name="cpu_choices" {{bind-attr id=index}}>{{cpu_choice}}
+                    {{#eachidx cpu_choice in selected_project_cpu_choices_available}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=cpu_choice.value disabled=cpu_choice.disabled}} {{action "pick_cpu" index cpu_choice.value}}>
+                        <input type="radio" name="cpu_choices" {{bind-attr id=index}}>{{cpu_choice.value}}
                       </label>
                     {{/eachidx}}
                 </div>
@@ -206,9 +209,9 @@ Can also select server name, project name, flavor, ssh-key-->
             <div class="col col-sm-4">
                 <h4 id="id_vre_ram_summary">RAM: {{selected_ram_value}} </h4>
                 <div id="id_ram_choice" class="btn-group" data-toggle="buttons">
-                    {{#eachidx ram_choice in selected_project_ram_choices}}
-                      <label class="btn btn-sm btn-primary" {{bind-attr id=ram_choice}} {{action "pick_ram" index ram_choice}}>
-                        <input type="radio" name="ram_choices" {{bind-attr id=index}}>{{ram_choice}}
+                    {{#eachidx ram_choice in selected_project_ram_choices_available}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=ram_choice.value disabled=ram_choice.disabled}} {{action "pick_ram" index ram_choice.value}}>
+                        <input type="radio" name="ram_choices" {{bind-attr id=index}}>{{ram_choice.value}}
                       </label>
                     {{/eachidx}}
                 </div>
@@ -216,9 +219,9 @@ Can also select server name, project name, flavor, ssh-key-->
             <div class="col col-sm-4">
                 <h4 id="id_vre_disk_summary">Disk Size: {{selected_disk_value}} </h4>
                 <div id="id_disk_choice" class="btn-group" data-toggle="buttons">
-                    {{#eachidx disk_choice in selected_project_disk_choices}}
-                      <label class="btn btn-sm btn-primary" {{bind-attr id=disk_choice}} {{action "pick_disk" index disk_choice}}>
-                        <input type="radio" name="disk_choices" {{bind-attr id=index}}>{{disk_choice}}
+                    {{#eachidx disk_choice in selected_project_disk_choices_available}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=disk_choice.value disabled=disk_choice.disabled}} {{action "pick_disk" index disk_choice.value}}>
+                        <input type="radio" name="disk_choices" {{bind-attr id=index}}>{{disk_choice.value}}
                       </label>
                     {{/eachidx}}
                 </div>
@@ -226,13 +229,13 @@ Can also select server name, project name, flavor, ssh-key-->
         </div>
         <div class="row text-center text-danger">
             <div id = "id_alert_vre_cpu" class="col col-sm-4">
-                {{alert_missing_cpu}}
+                {{alert_missing_input_cpu}}
             </div>
             <div id = "id_alert_vre_ram" class="col col-sm-4">
-                {{alert_missing_ram}}
+                {{alert_missing_input_ram}}
             </div>
             <div id = "id_alert_vre_disk" class="col col-sm-4">
-                {{alert_missing_disk}}
+                {{alert_missing_input_disk}}
             </div>
         </div>
     </div>
@@ -259,11 +262,10 @@ Can also select server name, project name, flavor, ssh-key-->
         </button>
     </div>
     <div class="col col-sm-6">
-        <button id="id_create_server" class="btn btn-success btn-md btn-block" {{action "submit_create"}}>
+        <button id="id_create_server" class="btn btn-success btn-md btn-block" {{bind-attr disabled="boolean_no_project"}} {{action "submit_create"}}>
             Create VRE Server
         </button>
-        <h4>{{message}}</h4>
+        <h4 class="text-left text-danger">{{message}}</h4>
     </div>
     <div class="col col-sm-2"></div>
 </div>
-
