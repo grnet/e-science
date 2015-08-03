@@ -155,7 +155,7 @@ class HadoopCluster(object):
             result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
             logging.log(SUMMARY, "VRE server is active and has the following properties:")
             stdout.write("server_id: {0}\nserver_IP: {1}\n"
-                         "root password: {2}\nadmin password for login: {3}".format(result['server_id'], result['server_IP'],
+                         "root password: {2}\nadmin password for login: {3}\n".format(result['server_id'], result['server_IP'],
                                                         result['VRE_VM_password'], self.opts['admin_password']))
             exit(SUCCESS)
 
@@ -222,7 +222,11 @@ class HadoopCluster(object):
                          "root password: {2}\n".format(result['cluster_id'], result['master_IP'],
                                                         result['master_VM_password']))
             if self.opts['admin_password']:
-                stdout.write("You can access Hue browser with password: {0}".format(self.opts['admin_password']))
+                if 'CDH' in self.opts['image']:
+                    hue_user = 'hdfs'
+                else:
+                    hue_user = 'hduser'
+                stdout.write("You can access Hue browser with username {0} and  password: {1}\n".format(hue_user, self.opts['admin_password']))
 
             exit(SUCCESS)
 
@@ -717,7 +721,7 @@ def main():
         kamaki_base_url = ' '
         logging.warning(e.message)
     user_id = get_user_id(kamaki_token, kamaki_base_url)
-    auto_generated_pass = "".join(random.SystemRandom().choice(string.ascii_letters + string.digits + string.punctuation) for _ in range(9)).join(" {0}".format(user_id)).lstrip()
+    auto_generated_pass = "".join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(9)).join(" {0}".format(user_id)).lstrip()
     
     orka_subparsers = orka_parser.add_subparsers(help='Choose Hadoop cluster or VRE server action')
     orka_parser.add_argument("-V", "--version", action='version',

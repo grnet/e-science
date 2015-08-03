@@ -98,6 +98,28 @@ pithos_images_uuids_properties = {"d3782488-1b6d-479d-8b9b-363494064c52": {"role
                              "dc171a3d-09bf-469d-9b7a-d3fb5c0afebc": {"role":"yarn", "tags":"-t postconfig,hueconfig,ecoconfig", "image":"ecosystem"},
                              "05f23bb1-5415-4da3-8e8a-93daa384b2f8": {"role":"cloudera", "tags":"-t preconfig,postconfig", "image":"cloudera"}}
 # Dictionary of pithos vre images UUIDs with their corresponding actions
-pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"image":"drupal"},
-                               "f64a11dc-97bd-44cb-a502-6c141cc42bfa": {"image":"redmine"},
-                               "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"image":"mediawiki"}}
+pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"image":"drupal","db_name":"db","default_password":"@test123",
+                                                                            "update_password":"/usr/bin/mysqladmin -u root -p\'@test123\' password \'{0}\'"},
+                               "f64a11dc-97bd-44cb-a502-6c141cc42bfa": {"image":"redmine_redmine_1","db_name":"redmine_postgresql_1","default_password":"password",
+                                                                        "update_password":"sudo -u postgres psql -U postgres -d redmine_production -c \"alter user redmine password \'{0}\';\""
+                                                                        ";sed -i \'s/DB_PASS=password/DB_PASS={0}/g\' /usr/local/redmine/docker-compose.yml"},
+                               "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"image":"mediawiki","db_name":"db","default_password":"@test123",
+                                                                        "update_password":"/usr/bin/mysqladmin -u root -p\'@test123\' password \'{0}\'"}}
+
+#encrypt decrypt token in django db
+def mask_token(key, token):
+    enc = []
+    for i in range(len(token)):
+        key_c = key[i % len(key)]
+        enc_c = chr((ord(token[i]) + ord(key_c)) % 256)
+        enc.append(enc_c)
+    return base64.urlsafe_b64encode("".join(enc))
+
+def unmask_token(key, masked_token):
+    dec = []
+    masked_token = base64.urlsafe_b64decode(masked_token.encode('ascii'))
+    for i in range(len(masked_token)):
+        key_c = key[i % len(key)]
+        dec_c = chr((256 + ord(masked_token[i]) - ord(key_c)) % 256)
+        dec.append(dec_c)
+    return "".join(dec)

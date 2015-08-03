@@ -370,7 +370,7 @@ class YarnCluster(object):
                         server_ip = attachment['ipv4']
         else:
             self.cyclades.delete_server(server['id'])
-            set_server_state(self.opts['token'],server_id,'Error',status='Failed')
+            set_server_state( self.opts['token'],server_id,'Error',status='Failed')
             msg = ' Status for VRE server {0} is {1}'.format(server['name'], new_status)
             raise ClientError(msg, error_create_server)
             
@@ -389,8 +389,8 @@ class YarnCluster(object):
         except RuntimeError, e:
             # Exception is raised if a VRE start command is not executed correctly and informs user of its VRE properties
             # so user can ssh connect to the VRE server or delete the server from orkaCLI.
-            raise RuntimeError('{0}. Your VRE server has the following properties id:{1} root_password:{2} server_IP:{3}'
-                               .format(e.args[0],server_id,server_pass,server_ip),error_create_server)
+            raise RuntimeError('Your VRE server has the following properties id:{0} root_password:{1} server_IP:{2}'
+                               ' but could not be started normally.'.format(server_id,server_pass,server_ip),error_create_server)
         return server_id, server_pass, server_ip
         
         
@@ -464,7 +464,7 @@ class YarnCluster(object):
                           'Installing and configuring YARN (3/3)')
 
             install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
-                         self.cluster_name_postfix_id, self.orka_image_uuid, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'])
+                         self.cluster_name_postfix_id, self.orka_image_uuid, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'], self.opts['admin_password'])
 
         except Exception, e:
             logging.error(str(e.args[0]))
