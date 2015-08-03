@@ -108,8 +108,7 @@ Can also select server name, project name, flavor, ssh-key-->
                         data-placement="bottom"
                         data-trigger="hover focus click"
                         data-html=true
-                        data-title='<b>Component</b>: <span class="text text-info"><b>Version</b></span>'
-                        {{bind-attr data-content=version_message class="info_popover_visible:btn:hide info_popover_visible:btn-primary:hide info_popover_visible:btn-sm:hide"}}
+                        {{bind-attr data-content=selected_image_components class="selected_image_popover:btn:hide selected_image_popover:btn-primary:hide selected_image_popover:btn-sm:hide"}}
                         >
                             <b class="glyphicon glyphicon-info-sign"></b>
                         </button>

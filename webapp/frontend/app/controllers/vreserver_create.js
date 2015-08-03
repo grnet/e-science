@@ -67,6 +67,7 @@ App.VreserverCreateController = Ember.Controller.extend({
     selected_category : function(key,value){
         if (arguments.length>1){// setter
             this.set('selected_category_id_static',value);
+            this.set('selected_image',null);
         }
         return this.get('selected_category_id_static'); // getter
     }.property('selected_category_id_static','selected_project_id'),
@@ -90,6 +91,26 @@ App.VreserverCreateController = Ember.Controller.extend({
         }
         return this.get('selected_image_static');// getter
     }.property('selected_image_static', 'selected_project_id'),
+    selected_image_popover : false,
+    selected_image_components : function(){
+        // decorate with image component info
+        var html_templ = '%@%@: <span class="text text-info pull-right">%@</span><br>';
+        var html_snippet = '<h5 class="strong">Component: <span class="text text-info">Version</span></h5>';
+        var image_data = this.get('vreImages');
+        for (i=0; i<image_data.length; i++){
+            if (image_data[i].get('image_name') == this.get('selected_image')){
+                var arr_image_components = image_data[i].get('image_components');
+                for (j=0; j<arr_image_components.length; j++){
+                    html_snippet = html_templ.fmt(html_snippet, arr_image_components[j]['name'], arr_image_components[j]['property']['version']);
+                }
+                var self = this;
+                Ember.run.later(function(){self.set('selected_image_popover',true);},300);
+                return html_snippet;
+            }
+        }
+        this.set('selected_image_popover',null);
+        return '';
+    }.property('selected_image','selected_category'),
     selected_image_changed : function(){
         if (!Ember.isEmpty(this.get('selected_image'))) this.set('alert_missing_input_image',null);
     }.observes('selected_image'),
