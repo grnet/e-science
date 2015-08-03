@@ -242,20 +242,23 @@ App.VreserverCreateController = Ember.Controller.extend({
     /*
      * Utility Functions
      */
+    category_from_image : function(that, image_name){
+        var self = that; // get controller into self
+        var category_data = self.get('vreCategoryData');
+        for (category in category_data) {
+            if (category_data[category].contains(image_name)) {
+                return category;
+            }
+        }
+        return;
+    },
     last_vre_popover_data : null,
     set_vre_popover_data : function(){
         if (!Ember.isEmpty(this.get('last_vre_server'))){
             var last_data = this.get('last_vre_server');
             var html_templ = '%@%@: <span class="text text-info pull-right">%@</span><br>';
             var html_snippet = '<h5 class="strong">Option: <span class="text text-info pull-right">Value</span></h5>';
-            var category = null;
-            var category_data = this.get('vreCategoryData');
-            for (cat in category_data){
-                if (category_data[cat].contains(last_data.get('os_image'))){
-                    category = cat;
-                    break;
-                }
-            }
+            var category = this.get('category_from_image')(this, last_data.get('os_image'));
             html_snippet = html_templ.fmt(html_snippet, 'Project', last_data.get('project_name'));
             html_snippet = html_templ.fmt(html_snippet, 'Category', category);
             html_snippet = html_templ.fmt(html_snippet, 'Image', last_data.get('os_image'));
@@ -403,7 +406,27 @@ App.VreserverCreateController = Ember.Controller.extend({
             });
         },
         apply_last_config : function(){
-            console.log('clicked apply last');
+            var self = this;
+            var project_id = null;
+            if (!Ember.isEmpty(this.get('last_vre_server'))){
+                var last_server = this.get('last_vre_server');
+                project_id = this.get('content').findBy('project_name',last_server.get('project_name')).get('id');
+                if (!Ember.isEmpty(project_id)){
+                    this.set('selected_project_id',project_id);
+                    var category = this.get('category_from_image')(this, last_server.get('os_image'));
+                    this.set('selected_category',category);
+                    this.set('selected_image',last_server.get('os_image'));
+                    this.set('vre_server_name',last_server.get('server_name_noprefix'));
+                    Ember.run.later(function(){
+                        var cpu_index = self.get('selected_project_cpu_choices').indexOf(last_server.get('cpu'));
+                        self.send('pick_cpu',cpu_index,last_server.get('cpu'));
+                        var ram_index = self.get('selected_project_ram_choices').indexOf(last_server.get('ram'));
+                        self.send('pick_ram',ram_index,last_server.get('ram'));
+                        var disk_index = self.get('selected_project_disk_choices').indexOf(last_server.get('disk'));
+                        self.send('pick_disk',ram_index,last_server.get('disk'));
+                    },300);
+                }
+            }
         },
         submit_create : function(){
             var that = this;
