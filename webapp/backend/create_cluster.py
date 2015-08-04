@@ -361,8 +361,10 @@ class YarnCluster(object):
         server_ip = '127.0.0.1'
         # Update DB with server status as pending
         new_state = "Started creation of Virtual Research Environment server {0}".format(vre_server_name)
+        os.system('rm ' + self.ssh_file)
         set_server_state(self.opts['token'], server_id, new_state, okeanos_server_id=server['id'])
         new_status = self.cyclades.wait_server(server['id'], max_wait=MAX_WAIT)
+        
         if new_status == 'ACTIVE':
             server_details = self.cyclades.get_server_details(server['id'])
             for attachment in server_details['attachments']:
