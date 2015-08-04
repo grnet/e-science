@@ -100,11 +100,14 @@ class HdfsRequest(object):
 
 def start_vre(server_ip, password, token, vre_image):
     """Change vre image mysql password to user token"""
-    command = "cd; myvar=$(docker inspect db | grep \"Id\" | sed 's/[\" ,:]//g' | sed 's/Id//g'); cd /var/lib/docker/containers/$myvar;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/@test123/{0}/g' {{}} +;"\
-    "/etc/init.d/docker start;/usr/bin/docker start db; docker inspect --format '{{ .NetworkSettings.IPAddress }}:9200' db | xargs wget --retry-connrefused --tries=5 -q --wait=3 --spider;/usr/bin/docker exec -d db /usr/bin/mysqladmin -u root -p'@test123' password '{0}';"\
-    "/usr/bin/docker start {1}; ".format(token, vre_image)
+    vre_commands = [ "cd;systemctl stop docker-*.scope;myvar=$(docker inspect {0} | grep \"Id\" | sed 's/[\" ,:]//g' | sed 's/Id//g'); cd /var/lib/docker/containers/$myvar;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/{1}/{2}/g' {{}} +;"\
+    "/etc/init.d/docker start;/usr/bin/docker start {0}".format(vre_image['db_name'], vre_image['default_password'], token),
+    "/usr/bin/docker exec -d {0} {1}".format(vre_image['db_name'], vre_image['update_password'].format(token)),
+    " /usr/bin/docker start {0}".format(vre_image['image'])]
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
-    exec_command(ssh_client, command)
+    for command in vre_commands:
+        exec_command(ssh_client, command)
+        sleep(20)
     
     
 def reroute_ssh_prep(server, master_ip):

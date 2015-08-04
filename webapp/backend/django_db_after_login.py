@@ -52,6 +52,7 @@ def db_after_login(token, login=True):
     """
     given_uuid = get_user_id(token)
     cached_user_name = get_user_name(token)
+    masked_token = mask_token(encrypt_key, token)
     try:
         existing_user = UserInfo.objects.get(uuid=given_uuid)
         logging.info(' The id of the user %s is %d', existing_user.uuid,
@@ -59,8 +60,8 @@ def db_after_login(token, login=True):
         # user already in db
         if login:
             db_login_entry(existing_user)
-        if existing_user.okeanos_token != token:
-            existing_user.okeanos_token = token
+        if existing_user.okeanos_token != masked_token:
+            existing_user.okeanos_token = masked_token
             existing_user.save()
         if existing_user.user_name != cached_user_name:
             existing_user.user_name = cached_user_name
@@ -69,7 +70,7 @@ def db_after_login(token, login=True):
 
     except ObjectDoesNotExist:
         # new user database entry
-        new_entry = UserInfo.objects.create(uuid=given_uuid, okeanos_token=token, user_name=cached_user_name)
+        new_entry = UserInfo.objects.create(uuid=given_uuid, okeanos_token=masked_token, user_name=cached_user_name)
         new_token = Token.objects.create(user=new_entry)
         new_user = UserInfo.objects.get(uuid=given_uuid)
         logging.info(' The id of the new user is '+ str(new_user.user_id))
@@ -122,7 +123,7 @@ def db_server_create(choices, task_id):
     return new_server.id
 
 
-def db_server_update(token, status, id, server_IP='', state='', okeanos_server_id=''):
+def db_server_update(token, status, id, server_IP='', state='', okeanos_server_id='', password='', error=''):
     """
     Updates DB when VRE server is created or deleted from pending status.
     """
@@ -132,9 +133,15 @@ def db_server_update(token, status, id, server_IP='', state='', okeanos_server_i
     except ObjectDoesNotExist:
         msg = 'Server with given name does not exist'
         raise ObjectDoesNotExist(msg)
+    if password:
+        user.master_vm_password = u'The root password of \"{0}\"({1}) VRE server is {2}'.format(server.server_name,server.id,password)
+    if error:
+        user.error_message = error
 
     if status == "Active":
         server.server_status = const_cluster_status_active
+        user.master_vm_password = ''
+        user.error_message = ''
 
     elif status == "Pending":
         server.server_status = const_cluster_status_pending
@@ -153,6 +160,7 @@ def db_server_update(token, status, id, server_IP='', state='', okeanos_server_i
     if server_IP:
         server.server_IP = server_IP
     server.save()
+    user.save()
 
 
 def db_hadoop_update(cluster_id, hadoop_status, state):

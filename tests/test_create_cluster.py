@@ -148,7 +148,17 @@ def mock_get_project_id(*args):
     print 'in mock get project id'
     return 'some_project_id'
 
+def mock_mask_token(*args):
+    print 'mock masking'
+    return args[1]
+
+def mock_unmask_token(*args):
+    print 'mock unmasking'
+    return args[1]
+
 # replace unmanaged calls with fakes
+@patch('backend.create_cluster.mask_token', mock_mask_token)
+@patch('backend.create_cluster.unmask_token', mock_unmask_token)
 @patch('backend.create_cluster.Cluster.create', mock_createcluster)
 @patch('backend.create_cluster.check_credentials', mock_checkcredentials)
 @patch('backend.create_cluster.endpoints_and_user_id', mock_endpoints_userid)

@@ -6,7 +6,7 @@ addons:
 - postgresql: '9.1'
 before_install:
 - openssl aes-256-cbc -K $encrypted_b7bd3aa10e46_key -iv $encrypted_b7bd3aa10e46_iv
-  -in .private/.config.txt.enc -out .private/.config.txt -d
+  -in .private/private_data.tar.enc -out private_data.tar -d
 install:
 - pip install kamaki==0.13.1
 - pip install paramiko
@@ -27,6 +27,7 @@ install:
 before_script:
 - psql -c 'create user developer with createdb;' -U postgres
 - psql -c 'create database escience with owner developer;' -U postgres
+- tar -xvf private_data.tar
 - python webapp/manage.py syncdb --noinput
 - cd orka
 - python setup.py install
