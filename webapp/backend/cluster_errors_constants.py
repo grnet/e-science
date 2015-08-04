@@ -106,20 +106,3 @@ pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"ima
                                "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"image":"mediawiki","db_name":"db","default_password":"@test123",
                                                                         "update_password":"/usr/bin/mysqladmin -u root -p\'@test123\' password \'{0}\'"}}
 
-#encrypt decrypt token in django db
-def mask_token(key, token):
-    enc = []
-    for i in range(len(token)):
-        key_c = key[i % len(key)]
-        enc_c = chr((ord(token[i]) + ord(key_c)) % 256)
-        enc.append(enc_c)
-    return base64.urlsafe_b64encode("".join(enc))
-
-def unmask_token(key, masked_token):
-    dec = []
-    masked_token = base64.urlsafe_b64decode(masked_token.encode('ascii'))
-    for i in range(len(masked_token)):
-        key_c = key[i % len(key)]
-        dec_c = chr((256 + ord(masked_token[i]) - ord(key_c)) % 256)
-        dec.append(dec_c)
-    return "".join(dec)

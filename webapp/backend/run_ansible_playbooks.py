@@ -41,7 +41,7 @@ def install_yarn(*args):
     try:
         hosts_filename = create_ansible_hosts(args[3], list_of_hosts, args[2])
         # Run Ansible playbook
-        ansible_create_cluster(hosts_filename, cluster_size, args[4], args[5], args[0], args[6], args[7])
+        ansible_create_cluster(hosts_filename, cluster_size, args[4], args[5], args[0], args[6], args[7], args[8])
         # Format and start Hadoop cluster
         set_cluster_state(args[0], cluster_id,
                           'Yarn Cluster is active', status='Active',
@@ -155,7 +155,7 @@ def ansible_manage_cluster(cluster_id, action):
 
 
 def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_file, token, replication_factor,
-                           dfs_blocksize):
+                           dfs_blocksize, admin_password):
     """
     Calls the ansible playbook that installs and configures
     hadoop and everything needed for hadoop to be functional.
@@ -177,7 +177,7 @@ def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_fi
     # Create command that executes ansible playbook
     ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
     '-f {0} -e "choose_role={1} ssh_file_name={2} token={3} '.format(str(cluster_size), chosen_image['role'], ssh_file, token) + \
-    'dfs_blocksize={0}m dfs_replication={1} uuid={2} " {3}'.format(dfs_blocksize, replication_factor, uuid, chosen_image['tags'])
+    'dfs_blocksize={0}m dfs_replication={1} uuid={2} admin_password={3}" {4}'.format(dfs_blocksize, replication_factor, uuid, admin_password, chosen_image['tags'])
 
     # Execute ansible
     ansible_code += ansible_log

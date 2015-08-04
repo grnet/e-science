@@ -24,6 +24,7 @@
  settings_path: "{{my_project_dir}}/{{my_project_name}}/{{webapp_dir}}/backend"
  path_to_java_dirs: "{{my_project_dir}}/{{my_project_name}}/pithosfs/java"
  orka_version: orka-0.1.1
+ orka_db_sql_script: backend_insert_tables.sql
 
  # Paths for project
  project_path: "{{my_project_dir}}/{{my_project_name}}"
