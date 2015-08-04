@@ -123,7 +123,7 @@ def db_server_create(choices, task_id):
     return new_server.id
 
 
-def db_server_update(token, status, id, server_IP='', state='', okeanos_server_id=''):
+def db_server_update(token, status, id, server_IP='', state='', okeanos_server_id='', password='', error=''):
     """
     Updates DB when VRE server is created or deleted from pending status.
     """
@@ -133,9 +133,15 @@ def db_server_update(token, status, id, server_IP='', state='', okeanos_server_i
     except ObjectDoesNotExist:
         msg = 'Server with given name does not exist'
         raise ObjectDoesNotExist(msg)
+    if password:
+        user.master_vm_password = u'The root password of \"{0}\"({1}) VRE server is {2}'.format(server.server_name,server.id,password)
+    if error:
+        user.error_message = error
 
     if status == "Active":
         server.server_status = const_cluster_status_active
+        user.master_vm_password = ''
+        user.error_message = ''
 
     elif status == "Pending":
         server.server_status = const_cluster_status_pending
@@ -154,6 +160,7 @@ def db_server_update(token, status, id, server_IP='', state='', okeanos_server_i
     if server_IP:
         server.server_IP = server_IP
     server.save()
+    user.save()
 
 
 def db_hadoop_update(cluster_id, hadoop_status, state):

@@ -60,13 +60,13 @@ def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', 
     current_task.update_state(state=state)
     
     
-def set_server_state(token, id, state, status='Pending', server_IP='', okeanos_server_id=''):
+def set_server_state(token, id, state, status='Pending', server_IP='', okeanos_server_id='', password='', error=''):
     """
     Logs a VRE server state message and updates the celery and escience database
     state.
     """
     logging.log(SUMMARY, state)
-    db_server_update(token, status, id, server_IP, state=state, okeanos_server_id=okeanos_server_id)
+    db_server_update(token, status, id, server_IP, state=state, okeanos_server_id=okeanos_server_id, password=password, error=error)
     if len(state) >= const_truncate_limit:
         state = state[:(const_truncate_limit-2)] + '..'
     current_task.update_state(state=state)
