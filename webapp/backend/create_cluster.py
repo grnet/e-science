@@ -381,7 +381,7 @@ class YarnCluster(object):
             vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
             if vre_image_uuid == server['image']['id']:
                 chosen_vre_image = pithos_vre_images_uuids_actions[vre_image_uuid]
-                start_vre(server_ip,server_pass,self.opts['token'], chosen_vre_image)
+                start_vre(server_ip,server_pass,self.opts['admin_password'], chosen_vre_image)
             else:
                 msg = 'Image {0} exists on database but cannot be found or has different id'
                 ' on Pithos+'.format(self.opts['os_choice'])

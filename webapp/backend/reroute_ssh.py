@@ -98,12 +98,12 @@ class HdfsRequest(object):
             self.ssh_client.close()
 
 
-def start_vre(server_ip, password, token, vre_image):
-    """Change vre image mysql password to user token"""
+def start_vre(server_ip, password, admin_password, vre_image):
+    """Change vre image mysql password to user admin_password"""
     print 'Strarting vre'
     command = "cd;myvar=$(docker inspect {0} | grep \"Id\" | sed 's/[\" ,:]//g' | sed 's/Id//g'); cd /var/lib/docker/containers/$myvar;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/{1}/{2}/g' {{}} +;"\
     "/etc/init.d/docker start;/usr/bin/docker start {0}; docker inspect --format '{{ .NetworkSettings.IPAddress }}:9200' {0} | xargs wget --retry-connrefused --tries=5 -q --wait=3 --spider;/usr/bin/docker exec -d {0} {3}"\
-    ";/usr/bin/docker start {4}; ".format(vre_image['db_name'], vre_image['default_password'], token, vre_image['update_password'].format(token), vre_image['image'])
+    ";/usr/bin/docker start {4}; ".format(vre_image['db_name'], vre_image['default_password'], admin_password, vre_image['update_password'].format(admin_password), vre_image['image'])
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
     exec_command(ssh_client, command)
     
