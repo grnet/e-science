@@ -9,9 +9,9 @@ App.VreserverCreateController = Ember.Controller.extend({
 	// client-side only, eventually add data structure to the backend
 	vreCategoryLabels : ['Portal/Cms','Wiki','Project Management'],
 	vreCategoryData : {
-	    'Portal/Cms' : ['Deb8-Drupal-Docker'],
-	    'Wiki' : ['Deb8-Mediawiki-Docker'],
-	    'Project Management': ['Deb8-Redmine-Docker'] 
+	    'Portal/Cms' : ['Drupal-7.3.7'],
+	    'Wiki' : ['Mediawiki-1.2.4'],
+	    'Project Management': ['Redmine-3.0.4'] 
 	},
 	// client-side only, eventually move to backend
 	vreFlavorLabels : ['Small', 'Medium', 'Large'],

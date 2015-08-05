@@ -20,7 +20,7 @@ Required positional arguments for vre create command:
 
 example for orka vre create with Drupal image:
 
-    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Deb8-Drupal-Docker
+    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Drupal-7.3.7
 
 ##"vre destroy" command
 
