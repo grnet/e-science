@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+This script create a user in hue and sets a password'
+
+@author: e-science dev-team
+"""
+
+from django.contrib.auth.models import User
+
+def set_user_pass():
+    User.objects.create(id=1, username='hdfs', password='@test123')
+    user = User.objects.get(username='hdfs')
+    user.is_staff = True
+    user.is_superuser = True
+    user.set_password('{{admin_password}}')
+    user.save()
+
+def main():
+    set_user_pass()
+    
+if __name__ == "__main__":
+    main()

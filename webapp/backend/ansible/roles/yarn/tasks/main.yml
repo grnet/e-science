@@ -240,6 +240,11 @@
     tags: hueconfig
     template: src=hue.j2 dest={{ hue_home }}/desktop/conf/hue.ini owner=hduser group=hadoop
     when: is_master
+    
+  - name: copy hue_login.py in master node
+    tags: hueconfig
+    template: src=hue_login.j2 dest={{ hue_home }}/build/env/bin/hue_login.py owner=hduser group=hadoop
+    when: is_master
 
   - name: copy ecosystem xml files
     tags: ecoconfig
@@ -388,4 +393,9 @@
       - { src: 'hbaseserver.service', dest: '/lib/systemd/system/hbaseserver.service', mode: '644' }
       - { src: 'livyserver.service', dest: '/lib/systemd/system/livyserver.service', mode: '644' }
       - { src: 'oozieserver.service', dest: '/lib/systemd/system/oozieserver.service', mode: '644' }
+    when: is_master
+    
+  - name: Set password and username for hue superuser
+    shell: echo 'from hue_login import set_user_pass; set_user_pass()' | ./hue shell chdir=/usr/local/hue/build/env/bin/
+    tags: hueconfig
     when: is_master

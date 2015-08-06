@@ -385,7 +385,7 @@ class YarnCluster(object):
             vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
             if vre_image_uuid == server['image']['id']:
                 chosen_vre_image = pithos_vre_images_uuids_actions[vre_image_uuid]
-                start_vre(server_ip,server_pass,unmask_token(encrypt_key, self.opts['token']), chosen_vre_image)
+                start_vre(server_ip,server_pass,self.opts['admin_password'], chosen_vre_image)
             else:
                 msg = u'VRE server \"{0}\" creation failed because image {1} exists on database but cannot be found or has different id'
                 u' on Pithos+'.format(self.opts['server_name'],self.opts['os_choice'])                                                                                   
@@ -474,7 +474,7 @@ class YarnCluster(object):
                           'Installing and configuring YARN (3/3)')
 
             install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
-                         self.cluster_name_postfix_id, self.orka_image_uuid, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'])
+                         self.cluster_name_postfix_id, self.orka_image_uuid, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'], self.opts['admin_password'])
 
         except Exception, e:
             logging.error(str(e.args[0]))
