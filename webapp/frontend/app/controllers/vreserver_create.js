@@ -467,15 +467,19 @@ App.VreserverCreateController = Ember.Controller.extend({
                 console.log(reason);
             });
         },
-        clear_cached : function(){
+        clear_cached : function(){// invalidate data cached on page, linked to selected project
             this.set('selected_storage_id',null);
             this.set('selected_cpu_id',null);
             this.set('selected_ram_id',null);
             this.set('selected_disk_id',null);
             this.set('selected_flavor_id',null);
+            this.set('selected_category',null);
+            this.set('selected_image',null);
+            this.set('vre_server_name',null);
+            this.set('vre_admin_pass',null);
             this.set('message',null);
         },
-        reset : function(){
+        reset : function(){ // invalidate selected project (data linked to project cascades)
             this.set('selected_project_id',null);
             this.set('vre_server_name',null);
             this.set('vre_admin_pass',null);
