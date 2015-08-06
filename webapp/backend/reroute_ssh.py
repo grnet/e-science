@@ -101,25 +101,15 @@ class HdfsRequest(object):
 def start_vre(server_ip, password, token, vre_image):
     """Change vre image mysql password to user token"""
     vre_commands = [ "cd;systemctl stop docker-*.scope;myvar=$(docker inspect {0} | grep \"Id\" | sed 's/[\" ,:]//g' | sed 's/Id//g'); cd /var/lib/docker/containers/$myvar;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/{1}/{2}/g' {{}} +;"\
-    "/etc/init.d/docker start;/usr/bin/docker start {0}".format(vre_image['db_name'], vre_image['default_password'], token),
-    "/usr/bin/docker exec -d {0} {1}".format(vre_image['db_name'], vre_image['update_password'].format(token)),
-    " /usr/bin/docker start {0}".format(vre_image['image'])]
+    "/etc/init.d/docker start;/usr/bin/docker start {0}".format(vre_image['db_name'], vre_image['default_password'], admin_password),
+    "/usr/bin/docker exec -d {0} {1}".format(vre_image['db_name'], vre_image['update_password'].format(admin_password)),
+    " /usr/bin/docker start {0}".format(vre_image['image']),vre_image['change_db_pass'].format(admin_password)]
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
     for command in vre_commands:
         exec_command(ssh_client, command)
         sleep(20)
-    """Change vre image mysql password to user admin_password"""
-    command_1 = "cd;systemctl stop docker-*.scope;myvar=$(docker inspect {0} | grep \"Id\" | sed 's/[\" ,:]//g' | sed 's/Id//g'); cd /var/lib/docker/containers/$myvar;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/{1}/{2}/g' {{}} +;"\
-    "/etc/init.d/docker start;/usr/bin/docker start {0}".format(vre_image['db_name'], vre_image['default_password'], admin_password)
-    command_2 = "/usr/bin/docker exec -d {0} {1}".format(vre_image['db_name'], vre_image['update_password'].format(admin_password))
-    command_3 = " /usr/bin/docker start {0}".format(vre_image['image'])
-    command_4 = vre_image['change_db_pass'].format(admin_password)
-    ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
-    for command in [command_1, command_2, command_3, command_4]:
-        exec_command(ssh_client, command)
-        sleep(20)
-    
-    
+
+   
 def reroute_ssh_prep(server, master_ip):
     """
     Creates list of host and ip-tables for reroute ssh to all slaves
