@@ -93,6 +93,7 @@ App.VreserverCreateController = Ember.Controller.extend({
         return this.get('selected_image_static');// getter
     }.property('selected_image_static', 'selected_project_id'),
     selected_image_popover : false,
+    show_admin_pass_input : false,
     selected_image_components : function(){
         // decorate with image component info
         var html_templ = '%@%@: <span class="text text-info pull-right">%@</span><br>';
@@ -106,10 +107,13 @@ App.VreserverCreateController = Ember.Controller.extend({
                 }
                 var self = this;
                 self.set('selected_image_popover',true);
+                self.set('show_admin_pass_input',true);
                 return html_snippet;
             }
         }
         this.set('selected_image_popover',null);
+        this.set('vre_admin_pass',null);
+        this.set('show_admin_pass_input',null);
         return '';
     }.property('selected_image','selected_category'),
     selected_image_changed : function(){
@@ -428,6 +432,13 @@ App.VreserverCreateController = Ember.Controller.extend({
                 }
             }
         },
+        admin_pass_generate : function(){
+            this.set('vre_admin_pass',PassGen.generate(12));
+            this.send('admin_pass_select');
+        },
+        admin_pass_select : function(){
+            !Ember.isEmpty(this.get('vre_admin_pass')) && Ember.run.later(function(){$('#id_vre_admin_pass').select();},100);
+        },
         submit_create : function(){
             var that = this;
             var new_server = {};
@@ -467,6 +478,7 @@ App.VreserverCreateController = Ember.Controller.extend({
         reset : function(){
             this.set('selected_project_id',null);
             this.set('vre_server_name',null);
+            this.set('vre_admin_pass',null);
         },
         cancel : function(){
             this.send('reset');

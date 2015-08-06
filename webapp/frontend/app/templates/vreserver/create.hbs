@@ -114,9 +114,38 @@ Can also select server name, project name, flavor, ssh-key-->
                         </button>
 					</div>
 				</div>
+				{{#if show_admin_pass_input}}
+				<div class="form-group">
+				    <label for="id_vre_admin_pass" class="control-label col-sm-5"> Admin Pass </label>			    
+				    <div class="input-group">				        
+				        {{input type="text" 
+                        value=vre_admin_pass
+                        placeholder="Type or generate an admin password"
+                        required="true"
+                        id="id_vre_admin_pass"
+                        action="admin_pass_select"
+                        on="focus-in"
+                        classNames="input-sm form-control"}}
+                        <span class="input-group-btn">
+                            <button
+                            id=id_admin_pass_random
+                            data-toggle="tooltip"
+                            data-placement="top"
+                            data-trigger="hover focus"
+                            data-container="body"
+                            title="Generate random password"
+                            class="btn btn-primary btn-sm"
+                            {{action "admin_pass_generate"}}
+                            >
+                                <b class="glyphicon glyphicon-random"></b>
+                            </button>
+                        </span>                         
+				    </div>
+				</div>
+				{{/if}}
 				<div class="row text-center text-danger">
 					<div class="col col-sm">
-						{{alert_missing_input_image}}
+						{{alert_missing_input_image}}{{alert_copy_pass_prompt}}
 					</div>
 				</div>
 			</div>
