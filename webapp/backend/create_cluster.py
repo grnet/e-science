@@ -374,7 +374,6 @@ class YarnCluster(object):
             msg = ' Status for VRE server {0} is {1}'.format(server['name'], new_status)
             raise ClientError(msg, error_create_server)
             
-        set_server_state(self.opts['token'],server_id,state='VRE Server created',status='Active',server_IP=server_ip)
         # Wait for VRE server to be pingable
         sleep(30)
         try:
@@ -389,8 +388,10 @@ class YarnCluster(object):
         except RuntimeError, e:
             # Exception is raised if a VRE start command is not executed correctly and informs user of its VRE properties
             # so user can ssh connect to the VRE server or delete the server from orkaCLI.
-            raise RuntimeError('{0}. Your VRE server has the following properties id:{1} root_password:{2} server_IP:{3}'
-                               .format(e.args[0],server_id,server_pass,server_ip),error_create_server)
+            set_server_state(self.opts['token'],server_id,state='VRE Server created but started with errors',status='Active',server_IP=server_ip)
+            raise RuntimeError('Your VRE server has the following properties id:{0} root_password:{1} server_IP:{2}'
+                               ' but could not be started normally.'.format(server_id,server_pass,server_ip),error_create_server)
+        set_server_state(self.opts['token'],server_id,state='VRE Server created',status='Active',server_IP=server_ip)
         return server_id, server_pass, server_ip
         
         

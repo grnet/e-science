@@ -240,7 +240,7 @@ class ClusterInfo(models.Model):
                                        " the creation of this entry")
     cluster_status = models.CharField("Cluster Status", max_length=1,
                                       choices=CLUSTER_STATUS_CHOICES,
-                                      null=False, help_text="Destroyed/Active/Pending"
+                                      null=False, help_text="Destroyed/Active/Pending/Failed"
                                       " status of the cluster")
     cluster_size = models.IntegerField("Cluster Size", null=True,
                                        help_text="Total VMs, including master"
@@ -267,7 +267,7 @@ class ClusterInfo(models.Model):
                                      help_text="Disk Template of the cluster")
 
     os_image = models.CharField("OS Image", max_length=255, null=False,
-                                help_text="Operating system of the cluster")
+                                help_text="Pithos image used for the creation of the cluster")
     master_IP = models.CharField("Master IP", max_length=255, blank=True,
                                  help_text="IP address of Master's node")
     user_id = models.ForeignKey(UserInfo, null=False, related_name='clusters',

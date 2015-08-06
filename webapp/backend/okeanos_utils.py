@@ -401,15 +401,19 @@ def check_images(token, project_id):
     plankton = init_plankton(endpoints['plankton'], token)
     list_current_images = plankton.list_public(True, 'default')
     available_images = []
+    hadoop_images = []
+    vre_images = []
     for image in list_current_images:
         # owner of image will be checked based on the uuid
-        if image['owner'] == const_escience_uuid:
-            image_properties = image['properties']
-            if image_properties.has_key('escienceconf'):
-                available_images.append(image['name'])
-        elif image['owner'] == const_system_uuid and image['name'] == "Debian Base":
-            available_images.append(image['name'])
-                
+        if image['owner'] == const_escience_uuid or image['owner'] == const_system_uuid:
+            if pithos_images_uuids_properties.has_key(image['id']):
+                hadoop_images.append(image['name'])
+            if pithos_vre_images_uuids_actions.has_key(image['id']):
+                vre_images.append(image['name'])
+    # hadoop images at ordinal 0, vre images at 1
+    available_images.append(hadoop_images)
+    available_images.append(vre_images)
+            
     return available_images
 
 def endpoints_and_user_id(auth):
@@ -510,15 +514,16 @@ def personality(ssh_keys_path='', pub_keys_path=''):
             except IOError:
                 msg = " No valid public ssh key(id_rsa.pub) in %s or %s" %((abspath(ssh_keys_path)),(abspath(pub_keys_path)))
                 raise IOError(msg)
-        elif ssh_keys_path:
+        elif ssh_keys_path or pub_keys_path:
             try:
-                with open(abspath(ssh_keys_path)) as f:
+                keys_path = ssh_keys_path if ssh_keys_path else pub_keys_path
+                with open(abspath(keys_path)) as f:
                     personality.append(dict(
                         contents=b64encode(f.read()),
                         path='/root/.ssh/authorized_keys',
                         owner='root', group='root', mode=0600))
             except IOError:
-                msg = " No valid public ssh key(id_rsa.pub) in " + (abspath(ssh_keys_path))
+                msg = " No valid public ssh key(id_rsa.pub) in " + (abspath(keys_path))
                 raise IOError(msg)
         if ssh_keys_path or pub_keys_path:
                 personality.append(dict(
