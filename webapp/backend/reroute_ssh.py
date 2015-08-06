@@ -98,12 +98,13 @@ class HdfsRequest(object):
             self.ssh_client.close()
 
 
-def start_vre(server_ip, password, token, vre_image):
-    """Change vre image mysql password to user token"""
+def start_vre(server_ip, password, admin_password, vre_image):
+    """Change vre image mysql password to user admin_password"""
     vre_commands = [ "cd;systemctl stop docker-*.scope;myvar=$(docker inspect {0} | grep \"Id\" | sed 's/[\" ,:]//g' | sed 's/Id//g'); cd /var/lib/docker/containers/$myvar;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/{1}/{2}/g' {{}} +;"\
-    "/etc/init.d/docker start;/usr/bin/docker start {0}".format(vre_image['db_name'], vre_image['default_password'], token),
-    "/usr/bin/docker exec -d {0} {1}".format(vre_image['db_name'], vre_image['update_password'].format(token)),
-    " /usr/bin/docker start {0}".format(vre_image['image'])]
+    "/etc/init.d/docker start;/usr/bin/docker start {0}".format(vre_image['db_name'], vre_image['default_password'], admin_password),
+    "/usr/bin/docker exec -d {0} {1}".format(vre_image['db_name'], vre_image['update_password'].format(admin_password)),
+    " /usr/bin/docker start {0}".format(vre_image['image']),
+    vre_image['change_db_pass'].format(admin_password)]
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
     for command in vre_commands:
         exec_command(ssh_client, command)

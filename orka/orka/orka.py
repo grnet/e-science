@@ -3,6 +3,8 @@
 
 """orka.orka: provides entry point main()."""
 import logging
+import random
+import string
 from sys import argv, stdout, stderr
 from kamaki.clients import ClientError
 from kamaki.clients.pithos import PithosClient
@@ -15,7 +17,7 @@ from utils import ClusterRequest, ConnectionError, authenticate_escience, get_us
     ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to_hadoop, \
     read_replication_factor, ssh_stream_from_hadoop, parse_hdfs_dest, get_file_protocol, \
     ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, is_period, is_default_dir, \
-    check_credentials, endpoints_and_user_id, init_plankton
+    check_credentials, endpoints_and_user_id, init_plankton, get_user_id
 from time import sleep
 
 
@@ -141,7 +143,8 @@ class HadoopCluster(object):
         try:
             payload = {"vreserver":{"project_name": self.opts['project_name'], "server_name": self.opts['name'],
                                         "cpu": self.opts['cpu'], "ram": self.opts['ram'],
-                                        "disk": self.opts['disk'], "disk_template": self.opts['disk_template'], "os_choice": self.opts['image']}}
+                                        "disk": self.opts['disk'], "disk_template": self.opts['disk_template'], "os_choice": self.opts['image'],
+                                        "admin_password": self.opts['admin_password']}}
             yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='vre')
             response = yarn_cluster_req.post()
             if 'task_id' in response['vreserver']:
@@ -152,8 +155,8 @@ class HadoopCluster(object):
             result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
             logging.log(SUMMARY, "VRE server is active and has the following properties:")
             stdout.write("server_id: {0}\nserver_IP: {1}\n"
-                         "root password: {2}\n".format(result['server_id'], result['server_IP'],
-                                                        result['VRE_VM_password']))
+                         "root password: {2}\nadmin password for login: {3}\n".format(result['server_id'], result['server_IP'],
+                                                        result['VRE_VM_password'], self.opts['admin_password']))
             exit(SUCCESS)
 
         except Exception, e:
@@ -203,7 +206,8 @@ class HadoopCluster(object):
                                         "disk_master": self.opts['disk_master'], "cpu_slaves": self.opts['cpu_slave'],
                                         "ram_slaves": self.opts['ram_slave'], "disk_slaves": self.opts['disk_slave'],
                                         "disk_template": self.opts['disk_template'], "os_choice": self.opts['image'],
-                                        "replication_factor": self.opts['replication_factor'], "dfs_blocksize": self.opts['dfs_blocksize']}}
+                                        "replication_factor": self.opts['replication_factor'], "dfs_blocksize": self.opts['dfs_blocksize'],
+                                        "admin_password": self.opts['admin_password']}}
             yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='cluster')
             response = yarn_cluster_req.create_cluster()
             if 'task_id' in response['clusterchoice']:
@@ -217,6 +221,12 @@ class HadoopCluster(object):
             stdout.write("cluster_id: {0}\nmaster_IP: {1}\n"
                          "root password: {2}\n".format(result['cluster_id'], result['master_IP'],
                                                         result['master_VM_password']))
+            if self.opts['admin_password']:
+                if 'CDH' in self.opts['image']:
+                    hue_user = 'hdfs'
+                else:
+                    hue_user = 'hduser'
+                stdout.write("You can access Hue browser with username {0} and  password: {1}\n".format(hue_user, self.opts['admin_password']))
 
             exit(SUCCESS)
 
@@ -710,6 +720,8 @@ def main():
         kamaki_token = ' '
         kamaki_base_url = ' '
         logging.warning(e.message)
+    user_id = get_user_id(kamaki_token, kamaki_base_url)
+    auto_generated_pass = "".join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(9)).join(" {0}".format(user_id)).lstrip()
     
     orka_subparsers = orka_parser.add_subparsers(help='Choose Hadoop cluster or VRE server action')
     orka_parser.add_argument("-V", "--version", action='version',
@@ -799,7 +811,8 @@ def main():
                               help='Replication factor for HDFS. Must be between 1 and number of slave nodes (cluster_size -1). Default is 2.')
         parser_create.add_argument("--dfs_blocksize", metavar='dfs_blocksize', default=128, type=checker.positive_num_is,
                               help='HDFS block size (in MB). Default is 128.')
-        
+        parser_create.add_argument("--admin_password", metavar='admin_password', default=auto_generated_pass, type=checker.a_string_is,
+                              help='Admin password for Hue login. Default is auto-generated')
         
         parser_destroy.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
@@ -818,6 +831,8 @@ def main():
         parser_vre_create.add_argument("project_name", help='~okeanos project name'
                               ' to request resources from ', type=checker.a_string_is)
         parser_vre_create.add_argument("image", help='OS for the VRE server.', metavar='image')
+        parser_vre_create.add_argument("--admin_password", metavar='admin_password', default=auto_generated_pass, type=checker.a_string_is,
+                              help='Admin password for VRE servers. Default is auto-generated')
         
         parser_vre_destroy.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='vre_destroy')
         
@@ -892,6 +907,8 @@ def main():
             if opts['cluster_size'] <= opts['replication_factor']:
                 logging.error('Replication factor must be between 1 and number of slave nodes (cluster_size -1)')
                 exit(error_replication_factor)
+            if opts['image'] in images_without_hue:
+                opts['admin_password'] = ''
             c_hadoopcluster.create()
         elif verb == 'destroy':
             c_hadoopcluster.destroy()
