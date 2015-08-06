@@ -671,20 +671,30 @@ class ImagesInfo(object):
     """ Class holding info for available images"""
     
     def __init__(self, opts):
-        self.opts = opts                
-
-    def list_hadoop_images(self):
-        """Method for listing the Hadoop images available in database"""
-        response = ClusterRequest('', self.opts['server_url'], '', action='orka_images').retrieve()
-        for image in response['orkaimage']:
-            print image['image_name']
-                   
-    def list_vre_images(self):
-        """Method for listing the VRE images available in database"""
-        response = ClusterRequest('', self.opts['server_url'], '', action='vre_images').retrieve()
-        for image in response['vreimage']:
-            print image['image_name']
-        
+        self.opts = opts
+        self.image_list = []             
+             
+    def get_images(self,images):
+        """Method for getting the images available in database"""
+        response = ClusterRequest('', self.opts['server_url'], '', images['action']).retrieve()
+        return response[images['resource_name']]
+          
+    def list_images(self, images_type):
+        """Method for listing the images available in database"""
+        images = {}
+        if images_type == 'vre':
+            images =  VRE_IMAGES
+        elif images_type == 'orka':
+            images = ORKA_IMAGES
+        self.image_list = self.get_images(images)
+        for image in self.image_list:
+            self.list_image(image)
+                       
+    def list_image(self,image):
+        """Method for listing info about one image"""
+        stdout.write('{0}: {1}\n'.format('name',image['image_name']))
+        stdout.write('{0}: {1}\n\n'.format('pithos uuid',image['image_pithos_uuid']))
+            
     
 def main():
     """
@@ -892,7 +902,7 @@ def main():
         elif verb == 'destroy':
             c_hadoopcluster.destroy()
         elif verb == 'images':
-            c_imagesinfo.list_hadoop_images()
+            c_imagesinfo.list_images('orka')
         elif verb == 'list' or verb == 'info':
             if verb == 'info':
                 opts['verbose'] = True
@@ -904,7 +914,7 @@ def main():
             c_hadoopcluster.file_action()
         elif verb == 'vre':
             if argv[2] == 'images':
-                c_imagesinfo.list_vre_images()
+                c_imagesinfo.list_images('vre')
             else:
                 c_hadoopcluster.vre_action()
 
