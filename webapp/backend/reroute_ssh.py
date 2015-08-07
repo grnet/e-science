@@ -98,13 +98,13 @@ class HdfsRequest(object):
             self.ssh_client.close()
 
 
-def start_vre(server_ip, password, admin_password, vre_image):
+def start_vre(server_ip, password, admin_password, vre_image, admin_email=''):
     """Change vre image mysql password to user admin_password"""
     if vre_image['image'] == 'dspace':
-        vre_commands = ["cd;systemctl stop docker-*.scope;","/usr/bin/docker exec -d dspace sv stop tomcat8",
-                        "/usr/bin/docker exec -d dspace /dspace/bin/dspace create-administrator -e {0} -f changeme -l changeme -c en -p {1}".format('john@home','john'),
+        vre_commands = ["cd;systemctl stop docker-*.scope;","/usr/bin/docker exec -ti dspace bash -c \"export JAVA_HOME=/usr/bin/java;/usr/bin/sv stop tomcat8\"",
+                        "/usr/bin/docker exec -d dspace /dspace/bin/dspace create-administrator -e {0} -f changeme -l changeme -c en -p {1}".format('john@home',admin_password),
                         "/usr/bin/docker exec -d dspace /dspace/bin/dspace user -d -m a@b.gr",
-                        "/usr/bin/docker exec -d dspace sv start tomcat8"]
+                        "/usr/bin/docker exec -ti dspace bash -c \"export JAVA_HOME=/usr/bin/java;/usr/bin/sv start tomcat8\""]
     else:        
         vre_commands = [ "cd;systemctl stop docker-*.scope;myvar=$(docker inspect {0} | grep \"Id\" | sed 's/[\" ,:]//g' | sed 's/Id//g'); cd /var/lib/docker/containers/$myvar;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/{1}/{2}/g' {{}} +;"\
         "/etc/init.d/docker start;/usr/bin/docker start {0}".format(vre_image['db_name'], vre_image['default_password'], admin_password),
