@@ -7,6 +7,9 @@ This module contains the definitions of returned errors and package constants.
 @author: Ioannis Stenos, Nick Vrionis
 """
 import os
+import base64
+from encrypt_key import key #file with only one variable key = encrypt_key file is not in git repo
+encrypt_key = key
 
 # Definitions of return value errors
 error_syntax_clustersize = -1
@@ -113,6 +116,23 @@ pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"ima
                                                                         "change_db_pass":"docker exec -t -i redmine_redmine_1 bash -c 'RAILS_ENV=production bin/rails runner \"user = User.first ;\
                                                                          user.password, user.password_confirmation = \\\"{0}\\\"; user.save!\"'"},
                                "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"image":"mediawiki","db_name":"db","default_password":"@test123",
-                                                                        "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}",
-                                                                        "change_db_pass":"docker exec -t -i db bash -c \"mysql -p{0} mediawiki -e \\\"UPDATE user SET user_password = CONCAT(':A:', MD5('{0}')) WHERE user_name = 'Admin';\\\"\""}}
+                                                                        "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}"},
+                               "6a6676d4-213c-464b-a321-04998c1d8dc7": {"image":"dspace"}}
 
+#encrypt decrypt token in django db
+def mask_token(key, token):
+    enc = []
+    for i in range(len(token)):
+        key_c = key[i % len(key)]
+        enc_c = chr((ord(token[i]) + ord(key_c)) % 256)
+        enc.append(enc_c)
+    return base64.urlsafe_b64encode("".join(enc))
+
+def unmask_token(key, masked_token):
+    dec = []
+    masked_token = base64.urlsafe_b64decode(masked_token.encode('ascii'))
+    for i in range(len(masked_token)):
+        key_c = key[i % len(key)]
+        dec_c = chr((256 + ord(masked_token[i]) - ord(key_c)) % 256)
+        dec.append(dec_c)
+    return "".join(dec)

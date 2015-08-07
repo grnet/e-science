@@ -5,15 +5,24 @@ App.VreserverCreateRoute = App.RestrictedRoute.extend({
 		$.loader.close(true);
 		return this.store.find('vreserver');
 	},
-	actions: {
-		error: function(err) {
+	deactivate : function(){
+	    // left this route
+	    this.controller.send('reset');
+	},
+	actions : {
+		error : function(err) {
 			// to catch errors
 			// for example 401 responses
 			console.log(err['message']);
 			this.transitionTo('user.logout');
     	},
-    	didTransition: function(transition) {
-
+    	didTransition : function(transition) {
+            // came to this route
+            this.controller.send('find_last_config');
+    	},
+    	willTransition: function(){
+    	    // leaving this route
+    	    this.controller.send('reset');
     	}
 	}
 });

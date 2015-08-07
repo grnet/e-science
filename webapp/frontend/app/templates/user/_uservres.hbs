@@ -2,15 +2,15 @@
     <table class="table table-striped table-hover table-border">
         <thead class="h4 text-left">
             <tr>
-                <td class="col col-sm-2"><a href="#" {{action 'sortBy' controller.sortable_vreservers 'server_name'}}>Name</a> 
+                <td class="col col-sm-2"><a href="#" {{action 'sortBy' controller.sortable_vreservers 'uv' 'server_name'}}>Name</a> 
                 	<i {{bind-attr class="sorting_info.uv_server_name_show:glyphicon:hide sorting_info.uv_server_name_show:small:hide sorting_info.uv_server_name_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                <td><a href="#" {{action 'sortBy' controller.sortable_vreservers 'action_date'}}>Creation Date</a> 
+                <td><a href="#" {{action 'sortBy' controller.sortable_vreservers 'uv' 'action_date'}}>Creation Date</a> 
                 	<i {{bind-attr class="sorting_info.uv_action_date_show:glyphicon:hide sorting_info.uv_action_date_show:small:hide sorting_info.uv_action_date_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i> </td>
-                <td id="id_label_vre_status"><a href="#" {{action 'sortBy' controller.sortable_vreservers 'resorted_status'}}>VRE Status</a> 
+                <td id="id_label_vre_status"><a href="#" {{action 'sortBy' controller.sortable_vreservers 'uv' 'resorted_status'}}>VRE Status</a> 
                 	<i {{bind-attr class="sorting_info.uv_resorted_status_show:glyphicon:hide sorting_info.uv_resorted_status_show:small:hide sorting_info.uv_resorted_status_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                <td><a href="#" {{action 'sortBy' controller.sortable_vreservers 'os_image'}}>Image Name</a>
+                <td><a href="#" {{action 'sortBy' controller.sortable_vreservers 'uv' 'os_image'}}>Image Name</a>
                 	<i {{bind-attr class="sorting_info.uv_project_name_show:glyphicon:hide sorting_info.uv_project_name_show:small:hide sorting_info.uv_project_name_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
-                <td><a href="#" {{action 'sortBy' controller.sortable_vreservers 'server_IP'}}>Access IP</a>
+                <td><a href="#" {{action 'sortBy' controller.sortable_vreservers 'uv' 'server_IP'}}>Access IP</a>
                 	<i {{bind-attr class="sorting_info.uv_server_IP_show:glyphicon:hide sorting_info.uv_server_IP_show:small:hide sorting_info.uv_server_IP_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
                 <td class="col col-sm-2"><a class="nounder">Actions</a></td>
             </tr>

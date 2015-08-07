@@ -25,9 +25,10 @@ class UserInfo(models.Model):
                             default="", max_length=255,
                             help_text="Universally unique identifier "
                             "(for astakos authentication)")
-    okeanos_token = models.CharField('Okeanos Token', max_length=64,
+    okeanos_token = models.CharField('Encrypted Okeanos Token', max_length=64,
                                      null=True, blank=True, unique=True,
-                                     help_text="Okeanos Authentication Token ")
+                                     help_text="Encrypted Okeanos Authentication Token ")
+    # master_VM_password is saved temporarily in database and then assigned to blank.
     master_vm_password = models.CharField("Master VM Password", max_length=255,
                                blank=True, help_text="Root password of master VM")
     error_message = models.CharField("Error Message", max_length=255,

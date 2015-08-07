@@ -20,7 +20,7 @@ Required positional arguments for vre create command:
 
 example for orka vre create with Drupal image:
 
-    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Deb8-Drupal-Docker
+    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Drupal-7.3.7
 
 ##"vre destroy" command
 
@@ -56,6 +56,11 @@ then, stop the docker service:
     service docker stop
 and find the **config.json** of the corresponding container, open the file and change the variable MYSQL_ROOT_PASSWORD = *new_password*
 
+To find the **config.json** of the mysql (named db) container:
+
+    myvar=$(docker inspect db | grep "Id" | sed 's/[" ,:]//g' | sed 's/Id//g')
+    cd /var/lib/docker/containers/$myvar
+
 Finally, start docker and containers, as the drupal example below:
 
     service docker start
@@ -81,6 +86,11 @@ then, stop the docker service:
 
     service docker stop
 and find the **config.json** of the corresponding container, open the file and change the variable DB_PASS = *new_password*. The same should be done for the file /usr/local/redmine/docker-compose.yml
+
+To find the **config.json** of the postgresql (named redmine_postgresql_1) container:
+
+    myvar=$(docker inspect redmine_postgresql_1 | grep "Id" | sed 's/[" ,:]//g' | sed 's/Id//g')
+    cd /var/lib/docker/containers/$myvar
 
 Finally, start docker and containers:
 

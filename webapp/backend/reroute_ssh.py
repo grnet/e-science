@@ -100,13 +100,19 @@ class HdfsRequest(object):
 
 def start_vre(server_ip, password, admin_password, vre_image):
     """Change vre image mysql password to user admin_password"""
-    command_1 = "cd;systemctl stop docker-*.scope;myvar=$(docker inspect {0} | grep \"Id\" | sed 's/[\" ,:]//g' | sed 's/Id//g'); cd /var/lib/docker/containers/$myvar;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/{1}/{2}/g' {{}} +;"\
-    "/etc/init.d/docker start;/usr/bin/docker start {0}".format(vre_image['db_name'], vre_image['default_password'], admin_password)
-    command_2 = "/usr/bin/docker exec -d {0} {1}".format(vre_image['db_name'], vre_image['update_password'].format(admin_password))
-    command_3 = " /usr/bin/docker start {0}".format(vre_image['image'])
-    command_4 = vre_image['change_db_pass'].format(admin_password)
+    if vre_image['image'] == 'dspace':
+        vre_commands = ["cd;systemctl stop docker-*.scope;","/usr/bin/docker exec -d dspace sv stop tomcat8",
+                        "/usr/bin/docker exec -d dspace /dspace/bin/dspace create-administrator -e {0} -f changeme -l changeme -c en -p {1}".format('john@home','john'),
+                        "/usr/bin/docker exec -d dspace /dspace/bin/dspace user -d -m a@b.gr",
+                        "/usr/bin/docker exec -d dspace sv start tomcat8"]
+    else:        
+        vre_commands = [ "cd;systemctl stop docker-*.scope;myvar=$(docker inspect {0} | grep \"Id\" | sed 's/[\" ,:]//g' | sed 's/Id//g'); cd /var/lib/docker/containers/$myvar;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/{1}/{2}/g' {{}} +;"\
+        "/etc/init.d/docker start;/usr/bin/docker start {0}".format(vre_image['db_name'], vre_image['default_password'], admin_password),
+        "/usr/bin/docker exec -d {0} {1}".format(vre_image['db_name'], vre_image['update_password'].format(admin_password)),
+        " /usr/bin/docker start {0}".format(vre_image['image']),vre_image['change_db_pass'].format(admin_password)]
+    
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
-    for command in [command_1, command_2, command_3, command_4]:
+    for command in vre_commands:
         exec_command(ssh_client, command)
         sleep(20)
     
