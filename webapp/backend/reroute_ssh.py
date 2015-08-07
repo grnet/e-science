@@ -98,18 +98,25 @@ class HdfsRequest(object):
             self.ssh_client.close()
 
 
-def start_vre(server_ip, password, token, vre_image):
-    """Change vre image mysql password to user token"""
-    vre_commands = [ "cd;systemctl stop docker-*.scope;myvar=$(docker inspect {0} | grep \"Id\" | sed 's/[\" ,:]//g' | sed 's/Id//g'); cd /var/lib/docker/containers/$myvar;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/{1}/{2}/g' {{}} +;"\
-    "/etc/init.d/docker start;/usr/bin/docker start {0}".format(vre_image['db_name'], vre_image['default_password'], admin_password),
-    "/usr/bin/docker exec -d {0} {1}".format(vre_image['db_name'], vre_image['update_password'].format(admin_password)),
-    " /usr/bin/docker start {0}".format(vre_image['image']),vre_image['change_db_pass'].format(admin_password)]
+def start_vre(server_ip, password, admin_password, vre_image):
+    """Change vre image mysql password to user admin_password"""
+    if vre_image['image'] == 'dspace':
+        vre_commands = ["cd;systemctl stop docker-*.scope;","/usr/bin/docker exec -d dspace sv stop tomcat8",
+                        "/usr/bin/docker exec -d dspace /dspace/bin/dspace create-administrator -e {0} -f changeme -l changeme -c en -p {1}".format('john@home','john'),
+                        "/usr/bin/docker exec -d dspace /dspace/bin/dspace user -d -m a@b.gr",
+                        "/usr/bin/docker exec -d dspace sv start tomcat8"]
+    else:        
+        vre_commands = [ "cd;systemctl stop docker-*.scope;myvar=$(docker inspect {0} | grep \"Id\" | sed 's/[\" ,:]//g' | sed 's/Id//g'); cd /var/lib/docker/containers/$myvar;/etc/init.d/docker stop;find . -name config.json -exec sed -i 's/{1}/{2}/g' {{}} +;"\
+        "/etc/init.d/docker start;/usr/bin/docker start {0}".format(vre_image['db_name'], vre_image['default_password'], admin_password),
+        "/usr/bin/docker exec -d {0} {1}".format(vre_image['db_name'], vre_image['update_password'].format(admin_password)),
+        " /usr/bin/docker start {0}".format(vre_image['image']),vre_image['change_db_pass'].format(admin_password)]
+    
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
     for command in vre_commands:
         exec_command(ssh_client, command)
         sleep(20)
-
-   
+    
+    
 def reroute_ssh_prep(server, master_ip):
     """
     Creates list of host and ip-tables for reroute ssh to all slaves

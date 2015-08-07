@@ -42,7 +42,7 @@ App.Uservreserver = DS.Model.extend({
     // computed properties
     vre_access_url : function(){
         // TODO: add to components info and resolve dynamically
-        return (this.get('os_image')=='Deb8-Redmine-Docker') && 'http://%@:%@'.fmt(this.get('server_IP'),'10083') || 'http://%@'.fmt(this.get('server_IP'));
+        return (this.get('os_image')=='Redmine-3.0.4') && 'http://%@:%@'.fmt(this.get('server_IP'),'10083') || 'http://%@'.fmt(this.get('server_IP'));
     }.property('server_IP','os_image'),
     class_vre_status : function (){
         var status = this.get('server_status');
