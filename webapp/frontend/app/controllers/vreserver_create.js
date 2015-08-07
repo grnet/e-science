@@ -7,19 +7,23 @@ App.VreserverCreateController = Ember.Controller.extend({
 	 * Static Data
 	 */
 	// client-side only, eventually add data structure to the backend
-	vreCategoryLabels : ['Portal/Cms','Wiki','Project Management'],
+	vreCategoryLabels : ['Portal/Cms','Wiki','Project Management','Digital Repository'],
 	vreCategoryData : {
 	    'Portal/Cms' : ['Drupal-7.3.7'],
 	    'Wiki' : ['Mediawiki-1.2.4'],
-	    'Project Management': ['Redmine-3.0.4'] 
+	    'Project Management': ['Redmine-3.0.4'],
+	    'Digital Repository': ['DSpace-5.3']
 	},
 	// client-side only, eventually move to backend
 	vreFlavorLabels : ['Small', 'Medium', 'Large'],
 	vreFlavorData : [
-	   {cpu:1,ram:1024,disk:5}, //Small
-	   {cpu:2,ram:2048,disk:10},//Medium
-	   {cpu:4,ram:4096,disk:20} //Large
+	   {cpu:2,ram:2048,disk:5}, //Small
+	   {cpu:2,ram:4096,disk:10},//Medium
+	   {cpu:4,ram:6144,disk:20} //Large
 	],
+	vreResourceMin : {
+	    'DSpace-5.3':{ram:2048}
+	},
 	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
 	// mapping of uservreserver model properties to controller computed properties
 	model_to_controller_map : {
@@ -213,11 +217,13 @@ App.VreserverCreateController = Ember.Controller.extend({
     selected_project_ram_choices_available : function(){
         var ram_choices = this.get('selected_project_ram_choices');
         var available_ram = Number(this.get('selected_project_available_ram'));
+        var selected_image = this.get('selected_image');
+        var ram_minimum = (!Ember.isEmpty(selected_image) && this.get('vreResourceMin')[selected_image]) && this.get('vreResourceMin')[selected_image]['ram'] || 0;
         var ram_choices_available = ram_choices.map(function(item,index,original){
-            return Number(item)<=available_ram && {value:item,disabled:false} || {value:item,disabled:true};
+            return (Number(item)<=available_ram && Number(item)>=ram_minimum) && {value:item,disabled:false} || {value:item,disabled:true};
         },this);
         return ram_choices_available; 
-    }.property('selected_project_ram_choices.[]'),    
+    }.property('selected_project_ram_choices.[]','selected_image'),    
     selected_ram_value : function(){
         return !this.get('boolean_no_project') && !Ember.isEmpty(this.get('selected_ram_id')) ? 
         this.get('selected_project_ram_choices')[this.get('selected_ram_id')] : 
