@@ -462,7 +462,7 @@ App.VreserverCreateController = Ember.Controller.extend({
                 //success
                 var new_record = that.store.createRecord('uservreserver',new_server);
                 new_record.save().then(function(data){
-                    var admin_pass_msg = {'msg_type': 'warning', 'msg_text': 'The admin password of \"%@\" VRE server is %@'.fmt(data.get('server_name'),data.get('admin_password'))};
+                    var admin_pass_msg = {'msg_type': 'warning', 'msg_text': 'The admin password of \"%@%@\" VRE server is %@'.fmt('[orka]-',data.get('server_name'),data.get('admin_password'))};
                     that.set('controllers.userWelcome.create_cluster_start', true);
                     that.get('controllers.userWelcome').send('setActiveTab','vreservers');
                     that.get('controllers.userWelcome').send('addMessage',admin_pass_msg);
