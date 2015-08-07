@@ -35,6 +35,7 @@ App.Uservreserver = DS.Model.extend({
     project_name : attr(), 
     task_id : attr(), 
     state : attr(),
+    admin_password : attr('string'),
     // user that created the VRE
     user : DS.belongsTo('user', {
         inverse : 'vreservers'

@@ -30,7 +30,8 @@ App.VreserverCreateController = Ember.Controller.extend({
         disk: 'selected_disk_value', 
         disk_template: 'selected_storage_description',
         os_image: 'selected_image',
-        ssh_key_selection: 'selected_sshkey'
+        ssh_key_selection: 'selected_sshkey',
+        admin_password: 'vre_admin_pass'
 	},
 	/*
 	 * Project selection:
@@ -284,7 +285,8 @@ App.VreserverCreateController = Ember.Controller.extend({
         ram : ['alert_missing_input_ram','#id_ram_choice'],
         disk : ['alert_missing_input_disk','#id_disk_choice'],
         disk_template : ['alert_missing_input_storage','#id_storage_choice'],
-        os_image : ['alert_missing_input_image','#id_vre_image']
+        os_image : ['alert_missing_input_image','#id_vre_image'],
+        admin_password : ['alert_missing_input_admin_pass','#id_vre_admin_pass']
     },
     alert_input_missing_text : {
         // alert message property > message text
@@ -294,7 +296,8 @@ App.VreserverCreateController = Ember.Controller.extend({
         alert_missing_input_ram : 'Please select RAM amount (MiB)',
         alert_missing_input_disk : 'Please select Disk size (GiB)',     
         alert_missing_input_storage : 'Please select a disk template',
-        alert_missing_input_image : 'Please select VRE category/image'
+        alert_missing_input_image : 'Please select VRE category/image',
+        alert_missing_input_admin_pass : 'Please type in or generate an admin password. Copy it for keeping.'
     },    
     missing_input : function(that, new_server){
         var self = that; // get the controller reference into self
@@ -437,7 +440,10 @@ App.VreserverCreateController = Ember.Controller.extend({
             this.send('admin_pass_select');
         },
         admin_pass_select : function(){
-            !Ember.isEmpty(this.get('vre_admin_pass')) && Ember.run.later(function(){$('#id_vre_admin_pass').select();},100);
+            if (!Ember.isEmpty(this.get('vre_admin_pass'))){
+                Ember.run.later(function(){$('#id_vre_admin_pass').select();},100);
+                this.set('alert_missing_input_admin_pass',null);
+            }
         },
         submit_create : function(){
             var that = this;
