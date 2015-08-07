@@ -46,7 +46,7 @@ def ssh_key_list(token):
 
 def project_list_flavor_quota(user):
     """Creates the list of resources for every project a user has quota"""
-    okeanos_token = user.okeanos_token
+    okeanos_token = unmask_token(encrypt_key, user.okeanos_token)
     list_of_resources = list()
     flavors = get_flavor_id(okeanos_token)
     auth = check_credentials(okeanos_token)

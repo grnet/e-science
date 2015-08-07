@@ -1,11 +1,13 @@
+<!--User picks a category (portal/cms for now) and then an image from this category (Drupal 7.x for now) using dropdown menus
+Can also select server name, project name, flavor, ssh-key-->
 <p></p>
 <div class="well well-lg text-center v-center">
 	<div class="row">
-	<h3 id = 'id_title_cluster_create_route'>Hadoop Cluster Configuration</h3>
+	<h3 id = 'id_title_cluster_create_route'>VRE Server Configuration</h3>
 	<div class="col col-sm-3"></div>
-	{{#if no_project_selected}}
+	{{#if boolean_no_project}}
 	<div id="id_alert_noproject" class="alert alert-dismissable alert-warning col-sm-6">
-		<button type="button" class="close" data-dismiss="alert">×</button>
+		<button type="button" class="close" data-dismiss="alert"></button>
 		Please <a href="#" {{action 'focus_project_selection'}}>select</a> a project.
 	</div>
 	{{/if}}
@@ -21,43 +23,56 @@
         <div class="col col-lg-8">
             <div class="form-horizontal">
                 <div class="form-group">
-                    <label for="project_id" class="control-label col col-sm-4">Projects</label>
+                    <label for="id_project_id" class="control-label col col-sm-4">Projects</label>
                     <div class="col col-sm-8">
-                        {{view Ember.Select contentBinding="projects_av"
-                        valueBinding="project_details" id="project_id" prompt="*Select project*"
-                        selectionBinding="selected_project"
+                        {{view "select" 
+                        content=content
+                        optionValuePath="content.id"
+                        optionLabelPath="content.project_name_decorated"
+                        value=selected_project_id
+                        prompt="*Select project*"
+                        id="id_project_id"
                         class="btn-primary btn-sm text-left"}}
                     </div>
                 </div>                
             </div>
 	    	<div class="text-center text-danger">
-	    	    {{alert_mes_network}}
-	    	</div>
-	    	<div class="text-center text-danger">
-	    		{{alert_mes_float_ip}}
+	    		{{alert_missing_input_project}}{{alert_no_project_resources}}
 	    	</div>
         </div>        
         <div class="col col-lg-4 col-lg-offset-0 col-md-offset-4 col-sm-offset-3">
             <div class="text-left">
                 <button class="btn btn-primary btn-sm" 
-                id = id_apply_last_cluster
+                id = id_apply_last_server
                 data-container="body" 
                 data-toggle="popover" 
                 data-placement="bottom-auto"
                 data-trigger='hover focus click'
                 data-html=true
-                {{bind-attr data-content=last_conf_message}} 
-                {{action "applyLastCluster"}}
+                {{bind-attr data-content=last_vre_popover_data}}
+                {{action "apply_last_config"}}
                 >
-                Apply Last Cluster Configuration</button>
+                Apply Last VRE Server Configuration</button>
             </div>
 	        <div class="row text-center text-danger">
 	            <div class="col col-sm-8">
-	                {{alert_mes_last_conf}}
+	                {{alert_last_conf_no_resources}}
 	            </div>
 	        </div>            
         </div>
     </div>
+    <div class="panel-footer text-left">
+        <div class="row">
+            <div class="col col-sm-3"></div>
+            <div class="col col-sm-9">
+                {{#unless boolean_no_project}}
+                Selected project resources VMs:{{selected_project_available_vm}} IPs:{{selected_project_available_ip}}
+                {{else}}
+                <span class="text text-muted">~okeanos project resource info</span>
+                {{/unless}}
+            </div>
+        </div>
+    </div>    
 </div>
 
 <div class="panel panel-primary">
@@ -68,47 +83,40 @@
 		<div class="col col-sm-6">
 			<div class="form-horizontal">
 				<div class="form-group">
-					<label for="os_systems" class="control-label col-sm-5"> Available Images </label>
+					<label for="id_vre_category" class="control-label col-sm-5"> Category </label>
 					<div class="col col-sm-7">
-						{{view Ember.Select contentBinding="images_available"
-						valueBinding="operating_system" id="os_systems"
-						selectionBinding="selected_image"
-						class="btn btn-primary btn-sm"}}
-						<button
-						id=id_components_info
-						data-toggle="popover"
-						data-placement="bottom"
-						data-trigger="hover focus click"
-						data-html=true
-						data-title='<b>Component</b>: <span class="text text-info"><b>Version</b></span>'
-						{{bind-attr data-content=version_message class="info_popover_visible:btn:hide info_popover_visible:btn-primary:hide info_popover_visible:btn-sm:hide"}}
-						>
-							<b class="glyphicon glyphicon-info-sign"></b>
-						</button>
+						{{view "select" 
+                        content=vre_categories
+						value=selected_category
+						prompt="*Select category*"
+						id="id_vre_category"
+						class="btn-primary btn-sm text-left"}}
 					</div>
-					{{#if project_current.os_choices}}
-					   <div class='col col-sm-1'></div>
-    				   <div class='col col-sm-4'>
-                       <label for="oozie_filter" class="control-label pull-right"> Only with Workflow </label>
-                       </div>
-                       <div class='col col-sm-2'>
-                       {{view Ember.Checkbox checkedBinding="workflow_filter" id="oozie_filter" class="checkbox"}}
-                       </div>
-                       <div class='col col-sm-5'></div>
-                    {{/if}}
 				</div>
 				<div class="form-group">
-					<label for="size_of_cluster" class="control-label col-sm-5">Cluster size </label>
+					<label for="id_vre_image" class="control-label col-sm-5"> Image </label>
 					<div class="col col-sm-7">
-						{{view Ember.Select contentBinding="max_cluster_size_av"
-						valueBinding="cluster_size" prompt="Select size" id="size_of_cluster"
-						selectionBinding="selected_size"
-						class="btn btn-primary btn-sm text-left"}}
+						{{view "select" 
+						content=selected_project_images
+						value=selected_image
+						prompt="*Select image*" 
+						id="id_vre_image"
+						class="btn-primary btn-sm text-left"}}
+						<button
+                        id=id_components_info
+                        data-toggle="popover"
+                        data-placement="bottom"
+                        data-trigger="hover focus click"
+                        data-html=true
+                        {{bind-attr data-content=selected_image_components class="selected_image_popover:btn:hide selected_image_popover:btn-primary:hide selected_image_popover:btn-sm:hide"}}
+                        >
+                            <b class="glyphicon glyphicon-info-sign"></b>
+                        </button>
 					</div>
 				</div>
 				<div class="row text-center text-danger">
-					<div class="col col-sm-6">
-						{{alert_mes_cluster_size}}
+					<div class="col col-sm">
+						{{alert_missing_input_image}}
 					</div>
 				</div>
 			</div>
@@ -116,39 +124,47 @@
 		<div class="col col-sm-6">
 			<div class="form-horizontal">
 				<div class="form-group">
-					<label for="cluster_name" class="control-label col-sm-4">Cluster Name</label>
+					<label for="id_server_name" class="control-label col-sm-4">VRE Server Name</label>
 					<div class="col col-sm-8">
-						{{view Ember.TextField valueBinding="cluster_name"
-						id="cluster_name" class="input-sm form-control"
-						placeholder="cluster_name"}}
+					    {{input type="text" 
+					    value=vre_server_name
+					    placeholder="VRE server name"
+					    required="true"
+					    id="id_server_name"
+					    action="pick_server_name"
+					    on="focus-out"
+					    classNames="input-sm form-control"}}
 					</div>
 				</div>
 				<div class="row text-center text-danger">
 					<div id = "alert_mes_cluster_name" class="col col-sm-6">
-						{{alert_mes_cluster_name}}
+						{{alert_missing_input_server_name}}
 					</div>
 				</div>
 				<div class="form-group">
-					<label for="names_of_ssh_keys" class="control-label col-sm-4">public keys </label>
+					<label for="id_ssh_key" class="control-label col-sm-4">public keys </label>
 					<div class="col col-sm-8">
-						{{view Ember.Select contentBinding="ssh_keys_av"
-						valueBinding="ssh_key_selection" prompt="Select public key" id="ssh_key"
-						class="btn btn-primary btn-sm text-left"}}
+						{{view "select"
+						content=selected_project_sshkeys
+						value=selected_sshkey
+						prompt="Select public key" 
+						id="id_ssh_key"
+						class="btn-primary btn-sm text-left"}}
 					</div>
 				</div>
 				<div class="form-group">
 					<label class="control-label col-sm-4">Storage: </label>
 					<div class="col col-sm-8">
-						<div class="btn-group">
-							{{#each item in project_current.disk_template}}
-							{{#view App.StorageSelButView value=item
-							name="storage_button" class="btn btn-primary btn-sm"
-							disabled=storage_Not_Allow}}{{item}}{{/view}}
-							{{/each}}
-						</div>
+					    <div id="id_storage_choice" class="btn-group" data-toggle="buttons">
+                            {{#eachidx storage in selected_project_storage_choices}}
+                              <label class="btn btn-sm btn-primary" {{bind-attr id=storage}} {{action "pick_storage" index storage}}>
+                                <input type="radio" name="storage_choices" {{bind-attr id=index}}>{{storage}}
+                              </label>
+                            {{/eachidx}}
+                        </div>
 						<div class="row text-center text-danger">
 							<div id = "alert_mes_cluster_name" class="col col-sm-6">
-								{{alert_mes_disk_template}}
+								{{alert_missing_input_storage}}
 							</div>
 						</div>
 					</div>
@@ -156,248 +172,100 @@
 			</div>
 		</div>
 	</div>
-	<div class="panel-footer text-center">
-		<div class="row">
-			<div class="col col-sm-6">
-				~okeanos project maximum cluster size:
-				{{project_current.vms_max}}
-			</div>
-			<div class="col col-sm-6">
-
-            </div>
-        </div>
-    </div>
-
 </div>
 
 <div class="panel panel-primary">
     <div id = "master_settings" class="panel-heading text-center v-center">
-        <h3 class="panel-title">Master Settings</h3>
+        <h3 class="panel-title">Hardware Settings</h3>
     </div>
     <div class="panel-body text-center">
 	    <div class="row horizontal">
 	        <div class="col col-sm-3">
 	        </div>	
-	        <div class="col col-sm-5">
-	            <h4 id = "vm_flavors_Master" class="btn-group">Predefined VM Flavors: </h4>
-                <div class="btn-group">
-	                {{#each item in project_current.vm_flavors_choices}}
-		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_master"
-		            class="btn btn-primary btn-sm" disabled = false}}
-		            {{item}}{{/view}}
-		            {{/each}}
-                    </div>
+	        <div class="col col-sm-6">
+	            <label for="id_vre_flavors" class="h4">Predefined VRE Flavors: </label>
+                <div id="id_vre_flavors" class="btn-group" data-toggle="buttons">
+	                {{#eachidx flavor in vre_flavor_available_choices}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=flavor.value disabled=flavor.disabled}} {{action "pick_flavor" index flavor.value}}>
+                        <input type="radio" name="flavors" {{bind-attr id=index}}>{{flavor.value}}
+                      </label>
+		            {{/eachidx}}
+                </div>
 	        </div>
-	        <div class="col col-sm-4">
+	        <div class="col col-sm-3">
 	        </div>
         </div>
         <div class="row">
             <div class="col col-sm-4">
-                <h4 id = "master_cpu_summary">CPUs: {{this.master_cpu_selection}} </h4>
-                <div class="btn-group">
-                    {{#each item in project_current.cpu_choices}}
-                    {{#view App.CPUSelButView value=item name="master_cpus_button"
-                    class="btn btn-primary btn-sm" disabled=master_cpus_Not_Allow}}
-                    {{item}}x{{/view}}
-                    {{/each}}
+                <h4 id="id_vre_cpu_summary">CPUs: {{selected_cpu_value}} </h4>
+                <div id="id_cpu_choice" class="btn-group" data-toggle="buttons">
+                    {{#eachidx cpu_choice in selected_project_cpu_choices_available}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=cpu_choice.value disabled=cpu_choice.disabled}} {{action "pick_cpu" index cpu_choice.value}}>
+                        <input type="radio" name="cpu_choices" {{bind-attr id=index}}>{{cpu_choice.value}}
+                      </label>
+                    {{/eachidx}}
                 </div>
             </div>
             <div class="col col-sm-4">
-                <h4 id="master_ram_summary">RAM: {{this.master_ram_selection}} </h4>
-                <div class="btn-group">
-                    {{#each item in project_current.ram_choices}}
-                    {{#view App.RAMSelButView value=item name="master_ram_button"
-                    class="btn btn-primary btn-sm" disabled=master_ram_Not_Allow}}
-                    {{item}}{{/view}}
-                    {{/each}}
+                <h4 id="id_vre_ram_summary">RAM: {{selected_ram_value}} </h4>
+                <div id="id_ram_choice" class="btn-group" data-toggle="buttons">
+                    {{#eachidx ram_choice in selected_project_ram_choices_available}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=ram_choice.value disabled=ram_choice.disabled}} {{action "pick_ram" index ram_choice.value}}>
+                        <input type="radio" name="ram_choices" {{bind-attr id=index}}>{{ram_choice.value}}
+                      </label>
+                    {{/eachidx}}
                 </div>
             </div>
             <div class="col col-sm-4">
-                <h4 id="master_disk_summary">Disk Size: {{this.master_disk_selection}} </h4>
-                <div class="btn-group">
-                    {{#each item in project_current.disk_choices}}
-                    {{#view App.DiskSelButView value=item name="master_disk_button"
-                    class="btn btn-primary btn-sm" disabled=master_disk_Not_Allow}}
-                    {{item}}{{/view}}
-                    {{/each}}
+                <h4 id="id_vre_disk_summary">Disk Size: {{selected_disk_value}} </h4>
+                <div id="id_disk_choice" class="btn-group" data-toggle="buttons">
+                    {{#eachidx disk_choice in selected_project_disk_choices_available}}
+                      <label class="btn btn-sm btn-primary" {{bind-attr id=disk_choice.value disabled=disk_choice.disabled}} {{action "pick_disk" index disk_choice.value}}>
+                        <input type="radio" name="disk_choices" {{bind-attr id=index}}>{{disk_choice.value}}
+                      </label>
+                    {{/eachidx}}
                 </div>
             </div>
         </div>
         <div class="row text-center text-danger">
-            <div id = "alert_mes_master_cpu" class="col col-sm-4">
-                {{alert_mes_master_cpu}}
+            <div id = "id_alert_vre_cpu" class="col col-sm-4">
+                {{alert_missing_input_cpu}}
             </div>
-            <div id = "alert_mes_master_ram" class="col col-sm-4">
-                {{alert_mes_master_ram}}
+            <div id = "id_alert_vre_ram" class="col col-sm-4">
+                {{alert_missing_input_ram}}
             </div>
-            <div id = "alert_mes_master_disk" class="col col-sm-4">
-                {{alert_mes_master_disk}}
+            <div id = "id_alert_vre_disk" class="col col-sm-4">
+                {{alert_missing_input_disk}}
             </div>
         </div>
     </div>
     <div class="panel-footer text-center">
         <div class="row">
             <div class="col col-sm-4">
-                CPUs ({{this.cpu_available}} available)
+                CPUs ({{selected_project_available_cpu}} available)
             </div>
             <div class="col col-sm-4">
-                RAM size ({{this.ram_available}} MB available)
+                RAM size ({{selected_project_available_ram}} MiB available)
             </div>
             <div class="col col-sm-4">
-                Disk size ({{this.disk_available}} GB available)
+                Disk size ({{selected_project_available_disk}} GiB available)
             </div>
         </div>
     </div>
-</div>
-
-<div class="panel panel-primary">
-    <div id = "slaves_settings" class="panel-heading text-center v-center">
-        <h3 class="panel-title">Slaves Settings</h3>
-    </div>
-    <div class="panel-body text-center">
-	    <div class="row horizontal">
-	        <div class="col col-sm-3"></div>	
-	        <div class="col col-sm-5">
-	            <h4 id = "vm_flavors_Slave" class="btn-group">Predefined VM Flavors: </h4>
-                <div class="btn-group">
-	                {{#each item in project_current.vm_flavors_choices}}
-		            {{#view App.VMFlavorSelButView value=item name="vm_flavor_button_slaves"
-		            class="btn btn-primary btn-sm" disabled = false}}
-		            {{item}}{{/view}}
-		            {{/each}}
-                </div>
-	        </div>
-	        <div class="col col-sm-4"></div>
-        </div>
-        <div class="row">
-            <div class="col col-sm-4">
-                <h4 id = "slaves_cpu_summary">CPUs each: {{this.slaves_cpu_selection}}</h4>
-                <div class="btn-group">
-                    {{#each item in project_current.cpu_choices}}
-                    {{#view App.CPUSelButView value=item name="slaves_cpus_button"
-                    class="btn btn-primary btn-sm" disabled=slaves_cpus_Not_Allow}}
-                    {{item}}x{{/view}}
-                    {{/each}}
-                </div>
-            </div>
-            <div class="col col-sm-4">
-                <h4 id="slaves_ram_summary">RAM each: {{this.slaves_ram_selection}}</h4>
-                <div class="btn-group">
-                    {{#each item in project_current.ram_choices}}
-                    {{#view App.RAMSelButView value=item name="slaves_ram_button" class="btn btn-primary btn-sm" disabled=slaves_ram_Not_Allow}}{{item}}{{/view}}
-                    {{/each}}
-                </div>
-            </div>
-            <div class="col col-sm-4">
-                <h4 id="slaves_disk_summary">Disk Size each: {{this.slaves_disk_selection}}</h4>
-                <div class="btn-group">
-                    {{#each item in project_current.disk_choices}}
-                    {{#view App.DiskSelButView value=item name="slaves_disk_button"
-                    class="btn btn-primary btn-sm" disabled=slaves_disk_Not_Allow}}
-                    {{item}}{{/view}}
-                    {{/each}}
-                </div>
-            </div>
-        </div>
-        <div class="row text-center text-danger">
-            <div id = "alert_mes_slaves_cpu" class="col col-sm-4">
-                {{alert_mes_slaves_cpu}}
-            </div>
-            <div id = "alert_mes_slaves_ram" class="col col-sm-4">
-                {{alert_mes_slaves_ram}}
-            </div>
-            <div id = "alert_mes_slaves_disk" class="col col-sm-4">
-                {{alert_mes_slaves_disk}}
-            </div>
-        </div>
-    </div>
-    <div class="panel-footer text-center">
-        <div class="row">
-            <div class="col col-sm-4">
-                CPUs ({{this.cpu_available}} available)
-            </div>
-            <div class="col col-sm-4">
-                RAM size ({{this.ram_available}} MB available)
-            </div>
-            <div class="col col-sm-4">
-                Disk size ({{this.disk_available}} GB available)
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="panel panel-primary">
-	<div id = "hdfs_configuration" class="panel-heading text-center v-center">
-        <h3 class="panel-title">Hadoop Configuration</h3>
-    </div>
-    <div class="panel-body">
-    	<div class="row text-center text-warning">
-	            <div id = "replication_factor_change" class="col col-sm-4">
-	                {{replication_factor_change}}
-	            </div>
-	            <div id = "dfs_blocksize_change" class="col col-sm-4">
-	                {{dfs_blocksize_change}}
-	            </div>
-	            <div class="col col-sm-4"></div>
-        	</div>
-    	<div class="row">
-	    	<div class="col col-sm-4 text-left">
-	            <div class="form-horizontal">
-	                <div class="form-group">
-	                    <label for="replication_factor" class="control-label col-sm-7">Replication Factor</label>
-	                    <div class="col col-sm-5">
-	                        {{view Ember.TextField valueBinding="replication_factor"
-	                        id="replication_factor" class="input-sm form-control"
-	                        placeholder="2 (default)"}}
-	                    </div>
-	                </div>
-				</div>
-			</div>
-			<div class="col col-sm-4 text-left">
-	            <div class="form-horizontal">
-	                <div class="form-group">
-	                    <label for="dfs_blocksize" class="control-label col-sm-7">HDFS blocksize in MB</label>
-	                    <div class="col col-sm-5">
-	                        {{view Ember.TextField valueBinding="dfs_blocksize"
-	                        id="dfs_blocksize" class="input-sm form-control"
-	                        placeholder="128 (default)"}}
-	                    </div>
-	                </div>
-				</div>
-			</div>
-			<div class="col col-sm-1"></div>
-			<div class="col col-sm-3 text-left">
-				<button class="btn btn-primary btn-sm" id = id_hdfs_configuration {{action "default_hdfs_configuration"}} >
-					Default HDFS Configuration
-				</button>
-			</div>
-		</div>
-		<div class="row text-center text-danger">
-            <div id = "alert_mes_replication_factor" class="col col-sm-4">
-                {{alert_mes_replication_factor}}
-            </div>
-            <div id = "alert_mes_dfs_blocksize" class="col col-sm-4">
-                {{alert_mes_dfs_blocksize}}
-            </div>
-            <div class="col col-sm-4"></div>
-        </div>
-	</div>   	
 </div>
 
 <div class="row">
     <div class="col col-sm-2"></div>
     <div class="col col-sm-2">
-        <button id="cancel" class="next btn btn-default btn-md btn-block" {{action "cancel"}}>
+        <button id="id_cancel" class="btn btn-default btn-md btn-block" {{action "cancel"}}>
             Cancel
         </button>
     </div>
     <div class="col col-sm-6">
-        {{#view App.CreateClusterButView id="next"
-        class="next btn btn-success btn-md btn-block"}}
-        Create Cluster
-        {{/view}}
-        <h4>{{message}}</h4>
+        <button id="id_create_server" class="btn btn-success btn-md btn-block" {{bind-attr disabled="boolean_no_project"}} {{action "submit_create"}}>
+            Create VRE Server
+        </button>
+        <h4 class="text-left text-danger">{{message}}</h4>
     </div>
     <div class="col col-sm-2"></div>
 </div>
-

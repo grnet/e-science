@@ -53,6 +53,6 @@ checkPrereqs()
 	fi
 	if [ -z "${VRE_IMAGE}" ]; then
 		echo "WARNING: no vre image found in environment. Setting default." >&2;
-		VRE_IMAGE=Deb8-Mediawiki-Docker
+		VRE_IMAGE=Mediawiki-1.2.4
 	fi
 }

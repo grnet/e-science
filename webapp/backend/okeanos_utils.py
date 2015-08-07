@@ -60,13 +60,13 @@ def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', 
     current_task.update_state(state=state)
     
     
-def set_server_state(token, id, state, status='Pending', server_IP='', okeanos_server_id=''):
+def set_server_state(token, id, state, status='Pending', server_IP='', okeanos_server_id='', password='', error=''):
     """
     Logs a VRE server state message and updates the celery and escience database
     state.
     """
     logging.log(SUMMARY, state)
-    db_server_update(token, status, id, server_IP, state=state, okeanos_server_id=okeanos_server_id)
+    db_server_update(token, status, id, server_IP, state=state, okeanos_server_id=okeanos_server_id, password=password, error=error)
     if len(state) >= const_truncate_limit:
         state = state[:(const_truncate_limit-2)] + '..'
     current_task.update_state(state=state)
@@ -105,12 +105,12 @@ def destroy_server(token, id):
     """Destroys a VRE server in ~okeanos ."""
     current_task.update_state(state="Started")
     vre_server = VreServer.objects.get(id=id)    
-    auth = check_credentials(token)
+    auth = check_credentials(unmask_token(encrypt_key,token))
     current_task.update_state(state="Authenticated")
     set_server_state(token, id, 'Deleting VRE server and its public IP')
     endpoints, user_id = endpoints_and_user_id(auth)
-    cyclades = init_cyclades(endpoints['cyclades'], token)
-    nc = init_cyclades_netclient(endpoints['network'], token)
+    cyclades = init_cyclades(endpoints['cyclades'], unmask_token(encrypt_key,token))
+    nc = init_cyclades_netclient(endpoints['network'], unmask_token(encrypt_key,token))
     cyclades.delete_server(vre_server.server_id)
     new_status = cyclades.wait_server(vre_server.server_id,current_status='ACTIVE',max_wait=MAX_WAIT)
     if new_status != 'DELETED':
@@ -152,11 +152,11 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     network_to_delete_id = None
     float_ip_to_delete_id = None
     new_status = 'placeholder'
-    auth = check_credentials(token)
+    auth = check_credentials(unmask_token(encrypt_key,token))
     current_task.update_state(state="Authenticated")
     endpoints, user_id = endpoints_and_user_id(auth)
-    cyclades = init_cyclades(endpoints['cyclades'], token)
-    nc = init_cyclades_netclient(endpoints['network'], token)
+    cyclades = init_cyclades(endpoints['cyclades'], unmask_token(encrypt_key,token))
+    nc = init_cyclades_netclient(endpoints['network'], unmask_token(encrypt_key,token))
     # Get list of servers and public IPs
     try:
         list_of_servers = cyclades.list_servers(detail=True)
@@ -401,15 +401,19 @@ def check_images(token, project_id):
     plankton = init_plankton(endpoints['plankton'], token)
     list_current_images = plankton.list_public(True, 'default')
     available_images = []
+    hadoop_images = []
+    vre_images = []
     for image in list_current_images:
         # owner of image will be checked based on the uuid
-        if image['owner'] == const_escience_uuid:
-            image_properties = image['properties']
-            if image_properties.has_key('escienceconf'):
-                available_images.append(image['name'])
-        elif image['owner'] == const_system_uuid and image['name'] == "Debian Base":
-            available_images.append(image['name'])
-                
+        if image['owner'] == const_escience_uuid or image['owner'] == const_system_uuid:
+            if pithos_images_uuids_properties.has_key(image['id']):
+                hadoop_images.append(image['name'])
+            if pithos_vre_images_uuids_actions.has_key(image['id']):
+                vre_images.append(image['name'])
+    # hadoop images at ordinal 0, vre images at 1
+    available_images.append(hadoop_images)
+    available_images.append(vre_images)
+            
     return available_images
 
 def endpoints_and_user_id(auth):
@@ -510,15 +514,16 @@ def personality(ssh_keys_path='', pub_keys_path=''):
             except IOError:
                 msg = " No valid public ssh key(id_rsa.pub) in %s or %s" %((abspath(ssh_keys_path)),(abspath(pub_keys_path)))
                 raise IOError(msg)
-        elif ssh_keys_path:
+        elif ssh_keys_path or pub_keys_path:
             try:
-                with open(abspath(ssh_keys_path)) as f:
+                keys_path = ssh_keys_path if ssh_keys_path else pub_keys_path
+                with open(abspath(keys_path)) as f:
                     personality.append(dict(
                         contents=b64encode(f.read()),
                         path='/root/.ssh/authorized_keys',
                         owner='root', group='root', mode=0600))
             except IOError:
-                msg = " No valid public ssh key(id_rsa.pub) in " + (abspath(ssh_keys_path))
+                msg = " No valid public ssh key(id_rsa.pub) in " + (abspath(keys_path))
                 raise IOError(msg)
         if ssh_keys_path or pub_keys_path:
                 personality.append(dict(

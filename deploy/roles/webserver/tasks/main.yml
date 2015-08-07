@@ -107,6 +107,10 @@
     lineinfile: line="include {{user_home}}/conf/nginx.conf;" insertafter="http {" dest="/etc/nginx/nginx.conf"
     tags: postimage
 
+  - name: Copy encryption file for ~okeanos token
+    copy: src={{local_encrypt_file_path}} dest={{remote_encrypt_file_path}} owner=orka_admin
+    tags: postimage
+
   - name: Restart Nginx service
     sudo: yes
     service: name=nginx state=restarted

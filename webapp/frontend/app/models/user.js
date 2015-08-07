@@ -26,6 +26,7 @@ App.Uservreserver = DS.Model.extend({
     action_date : attr('isodate'), 
     server_status : attr('string'),
     server_IP : attr('string'),
+    ssh_key_selection : attr('string'), // ssh_key_name
     cpu : attr(), 
     ram : attr(), 
     disk : attr(), 
@@ -40,8 +41,9 @@ App.Uservreserver = DS.Model.extend({
     }),
     // computed properties
     vre_access_url : function(){
-        return 'http://%@'.fmt(this.get('server_IP'));
-    }.property('server_IP'),
+        // TODO: add to components info and resolve dynamically
+        return (this.get('os_image')=='Redmine-3.0.4') && 'http://%@:%@'.fmt(this.get('server_IP'),'10083') || 'http://%@'.fmt(this.get('server_IP'));
+    }.property('server_IP','os_image'),
     class_vre_status : function (){
         var status = this.get('server_status');
         switch (status) {
@@ -149,6 +151,8 @@ App.Usercluster = DS.Model.extend({
 	task_id : attr(),
 	state : attr(),
 	hadoop_status : attr(),
+	replication_factor : attr(),
+	dfs_blocksize : attr(),
 	// user that created the cluster
 	user : DS.belongsTo('user', {
 		inverse : 'clusters'

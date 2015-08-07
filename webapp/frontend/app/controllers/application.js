@@ -2,6 +2,7 @@
 // loggedIn, homeURL, adminURL, STATIC_URL
 App.ApplicationController = Ember.Controller.extend({
     STATIC_URL : DJANGO_STATIC_URL,
+    APP_VERSION : App.VERSION,
     // other controllers that need to be accessible from this one
     // for .set or .get
     needs : ['homepage', 'userLogin', 'userWelcome', 'clusterCreate', 'clusterManagement', 'helpImages', 'vreserverCreate', 'vreserverManagement', 'helpVreimages'],

@@ -13,7 +13,7 @@ from backend.models import ClusterInfo, UserInfo
 from django_db_after_login import db_hadoop_update
 from celery import current_task
 from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS, REPORT, SUMMARY, \
-    error_ansible_playbook, const_hadoop_status_started, hadoop_images_ansible_tags, pithos_images_uuids_properties
+    error_ansible_playbook, const_hadoop_status_started, hadoop_images_ansible_tags, pithos_images_uuids_properties, unmask_token, encrypt_key
 from okeanos_utils import set_cluster_state
 from backend.models import OrkaImage
 
@@ -176,7 +176,7 @@ def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_fi
     uuid = UserInfo.objects.get(okeanos_token=token).uuid
     # Create command that executes ansible playbook
     ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
-    '-f {0} -e "choose_role={1} ssh_file_name={2} token={3} '.format(str(cluster_size), chosen_image['role'], ssh_file, token) + \
+    '-f {0} -e "choose_role={1} ssh_file_name={2} token={3} '.format(str(cluster_size), chosen_image['role'], ssh_file, unmask_token(encrypt_key, token)) + \
     'dfs_blocksize={0}m dfs_replication={1} uuid={2} " {3}'.format(dfs_blocksize, replication_factor, uuid, chosen_image['tags'])
 
     # Execute ansible
