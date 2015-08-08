@@ -116,7 +116,8 @@ pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"ima
                                                                         "change_db_pass":"docker exec -t -i redmine_redmine_1 bash -c 'RAILS_ENV=production bin/rails runner \"user = User.first ;\
                                                                          user.password, user.password_confirmation = \\\"{0}\\\"; user.save!\"'"},
                                "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"image":"mediawiki","db_name":"db","default_password":"@test123",
-                                                                        "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}"},
+                                                                        "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}",
+                                                                        "change_db_pass":"docker exec -t -i db bash -c \"mysql -p{0} mediawiki -e \\\"UPDATE user SET user_password = CONCAT(':A:', MD5('{0}')) WHERE user_name = 'Admin';\\\"\""},
                                "6a6676d4-213c-464b-a321-04998c1d8dc7": {"image":"dspace"}}
 
 #encrypt decrypt token in django db
