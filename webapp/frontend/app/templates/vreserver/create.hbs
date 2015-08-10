@@ -123,8 +123,8 @@ Can also select server name, project name, flavor, ssh-key-->
                         placeholder="Upper/lowercase letters and numbers"
                         required="true"
                         id="id_vre_admin_pass"
-                        action="admin_pass_select"
-                        on="focus-in"
+                        action="admin_pass_validate"
+                        on="focus-out"
                         classNames="input-sm form-control"}}
                         <span class="input-group-btn">
                             <button
@@ -145,7 +145,7 @@ Can also select server name, project name, flavor, ssh-key-->
 				{{/if}}
 				<div class="row text-center text-danger">
 					<div class="col col-sm">
-						{{alert_missing_input_image}}{{alert_missing_input_admin_pass}}
+						{{alert_missing_input_image}}{{alert_missing_input_admin_pass}}{{alert_invalid_input_admin_pass}}
 					</div>
 				</div>
 			</div>
