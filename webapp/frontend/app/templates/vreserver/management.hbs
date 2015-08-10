@@ -66,6 +66,12 @@
   			   <td class="col-sm-2"><b>VRE Server Access</b></td>
   			   <td class="col-sm-2"><a {{bind-attr href='model.vre_access_url'}} target="_blank"><span class="text text-info">{{model.vre_access_url}}</span></a></td>
   			 </tr>
+  			 {{#if model.dspace_image}}
+  			 	<tr>
+  			   	   <td class="col-sm-2"><b>DSpace JSP Access</b></td>
+                   <td><a {{bind-attr href='model.dspace_access'}} target="_blank"><span class="text text-info">{{model.dspace_access}}</span></a></td>
+                </tr>
+               {{/if}}
  		   </table>
        {{else}}
 	       <div class="text-warning text-center">No information available.</div>

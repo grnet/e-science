@@ -120,7 +120,7 @@ Can also select server name, project name, flavor, ssh-key-->
 				    <div class="input-group">				        
 				        {{input type="text" 
                         value=vre_admin_pass
-                        placeholder="Type or generate an admin password"
+                        placeholder="Upper/lowercase letters and numbers"
                         required="true"
                         id="id_vre_admin_pass"
                         action="admin_pass_select"
@@ -143,9 +143,25 @@ Can also select server name, project name, flavor, ssh-key-->
 				    </div>
 				</div>
 				{{/if}}
+				{{#if show_admin_email_input}}
+				<div class="form-group">
+				    <label for="id_vre_admin_pass" class="control-label col-sm-5"> Admin Email </label>			    
+				    <div class="input-group">				        
+				        {{input type="text" 
+                        value=vre_admin_email
+                        placeholder="Email for admin account"
+                        required="true"
+                        id="id_vre_admin_email"
+                        action="admin_email_select"
+                        on="focus-in"
+                        classNames="input-sm form-control"}}
+				    </div>
+				</div>
+				{{/if}}
 				<div class="row text-center text-danger">
 					<div class="col col-sm">
-						{{alert_missing_input_image}}{{alert_copy_pass_prompt}}
+						{{alert_missing_input_image}}{{alert_missing_input_admin_pass}}
+						{{alert_missing_input_image}}{{alert_missing_input_admin_email}}
 					</div>
 				</div>
 			</div>

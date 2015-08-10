@@ -144,7 +144,8 @@ App.UservreserverSerializer = DS.RESTSerializer.extend({
         task_id : {serialize : false},
         state : {serialize : false},
         user : {serialize : false},
-        //ssh_key_selection : {serialize : false}
+        //ssh_key_selection : {serialize : false},
+        //admin_password : {serialize : false}
     } 
 });
 
