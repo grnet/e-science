@@ -297,8 +297,8 @@ App.VreserverCreateController = Ember.Controller.extend({
         alert_missing_input_disk : 'Please select Disk size (GiB)',     
         alert_missing_input_storage : 'Please select a disk template',
         alert_missing_input_image : 'Please select VRE category/image',
-        alert_missing_input_admin_pass : 'Please type in or generate an admin password. Copy it for keeping.'
-    },    
+        alert_missing_input_admin_pass : 'Please type in or generate an admin password. Copy it for first time login.'
+    },
     missing_input : function(that, new_server){
         var self = that; // get the controller reference into self
         // clear alerts on new check
@@ -324,6 +324,45 @@ App.VreserverCreateController = Ember.Controller.extend({
         var missing_resources = self.get('selected_project_available_vm') < 1 || self.get('selected_project_available_ip') < 1;
         if (missing_resources) self.set('message','Insufficient project resources for VRE server creation');
         return missing_resources;
+    },
+    alert_input_invalid_boundto : {
+        // data column > alert message property, input control element id
+        admin_password : ['alert_invalid_input_admin_pass','#id_vre_admin_pass']
+    },
+    alert_input_invalid_text : {
+        // alert message property > message text
+        alert_invalid_input_admin_pass : '%@ Upper/lowercase letters and numbers allowed. Minimum length:8.'
+    },
+    alert_input_validators : {
+        // model property > true for invalid input, false/null for valid
+        admin_password : function(value,self){
+            var alert_prop_name = self.get('alert_input_invalid_boundto')['admin_password'][0];
+            var input_element = $(self.get('alert_input_invalid_boundto')['admin_password'][1]);
+            var _invalidpattern = /[^a-zA-Z0-9]+/;
+            var _minlength = 8;
+            var _result = _invalidpattern.exec(value) || '';
+            if (value.length < _minlength || _result.length > 0){
+                var _alert_text = self.get('alert_input_invalid_text')[alert_prop_name];
+                _result.length > 0 ? self.set(alert_prop_name,_alert_text.fmt('Invalid input:'+_result)) : self.set(alert_prop_name,_alert_text.fmt(''));
+                window.scrollTo(input_element.offsetLeft, input_element.offsetTop);
+                return true;
+            }
+            return false;
+        }
+    },
+    invalid_input : function(that, new_server){
+        var self = that; // get the controller reference into self
+        // clear alerts on new check
+        for (alert in self.get('alert_input_invalid_text')){
+            self.set(alert,null);
+        }
+        for (property in new_server) {
+            if (!Ember.isEmpty(self.get('alert_input_validators')[property])){
+                var invalid = self.get('alert_input_validators')[property](new_server[property],self);
+                if (invalid) return true;
+            }
+        }
+        return false;
     },
     /*
      * Actions
@@ -437,6 +476,7 @@ App.VreserverCreateController = Ember.Controller.extend({
         },
         admin_pass_generate : function(){
             this.set('vre_admin_pass',PassGen.generate(12));
+            this.send('admin_pass_validate');
             this.send('admin_pass_select');
         },
         admin_pass_select : function(){
@@ -444,6 +484,11 @@ App.VreserverCreateController = Ember.Controller.extend({
                 Ember.run.later(function(){$('#id_vre_admin_pass').select();},100);
                 this.set('alert_missing_input_admin_pass',null);
             }
+        },
+        admin_pass_validate : function(){
+            this.set('alert_invalid_input_admin_pass',null);
+            this.set('alert_missing_input_admin_pass',null);
+            this.get('invalid_input')(this,{admin_password: this.get('vre_admin_pass')});
         },
         submit_create : function(){
             var that = this;
@@ -456,6 +501,9 @@ App.VreserverCreateController = Ember.Controller.extend({
                 return;
             }
             if (this.get('missing_input')(that, new_server)){
+                return;
+            }
+            if (this.get('invalid_input')(that, new_server)){
                 return;
             }
             this.store.fetch('user',1).then(function(user){
