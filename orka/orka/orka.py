@@ -85,6 +85,16 @@ class _ArgCheck(object):
             return val
         else:
             raise ArgumentTypeError(" %s must containt at least one letter." % val)
+        
+    def longer_than_eight_chars_is(self, val):
+        """
+        :param val: str
+        :return val if string length equal or bigger than eight
+        """
+        if self.a_string_is(val) and len(val) >= 8:
+            return val
+        else:
+            raise ArgumentTypeError(" %s must be at least 8 characters." % val)
 
 
 def task_message(task_id, escience_token, server_url, wait_timer, task='not_progress_bar'):
@@ -819,7 +829,7 @@ def main():
                               help='Replication factor for HDFS. Must be between 1 and number of slave nodes (cluster_size -1). Default is 2.')
         parser_create.add_argument("--dfs_blocksize", metavar='dfs_blocksize', default=128, type=checker.positive_num_is,
                               help='HDFS block size (in MB). Default is 128.')
-        parser_create.add_argument("--admin_password", metavar='admin_password', default=auto_generated_pass, type=checker.a_string_is,
+        parser_create.add_argument("--admin_password", metavar='admin_password', default=auto_generated_pass, type=checker.longer_than_eight_chars_is,
                               help='Admin password for Hue login. Default is auto-generated')
         
         parser_destroy.add_argument('cluster_id',
@@ -839,7 +849,7 @@ def main():
         parser_vre_create.add_argument("project_name", help='~okeanos project name'
                               ' to request resources from ', type=checker.a_string_is)
         parser_vre_create.add_argument("image", help='OS for the VRE server.', metavar='image')
-        parser_vre_create.add_argument("--admin_password", metavar='admin_password', default=auto_generated_pass, type=checker.a_string_is,
+        parser_vre_create.add_argument("--admin_password", metavar='admin_password', default=auto_generated_pass, type=checker.longer_than_eight_chars_is,
                               help='Admin password for VRE servers. Default is auto-generated')
         parser_vre_create.add_argument("--admin_email", metavar='admin_email', default='admin@dspace.gr', type=checker.a_string_is,
                               help='Admin email for VRE DSpace image. Default is admin@dspace.gr')
