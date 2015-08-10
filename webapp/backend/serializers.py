@@ -161,6 +161,8 @@ class ClusterchoicesSerializer(serializers.Serializer):
     hadoop_status = serializers.CharField(required=False)
     
     admin_password = serializers.CharField(required=False)
+    
+    admin_email = serializers.CharField(required=False)
 
 
 class ClusterInfoSerializer(serializers.ModelSerializer):
