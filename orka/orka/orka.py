@@ -5,6 +5,7 @@
 import logging
 import random
 import string
+import re
 from sys import argv, stdout, stderr
 from kamaki.clients import ClientError
 from kamaki.clients.pithos import PithosClient
@@ -84,7 +85,17 @@ class _ArgCheck(object):
         if not val.isdigit():
             return val
         else:
-            raise ArgumentTypeError(" %s must containt at least one letter." % val)
+            raise ArgumentTypeError(" %s must contain at least one letter." % val)
+        
+    def valid_admin_password_is(self, val):
+        """
+        :param val: str
+        :return val if string is longer than eight characters and contain only letters and numbers
+        """
+        if self.a_string_is(val) and re.match("^[A-Za-z0-9]{8,}$", val):
+            return val
+        else:
+            raise ArgumentTypeError(" %s must be at least 8 characters and contain only letters and numbers." % val)
 
 
 def task_message(task_id, escience_token, server_url, wait_timer, task='not_progress_bar'):
@@ -819,7 +830,7 @@ def main():
                               help='Replication factor for HDFS. Must be between 1 and number of slave nodes (cluster_size -1). Default is 2.')
         parser_create.add_argument("--dfs_blocksize", metavar='dfs_blocksize', default=128, type=checker.positive_num_is,
                               help='HDFS block size (in MB). Default is 128.')
-        parser_create.add_argument("--admin_password", metavar='admin_password', default=auto_generated_pass, type=checker.a_string_is,
+        parser_create.add_argument("--admin_password", metavar='admin_password', default=auto_generated_pass, type=checker.valid_admin_password_is,
                               help='Admin password for Hue login. Default is auto-generated')
         
         parser_destroy.add_argument('cluster_id',
@@ -839,8 +850,11 @@ def main():
         parser_vre_create.add_argument("project_name", help='~okeanos project name'
                               ' to request resources from ', type=checker.a_string_is)
         parser_vre_create.add_argument("image", help='OS for the VRE server.', metavar='image')
-        parser_vre_create.add_argument("--admin_password", metavar='admin_password', default=auto_generated_pass, type=checker.a_string_is,
+        parser_vre_create.add_argument("--admin_password", metavar='admin_password', default=auto_generated_pass, type=checker.valid_admin_password_is,
                               help='Admin password for VRE servers. Default is auto-generated')
+        parser_vre_create.add_argument("--admin_email", metavar='admin_email', default='admin@dspace.gr', type=checker.a_string_is,
+                              help='Admin email for VRE DSpace image. Default is admin@dspace.gr')
+        
         
         parser_vre_destroy.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='vre_destroy')
         

@@ -70,7 +70,9 @@ App.ClusterCreateController = Ember.Controller.extend({
 	number_of_roles : 2,
 	workflow_filter: false, // workflow_filter initial status
 	workflow_filter_empty : 'no images available',
-
+	admin_password: '', //password for hue superuser first login
+	hue_in_image: false, //boolean to check if selected image has hue
+	
 	// utility function takes String 'pattern' and numeric count
 	// and returns 'pattern' concatenated 'count' times.
 	str_repeat : function (pattern, count) {
@@ -170,9 +172,29 @@ App.ClusterCreateController = Ember.Controller.extend({
 		}
 		return no_project;
 	}.property('project_name'),
+	
+	
+	//Boolean to check if image has hue
+	hue_image : function(){
+		this.set('hue_in_image', false);
+		this.set('alert_missing_input_admin_password','');
+		for (var i=0; i<this.get('orkaImages').length; i++){
+			if (this.get('orkaImages').objectAt(i).get('image_name') == this.get('operating_system')){
+				for (var j=0; j<this.get('orkaImages').objectAt(i).get('image_components').length; j++) {
+					if (this.get('orkaImages').objectAt(i).get('image_components').objectAt(j).name == 'Hue') {
+						this.set('hue_in_image', true);
+						break;
+					}
+				}
+				break;
+			}
+		}
+		return this.get('hue_in_image');
+	}.property('operating_system'),
 
 	//Images available after filtering for oozie component if option is selected
 	images_available : function() {
+		this.set('admin_password', '');
 		var db_orka_images = [];
 		var pithos_orka_images = [];
 		var images = [];
@@ -799,6 +821,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('dfs_blocksize', '');
 		this.set('hue_message', '');
 		this.set('workflow_filter', false);
+		this.set('admin_password', '');
 		this.init_alerts();
 	},
 	// initialize alert messages
@@ -816,6 +839,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('alert_mes_dfs_blocksize', '');
 		this.set('warning_mes_replication_factor', '');
 		this.set('warning_mes_dfs_blocksize', '');
+		this.set('alert_missing_input_admin_password', '');
 		
 	},
 	
@@ -875,15 +899,26 @@ App.ClusterCreateController = Ember.Controller.extend({
 	message_hue_login : function(){
 		this.get('controllers.clusterManagement').send('help_hue_login', this.get('operating_system'));
 		if (this.get('hue_message') === 'CDH'){
-			var msg = {'msg_type':'warning','msg_text':'IMPORTANT: First login in Hue browser with username : hdfs'};
+			var msg = {'msg_type':'warning','msg_text':'IMPORTANT: First login in Hue browser with username : hdfs and password : ' + this.get('admin_password')};
 			this.get('controllers.userWelcome').send('addMessage',msg);
 		} else if (this.get('hue_message') === 'HUE'){
-			var msg = {'msg_type':'warning','msg_text':'IMPORTANT: First login in Hue browser with username : hduser'};
+			var msg = {'msg_type':'warning','msg_text':'IMPORTANT: First login in Hue browser with username : hduser and password : ' + this.get('admin_password')};
 			this.get('controllers.userWelcome').send('addMessage',msg);
 		}
 	},
 
 	actions : {
+		// action to generate random password for hue superuser
+		admin_pass_generate : function(){
+            this.set('admin_password',PassGen.generate(12));
+            this.send('admin_pass_select');
+        },
+        admin_pass_select : function(){
+            if (!Ember.isEmpty(this.get('admin_password'))){
+                Ember.run.later(function(){$('#id_hue_admin_pass').select();},100);
+                this.set('alert_missing_input_admin_password', '');           
+            }
+        },
 		// action to focus project selection view
 		focus_project_selection : function(){
 			$('#project_id').focus();
@@ -1203,6 +1238,16 @@ App.ClusterCreateController = Ember.Controller.extend({
 			if (!Ember.isBlank(this.get('alert_mes_network')) || !Ember.isBlank(this.get('alert_mes_float_ip'))){
 				var elem = $('#id_project_selection');
 				window.scrollTo(elem.offsetLeft, elem.offsetTop);
+			} else if ((this.get('admin_password') == '') && this.get('hue_in_image')) {
+				this.set('alert_missing_input_admin_password', 'Please type in or generate an admin password. Copy it for first time login.');
+				// scroll to message
+				var elem = document.getElementById("common_settings");
+				window.scrollTo(elem.offsetLeft, elem.offsetTop);
+			} else if ((!(/^[^\W_]{8,}$/gi.test(this.get('admin_password')))) && this.get('hue_in_image')) {
+				this.set('alert_missing_input_admin_password', 'Password should be at least 8 characters and contain only letters and numbers.');
+				// scroll to message
+				var elem = document.getElementById("common_settings");
+				window.scrollTo(elem.offsetLeft, elem.offsetTop);
 			} else if ((this.get('cluster_size') === null) || (this.get('cluster_size') === undefined) || (this.get('cluster_size') === 0)) {
 				this.set('alert_mes_cluster_size', 'Please select cluster size');
 				// scroll to message
@@ -1299,7 +1344,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 						'os_choice' : self.get('operating_system'),
 						'ssh_key_selection' : self.get('ssh_key_selection'),
 						'replication_factor' : self.get('replication_factor'),
-						'dfs_blocksize': self.get('dfs_blocksize')
+						'dfs_blocksize': self.get('dfs_blocksize'),
+						'admin_password': self.get('admin_password')
 					}).save();
 					
 					this.message_hue_login();

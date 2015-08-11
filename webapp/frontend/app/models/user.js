@@ -36,30 +36,27 @@ App.Uservreserver = DS.Model.extend({
     task_id : attr(), 
     state : attr(),
     admin_password : attr('string'),
+    admin_email : attr('string'),
     // user that created the VRE
     user : DS.belongsTo('user', {
         inverse : 'vreservers'
     }),
     // computed properties
-    dspace_image: false,
     vre_access_url : function(){
         // TODO: add to components info and resolve dynamically
         var image = this.get('os_image');
         switch (image){
         case 'Redmine-3.0.4':
-            return 'http://%@:%@'.fmt(this.get('server_IP'),'10083');
+            return ['http://%@:%@'.fmt(this.get('server_IP'),'10083')];
         case 'DSpace-5.3':
-        	this.set('dspace_image', true);
-            return 'http://%@:%@'.fmt(this.get('server_IP'),'8080/xmlui');
+            return ['http://%@:%@'.fmt(this.get('server_IP'),'8080/xmlui'),'http://%@:%@'.fmt(this.get('server_IP'),'8080/jspui')];
         default:
-            return 'http://%@'.fmt(this.get('server_IP'));
+            return ['http://%@'.fmt(this.get('server_IP'))];
         }
     }.property('server_IP','os_image'),
-    dspace_access: function(){
-    	if (this.get('dspace_image') == true){
-    		return 'http://%@:%@'.fmt(this.get('server_IP'),'8080/jspui');
-    	}
-    }.property('dspace_image', 'server_IP'),
+    vre_access_base_url : function(){
+        return this.get('vre_access_url')[0];
+    }.property('vre_access_url'),
     class_vre_status : function (){
         var status = this.get('server_status');
         switch (status) {
