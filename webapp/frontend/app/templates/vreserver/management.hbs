@@ -63,8 +63,14 @@
       {{#if model.boolean_vre_status_active}}	    
    		   <table class="table table-striped table-hover table-border">
  		     <tr>
-  			   <td class="col-sm-2"><b>VRE Server Access</b></td>
-  			   <td class="col-sm-2"><a {{bind-attr href='model.vre_access_url'}} target="_blank"><span class="text text-info">{{model.vre_access_url}}</span></a></td>
+  			   <td class="col-sm-6" style="vertical-align: middle"><b>VRE Server Access</b></td>
+  			   <td class="col-sm-6">
+  			       {{#each access_url in model.vre_access_url}}
+  			       <li class="list-unstyled">
+  			       <a {{bind-attr href='access_url'}} target="_blank"><span class="text text-info">{{access_url}}</span></a>
+  			       </li>
+  			       {{/each}}
+  			   </td>
   			 </tr>
  		   </table>
        {{else}}

@@ -239,7 +239,7 @@ class HadoopCluster(object):
                     hue_user = 'hdfs'
                 else:
                     hue_user = 'hduser'
-                stdout.write("You can access Hue browser with username {0} and  password: {1}\n".format(hue_user, self.opts['admin_password']))
+                stdout.write("You can access Hue browser with username {0} and password: {1}\n".format(hue_user, self.opts['admin_password']))
 
             exit(SUCCESS)
 
