@@ -77,14 +77,14 @@
 	       <div class="text-warning text-center">No information available.</div>
        {{/if}}
    </div>
-   <div class="tab-pane fade col col-sm-2" id="id_tab_manage">
+   <div class="tab-pane fade" id="id_tab_manage">
 		{{#if model.boolean_vre_status_active}}
-		 <div class='btn-group-vertical btn-group-sm'>
+		 <div class='btn-group-vertical btn-group-sm col col-sm-2'>
 				{{#ifeq model.action_server_confirm 'server_delete'}}
-				<div class='btn-toolbar-horizontal btn-toolbar-sm btn-block'>
-                    <div class='btn-group btn-group-sm'>
-					<a role="button" {{bind-attr id='model.id_server_confirm'}} {{action 'takeVreAction' model}} class="btn btn-danger btn-sm active">{{model.description_action_server_confirm}}</a>
-					<a role="button" {{action 'confirmVreAction' model false}} class="btn btn-danger btn-sm active">x</a>
+				<div class='btn-toolbar-horizontal btn-toolbar-sm'>
+                    <div class='btn-group btn-group-sm btn-block'>
+					<button {{bind-attr id='model.id_server_confirm'}} {{action 'takeVreAction' model}} class="btn btn-danger btn-sm active col-sm-10">{{model.description_action_server_confirm}}</button>
+					<button {{action 'confirmVreAction' model false}} class="btn btn-danger btn-sm active col-sm-2">x</button>
 				    </div>
                 </div>
 				{{else}}
