@@ -170,6 +170,10 @@ App.Usercluster = DS.Model.extend({
 	user : DS.belongsTo('user', {
 		inverse : 'clusters'
 	}),
+	// computed properties
+    cluster_slaves_num : function(){
+        return this.get('cluster_size')-1;
+    }.property('cluster_size'),
 	workflow_link : function(){
 		return 'http://%@:8888/oozie/editor/workflow/new/'.fmt(this.get('master_IP'));
 	}.property('master_IP'),
