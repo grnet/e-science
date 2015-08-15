@@ -16,7 +16,8 @@ App.ClusterManagementController = Ember.Controller.extend({
 	}.property('content.cluster_slaves_num','cluster_slaves_newsize_static'),
 	slaves_resize_disabled : function(){
 	    // TODO conditionally disable all controls based on cluster / hadoop status
-	    return false;
+	    var enabled = this.get('content.cluster_status')=='1' && this.get('content.hadoop_status')!='2';
+	    return !enabled;
 	}.property('content.cluster_status','content.hadoop_status'),
 	slaves_increment_disabled : function(){
 	    // TODO arithmetic with slave config and available resources (cpu,ram,disk etc)
