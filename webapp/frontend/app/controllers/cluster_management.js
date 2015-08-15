@@ -1,3 +1,4 @@
+safestr = Ember.Handlebars.SafeString;
 App.ClusterManagementController = Ember.Controller.extend({
 	
 	needs : ['clusterCreate','helpImages'],
@@ -6,7 +7,54 @@ App.ClusterManagementController = Ember.Controller.extend({
     count : 0,
 	orkaImages : [],
 	
+	cluster_slaves_newsize_static : null,
+	cluster_slaves_newsize : function(key, value){
+	    if (arguments.length > 1){//setter
+	        this.set('cluster_slaves_newsize_static',value);
+	    }
+	    return Ember.isEmpty(this.get('cluster_slaves_newsize_static')) ? this.get('content.cluster_slaves_num') : this.get('cluster_slaves_newsize_static'); // getter
+	}.property('content.cluster_slaves_num','cluster_slaves_newsize_static'),
+	slaves_resize_disabled : function(){
+	    // TODO conditionally disable all controls based on cluster / hadoop status
+	    var enabled = this.get('content.cluster_status')=='1' && this.get('content.hadoop_status')!='2';
+	    return !enabled;
+	}.property('content.cluster_status','content.hadoop_status'),
+	slaves_increment_disabled : function(){
+	    // TODO arithmetic with slave config and available resources (cpu,ram,disk etc)
+	    return false;
+	}.property('cluster_slaves_newsize'),
+	slaves_decrement_disabled : function(){
+	    return this.get('cluster_slaves_newsize') > 1 ? false : true;
+	}.property('cluster_slaves_newsize'),
+	cluster_slaves_delta : function(){
+	    return this.get('cluster_slaves_newsize') - this.get('content.cluster_slaves_num');
+	}.property('content.cluster_slaves_num','cluster_slaves_newsize'),
+	cluster_slaves_delta_decorated : function(){
+	    var num_delta = Number(this.get('cluster_slaves_delta'));
+	    if (num_delta>0){
+	        return new safestr('<span class="text-success">+%@</span>'.fmt(num_delta));
+	    }else if (num_delta<0){
+	        return new safestr('<span class="text-danger">%@</span'.fmt(num_delta));
+	    }else{
+	        return new safestr('<b class="glyphicon glyphicon-resize-small"></b>');   
+	    }
+	}.property('cluster_slaves_delta'),
+	
 	actions : {
+	    increment_size : function(){
+	        this.set('cluster_slaves_newsize',this.get('cluster_slaves_newsize')+1);
+	        $('#id_number_of_slaves').focus();
+	    },
+	    decrement_size : function(){
+	        this.set('cluster_slaves_newsize',this.get('cluster_slaves_newsize')-1);
+	        $('#id_number_of_slaves').focus();
+	    },
+	    reset_size : function(){
+	        this.set('cluster_slaves_newsize',this.get('content.cluster_slaves_num'));
+	    },
+	    apply_resize : function(){
+	        console.log('apply');
+	    },
 		help_hue_login : function(os_image){
 			if (/Ecosystem/.test(os_image) || /Hue/.test(os_image)){
 				this.set('hue_login_message', '<b>Hue first login</b><br><span class="text text-info">username : hduser</span>');
@@ -20,7 +68,6 @@ App.ClusterManagementController = Ember.Controller.extend({
 			}
 			this.get('controllers.clusterCreate').set('hue_message', this.get('hue_message'));
 		},
-		
 		visitActiveImage : function(os_image){
 		    for (i=0;i<this.get('orkaImages').length;i++){
 		        if (this.get('orkaImages').objectAt(i).get('image_name') == os_image){
@@ -30,7 +77,6 @@ App.ClusterManagementController = Ember.Controller.extend({
 		        }
 		    }
 		},
-
         timer : function(status, store) {
             var that = this;
             if (Ember.isNone(this.get('timer'))) {

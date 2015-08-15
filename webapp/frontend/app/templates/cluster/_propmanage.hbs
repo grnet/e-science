@@ -1,0 +1,55 @@
+<div class="text-center" style="vertical-align: middle">
+    <form class="form-horizontal" role="form">
+        <div class="col-sm-6">
+            <table class="table table-condensed table-bordered">
+                <thead class="h5"><tr><td>Cluster Status</td><td>Hadoop Status</td></tr></thead>
+                <tr class="text text-info">
+                    <td><i {{bind-attr class="content.cluster_status_class"}}></i>{{content.cluster_status_verbose}}</td>
+                    <td><i {{bind-attr class="content.cluster_hadoop_status_class"}}></i>{{content.cluster_hadoop_status}}</td>
+                </tr>
+                <tr class="text text-warning"><td>{{content.cluster_status_pending}}</td><td>{{content.hadoop_status_verbose}}</td></tr>
+            </table>
+        </div>
+        <div class="col-sm-6">
+            <div class="form-group">
+                <fieldset {{bind-attr disabled="slaves_resize_disabled"}}>
+                <label class="control-label col-sm-5" for="id_number_of_slaves">Number of Slaves </label>
+                <div class="input-group input-group-md col-sm-7">
+                    <span class="input-group-addon">{{cluster_slaves_delta_decorated}}</span>
+                    <input id="id_number_of_slaves" type="text" class="form-control" readonly="readonly" placeholder="slaves" {{bind-attr value="cluster_slaves_newsize"}}/>
+                    <span class="input-group-btn">
+                        <button id="id_slave_subtract" type="button" class="btn btn-primary" {{bind-attr disabled="slaves_decrement_disabled"}} {{action "decrement_size"}}>
+                            <i class="glyphicon glyphicon-minus"></i>
+                        </button>
+                        <button id="id_slave_add" type="button" class="btn btn-primary" {{bind-attr disabled="slaves_increment_disabled"}} {{action "increment_size"}}>
+                            <i class="glyphicon glyphicon-plus"></i>
+                        </button> 
+                    </span>
+                </div>
+                </fieldset>
+                <label class="control-label col-sm-5" for="id_slaves_settings">Per Slave </label>
+                <div class="col-sm-7">
+                    <p class="form-control-static"><span class="text text-info"> CPUs:{{content.cpu_slaves}}, RAM:{{content.ram_slaves}}MiB, 
+                        Disk size:{{content.disk_slaves}}GiB </span></p>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col col-sm-7"></div>
+            <div class="col col-sm-2">
+            <fieldset {{bind-attr disabled="slaves_resize_disabled"}}>
+            <button id="id_reset_size" class="btn btn-default btn-md btn-block" {{action "reset_size"}}>
+                Reset
+            </button>
+            </fieldset>
+            </div>
+            <div class="col col-sm-3">
+            <fieldset {{bind-attr disabled="slaves_resize_disabled"}}>
+            <button id="id_apply_size" class="btn btn-success btn-md btn-block" {{action "apply_resize"}}>
+                Apply
+            </button>
+            </fieldset>
+            </div>
+        </div>
+    </form>
+</div>
