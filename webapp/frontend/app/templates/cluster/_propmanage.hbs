@@ -1,7 +1,11 @@
 <div class="text-center" style="vertical-align: middle">
     <form class="form-horizontal" role="form">
         <div class="col-sm-6">
-
+            <table class="table table-condensed table-bordered">
+                <thead class="h4"><tr><td>Cluster Status</td><td>Hadoop Status</td></tr></thead>
+                <tr><td>{{content.cluster_status_verbose}}</td><td>{{content.cluster_hadoop_status}}</td></tr>
+                <tr><td>{{content.cluster_status_pending}}</td><td>{{content.hadoop_status_verbose}}</td></tr>
+            </table>
         </div>
         <div class="col-sm-6">
             <div class="form-group">
