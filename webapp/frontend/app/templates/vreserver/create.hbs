@@ -123,8 +123,7 @@ Can also select server name, project name, flavor, ssh-key-->
 				<div class="form-group">
 				    <label for="id_vre_admin_pass" class="control-label col-sm-5"> Admin Pass </label>
 				    <div class="col col-sm-7">
-				        <div class="col col-sm-1"></div>  
-    				    <div class="input-group col col-sm-11">				        
+    				    <div class="input-group">				        
     				        {{input type="text" 
                             value=vre_admin_pass
                             placeholder="Upper/lowercase letters and numbers"
@@ -149,7 +148,6 @@ Can also select server name, project name, flavor, ssh-key-->
                             </span>                         
     				    </div>
 				    </div>
-				</div>
 				<div class="row text-center text-danger">
                     <div class="col col-sm">
 				    {{alert_missing_input_admin_pass}}{{alert_invalid_input_admin_pass}}
