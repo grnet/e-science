@@ -1,6 +1,6 @@
 #!/bin/bash
 SERVERNAME=$1 # StagingServerName
-PROJECTGUID=$2 # project guid as found by 'kamaki project list' eg. 10bdefe7-07dd-43ae-a32e-d9b569640717
+PROJECTGUID=$2 # project guid as found by 'kamaki project list'
 GITREPO=$3 # a git repo uri
 GITBRANCH=$4 # a git repo branch name, tag or hash
 if [ $# -lt 3 ]
@@ -20,8 +20,9 @@ if [ $# -lt 3 ]
 	echo ""
 	echo "Exiting"
 	echo ""
-	return 1 # exit script without closing terminal if user ran it sourced: . script.sh
-	exit 1 # exit if user executed it: ./script.sh
+	# terminate script without closing terminal if user ran it sourced: . script.sh
+	# exit if user executed it: ./script.sh
+	return 1 2>/dev/null || exit 1
 fi
 START=$(date +"%s")
 kamaki -k ip create --project-id=$PROJECTGUID 2>&1 | tee tmp_ip.txt
@@ -33,8 +34,7 @@ if [ -z "$IP" ]
 	echo "Couldn't get a floating IP"
 	echo "Exiting"
 	echo ""
-	return 1
-	exit 1
+	return 1 2>/dev/null || exit 1
 fi
 sleep 5
 kamaki -k server create --project-id=$PROJECTGUID --name=$SERVERNAME \
@@ -49,8 +49,7 @@ if [ -z "$VM" ]
 	echo "Couldn't create a VM"
 	echo "Exiting"
 	echo ""
-	return 1
-	exit 1
+	return 1 2>/dev/null || exit 1
 fi
 HOST="root@"$VM
 echo "Waiting a minute for VM to be reachable..."
@@ -58,7 +57,7 @@ sleep 60
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
 'apt-get update;
 apt-get install -y git python python-dev python-pip;
-pip install ansible==1.7.2;
+pip install ansible==1.9.2;
 pip install kamaki==0.13.1;
 exit'
 echo "Information" > $SERVERNAME.txt

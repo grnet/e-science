@@ -47,14 +47,18 @@ Optional arguments for all orka commands:
     
     --auth_url="authentication url (default value='https://accounts.okeanos.grnet.gr/identity/v2.0')",
     --token="an ~okeanos token (default value read from ~/.kamakirc)",
+    --server_url="orka web application url (default value read from ~/.kamakirc)",
 
 ## "images" command
-###{orka images} command example
 
-example for retrieving the available images:
+Images command has no required positional or optional arguments.
 
-	orka images
-	
+### {orka images} command example
+
+example for listing available images using defaults from .kamakirc
+
+    orka images 
+
 ## "create" command
 
 Required positional arguments for create command:
@@ -73,11 +77,13 @@ Required positional arguments for create command:
 Optional arguments for create command:
 
     --image="Operating System (default value='Debian Base')",
-    --use_hadoop_image="name of a Hadoop image. Overrides image value (default value='HadoopImage')"
+(available images can be found with **orka images** command)
+    --replication_factor="HDFS replication factor. Default is 2",
+    --dfs_blocksize="HDFS block size (in MB). Default is 128",
 
 ### Create Hadoop cluster from a pre-configured image
 
-Using the --use_hadoop_image argument creates the Hadoop cluster much faster because it utilises a specially created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest stable YARN version will be installed (but at the cost of lower speed).
+Using the --image=Hadoop-2.5.2-Debian-8.0 argument creates the Hadoop cluster much faster because it utilises a specially created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest stable YARN version will be installed (but at the cost of lower speed).
 
 ###{orka create} command examples
 
@@ -85,13 +91,9 @@ example for create cluster with default optionals (not hadoop_image):
 
     orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <project_name>
 
-example for create cluster with default optionals (with default hadoop image):
+example for create cluster with a specific image:
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <project_name> --use_hadoop_image
-
-example for create cluster with a different hadoop image:
-
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <project_name> --use_hadoop_image=hadoop_image_name
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <project_name> --image=hadoop_image_name
 
 ##"list" command
 
@@ -178,9 +180,9 @@ Pithos destination is differentiated by prepending "pithos://" to the object des
 
 ####{orka file get} command examples
 
-    orka file get <hdfs_file_path> <local_file_path>
+    orka file get <cluster_id> <hdfs_file_path> <local_file_path>
     
-    orka file get <hdfs_file_path> pithos://<pithos_file_path>
+    orka file get <cluster_id> <hdfs_file_path> pithos://<pithos_file_path>
     
 ###"file put" command
 
@@ -204,18 +206,39 @@ example for pithos source:
 
 example for remote server source:
 
-    orka file put <remote_http_or_ftp_url> <hdfs_file_path>
+    orka file put <cluster_id> <remote_http_or_ftp_url> <hdfs_file_path>
     
 example for local filesystem source:
 
-    orka file put <local_file_path> <hdfs_file_path>
+    orka file put <cluster_id> <local_file_path> <hdfs_file_path>
+
+###"file mkdir" command
+
+Required positional arguments for file mkdir command:
+
+    cluster_id: "Cluster id in e-science database"
+    directory: "destination directory on HDFS"
+    
+Optional arguments for file put command:
+
+    -p (recursive folder creation)
+
+####{orka file mkdir} command examples
+
+example for HDFS folder creation in HDFS home:
+
+    orka file mkdir <cluster_id> <directory>
+    
+example for recursive HDFS folder creation:
+
+    orka file mkdir -p <cluster_id> <directory_with_non_existant_parent>
 
 ## Getting help
 
 Also, with
 
     orka -h
-    orka { images | create | destroy | list | info | hadoop | file } -h
+    orka { images | create | vre | destroy | list | info | hadoop | file } -h
 
 helpful information about the orka CLI is depicted and
 

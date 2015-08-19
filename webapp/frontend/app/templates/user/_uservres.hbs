@@ -1,0 +1,55 @@
+<div class="table-responsive">
+    <table class="table table-striped table-hover table-border">
+        <thead class="h4 text-left">
+            <tr>
+                <td class="col col-sm-2"><a href="#" {{action 'sortBy' controller.sortable_vreservers 'uv' 'server_name'}}>Name</a> 
+                	<i {{bind-attr class="sorting_info.uv_server_name_show:glyphicon:hide sorting_info.uv_server_name_show:small:hide sorting_info.uv_server_name_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                <td><a href="#" {{action 'sortBy' controller.sortable_vreservers 'uv' 'action_date'}}>Creation Date</a> 
+                	<i {{bind-attr class="sorting_info.uv_action_date_show:glyphicon:hide sorting_info.uv_action_date_show:small:hide sorting_info.uv_action_date_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i> </td>
+                <td id="id_label_vre_status"><a href="#" {{action 'sortBy' controller.sortable_vreservers 'uv' 'resorted_status'}}>VRE Status</a> 
+                	<i {{bind-attr class="sorting_info.uv_resorted_status_show:glyphicon:hide sorting_info.uv_resorted_status_show:small:hide sorting_info.uv_resorted_status_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                <td><a href="#" {{action 'sortBy' controller.sortable_vreservers 'uv' 'os_image'}}>Image Name</a>
+                	<i {{bind-attr class="sorting_info.uv_project_name_show:glyphicon:hide sorting_info.uv_project_name_show:small:hide sorting_info.uv_project_name_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                <td><a href="#" {{action 'sortBy' controller.sortable_vreservers 'uv' 'server_IP'}}>Access IP</a>
+                	<i {{bind-attr class="sorting_info.uv_server_IP_show:glyphicon:hide sorting_info.uv_server_IP_show:small:hide sorting_info.uv_server_IP_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                <td class="col col-sm-2"><a class="nounder">Actions</a></td>
+            </tr>
+        </thead>
+        <tbody class="text-left">
+            {{#each vreserver in controller.sortable_vreservers}}
+            <tr>
+            	<td {{bind-attr id='vreserver.id_server_name'}}>{{#link-to 'vreserver.management' vreserver.id}}{{vreserver.server_name}}{{/link-to}}</td>
+                <td>{{formatDate vreserver.action_date format='shortdatetime'}}</td>
+                <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='vreserver.description_vre_status'}}> 
+                	<i {{bind-attr id='vreserver.id_server_status' class='vreserver.class_vre_status'}}></i> {{vreserver.message_vre_status_pending}}</span>
+                </td>
+                <td>{{vreserver.os_image}}</td>
+                {{#if vreserver.boolean_vre_status_active}}
+                	<td><a {{bind-attr href='vreserver.vre_access_base_url' id='vreserver.id_server_ip'}} target="_blank">{{vreserver.server_IP}}</a></td>
+                {{else}}
+                	<td><span class="text-muted">{{vreserver.server_IP}}</span></td>
+                {{/if}}
+                <td>
+                {{#if vreserver.boolean_vre_status_active}}
+                {{#if vreserver.action_server_confirm}}
+                <div class="btn-group  btn-block">
+				    <a role="button" {{bind-attr id='vreserver.id_server_confirm'}} {{action 'takeVreAction' vreserver}} class="btn btn-danger btn-xs active">{{vreserver.description_action_server_confirm}}</a>
+				    <a role="button" {{action 'confirmVreAction' vreserver false}} class="btn btn-danger btn-xs active">x</a>
+				</div>
+                {{else}}
+                <div class='btn-group btn-block'>
+                	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY SERVER'><button {{bind-attr id='vreserver.id_server_destroy'}} class="btn btn-xs btn-default"{{action 'confirmVreAction' vreserver 'server_delete'}}>
+                		<b {{bind-attr class='vreserver.class_button_vre_destroy'}}></b> </button></div>
+                </div>
+                {{/if}}	
+                {{/if}}
+                </td>
+            </tr>
+            {{else}}
+            <tr>
+                <td colspan="6" class="text-center text-info">No user Virtual Research Environments (VRE) found</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>

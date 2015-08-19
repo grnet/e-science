@@ -1,0 +1,12 @@
+[Unit]
+Description=Livyserver
+
+[Service]
+Type=oneshot
+ExecStart=/etc/init.d/livyserver start
+ExecStop=/etc/init.d/livyserver stop
+ExecReload=/etc/init.d/livyserver restart
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,199 @@
+<p></p>
+
+<div class="well well-lg text-center v-center">
+	<div class="row">
+		<h2 id = 'id_title_cluster_create_route'>Hadoop Cluster Management</h2>
+		<h3 id = 'id_title_cluster_name'>{{model.cluster_name}}</h3>
+	</div>
+</div>
+
+<ul id="id_management_tabs" class="nav nav-tabs">
+	<li class="active">
+		<a href="#id_tab_info" data-toggle="tab">Info</a>
+	</li>
+	<li>
+		<a href="#id_tab_access" data-toggle="tab">Access</a>
+	</li>
+	<li>
+		<a href="#id_tab_manage" data-toggle="tab">Manage</a>
+	</li>
+</ul>
+<div id="id_management_tab_content" class="tab-content">
+   <div class="tab-pane fade in active" id="id_tab_info">
+   		<h4 class="list-group-item-heading">Cluster</h4>
+       		<table class="table table-striped table-hover table-border">
+      			<tr>
+      				<td class="col-sm-2"> <b>ID :</b> </td>
+      				<td class="col-sm-2"><span class="text text-info"> {{model.id}} </span></td>
+      			</tr>
+      			<tr>
+      				<td class="col-sm-2"> <b>Creation Date :</b> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> {{formatDate model.action_date format='shortdatetime'}} </span> </td>
+      			</tr>
+      			<tr>
+      				<td class="col-sm-2"> <b>Cluster Status :</b> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> {{model.cluster_status_verbose}} </span> </td>
+      			</tr>
+      			<tr>
+      				<td class="col-sm-2"> <b>Hadoop Status :</b> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> {{model.cluster_hadoop_status}} </span></td>
+      			</tr>
+      			<tr>
+      			    <td class="col-sm-2"> <b>Image :</b> </td>
+                    <td class="col-sm-2"> <a href="#" {{action 'visitActiveImage' model.os_image}}><span class="text text-info"> {{model.os_image}} </span></a></td>
+      			</tr>
+      			<tr>
+      				<td class="col-sm-2"> <b>Master IP :</b> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> {{model.master_IP}} </span></td>
+      			</tr>
+                <tr>
+      				<td class="col-sm-2"> <b>~Okeanos Project :</b> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> {{model.project_name}} </span></td>
+      			</tr>
+ 			</table>
+      	<p></p>
+      	<p></p>
+      	<h4 class="list-group-item-heading">Properties</h4>
+       		<table class="table table-striped table-hover table-border">
+      			<tr> 
+      				<td class="col-sm-2"> <b>Cluster size :</b> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> {{model.cluster_size}} </span> </td>
+      			</tr>
+      			<tr> 
+      				<td class="col-sm-2"> <b>Master Settings :</b> </td>
+      				<td class="col-sm-2"> <span class="text text-info"> CPUs:{{model.cpu_master}}, RAM:{{model.ram_master}}MiB, 
+      					Disk size:{{model.disk_master}}GiB </span> </td>
+      			</tr>
+      			<tr> 
+      				<td class="col-sm-2"> <b>Slaves Settings :</b> </td> 
+      				<td class="col-sm-2"> <span class="text text-info"> CPUs:{{model.cpu_slaves}}, RAM:{{model.ram_slaves}}MiB, 
+      					Disk size:{{model.disk_slaves}}GiB </span> </td>
+      			</tr>
+      		</table>
+      			
+   </div>
+   <div class="tab-pane fade" id="id_tab_access">
+       {{#if model.cluster_status_active}}
+           {{#unless model.hadoop_status_active}}
+       		<table class="table table-striped table-hover table-border">
+	 		     <tr>
+	  			   <td class="col-sm-2"><b>Cluster</b></td>
+	  			   <td class="col-sm-2"><span class="text-muted">{{model.cluster_url}}</span></td>
+	  			 </tr>
+			     <tr>
+			     	<td class="col-sm-2"><b>HDFS Overview</b></td>
+			     	<td class="col-sm-2"><span class="text-muted">{{model.hdfs_overview}}</span></td>
+			     </tr>
+			   	 <tr>
+			   	 	<td class="col-sm-2"><b>HDFS Browse</b></td>
+			   	 	<td class="col-sm-2"><span class="text-muted">{{model.browse_hdfs}}</span></td>
+			   	 </tr>
+			   	 {{#if model.ecosystem_or_cloudera}}
+			   	 <tr>
+	  			   <td class="col-sm-2"><b>Oozie</b></td>
+	  			   <td class="col-sm-2"><span class="text-muted">{{model.oozie}}</span></td>
+	  			 </tr>
+			     <tr>
+			     	<td class="col-sm-2"><b>HBase</b></td>
+			     	<td class="col-sm-2"><span class="text-muted">{{model.hbase}}</span></td>
+			     </tr>
+			   	 <tr>
+			   	 	<td class="col-sm-2"><b>Spark</b></td>
+			   	 	<td class="col-sm-2"><span class="text-muted">{{model.spark}}</span></td>
+			   	 </tr>
+			   	 {{/if}}
+	 		   </table>
+	       {{else}}	    
+       		<table class="table table-striped table-hover table-border">
+	 		     <tr>
+	  			   <td class="col-sm-2"><b>Cluster</b></td>
+	  			   <td class="col-sm-2"><a {{bind-attr href='model.cluster_url'}} target="_blank"><span class="text text-info">{{model.cluster_url}}</span></a></td>
+	  			 </tr>
+			     <tr>
+			     	<td class="col-sm-2"><b>HDFS Overview</b></td>
+			     	<td class="col-sm-2"><a {{bind-attr href='model.hdfs_overview'}} target="_blank"><span class="text text-info">{{model.hdfs_overview}}</span></a></td>
+			     </tr>
+			   	 <tr>
+			   	 	<td class="col-sm-2"><b>HDFS Browse</b></td>
+			   	 	<td class="col-sm-2"><a {{bind-attr href='model.browse_hdfs'}} target="_blank" data-container="body" data-toggle="popover" 
+			     		data-placement="right" data-trigger="hover focus" data-html=true {{bind-attr data-content=hue_login_message}}>
+			     		<span class="text text-info">{{model.browse_hdfs}}</span></a></td>
+			   	 </tr>
+			   	 {{#if model.ecosystem_or_cloudera}}
+			   	 <tr>
+			   	 	<td class="col-sm-2"><b>Oozie</b></td>
+			   	 	<td class="col-sm-2"><a {{bind-attr href='model.oozie'}} target="_blank"><span class="text text-info">{{model.oozie}}</span></a></td>
+			   	 </tr>
+			   	 <tr>
+			   	 	<td class="col-sm-2"><b>HBase</b></td>
+			   	 	<td class="col-sm-2"><a {{bind-attr href='model.hbase'}} target="_blank"><span class="text text-info">{{model.hbase}}</span></a></td>
+			   	 </tr>
+			   	 <tr>
+			   	 	<td class="col-sm-2"><b>Spark</b></td>
+			   	 	<td class="col-sm-2"><a {{bind-attr href='model.spark'}} target="_blank"><span class="text text-info">{{model.spark}}</span></a></td>
+			   	 </tr>
+			   	 {{/if}}
+	 		   </table>
+	       {{/unless}}
+       {{else}}
+	       <div class="text-warning text-center">No information available.</div>
+       {{/if}}
+   </div>
+   <div class="tab-pane fade col col-sm-2" id="id_tab_manage">
+		{{#if model.cluster_status_active}}
+		 <div class='btn-group-vertical btn-group-sm'>
+				{{#ifeq model.cluster_confirm_action 'hadoop_start'}}
+				<div class='btn-toolbar-horizontal btn-toolbar-sm btn-block'>
+                    <div class='btn-group btn-group-sm'>
+    					<a role="button" {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeClusterAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</a>
+    					<a role="button" {{action 'confirmClusterAction' model false}} class="btn btn-danger btn-sm active">x</a>
+    				</div>
+                </div>
+				{{else}}
+    				<button {{bind-attr id='model.hadoop_start_id'}} class="btn btn-sm btn-primary btn-block" {{action 'confirmClusterAction' model 'hadoop_start'}}{{bind-attr disabled=model.hadoop_action_start_disabled}}>
+                        Start Hadoop <b {{bind-attr class='model.hadoop_status_class_start'}}></b>
+                    </button>
+				{{/ifeq}}									
+				{{#ifeq model.cluster_confirm_action 'hadoop_stop'}}
+				<div class='btn-toolbar-horizontal btn-toolbar-sm btn-block'>
+				    <div class='btn-group btn-group-sm'>
+    					<button {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeClusterAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</button>
+    					<button {{action 'confirmClusterAction' model false}} class="btn btn-danger btn-sm active">x</button>
+    				</div>
+    			</div>
+				{{else}}
+                    <button {{bind-attr id='model.hadoop_stop_id'}} class="btn btn-sm btn-primary btn-block" {{action 'confirmClusterAction' model 'hadoop_stop'}}{{bind-attr disabled=model.hadoop_action_stop_disabled}}>
+                        Stop Hadoop <b {{bind-attr class='model.hadoop_status_class_stop'}}></b>
+                    </button>				    
+				{{/ifeq}}					
+				{{#ifeq model.cluster_confirm_action 'hadoop_format'}}
+				<div class='btn-toolbar-horizontal btn-toolbar-sm btn-block'>
+                    <div class='btn-group btn-group-sm'>
+					<a role="button" {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeClusterAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</a>
+					<a role="button" {{action 'confirmClusterAction' model false}} class="btn btn-danger btn-sm active">x</a>
+				    </div>
+                </div>
+				{{else}}
+    				<button {{bind-attr id='model.hadoop_format_id'}} class="btn btn-sm btn-primary btn-block" {{action 'confirmClusterAction' model 'hadoop_format'}}{{bind-attr disabled=model.hadoop_action_format_disabled}}>
+                        Format HDFS <b {{bind-attr class='model.hadoop_status_class_format'}}></b>
+                    </button>
+				{{/ifeq}}		   	    
+				{{#ifeq model.cluster_confirm_action 'cluster_delete'}}
+				<div class='btn-toolbar-horizontal btn-toolbar-sm btn-block'>
+                    <div class='btn-group btn-group-sm'>
+					<a role="button" {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeClusterAction' model}} class="btn btn-danger btn-sm active">{{model.cluster_confirm_action_verbose}}</a>
+					<a role="button" {{action 'confirmClusterAction' model false}} class="btn btn-danger btn-sm active">x</a>
+				    </div>
+                </div>
+				{{else}}
+    				<button {{bind-attr id='model.cluster_destroy_id'}} class="btn btn-sm btn-primary btn-block"{{action 'confirmClusterAction' model 'cluster_delete'}}>
+                        Destroy Cluster <b {{bind-attr class='model.cluster_status_class_destroy'}}></b>
+                    </button>
+				{{/ifeq}}
+			</div>
+	</div>
+		{{else}}
+			<div class="text-warning text-center">No actions available.</div>
+		{{/if}}
+
+</div>

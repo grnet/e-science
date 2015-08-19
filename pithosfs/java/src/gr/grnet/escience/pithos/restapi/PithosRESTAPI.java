@@ -14,11 +14,14 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import gr.grnet.escience.commons.Utils;
+import gr.grnet.escience.fs.pithos.PithosFileSystem;
 
 /**
  * @author kostas vogias
@@ -306,6 +309,10 @@ public class PithosRESTAPI implements Serializable {
 
                 return getConnection().getHeaderFields();
 
+            } else if (responseCode == 401) {
+                PithosFileSystem.getHadoopPithosConnector()
+                        .terminateConnection();
+                return null;
             } else {
                 Utils.dbgPrint(String.valueOf(responseCode));
 
@@ -489,6 +496,10 @@ public class PithosRESTAPI implements Serializable {
 
                 return getConnection().getHeaderFields();
 
+            } else if (responseCode == 401) {
+                PithosFileSystem.getHadoopPithosConnector()
+                        .terminateConnection();
+                return null;
             } else {
 
                 Utils.dbgPrint(String.valueOf(responseCode));
@@ -844,6 +855,10 @@ public class PithosRESTAPI implements Serializable {
 
                 return getConnection().getHeaderFields();
 
+            } else if (responseCode == 401) {
+                PithosFileSystem.getHadoopPithosConnector()
+                        .terminateConnection();
+                return null;
             } else {
                 Utils.dbgPrint(String.valueOf(responseCode));
                 return getConnection().getHeaderFields();
@@ -1529,7 +1544,14 @@ public class PithosRESTAPI implements Serializable {
                 this.getConnection().setDoOutput(true);
                 DataOutputStream wr = new DataOutputStream(getConnection()
                         .getOutputStream());
-                wr.write(content.getBytes("UTF-8"));
+                byte[] decBytes = null;
+                try {
+                    decBytes = Base64.getDecoder().decode(content);
+                } catch (IllegalArgumentException e) {
+                    Utils.dbgPrint("PithosRESTAPI#update_append_truncate_object exception:", e);
+                    decBytes = content.getBytes("UTF-8");
+                } 
+                wr.write(decBytes);
                 wr.flush();
                 wr.close();
             } else {

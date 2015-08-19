@@ -1,62 +1,66 @@
 package gr.grnet.escience.commons;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.util.Base64;
 
+/**
+ * The Class PithosSerializer. Used to serialize / deserialize and convert data
+ * to strings safe for transmission over http
+ */
 public class PithosSerializer {
 
-    private static BufferedReader br = null;
-    private static StringBuilder sb = null;
-    private static String line = null;
     private static FileInputStream fileInputStream = null;
+
+    private static ByteArrayOutputStream baos = null;
+
+    private static byte[] buffer = null;
+
     private static byte[] blockDataBytes = null;
+
     private static int bytesRead = 0;
-    private static InputStreamReader inputStreamReader = null;
 
     private PithosSerializer() {
     }
 
     /**
-     * 
+     * Input stream to string.
+     *
      * @param is
      *            : the input stream
-     * @return the inputstream as string
+     * @return the inputstream as Base64 encoded string
+     * @throws IOException
+     *             Signals the inputstream could not be read.
      */
     public static String inputStreamToString(InputStream is) throws IOException {
 
         try {
-            sb = new StringBuilder();
-            inputStreamReader = new InputStreamReader(is);
-            br = new BufferedReader(inputStreamReader);
-
-            while ((line = br.readLine()) != null) {
-                sb.append(line);
+            baos = new ByteArrayOutputStream();
+            buffer = new byte[1024];
+            int length = 0;
+            while ((length = is.read(buffer)) != -1) {
+                baos.write(buffer, 0, length);
             }
-
-        } finally {
-            if (br != null) {
-                br.close();
-            }
-            if (inputStreamReader != null) {
-                inputStreamReader.close();
-            }
+        } catch (IOException e) {
+            Utils.dbgPrint("PithosSerializer#inputStreamToString error >",
+                    e.getMessage());
+            throw new IOException(e);
         }
-
-        return sb.toString();
-
+        return Base64.getEncoder().encodeToString(baos.toByteArray());
     }
 
     /**
-     * Serialize a file into bytes array
-     * 
+     * Serialize a file into bytes array.
+     *
      * @param inputFile
      *            : the file that should be serialized into bytes array
      * @return a File as bytes []
+     * @throws IOException
+     *             Signals that the file input stream could not be read.
      */
     public static byte[] serializeFile(File inputFile) throws IOException {
         // -Create file input stream
@@ -87,12 +91,14 @@ public class PithosSerializer {
     }
 
     /**
-     * Deserialize a byte array into File
-     * 
+     * Deserialize a byte array into File.
+     *
      * @param data
      *            the byte array that should be deserialized int File
      * @return return a File that actually constitutes the bytes that were
      *         deserialized
+     * @throws IOException
+     *             Signals that data failed to be written to file.
      */
     public static File deserializeFile(byte[] data) throws IOException {
         // convert array of bytes into file

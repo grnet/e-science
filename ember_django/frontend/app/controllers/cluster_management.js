@@ -1,1 +1,0 @@
-App.ClusterManagementController = Ember.Controller.extend({});

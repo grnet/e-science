@@ -17,7 +17,7 @@ from time import sleep
 from unittest import TestCase, main as unittest_main
 from ConfigParser import RawConfigParser, NoSectionError
 from os.path import join, dirname, abspath
-sys.path.append(join(dirname(__file__), '../../ember_django'))
+sys.path.append(join(dirname(__file__), '../../webapp'))
 from backend.reroute_ssh import *
 #GLobal constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection

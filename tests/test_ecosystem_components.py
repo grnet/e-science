@@ -13,6 +13,7 @@ from constants_of_tests import *
 from orka.orka.cluster_errors_constants import error_fatal, const_hadoop_status_started, FNULL
 import requests
 import re
+import time
 
 BASE_DIR = join(dirname(abspath(__file__)), "../")
 JOB_PROPERTIES_PATH = join(dirname(abspath(__file__)), 'job.properties')
@@ -61,7 +62,33 @@ class EcosystemTest(unittest.TestCase):
             print 'Current authentication details are kept off source control. ' \
                   '\nUpdate your .config.txt file in <projectroot>/.private/'
                   
-                  
+    def test_flume(self):
+        """
+        Checks Flume's operation.
+        Create a temp file and check that it is uploaded successfully to hdfs
+        """
+        #clear flume data directories
+        self.clear_flume_hdfs_folder()
+        self.clear_flume_tmp_folder()
+        #create the temp file in /usr/local/flume/tmp
+        response = subprocess.call("ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "echo 'this is a test file'" +
+                                    " >  /usr/local/flume/tmp/tempfile.log" + 
+                                    "\"", stderr=FNULL, shell=True)
+        # wait for flume to write data in hdfs
+        time.sleep(20)
+        # check hdfs for Flume Data
+#         response = subprocess.check_output("ssh " + self.user + "@" + self.master_IP + " \"" + 
+#                                     "/usr/local/hadoop/bin/hdfs dfs -test -e /user/hduser/flume/FlumeData.*" +
+#                                     "\"", stderr=FNULL, shell=True)
+        command = ' dfs -test -e /user/hduser/flume/FlumeData.*'
+        exist_check_status = ssh_call_hadoop(self.user, self.master_IP, command, hadoop_path='/usr/local/hadoop/bin/hdfs')
+        self.assertEqual(exist_check_status, 0) # Output exists in hdfs        
+        #clear flume hdfs folder
+        self.addCleanup(self.clear_flume_hdfs_folder)
+        # clear flume local temp folder
+        self.addCleanup(self.clear_flume_tmp_folder)
+               
     def test_pig(self):
         """
         Test pig for hadoop ecosystem
@@ -303,6 +330,24 @@ class EcosystemTest(unittest.TestCase):
         Helper method to delete files transfered to pithos filesystem after test.
         """
         subprocess.call('kamaki file delete --yes {}'.format(file_to_delete), stderr=FNULL, shell=True)
+
+    def clear_flume_hdfs_folder(self):
+        """
+        clear flume hdfs folder
+        """
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    " /usr/local/hadoop/bin/hdfs dfs -rm  /user/hduser/flume/*" +
+                                    "\""
+                                    , stderr=FNULL, shell=True)
+
+    def clear_flume_tmp_folder(self):
+        """
+        clear flume local temp folder
+        """
+        response = subprocess.call( "ssh " + self.user + "@" + self.master_IP + " \"" + 
+                                    "rm  /usr/local/flume/tmp/*" +
+                                    "\""
+                                    , stderr=FNULL, shell=True)
 
     def tearDown(self):
         """
