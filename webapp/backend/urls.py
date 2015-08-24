@@ -23,7 +23,8 @@ urlpatterns = patterns('', url(r'^$', MainPageView.as_view()),
                        url(r'^api/clusterchoices', StatusView.as_view()),
                        url(r'^api/jobs', JobsView.as_view()),
                        url(r'^api/vreservers', VreServerView.as_view()),
-                       url(r'^api/hdfs', HdfsView.as_view())
+                       url(r'^api/hdfs', HdfsView.as_view()),
+                       url(r'^api/nodeservers', NodeServerView.as_view())
                        )
 
 # if settings.DEBUG:

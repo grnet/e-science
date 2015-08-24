@@ -63,6 +63,7 @@ hdfs_endpoint = '/api/hdfs'
 vre_endpoint = '/api/vreservers'
 vre_images_endpoint = '/api/vreimages'
 orka_images_endpoint = '/api/orkaimages'
+node_endpoint = '/api/nodeservers'
 wait_timer_create = 30
 wait_timer_delete = 5
 const_cluster_status_destroyed = "0"
