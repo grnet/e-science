@@ -7,9 +7,12 @@ import gr.grnet.escience.pithos.rest.PithosResponseFormat;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -111,6 +114,8 @@ public class PithosFileSystem extends FileSystem {
     private boolean commitCalled = false;
 
     private PithosPath commitPithosPath = null;
+    
+    private Properties kamaki_info = new Properties();
 
     /**
      * Instantiates a new pithos file system.
@@ -172,14 +177,30 @@ public class PithosFileSystem extends FileSystem {
             Boolean debug = Boolean.valueOf(conf.get("fs.pithos.debug"));
             Utils.setDebug(debug);
         }
+    	try (InputStream kamakirc = new FileInputStream("/home/hduser/.kamakirc")) {	
+    		kamaki_info.load(kamakirc);
+    		kamakirc.close();
+    	}
+    	catch (IOException e) {
+    		try (InputStream kamakirc = new FileInputStream(
+					"/var/lib/hadoop-hdfs/.kamakirc")) {
+				kamaki_info.load(kamakirc);
+				kamakirc.close();
+			} catch (IOException exc) {
+				Utils.dbgPrint(
+						"initialize > /home/hduser/.kamakirc error: ", e, 
+						"  and initialize > /var/lib/hadoop-hdfs/.kamakirc error: ",
+						exc);
+			}
+    	}        
         this.uri = URI.create(uri.getScheme() + "://" + uri.getAuthority());
         setWorkingDirectory(new Path("/user", System.getProperty("user.name")));
         hdfsBlockSize = conf.getLongBytes("dfs.blocksize",
                 DEFAULT_HDFS_BLOCK_SIZE);
         if (hadoopPithosConnector == null) {
             setHadoopPithosConnector(new HadoopPithosConnector(
-                    conf.get("fs.pithos.url"), conf.get("auth.pithos.token"),
-                    conf.get("auth.pithos.uuid")));
+            		conf.get("fs.pithos.url"), kamaki_info.getProperty("token"),
+                    kamaki_info.getProperty("uuid")));
         }
 
     }

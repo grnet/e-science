@@ -26,6 +26,7 @@ App.Uservreserver = DS.Model.extend({
     action_date : attr('isodate'), 
     server_status : attr('string'),
     server_IP : attr('string'),
+    ssh_key_selection : attr('string'), // ssh_key_name
     cpu : attr(), 
     ram : attr(), 
     disk : attr(), 
@@ -34,14 +35,28 @@ App.Uservreserver = DS.Model.extend({
     project_name : attr(), 
     task_id : attr(), 
     state : attr(),
+    admin_password : attr('string'),
+    admin_email : attr('string'),
     // user that created the VRE
     user : DS.belongsTo('user', {
         inverse : 'vreservers'
     }),
     // computed properties
     vre_access_url : function(){
-        return 'http://%@'.fmt(this.get('server_IP'));
-    }.property('server_IP'),
+        // TODO: add to components info and resolve dynamically
+        var image = this.get('os_image');
+        switch (image){
+        case 'Redmine-3.0.4':
+            return ['http://%@:%@'.fmt(this.get('server_IP'),'10083')];
+        case 'DSpace-5.3':
+            return ['http://%@:%@'.fmt(this.get('server_IP'),'8080/xmlui'),'http://%@:%@'.fmt(this.get('server_IP'),'8080/jspui')];
+        default:
+            return ['http://%@'.fmt(this.get('server_IP'))];
+        }
+    }.property('server_IP','os_image'),
+    vre_access_base_url : function(){
+        return this.get('vre_access_url')[0];
+    }.property('vre_access_url'),
     class_vre_status : function (){
         var status = this.get('server_status');
         switch (status) {
@@ -149,6 +164,8 @@ App.Usercluster = DS.Model.extend({
 	task_id : attr(),
 	state : attr(),
 	hadoop_status : attr(),
+	replication_factor : attr(),
+	dfs_blocksize : attr(),
 	// user that created the cluster
 	user : DS.belongsTo('user', {
 		inverse : 'clusters'

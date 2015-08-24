@@ -64,7 +64,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			// arrived at this route
 			var from_create = this.controller.get('create_cluster_start');
 			if (from_create) {
-				this.controller.set('count', 10);
+				this.controller.set('count', 15);
 				this.controller.send('timer', true, this.store);
 			}
 			return true;

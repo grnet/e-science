@@ -13,15 +13,21 @@ Required positional arguments for vre create command:
     disk_template: "Standard or Archipelago",
     project_name: "name of a ~okeanos project, to pull resources from",
     image: "name of VRE image"
+    
+Optional arguments for vre create command:
 
-
+    admin_password: "Admin password for VRE servers. Default is auto-generated if not given from user",
+    admin_email: "Admin email for VRE DSpace image. Default is admin@dspace.gr if not given from user"
+    
+ **admin_password must contain only uppercase and lowercase letters and numbers and be at least eight characters long**.
 
 ### {orka vre create} command examples
 
 example for orka vre create with Drupal image:
 
-    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Deb8-Drupal-Docker
-
+    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Drupal-7.3.7 --admin_password=My21PaSswOrd
+    orka vre create DSpace_Test 2 2048 20 Standard <project_name> DSpace-5.3 --admin_password=sOmEoTheRPassWorD --admin_email=mymail@gmail.com
+    
 ##"vre destroy" command
 
 Required positional arguments for vre destroy command:
@@ -34,6 +40,14 @@ Required positional arguments for vre destroy command:
 example for orka vre destroy:
 
     orka vre destroy <server_id>
+    
+### {orka vre images} command
+
+With the following command:
+
+    orka vre images
+
+a list of VRE image names and their pithos uuid values is shown.
 
 ## General Docker Info
 
@@ -46,7 +60,7 @@ For example, to access the mysql layer (db) in the **Drupal** or **Mediawiki** i
     docker exec -t -i db bash
     mysql -p
 
-and give the ~okeanos token when prompt for password.
+and give the admin_password when prompt for password.
 
 In order to change the mysql root password, type:
 
@@ -55,6 +69,11 @@ then, stop the docker service:
 
     service docker stop
 and find the **config.json** of the corresponding container, open the file and change the variable MYSQL_ROOT_PASSWORD = *new_password*
+
+To find the **config.json** of the mysql (named db) container:
+
+    myvar=$(docker inspect db | grep "Id" | sed 's/[" ,:]//g' | sed 's/Id//g')
+    cd /var/lib/docker/containers/$myvar
 
 Finally, start docker and containers, as the drupal example below:
 
@@ -65,7 +84,7 @@ In case of **Redmine** image, to access the postgresql database:
 
     docker exec -t -i redmine_postgresql_1 bash
     psql -U redmine -d redmine_production -h localhost
-and give the ~okeanos token when prompt for password.
+and give the admin_password when prompt for password.
 
 In order to change the postgresql password, type:
 
@@ -82,11 +101,27 @@ then, stop the docker service:
     service docker stop
 and find the **config.json** of the corresponding container, open the file and change the variable DB_PASS = *new_password*. The same should be done for the file /usr/local/redmine/docker-compose.yml
 
+To find the **config.json** of the postgresql (named redmine_postgresql_1) container:
+
+    myvar=$(docker inspect redmine_postgresql_1 | grep "Id" | sed 's/[" ,:]//g' | sed 's/Id//g')
+    cd /var/lib/docker/containers/$myvar
+
 Finally, start docker and containers:
 
     service docker start
     docker start redmine_postgresql_1
     docker start redmine_redmine_1
+    
+For **DSpace image**, the database is in the same container with the dspace.
+So, in order for the postgresql database to be accessed, the following commands are needed:
+
+    docker exec -t -i dspace bash
+    psql -U dspace -d dspace -h localhost
+    
+and give the admin_password. If the postgresql dspace password is changed, it must be also changed in the file /dspace/config/dspace.cfg, which is inside the dspace container.
+
+The entry db.password=<old_password> inside the dspace.cfg file must be changed to reflect the change in postgresql.After the change, stop and start the docker dspace container. It needs 3,5 to 4 minutes to be up and running,so the dspace urls can be accessed.
+
 Useful links:
 
 https://www.docker.com/
@@ -97,7 +132,7 @@ https://docs.docker.com/reference/commandline/exec/
 
 
 ##Access VRE servers
-In order to access Drupal and Mediawiki, just visit the VM's IP. To access Redmine visit the VM's IP:10083
+In order to access Drupal and Mediawiki, just visit the VM's IP. To access Redmine visit the VM's IP:10083. For DSpace the urls are VM_IP:8080/jspui and VM_IP:8080/xmlui.
 
 ## Getting help
 

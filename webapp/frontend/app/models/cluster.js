@@ -18,6 +18,9 @@ App.Cluster = DS.Model.extend({
 	disk_choices : attr(),       	// disk choices
 	disk_template : attr(),      	// storage choices
 	os_choices : attr(),          	// Operating System choices
+	hadoop_choices : function(){
+	    return this.get('os_choices')[0];
+	}.property('os_choices'),       // Filter for Hadoop Images
 	vm_flavors_choices : ['Small', 'Medium', 'Large'],  //Predefined VM Flavors
 	ssh_keys_names : attr()         // ssh key's names
 });

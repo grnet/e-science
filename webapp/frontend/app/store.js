@@ -22,13 +22,36 @@ App.UservreserverAdapter = DS.ActiveModelAdapter.extend({
             "Authorization" : App.escience_token,
         };
     }.property("App.escience_token"),
-    deleteRecord : function(store, type, record) {
+    createRecord: function(store, type, record) {
         var data = this.serialize(record, {
             includeId : true
         });
         var url = 'api/vreservers';
         var headers = this.get('headers');
 
+        return new Ember.RSVP.Promise(function(resolve, reject) {
+            jQuery.ajax({
+                type : 'POST',
+                headers : headers,
+                url : url,
+                dataType : 'json',
+                data : data
+            }).then(function(data) {
+                Ember.run(null, resolve, data);
+            }, function(jqXHR) {
+                jqXHR.then = null;
+                // tame jQuery's ill mannered promises
+                Ember.run(null, reject, jqXHR);
+            });
+        });
+    },
+    deleteRecord : function(store, type, record) {
+        var data = this.serialize(record, {
+            includeId : true
+        });
+        var url = 'api/vreservers';
+        var headers = this.get('headers');
+    
         return new Ember.RSVP.Promise(function(resolve, reject) {
             jQuery.ajax({
                 type : 'DELETE',
@@ -106,18 +129,24 @@ App.UservreserverSerializer = DS.RESTSerializer.extend({
         server_IP : {
             key : 'master_IP'
         },
-        server_name : {serialize : false},
+        os_image : {
+            key : 'os_choice'
+        },
+        //server_name : {serialize : false},
         action_date : {serialize : false},
         server_status : {serialize : false},
-        cpu : {serialize : false},
-        ram : {serialize : false},
-        disk : {serialize : false},
-        disk_template : {serialize : false},
-        os_image : {serialize : false},
-        project_name : {serialize : false},
+        //cpu : {serialize : false},
+        //ram : {serialize : false},
+        //disk : {serialize : false},
+        //disk_template : {serialize : false},
+        //os_image : {serialize : false},
+        //project_name : {serialize : false},
         task_id : {serialize : false},
         state : {serialize : false},
-        user : {serialize : false}
+        user : {serialize : false},
+        //ssh_key_selection : {serialize : false},
+        //admin_password : {serialize : false},
+        //admin_email : {serialize : false}
     } 
 });
 
@@ -141,7 +170,9 @@ App.UserclusterSerializer = DS.RESTSerializer.extend({
         project_name : {serialize : false},
         task_id : {serialize : false},
         state : {serialize : false},
-        user : {serialize : false},
+        replication_factor : {serialize : false}, // check if needed
+        dfs_blocksize : {serialize : false},       // check if needed
+        user : {serialize : false}
     }
 });
 

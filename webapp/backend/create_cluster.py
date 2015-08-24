@@ -354,6 +354,8 @@ class YarnCluster(object):
                 get_float_network_id(self.net_client, project_id=self.project_id)
                 server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path), project_id=self.project_id)
             else:
+                msg = u'VRE server \"{0}\" creation failed due to error: {1}'.format(self.opts['server_name'], str(e.args[0]))
+                set_server_state(self.opts['token'], server_id, 'Error',status='Failed', error=msg)
                 raise
         # Get VRE server root password
         server_pass = server ['adminPass']
@@ -361,36 +363,44 @@ class YarnCluster(object):
         server_ip = '127.0.0.1'
         # Update DB with server status as pending
         new_state = "Started creation of Virtual Research Environment server {0}".format(vre_server_name)
-        set_server_state(self.opts['token'], server_id, new_state, okeanos_server_id=server['id'])
+        os.system('rm ' + self.ssh_file)
+        set_server_state(self.opts['token'], server_id, new_state, okeanos_server_id=server['id'], password=server_pass)
         new_status = self.cyclades.wait_server(server['id'], max_wait=MAX_WAIT)
+        
         if new_status == 'ACTIVE':
             server_details = self.cyclades.get_server_details(server['id'])
             for attachment in server_details['attachments']:
                 if attachment['OS-EXT-IPS:type'] == 'floating':
                         server_ip = attachment['ipv4']
         else:
-            self.cyclades.delete_server(server['id'])
-            set_server_state( self.opts['token'],server_id,'Error',status='Failed')
-            msg = ' Status for VRE server {0} is {1}'.format(server['name'], new_status)
+            self.cyclades.delete_server(server['id'])           
+            msg = u'VRE server \"{0}\" creation failed because status of VRE server is {1}'.format(self.opts['server_name'],
+                                                                                                   new_status)
+            set_server_state( self.opts['token'],server_id,'Error',status='Failed',error=msg)
             raise ClientError(msg, error_create_server)
             
-        set_server_state(self.opts['token'],server_id,state='VRE Server created',status='Active',server_IP=server_ip)
         # Wait for VRE server to be pingable
-        sleep(15)
+        sleep(30)
         try:
             vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
             if vre_image_uuid == server['image']['id']:
                 chosen_vre_image = pithos_vre_images_uuids_actions[vre_image_uuid]
-                start_vre(server_ip,server_pass,unmask_token(encrypt_key, self.opts['token']), chosen_vre_image)
+                start_vre(server_ip,server_pass,self.opts['admin_password'], chosen_vre_image, self.opts['admin_email'])
             else:
-                msg = 'Image {0} exists on database but cannot be found or has different id'
-                ' on Pithos+'.format(self.opts['os_choice'])
+                msg = u'VRE server \"{0}\" creation failed because image {1} exists on database but cannot be found or has different id'
+                u' on Pithos+'.format(self.opts['server_name'],self.opts['os_choice'])                                                                                   
+                set_server_state(self.opts['token'],server_id,'Error',status='Failed',error=msg)
+                self.cyclades.delete_server(server['id'])
                 raise ClientError(msg, error_flavor_id) 
         except RuntimeError, e:
             # Exception is raised if a VRE start command is not executed correctly and informs user of its VRE properties
             # so user can ssh connect to the VRE server or delete the server from orkaCLI.
+            msg =  u'VRE server \"{0}\" created but started with errors'.format(self.opts['server_name'])
+            set_server_state(self.opts['token'],server_id,state='VRE Server created but started with errors',
+                             status='Active',server_IP=server_ip, error=msg)
             raise RuntimeError('Your VRE server has the following properties id:{0} root_password:{1} server_IP:{2}'
                                ' but could not be started normally.'.format(server_id,server_pass,server_ip),error_create_server)
+        set_server_state(self.opts['token'],server_id,state='VRE Server created',status='Active',server_IP=server_ip)
         return server_id, server_pass, server_ip
         
         

@@ -59,6 +59,15 @@ def get_from_kamaki_conf(section, option, action=None):
             if action == 'vre':
                 url_vre = '{0}{1}'.format(option_value, vre_endpoint)
                 return url_vre
+            if action == 'vre_images':
+                url_vre_images = '{0}{1}'.format(option_value, vre_images_endpoint)
+                return url_vre_images
+            if action == 'orka_images':
+                url_orka_images = '{0}{1}'.format(option_value, orka_images_endpoint)
+                return url_orka_images
+            if action == 'node':
+                url_node = '{0}{1}'.format(option_value, node_endpoint)
+                return url_node
             else:
                 logging.log(SUMMARY, ' Url to be returned from .kamakirc not specified')
                 return 0
@@ -75,8 +84,10 @@ class ClusterRequest(object):
         self.payload = payload
         self.url = get_from_kamaki_conf('orka','base_url',action)
         self.url = server_url + re.split('http://[^/]+',self.url)[-1]
-        self.headers = {'Accept': 'application/json','content-type': 'application/json',
-                        'Authorization': 'Token ' + self.escience_token}
+        self.headers = {'Accept': 'application/json','content-type': 'application/json'}
+        
+        if self.escience_token:
+            self.headers.update({'Authorization': 'Token ' + self.escience_token})
 
     def create_cluster(self):
         """Request to create a Hadoop Cluster in ~okeanos."""
