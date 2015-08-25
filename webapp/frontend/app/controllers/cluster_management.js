@@ -35,7 +35,7 @@ App.ClusterManagementController = Ember.Controller.extend({
 	    }else if (num_delta<0){
 	        return new safestr('<span class="text-danger">%@</span'.fmt(num_delta));
 	    }else{
-	        return new safestr('<b class="glyphicon glyphicon-resize-small"></b>');   
+	        return new safestr('<b class="glyphicon glyphicon-resize-full"></b>');   
 	    }
 	}.property('cluster_slaves_delta'),
 	
