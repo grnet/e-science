@@ -6,7 +6,30 @@ App.ClusterManagementController = Ember.Controller.extend({
 	hue_message : '',
     count : 0,
 	orkaImages : [],
-	
+    // tabs info for template
+    content_tabs_info : {
+        info: {id:'id_tab_info',href:'#id_tab_info',name:'Info',active:true},
+        access: {id:'id_tab_access',href:'#id_tab_access',name:'Access'},
+        manage : {id:'id_tab_manage',href:'#id_tab_manage',name:'Manage'}
+    },
+    content_tabs : function(key,value){
+        var tabs_object = this.get('content_tabs_info');
+        if (arguments.length>1){//setter
+            tabs_object["info"]["active"]=false;
+            tabs_object["access"]["active"]=false;
+            tabs_object["manage"]["active"]=false;
+            switch(value) {
+            case "info":
+                tabs_object["info"]["active"]=true;
+            case "access":
+                tabs_object["access"]["active"]=true;
+            case "manage":
+                tabs_object["manage"]["active"]=true;
+            }
+            return tabs_object;
+        }
+        return tabs_object;
+    }.property(),	
 	cluster_slaves_newsize_static : null,
 	cluster_slaves_newsize : function(key, value){
 	    if (arguments.length > 1){//setter
@@ -18,6 +41,9 @@ App.ClusterManagementController = Ember.Controller.extend({
 	    var enabled = this.get('content.cluster_status')=='1' && this.get('content.hadoop_status')!='2';
 	    return !enabled;
 	}.property('content.cluster_status','content.hadoop_status'),
+	apply_resize_disabled : function(){
+	    return this.get('slaves_resize_disabled') || this.get('cluster_slaves_delta') == 0;
+	}.property('cluster_slaves_delta','slaves_resize_disabled'),
 	slaves_increment_disabled : function(){
 	    // TODO arithmetic with slave config and available resources (cpu,ram,disk etc)
 	    return false;
@@ -52,7 +78,12 @@ App.ClusterManagementController = Ember.Controller.extend({
 	        this.set('cluster_slaves_newsize',this.get('content.cluster_slaves_num'));
 	    },
 	    apply_resize : function(){
-	        console.log('apply');
+	        if (this.get('cluster_slaves_delta')==0){
+	            console.log('no changes to apply');
+	        }else{
+	            var str_delta = this.get('cluster_slaves_delta') > 0 && '+'+this.get('cluster_slaves_delta') || this.get('cluster_slaves_delta');
+	            console.log('apply scale: ' + str_delta);
+	        }
 	    },
 		help_hue_login : function(os_image){
 			if (/Ecosystem/.test(os_image) || /Hue/.test(os_image)){
@@ -67,6 +98,9 @@ App.ClusterManagementController = Ember.Controller.extend({
 			}
 			this.get('controllers.clusterCreate').set('hue_message', this.get('hue_message'));
 		},
+        setActiveTab : function(tab){
+            this.set('content_tabs',tab);  
+        },
 		visitActiveImage : function(os_image){
 		    for (i=0;i<this.get('orkaImages').length;i++){
 		        if (this.get('orkaImages').objectAt(i).get('image_name') == os_image){

@@ -1,7 +1,7 @@
 // User Welcome controller
 App.UserWelcomeController = Ember.Controller.extend({
 
-    needs : ['clusterCreate','vreserverCreate'],
+    needs : ['clusterCreate','vreserverCreate','clusterManagement'],
     // flag to denote transition from a create action
     create_cluster_start : false,
     count : 0,
@@ -18,13 +18,13 @@ App.UserWelcomeController = Ember.Controller.extend({
     content_tabs : function(key,value){
         var tabs_object = this.get('content_tabs_info');
         if (arguments.length>1){//setter
+            tabs_object["vreservers"]["active"]=false;
+            tabs_object["clusters"]["active"]=false;            
             switch(value) {
             case "clusters":
                 tabs_object["clusters"]["active"]=true;
-                tabs_object["vreservers"]["active"]=null;
             case "vreservers":
                 tabs_object["vreservers"]["active"]=true;
-                tabs_object["clusters"]["active"]=null;
             }
             return tabs_object;
         }
@@ -106,6 +106,11 @@ App.UserWelcomeController = Ember.Controller.extend({
                 this.set('sorted_vreservers_prop',sort_properties);
             }
             this.setProperties(this.get_sorting_info(short_model_name,sortAscending,column));
+        },
+        goto_scale_cluster : function(cluster_id){
+            console.log(cluster_id);
+            this.get('controllers.clusterManagement').send('setActiveTab','manage');
+            this.transitionToRoute('cluster.management',cluster_id);
         },
         setActiveTab : function(tab){
             this.set('content_tabs',tab);  
