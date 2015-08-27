@@ -1196,11 +1196,13 @@ App.ClusterCreateController = Ember.Controller.extend({
 		},
 		// Cancel action when in create cluster -> redirect to user's welcome screen
 		cancel : function() {
+		    var that = this;
 			// reset variables();
 			this.reset_variables();
 			this.reset_project();
+			this.get('controllers.userWelcome').send('setActiveTab','clusters');
 			// redirect to welcome
-			this.transitionToRoute('user.welcome');
+			Ember.run.next(function(){that.transitionToRoute('user.welcome');});
 		},
 		// when create cluster button is pressed
 		// go_to_create action is triggered

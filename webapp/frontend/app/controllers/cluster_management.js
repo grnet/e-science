@@ -21,11 +21,15 @@ App.ClusterManagementController = Ember.Controller.extend({
             switch(value) {
             case "info":
                 tabs_object["info"]["active"]=true;
+                break;
             case "access":
                 tabs_object["access"]["active"]=true;
+                break;
             case "manage":
                 tabs_object["manage"]["active"]=true;
+                break;
             }
+            this.set('content_tabs_info',tabs_object);
             return tabs_object;
         }
         return tabs_object;

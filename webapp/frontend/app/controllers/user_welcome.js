@@ -19,13 +19,16 @@ App.UserWelcomeController = Ember.Controller.extend({
         var tabs_object = this.get('content_tabs_info');
         if (arguments.length>1){//setter
             tabs_object["vreservers"]["active"]=false;
-            tabs_object["clusters"]["active"]=false;            
+            tabs_object["clusters"]["active"]=false;
             switch(value) {
             case "clusters":
                 tabs_object["clusters"]["active"]=true;
+                break;
             case "vreservers":
                 tabs_object["vreservers"]["active"]=true;
+                break;
             }
+            this.set('content_tabs_info',tabs_object);
             return tabs_object;
         }
         return tabs_object;
@@ -98,12 +101,14 @@ App.UserWelcomeController = Ember.Controller.extend({
                 var primarysort = '%@:%@'.fmt(column,sortAscending && 'asc' || 'desc');
                 var sort_properties = (column == 'action_date') && [primarysort] || [primarysort,'action_date:desc'];
                 this.set('sorted_clusters_prop',sort_properties);
+                break;
             case "uv":
                 this.set('sorted_vreservers_dir',!this.get('sorted_vreservers_dir'));
                 sortAscending = this.get('sorted_vreservers_dir');
                 var primarysort = '%@:%@'.fmt(column,sortAscending && 'asc' || 'desc');
                 var sort_properties = (column == 'action_date') && [primarysort] || [primarysort,'action_date:desc'];
                 this.set('sorted_vreservers_prop',sort_properties);
+                break;
             }
             this.setProperties(this.get_sorting_info(short_model_name,sortAscending,column));
         },
