@@ -15,18 +15,20 @@ App.ClusterManagementController = Ember.Controller.extend({
     content_tabs : function(key,value){
         var tabs_object = this.get('content_tabs_info');
         if (arguments.length>1){//setter
-            tabs_object["info"]["active"]=false;
-            tabs_object["access"]["active"]=false;
-            tabs_object["manage"]["active"]=false;
+            // must use Ember.set() to workaround Ember 1.8.x issue 
+            // ref: http://discuss.emberjs.com/t/ember-1-8-you-must-use-ember-set-to-set-the-property/6582, https://github.com/emberjs/ember.js/issues/10209
+            Ember.set(tabs_object.info,'active',false);
+            Ember.set(tabs_object.access,'active',false);
+            Ember.set(tabs_object.manage,'active',false);
             switch(value) {
             case "info":
-                tabs_object["info"]["active"]=true;
+                Ember.set(tabs_object.info,'active',true);
                 break;
             case "access":
-                tabs_object["access"]["active"]=true;
+                Ember.set(tabs_object.access,'active',true);
                 break;
             case "manage":
-                tabs_object["manage"]["active"]=true;
+                Ember.set(tabs_object.manage,'active',true);
                 break;
             }
             this.set('content_tabs_info',tabs_object);
@@ -103,7 +105,7 @@ App.ClusterManagementController = Ember.Controller.extend({
 			this.get('controllers.clusterCreate').set('hue_message', this.get('hue_message'));
 		},
         setActiveTab : function(tab){
-            this.set('content_tabs',tab);  
+            this.set('content_tabs',tab);
         },
 		visitActiveImage : function(os_image){
 		    for (i=0;i<this.get('orkaImages').length;i++){

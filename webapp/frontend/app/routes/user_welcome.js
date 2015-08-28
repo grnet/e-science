@@ -59,6 +59,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			// leaving this route
 			this.controller.send('timer', false);
 			this.controller.send('removeMessage',1,true);
+			this.controller.send('setActiveTab','clusters');
 		},
 		didTransition : function() {
 			// arrived at this route
