@@ -55,7 +55,7 @@ Images command has no required positional or optional arguments.
 
 ### {orka images} command example
 
-example for listing available images using defaults from .kamakirc
+example for listing available images and their pithos uuid values using defaults from .kamakirc
 
     orka images 
 
