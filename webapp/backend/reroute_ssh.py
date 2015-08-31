@@ -297,7 +297,7 @@ def establish_connect(hostname, name, passwd, port):
         raise RuntimeError(msg, error_ssh_client)
     i = 0
     while True:
-        response = os.system("ping -c1 -w4 " + hostname + " > /dev/null 2>&1")
+        response = subprocess.call("ping -c1 -w4 " + hostname + " > /dev/null 2>&1", shell=True)
         if response == 0:
             try:
                 logging.log(REPORT, ' Ping %s:%s', hostname, port)

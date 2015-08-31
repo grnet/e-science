@@ -363,7 +363,7 @@ class YarnCluster(object):
         server_ip = '127.0.0.1'
         # Update DB with server status as pending
         new_state = "Started creation of Virtual Research Environment server {0}".format(vre_server_name)
-        os.system('rm ' + self.ssh_file)
+        subprocess.call('rm ' + self.ssh_file, shell=True)
         set_server_state(self.opts['token'], server_id, new_state, okeanos_server_id=server['id'], password=server_pass)
         new_status = self.cyclades.wait_server(server['id'], max_wait=MAX_WAIT)
         
@@ -447,7 +447,7 @@ class YarnCluster(object):
         except Exception, e:
             # If error in bare cluster, update cluster status as destroyed
             set_cluster_state(self.opts['token'], self.cluster_id, 'Error', status='Failed', error=str(e.args[0]))
-            os.system('rm ' + self.ssh_file)
+            subprocess.call('rm ' + self.ssh_file, shell=True)
             raise
         # Get master VM root password
         self.master_root_pass = self.server_dict[0]['adminPass']
@@ -486,7 +486,7 @@ class YarnCluster(object):
 
         finally:
             if self.ssh_file != 'no_ssh_key_selected':
-                os.system('rm ' + self.ssh_file)
+                subprocess.call('rm ' + self.ssh_file, shell=True)
 
         return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass, self.cluster_id
 
