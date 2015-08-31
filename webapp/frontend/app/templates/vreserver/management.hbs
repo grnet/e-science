@@ -8,18 +8,18 @@
 </div>
 
 <ul id="id_management_tabs" class="nav nav-tabs">
-	<li class="active">
-		<a href="#id_tab_info" data-toggle="tab">Info</a>
-	</li>
-	<li>
-		<a href="#id_tab_access" data-toggle="tab">Access</a>
-	</li>
-	<li>
-		<a href="#id_tab_manage" data-toggle="tab">Manage</a>
-	</li>
+    <li {{bind-attr class="content_tabs.info.active:active"}}>
+        <a data-toggle="tab" {{bind-attr href="content_tabs.info.href"}}>{{content_tabs.info.name}}</a>
+    </li>
+    <li {{bind-attr class="content_tabs.access.active:active"}}>
+        <a data-toggle="tab" {{bind-attr href="content_tabs.access.href"}}>{{content_tabs.access.name}}</a>
+    </li>
+    <li {{bind-attr class="content_tabs.manage.active:active"}}>
+        <a data-toggle="tab" {{bind-attr href="content_tabs.manage.href"}}>{{content_tabs.manage.name}}</a>
+    </li>
 </ul>
 <div id="id_management_tab_content" class="tab-content">
-   <div class="tab-pane fade in active" id="id_tab_info">
+   <div {{bind-attr id="content_tabs.info.id" class=":tab-pane content_tabs.info.active:active"}}>
    		<h4 class="list-group-item-heading">VRE Server</h4>
        		<table class="table table-striped table-hover table-border">
       			<tr>
@@ -59,7 +59,7 @@
       		</table>
       			
    </div>
-   <div class="tab-pane fade" id="id_tab_access">
+   <div {{bind-attr id="content_tabs.access.id" class=":tab-pane content_tabs.access.active:active"}}>
       {{#if model.boolean_vre_status_active}}	    
    		   <table class="table table-striped table-hover table-border">
  		     <tr>
@@ -77,14 +77,14 @@
 	       <div class="text-warning text-center">No information available.</div>
        {{/if}}
    </div>
-   <div class="tab-pane fade col col-sm-2" id="id_tab_manage">
+   <div {{bind-attr id="content_tabs.manage.id" class=":tab-pane content_tabs.manage.active:active"}}>
 		{{#if model.boolean_vre_status_active}}
-		 <div class='btn-group-vertical btn-group-sm'>
+		 <div class='btn-group-vertical btn-group-sm col col-sm-2'>
 				{{#ifeq model.action_server_confirm 'server_delete'}}
-				<div class='btn-toolbar-horizontal btn-toolbar-sm btn-block'>
-                    <div class='btn-group btn-group-sm'>
-					<a role="button" {{bind-attr id='model.id_server_confirm'}} {{action 'takeVreAction' model}} class="btn btn-danger btn-sm active">{{model.description_action_server_confirm}}</a>
-					<a role="button" {{action 'confirmVreAction' model false}} class="btn btn-danger btn-sm active">x</a>
+				<div class='btn-toolbar-horizontal btn-toolbar-sm'>
+                    <div class='btn-group btn-group-sm btn-block'>
+					<button {{bind-attr id='model.id_server_confirm'}} {{action 'takeVreAction' model}} class="btn btn-danger btn-sm active col-sm-10">{{model.description_action_server_confirm}}</button>
+					<button {{action 'confirmVreAction' model false}} class="btn btn-danger btn-sm active col-sm-2">x</button>
 				    </div>
                 </div>
 				{{else}}
