@@ -326,7 +326,7 @@ App.Usercluster = DS.Model.extend({
 		var cluster_status = this.get('cluster_status');
 		var hadoop_status = this.get('hadoop_status');
 		var state = this.get('state');
-		if (cluster_status == '1' && hadoop_status == '2'){
+		if (cluster_status == '1' && (hadoop_status == '2' || hadoop_status == '3')){
 			return state;
 		}else
 		{
@@ -342,6 +342,8 @@ App.Usercluster = DS.Model.extend({
 		switch (status){
 		case "0":
 			return false;
+		case "3":
+		    return false;
 		default:
 			return true;
 		}
@@ -354,7 +356,9 @@ App.Usercluster = DS.Model.extend({
 		}
 		switch (status){
 		case "1":
-			return false;
+		    return false;
+	    case "3":
+	        return false;
 		default:
 			return true;
 		}
@@ -480,7 +484,7 @@ App.Usercluster = DS.Model.extend({
   			case "2":
    				return "PENDING";
   			default:
-   				return "";
+   				return "UNKNOWN";
   		}
  	}.property('hadoop_status','cluster_status')
 });

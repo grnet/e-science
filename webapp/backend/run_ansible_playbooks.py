@@ -144,7 +144,12 @@ def ansible_manage_cluster(cluster_id, action):
 
         for hadoop_action in ANSIBLE_SEQUENCE:
             ansible_code = '{0} {1} {2}'.format(ansible_code_generic, hadoop_action, ansible_log)
-            execute_ansible_playbook(ansible_code)
+            try:
+                execute_ansible_playbook(ansible_code)
+            except Exception, e:
+                msg = str(e.args[0])
+                db_hadoop_update(cluster_id, 'undefined', msg)
+                raise RuntimeError(msg)
 
         msg = 'Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
         db_hadoop_update(cluster_id, current_hadoop_status, msg)
@@ -195,7 +200,7 @@ def execute_ansible_playbook(ansible_command):
         if exit_status > 0:
             # exit_status holds a 16bit integer whose low byte is signum, high byte actual exit code ref: https://docs.python.org/2/library/os.html#os.wait
             # to get a meaningful return code out of ansible we need to use bit shifting to get the high byte.
-            exit_status = (exit_status & 0xff00) >> 8
+            # exit_status = (exit_status & 0xff00) >> 8 #only needed if using the older os.system(), subprocess.call() does hi/lo byte handling automatically.
             msg = 'Ansible failed with exit status %d' % exit_status
             raise RuntimeError(msg, exit_status)
     except OSError as e:
