@@ -65,6 +65,9 @@ def get_from_kamaki_conf(section, option, action=None):
             if action == 'orka_images':
                 url_orka_images = '{0}{1}'.format(option_value, orka_images_endpoint)
                 return url_orka_images
+            if action == 'node':
+                url_node = '{0}{1}'.format(option_value, node_endpoint)
+                return url_node
             else:
                 logging.log(SUMMARY, ' Url to be returned from .kamakirc not specified')
                 return 0

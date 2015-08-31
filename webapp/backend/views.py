@@ -317,6 +317,38 @@ class SessionView(APIView):
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
             
+class NodeServerView(APIView):
+    """
+    View to handle requests for adding or deleting a node server.
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (IsAuthenticated, )
+    resource_name = 'nodeserver'
+    serializer_class = ClusterchoicesSerializer
+    
+    def post(self, request, *args, **kwargs):
+        """
+        Handles requests for adding a node.
+        """
+        serializer = self.serializer_class(data=request.DATA)
+        if serializer.is_valid():
+            user_token = Token.objects.get(key=request.auth)
+            user = UserInfo.objects.get(user_id=user_token.user.user_id)
+
+            # Dictionary of VreServer arguments
+            choices = dict()
+            choices = serializer.data.copy()
+            choices.update({'token': user.okeanos_token, "cpu_slaves": 0,"ram_slaves": 0,
+                            "disk_slaves": 0,"cpu_master": choices['cpu'],"ram_master": choices['ram'],
+                            "disk_master": choices['disk']})
+            c_server = create_server_async.delay(choices)
+            task_id = c_server.id
+            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+
+        # This will be send if user's parameters are not de-serialized
+        # correctly.
+        return Response(serializer.errors)
+            
 class VreServerView(APIView):
     """
     View to handle requests for Virtual Research Environment servers.

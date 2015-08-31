@@ -271,6 +271,44 @@ class HadoopCluster(object):
             logging.error(str(e.args[0]))
             exit(error_fatal)
             
+            
+    def node_action(self):
+        """ Method for taking node actions in a Hadoop cluster in~okeanos."""
+        opt_addnode = self.opts.get('addnode', False)
+        opt_deletenode = self.opts.get('deletenode', False)
+        clusters = get_user_clusters(self.opts['token'], self.opts['server_url'])
+        for cluster in clusters:
+            if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == const_cluster_status_active:
+                if self.opts['ram'] < cluster['ram_slaves']:
+                    logging.error('Ram should not be lower than the memory of the other slaves.')
+                    exit(error_fatal)
+                self.opts['name'] = '{0}-{1}'.format(cluster['cluster_name'], cluster['cluster_size']+1)
+                self.opts['project_name'] = cluster['project_name']
+                break
+        else:
+            logging.error('You can take node actions only in an active cluster.')
+            exit(error_fatal)
+        if opt_addnode == True:
+            try:
+                payload = {"nodeserver":{"project_name": self.opts['project_name'], "server_name": self.opts['name'],
+                                         "id": self.opts['cluster_id'], "cpu": self.opts['cpu'],
+                                         "ram": self.opts['ram'], "disk": self.opts['disk']}}
+                yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='node')
+                response = yarn_cluster_req.post()
+                print response
+                if 'task_id' in response['nodeserver']:
+                    task_id = response['nodeserver']['task_id']
+                else:
+                    logging.error(response['nodeserver']['message'])
+                    exit(error_fatal)
+                result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
+                logging.log(SUMMARY, 'Node added successfully in cluster.')
+                exit(SUCCESS)
+            except Exception, e:
+                stderr.write('{0}'.format('\r'))
+                logging.error(str(e.args[0]))
+                exit(error_fatal)
+        # elif opt_deletenode == True:
 
     def hadoop_action(self):
         """ Method for applying an action to a Hadoop cluster"""
@@ -780,6 +818,8 @@ def main():
     parser_destroy = orka_subparsers.add_parser('destroy', parents=[common_parser],
                                      help='Destroy a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
+    parser_node = orka_subparsers.add_parser('node', parents=[common_parser],
+                                     help='Operations on a Hadoop-Yarn cluster for adding or deleting a node.')
     parser_list = orka_subparsers.add_parser('list', parents=[common_parser],
                                      help='List user clusters.')
     parser_info = orka_subparsers.add_parser('info', parents=[common_parser],
@@ -799,6 +839,11 @@ def main():
                                      help='Get/Download a file from the Hadoop-Yarn filesystem to <destination>.')
     parser_file_list = file_subparsers.add_parser('list',
                                              help='List pithos+ files.')
+    parser_node_subparsers = parser_node.add_subparsers(help='Choose node action add or delete')
+    parser_addnode = parser_node_subparsers.add_parser('add',
+                                                       help='Add a node in a Hadoop-Yarn cluster on ~okeanos.')
+    parser_deletenode = parser_node_subparsers.add_parser('delete',
+                                                          help='Remove a node from a Hadoop-Yarn cluster on ~okeanos.')
     
     if len(argv) > 1:
         
@@ -860,6 +905,22 @@ def main():
         
         parser_vre_destroy.add_argument('server_id',
                               help='The id of a VRE server', type=checker.positive_num_is)
+        
+        # hidden argument with default value so we can set opts['addnode'] 
+        # when ANY 'orka node add' command is invoked
+        parser_addnode.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='addnode')
+        parser_addnode.add_argument('cluster_id', help='The id of the Hadoop cluster',
+                                   type=checker.positive_num_is)
+        parser_addnode.add_argument("cpu", help='Number of CPU cores for server',
+                                   type=checker.positive_num_is)
+        parser_addnode.add_argument("ram", help='Size of RAM (MB) for server',
+                                   type=checker.positive_num_is)
+        parser_addnode.add_argument("disk", help='Disk size (GB) for server',
+                                   type=checker.five_or_larger_is)
+        
+        # hidden argument with default value so we can set opts['deletenode'] 
+        # when ANY 'orka node delete' command is invoked
+        parser_deletenode.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='deletenode')
      
         parser_list.add_argument('--status', help='Filter by status ({%(choices)s})'
                               ' Default is all: no filtering.', type=str.upper,
@@ -950,6 +1011,8 @@ def main():
                 c_imagesinfo.list_images('vre')
             else:
                 c_hadoopcluster.vre_action()
+        elif verb == 'node':
+            c_hadoopcluster.node_action()
 
     else:
         logging.error('No arguments were given')

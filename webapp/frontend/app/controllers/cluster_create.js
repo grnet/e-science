@@ -902,7 +902,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			var msg = {'msg_type':'warning','msg_text':'IMPORTANT: First login in Hue browser with username : hdfs and password : ' + this.get('admin_password')};
 			this.get('controllers.userWelcome').send('addMessage',msg);
 		} else if (this.get('hue_message') === 'HUE'){
-			var msg = {'msg_type':'warning','msg_text':'IMPORTANT: First login in Hue browser with username : hduser : ' + this.get('admin_password')};
+			var msg = {'msg_type':'warning','msg_text':'IMPORTANT: First login in Hue browser with username : hduser and password : ' + this.get('admin_password')};
 			this.get('controllers.userWelcome').send('addMessage',msg);
 		}
 	},
