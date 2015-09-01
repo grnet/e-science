@@ -3,8 +3,39 @@ App.VreserverManagementController = Ember.Controller.extend({
 	needs : ['vreserverCreate','helpVreimages'],
     count : 0,
     vreImages : [],
-	
+    // tabs info for template
+    content_tabs_info : {
+        info: {id:'id_tab_info',href:'#id_tab_info',name:'Info',active:true},
+        access: {id:'id_tab_access',href:'#id_tab_access',name:'Access'},
+        manage : {id:'id_tab_manage',href:'#id_tab_manage',name:'Manage'}
+    },
+    content_tabs : function(key,value){
+        var tabs_object = this.get('content_tabs_info');
+        if (arguments.length>1){//setter
+            tabs_object["info"]["active"]=false;
+            tabs_object["access"]["active"]=false;
+            tabs_object["manage"]["active"]=false;
+            switch(value) {
+            case "info":
+                tabs_object["info"]["active"]=true;
+                break;
+            case "access":
+                tabs_object["access"]["active"]=true;
+                break;
+            case "manage":
+                tabs_object["manage"]["active"]=true;
+                break;
+            }
+            this.set('content_tabs_info',tabs_object);
+            return tabs_object;
+        }
+        return tabs_object;
+    }.property(),
+    	
 	actions : {
+        setActiveTab : function(tab){
+            this.set('content_tabs',tab);  
+        },		
 		
 		visitActiveImage : function(os_image){
 		    for (i=0;i<this.get('vreImages').length;i++){

@@ -363,7 +363,7 @@ class YarnCluster(object):
         server_ip = '127.0.0.1'
         # Update DB with server status as pending
         new_state = "Started creation of Virtual Research Environment server {0}".format(vre_server_name)
-        os.system('rm ' + self.ssh_file)
+        subprocess.call('rm ' + self.ssh_file, shell=True)
         set_server_state(self.opts['token'], server_id, new_state, okeanos_server_id=server['id'], password=server_pass)
         new_status = self.cyclades.wait_server(server['id'], max_wait=MAX_WAIT)
         
@@ -385,7 +385,7 @@ class YarnCluster(object):
             vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
             if vre_image_uuid == server['image']['id']:
                 chosen_vre_image = pithos_vre_images_uuids_actions[vre_image_uuid]
-                start_vre(server_ip,server_pass,unmask_token(encrypt_key, self.opts['token']), chosen_vre_image)
+                start_vre(server_ip,server_pass,self.opts['admin_password'], chosen_vre_image, self.opts['admin_email'])
             else:
                 msg = u'VRE server \"{0}\" creation failed because image {1} exists on database but cannot be found or has different id'
                 u' on Pithos+'.format(self.opts['server_name'],self.opts['os_choice'])                                                                                   
@@ -447,7 +447,7 @@ class YarnCluster(object):
         except Exception, e:
             # If error in bare cluster, update cluster status as destroyed
             set_cluster_state(self.opts['token'], self.cluster_id, 'Error', status='Failed', error=str(e.args[0]))
-            os.system('rm ' + self.ssh_file)
+            subprocess.call('rm ' + self.ssh_file, shell=True)
             raise
         # Get master VM root password
         self.master_root_pass = self.server_dict[0]['adminPass']
@@ -474,7 +474,7 @@ class YarnCluster(object):
                           'Installing and configuring YARN (3/3)')
 
             install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
-                         self.cluster_name_postfix_id, self.orka_image_uuid, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'])
+                         self.cluster_name_postfix_id, self.orka_image_uuid, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'], self.opts['admin_password'])
 
         except Exception, e:
             logging.error(str(e.args[0]))
@@ -486,7 +486,7 @@ class YarnCluster(object):
 
         finally:
             if self.ssh_file != 'no_ssh_key_selected':
-                os.system('rm ' + self.ssh_file)
+                subprocess.call('rm ' + self.ssh_file, shell=True)
 
         return self.HOSTNAME_MASTER_IP, self.server_dict, self.master_root_pass, self.cluster_id
 

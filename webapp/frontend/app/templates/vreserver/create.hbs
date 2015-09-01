@@ -114,11 +114,65 @@ Can also select server name, project name, flavor, ssh-key-->
                         </button>
 					</div>
 				</div>
+                <div class="row text-center text-danger">
+                    <div class="col col-sm">
+                        {{alert_missing_input_image}}
+                    </div>
+                </div>				
+				{{#if show_admin_pass_input}}
+				<div class="form-group">
+				    <label for="id_vre_admin_pass" class="control-label col-sm-5"> Admin Pass </label>
+				    <div class="col col-sm-7">
+    				    <div class="input-group">				        
+    				        {{input type="text" 
+                            value=vre_admin_pass
+                            placeholder="Upper/lowercase letters and numbers"
+                            required="true"
+                            id="id_vre_admin_pass"
+                            action="admin_pass_validate"
+                            on="focus-out"
+                            classNames="input-sm form-control"}}
+                            <span class="input-group-btn">
+                                <button
+                                id=id_admin_pass_random
+                                data-toggle="tooltip"
+                                data-placement="top"
+                                data-trigger="hover focus"
+                                data-container="body"
+                                title="Generate random password"
+                                class="btn btn-primary btn-sm"
+                                {{action "admin_pass_generate"}}
+                                >
+                                    <b class="glyphicon glyphicon-random"></b>
+                                </button>
+                            </span>                         
+    				    </div>
+				    </div>
 				<div class="row text-center text-danger">
-					<div class="col col-sm">
-						{{alert_missing_input_image}}
-					</div>
-				</div>
+                    <div class="col col-sm">
+				    {{alert_missing_input_admin_pass}}{{alert_invalid_input_admin_pass}}
+				    </div>
+                </div>  
+				{{/if}}
+                {{#if show_admin_email_input}}
+                <div class="form-group">
+                    <label for="id_vre_admin_email" class="control-label col-sm-5"> Admin Email </label>              
+                    <div class="col col-sm-7">                       
+                        {{input type="email" 
+                        value=vre_admin_email
+                        placeholder="a@b.cc"
+                        id="id_vre_admin_email"
+                        action="admin_email_validate"
+                        on="focus-out"
+                        classNames="input-sm form-control"}}
+                    </div>
+                </div>
+                <div class="row text-center text-danger">
+                    <div class="col col-sm">
+                    {{alert_missing_input_admin_email}}{{alert_invalid_input_admin_email}}
+                    </div>
+                </div>  
+                {{/if}}
 			</div>
 		</div>
 		<div class="col col-sm-6">

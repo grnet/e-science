@@ -1,7 +1,7 @@
 // User Welcome controller
 App.UserWelcomeController = Ember.Controller.extend({
 
-    needs : ['clusterCreate','vreserverCreate'],
+    needs : ['clusterCreate','vreserverCreate','clusterManagement'],
     // flag to denote transition from a create action
     create_cluster_start : false,
     count : 0,
@@ -18,14 +18,19 @@ App.UserWelcomeController = Ember.Controller.extend({
     content_tabs : function(key,value){
         var tabs_object = this.get('content_tabs_info');
         if (arguments.length>1){//setter
+            // must use Ember.set() to workaround Ember 1.8.x issue 
+            // ref: http://discuss.emberjs.com/t/ember-1-8-you-must-use-ember-set-to-set-the-property/6582, https://github.com/emberjs/ember.js/issues/10209
+            Ember.set(tabs_object.vreservers,'active',false);
+            Ember.set(tabs_object.clusters,'active',false);
             switch(value) {
             case "clusters":
-                tabs_object["clusters"]["active"]=true;
-                tabs_object["vreservers"]["active"]=null;
+                Ember.set(tabs_object.clusters,'active',true);
+                break;
             case "vreservers":
-                tabs_object["vreservers"]["active"]=true;
-                tabs_object["clusters"]["active"]=null;
+                Ember.set(tabs_object.vreservers,'active',true);
+                break;
             }
+            this.set('content_tabs_info',tabs_object);
             return tabs_object;
         }
         return tabs_object;
@@ -98,14 +103,20 @@ App.UserWelcomeController = Ember.Controller.extend({
                 var primarysort = '%@:%@'.fmt(column,sortAscending && 'asc' || 'desc');
                 var sort_properties = (column == 'action_date') && [primarysort] || [primarysort,'action_date:desc'];
                 this.set('sorted_clusters_prop',sort_properties);
+                break;
             case "uv":
                 this.set('sorted_vreservers_dir',!this.get('sorted_vreservers_dir'));
                 sortAscending = this.get('sorted_vreservers_dir');
                 var primarysort = '%@:%@'.fmt(column,sortAscending && 'asc' || 'desc');
                 var sort_properties = (column == 'action_date') && [primarysort] || [primarysort,'action_date:desc'];
                 this.set('sorted_vreservers_prop',sort_properties);
+                break;
             }
             this.setProperties(this.get_sorting_info(short_model_name,sortAscending,column));
+        },
+        goto_scale_cluster : function(cluster_id){
+            this.get('controllers.clusterManagement').send('setActiveTab','manage');
+            this.transitionToRoute('cluster.management',cluster_id);
         },
         setActiveTab : function(tab){
             this.set('content_tabs',tab);  

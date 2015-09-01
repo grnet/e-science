@@ -7,19 +7,33 @@ App.VreserverCreateController = Ember.Controller.extend({
 	 * Static Data
 	 */
 	// client-side only, eventually add data structure to the backend
-	vreCategoryLabels : ['Portal/Cms','Wiki','Project Management'],
+	vreCategoryLabels : ['Portal/Cms','Wiki','Project Management','Digital Repository'],
 	vreCategoryData : {
 	    'Portal/Cms' : ['Drupal-7.3.7'],
 	    'Wiki' : ['Mediawiki-1.2.4'],
-	    'Project Management': ['Redmine-3.0.4'] 
+	    'Project Management': ['Redmine-3.0.4'],
+	    'Digital Repository': ['DSpace-5.3']
 	},
 	// client-side only, eventually move to backend
 	vreFlavorLabels : ['Small', 'Medium', 'Large'],
 	vreFlavorData : [
-	   {cpu:1,ram:1024,disk:5}, //Small
-	   {cpu:2,ram:2048,disk:10},//Medium
-	   {cpu:4,ram:4096,disk:20} //Large
+	   {cpu:2,ram:2048,disk:5}, //Small
+	   {cpu:2,ram:4096,disk:10},//Medium
+	   {cpu:4,ram:6144,disk:20} //Large
 	],
+	vreResourceMin : {
+	    'DSpace-5.3':{ram:2048}
+	},
+	vreImageExtraProperties : {
+	    // controller_show_field : [image,...] / '*' = all images
+	    'show_admin_pass_input' : ['*'],
+	    'show_admin_email_input': ['DSpace-5.3']
+	},
+	vreImageExtraFields : {
+	   // image : [extra_field,...] / '*' = all images
+	   '*' : ['admin_password'],
+	   'DSpace-5.3' : ['admin_email']
+	},
 	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
 	// mapping of uservreserver model properties to controller computed properties
 	model_to_controller_map : {
@@ -30,7 +44,9 @@ App.VreserverCreateController = Ember.Controller.extend({
         disk: 'selected_disk_value', 
         disk_template: 'selected_storage_description',
         os_image: 'selected_image',
-        ssh_key_selection: 'selected_sshkey'
+        ssh_key_selection: 'selected_sshkey',
+        admin_password: 'vre_admin_pass',
+        admin_email : 'vre_admin_email'
 	},
 	/*
 	 * Project selection:
@@ -98,18 +114,27 @@ App.VreserverCreateController = Ember.Controller.extend({
         var html_templ = '%@%@: <span class="text text-info pull-right">%@</span><br>';
         var html_snippet = '<h5 class="strong">Component: <span class="text text-info">Version</span></h5>';
         var image_data = this.get('vreImages');
+        var extra_fields = this.get('vreImageExtraProperties');
+        for (property in extra_fields){
+            this.set(property,null);
+        }
         for (i=0; i<image_data.length; i++){
             if (image_data[i].get('image_name') == this.get('selected_image')){
                 var arr_image_components = image_data[i].get('image_components');
                 for (j=0; j<arr_image_components.length; j++){
                     html_snippet = html_templ.fmt(html_snippet, arr_image_components[j]['name'], arr_image_components[j]['property']['version']);
                 }
-                var self = this;
-                self.set('selected_image_popover',true);
+                for (property in extra_fields){
+                    if (extra_fields[property].contains(this.get('selected_image')) || extra_fields[property].contains('*')){
+                        this.set(property,true);
+                    }
+                }
+                this.set('selected_image_popover',true);
                 return html_snippet;
             }
         }
         this.set('selected_image_popover',null);
+        this.set('vre_admin_pass',null);
         return '';
     }.property('selected_image','selected_category'),
     selected_image_changed : function(){
@@ -208,11 +233,13 @@ App.VreserverCreateController = Ember.Controller.extend({
     selected_project_ram_choices_available : function(){
         var ram_choices = this.get('selected_project_ram_choices');
         var available_ram = Number(this.get('selected_project_available_ram'));
+        var selected_image = this.get('selected_image');
+        var ram_minimum = (!Ember.isEmpty(selected_image) && this.get('vreResourceMin')[selected_image]) && this.get('vreResourceMin')[selected_image]['ram'] || 0;
         var ram_choices_available = ram_choices.map(function(item,index,original){
-            return Number(item)<=available_ram && {value:item,disabled:false} || {value:item,disabled:true};
+            return (Number(item)<=available_ram && Number(item)>=ram_minimum) && {value:item,disabled:false} || {value:item,disabled:true};
         },this);
         return ram_choices_available; 
-    }.property('selected_project_ram_choices.[]'),    
+    }.property('selected_project_ram_choices.[]','selected_image'),    
     selected_ram_value : function(){
         return !this.get('boolean_no_project') && !Ember.isEmpty(this.get('selected_ram_id')) ? 
         this.get('selected_project_ram_choices')[this.get('selected_ram_id')] : 
@@ -272,6 +299,7 @@ App.VreserverCreateController = Ember.Controller.extend({
             this.set('last_vre_popover_data',null);
         }
     }.observes('last_vre_server'),
+    // missing input block
     alert_input_missing_boundto : {
         // data column > alert message property, input control element id
         project_name : ['alert_missing_input_project','#id_project_id'],
@@ -280,7 +308,9 @@ App.VreserverCreateController = Ember.Controller.extend({
         ram : ['alert_missing_input_ram','#id_ram_choice'],
         disk : ['alert_missing_input_disk','#id_disk_choice'],
         disk_template : ['alert_missing_input_storage','#id_storage_choice'],
-        os_image : ['alert_missing_input_image','#id_vre_image']
+        os_image : ['alert_missing_input_image','#id_vre_image'],
+        admin_password : ['alert_missing_input_admin_pass','#id_vre_admin_pass'],
+        admin_email : ['alert_missing_input_admin_email','#id_vre_admin_email']
     },
     alert_input_missing_text : {
         // alert message property > message text
@@ -290,8 +320,10 @@ App.VreserverCreateController = Ember.Controller.extend({
         alert_missing_input_ram : 'Please select RAM amount (MiB)',
         alert_missing_input_disk : 'Please select Disk size (GiB)',     
         alert_missing_input_storage : 'Please select a disk template',
-        alert_missing_input_image : 'Please select VRE category/image'
-    },    
+        alert_missing_input_image : 'Please select VRE category/image',
+        alert_missing_input_admin_pass : 'Please type in or generate an admin password. Copy it for first time login.',
+        alert_missing_input_admin_email : 'Please input the admin e-mail'
+    },
     missing_input : function(that, new_server){
         var self = that; // get the controller reference into self
         // clear alerts on new check
@@ -317,6 +349,61 @@ App.VreserverCreateController = Ember.Controller.extend({
         var missing_resources = self.get('selected_project_available_vm') < 1 || self.get('selected_project_available_ip') < 1;
         if (missing_resources) self.set('message','Insufficient project resources for VRE server creation');
         return missing_resources;
+    },
+    // invalid input block
+    alert_input_invalid_boundto : {
+        // data column > alert message property, input control element id
+        admin_password : ['alert_invalid_input_admin_pass','#id_vre_admin_pass'],
+        admin_email : ['alert_invalid_input_admin_email', '#id_vre_admin_email']
+    },
+    alert_input_invalid_text : {
+        // alert message property > message text
+        alert_invalid_input_admin_pass : '%@ Upper/lowercase letters and numbers allowed. Minimum length:8.',
+        alert_invalid_input_admin_email: '%@ not a valid e-mail address. Example: a@b.cc'
+    },
+    alert_input_validators : {
+        // model property > true for invalid input, false/null for valid
+        admin_password : function(value,self){
+            var alert_prop_name = self.get('alert_input_invalid_boundto')['admin_password'][0];
+            var input_element = $(self.get('alert_input_invalid_boundto')['admin_password'][1]);
+            var _invalidpattern = /[^a-zA-Z0-9]+/;
+            var _minlength = 8;
+            var _result = _invalidpattern.exec(value) || '';
+            if (value.length < _minlength || _result.length > 0){
+                var _alert_text = self.get('alert_input_invalid_text')[alert_prop_name];
+                _result.length > 0 ? self.set(alert_prop_name,_alert_text.fmt('Invalid input:'+_result)) : self.set(alert_prop_name,_alert_text.fmt(''));
+                window.scrollTo(input_element.offsetLeft, input_element.offsetTop);
+                return true;
+            }
+            return false;
+        },
+        admin_email : function(value,self){
+            var alert_prop_name = self.get('alert_input_invalid_boundto')['admin_email'][0];
+            var input_element = $(self.get('alert_input_invalid_boundto')['admin_email'][1]);
+            var _validpattern = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,4})+$/;
+            var result = _validpattern.test(value);
+            if (!result){
+                var _alert_text = self.get('alert_input_invalid_text')[alert_prop_name];
+                self.set(alert_prop_name,_alert_text.fmt(value));
+                window.scrollTo(input_element.offsetLeft, input_element.offsetTop);
+                return true;
+            }
+            return false;
+        }
+    },
+    invalid_input : function(that, new_server){
+        var self = that; // get the controller reference into self
+        // clear alerts on new check
+        for (alert in self.get('alert_input_invalid_text')){
+            self.set(alert,null);
+        }
+        for (property in new_server) {
+            if (!Ember.isEmpty(self.get('alert_input_validators')[property])){
+                var invalid = self.get('alert_input_validators')[property](new_server[property],self);
+                if (invalid) return true;
+            }
+        }
+        return false;
     },
     /*
      * Actions
@@ -428,12 +515,41 @@ App.VreserverCreateController = Ember.Controller.extend({
                 }
             }
         },
+        admin_pass_generate : function(){
+            this.set('vre_admin_pass',PassGen.generate(12));
+            this.send('admin_pass_validate');
+            this.send('admin_pass_select');
+        },
+        admin_pass_select : function(){
+            if (!Ember.isEmpty(this.get('vre_admin_pass'))){
+                Ember.run.later(function(){$('#id_vre_admin_pass').select();},100);
+                this.set('alert_missing_input_admin_pass',null);
+            }
+        },
+        admin_pass_validate : function(){
+            this.set('alert_invalid_input_admin_pass',null);
+            this.set('alert_missing_input_admin_pass',null);
+            if (!Ember.isEmpty(this.get('vre_admin_pass'))) this.get('invalid_input')(this,{admin_password: this.get('vre_admin_pass')});
+        },
+        admin_email_validate : function(){
+            this.set('alert_invalid_input_admin_email',null);
+            this.set('alert_missing_input_admin_email',null);
+            if (!Ember.isEmpty(this.get('vre_admin_email'))) this.get('invalid_input')(this,{admin_email: this.get('vre_admin_email')});
+        },
         submit_create : function(){
             var that = this;
             var new_server = {};
+            var extra_fields = this.get('vreImageExtraFields');
             for (model_property in this.get('model_to_controller_map')){
                 var bound_controller_property = this.get('model_to_controller_map')[model_property];
                 new_server[model_property] = this.get(bound_controller_property);
+            }
+            for (image in extra_fields){// remove fields that are not applicable to some images
+                if (image!='*' && new_server['os_image']!=image){
+                    for (i=0;i<extra_fields[image].length;i++){
+                        delete new_server[extra_fields[image][i]];
+                    }
+                }
             }
             if (this.get('missing_resources')(that, new_server)){
                 return;
@@ -441,13 +557,18 @@ App.VreserverCreateController = Ember.Controller.extend({
             if (this.get('missing_input')(that, new_server)){
                 return;
             }
+            if (this.get('invalid_input')(that, new_server)){
+                return;
+            }
             this.store.fetch('user',1).then(function(user){
                 //success
                 var new_record = that.store.createRecord('uservreserver',new_server);
                 new_record.save().then(function(data){
+                    var admin_pass_msg = {'msg_type': 'warning', 'msg_text': 'The admin password of \"%@%@\" VRE server is %@'.fmt('[orka]-',data.get('server_name'),data.get('admin_password'))};
                     that.set('controllers.userWelcome.create_cluster_start', true);
                     that.get('controllers.userWelcome').send('setActiveTab','vreservers');
-                    that.transitionToRoute('user.welcome');
+                    that.get('controllers.userWelcome').send('addMessage',admin_pass_msg);
+                    Ember.run.next(function(){that.transitionToRoute('user.welcome');});
                 },function(reason){
                     console.log(reason);
                 });
@@ -456,21 +577,30 @@ App.VreserverCreateController = Ember.Controller.extend({
                 console.log(reason);
             });
         },
-        clear_cached : function(){
+        clear_cached : function(){// invalidate data cached on page, linked to selected project
             this.set('selected_storage_id',null);
             this.set('selected_cpu_id',null);
             this.set('selected_ram_id',null);
             this.set('selected_disk_id',null);
             this.set('selected_flavor_id',null);
+            this.set('selected_category',null);
+            this.set('selected_image',null);
+            this.set('vre_server_name',null);
+            this.set('vre_admin_pass',null);
+            this.set('vre_admin_email',null);
             this.set('message',null);
         },
-        reset : function(){
+        reset : function(){ // invalidate selected project (data linked to project cascades)
             this.set('selected_project_id',null);
             this.set('vre_server_name',null);
+            this.set('vre_admin_pass',null);
+            this.set('vre_admin_email',null);
         },
         cancel : function(){
+            var that = this;
             this.send('reset');
-            this.transitionToRoute('user.welcome');
+            this.get('controllers.userWelcome').send('setActiveTab','vreservers');
+            Ember.run.next(function(){that.transitionToRoute('user.welcome');});
         }
     }
 });
