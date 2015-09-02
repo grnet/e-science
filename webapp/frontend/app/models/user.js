@@ -43,6 +43,7 @@ App.Uservreserver = DS.Model.extend({
     }),
     // computed properties
     vre_okeanos_faq: function(){
+        // Return url with helpful info for setting up email port inside ~okeanos
         return 'https://okeanos.grnet.gr/support/faq/cyclades-why-is-port-x-closed-is-it-blocked-by-design/';
     }.property('os_image'),
     vre_access_url : function(){
