@@ -275,40 +275,90 @@ class HadoopCluster(object):
     def node_action(self):
         """ Method for taking node actions in a Hadoop cluster in~okeanos."""
         opt_addnode = self.opts.get('addnode', False)
-        opt_deletenode = self.opts.get('deletenode', False)
-        clusters = get_user_clusters(self.opts['token'], self.opts['server_url'])
-        for cluster in clusters:
-            if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == const_cluster_status_active:
-                if self.opts['ram'] < cluster['ram_slaves']:
-                    logging.error('Ram should not be lower than the memory of the other slaves.')
-                    exit(error_fatal)
-                self.opts['name'] = '{0}-{1}'.format(cluster['cluster_name'], cluster['cluster_size']+1)
-                self.opts['project_name'] = cluster['project_name']
-                break
-        else:
-            logging.error('You can take node actions only in an active cluster.')
-            exit(error_fatal)
-        if opt_addnode == True:
-            try:
-                payload = {"nodeserver":{"project_name": self.opts['project_name'], "server_name": self.opts['name'],
-                                         "id": self.opts['cluster_id'], "cpu": self.opts['cpu'],
-                                         "ram": self.opts['ram'], "disk": self.opts['disk']}}
-                yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='node')
-                response = yarn_cluster_req.post()
-                print response
-                if 'task_id' in response['nodeserver']:
-                    task_id = response['nodeserver']['task_id']
-                else:
-                    logging.error(response['nodeserver']['message'])
-                    exit(error_fatal)
-                result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
-                logging.log(SUMMARY, 'Node added successfully in cluster.')
-                exit(SUCCESS)
-            except Exception, e:
-                stderr.write('{0}'.format('\r'))
-                logging.error(str(e.args[0]))
-                exit(error_fatal)
-        # elif opt_deletenode == True:
+        opt_deletenode = self.opts.get('removenode', False)
+
+        if opt_deletenode == True:
+
+            clusters = get_user_clusters(self.opts['token'], self.opts['server_url'])
+            for cluster in clusters:
+                if (cluster['id'] == self.opts['cluster_id']):
+                    if int(cluster['cluster_size']) == int(cluster['replication_factor']) +1:
+                        print "Limited resources. Cannot remove node."
+                    else:
+                        print "Removing node"
+                        try:
+                            payload = {"clusterchoice":{"project_name": self.opts['project_name'], 
+                                        "cluster_name": self.opts['name'],
+                                        "cluster_size": self.opts['cluster_size'],
+                                        "cpu_master": self.opts['cpu_master'], 
+                                        "ram_master": self.opts['ram_master'],
+                                        "disk_master": self.opts['disk_master'], 
+                                        "cpu_slaves": self.opts['cpu_slave'],
+                                        "ram_slaves": self.opts['ram_slave'], 
+                                        "disk_slaves": self.opts['disk_slave'],
+                                        "disk_template": self.opts['disk_template'], 
+                                        "os_choice": self.opts['image'],
+                                        "replication_factor": self.opts['replication_factor'], 
+                                        "dfs_blocksize": self.opts['dfs_blocksize'],
+                                        "admin_password": self.opts['admin_password']}}
+
+                            yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, 
+                                                              payload, action='cluster')
+                            response = yarn_cluster_req.create_cluster()
+                            if 'task_id' in response['clusterchoice']:
+                                task_id = response['clusterchoice']['task_id']
+                            else:
+                                logging.error(response['clusterchoice']['message'])
+                                exit(error_fatal)
+                            result = task_message(task_id, self.escience_token, self.server_url, 
+                                                  wait_timer_create)
+                            
+                            
+                            logging.log(SUMMARY, " ")
+
+                            exit(SUCCESS)
+
+                        except Exception, e:
+                            stderr.write('{0}'.format('\r'))
+                            logging.error(str(e.args[0]))
+                            exit(error_fatal)
+
+
+#         clusters = get_user_clusters(self.opts['token'], self.opts['server_url'])
+#         for cluster in clusters:
+#             if (cluster['id'] == self.opts['cluster_id']) and cluster['cluster_status'] == const_cluster_status_active:
+#                 if self.opts['ram'] < cluster['ram_slaves']:
+#                     logging.error('Ram should not be lower than the memory of the other slaves.')
+#                     exit(error_fatal)
+#                 self.opts['name'] = '{0}-{1}'.format(cluster['cluster_name'], cluster['cluster_size']+1)
+#                 self.opts['project_name'] = cluster['project_name']
+#                 break
+#         else:
+#             logging.error('You can take node actions only in an active cluster.')
+#             exit(error_fatal)
+# 
+#         if opt_addnode == True:
+#             try:
+#                 payload = {"nodeserver":{"project_name": self.opts['project_name'], "server_name": self.opts['name'],
+#                                          "id": self.opts['cluster_id'], "cpu": self.opts['cpu'],
+#                                          "ram": self.opts['ram'], "disk": self.opts['disk']}}
+#                 yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, payload, action='node')
+#                 response = yarn_cluster_req.post()
+#                 print response
+#                 if 'task_id' in response['nodeserver']:
+#                     task_id = response['nodeserver']['task_id']
+#                 else:
+#                     logging.error(response['nodeserver']['message'])
+#                     exit(error_fatal)
+#                 result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
+#                 logging.log(SUMMARY, 'Node added successfully in cluster.')
+#                 exit(SUCCESS)
+#             except Exception, e:
+#                 stderr.write('{0}'.format('\r'))
+#                 logging.error(str(e.args[0]))
+#                 exit(error_fatal)
+#         elif opt_deletenode == True:
+
 
     def hadoop_action(self):
         """ Method for applying an action to a Hadoop cluster"""
@@ -842,7 +892,7 @@ def main():
     parser_node_subparsers = parser_node.add_subparsers(help='Choose node action add or delete')
     parser_addnode = parser_node_subparsers.add_parser('add',
                                                        help='Add a node in a Hadoop-Yarn cluster on ~okeanos.')
-    parser_deletenode = parser_node_subparsers.add_parser('delete',
+    parser_removenode = parser_node_subparsers.add_parser('remove',
                                                           help='Remove a node from a Hadoop-Yarn cluster on ~okeanos.')
     
     if len(argv) > 1:
@@ -918,10 +968,12 @@ def main():
         parser_addnode.add_argument("disk", help='Disk size (GB) for server',
                                    type=checker.five_or_larger_is)
         
-        # hidden argument with default value so we can set opts['deletenode'] 
-        # when ANY 'orka node delete' command is invoked
-        parser_deletenode.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='deletenode')
-     
+        # hidden argument with default value so we can set opts['removenode'] 
+        # when ANY 'orka node remove' command is invoked
+        parser_removenode.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='removenode')
+        parser_removenode.add_argument('cluster_id', help='The id of the Hadoop cluster', 
+                                       type=checker.positive_num_is)
+
         parser_list.add_argument('--status', help='Filter by status ({%(choices)s})'
                               ' Default is all: no filtering.', type=str.upper,
                               metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
