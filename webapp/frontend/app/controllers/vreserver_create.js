@@ -597,8 +597,10 @@ App.VreserverCreateController = Ember.Controller.extend({
             this.set('vre_admin_email',null);
         },
         cancel : function(){
+            var that = this;
             this.send('reset');
-            this.transitionToRoute('user.welcome');
+            this.get('controllers.userWelcome').send('setActiveTab','vreservers');
+            Ember.run.next(function(){that.transitionToRoute('user.welcome');});
         }
     }
 });

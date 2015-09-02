@@ -23,7 +23,7 @@ Optional arguments for vre create command:
 
 ### {orka vre create} command examples
 
-example for orka vre create with Drupal image:
+example for orka vre create with Drupal and DSpace images:
 
     orka vre create Drupal_Test 2 2048 20 Standard <project_name> Drupal-7.3.7 --admin_password=My21PaSswOrd
     orka vre create DSpace_Test 2 2048 20 Standard <project_name> DSpace-5.3 --admin_password=sOmEoTheRPassWorD --admin_email=mymail@gmail.com
@@ -41,13 +41,15 @@ example for orka vre destroy:
 
     orka vre destroy <server_id>
     
-### {orka vre images} command
+## "vre images" command
 
-With the following command:
+vre images command has no required positional or optional arguments.
+
+### {orka vre images} command example
+
+example for listing available VRE images and their pithos uuid values
 
     orka vre images
-
-a list of VRE image names and their pithos uuid values is shown.
 
 ## General Docker Info
 
@@ -122,17 +124,22 @@ and give the admin_password. If the postgresql dspace password is changed, it mu
 
 The entry db.password=<old_password> inside the dspace.cfg file must be changed to reflect the change in postgresql.After the change, stop and start the docker dspace container. It needs 3,5 to 4 minutes to be up and running,so the dspace urls can be accessed.
 
-Useful links:
+## Access VRE servers
+
+| VRE image   | Access URL
+|------------ |:---
+| Drupal      | *VRE server IP*
+| Mediawiki   | *VRE server IP*
+| Redmine     | *VRE server IP*`:10083`
+| DSpace      | *VRE server IP*`:8080/jspui` && *VRE server IP*`:8080/xmlui`
+
+## Useful links:
 
 https://www.docker.com/
 
 https://docs.docker.com/articles/basics/
 
 https://docs.docker.com/reference/commandline/exec/
-
-
-##Access VRE servers
-In order to access Drupal and Mediawiki, just visit the VM's IP. To access Redmine visit the VM's IP:10083. For DSpace the urls are VM_IP:8080/jspui and VM_IP:8080/xmlui.
 
 ## Getting help
 

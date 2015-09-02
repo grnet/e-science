@@ -170,6 +170,10 @@ App.Usercluster = DS.Model.extend({
 	user : DS.belongsTo('user', {
 		inverse : 'clusters'
 	}),
+	// computed properties
+    cluster_slaves_num : function(){
+        return this.get('cluster_size')-1;
+    }.property('cluster_size'),
 	workflow_link : function(){
 		return 'http://%@:8888/oozie/editor/workflow/new/'.fmt(this.get('master_IP'));
 	}.property('master_IP'),
@@ -322,7 +326,7 @@ App.Usercluster = DS.Model.extend({
 		var cluster_status = this.get('cluster_status');
 		var hadoop_status = this.get('hadoop_status');
 		var state = this.get('state');
-		if (cluster_status == '1' && hadoop_status == '2'){
+		if (cluster_status == '1' && (hadoop_status == '2' || hadoop_status == '3')){
 			return state;
 		}else
 		{
@@ -338,6 +342,8 @@ App.Usercluster = DS.Model.extend({
 		switch (status){
 		case "0":
 			return false;
+		case "3":
+		    return false;
 		default:
 			return true;
 		}
@@ -350,7 +356,9 @@ App.Usercluster = DS.Model.extend({
 		}
 		switch (status){
 		case "1":
-			return false;
+		    return false;
+	    case "3":
+	        return false;
 		default:
 			return true;
 		}
@@ -392,6 +400,11 @@ App.Usercluster = DS.Model.extend({
 	hadoop_status_class_format : function(){
 		return "glyphicon glyphicon-erase text-warning";
 	}.property(),
+	cluster_scale_id : function(){
+        var cluster_name_short = this.get('cluster_name').slice(7);
+        var cluster_scale_id = "id_".concat("cluster_scale_",cluster_name_short);
+        return cluster_scale_id;
+    }.property('cluster_name'),
 	cluster_name_id : function (){
 		var cluster_name_sort = this.get('cluster_name').slice(7);
 		var cluster_name_id = "id_".concat("cluster_name_",cluster_name_sort);
@@ -471,7 +484,7 @@ App.Usercluster = DS.Model.extend({
   			case "2":
    				return "PENDING";
   			default:
-   				return "";
+   				return "UNKNOWN";
   		}
  	}.property('hadoop_status','cluster_status')
 });

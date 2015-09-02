@@ -88,29 +88,31 @@
 					</div>
 					{{#if hue_image}}
 					<label for="id_hue_admin_password" class="control-label col col-sm-5">Hue Password</label>
-					<div class="input-group">
-						{{input type="text" 
-                        value=admin_password
-                        placeholder="Upper/lowercase letters and numbers"
-                        required="true"
-                        id="id_hue_admin_password"
-                        action="admin_pass_select"
-                        on="focus-in"
-                        classNames="input-sm form-control"}}
-						<span class="input-group-btn">
-                            <button
-                            id=id_hue_pass_random
-                            data-toggle="tooltip"
-                            data-placement="top"
-                            data-trigger="hover focus"
-                            data-container="body"
-                            title="Generate random password"
-                            class="btn btn-primary btn-sm"
-                            {{action "admin_pass_generate"}}
-                            >
-                                <b class="glyphicon glyphicon-random"></b>
-                            </button>
-                        </span>
+					<div class="col col-sm-7">
+    					<div class="input-group">
+    						{{input type="text" 
+                            value=admin_password
+                            placeholder="Upper/lowercase letters and numbers"
+                            required="true"
+                            id="id_hue_admin_password"
+                            action="admin_pass_select"
+                            on="focus-in"
+                            classNames="input-sm form-control"}}
+    						<span class="input-group-btn">
+                                <button
+                                id=id_hue_pass_random
+                                data-toggle="tooltip"
+                                data-placement="top"
+                                data-trigger="hover focus"
+                                data-container="body"
+                                title="Generate random password"
+                                class="btn btn-primary btn-sm"
+                                {{action "admin_pass_generate"}}
+                                >
+                                    <b class="glyphicon glyphicon-random"></b>
+                                </button>
+                            </span>
+    					</div>
 					</div>
 					<div class="row text-center text-danger">
 					<div class="col col-sm">
