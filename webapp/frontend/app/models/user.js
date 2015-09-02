@@ -42,6 +42,9 @@ App.Uservreserver = DS.Model.extend({
         inverse : 'vreservers'
     }),
     // computed properties
+    vre_okeanos_faq: function(){
+        return 'https://okeanos.grnet.gr/support/faq/cyclades-why-is-port-x-closed-is-it-blocked-by-design/';
+    }.property('os_image'),
     vre_access_url : function(){
         // TODO: add to components info and resolve dynamically
         var image = this.get('os_image');

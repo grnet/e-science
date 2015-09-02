@@ -134,7 +134,7 @@ def db_server_update(token, status, id, server_IP='', state='', okeanos_server_i
         msg = 'Server with given name does not exist'
         raise ObjectDoesNotExist(msg)
     if password:
-        user.master_vm_password = u'The root password of \"{0}\"({1}) is {2}'.format(server.server_name,server.id,password)
+        user.master_vm_password = u'The root password of \"{0}\" VM({1}) is {2}'.format(server.server_name,server.id,password)
     if error:
         user.error_message = error
 
