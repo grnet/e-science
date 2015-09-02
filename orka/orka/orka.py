@@ -50,6 +50,16 @@ class _ArgCheck(object):
         if ival <= 0:
             raise ArgumentTypeError(" %s must be a positive number." % val)
         return ival
+    
+    def greater_than_min_vre_ram_is(self, val):
+        """
+        :param val: int
+        :return: val if >= 1024 or raise exception
+        """
+        ival = int(val)
+        if ival < vre_ram_min:
+            raise ArgumentTypeError(" %s must be at least 1024 MiB for VRE servers, except for DSpace (2048 MiB)" % val)
+        return ival
 
     def two_or_larger_is(self, val):
         """
@@ -152,10 +162,7 @@ class HadoopCluster(object):
     def create_vre_machine(self):
         """ Method for creating VRE server in~okeanos."""
         if 'dspace' in self.opts['image'].lower() and self.opts['ram'] < dspace_ram_min:
-            logging.error('Memory should be at least 2048 MB for {0} image.'.format(self.opts['image']))
-            exit(error_fatal)
-        if self.opts['ram'] < vre_ram_min:
-            logging.error('Memory should be at least 1024 MB.')
+            logging.error('Memory should be at least 2048 MiB for {0} image.'.format(self.opts['image']))
             exit(error_fatal)
         try:
             payload = {"vreserver":{"project_name": self.opts['project_name'], "server_name": self.opts['name'],
@@ -890,8 +897,8 @@ def main():
         parser_vre_create.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='vre_create')
         parser_vre_create.add_argument("cpu", help='Number of CPU cores for VRE server',
                                    type=checker.positive_num_is)
-        parser_vre_create.add_argument("ram", help='Size of RAM (MB) for VRE server',
-                                   type=checker.positive_num_is)
+        parser_vre_create.add_argument("ram", help='Size of RAM (MB) for VRE servers must be at least 1024 MiB, except for DSpace (2048 MiB)',
+                                   type=checker.greater_than_min_vre_ram_is)
     
         parser_vre_create.add_argument("disk", help='Disk size (GB) for VRE server',
                                    type=checker.five_or_larger_is)
