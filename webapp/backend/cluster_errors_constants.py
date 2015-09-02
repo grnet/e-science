@@ -83,9 +83,10 @@ const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
 const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
 HADOOP_STATUS_ACTIONS = {"stop": ["0", "Stopping", "Stopped"],
                          "start": ["1", "Starting", "Started"],
-                         "format": ["2", "Formatting", "Formatted"]}
+                         "format": ["2", "Formatting", "Formatted"],
+                         "undefined": ["3", "Undefined", "Undefined"]}
 
-REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}
+REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending", "3":"Undefined"}
 
 # Dictionary of Ansible tags of the hadoop images
 hadoop_images_ansible_tags = {"debianbase": {"stop": "stop", "start": "start"},

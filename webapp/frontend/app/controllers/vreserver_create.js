@@ -49,7 +49,7 @@ App.VreserverCreateController = Ember.Controller.extend({
         os_image: 'selected_image',
         ssh_key_selection: 'selected_sshkey',
         admin_password: 'vre_admin_pass',
-        admin_email : 'vre_admin_email'
+        admin_email: 'vre_admin_email'
 	},
 	/*
 	 * Project selection:
