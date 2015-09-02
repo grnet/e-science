@@ -151,6 +151,12 @@ class HadoopCluster(object):
     
     def create_vre_machine(self):
         """ Method for creating VRE server in~okeanos."""
+        if 'dspace' in self.opts['image'].lower() and self.opts['ram'] < dspace_ram_min:
+            logging.error('Memory should be at least 2048 MB for {0} image.'.format(self.opts['image']))
+            exit(error_fatal)
+        if self.opts['ram'] < vre_ram_min:
+            logging.error('Memory should be at least 1024 MB.')
+            exit(error_fatal)
         try:
             payload = {"vreserver":{"project_name": self.opts['project_name'], "server_name": self.opts['name'],
                                         "cpu": self.opts['cpu'], "ram": self.opts['ram'],
@@ -166,10 +172,10 @@ class HadoopCluster(object):
             result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
             logging.log(SUMMARY, "VRE server is active and has the following properties:")
             stdout.write("server_id: {0}\nserver_IP: {1}\n"
-                         "root password: {2}\nadmin password for login: {3}\n".format(result['server_id'], result['server_IP'],
-                                                        result['VRE_VM_password'], self.opts['admin_password']))
+                         "VM's root password: {2}\nAdmin password for {3} login: {4}\n".format(result['server_id'], result['server_IP'],
+                                                        result['VRE_VM_password'], filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_password']))
             if 'dspace' in self.opts['image'].lower():
-                stdout.write("The admin email used for login is {0}\n".format(self.opts['admin_email']))
+                stdout.write("The admin email used for login in {0} is {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_email']))
             exit(SUCCESS)
 
         except Exception, e:
@@ -897,8 +903,8 @@ def main():
         parser_vre_create.add_argument("image", help='OS for the VRE server.', metavar='image')
         parser_vre_create.add_argument("--admin_password", metavar='admin_password', default=auto_generated_pass, type=checker.valid_admin_password_is,
                               help='Admin password for VRE servers. Default is auto-generated')
-        parser_vre_create.add_argument("--admin_email", metavar='admin_email', default='admin@dspace.gr', type=checker.a_string_is,
-                              help='Admin email for VRE DSpace image. Default is admin@dspace.gr')
+        parser_vre_create.add_argument("--admin_email", metavar='admin_email', default='admin@example.com', type=checker.a_string_is,
+                              help='Admin email for VRE DSpace image. Default is admin@example.com')
         
         
         parser_vre_destroy.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='vre_destroy')
