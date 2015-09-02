@@ -287,35 +287,24 @@ class HadoopCluster(object):
                     else:
                         print "Removing node"
                         try:
-                            payload = {"clusterchoice":{"project_name": self.opts['project_name'], 
-                                        "cluster_name": self.opts['name'],
-                                        "cluster_size": self.opts['cluster_size'],
-                                        "cpu_master": self.opts['cpu_master'], 
-                                        "ram_master": self.opts['ram_master'],
-                                        "disk_master": self.opts['disk_master'], 
-                                        "cpu_slaves": self.opts['cpu_slave'],
-                                        "ram_slaves": self.opts['ram_slave'], 
-                                        "disk_slaves": self.opts['disk_slave'],
-                                        "disk_template": self.opts['disk_template'], 
-                                        "os_choice": self.opts['image'],
-                                        "replication_factor": self.opts['replication_factor'], 
-                                        "dfs_blocksize": self.opts['dfs_blocksize'],
-                                        "admin_password": self.opts['admin_password']}}
+                            new_cluster_size = int(cluster['cluster_size']-1)
+                            payload = {"clusterchoice":{ 
+                                        "new_size": new_cluster_size
+                                        }}
 
                             yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, 
                                                               payload, action='cluster')
                             response = yarn_cluster_req.create_cluster()
+
                             if 'task_id' in response['clusterchoice']:
                                 task_id = response['clusterchoice']['task_id']
                             else:
                                 logging.error(response['clusterchoice']['message'])
                                 exit(error_fatal)
                             result = task_message(task_id, self.escience_token, self.server_url, 
-                                                  wait_timer_create)
-                            
-                            
-                            logging.log(SUMMARY, " ")
-
+                                                 wait_timer_create)
+                    
+                            logging.log(SUMMARY, "A node was successfully removed from cluster.")
                             exit(SUCCESS)
 
                         except Exception, e:
