@@ -148,7 +148,6 @@ Next, open bash inside the dspace container:
     docker exec -it dspace bash
 
 dspace installation folder backup
-----------------------------------
 
     nano /dspace/config/dspace.cfg
         #find line: <dspace.dir = {{dspace installation folder}}>
@@ -158,13 +157,11 @@ dspace installation folder backup
     tar zcC /dspace > dspace_installation-backup-$(date +%Y-%m-%d).tar.gz .
 
 dspace installation folder restore
------------------------------------
 
     cd
     tar zxC / -f dspace_installation-backup-{{select date}}.tar.gz
 
 dspace db backup
------------------
 
     cd
     #store password, so that dump doesn't ask for password for each database dumped
@@ -174,7 +171,6 @@ dspace db backup
     pg_dump -Fc dspace -U dspace -h localhost > dspace_db-backup-$(date +%Y-%m-%d).bak
 
 dspace db restore
-------------------
 
     cd 
     pg_restore -Fc dspace_db-backup-{{select date}}.bak -U dspace -h localhost
