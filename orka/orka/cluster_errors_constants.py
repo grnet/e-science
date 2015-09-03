@@ -79,3 +79,5 @@ block_size = 67108864 # block size in bytes,used in division when transfering fi
 # Dictionaries with constants used in images list
 ORKA_IMAGES = {'action':'orka_images','resource_name':'orkaimage'}
 VRE_IMAGES = {'action':'vre_images','resource_name':'vreimage'}
+vre_ram_min = 1024
+dspace_ram_min = 2048
