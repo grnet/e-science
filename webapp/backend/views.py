@@ -206,12 +206,7 @@ class StatusView(APIView):
         self.serializer_class = ClusterchoicesSerializer
         serializer = self.serializer_class(data=request.DATA)
 
-        if serializer.is_valid():
-            if 'cluster_edit' in serializer.data:
-                return Response({"id":1, "scale": 'yes', "cluster_edit": serializer.data['cluster_edit']}, 
-                                status=status.HTTP_202_ACCEPTED)
-
-            else:   
+        if serializer.is_valid(): 
                 user_token = Token.objects.get(key=request.auth)
                 user = UserInfo.objects.get(user_id=user_token.user.user_id)
                 if serializer.data['hadoop_status']:
