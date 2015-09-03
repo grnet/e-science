@@ -178,11 +178,11 @@ Next, open bash inside the dspace container:
 **Docker installation directories**
 
 | VRE image   | Installation directory
-    |------------ |:---------------------
-    | Drupal      | */var/www/html*
-    | Mediawiki   | */var/www/html*
-    | Redmine     | */home/redmine*
-    | DSpace      | */dspace*
+|------------ |:---------------------
+| Drupal      | */var/www/html*
+| Mediawiki   | */var/www/html*
+| Redmine     | */home/redmine*
+| DSpace      | */dspace*
 
 ## Useful links:
 
