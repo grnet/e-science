@@ -275,9 +275,9 @@ class HadoopCluster(object):
     def node_action(self):
         """ Method for taking node actions in a Hadoop cluster in~okeanos."""
         opt_addnode = self.opts.get('addnode', False)
-        opt_deletenode = self.opts.get('removenode', False)
+        opt_removenode = self.opts.get('removenode', False)
 
-        if opt_deletenode == True:
+        if opt_removenode == True:
 
             clusters = get_user_clusters(self.opts['token'], self.opts['server_url'])
             for cluster in clusters:
@@ -287,9 +287,10 @@ class HadoopCluster(object):
                     else:
                         print "Removing node"
                         try:
-                            new_cluster_size = int(cluster['cluster_size']-1)
+                            new_cluster_size = int(cluster['cluster_size'])-1
                             payload = {"clusterchoice":{ 
-                                        "new_size": new_cluster_size
+                                        "cluster_edit": self.opts['cluster_id'],
+                                        "cluster_size": new_cluster_size
                                         }}
 
                             yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, 
