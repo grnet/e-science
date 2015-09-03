@@ -156,22 +156,22 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Undefined'):
         for counter in range(cluster_delta,0):
             sleep(refresh_timer)
             state = "Decommissioning Node %s from Hadoop (ansible)" % -counter
-            set_server_state(token, cluster_id, state, status=status)
+            set_cluster_state(token, cluster_id, state, status=status)
             sleep(refresh_timer)
             state = "Deleting Node VM %s from cluster %s" % (-counter, cluster_to_scale.cluster_name)
-            set_server_state(token, cluster_id, state, status=status)
+            set_cluster_state(token, cluster_id, state, status=status)
     elif cluster_delta > 0: # scale up
         # TODO: 1. Create VM > attach to cluster + update metadata on DB 2. Ansible to add datanode to hadoop
         for counter in range(1,cluster_delta+1):
             sleep(refresh_timer)
             state = "Adding Node %s VM to cluster %s" % (counter, cluster_to_scale.cluster_name)
-            set_server_state(token, cluster_id, state, status=status)
+            set_cluster_state(token, cluster_id, state, status=status)
             sleep(refresh_timer)
             state = "Adding Datanode %s to Hadoop" % counter
-            set_server_state(token, cluster_id, state, status=status)
+            set_cluster_state(token, cluster_id, state, status=status)
     sleep(refresh_timer)
     state = 'DONE: Scaled cluster %s' % cluster_to_scale.cluster_name
-    set_server_state(token, cluster_id, state, previous_cluster_status)
+    set_cluster_state(token, cluster_id, state, previous_cluster_status)
     return cluster_to_scale.cluster_name
     
 def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
