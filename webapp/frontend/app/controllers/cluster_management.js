@@ -89,6 +89,20 @@ App.ClusterManagementController = Ember.Controller.extend({
 	        }else{
 	            var str_delta = this.get('cluster_slaves_delta') > 0 && '+'+this.get('cluster_slaves_delta') || this.get('cluster_slaves_delta');
 	            console.log('apply scale: ' + str_delta);
+	            var store = this.get('store');
+	            var model = this.get('content');
+                var cluster_id = model.get('id');
+                var new_size = model.get('cluster_size')+this.get('cluster_slaves_delta');
+                var promise = store.push('clusterchoice',{
+                    'id': 1,
+                    'cluster_edit': cluster_id,
+                    'cluster_size': new_size
+                }).save();
+                promise.then(function(user){
+                    console.log('success');
+                },function(reason){
+                    console.log('failure');
+                });
 	        }
 	    },
 		help_hue_login : function(os_image){

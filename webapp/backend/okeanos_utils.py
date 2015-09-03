@@ -133,7 +133,17 @@ def get_public_ip_id(cyclades_network_client,float_ip):
         if ip['floating_ip_address'] == float_ip:
             return ip
 
-
+def scale_cluster(token, cluster_id, cluster_delta, status='Undefined'):
+    """
+    Scales an active cluster by cluster_delta (signed int).
+    For scaling up finds the cluster settings and highest internal ip/port slave
+    and "appends" cluster_delta nodes.
+    For scaling down it removes the highest slave. 
+    """
+    current_task.update_state(state="Started")
+    cluster_to_scale = ClusterInfo.objects.get(id=cluster_id)
+    pass
+    
 def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     """
     Destroys cluster and deletes network and floating IP. Finds the machines

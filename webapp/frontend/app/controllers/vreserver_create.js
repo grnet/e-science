@@ -83,11 +83,11 @@ App.VreserverCreateController = Ember.Controller.extend({
     selected_category_static : null, // need this one-way bound property to workaround ember #select bug
     selected_category : function(key,value){
         if (arguments.length>1){// setter
-            this.set('selected_category_id_static',value);
+            this.set('selected_category_static',value);
             this.set('selected_image',null);
         }
-        return this.get('selected_category_id_static'); // getter
-    }.property('selected_category_id_static','selected_project_id'),
+        return this.get('selected_category_static'); // getter
+    }.property('selected_category_static','selected_project_id'),
     /*
      * VRE Images
      */
