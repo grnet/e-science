@@ -23,7 +23,7 @@ from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     OrkaImagesSerializer, VreImagesSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
-from tasks import create_cluster_async, destroy_cluster_async, \
+from tasks import create_cluster_async, destroy_cluster_async, scale_cluster_async, \
     hadoop_cluster_action_async, put_hdfs_async, create_server_async, destroy_server_async
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
@@ -205,37 +205,41 @@ class StatusView(APIView):
         self.resource_name = 'clusterchoice'
         self.serializer_class = ClusterchoicesSerializer
         serializer = self.serializer_class(data=request.DATA)
-
         if serializer.is_valid():
-            if serializer.data['cluster_id']:
-                return Response({"id":1, "scale": 'yes', "cluster_edit": serializer.data['cluster_edit']}, 
-                                status=status.HTTP_202_ACCEPTED)
-
-            else:
-                user_token = Token.objects.get(key=request.auth)
-                user = UserInfo.objects.get(user_id=user_token.user.user_id)
-                if serializer.data['hadoop_status']:
-                    try:
-                        cluster_action = hadoop_cluster_action_async.delay(serializer.data['id'],
-                                                                       serializer.data['hadoop_status'])
-                        task_id = cluster_action.id
-                        return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
-                    except Exception, e:
-                        return Response({"status": str(e.args[0])})
-
-                # Dictionary of YarnCluster arguments
-                choices = dict()
-                choices = serializer.data.copy()
-                choices.update({'token': user.okeanos_token})
+            user_token = Token.objects.get(key=request.auth)
+            user = UserInfo.objects.get(user_id=user_token.user.user_id)
+            if serializer.data['hadoop_status']:
                 try:
-                    YarnCluster(choices).check_user_resources()
-                except ClientError, e:
-                    return Response({"id": 1, "message": e.message})
+                    cluster_action = hadoop_cluster_action_async.delay(serializer.data['id'],
+                                                                       serializer.data['hadoop_status'])
+                    task_id = cluster_action.id
+                    return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
                 except Exception, e:
-                    return Response({"id": 1, "message": e.args[0]})
-                c_cluster = create_cluster_async.delay(choices)
-                task_id = c_cluster.id
-                return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+                    return Response({"status": str(e.args[0])})
+            # Update existing cluster
+            if serializer.data['cluster_edit']:
+                cluster = ClusterInfo.objects.get(id=serializer.data['cluster_edit'])
+                cluster_delta = serializer.data['cluster_size']-cluster.cluster_size
+                try:
+                    cluster_action = scale_cluster_async.delay(user.okeanos_token, serializer.data['cluster_edit'], cluster_delta)
+                    task_id = cluster_action.id
+                    return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+                except Exception, e:
+                    return Response({"status": str(e.args[0])})
+            # Create cluster
+            # Dictionary of YarnCluster arguments
+            choices = dict()
+            choices = serializer.data.copy()
+            choices.update({'token': user.okeanos_token})
+            try:
+                YarnCluster(choices).check_user_resources()
+            except ClientError, e:
+                return Response({"id": 1, "message": e.message})
+            except Exception, e:
+                return Response({"id": 1, "message": e.args[0]})
+            c_cluster = create_cluster_async.delay(choices)
+            task_id = c_cluster.id
+            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
 
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
@@ -322,38 +326,6 @@ class SessionView(APIView):
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
-            
-class NodeServerView(APIView):
-    """
-    View to handle requests for adding or deleting a node server.
-    """
-    authentication_classes = (EscienceTokenAuthentication, )
-    permission_classes = (IsAuthenticated, )
-    resource_name = 'nodeserver'
-    serializer_class = ClusterchoicesSerializer
-    
-    def post(self, request, *args, **kwargs):
-        """
-        Handles requests for adding a node.
-        """
-        serializer = self.serializer_class(data=request.DATA)
-        if serializer.is_valid():
-            user_token = Token.objects.get(key=request.auth)
-            user = UserInfo.objects.get(user_id=user_token.user.user_id)
-
-            # Dictionary of VreServer arguments
-            choices = dict()
-            choices = serializer.data.copy()
-            choices.update({'token': user.okeanos_token, "cpu_slaves": 0,"ram_slaves": 0,
-                            "disk_slaves": 0,"cpu_master": choices['cpu'],"ram_master": choices['ram'],
-                            "disk_master": choices['disk']})
-            c_server = create_server_async.delay(choices)
-            task_id = c_server.id
-            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
-
-        # This will be send if user's parameters are not de-serialized
-        # correctly.
-        return Response(serializer.errors)
             
 class VreServerView(APIView):
     """

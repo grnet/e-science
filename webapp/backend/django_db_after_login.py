@@ -134,7 +134,7 @@ def db_server_update(token, status, id, server_IP='', state='', okeanos_server_i
         msg = 'Server with given name does not exist'
         raise ObjectDoesNotExist(msg)
     if password:
-        user.master_vm_password = u'The root password of \"{0}\"({1}) is {2}'.format(server.server_name,server.id,password)
+        user.master_vm_password = u'The root password of \"{0}\" VM (id:{1}) is {2}'.format(server.server_name,server.id,password)
     if error:
         user.error_message = error
 
@@ -191,9 +191,9 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
         msg = 'Cluster with given name does not exist in pending state'
         raise ObjectDoesNotExist(msg)
     if password:
-        user.master_vm_password = u'The root password of \"{0}\"({1}) master VM is {2}'.format(cluster.cluster_name,cluster.id,password)
+        user.master_vm_password = u'The root password of \"{0}\" master VM (id:{1}) is {2}'.format(cluster.cluster_name,cluster.id,password)
     if error:
-        user.error_message = u'Cluster \"{0}\"({1}) creation failed due to error: {2}'.format(cluster.cluster_name,cluster.id, error)
+        user.error_message = u'Cluster \"{0}\" (id:{1}) creation failed due to error: {2}'.format(cluster.cluster_name,cluster.id, error)
 
     if status == "Active":
         cluster.cluster_status = const_cluster_status_active

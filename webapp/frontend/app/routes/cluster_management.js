@@ -45,6 +45,7 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 	    willTransition : function(transition) {
             // leaving this route
             this.controller.send('timer', false);
+            this.controller.send('setActiveTab','info');
         },
 		
 		takeClusterAction : function(cluster) {
