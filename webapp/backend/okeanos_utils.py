@@ -133,7 +133,7 @@ def get_public_ip_id(cyclades_network_client,float_ip):
         if ip['floating_ip_address'] == float_ip:
             return ip
 
-def scale_cluster(token, cluster_id, cluster_delta, status='Undefined'):
+def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     """
     Scales an active cluster by cluster_delta (signed int).
     For scaling up finds the cluster settings and highest internal ip/port slave
@@ -143,6 +143,7 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Undefined'):
     current_task.update_state(state="Started")
     cluster_to_scale = ClusterInfo.objects.get(id=cluster_id)
     previous_cluster_status = cluster_to_scale.cluster_status
+    status_map = {"0":"Destroyed","1":"Active","2":"Pending","3":"Failed"}
     auth = check_credentials(unmask_token(encrypt_key,token))
     current_task.update_state(state="Authenticated")
     endpoints, user_id = endpoints_and_user_id(auth)
@@ -171,7 +172,7 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Undefined'):
             set_cluster_state(token, cluster_id, state, status=status)
     sleep(refresh_timer)
     state = 'DONE: Scaled cluster %s' % cluster_to_scale.cluster_name
-    set_cluster_state(token, cluster_id, state, previous_cluster_status)
+    set_cluster_state(token, cluster_id, state, status=status_map[previous_cluster_status])
     return cluster_to_scale.cluster_name
     
 def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
