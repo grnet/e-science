@@ -141,7 +141,7 @@
    </div>
    <div {{bind-attr id="content_tabs.manage.id" class=":tab-pane content_tabs.manage.active:active"}}>
        <div class="row">
-		{{#if model.cluster_status_active}}
+		{{#if model.cluster_manage_enabled}}
 		 <div class='btn-group-vertical btn-group-sm col col-sm-2'>
 			{{#ifeq model.cluster_confirm_action 'hadoop_start'}}
 			<div class='btn-toolbar-horizontal btn-toolbar-sm'>

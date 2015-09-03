@@ -292,6 +292,11 @@ App.Usercluster = DS.Model.extend({
 			return '';
 		}
 	}.property('cluster_status'),
+	cluster_manage_enabled : function(){
+	   var disabled = ['DESTROYED','FAILED'];
+	   var status_verbose = this.get('cluster_status_verbose');
+	   return !disabled.contains(status_verbose);	   
+	}.property('cluster_status_verbose'),
 	cluster_status_active : function(){
 		var status = this.get('cluster_status');
 		if (status == '1'){
@@ -341,7 +346,7 @@ App.Usercluster = DS.Model.extend({
 		var status = this.get('hadoop_status');
 		var cluster_status = this.get('cluster_status');
 		if (cluster_status !== "1"){
-			status = "0";
+			return true;
 		}
 		switch (status){
 		case "0":
@@ -356,7 +361,7 @@ App.Usercluster = DS.Model.extend({
 		var status = this.get('hadoop_status');
 		var cluster_status = this.get('cluster_status');
 		if (cluster_status !== "1"){
-			status = "0";
+			return true;
 		}
 		switch (status){
 		case "1":
@@ -371,7 +376,7 @@ App.Usercluster = DS.Model.extend({
 		var status = this.get('hadoop_status');
 		var cluster_status = this.get('cluster_status');
 		if (cluster_status !== "1"){
-			status = "0";
+			return true;
 		}
 		switch (status){
 		case "0":
