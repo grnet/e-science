@@ -295,14 +295,8 @@ class HadoopCluster(object):
                             yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, 
                                                               payload, action='cluster')
                             response = yarn_cluster_req.create_cluster()
-
-                            if 'task_id' in response['clusterchoice']:
-                                task_id = response['clusterchoice']['task_id']
-                            else:
-                                logging.error(response['clusterchoice']['message'])
-                                exit(error_fatal)
-                            result = task_message(task_id, self.escience_token, self.server_url, 
-                                                 wait_timer_create)
+                            
+                            print response
                     
                             logging.log(SUMMARY, "A node was successfully removed from cluster.")
                             exit(SUCCESS)

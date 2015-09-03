@@ -125,7 +125,7 @@ class ClusterchoicesSerializer(serializers.Serializer):
     id = serializers.CharField(required=False)
 
     cluster_size = serializers.IntegerField(required=False)
-        
+    
     cpu = serializers.IntegerField(required=False)
 
     ram = serializers.IntegerField(required=False)
@@ -164,7 +164,8 @@ class ClusterchoicesSerializer(serializers.Serializer):
     
     admin_email = serializers.CharField(required=False)
 
-    new_size = serializers.IntegerField(required=False)
+    cluster_edit = serializers.IntegerField(required=False)
+
 
 class ClusterInfoSerializer(serializers.ModelSerializer):
     """ Serializer for ember request with user's available clusters."""

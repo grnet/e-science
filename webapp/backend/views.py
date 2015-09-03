@@ -205,31 +205,37 @@ class StatusView(APIView):
         self.resource_name = 'clusterchoice'
         self.serializer_class = ClusterchoicesSerializer
         serializer = self.serializer_class(data=request.DATA)
-        if serializer.is_valid():
-            user_token = Token.objects.get(key=request.auth)
-            user = UserInfo.objects.get(user_id=user_token.user.user_id)
-            if serializer.data['hadoop_status']:
-                try:
-                    cluster_action = hadoop_cluster_action_async.delay(serializer.data['id'],
-                                                                       serializer.data['hadoop_status'])
-                    task_id = cluster_action.id
-                    return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
-                except Exception, e:
-                    return Response({"status": str(e.args[0])})
 
-            # Dictionary of YarnCluster arguments
-            choices = dict()
-            choices = serializer.data.copy()
-            choices.update({'token': user.okeanos_token})
-            try:
-                YarnCluster(choices).check_user_resources()
-            except ClientError, e:
-                return Response({"id": 1, "message": e.message})
-            except Exception, e:
-                return Response({"id": 1, "message": e.args[0]})
-            c_cluster = create_cluster_async.delay(choices)
-            task_id = c_cluster.id
-            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+        if serializer.is_valid():
+            if 'cluster_edit' in serializer.data:
+                return Response({"id":1, "scale": 'yes', "cluster_edit": serializer.data['cluster_edit']}, 
+                                status=status.HTTP_202_ACCEPTED)
+
+            else:   
+                user_token = Token.objects.get(key=request.auth)
+                user = UserInfo.objects.get(user_id=user_token.user.user_id)
+                if serializer.data['hadoop_status']:
+                    try:
+                        cluster_action = hadoop_cluster_action_async.delay(serializer.data['id'],
+                                                                       serializer.data['hadoop_status'])
+                        task_id = cluster_action.id
+                        return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+                    except Exception, e:
+                        return Response({"status": str(e.args[0])})
+
+                # Dictionary of YarnCluster arguments
+                choices = dict()
+                choices = serializer.data.copy()
+                choices.update({'token': user.okeanos_token})
+                try:
+                    YarnCluster(choices).check_user_resources()
+                except ClientError, e:
+                    return Response({"id": 1, "message": e.message})
+                except Exception, e:
+                    return Response({"id": 1, "message": e.args[0]})
+                c_cluster = create_cluster_async.delay(choices)
+                task_id = c_cluster.id
+                return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
 
         # This will be send if user's cluster parameters are not de-serialized
         # correctly.
