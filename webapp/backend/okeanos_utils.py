@@ -142,7 +142,37 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Undefined'):
     """
     current_task.update_state(state="Started")
     cluster_to_scale = ClusterInfo.objects.get(id=cluster_id)
-    pass
+    previous_cluster_status = cluster_to_scale.cluster_status
+    auth = check_credentials(unmask_token(encrypt_key,token))
+    current_task.update_state(state="Authenticated")
+    endpoints, user_id = endpoints_and_user_id(auth)
+    cyclades = init_cyclades(endpoints['cyclades'], unmask_token(encrypt_key,token))
+    netclient = init_cyclades_netclient(endpoints['network'], unmask_token(encrypt_key,token))
+    # TODO: Code below this point is just a stub so CLI and webapp can be tested and to illustrate the flow of actions.
+    refresh_timer = 5
+    state = ''
+    if cluster_delta < 0: # scale down
+        # TODO: 1. Ansible to decommission node 2. Destroy VM + update cluster metadata on DB
+        for counter in range(cluster_delta,0):
+            sleep(refresh_timer)
+            state = "Decommissioning Node %s from Hadoop (ansible)" % -counter
+            set_server_state(token, cluster_id, state, status=status)
+            sleep(refresh_timer)
+            state = "Deleting Node VM %s from cluster %s" % (-counter, cluster_to_scale.cluster_name)
+            set_server_state(token, cluster_id, state, status=status)
+    elif cluster_delta > 0: # scale up
+        # TODO: 1. Create VM > attach to cluster + update metadata on DB 2. Ansible to add datanode to hadoop
+        for counter in range(1,cluster_delta+1):
+            sleep(refresh_timer)
+            state = "Adding Node %s VM to cluster %s" % (counter, cluster_to_scale.cluster_name)
+            set_server_state(token, cluster_id, state, status=status)
+            sleep(refresh_timer)
+            state = "Adding Datanode %s to Hadoop" % counter
+            set_server_state(token, cluster_id, state, status=status)
+    sleep(refresh_timer)
+    state = 'DONE: Scaled cluster %s' % cluster_to_scale.cluster_name
+    set_server_state(token, cluster_id, state, previous_cluster_status)
+    return cluster_to_scale.cluster_name
     
 def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     """
@@ -221,7 +251,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
             if new_status != 'DELETED':
                 logging.error('Error deleting server [%s]' % server['name'])
                 list_of_errors.append(error_cluster_corrupt)
-        set_cluster_state(token, cluster_id, ' Deleting cluster network and public IP')
+        set_cluster_state(token, cluster_id, 'Deleting cluster network and public IP')
     except ClientError:
         logging.exception('Error in deleting server')
         list_of_errors.append(error_cluster_corrupt)
