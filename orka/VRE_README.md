@@ -133,6 +133,52 @@ The entry db.password=<old_password> inside the dspace.cfg file must be changed 
 | Redmine     | *VRE server IP*`:10083`
 | DSpace      | *VRE server IP*`:8080/jspui` && *VRE server IP*`:8080/xmlui`
 
+## Backup and Restore procedure of docker container's directories and database
+
+For example in **DSpace image** case:
+
+First, determine which directories are needed to be backed up.
+
+    - installation directory
+    - web deployment directory
+        - In our case it resides inside the installation directory.
+
+Next, open bash inside the dspace container:
+
+    docker exec -it dspace bash
+
+dspace installation folder backup
+----------------------------------
+
+    nano /dspace/config/dspace.cfg
+        #find line: <dspace.dir = {{dspace installation folder}}>
+        #here it is /dspace
+    cd
+        #backup will be saved on your (root) home directory
+    tar zcC /dspace > dspace_installation-backup-$(date +%Y-%m-%d).tar.gz .
+
+dspace installation folder restore
+-----------------------------------
+
+    cd
+    tar zxC / -f dspace_installation-backup-{{select date}}.tar.gz
+
+dspace db backup
+-----------------
+
+    cd
+    #store password, so that dump doesn't ask for password for each database dumped
+        nano .pgpass
+            localhost:*:*:dspace:dspace
+        chmod 600 .pgpass
+    pg_dump -Fc dspace -U dspace -h localhost > dspace_db-backup-$(date +%Y-%m-%d).bak
+
+dspace db restore
+------------------
+
+    cd 
+    pg_restore -Fc dspace_db-backup-{{select date}}.bak -U dspace -h localhost
+
 ## Useful links:
 
 https://www.docker.com/
