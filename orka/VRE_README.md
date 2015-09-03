@@ -135,7 +135,7 @@ The entry db.password=<old_password> inside the dspace.cfg file must be changed 
 
 ## Backup and Restore procedure of docker container's directories and database
 
-For example in **DSpace image** case:
+For example, in **DSpace image** case:
 
 First, determine which directories are needed to be backed up.
 
@@ -174,6 +174,15 @@ Next, open bash inside the dspace container:
 
     cd 
     pg_restore -Fc dspace_db-backup-{{select date}}.bak -U dspace -h localhost
+
+**Docker installation directories**
+
+| VRE image   | Installation directory
+    |------------ |:---------------------
+    | Drupal      | */var/www/html*
+    | Mediawiki   | */var/www/html*
+    | Redmine     | */home/redmine*
+    | DSpace      | */dspace*
 
 ## Useful links:
 
