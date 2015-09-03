@@ -162,7 +162,7 @@ class HadoopCluster(object):
     def create_vre_machine(self):
         """ Method for creating VRE server in~okeanos."""
         if 'dspace' in self.opts['image'].lower() and self.opts['ram'] < dspace_ram_min:
-            logging.error('Memory should be at least 2048 MiB for {0} image.'.format(self.opts['image']))
+            logging.error('argument ram: {0} must be at least 1024 MiB for VRE servers, except for DSpace (2048 MiB).'.format(self.opts['ram']))
             exit(error_fatal)
         try:
             payload = {"vreserver":{"project_name": self.opts['project_name'], "server_name": self.opts['name'],
@@ -179,10 +179,10 @@ class HadoopCluster(object):
             result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
             logging.log(SUMMARY, "VRE server is active and has the following properties:")
             stdout.write("server_id: {0}\nserver_IP: {1}\n"
-                         "VM's root password: {2}\nAdmin password for {3} login: {4}\n".format(result['server_id'], result['server_IP'],
+                         "VM root password: {2}\n{3} admin user's password: {4}\n".format(result['server_id'], result['server_IP'],
                                                         result['VRE_VM_password'], filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_password']))
             if 'dspace' in self.opts['image'].lower():
-                stdout.write("The admin email used for login in {0} is {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_email']))
+                stdout.write("{0} admin user's email: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_email']))
             exit(SUCCESS)
 
         except Exception, e:
