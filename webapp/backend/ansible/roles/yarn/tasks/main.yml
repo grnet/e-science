@@ -54,6 +54,10 @@
     tags: preconfig
     unarchive: src={{path_to_hadoop}}/{{ yarn_version }}.tar.gz dest=/usr/local copy=no owner=root group=root
 
+  - name: Clean /etc/hosts file before adding new entries for scale cluster
+    shell: sed -i.bak '/192.168.0.2/,$d' /etc/hosts
+    tags: postconfig
+
   - name: Add virtual machine private ips in /etc/hosts
     template: src=hosts.j2 dest={{etchosts_filename}}
     tags: postconfig
@@ -69,10 +73,12 @@
   - name: create hadoop user
     user: name=hduser group=hadoop generate_ssh_key=yes shell=/bin/bash
     tags: postconfig
+    when: execute_once
 
   - name: chown of hue bin directory
     file: path=/usr/local/hue owner=hduser group=hadoop state=directory recurse=yes
     tags: hueconfig
+    when: execute_once
 
   - name: Remove Hue obsolete directory
     shell: rm -rf hue-*
@@ -92,18 +98,19 @@
     authorized_key: user=hduser key="{{ item }}"
     with_file:
       - "{{ ssh_file_name }}"
-    when: p.stat.exists
+    when: p.stat.exists and execute_once
 
   - name: copy server authorized_keys to hduser .ssh directory
     tags: postconfig
     authorized_key: user=hduser key="{{ item }}"
     with_file:
       - "{{ path | expanduser }}"
+    when: execute_once
 
   - name: create master vm root user ssh key
     user: name=root generate_ssh_key=yes shell=/bin/bash state=present
     tags: postconfig
-    when: is_master
+    when: is_master and execute_once
 
   - name: change owner of hduser auth keys file
     tags: postconfig
@@ -113,7 +120,7 @@
   - name: prepare ssh 
     tags: postconfig
     shell: sudo -u hduser cat {{hadoopuser_path}}/.ssh/id_rsa.pub >> {{hadoopuser_path}}/.ssh/authorized_keys
-    when: is_master
+    when: is_master and execute_once
 
   - name: copy master hduser public ssh key to local box
     tags: postconfig
@@ -130,22 +137,24 @@
     authorized_key: user=hduser key="{{ item }}"
     with_file:
       - /tmp/{{master_key_hduser}}
-    when: is_slave
+    when: is_slave and execute_once and '/tmp/{{master_key_hduser}}' is defined
 
   - name: copy local box master root ssh key to root every VM
     tags: postconfig
     authorized_key: user=root key="{{ item }}"
     with_file:
       - /tmp/{{master_key_root}}
-    when: is_slave
+    when: is_slave and execute_once and '/tmp/{{master_key_root}}' is defined
 
   - name: chown hadoop-src from root to hadoop group
     tags: postconfig
     file: path={{path_to_hadoop}}/{{yarn_version}} state=directory owner=hduser group=hadoop recurse=yes
+    when: execute_once
 
   - name: Rename hadoop directory
     tags: postconfig
     command: mv {{path_to_hadoop}}/{{yarn_version}} {{hadoop_home}}
+    when: execute_once
 
   - name: update ~/.bashrc and hadoop-env.sh files
     tags: postconfig
@@ -169,6 +178,7 @@
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$FLUME_HOME/bin'" }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle"' }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export HADOOP_PREFIX=/usr/local/hadoop"' }
+    when: execute_once
 
   - name: update ~/.bashrc and hbase-env.sh files for ecosystem
     tags: ecoconfig
@@ -187,18 +197,22 @@
       - { dest: '.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$SPARK_HOME/bin'" }
       - { dest: '.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop'" }
       - { dest: '/usr/local/hbase/conf/hbase-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle/"' }
+    when: execute_once
 
   - name: Copy Java lib directory
     tags: postconfig
     copy: src=lib/ dest={{path_to_common_libs}} owner=hduser group=hadoop
+    when: execute_once
 
   - name: Copy Java dist directory
     tags: postconfig
     copy: src=dist/ dest={{path_to_hdfs_libs}} owner=hduser group=hadoop
+    when: execute_once
 
   - name: Delete .gitignore
     tags: postconfig
     shell: find -name '.gitignore' | xargs rm chdir={{hadoop_home}}
+    when: execute_once
 
   - name: create app/hadoop/tmp to store HDFS and Flume Home configuration folder for Debian Base
     tags: postconfig
@@ -208,6 +222,7 @@
       - chown hduser:hadoop /app/hadoop/tmp
       - chmod 750 /app/hadoop/tmp
       - mkdir -p {{flume_home}}/conf
+    when: execute_once
 
   - name: copy yarn configuration xml and kamakirc files in every node
     tags: postconfig
@@ -219,6 +234,7 @@
       - { src: 'yarn-site.j2', dest: '/usr/local/hadoop/etc/hadoop/yarn-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'kamakirc.j2', dest: '/home/hduser/.kamakirc', owner: 'hduser', group: 'hadoop' }
       - { src: 'flume.j2', dest: '{{flume_home}}/conf/flume.conf', owner: 'hduser', group: 'hadoop' }
+    when: execute_once
 
   - name: Change ownership to hduser for flume
     tags: postconfig
@@ -227,6 +243,7 @@
       - { path: '{{flume_home}}', owner: 'hduser', group: 'hadoop' }
       - { path: '/var/log/flume', owner: 'hduser', group: 'hadoop' }
       - { path: '/var/run/flume', owner: 'hduser', group: 'hadoop' }
+    when: execute_once
 
   - name: Copy Flume services to /etc/init.d
     tags: postconfig
@@ -234,17 +251,17 @@
     with_items:
       - { src: 'flume-agent', dest: '/etc/init.d/flume-agent', mode: '0755' }
       - { src: 'flume-agent.service', dest: '/lib/systemd/system/flume-agent.service', mode: '644' }
-    when: is_master
+    when: is_master and execute_once
 
   - name: copy hue.ini in master node
     tags: hueconfig
     template: src=hue.j2 dest={{ hue_home }}/desktop/conf/hue.ini owner=hduser group=hadoop
-    when: is_master
+    when: is_master and execute_once
     
   - name: copy hue_login.py in master node
     tags: hueconfig
     template: src=hue_login.j2 dest={{ hue_home }}/build/env/bin/hue_login.py owner=hduser group=hadoop
-    when: is_master
+    when: is_master and execute_once
 
   - name: copy ecosystem xml files
     tags: ecoconfig
@@ -254,6 +271,7 @@
       - { src: 'regionservers.j2', dest: '/usr/local/hadoop/etc/hadoop/regionservers', owner: 'hduser', group: 'hadoop' }
       - { src: 'hbase-site.j2', dest: '/usr/local/hbase/conf/hbase-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'hive-site.j2', dest: '/usr/local/hive/conf/hive-site.xml', owner: 'hduser', group: 'hadoop' }
+    when: execute_once
 
   - name: create masters and slaves files in hadoop-yarn master node
     tags: postconfig
@@ -276,6 +294,7 @@
     with_items:
       - { dest: '/app/hadoop/tmp/namenode', mode: '750', owner: 'hduser', group: 'hadoop', state: 'directory' }
       - { dest: '/app/hadoop/tmp/datanode', mode: '750', owner: 'hduser', group: 'hadoop', state: 'directory' }
+    when: execute_once
 
   - name: Install package for installation of psycopg2
     tags: hueconfig
@@ -283,71 +302,72 @@
     with_items:
       - libpq-dev
       - python-dev
-    when: is_master
+    when: is_master and execute_once
 
   - name: Install psycopg2
     tags: hueconfig
     pip: name=psycopg2 state=present
-    when: is_master
+    when: is_master and execute_once
 
   - name: Install psycopg2 in Hue virtual env
     shell: sudo -u hduser {{ hue_home }}/build/env/bin/pip install psycopg2
     tags: hueconfig
-    when: is_master
+    when: is_master and execute_once
 
   - name: Edit pg_hba.conf, local to trust
     lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
     tags: hueconfig
-    when: is_master
+    when: is_master and execute_once
 
   - name: Edit pg_hba.conf, host to trust
     lineinfile: line="host\tall\t\tall\t\t127.0.0.1/32\t\ttrust" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="host(\s)+all(\s)+all(\s)+127.0.0.1/32(\s)+(?=md5)" backrefs=yes
     tags: hueconfig
-    when: is_master
+    when: is_master and execute_once
 
   - name: Edit pg_hba.conf, add hduser
     lineinfile: line="host\thduser\t\thduser\t\t0.0.0.0/0\t\tmd5" dest=/etc/postgresql/9.4/main/pg_hba.conf
     tags: hueconfig
-    when: is_master
+    when: is_master and execute_once
 
   - name: Edit postgresql.conf
     lineinfile: line="listen_addresses = '0.0.0.0'" dest=/etc/postgresql/9.4/main/postgresql.conf
     tags: hueconfig
-    when: is_master
+    when: is_master and execute_once
 
   - name: Restart PostgreSql service
     service: name=postgresql state=restarted
     tags: hueconfig
-    when: is_master
+    when: is_master  and execute_once
 
   - name: Create PostgreSql user
     postgresql_user: name={{ eco_db_user }} password={{ eco_db_password }} role_attr_flags=CREATEDB,SUPERUSER,CREATEROLE
     tags: hueconfig
-    when: is_master
+    when: is_master and execute_once
 
   - name: Create PostgreSql database
     postgresql_db: name={{ hue_db_name }} owner={{ eco_db_user }}
     tags: hueconfig
-    when: is_master
+    when: is_master and execute_once
 
   - name: Restart PostgreSql service
     service: name=postgresql state=restarted
     tags: hueconfig
-    when: is_master
+    when: is_master and execute_once
 
   - name: Hue project syncdb
     shell: sudo -u hduser ./hue syncdb --noinput chdir={{ hue_home }}/build/env/bin
     tags: hueconfig
-    when: is_master
+    when: is_master and execute_once
 
   - name: Hue project migrate
     shell: sudo -u hduser ./hue migrate chdir={{ hue_home }}/build/env/bin
     tags: hueconfig
-    when: is_master
+    when: is_master and execute_once
 
   - name: Create folder zookeeper
     tags: ecoconfig
     file: path=/usr/local/zookeeper owner={{eco_db_user}} group=hadoop state=directory
+    when: execute_once
 
   - name: Change ownership to hduser for all components
     tags: ecoconfig
@@ -357,11 +377,12 @@
       - { path: '/usr/local/hbase/', owner: '{{eco_db_user}}', group: 'hadoop' }
       - { path: '/usr/local/oozie/', owner: '{{eco_db_user}}', group: 'hadoop' }
       - { path: '/usr/local/pig/', owner: '{{eco_db_user}}', group: 'hadoop' }
+    when: execute_once
 
   - name: Create PostgreSql database for Hive
     tags: ecoconfig
     postgresql_db: name={{hive_db_name}} owner={{eco_db_user}}
-    when: is_master
+    when: is_master and execute_once
 
   - name: Run sql scripts
     tags: ecoconfig
@@ -369,17 +390,17 @@
     with_items:
       - "{{hive_home}}/metastore/scripts/upgrade/postgres/hive-schema-1.1.0.postgres.sql"
       - "{{hive_home}}/metastore/scripts/upgrade/postgres/hive-txn-schema-0.13.0.postgres.sql"
-    when: is_master
+    when: is_master and execute_once
 
   - name: Copy hadoop xml files to oozie conf directory
     tags: ecoconfig
     shell: cp -rf {{hadoop_home}}/etc/hadoop/* {{path_to_hadoop}}/oozie/conf/hadoop-conf
-    when: is_master
+    when: is_master and execute_once
 
   - name: Create Oozie Database
     tags: ecoconfig
     action: command sudo -u hduser ./ooziedb.sh create -sqlfile oozie.sql -run chdir=/usr/local/oozie/bin/
-    when: is_master
+    when: is_master and execute_once
 
   - name: Copy Ecosystem services to /etc/init.d
     tags: ecoconfig
@@ -393,9 +414,9 @@
       - { src: 'hbaseserver.service', dest: '/lib/systemd/system/hbaseserver.service', mode: '644' }
       - { src: 'livyserver.service', dest: '/lib/systemd/system/livyserver.service', mode: '644' }
       - { src: 'oozieserver.service', dest: '/lib/systemd/system/oozieserver.service', mode: '644' }
-    when: is_master
+    when: is_master and execute_once
     
   - name: Set password and username for hue superuser
     shell: echo 'from hue_login import set_user_pass; set_user_pass()' | ./hue shell chdir=/usr/local/hue/build/env/bin/
     tags: hueconfig
-    when: is_master
+    when: is_master and execute_once

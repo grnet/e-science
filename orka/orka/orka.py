@@ -669,10 +669,10 @@ class HadoopCluster(object):
             exit(error_fatal)
 
 
-class UserClusterInfo(object):
-    """ Class holding user cluster info
-    sortdict: input a cluster dictionary, output cluster with keys sorted according to order
-    sortlist: input a clusters list of cluster dictionaries, output a clusters list sorted according to cluster key
+class UserClusterVreInfo(object):
+    """ Class holding user cluster and VRE info
+    sortdict: input a cluster or VRE dictionary, output cluster or VRE respectively with keys sorted according to order
+    sortlist: input a clusters or VREs list of cluster or VRE dictionaries, output a clusters or VREs list respectively sorted according to cluster or VRE key
     list: pretty printer
     """
     def __init__(self, opts):
@@ -682,26 +682,37 @@ class UserClusterInfo(object):
                             'master_IP','project_name','os_image','disk_template',
                             'cpu_master','ram_master','disk_master',
                             'cpu_slaves','ram_slaves','disk_slaves']]
+        self.vre_list_order = [['server_name', 'id', 'action_date', 'server_status', 'server_IP', 'project_name', 'os_image',
+                                 'disk_template', 'cpu', 'ram', 'disk']]
+        self.sort_vre_func = custom_sort_factory(self.vre_list_order)
+        self.vre_short_list = {'id':True, 'server_name':True, 'action_date':True,
+                                   'server_status':True, 'server_IP':True}
         self.sort_cluster_func = custom_sort_factory(self.cluster_list_order)
         self.cluster_short_list = {'id':True, 'cluster_name':True, 'action_date':True, 'cluster_size':True,
                                    'cluster_status':True, 'hadoop_status':True, 'master_IP':True}
-        self.cluster_skip_list = {'task_id':True, 'state':True}
+        self.skip_list = {'task_id':True, 'state':True}
         self.status_desc_to_status_id = {'ACTIVE':'1', 'PENDING':'2', 'DESTROYED':'0', 'FAILED':'3'}
         self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED', '3':'FAILED'}
         self.hdp_status_id_to_status_desc = {'0':'STOPPED','1':'STARTED','2':'FORMAT'}
         self.hdp_status_desc_to_status_id = {'STOPPED':'0','STARTED':'1','FORMAT':'2'}
         self.disk_template_to_label = {'ext_vlmc':'Archipelago', 'drbd':'Standard'}
-        self.clusters_list_order = ['id']
+        self.list_order = ['id']
 
-    def sortdict(self, cluster):
-        return self.sort_cluster_func(cluster)
+    def sortdict(self, cluster_or_vre):
+        if self.type == 'server':
+            return self.sort_vre_func(cluster_or_vre)
+        return self.sort_cluster_func(cluster_or_vre)
     
-    def sortlist(self, clusters, keys):
-        return custom_sort_list(clusters, keys)
+    def sortlist(self, clusters_or_vres, keys):
+        return custom_sort_list(clusters_or_vres, keys)
     
-    def list(self):
+    def list(self, type, choice_argument):
+        self.type = type
+        short_list = self.cluster_short_list
+        if type == 'server':
+            short_list = self.vre_short_list
         try:
-            self.data.extend(get_user_clusters(self.opts['token'], self.opts['server_url']))
+            self.data.extend(get_user_clusters(self.opts['token'], self.opts['server_url'], choice=choice_argument))
         except ClientError, e:
             logging.error(e.message)
             exit(error_fatal)
@@ -711,43 +722,43 @@ class UserClusterInfo(object):
         
         opt_short = not self.opts['verbose']
         opt_status = False
-        opt_cluster_id = self.opts.get('cluster_id', False)
-        cluster_count = 0
+        opt_id = self.opts.get('{0}_id'.format(type), False)
+        count = 0
         if self.opts['status']:
             opt_status = self.status_desc_to_status_id[self.opts['status'].upper()]
         
         if len(self.data) > 0:
-            sorted_cluster_list = self.sortlist(self.data, self.clusters_list_order)
-            for cluster in sorted_cluster_list:
-                if opt_status and cluster['cluster_status'] != opt_status:
+            sorted_list = self.sortlist(self.data, self.list_order)
+            for cluster_or_vre in sorted_list:
+                if opt_status and cluster_or_vre['{0}_status'.format(type)] != opt_status:
                     continue
-                if opt_cluster_id and cluster['id'] != opt_cluster_id:
+                if opt_id and cluster_or_vre['id'] != opt_id:
                     continue
-                cluster_count += 1
-                sorted_cluster = self.sortdict(cluster)
-                for key in sorted_cluster:
-                    if (opt_short and not self.cluster_short_list.has_key(key)) or self.cluster_skip_list.has_key(key):
+                count += 1
+                sorted_cluster_or_vre = self.sortdict(cluster_or_vre)
+                for key in sorted_cluster_or_vre:
+                    if (opt_short and not short_list.has_key(key)) or self.skip_list.has_key(key):
                         continue
                     # using string.format spec mini-language to create a hanging indent 
                     # https://docs.python.org/2/library/string.html#formatstrings
-                    if key == 'cluster_name':
+                    if key == '{0}_name'.format(type):
                         fmt_string = u'{:<5}' + key + ': {' + key + '}'
-                    elif key == 'cluster_status':
-                        fmt_string = '{:<10}' + key + ': ' + self.status_id_to_status_desc[sorted_cluster[key]]
+                    elif key == '{0}_status'.format(type):
+                        fmt_string = '{:<10}' + key + ': ' + self.status_id_to_status_desc[sorted_cluster_or_vre[key]]
                     elif key == 'hadoop_status':
-                        fmt_string = '{:<10}' + key + ': ' + self.hdp_status_id_to_status_desc[sorted_cluster[key]]
+                        fmt_string = '{:<10}' + key + ': ' + self.hdp_status_id_to_status_desc[sorted_cluster_or_vre[key]]
                     elif key == 'disk_template':
-                        fmt_string = '{:<10}' + key + ': ' + self.disk_template_to_label[sorted_cluster[key]]
+                        fmt_string = '{:<10}' + key + ': ' + self.disk_template_to_label[sorted_cluster_or_vre[key]]
                     elif key == 'action_date':
-                        fmt_string = '{:<10}' + key + ': ' + custom_date_format(sorted_cluster[key])
+                        fmt_string = '{:<10}' + key + ': ' + custom_date_format(sorted_cluster_or_vre[key])
                     else:
                         fmt_string = '{:<10}' + key + ': {' + key + '}'
-                    print fmt_string.format('',**sorted_cluster)
+                    print fmt_string.format('',**sorted_cluster_or_vre)
                 print ''
-            if cluster_count == 0:
-                print 'No cluster(s) found matching those options.'
+            if count == 0:
+                print 'No {0}(s) found matching those options.'.format(type)
         else:
-            print 'No user cluster Information available.'
+            print 'No user {0} Information available.'.format(type)
 
 class ImagesInfo(object):
     """ Class holding info for available images"""
@@ -836,6 +847,8 @@ def main():
                                      ' on ~okeanos.')
     parser_vre_images = vre_subparsers.add_parser('images', parents=[common_parser],
                                                   help='List available Virtual Research Environment images')
+    parser_vre_list = vre_subparsers.add_parser('list', parents=[common_parser],
+                                                  help='List user Virtual Research Environment servers')
     parser_destroy = orka_subparsers.add_parser('destroy', parents=[common_parser],
                                      help='Destroy a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
@@ -926,6 +939,12 @@ def main():
         
         parser_vre_destroy.add_argument('server_id',
                               help='The id of a VRE server', type=checker.positive_num_is)
+
+        parser_vre_list.add_argument('--status', help='Filter by status ({%(choices)s})'
+                              ' Default is all: no filtering.', type=str.upper,
+                              metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
+        parser_vre_list.add_argument('--verbose', help='List extra Virtual Research Environment server details.',
+                              action="store_true")
         
         # hidden argument with default value so we can set opts['addnode'] 
         # when ANY 'orka node add' command is invoked
@@ -996,7 +1015,7 @@ def main():
                 
         opts = vars(orka_parser.parse_args(argv[1:]))
         c_hadoopcluster = HadoopCluster(opts)
-        c_userclusters = UserClusterInfo(opts)
+        c_userservers = UserClusterVreInfo(opts)
         c_imagesinfo = ImagesInfo(opts)
         verb = argv[1]
         if verb == 'create':
@@ -1018,7 +1037,7 @@ def main():
             if verb == 'info':
                 opts['verbose'] = True
                 opts['status'] = None
-            c_userclusters.list()        
+            c_userservers.list('cluster', 'clusters')       
         elif verb == 'hadoop':
             c_hadoopcluster.hadoop_action()
         elif verb == 'file':
@@ -1026,6 +1045,8 @@ def main():
         elif verb == 'vre':
             if argv[2] == 'images':
                 c_imagesinfo.list_images('vre')
+            elif argv[2] == 'list':
+                c_userservers.list('server', 'vreservers')
             else:
                 c_hadoopcluster.vre_action()
         elif verb == 'node':

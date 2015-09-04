@@ -11,6 +11,8 @@
   hive_home: /usr/local/hive
   flume_home: /usr/local/flume
   choose_role: webserver
+  manage_cluster: placeholder
+  execute_once: True
 
   # Hadoop-yarn variables
   path_to_common_libs: /usr/local/hadoop/share/hadoop/common
