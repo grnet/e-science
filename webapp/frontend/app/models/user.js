@@ -46,6 +46,10 @@ App.Uservreserver = DS.Model.extend({
         // Return url with helpful info for setting up email port inside ~okeanos
         return 'https://okeanos.grnet.gr/support/faq/cyclades-why-is-port-x-closed-is-it-blocked-by-design/';
     }.property('os_image'),
+    vre_readme_url: function(){
+        // Return url with helpful info for docker operations in VRE servers
+        return 'https://github.com/ioannisstenos/e-science/blob/es458/orka/VRE_README.md';
+    }.property('os_image'),
     vre_access_url : function(){
         // TODO: add to components info and resolve dynamically
         var image = this.get('os_image');
