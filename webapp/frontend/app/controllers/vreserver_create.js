@@ -22,7 +22,10 @@ App.VreserverCreateController = Ember.Controller.extend({
 	   {cpu:4,ram:6144,disk:20} //Large
 	],
 	vreResourceMin : {
-	    'DSpace-5.3':{ram:2048}
+	    'DSpace-5.3':{ram:2048},
+	    'Drupal-7.3.7':{ram:1024},
+        'Mediawiki-1.2.4':{ram:1024},
+        'Redmine-3.0.4':{ram:1024}
 	},
 	vreImageExtraProperties : {
 	    // controller_show_field : [image,...] / '*' = all images
@@ -564,7 +567,7 @@ App.VreserverCreateController = Ember.Controller.extend({
                 //success
                 var new_record = that.store.createRecord('uservreserver',new_server);
                 new_record.save().then(function(data){
-                    var admin_pass_msg = {'msg_type': 'warning', 'msg_text': 'The admin password of \"%@%@\" VRE server is %@'.fmt('[orka]-',data.get('server_name'),data.get('admin_password'))};
+                    var admin_pass_msg = {'msg_type': 'warning', 'msg_text': 'The admin password for %@ of \"%@%@\" VRE server is %@'.fmt(data.get('os_image'),'[orka]-',data.get('server_name'),data.get('admin_password'))};
                     that.set('controllers.userWelcome.create_cluster_start', true);
                     that.get('controllers.userWelcome').send('setActiveTab','vreservers');
                     that.get('controllers.userWelcome').send('addMessage',admin_pass_msg);

@@ -23,31 +23,31 @@
    		<h4 class="list-group-item-heading">Cluster</h4>
        		<table class="table table-striped table-hover table-border">
       			<tr>
-      				<td class="col-sm-2"> <b>ID :</b> </td>
+      				<td class="col-sm-2"> <b>ID</b> </td>
       				<td class="col-sm-2"><span class="text text-info"> {{model.id}} </span></td>
       			</tr>
       			<tr>
-      				<td class="col-sm-2"> <b>Creation Date :</b> </td>
+      				<td class="col-sm-2"> <b>Creation Date</b> </td>
       				<td class="col-sm-2"> <span class="text text-info"> {{formatDate model.action_date format='shortdatetime'}} </span> </td>
       			</tr>
       			<tr>
-      				<td class="col-sm-2"> <b>Cluster Status :</b> </td>
+      				<td class="col-sm-2"> <b>Cluster Status</b> </td>
       				<td class="col-sm-2"> <span class="text text-info"> {{model.cluster_status_verbose}} </span> </td>
       			</tr>
       			<tr>
-      				<td class="col-sm-2"> <b>Hadoop Status :</b> </td>
+      				<td class="col-sm-2"> <b>Hadoop Status</b> </td>
       				<td class="col-sm-2"> <span class="text text-info"> {{model.cluster_hadoop_status}} </span></td>
       			</tr>
       			<tr>
-      			    <td class="col-sm-2"> <b>Image :</b> </td>
+      			    <td class="col-sm-2"> <b>Image</b> </td>
                     <td class="col-sm-2"> <a href="#" {{action 'visitActiveImage' model.os_image}}><span class="text text-info"> {{model.os_image}} </span></a></td>
       			</tr>
       			<tr>
-      				<td class="col-sm-2"> <b>Master IP :</b> </td>
+      				<td class="col-sm-2"> <b>Master IP</b> </td>
       				<td class="col-sm-2"> <span class="text text-info"> {{model.master_IP}} </span></td>
       			</tr>
                 <tr>
-      				<td class="col-sm-2"> <b>~Okeanos Project :</b> </td>
+      				<td class="col-sm-2"> <b>~Okeanos Project</b> </td>
       				<td class="col-sm-2"> <span class="text text-info"> {{model.project_name}} </span></td>
       			</tr>
  			</table>
@@ -56,16 +56,16 @@
       	<h4 class="list-group-item-heading">Properties</h4>
        		<table class="table table-striped table-hover table-border">
       			<tr> 
-      				<td class="col-sm-2"> <b>Cluster size :</b> </td>
+      				<td class="col-sm-2"> <b>Cluster size</b> </td>
       				<td class="col-sm-2"> <span class="text text-info"> {{model.cluster_size}} </span> </td>
       			</tr>
       			<tr> 
-      				<td class="col-sm-2"> <b>Master Settings :</b> </td>
+      				<td class="col-sm-2"> <b>Master Settings</b> </td>
       				<td class="col-sm-2"> <span class="text text-info"> CPUs:{{model.cpu_master}}, RAM:{{model.ram_master}}MiB, 
       					Disk size:{{model.disk_master}}GiB </span> </td>
       			</tr>
       			<tr> 
-      				<td class="col-sm-2"> <b>Slaves Settings :</b> </td> 
+      				<td class="col-sm-2"> <b>Slaves Settings</b> </td> 
       				<td class="col-sm-2"> <span class="text text-info"> CPUs:{{model.cpu_slaves}}, RAM:{{model.ram_slaves}}MiB, 
       					Disk size:{{model.disk_slaves}}GiB </span> </td>
       			</tr>
@@ -191,12 +191,12 @@
                     Destroy Cluster <b {{bind-attr class='model.cluster_status_class_destroy'}}></b>
                 </button>
 			{{/ifeq}}
-			<!--<button {{!--bind-attr id='model.cluster_scale_id'--}} class="btn btn-sm btn-primary btn-block"{{!--action 'apply_resize'--}}{{!--bind-attr disabled="apply_resize_disabled"--}}>
+			<button {{bind-attr id='model.cluster_scale_id'}} class="btn btn-sm btn-primary btn-block"{{action 'apply_resize'}}{{bind-attr disabled="apply_resize_disabled"}}>
                     Scale Cluster <b class="glyphicon glyphicon-resize-full text-warning"></b>
-    </button>-->
+            </button>
 		</div>
 		<div class="col col-sm-10">
-		    {{!--partial 'cluster/propmanage'--}}
+		    {{partial 'cluster/propmanage'}}
 		</div>
 	</div>
 		{{else}}
