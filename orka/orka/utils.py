@@ -65,6 +65,9 @@ def get_from_kamaki_conf(section, option, action=None):
             if action == 'orka_images':
                 url_orka_images = '{0}{1}'.format(option_value, orka_images_endpoint)
                 return url_orka_images
+            if action == 'node':
+                url_node = '{0}{1}'.format(option_value, cluster_endpoint)
+                return url_node
             else:
                 logging.log(SUMMARY, ' Url to be returned from .kamakirc not specified')
                 return 0
@@ -113,22 +116,6 @@ class ClusterRequest(object):
                          headers=self.headers)
         response = json.loads(r.text)
         return response
-        
-        
-def get_user_id(token, server_url):
-    """Get user id."""
-    try:
-        escience_token = authenticate_escience(token, server_url)
-    except TypeError:
-        msg = ' Authentication error: Invalid Token'
-        raise ClientError(msg, error_authentication)
-    except Exception, e:
-        print ' ' + str(e.args[0])
-    payload = {"user": {"id": 1}}
-    orka_request = ClusterRequest(escience_token, server_url, payload, action='login')
-    user_data = orka_request.retrieve()
-    user_id = user_data['user']['user_id']
-    return user_id
 
 
 def get_user_clusters(token, server_url, choice='clusters'):
