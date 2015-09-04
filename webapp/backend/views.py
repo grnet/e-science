@@ -23,7 +23,7 @@ from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     OrkaImagesSerializer, VreImagesSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
-from tasks import create_cluster_async, destroy_cluster_async, \
+from tasks import create_cluster_async, destroy_cluster_async, scale_cluster_async, \
     hadoop_cluster_action_async, put_hdfs_async, create_server_async, destroy_server_async
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
@@ -216,7 +216,17 @@ class StatusView(APIView):
                     return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
                 except Exception, e:
                     return Response({"status": str(e.args[0])})
-
+            # Update existing cluster
+            if serializer.data['cluster_edit']:
+                cluster = ClusterInfo.objects.get(id=serializer.data['cluster_edit'])
+                cluster_delta = serializer.data['cluster_size']-cluster.cluster_size
+                try:
+                    cluster_action = scale_cluster_async.delay(user.okeanos_token, serializer.data['cluster_edit'], cluster_delta)
+                    task_id = cluster_action.id
+                    return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+                except Exception, e:
+                    return Response({"status": str(e.args[0])})
+            # Create cluster
             # Dictionary of YarnCluster arguments
             choices = dict()
             choices = serializer.data.copy()

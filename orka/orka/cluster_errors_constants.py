@@ -47,6 +47,7 @@ error_multiple_entries = -72
 error_project_quota = -73
 error_authentication = -99
 error_replication_factor = -36
+error_remove_node = -37
 SUCCESS = 0
 
 # Package constants
