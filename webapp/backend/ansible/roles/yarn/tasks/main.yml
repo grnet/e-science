@@ -55,7 +55,7 @@
     unarchive: src={{path_to_hadoop}}/{{ yarn_version }}.tar.gz dest=/usr/local copy=no owner=root group=root
 
   - name: Clean /etc/hosts file before adding new entries for scale cluster
-    shell: sed -i.bak '/192.168.0.2/,$d' /etc/hosts
+    shell: sed -i.bak '/192.168*/,$d' /etc/hosts
     tags: postconfig
 
   - name: Add virtual machine private ips in /etc/hosts
