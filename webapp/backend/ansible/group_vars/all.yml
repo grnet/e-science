@@ -13,6 +13,7 @@
   choose_role: webserver
   manage_cluster: placeholder
   execute_once: True
+  is_new_slave: False
 
   # Hadoop-yarn variables
   path_to_common_libs: /usr/local/hadoop/share/hadoop/common
