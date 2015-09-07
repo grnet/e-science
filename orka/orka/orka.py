@@ -179,8 +179,9 @@ class HadoopCluster(object):
             result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
             logging.log(SUMMARY, "VRE server is active and has the following properties:")
             stdout.write("server_id: {0}\nserver_IP: {1}\n"
-                         "VM root password: {2}\n{3} admin user's password: {4}\n".format(result['server_id'], result['server_IP'],
-                                                        result['VRE_VM_password'], filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_password']))
+                         "VM root password: {2}\n".format(result['server_id'], result['server_IP'], result['VRE_VM_password']))
+            if not 'bigbluebutton' in self.opts['image'].lower():
+                stdout.write("{0} admin user's password: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_password']))
             if 'dspace' in self.opts['image'].lower():
                 stdout.write("{0} admin user's email: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_email']))
             exit(SUCCESS)

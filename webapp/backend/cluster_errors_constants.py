@@ -120,7 +120,8 @@ pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"ima
                                                                         "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}",
                                                                         "change_db_pass":"docker exec -t -i db bash -c \"mysql -p{0} mediawiki -e \\\"UPDATE user SET user_password = CONCAT(':A:', MD5('{0}')) WHERE user_name = 'Admin';\\\"\""},
                                "6a6676d4-213c-464b-a321-04998c1d8dc7": {"image":"dspace","update_password":"/usr/bin/docker exec -d dspace sudo -u postgres psql -U postgres -d dspace -c \"alter user dspace password '{0}';\"",
-                                                                        "change_db_pass":"docker exec -d dspace sed -i 's/db.password *= * *dspace/db.password={0}/g' /dspace/config/dspace.cfg"}}
+                                                                        "change_db_pass":"docker exec -d dspace sed -i 's/db.password *= * *dspace/db.password={0}/g' /dspace/config/dspace.cfg"},
+                               "0d26fd55-31a4-46b3-955d-d94ecf04a323": {"image":"bigbluebutton"}}
 
 #encrypt decrypt token in django db
 def mask_token(key, token):
