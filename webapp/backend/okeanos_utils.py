@@ -179,7 +179,7 @@ def cluster_add_node(token, cluster_id):
         msg = ' Image not found.'
         raise ClientError(msg, error_image_id)
     
-    cyclades.create_server(node_name, flavor_id, chosen_image_id, personality=personality(), project_id=project_id)
+    cyclades.create_server(node_name, flavor_id, chosen_image['id'], personality=personality(), project_id=project_id)
    
     master_id = None
     network_to_edit_id = None
@@ -196,12 +196,46 @@ def cluster_add_node(token, cluster_id):
 #    port_details = self.nc.create_port(network_to_edit_id,new_server['id'])
 
 
-def cluster_remove_node(token, cluster_id, node_id, status):
+def cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient, status):
     """
-    Detach node with node_id from cluster and delete VM
+    Detach highest node from cluster and delete VM
     """
-    state = "Deleting Node VM %s from cluster %s" % (node_id, cluster_to_scale.cluster_name)
+    # TODO structured exception handling
+    node_id = None
+    cluster_servers = []
+    list_of_servers = cyclades.list_servers(detail=True)
+    ip = get_public_ip_id(netclient, cluster_to_scale.master_IP)
+    master_id = ip['instance_id']          
+    master_server = cyclades.get_server_details(master_id)
+    for attachment in master_server['attachments']:
+         if (attachment['OS-EXT-IPS:type'] == 'fixed' and not attachment['ipv6']):
+            network_id = attachment['network_id']
+            break
+    for server in list_of_servers:
+        for attachment in server['attachments']:
+            if attachment['network_id'] == network_id:
+                cluster_servers.append(server)
+                break
+    for server in cluster_servers:
+        node_id = server['id']
+        node_fqdn = server['SNF:fqdn']
+    cyclades.delete_server(node_id)
+    state = "Deleting Node %s from cluster %s (id:%d)" % (node_id, cluster_to_scale.cluster_name, cluster_id)
     set_cluster_state(token, cluster_id, state, status='Pending')
+    new_status = cyclades.wait_server(node_id,current_status='ACTIVE',max_wait=MAX_WAIT)
+    if new_status != 'DELETED':
+        msg = 'Error deleting server [%s]' % server['name']
+        logging.error(msg)
+        set_cluster_state(token, cluster_id, state=msg, status=status)
+        raise ClientError(msg, error_cluster_corrupt)
+    state = 'Deleted Node %s from cluster %s (id:%d)' % (node_id, cluster_to_scale.cluster_name, cluster_id)
+    set_cluster_state(token, cluster_id, state, status='Pending')
+    sleep(5)
+    state = ''
+    cluster_to_scale.cluster_size = len(cluster_servers)-1
+    cluster_to_scale.save()
+    set_cluster_state(token, cluster_id, state, status=status)
+    return node_fqdn
 
 def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     """
@@ -229,7 +263,7 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
             state = "Decommissioning Node %s from Hadoop (ansible)" % -counter
             set_cluster_state(token, cluster_id, state, status=status)
             sleep(refresh_timer)
-            cluster_remove_node(token, cluster_id, -counter, status_map[previous_cluster_status])
+            cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient, status_map[previous_cluster_status])
     elif cluster_delta > 0: # scale up
         # TODO: 1. Create VM > attach to cluster + update metadata on DB 2. Ansible to add datanode to hadoop
         for counter in range(1,cluster_delta+1):
@@ -304,7 +338,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
             if attachment['network_id'] == network_to_delete_id:
                 servers_to_delete.append(server)
                 break
-    cluster_name = servers_to_delete[0]['name'].rsplit("-", 1)[0]
+    cluster_name = cluster_to_delete.cluster_name
     number_of_nodes = len(servers_to_delete)
     set_cluster_state(token, cluster_id, "Starting deletion of requested cluster")
     # Start cluster deleting
