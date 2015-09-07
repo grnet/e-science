@@ -42,6 +42,14 @@ App.Uservreserver = DS.Model.extend({
         inverse : 'vreservers'
     }),
     // computed properties
+    vre_okeanos_faq: function(){
+        // Return url with helpful info for setting up email port inside ~okeanos
+        return 'https://okeanos.grnet.gr/support/faq/cyclades-why-is-port-x-closed-is-it-blocked-by-design/';
+    }.property('os_image'),
+    vre_readme_url: function(){
+        // Return url with helpful info for docker operations in VRE servers
+        return 'https://github.com/grnet/e-science/blob/master/orka/VRE_README.md';
+    }.property('os_image'),
     vre_access_url : function(){
         // TODO: add to components info and resolve dynamically
         var image = this.get('os_image');
@@ -326,7 +334,7 @@ App.Usercluster = DS.Model.extend({
 		var cluster_status = this.get('cluster_status');
 		var hadoop_status = this.get('hadoop_status');
 		var state = this.get('state');
-		if (cluster_status == '1' && hadoop_status == '2'){
+		if (cluster_status == '1' && (hadoop_status == '2' || hadoop_status == '3')){
 			return state;
 		}else
 		{
@@ -342,6 +350,8 @@ App.Usercluster = DS.Model.extend({
 		switch (status){
 		case "0":
 			return false;
+		case "3":
+		    return false;
 		default:
 			return true;
 		}
@@ -354,7 +364,9 @@ App.Usercluster = DS.Model.extend({
 		}
 		switch (status){
 		case "1":
-			return false;
+		    return false;
+	    case "3":
+	        return false;
 		default:
 			return true;
 		}
@@ -480,7 +492,7 @@ App.Usercluster = DS.Model.extend({
   			case "2":
    				return "PENDING";
   			default:
-   				return "";
+   				return "UNKNOWN";
   		}
  	}.property('hadoop_status','cluster_status')
 });

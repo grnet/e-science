@@ -17,6 +17,7 @@ from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATU
     error_ansible_playbook, const_hadoop_status_started, hadoop_images_ansible_tags, pithos_images_uuids_properties, unmask_token, encrypt_key
 from okeanos_utils import set_cluster_state
 from backend.models import OrkaImage
+from ansible import errors
 
 # Definitions of return value errors
 # Ansible constants
@@ -143,7 +144,12 @@ def ansible_manage_cluster(cluster_id, action):
 
         for hadoop_action in ANSIBLE_SEQUENCE:
             ansible_code = '{0} {1} {2}'.format(ansible_code_generic, hadoop_action, ansible_log)
-            execute_ansible_playbook(ansible_code)
+            try:
+                execute_ansible_playbook(ansible_code)
+            except Exception, e:
+                msg = str(e.args[0])
+                db_hadoop_update(cluster_id, 'undefined', msg)
+                raise RuntimeError(msg)
 
         msg = 'Cluster %s %s' %(cluster.cluster_name, HADOOP_STATUS_ACTIONS[action][2])
         db_hadoop_update(cluster_id, current_hadoop_status, msg)

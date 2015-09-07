@@ -44,7 +44,7 @@ App.ClusterManagementController = Ember.Controller.extend({
 	    return Ember.isEmpty(this.get('cluster_slaves_newsize_static')) ? this.get('content.cluster_slaves_num') : this.get('cluster_slaves_newsize_static'); // getter
 	}.property('content.cluster_slaves_num','cluster_slaves_newsize_static'),
 	slaves_resize_disabled : function(){
-	    var enabled = this.get('content.cluster_status')=='1' && this.get('content.hadoop_status')!='2';
+	    var enabled = this.get('content.cluster_status')=='1' && this.get('content.hadoop_status')!='2' && this.get('content.hadoop_status')!='3';
 	    return !enabled;
 	}.property('content.cluster_status','content.hadoop_status'),
 	apply_resize_disabled : function(){
