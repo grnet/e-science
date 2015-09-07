@@ -217,6 +217,7 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     # TODO: Code below this point is just a stub so CLI and webapp can be tested and to illustrate the flow of actions.
     refresh_timer = 5
     state = ''
+    ################# remember to rm -r /tmp/uuid directory
     if cluster_delta < 0: # scale down
         # TODO: 1. Ansible to decommission node 2. Destroy VM + update cluster metadata on DB
         for counter in range(cluster_delta,0):

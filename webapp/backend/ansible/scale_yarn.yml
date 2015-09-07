@@ -1,0 +1,200 @@
+---
+  - name: Clean /etc/hosts file before adding new entries for scale cluster
+    shell: sed -i.bak '/192.168*/,$d' /etc/hosts
+    tags: postconfigscale
+
+  - name: Add virtual machine private ips in /etc/hosts
+    template: src={{etc_hosts_template_path}} dest={{etchosts_filename}}
+    tags: postconfigscale
+
+  - name: Append the host file
+    shell: cat {{etchosts_filename}} >> /etc/hosts
+    tags: postconfigscale
+
+  - name: create hadoop group
+    group: name=hadoop state=present
+    tags: postconfigscale
+
+  - name: create hadoop user
+    user: name=hduser group=hadoop generate_ssh_key=yes shell=/bin/bash
+    tags: postconfigscale
+    when: is_new_slave
+
+  - name: chown of hue bin directory
+    file: path=/usr/local/hue owner=hduser group=hadoop state=directory recurse=yes
+    tags: hueconfigscale
+    when: is_new_slave
+
+  - name: Remove Hue obsolete directory
+    shell: rm -rf hue-*
+    tags: hueconfigscale
+
+  - name: Remove Hadoop .tar.gz file
+    shell: rm -f hadoop-*.tar.gz chdir={{path_to_hadoop}}
+    tags: postconfigscale
+
+  - name: copy authorized_keys from root to hduser .ssh directory in new slave machines
+    tags: postconfigscale
+    shell: cp -f /root/.ssh/authorized_keys {{hadoopuser_path}}/.ssh/authorized_keys
+    when: is_new_slave
+
+  - name: change owner of hduser auth keys file
+    tags: postconfigscale
+    file: path={{hadoopuser_path}}/.ssh/authorized_keys owner=hduser group=hadoop mode=0600
+    when: is_new_slave
+
+  - name: copy master hduser public ssh key to local box
+    tags: postconfigscale
+    fetch: src={{hadoopuser_path}}/.ssh/id_rsa.pub dest=/tmp/{{master_key_hduser}} flat=yes
+    when: is_master
+
+  - name: copy master root public ssh key to local box
+    tags: postconfigscale
+    fetch: src=/root/.ssh/id_rsa.pub dest=/tmp/{{master_key_root}} flat=yes
+    when: is_master
+
+  - name: copy local box master hduser ssh key to hduser
+    tags: postconfigscale
+    authorized_key: user=hduser key="{{ item }}"
+    with_file:
+      - /tmp/{{master_key_hduser}}
+    when: is_new_slave and '/tmp/{{master_key_hduser}}' is defined
+
+  - name: copy local box master root ssh key to root every VM
+    tags: postconfigscale
+    authorized_key: user=root key="{{ item }}"
+    with_file:
+      - /tmp/{{master_key_root}}
+    when: is_new_slave and '/tmp/{{master_key_root}}' is defined
+
+  - name: chown hadoop-src from root to hadoop group
+    tags: postconfigscale
+    file: path={{path_to_hadoop}}/{{yarn_version}} state=directory owner=hduser group=hadoop recurse=yes
+    when: is_new_slave
+
+  - name: Rename hadoop directory
+    tags: postconfigscale
+    command: mv {{path_to_hadoop}}/{{yarn_version}} {{hadoop_home}}
+    when: is_new_slave
+
+  - name: copy Hadoop files from master to staging server before copying them to new slave
+    tags: postconfigscale
+    fetch: "src={{item.src}} dest={{item.dest}} flat=yes"
+    with_items:
+      - { src: '/home/hduser/.bashrc', dest: '/tmp/{{uuid}}/.bashrc'}
+      - { src: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', dest: '/tmp/{{uuid}}/hadoop-env.sh'}
+      - { src: '/usr/local/hadoop/etc/hadoop/core-site.xml', dest: '/tmp/{{uuid}}/core-site.xml'}
+      - { src: '/usr/local/hadoop/etc/hadoop/mapred-site.xml', dest: '/tmp/{{uuid}}/mapred-site.xml'}
+      - { src: '/usr/local/hadoop/etc/hadoop/hdfs-site.xml', dest: '/tmp/{{uuid}}/hdfs-site.xml' }
+      - { src: '/usr/local/hadoop/etc/hadoop/yarn-site.xml', dest: '/tmp/{{uuid}}/yarn-site.xml' }
+      - { src: '/home/hduser/.kamakirc', dest: '/tmp/{{uuid}}/.kamakirc' }
+      - { src: '{{flume_home}}/conf/flume.conf', dest: '/tmp/{{uuid}}/flume.conf' }
+    when: is_master
+
+  - name: copy Hadoop files from staging server to new slave
+    tags: postconfigscale
+    copy: "src={{item.src}} dest={{item.dest}} owner=hduser group=hadoop"
+    with_items:
+      - { src: '/tmp/{{uuid}}/.bashrc', dest: '/home/hduser/.bashrc'}
+      - { src: '/tmp/{{uuid}}/hadoop-env.sh',dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh' }
+      - { src: '/tmp/{{uuid}}/core-site.xml',dest: '/usr/local/hadoop/etc/hadoop/core-site.xml' }
+      - { src: '/tmp/{{uuid}}/mapred-site.xml', dest: '/usr/local/hadoop/etc/hadoop/mapred-site.xml'}
+      - { src: '/tmp/{{uuid}}/hdfs-site.xml', dest: '/usr/local/hadoop/etc/hadoop/hdfs-site.xml'}
+      - { src: '/tmp/{{uuid}}/yarn-site.xml', dest: '/usr/local/hadoop/etc/hadoop/yarn-site.xml' }
+      - { src: '/tmp/{{uuid}}/.kamakirc',dest: '/home/hduser/.kamakirc'}
+      - { src: '/tmp/{{uuid}}/flume.conf',dest: '{{flume_home}}/conf/flume.conf'}
+    when: is_new_slave
+
+  - name: Copy Java lib directory
+    tags: postconfigscale
+    copy: src={{yarn_java_folders}}/lib/ dest={{path_to_common_libs}} owner=hduser group=hadoop
+    when: is_new_slave
+
+  - name: Copy Java dist directory
+    tags: postconfigscale
+    copy: src={{yarn_java_folders}}/dist/ dest={{path_to_hdfs_libs}} owner=hduser group=hadoop
+    when: is_new_slave
+
+  - name: Delete .gitignore
+    tags: postconfigscale
+    shell: find -name '.gitignore' | xargs rm chdir={{hadoop_home}}
+    when: is_new_slave
+
+  - name: create app/hadoop/tmp to store HDFS and Flume Home configuration folder for Debian Base
+    tags: postconfigscale
+    action: command {{item}}
+    with_items:
+      - mkdir -p /app/hadoop/tmp
+      - chown hduser:hadoop /app/hadoop/tmp
+      - chmod 750 /app/hadoop/tmp
+      - mkdir -p {{flume_home}}/conf
+    when: is_new_slave
+
+  - name: Change ownership to hduser for flume
+    tags: postconfigscale
+    file: path={{item.path}} owner={{item.owner}} group={{item.group}} recurse=yes state=directory
+    with_items:
+      - { path: '{{flume_home}}', owner: 'hduser', group: 'hadoop' }
+      - { path: '/var/log/flume', owner: 'hduser', group: 'hadoop' }
+      - { path: '/var/run/flume', owner: 'hduser', group: 'hadoop' }
+    when: is_new_slave
+
+  - name: create masters and slaves files in hadoop-yarn master node
+    tags: postconfigscale
+    template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
+    with_items:
+      - { src: '{{masters_template_path}}', dest: '/usr/local/hadoop/etc/hadoop/masters', owner: 'hduser', group: 'hadoop' }
+      - { src: '{{slaves_template_path}}', dest: '/usr/local/hadoop/etc/hadoop/slaves', owner: 'hduser', group: 'hadoop' }
+    when: is_master
+
+  - name: create masters and slaves files in spark master node
+    tags: ecoconfigscale
+    template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
+    with_items: 
+      - { src: '{{slaves_template_path}}', dest: '/usr/local/spark/conf/slaves', owner: 'hduser', group: 'hadoop' }
+    when: is_master 
+
+  - name: create app/hadoop/tmp/namenode and datanode
+    tags: postconfigscale
+    file: "dest={{item.dest}} mode={{item.mode}} owner={{item.owner}} group={{item.group}} state={{item.state}}"
+    with_items:
+      - { dest: '/app/hadoop/tmp/namenode', mode: '750', owner: 'hduser', group: 'hadoop', state: 'directory' }
+      - { dest: '/app/hadoop/tmp/datanode', mode: '750', owner: 'hduser', group: 'hadoop', state: 'directory' }
+    when: is_new_slave
+
+  - name: Create folder zookeeper
+    tags: ecoconfigscale
+    file: path=/usr/local/zookeeper owner={{eco_db_user}} group=hadoop state=directory
+    when: is_new_slave
+
+  - name: Change ownership to hduser for all components
+    tags: ecoconfigscale
+    file: path={{item.path}} owner={{item.owner}} group={{item.group}} recurse=yes state=directory
+    with_items:
+      - { path: '{{hive_home}}', owner: '{{eco_db_user}}', group: 'hadoop' }
+      - { path: '/usr/local/hbase/', owner: '{{eco_db_user}}', group: 'hadoop' }
+      - { path: '/usr/local/oozie/', owner: '{{eco_db_user}}', group: 'hadoop' }
+      - { path: '/usr/local/pig/', owner: '{{eco_db_user}}', group: 'hadoop' }
+    when: is_new_slave
+
+  - name: copy Hadoop Ecosystem files from master to staging server before copying them to new slave (scale cluster)
+    tags: ecoconfigscale
+    fetch: "src={{item.src}} dest={{item.dest}} flat=yes"
+    with_items:
+      - { src: '/usr/local/hbase/conf/regionservers', dest: '/tmp/{{uuid}}/regionservers'}
+      - { src: '/usr/local/hbase/conf/hbase-site.xml', dest: '/tmp/{{uuid}}/hbase-site.xml'}
+      - { src: '/usr/local/hive/conf/hive-site.xml', dest: '/tmp/{{uuid}}/hive-site.xml'}
+      - { src: '/usr/local/hbase/conf/hbase-env.sh', dest: '/tmp/{{uuid}}/hbase-env.sh'}
+      - { src: '/root/.bashrc', dest: '/tmp/{{uuid}}/.bashrc_root'}
+    when: is_master
+
+  - name: copy Hadoop Ecosystem files from staging server to new slave (scale cluster)
+    tags: ecoconfigscale
+    copy: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
+    with_items:
+      - { src: '/tmp/{{uuid}}/regionservers', dest: '/usr/local/hbase/conf/regionservers', owner: 'hduser', group: 'hadoop'}
+      - { src: '/tmp/{{uuid}}/hbase-site.xml',dest: '/usr/local/hbase/conf/hbase-site.xml', owner: 'hduser', group: 'hadoop'}
+      - { src: '/tmp/{{uuid}}/hive-site.xml',dest: '/usr/local/hive/conf/hive-site.xml', owner: 'hduser', group: 'hadoop'}
+      - { src: '/tmp/{{uuid}}/hbase-env.sh', dest: '/usr/local/hbase/conf/hbase-env.sh', owner: 'hduser', group: 'hadoop'}
+      - { src: '/tmp/{{uuid}}/.bashrc_root', dest: '/root/.bashrc', owner: 'root', group: 'root'}
+    when: is_new_slave

@@ -25,14 +25,11 @@
 
 - name: Scale Hadoop Yarn Cluster by adding slaves
   remote_user: root
-  hosts: 
-    - master
-    - slaves
-    - new_slaves
-  roles:
-    - {role: yarn, execute_once: False, is_master: True, when: "ansible_hostname == '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and manage_cluster == 'add_slaves'"}
-    - {role: yarn, execute_once: False, is_slave: True, when: "ansible_hostname == '{{ hostvars[groups['slaves'][0]].inventory_hostname_short}}' and manage_cluster == 'add_slaves'"}
-    - {role: yarn, is_new_slave: True, is_slave: True, when: "ansible_hostname != '{{ hostvars[groups['slaves'][0]].inventory_hostname_short}}' and ansible_hostname != '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and manage_cluster == 'add_slaves'"}
+  hosts: all
+  tasks:
+    - { include: scale_yarn.yml, is_master: True, when: "ansible_hostname == '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and manage_cluster == 'add_slaves'"}
+    - { include: scale_yarn.yml, when: "ansible_hostname == '{{ hostvars[groups['slaves'][0]].inventory_hostname_short}}' and manage_cluster == 'add_slaves'"}
+    - { include: scale_yarn.yml, is_new_slave: True, when: "ansible_hostname != '{{ hostvars[groups['slaves'][0]].inventory_hostname_short}}' and ansible_hostname != '{{ hostvars[groups['master'][0]].inventory_hostname_short}}' and manage_cluster == 'add_slaves'"}
 
 - name: Installing and configuring Cloudera cluster
   remote_user: root
