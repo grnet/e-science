@@ -29,13 +29,17 @@ App.VreserverCreateController = Ember.Controller.extend({
 	},
 	vreImageExtraProperties : {
 	    // controller_show_field : [image,...] / '*' = all images
-	    'show_admin_pass_input' : ['*'],
+	    //'show_admin_pass_input' : ['*'],
+	    'show_admin_pass_input' : ['Drupal-7.3.7','Mediawiki-1.2.4','Redmine-3.0.4','DSpace-5.3'],
 	    'show_admin_email_input': ['DSpace-5.3']
 	},
 	vreImageExtraFields : {
 	   // image : [extra_field,...] / '*' = all images
-	   '*' : ['admin_password'],
-	   'DSpace-5.3' : ['admin_email']
+	   //'*' : ['admin_password'],
+	   'Drupal-7.3.7' : ['admin_password'],
+	   'Mediawiki-1.2.4' : ['admin_password'],
+	   'Redmine-3.0.4' : ['admin_password'],
+	   'DSpace-5.3' : ['admin_password','admin_email']
 	},
 	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
 	// mapping of uservreserver model properties to controller computed properties
@@ -547,9 +551,10 @@ App.VreserverCreateController = Ember.Controller.extend({
                 var bound_controller_property = this.get('model_to_controller_map')[model_property];
                 new_server[model_property] = this.get(bound_controller_property);
             }
-            for (image in extra_fields){// remove fields that are not applicable to some images
-                if (image!='*' && new_server['os_image']!=image){
-                    for (i=0;i<extra_fields[image].length;i++){
+            var image_extra_fields = (extra_fields['*'] || []).concat(extra_fields[new_server['os_image']] || []).uniq();
+            for (image in extra_fields){// remove fields that are not applicable to selected image
+                for (i=0;i<extra_fields[image].length;i++){
+                    if (!image_extra_fields.contains(extra_fields[image][i])){
                         delete new_server[extra_fields[image][i]];
                     }
                 }
@@ -567,10 +572,12 @@ App.VreserverCreateController = Ember.Controller.extend({
                 //success
                 var new_record = that.store.createRecord('uservreserver',new_server);
                 new_record.save().then(function(data){
-                    var admin_pass_msg = {'msg_type': 'warning', 'msg_text': 'The admin password for %@ of \"%@%@\" VRE server is %@'.fmt(data.get('os_image'),'[orka]-',data.get('server_name'),data.get('admin_password'))};
+                    if (!Ember.isEmpty(data.get('admin_password'))){
+                        var admin_pass_msg = {'msg_type': 'warning', 'msg_text': 'The admin password for %@ of \"%@%@\" VRE server is %@'.fmt(data.get('os_image'),'[orka]-',data.get('server_name'),data.get('admin_password'))};
+                        that.get('controllers.userWelcome').send('addMessage',admin_pass_msg);
+                    }
                     that.set('controllers.userWelcome.create_cluster_start', true);
                     that.get('controllers.userWelcome').send('setActiveTab','vreservers');
-                    that.get('controllers.userWelcome').send('addMessage',admin_pass_msg);
                     Ember.run.next(function(){that.transitionToRoute('user.welcome');});
                 },function(reason){
                     console.log(reason);
