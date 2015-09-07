@@ -185,14 +185,14 @@
     fetch: "src={{item.src}} dest={{item.dest}} flat=yes"
     with_items:
       - { src: '/home/hduser/.bashrc', dest: '/tmp/{{uuid}}/.bashrc'}
-      - { src: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh, dest: '/tmp/{{uuid}}/hadoop-env.sh'}
+      - { src: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', dest: '/tmp/{{uuid}}/hadoop-env.sh'}
       - { src: '/usr/local/hadoop/etc/hadoop/core-site.xml', dest: '/tmp/{{uuid}}/core-site.xml'}
       - { src: '/usr/local/hadoop/etc/hadoop/mapred-site.xml', dest: '/tmp/{{uuid}}/mapred-site.xml'}
       - { src: '/usr/local/hadoop/etc/hadoop/hdfs-site.xml', dest: '/tmp/{{uuid}}/hdfs-site.xml' }
       - { src: '/usr/local/hadoop/etc/hadoop/yarn-site.xml', dest: '/tmp/{{uuid}}/yarn-site.xml' }
       - { src: '/home/hduser/.kamakirc', dest: '/tmp/{{uuid}}/.kamakirc' }
       - { src: '{{flume_home}}/conf/flume.conf', dest: '/tmp/{{uuid}}/flume.conf' }
-    when: is_master and manage_cluster == add_slaves
+    when: is_master and manage_cluster == 'add_slaves'
 
   - name: copy Hadoop files from staging server to new slave
     tags: postconfig
@@ -201,7 +201,7 @@
       - { src: '/tmp/{{uuid}}/.bashrc', dest: '/home/hduser/.bashrc'}
       - { src: '/tmp/{{uuid}}/hadoop-env.sh',dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh' }
       - { src: '/tmp/{{uuid}}/core-site.xml',dest: '/usr/local/hadoop/etc/hadoop/core-site.xml' }
-      - { src: '/tmp/{{uuid}}/mapred-site.xml, dest:'/usr/local/hadoop/etc/hadoop/mapred-site.xml'}
+      - { src: '/tmp/{{uuid}}/mapred-site.xml', dest: '/usr/local/hadoop/etc/hadoop/mapred-site.xml'}
       - { src: '/tmp/{{uuid}}/hdfs-site.xml', dest: '/usr/local/hadoop/etc/hadoop/hdfs-site.xml'}
       - { src: '/tmp/{{uuid}}/yarn-site.xml', dest: '/usr/local/hadoop/etc/hadoop/yarn-site.xml' }
       - { src: '/tmp/{{uuid}}/.kamakirc',dest: '/home/hduser/.kamakirc'}
