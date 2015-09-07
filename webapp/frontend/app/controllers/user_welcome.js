@@ -1,7 +1,7 @@
 // User Welcome controller
 App.UserWelcomeController = Ember.Controller.extend({
 
-    needs : ['clusterCreate','vreserverCreate'],
+    needs : ['clusterCreate','vreserverCreate','clusterManagement'],
     // flag to denote transition from a create action
     create_cluster_start : false,
     count : 0,
@@ -10,26 +10,52 @@ App.UserWelcomeController = Ember.Controller.extend({
     user_messages : [],
     // blacklist user messages explicitly removed during polling
     blacklist_messages : {},
-    sortable_clusters : function(){
-        var _sort_model = !Ember.isEmpty(this.get('sorting_info.last_sort_model')) ? this.get('sorting_info.last_sort_model') : '';
-        var _sortProperties = !Ember.isEmpty(this.get('sorting_info.last_sort')) && _sort_model=='uc' ? [this.get('sorting_info.last_sort'),'action_date'] : ['resorted_status','action_date'];
-        var _sortAscending = !Ember.isEmpty(this.get('sorting_info.last_sort_dir')) && _sort_model=='uc' ? this.get('sorting_info.last_sort_dir') : true;
-        return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin, 
-            {content : this.get('content.clusters').filterBy('id'),
-             sortProperties : _sortProperties,
-             sortAscending : _sortAscending,
-             short_model_name : 'uc'});
+    // tabs info for template
+    content_tabs_info : {
+        clusters: {id:'id_userclusters_tab',href:'#id_userclusters_tab',name:'User Clusters',active:true},
+        vreservers: {id:'id_uservres_tab',href:'#id_uservres_tab',name:'User VREs'}
+    },
+    content_tabs : function(key,value){
+        var tabs_object = this.get('content_tabs_info');
+        if (arguments.length>1){//setter
+            // must use Ember.set() to workaround Ember 1.8.x issue 
+            // ref: http://discuss.emberjs.com/t/ember-1-8-you-must-use-ember-set-to-set-the-property/6582, https://github.com/emberjs/ember.js/issues/10209
+            Ember.set(tabs_object.vreservers,'active',false);
+            Ember.set(tabs_object.clusters,'active',false);
+            switch(value) {
+            case "clusters":
+                Ember.set(tabs_object.clusters,'active',true);
+                break;
+            case "vreservers":
+                Ember.set(tabs_object.vreservers,'active',true);
+                break;
+            }
+            this.set('content_tabs_info',tabs_object);
+            return tabs_object;
+        }
+        return tabs_object;
+    }.property(),
+    // userclusters block
+    filtered_clusters : function(){
+        return this.get('content.clusters').filterBy('id');
     }.property('content.clusters.[]','content.clusters.isLoaded'),
-    sortable_vreservers : function(){
-        var _sort_model = !Ember.isEmpty(this.get('sorting_info.last_sort_model')) ? this.get('sorting_info.last_sort_model') : '';
-        var _sortProperties = !Ember.isEmpty(this.get('sorting_info.last_sort')) && _sort_model=='uv' ? [this.get('sorting_info.last_sort'),'action_date'] : ['resorted_status','action_date'];
-        var _sortAscending = !Ember.isEmpty(this.get('sorting_info.last_sort_dir')) && _sort_model=='uv' ? this.get('sorting_info.last_sort_dir') : true;
-        return Ember.ArrayProxy.createWithMixins(Ember.SortableMixin,
-            {content : this.get('content.vreservers').filterBy('id'),
-             sortProperties : _sortProperties,
-             sortAscending : _sortAscending,
-             short_model_name : 'uv'});
+    sorted_clusters_prop : ['resorted_status:asc','action_date:desc'],
+    sorted_clusters_dir : true,
+    sorted_clusters : Ember.computed.sort('filtered_clusters','sorted_clusters_prop'),
+    sortable_clusters : function(){
+        return this.get('sorted_clusters');
+    }.property('filtered_clusters.[]'),
+    // uservreservers block
+    filtered_vreservers : function(){
+        return this.get('content.vreservers').filterBy('id');
     }.property('content.vreservers.[]','content.vreservers.isLoaded'),
+    sorted_vreservers_prop : ['resorted_status:asc','action_date:desc'],
+    sorted_vreservers_dir : true,
+    sorted_vreservers : Ember.computed.sort('filtered_vreservers','sorted_vreservers_prop'),
+    sortable_vreservers : function(){
+        return this.get('sorted_vreservers');
+    }.property('filtered_vreservers.[]'),
+    // messages / feedback
     master_vm_password_msg : function() {
         var pwd_message = this.get('content.master_vm_password');
         if (!Ember.isBlank(pwd_message)) {
@@ -55,7 +81,7 @@ App.UserWelcomeController = Ember.Controller.extend({
         return (num_messages == 0 || Ember.isEmpty(num_messages));
     }.property('user_messages.@each'),
     // utility function. we use it to create dynamic properties for storing on the controller to reference in templates 
-    // (eg. <short_name>_<column_name>_show on a template will automatically have the correct boolean value to show/hide a sorting arrow)
+    // (eg. "<short_name>_<column_name>_show" on a template will automatically have the correct boolean value to show/hide a sorting arrow)
     get_sorting_info : function(short_model_name, sortdir, column){
         var prop_arrow_show = '%@_%@_show'.fmt(short_model_name,column);
         var prop_arrow_dir = '%@_%@_dir'.fmt(short_model_name,column);
@@ -68,10 +94,32 @@ App.UserWelcomeController = Ember.Controller.extend({
         return {'sorting_info': obj};
     },
     actions : {
-        sortBy : function(model, column){
-            model.set('sortProperties',[column]);
-            model.set('sortAscending', !model.get('sortAscending'));
-            this.setProperties(this.get_sorting_info(model.get('short_model_name'),model.get('sortAscending'),column));
+        sortBy : function(model, short_model_name, column){
+            var sortAscending = null;
+            switch(short_model_name){
+            case "uc":
+                this.set('sorted_clusters_dir',!this.get('sorted_clusters_dir'));
+                sortAscending = this.get('sorted_clusters_dir');
+                var primarysort = '%@:%@'.fmt(column,sortAscending && 'asc' || 'desc');
+                var sort_properties = (column == 'action_date') && [primarysort] || [primarysort,'action_date:desc'];
+                this.set('sorted_clusters_prop',sort_properties);
+                break;
+            case "uv":
+                this.set('sorted_vreservers_dir',!this.get('sorted_vreservers_dir'));
+                sortAscending = this.get('sorted_vreservers_dir');
+                var primarysort = '%@:%@'.fmt(column,sortAscending && 'asc' || 'desc');
+                var sort_properties = (column == 'action_date') && [primarysort] || [primarysort,'action_date:desc'];
+                this.set('sorted_vreservers_prop',sort_properties);
+                break;
+            }
+            this.setProperties(this.get_sorting_info(short_model_name,sortAscending,column));
+        },
+        goto_scale_cluster : function(cluster_id){
+            this.get('controllers.clusterManagement').send('setActiveTab','manage');
+            this.transitionToRoute('cluster.management',cluster_id);
+        },
+        setActiveTab : function(tab){
+            this.set('content_tabs',tab);  
         },
         addMessage : function(obj) {
             // routes/controllers > controller.send('addMessage',{'msg_type':'default|info|success|warning|danger', 'msg_text':'Lorem ipsum dolor sit amet, consectetur adipisicing elit'})

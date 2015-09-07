@@ -55,7 +55,7 @@ Images command has no required positional or optional arguments.
 
 ### {orka images} command example
 
-example for listing available images using defaults from .kamakirc
+example for listing available images and their pithos uuid values using defaults from .kamakirc
 
     orka images 
 
@@ -232,62 +232,6 @@ example for HDFS folder creation in HDFS home:
 example for recursive HDFS folder creation:
 
     orka file mkdir -p <cluster_id> <directory_with_non_existant_parent>
-    
-##"vre create" command
-
-Required positional arguments for vre create command:
-        
-    name: "name of the VRE server", 
-    cpu: "number of CPU cores of VRE server", 
-    ram: "ram in MB of VRE server",
-    disk: "hard drive in GB of VRE server",
-    disk_template: "Standard or Archipelago",
-    project_name: "name of a ~okeanos project, to pull resources from",
-    image: "name of VRE image. Only Deb8-Drupal-Final exists for now"
-    
-
-
-### {orka vre create} command examples
-
-example for orka vre create with a specific Drupal image:
-
-    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Deb8-Drupal-Final
-    
-##"vre destroy" command
-
-Required positional arguments for vre destroy command:
-
-    server_id: "VRE Server id in e-science database" 
-(server_id is returned after creation of VRE server and will be added later to **orka vre list** command)
-
-### {orka vre destroy} command examples
-
-example for orka vre destroy:
-
-    orka vre destroy <server_id>
-    
-## Docker Info
-
-VRE images are built using widely used Docker images pulled from hub.docker.com Repository. Components (i.e. Docker layers) inside the VM are not directly accessible from the root login. For example, in order to access the mysql layer in the Drupal image type:
-
-    docker exec -t -i db  bash 
-    mysql -p
-    
-and give the ~okeanos token when prompt for password.
-
-In general, in order to access a docker container's bash:
-
-    docker exec -t -i <container_name> bash
-
-Useful links:
-
-https://www.docker.com/
-
-https://docs.docker.com/articles/basics/
-
-https://docs.docker.com/reference/commandline/exec/
-
-https://github.com/wsargent/docker-cheat-sheet
 
 ## Getting help
 

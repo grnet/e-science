@@ -59,12 +59,13 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			// leaving this route
 			this.controller.send('timer', false);
 			this.controller.send('removeMessage',1,true);
+			this.controller.send('setActiveTab','clusters');
 		},
 		didTransition : function() {
 			// arrived at this route
 			var from_create = this.controller.get('create_cluster_start');
 			if (from_create) {
-				this.controller.set('count', 10);
+				this.controller.set('count', 15);
 				this.controller.send('timer', true, this.store);
 			}
 			return true;

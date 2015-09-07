@@ -7,6 +7,9 @@ This module contains the definitions of returned errors and package constants.
 @author: Ioannis Stenos, Nick Vrionis
 """
 import os
+import base64
+from encrypt_key import key #file with only one variable key = encrypt_key file is not in git repo
+encrypt_key = key
 
 # Definitions of return value errors
 error_syntax_clustersize = -1
@@ -80,9 +83,10 @@ const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
 const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
 HADOOP_STATUS_ACTIONS = {"stop": ["0", "Stopping", "Stopped"],
                          "start": ["1", "Starting", "Started"],
-                         "format": ["2", "Formatting", "Formatted"]}
+                         "format": ["2", "Formatting", "Formatted"],
+                         "undefined": ["3", "Undefined", "Undefined"]}
 
-REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending"}
+REVERSE_HADOOP_STATUS = {"0":"stop", "1":"start", "2":"Pending", "3":"Undefined"}
 
 # Dictionary of Ansible tags of the hadoop images
 hadoop_images_ansible_tags = {"debianbase": {"stop": "stop", "start": "start"},
@@ -98,6 +102,40 @@ pithos_images_uuids_properties = {"d3782488-1b6d-479d-8b9b-363494064c52": {"role
                              "dc171a3d-09bf-469d-9b7a-d3fb5c0afebc": {"role":"yarn", "tags":"-t postconfig,hueconfig,ecoconfig", "image":"ecosystem"},
                              "05f23bb1-5415-4da3-8e8a-93daa384b2f8": {"role":"cloudera", "tags":"-t preconfig,postconfig", "image":"cloudera"}}
 # Dictionary of pithos vre images UUIDs with their corresponding actions
-pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"image":"drupal"},
-                               "f64a11dc-97bd-44cb-a502-6c141cc42bfa": {"image":"redmine"},
-                               "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"image":"mediawiki"}}
+pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"image":"drupal","db_name":"db","default_password":"@test123",
+                                                                            "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}",
+                                                                            "change_db_pass":"hash=$(docker exec -t -i drupal bash -c \"php scripts/password-hash.sh {0} | grep hash | sed -e 's#.*hash: \\(\)#\\1#'\")\
+                                                                             && echo \\\'$hash|sed -r 's/[$]+/\\\\$/g' 1> hash\
+                                                                             && docker exec -t -i db bash -c \"echo \\\"UPDATE users SET pass=`cat hash`\\\">mysql.sql\"\
+                                                                             && docker exec -t -i db bash -c \"echo \\\"' where uid='1';\\\">>mysql.sql\"\
+                                                                             && docker exec -t -i db bash -c \"mysql -p{0} drupal < mysql.sql\"\
+                                                                             && docker exec -t -i db bash -c \"mysql -p{0} -e \\\"use drupal;UPDATE users SET pass=REPLACE(pass, '\n', '');\\\"\"\
+                                                                             && rm hash; docker exec -t -i db bash -c \"rm mysql.sql\""},
+                               "f64a11dc-97bd-44cb-a502-6c141cc42bfa": {"image":"redmine_redmine_1","db_name":"redmine_postgresql_1","default_password":"password",
+                                                                        "update_password":"sudo -u postgres psql -U postgres -d redmine_production -c \"alter user redmine password '{0}';\""
+                                                                        ";sed -i \'s/DB_PASS=password/DB_PASS={0}/g\' /usr/local/redmine/docker-compose.yml",
+                                                                        "change_db_pass":"docker exec -t -i redmine_redmine_1 bash -c 'RAILS_ENV=production bin/rails runner \"user = User.first ;\
+                                                                         user.password, user.password_confirmation = \\\"{0}\\\"; user.save!\"'"},
+                               "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"image":"mediawiki","db_name":"db","default_password":"@test123",
+                                                                        "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}",
+                                                                        "change_db_pass":"docker exec -t -i db bash -c \"mysql -p{0} mediawiki -e \\\"UPDATE user SET user_password = CONCAT(':A:', MD5('{0}')) WHERE user_name = 'Admin';\\\"\""},
+                               "6a6676d4-213c-464b-a321-04998c1d8dc7": {"image":"dspace","update_password":"/usr/bin/docker exec -d dspace sudo -u postgres psql -U postgres -d dspace -c \"alter user dspace password '{0}';\"",
+                                                                        "change_db_pass":"docker exec -d dspace sed -i 's/db.password *= * *dspace/db.password={0}/g' /dspace/config/dspace.cfg"}}
+
+#encrypt decrypt token in django db
+def mask_token(key, token):
+    enc = []
+    for i in range(len(token)):
+        key_c = key[i % len(key)]
+        enc_c = chr((ord(token[i]) + ord(key_c)) % 256)
+        enc.append(enc_c)
+    return base64.urlsafe_b64encode("".join(enc))
+
+def unmask_token(key, masked_token):
+    dec = []
+    masked_token = base64.urlsafe_b64decode(masked_token.encode('ascii'))
+    for i in range(len(masked_token)):
+        key_c = key[i % len(key)]
+        dec_c = chr((256 + ord(masked_token[i]) - ord(key_c)) % 256)
+        dec.append(dec_c)
+    return "".join(dec)

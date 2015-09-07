@@ -5,7 +5,7 @@
 App.ApplicationRoute = Ember.Route.extend({
     actions : {
 		loading : function(transition, route) {
-			if (transition.targetName == 'cluster.create') {
+			if (transition.targetName == 'cluster.create' || transition.targetName == 'vreserver.create') {
 				this.set('loaderTitle', 'Computing available resources');
 			} else {
 				this.set('loaderTitle', 'Working');
@@ -20,7 +20,7 @@ App.ApplicationRoute = Ember.Route.extend({
 				imgUrl : DJANGO_STATIC_URL + "images/loading[size].gif",
 				onShow : function() {
 					$.loader.shown = true;
-					$('.loading_wrp').find('span').addClass('text-info strong');
+					$('.loading_wrp').find('span').addClass('text-primary big strong');
 				},
 				onClose : function() {
 					$.loader.shown = false;
