@@ -16,12 +16,26 @@ App.UserWelcomeView = Ember.View.extend({
 				$("[data-toggle='tooltip']").tooltip();
 			});
 		});
+		this.addObserver('controller.filtered_clusters.[]', function(){
+            Ember.run.scheduleOnce('afterRender', self, function() {
+                $("[data-toggle='tooltip']").tooltip();
+            });
+        });
+        this.addObserver('controller.filtered_vreservers.[]', function(){
+            Ember.run.scheduleOnce('afterRender', self, function() {
+                $("[data-toggle='tooltip']").tooltip();
+            });
+        });
 		$(function() {
 			$("[data-toggle='tooltip']").tooltip();
+			var tab_element = $("#id_userclusters_tab");
+			window.scrollTo(tab_element.offsetLeft, tab_element.offsetTop);
 		});
 	},
 	willDestroyElement : function() {
 		this.removeObserver('controller.sorting_info');
 		this.removeObserver('controller.count');
+		this.removeObserver('controller.filtered_clusters.[]');
+		this.removeObserver('controller.filtered_vreservers.[]');
 	}
 });
