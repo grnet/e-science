@@ -178,7 +178,7 @@
       - { dest: '/home/hduser/.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$FLUME_HOME/bin'" }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle"' }
       - { dest: '/usr/local/hadoop/etc/hadoop/hadoop-env.sh', state: 'present', insertafter: 'EOF', line: '"export HADOOP_PREFIX=/usr/local/hadoop"' }
-    when: execute_once
+    when: manage_cluster != 'add_slaves'
 
   - name: copy Hadoop files from master to staging server before copying them to new slave
     tags: postconfig
@@ -225,7 +225,7 @@
       - { dest: '.bashrc', state: 'present', insertafter: 'EOF', line: "'export PATH=$PATH:$SPARK_HOME/bin'" }
       - { dest: '.bashrc', state: 'present', insertafter: 'EOF', line: "'export HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop'" }
       - { dest: '/usr/local/hbase/conf/hbase-env.sh', state: 'present', insertafter: 'EOF', line: '"export JAVA_HOME=/usr/lib/jvm/java-8-oracle/"' }
-    when: execute_once
+    when: manage_cluster != 'add_slaves'
 
   - name: Copy Java lib directory
     tags: postconfig
@@ -262,7 +262,7 @@
       - { src: 'yarn-site.j2', dest: '/usr/local/hadoop/etc/hadoop/yarn-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'kamakirc.j2', dest: '/home/hduser/.kamakirc', owner: 'hduser', group: 'hadoop' }
       - { src: 'flume.j2', dest: '{{flume_home}}/conf/flume.conf', owner: 'hduser', group: 'hadoop' }
-    when: execute_once
+    when: manage_cluster != 'add_slaves'
 
   - name: Change ownership to hduser for flume
     tags: postconfig
@@ -299,7 +299,7 @@
       - { src: 'regionservers.j2', dest: '/usr/local/hadoop/etc/hadoop/regionservers', owner: 'hduser', group: 'hadoop' }
       - { src: 'hbase-site.j2', dest: '/usr/local/hbase/conf/hbase-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'hive-site.j2', dest: '/usr/local/hive/conf/hive-site.xml', owner: 'hduser', group: 'hadoop' }
-    when: execute_once
+    when: manage_cluster != 'add_slaves'
 
   - name: create masters and slaves files in hadoop-yarn master node
     tags: postconfig
@@ -443,8 +443,30 @@
       - { src: 'livyserver.service', dest: '/lib/systemd/system/livyserver.service', mode: '644' }
       - { src: 'oozieserver.service', dest: '/lib/systemd/system/oozieserver.service', mode: '644' }
     when: is_master and execute_once
-    
+
   - name: Set password and username for hue superuser
     shell: echo 'from hue_login import set_user_pass; set_user_pass()' | ./hue shell chdir=/usr/local/hue/build/env/bin/
     tags: hueconfig
     when: is_master and execute_once
+
+  - name: copy Hadoop Ecosystem files from master to staging server before copying them to new slave (scale cluster)
+    tags: ecoconfig
+    fetch: "src={{item.src}} dest={{item.dest}} flat=yes"
+    with_items:
+      - { src: '/usr/local/hbase/conf/regionservers', dest: '/tmp/{{uuid}}/regionservers'}
+      - { src: '/usr/local/hbase/conf/hbase-site.xml', dest: '/tmp/{{uuid}}/hbase-site.xml'}
+      - { src: '/usr/local/hive/conf/hive-site.xml', dest: '/tmp/{{uuid}}/hive-site.xml'}
+      - { src: '/usr/local/hbase/conf/hbase-env.sh', dest: '/tmp/{{uuid}}/hbase-env.sh'}
+      - { src: '/root/.bashrc', dest: '/tmp/{{uuid}}/.bashrc_root'}
+    when: is_master and manage_cluster == 'add_slaves'
+
+  - name: copy Hadoop Ecosystem files from staging server to new slave (scale cluster)
+    tags: ecoconfig
+    copy: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} hduser group={{item.group}}hadoop"
+    with_items:
+      - { src: '/tmp/{{uuid}}/regionservers', dest: '/usr/local/hbase/conf/regionservers', owner: 'hduser', group: 'hadoop'}
+      - { src: '/tmp/{{uuid}}/hbase-site.xml',dest: '/usr/local/hbase/conf/hbase-site.xml', owner: 'hduser', group: 'hadoop'}
+      - { src: '/tmp/{{uuid}}/hive-site.xml',dest: '/usr/local/hive/conf/hive-site.xml', owner: 'hduser', group: 'hadoop'}
+      - { src: '/tmp/{{uuid}}/hbase-env.sh', dest: '/usr/local/hbase/conf/hbase-env.sh', owner: 'hduser', group: 'hadoop'}
+      - { src: '/tmp/{{uuid}}/.bashrc_root', dest: '/root/.bashrc', owner: 'root', group: 'root'}
+    when: is_new_slave

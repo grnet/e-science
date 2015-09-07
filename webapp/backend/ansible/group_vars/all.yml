@@ -11,7 +11,7 @@
   hive_home: /usr/local/hive
   flume_home: /usr/local/flume
   choose_role: webserver
-  manage_cluster: placeholder
+  manage_cluster: create
   execute_once: True
   is_new_slave: False
 
