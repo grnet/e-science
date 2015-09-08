@@ -885,13 +885,7 @@ def main():
         
         parser_vre_destroy.add_argument('server_id',
                               help='The id of a VRE server', type=checker.positive_num_is)
-        
-        parser_vre_list.add_argument('--status', help='Filter by status ({%(choices)s})'
-                              ' Default is all: no filtering.', type=str.upper,
-                              metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
-        parser_vre_list.add_argument('--verbose', help='List extra Virtual Research Environment server details.',
-                              action="store_true")
-        
+     
         parser_list.add_argument('--status', help='Filter by status ({%(choices)s})'
                               ' Default is all: no filtering.', type=str.upper,
                               metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
