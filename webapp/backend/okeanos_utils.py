@@ -21,7 +21,6 @@ from backend.models import UserInfo, ClusterInfo, VreServer
 import re
 import subprocess
 
-# -e "manage_cluster=add_slaves uuid=" -t postconfigscale
 
 def retrieve_pending_clusters(token, project_name):
     """Retrieve pending cluster info"""
@@ -205,7 +204,8 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     state = "New datanode {0} was added to cluster network".format(node_name)
     set_cluster_state(token, cluster_id, state, status='Active')
     new_slave = {'fqdn': new_server['SNF:fqdn'],'private_ip': new_slave_private_ip,
-                 'password': new_server['adminPass'],'port': new_slave_port}
+                 'password': new_server['adminPass'],'port': new_slave_port,'uuid': new_server['user_id'],
+                 'image_id':new_server['image']['id']}
     return new_slave
 
 def cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient, status):
@@ -256,6 +256,8 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     and "appends" cluster_delta nodes.
     For scaling down it removes the highest slave. 
     """
+    from reroute_ssh import reroute_ssh_to_slaves
+    from run_ansible_playbooks import modify_ansible_hosts_file,ansible_scale_cluster
     current_task.update_state(state="Started")
     cluster_to_scale = ClusterInfo.objects.get(id=cluster_id)
     previous_cluster_status = cluster_to_scale.cluster_status
@@ -270,7 +272,6 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     refresh_timer = 5
     state = ''
     list_of_new_slaves = []
-    ################# remember to rm -r /tmp/uuid directory
     if cluster_delta < 0: # scale down
         # TODO: 1. Ansible to decommission node 2. Destroy VM + update cluster metadata on DB
         for counter in range(cluster_delta,0):
@@ -285,17 +286,18 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
             new_slave = cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton, status)
             list_of_new_slaves.append(new_slave)
             sleep(refresh_timer)
-            state = "Adding Node %s VM to cluster %s" % (counter, cluster_to_scale.cluster_name)
-            set_cluster_state(token, cluster_id, state, status=status)
-            sleep(refresh_timer)
-            state = "Adding Datanode %s to Hadoop" % counter
-            set_cluster_state(token, cluster_id, state, status=status)
-            
-    print list_of_new_slaves        
+    master_ip = cluster_to_scale.master_IP
+    user_id = new_slave['uuid']
+    image_id = new_slave['image_id']
+    for new_slave in list_of_new_slaves:
+        reroute_ssh_to_slaves(new_slave['port'], new_slave['private_ip'], master_ip, new_slave['password'], '')
     cluster_name_suffix_id = '{0}-{1}'.format(cluster_to_scale.cluster_name, cluster_id)
-    sleep(refresh_timer)
+    ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, list_of_new_slaves, master_ip)
+    
+    ansible_scale_cluster(ansible_hosts, len(list_of_new_slaves), image_id, user_id)
     state = 'DONE: Scaled cluster %s' % cluster_to_scale.cluster_name
-    set_cluster_state(token, cluster_id, state, status=status_map[previous_cluster_status])
+    set_cluster_state(token, cluster_id, state, status=status_map[previous_cluster_status])    
+    subprocess.call('rm -r /tmp/{0}'.format(uuid),shell=True)
     return cluster_to_scale.cluster_name
 
 
