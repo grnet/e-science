@@ -225,6 +225,11 @@ App.Usercluster = DS.Model.extend({
         }
 		return 'http://%@%@'.fmt(this.get('master_IP'), hdfs_explorer_default);
 	}.property('master_IP'),
+	boolean_scale_cluster_applicable : function(){
+	    var image = this.get('os_image');
+	    var re = /Cloudera/i;
+	    return !re.test(image);
+	}.property('os_image'),
 	ecosystem_or_cloudera : function() {
 		if (this.get('selected_image') > -1 && this.get('selected_image') < 2) {
             return true;

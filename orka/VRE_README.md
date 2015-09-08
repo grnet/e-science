@@ -25,7 +25,7 @@ Optional arguments for vre create command:
 
 example for orka vre create with Drupal and DSpace images:
 
-    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Drupal-7.3.7 --admin_password=My21PaSswOrd
+    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Drupal-7.37 --admin_password=My21PaSswOrd
     orka vre create DSpace_Test 2 2048 20 Standard <project_name> DSpace-5.3 --admin_password=sOmEoTheRPassWorD --admin_email=mymail@gmail.com
     
 ##"vre destroy" command

@@ -9,7 +9,7 @@ App.VreserverCreateController = Ember.Controller.extend({
 	// client-side only, eventually add data structure to the backend
 	vreCategoryLabels : ['Portal/Cms','Wiki','Project Management','Digital Repository'],
 	vreCategoryData : {
-	    'Portal/Cms' : ['Drupal-7.3.7'],
+	    'Portal/Cms' : ['Drupal-7.37'],
 	    'Wiki' : ['Mediawiki-1.2.4'],
 	    'Project Management': ['Redmine-3.0.4'],
 	    'Digital Repository': ['DSpace-5.3']
@@ -23,20 +23,20 @@ App.VreserverCreateController = Ember.Controller.extend({
 	],
 	vreResourceMin : {
 	    'DSpace-5.3':{ram:2048},
-	    'Drupal-7.3.7':{ram:1024},
+	    'Drupal-7.37':{ram:1024},
         'Mediawiki-1.2.4':{ram:1024},
         'Redmine-3.0.4':{ram:1024}
 	},
 	vreImageExtraProperties : {
 	    // controller_show_field : [image,...] / '*' = all images
 	    //'show_admin_pass_input' : ['*'],
-	    'show_admin_pass_input' : ['Drupal-7.3.7','Mediawiki-1.2.4','Redmine-3.0.4','DSpace-5.3'],
+	    'show_admin_pass_input' : ['Drupal-7.37','Mediawiki-1.2.4','Redmine-3.0.4','DSpace-5.3'],
 	    'show_admin_email_input': ['DSpace-5.3']
 	},
 	vreImageExtraFields : {
 	   // image : [extra_field,...] / '*' = all images
 	   //'*' : ['admin_password'],
-	   'Drupal-7.3.7' : ['admin_password'],
+	   'Drupal-7.37' : ['admin_password'],
 	   'Mediawiki-1.2.4' : ['admin_password'],
 	   'Redmine-3.0.4' : ['admin_password'],
 	   'DSpace-5.3' : ['admin_password','admin_email']
