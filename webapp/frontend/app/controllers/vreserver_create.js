@@ -23,7 +23,7 @@ App.VreserverCreateController = Ember.Controller.extend({
 	   {cpu:4,ram:6144,disk:20} //Large
 	],
 	vreResourceMin : {
-		'BigBlueButton-0.81':{ram:1024},
+		'BigBlueButton-0.81':{cpu:2,ram:2048},
 	    'DSpace-5.3':{ram:2048},
 	    'Drupal-7.3.7':{ram:1024},
         'Mediawiki-1.2.4':{ram:1024},
@@ -219,11 +219,13 @@ App.VreserverCreateController = Ember.Controller.extend({
     selected_project_cpu_choices_available : function(){
         var cpu_choices = this.get('selected_project_cpu_choices');
         var available_cpu = Number(this.get('selected_project_available_cpu'));
+        var selected_image = this.get('selected_image');
+        var cpu_minimum = (!Ember.isEmpty(selected_image) && this.get('vreResourceMin')[selected_image]) && this.get('vreResourceMin')[selected_image]['cpu'] || 0;
         var cpu_choices_available = cpu_choices.map(function(item,index,original){
-            return Number(item)<=available_cpu && {value:item,disabled:false} || {value:item,disabled:true};
+            return (Number(item)<=available_cpu && Number(item)>=cpu_minimum) && {value:item,disabled:false} || {value:item,disabled:true};
         },this);
-        return cpu_choices_available; 
-    }.property('selected_project_cpu_choices.[]'),
+        return cpu_choices_available;
+    }.property('selected_project_cpu_choices.[]','selected_image'),
     selected_cpu_value : function(){
         return !this.get('boolean_no_project') && !Ember.isEmpty(this.get('selected_cpu_id')) ? 
         this.get('selected_project_cpu_choices')[this.get('selected_cpu_id')] : 

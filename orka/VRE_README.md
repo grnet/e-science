@@ -50,6 +50,18 @@ vre images command has no required positional or optional arguments.
 example for listing available VRE images and their pithos uuid values
 
     orka vre images
+## "vre list" command
+Optional arguments for vre list command:
+
+    --status="One of:ACTIVE, PENDING, DESTROYED (case insensitive, shows only VRE servers of that status)"
+    --verbose (outputs full VRE server details. Default off)
+vre list command has no required positional arguments.
+
+### {orka vre list} command example
+
+example for listing user VRE servers:
+
+	orka vre list --status=active --verbose
 
 ## General Docker Info
 
@@ -124,6 +136,8 @@ and give the admin_password. If the postgresql dspace password is changed, it mu
 
 The entry db.password=<old_password> inside the dspace.cfg file must be changed to reflect the change in postgresql.After the change, stop and start the docker dspace container. It needs 3,5 to 4 minutes to be up and running,so the dspace urls can be accessed.
 
+In case of **BigBlueButton** , there is no admin account and also, no database. The recommended minimum hardware requirements are: 4 CPUs and 4 GB ram.
+
 ## Access VRE servers
 
 | VRE image   | Access URL
@@ -132,6 +146,59 @@ The entry db.password=<old_password> inside the dspace.cfg file must be changed 
 | Mediawiki   | *VRE server IP*
 | Redmine     | *VRE server IP*`:10083`
 | DSpace      | *VRE server IP*`:8080/jspui` && *VRE server IP*`:8080/xmlui`
+| BigBlueButton | *VRE server IP*
+
+## Backup and Restore procedure of docker container's directories and database
+
+For example, in **DSpace image** case:
+
+First, determine which directories are needed to be backed up.
+
+    - installation directory
+    - web deployment directory
+        - In our case it resides inside the installation directory.
+
+Next, open bash inside the dspace container:
+
+    docker exec -it dspace bash
+
+**dspace installation folder backup**
+
+    nano /dspace/config/dspace.cfg
+        #find line: <dspace.dir = {{dspace installation folder}}>
+        #here it is /dspace
+    cd
+        #backup will be saved on your (root) home directory
+    tar zcC /dspace > dspace_installation-backup-$(date +%Y-%m-%d).tar.gz .
+
+**dspace installation folder restore**
+
+    cd
+    tar zxC / -f dspace_installation-backup-{{select date}}.tar.gz
+
+**dspace db backup**
+
+    cd
+    #store password, so that dump doesn't ask for password for each database dumped
+        nano .pgpass
+            localhost:*:*:dspace:dspace
+        chmod 600 .pgpass
+    pg_dump -Fc dspace -U dspace -h localhost > dspace_db-backup-$(date +%Y-%m-%d).bak
+
+**dspace db restore**
+
+    cd 
+    pg_restore -Fc dspace_db-backup-{{select date}}.bak -U dspace -h localhost
+
+**Docker installation directories**
+
+| VRE image   | Installation directory
+|------------ |:---------------------
+| Drupal      | */var/www/html*
+| Mediawiki   | */var/www/html*
+| Redmine     | */home/redmine*
+| DSpace      | */dspace*
+| BigBlueButton | */var/lib/tomcat6/webapps*
 
 ## Useful links:
 
