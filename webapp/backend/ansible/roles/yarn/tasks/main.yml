@@ -394,7 +394,7 @@
       - { src: 'livyserver.service', dest: '/lib/systemd/system/livyserver.service', mode: '644' }
       - { src: 'oozieserver.service', dest: '/lib/systemd/system/oozieserver.service', mode: '644' }
     when: is_master
-    
+
   - name: Set password and username for hue superuser
     shell: echo 'from hue_login import set_user_pass; set_user_pass()' | ./hue shell chdir=/usr/local/hue/build/env/bin/
     tags: hueconfig

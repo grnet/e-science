@@ -133,68 +133,79 @@ def get_public_ip_id(cyclades_network_client,float_ip):
         if ip['floating_ip_address'] == float_ip:
             return ip
 
-def cluster_add_node(token, cluster_id):
+def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton, status):
     """
     Create VM with options and attach node to cluster with cluster_id
     """
-    cluster_to_edit = ClusterInfo.objects.get(id=cluster_id)
-
-    endpoints, user_id = endpoints_and_user_id(auth)
-    cyclades = init_cyclades(endpoints['cyclades'], unmask_token(encrypt_key,token))
-        
-    project_id = get_project_id(token, cluster_to_edit.project_name)
-  
-    quotas = check_quota(token, project_id)
-    if quotas['ram']['available'] < cluster_to_edit.ram_slaves:
+    state = "Adding Datanode testtest"
+    set_cluster_state(token, cluster_id, state, status='Pending') 
+    empty_ip_list = []        
+    project_id = get_project_id(unmask_token(encrypt_key,token), cluster_to_scale.project_name)
+    quotas = check_quota(unmask_token(encrypt_key,token), project_id)
+    if quotas['ram']['available'] < cluster_to_scale.ram_slaves:
         msg = 'Not enough ram for new node.'
         raise ClientError(msg, error_quotas_ram)
-    if quotas['cpus']['available'] < cluster_to_edit.cpu_slaves:
+    if quotas['cpus']['available'] < cluster_to_scale.cpu_slaves:
         msg = 'Not enough cpu for new node.'
         raise ClientError(msg, error_quotas_cpu)
-    if quotas['disk']['available'] < cluster_to_edit.disk_slaves:
+    if quotas['disk']['available'] < cluster_to_scale.disk_slaves:
         msg = 'Not enough disk for new node.'
-        raise ClientError(msg, error_quotas_cyclades_disk)
-   
-    node_name = cluster_to_edit.cluster_name + '-' + str(cluster_to_edit.cluster_size + 1)
-   
+        raise ClientError(msg, error_quotas_cyclades_disk)  
+    node_name = cluster_to_scale.cluster_name + '-' + str(cluster_to_scale.cluster_size + 1)
     try:
-        flavor_list = self.cyclades.list_flavors(True)
+        flavor_list = cyclades.list_flavors(True)
     except ClientError:
         msg = 'Could not get list of flavors'
         raise ClientError(msg, error_flavor_list)
     for flavor in flavor_list:
-        if flavor['ram'] == cluster_to_edit.ram_slaves and \
-                            flavor['SNF:disk_template'] == cluster_to_edit.disk_template and \
-                            flavor['vcpus'] == cluster_to_edit.cpu_slaves and \
-                            flavor['disk'] == cluster_to_edit.disk_slaves:
+        if flavor['ram'] == cluster_to_scale.ram_slaves and \
+                            flavor['SNF:disk_template'] == cluster_to_scale.disk_template and \
+                            flavor['vcpus'] == cluster_to_scale.cpu_slaves and \
+                            flavor['disk'] == cluster_to_scale.disk_slaves:
                 flavor_id = flavor['id']
-   
     chosen_image = {}
-    list_current_images = self.plankton.list_public(True, 'default')
+    list_current_images = plankton.list_public(True, 'default')
     # Find image id of the operating system arg given
     for lst in list_current_images:
-        if lst['name'] == cluster_to_edit.os_image:
+        if lst['name'] == cluster_to_scale.os_image:
             chosen_image = lst
+            chosen_image_id = chosen_image['id']
     if not chosen_image:
         msg = ' Image not found.'
         raise ClientError(msg, error_image_id)
-    
-    cyclades.create_server(node_name, flavor_id, chosen_image['id'], personality=personality(), project_id=project_id)
-   
+    new_server = cyclades.create_server(node_name, flavor_id, chosen_image_id, personality=personality(), networks=empty_ip_list, project_id=project_id)
+    state = "Datanode added testtest "
+    set_cluster_state(token, cluster_id, state, status='Pending')
     master_id = None
     network_to_edit_id = None
     new_status = 'placeholder'
-    nc = init_cyclades_netclient(endpoints['network'], unmask_token(encrypt_key,token))
     # Get master virtual machine and network from IP   
-    ip = get_public_ip_id(nc, cluster_to_edit.master_IP)
+    ip = get_public_ip_id(netclient, cluster_to_scale.master_IP)
     master_id = ip['instance_id']          
     master_server = cyclades.get_server_details(master_id)
     for attachment in master_server['attachments']:
         if (attachment['OS-EXT-IPS:type'] == 'fixed' and not attachment['ipv6']):
            network_to_edit_id = attachment['network_id']
-           break  
-#    port_details = self.nc.create_port(network_to_edit_id,new_server['id'])
-
+           break
+    state = "Network found testtest" + network_to_edit_id
+    set_cluster_state(token, cluster_id, state, status='Pending')
+    new_status = cyclades.wait_server(new_server['id'], max_wait=MAX_WAIT)
+    if new_status != 'ACTIVE':
+        msg = ' Status for server [%s] is %s' % \
+            (servers[i]['name'], new_status)
+        raise ClientError(msg, error_create_server)
+    state = "New server is ACTIVE waiting for port"
+    set_cluster_state(token, cluster_id, state, status='Pending')
+    port_details = netclient.create_port(network_to_edit_id,new_server['id'])
+    port_status = netclient.get_port_details(port_details['id'])['status']
+    if port_status == 'BUILD':
+        port_status = netclient.wait_port(port_details['id'], max_wait=MAX_WAIT)
+    if port_status != 'ACTIVE':
+        msg = ' Status for port [%s] is %s' % \
+            (port_details['id'], port_status)
+        raise ClientError(msg, error_create_server)
+    state = "New server is ACTIVE"
+    set_cluster_state(token, cluster_id, state, status='Active')
 
 def cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient, status):
     """
@@ -253,9 +264,11 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], unmask_token(encrypt_key,token))
     netclient = init_cyclades_netclient(endpoints['network'], unmask_token(encrypt_key,token))
+    plankton = init_plankton(endpoints['plankton'], unmask_token(encrypt_key,token))
     # TODO: Code below this point is just a stub so CLI and webapp can be tested and to illustrate the flow of actions.
     refresh_timer = 5
     state = ''
+    ################# remember to rm -r /tmp/uuid directory
     if cluster_delta < 0: # scale down
         # TODO: 1. Ansible to decommission node 2. Destroy VM + update cluster metadata on DB
         for counter in range(cluster_delta,0):
@@ -267,6 +280,7 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     elif cluster_delta > 0: # scale up
         # TODO: 1. Create VM > attach to cluster + update metadata on DB 2. Ansible to add datanode to hadoop
         for counter in range(1,cluster_delta+1):
+            cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton, status)
             sleep(refresh_timer)
             state = "Adding Node %s VM to cluster %s" % (counter, cluster_to_scale.cluster_name)
             set_cluster_state(token, cluster_id, state, status=status)

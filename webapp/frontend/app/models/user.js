@@ -48,7 +48,7 @@ App.Uservreserver = DS.Model.extend({
     }.property('os_image'),
     vre_readme_url: function(){
         // Return url with helpful info for docker operations in VRE servers
-        return 'https://github.com/ioannisstenos/e-science/blob/es458/orka/VRE_README.md';
+        return 'https://github.com/grnet/e-science/blob/master/orka/VRE_README.md';
     }.property('os_image'),
     vre_access_url : function(){
         // TODO: add to components info and resolve dynamically
