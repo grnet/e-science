@@ -21,7 +21,7 @@ from backend.models import UserInfo, ClusterInfo, VreServer
 import re
 import subprocess
 
-
+# -e "manage_cluster=add_slaves uuid=" -t postconfigscale
 
 def retrieve_pending_clusters(token, project_name):
     """Retrieve pending cluster info"""
@@ -139,7 +139,10 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     """
     state = "Adding Datanode testtest"
     set_cluster_state(token, cluster_id, state, status='Pending') 
-    empty_ip_list = []        
+    empty_ip_list = []
+    server_home_path = expanduser('~')
+    server_ssh_keys = join(server_home_path, ".ssh/id_rsa.pub")
+    pub_keys_path = ''
     project_id = get_project_id(unmask_token(encrypt_key,token), cluster_to_scale.project_name)
     quotas = check_quota(unmask_token(encrypt_key,token), project_id)
     if quotas['ram']['available'] < cluster_to_scale.ram_slaves:
@@ -173,9 +176,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     if not chosen_image:
         msg = ' Image not found.'
         raise ClientError(msg, error_image_id)
-    new_server = cyclades.create_server(node_name, flavor_id, chosen_image_id, personality=personality(), networks=empty_ip_list, project_id=project_id)
-    state = "Datanode added testtest "
-    set_cluster_state(token, cluster_id, state, status='Pending')
+    ###############################################
     master_id = None
     network_to_edit_id = None
     new_status = 'placeholder'
@@ -187,22 +188,46 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
         if (attachment['OS-EXT-IPS:type'] == 'fixed' and not attachment['ipv6']):
            network_to_edit_id = attachment['network_id']
            break
-    state = "Network found testtest" + network_to_edit_id
-    set_cluster_state(token, cluster_id, state, status='Pending')
+    state = "Network found testtest" + network_to_edit_id     
+    ####################################
+    new_server = cyclades.create_server(node_name, flavor_id, chosen_image_id,
+                                        personality=personality(server_ssh_keys,pub_keys_path),
+                                        networks=[{"uuid": network_to_edit_id}], project_id=project_id)
+    
+#     state = "Datanode added testtest "
+#     set_cluster_state(token, cluster_id, state, status='Pending')
+#     master_id = None
+#     network_to_edit_id = None
+#     new_status = 'placeholder'
+#     # Get master virtual machine and network from IP   
+#     ip = get_public_ip_id(netclient, cluster_to_scale.master_IP)
+#     master_id = ip['instance_id']          
+#     master_server = cyclades.get_server_details(master_id)
+#     for attachment in master_server['attachments']:
+#         if (attachment['OS-EXT-IPS:type'] == 'fixed' and not attachment['ipv6']):
+#            network_to_edit_id = attachment['network_id']
+#            break
+#     state = "Network found testtest" + network_to_edit_id
+#     set_cluster_state(token, cluster_id, state, status='Pending')
+#     new_status = cyclades.wait_server(new_server['id'], max_wait=MAX_WAIT)
+#     if new_status != 'ACTIVE':
+#         msg = ' Status for server [%s] is %s' % \
+#             (servers[i]['name'], new_status)
+#         raise ClientError(msg, error_create_server)
+#     state = "New server is ACTIVE waiting for port"
+#     set_cluster_state(token, cluster_id, state, status='Pending')
+#     port_details = netclient.create_port(network_to_edit_id,new_server['id'])
+#     port_status = netclient.get_port_details(port_details['id'])['status']
+#     if port_status == 'BUILD':
+#         port_status = netclient.wait_port(port_details['id'], max_wait=MAX_WAIT)
+#     if port_status != 'ACTIVE':
+#         msg = ' Status for port [%s] is %s' % \
+#             (port_details['id'], port_status)
+#         raise ClientError(msg, error_create_server)
     new_status = cyclades.wait_server(new_server['id'], max_wait=MAX_WAIT)
     if new_status != 'ACTIVE':
         msg = ' Status for server [%s] is %s' % \
             (servers[i]['name'], new_status)
-        raise ClientError(msg, error_create_server)
-    state = "New server is ACTIVE waiting for port"
-    set_cluster_state(token, cluster_id, state, status='Pending')
-    port_details = netclient.create_port(network_to_edit_id,new_server['id'])
-    port_status = netclient.get_port_details(port_details['id'])['status']
-    if port_status == 'BUILD':
-        port_status = netclient.wait_port(port_details['id'], max_wait=MAX_WAIT)
-    if port_status != 'ACTIVE':
-        msg = ' Status for port [%s] is %s' % \
-            (port_details['id'], port_status)
         raise ClientError(msg, error_create_server)
     state = "New server is ACTIVE"
     set_cluster_state(token, cluster_id, state, status='Active')
