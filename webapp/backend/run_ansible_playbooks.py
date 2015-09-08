@@ -96,6 +96,37 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
     return hosts_filename
 
 
+def modify_ansible_hosts_file(cluster_name, list_of_hosts):
+    """
+    Function that modifies the ansible_hosts file with
+    the scaled cluster slaves.
+    """
+    hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name.replace(" ", "_")
+    # Create ansible_hosts file and write all information that is
+    # required from Ansible playbook.
+    master_host = '[master]'
+    slaves_host = '[slaves]'
+    cluster_id = cluster_name.rsplit('-',1)[1]
+    cluster = ClusterInfo.objects.get(id=cluster_id)
+    if 'cdh' in cluster.os_image.lower():
+        master_host = '[master_cloud]'
+        slaves_host = '[slaves_cloud]'
+
+    with open(hosts_filename, 'w+') as target:
+        target.write(master_host + '\n')
+        target.write(list_of_hosts[0]['fqdn'])
+        target.write(' private_ip='+list_of_hosts[0]['private_ip'])
+        target.write(' ansible_ssh_host=' + hostname_master + '\n' + '\n')
+        target.write(slaves_host +'\n')
+
+        for host in list_of_hosts[1:]:
+            target.write(host['fqdn'])
+            target.write(' private_ip='+host['private_ip'])
+            target.write(' ansible_ssh_port='+str(host['port']))
+            target.write(' ansible_ssh_host='+ hostname_master +'\n')
+    return hosts_filename
+
+
 def map_command_to_ansible_actions(action, image, pre_action_status):
     """
     Function to map the start,stop or format commands to the correct ansible actions in

@@ -8,7 +8,7 @@ This script contains useful classes and fuctions for orka package.
 """
 import logging
 from base64 import b64encode
-from os.path import abspath
+from os.path import abspath, join, expanduser
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
@@ -137,9 +137,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     """
     Create VM with options and attach node to cluster with cluster_id
     """
-    state = "Adding Datanode testtest"
-    set_cluster_state(token, cluster_id, state, status='Pending') 
-    empty_ip_list = []
+    new_slave = {}
     server_home_path = expanduser('~')
     server_ssh_keys = join(server_home_path, ".ssh/id_rsa.pub")
     pub_keys_path = ''
@@ -155,6 +153,8 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
         msg = 'Not enough disk for new node.'
         raise ClientError(msg, error_quotas_cyclades_disk)  
     node_name = cluster_to_scale.cluster_name + '-' + str(cluster_to_scale.cluster_size + 1)
+    state = "Adding new datanode {0}".format(node_name)
+    set_cluster_state(token, cluster_id, state, status='Pending')
     try:
         flavor_list = cyclades.list_flavors(True)
     except ClientError:
@@ -176,7 +176,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     if not chosen_image:
         msg = ' Image not found.'
         raise ClientError(msg, error_image_id)
-    ###############################################
+
     master_id = None
     network_to_edit_id = None
     new_status = 'placeholder'
@@ -187,50 +187,26 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     for attachment in master_server['attachments']:
         if (attachment['OS-EXT-IPS:type'] == 'fixed' and not attachment['ipv6']):
            network_to_edit_id = attachment['network_id']
-           break
-    state = "Network found testtest" + network_to_edit_id     
-    ####################################
+           break     
+
     new_server = cyclades.create_server(node_name, flavor_id, chosen_image_id,
                                         personality=personality(server_ssh_keys,pub_keys_path),
                                         networks=[{"uuid": network_to_edit_id}], project_id=project_id)
-    
-#     state = "Datanode added testtest "
-#     set_cluster_state(token, cluster_id, state, status='Pending')
-#     master_id = None
-#     network_to_edit_id = None
-#     new_status = 'placeholder'
-#     # Get master virtual machine and network from IP   
-#     ip = get_public_ip_id(netclient, cluster_to_scale.master_IP)
-#     master_id = ip['instance_id']          
-#     master_server = cyclades.get_server_details(master_id)
-#     for attachment in master_server['attachments']:
-#         if (attachment['OS-EXT-IPS:type'] == 'fixed' and not attachment['ipv6']):
-#            network_to_edit_id = attachment['network_id']
-#            break
-#     state = "Network found testtest" + network_to_edit_id
-#     set_cluster_state(token, cluster_id, state, status='Pending')
-#     new_status = cyclades.wait_server(new_server['id'], max_wait=MAX_WAIT)
-#     if new_status != 'ACTIVE':
-#         msg = ' Status for server [%s] is %s' % \
-#             (servers[i]['name'], new_status)
-#         raise ClientError(msg, error_create_server)
-#     state = "New server is ACTIVE waiting for port"
-#     set_cluster_state(token, cluster_id, state, status='Pending')
-#     port_details = netclient.create_port(network_to_edit_id,new_server['id'])
-#     port_status = netclient.get_port_details(port_details['id'])['status']
-#     if port_status == 'BUILD':
-#         port_status = netclient.wait_port(port_details['id'], max_wait=MAX_WAIT)
-#     if port_status != 'ACTIVE':
-#         msg = ' Status for port [%s] is %s' % \
-#             (port_details['id'], port_status)
-#         raise ClientError(msg, error_create_server)
+
     new_status = cyclades.wait_server(new_server['id'], max_wait=MAX_WAIT)
     if new_status != 'ACTIVE':
         msg = ' Status for server [%s] is %s' % \
             (servers[i]['name'], new_status)
         raise ClientError(msg, error_create_server)
-    state = "New server is ACTIVE"
+    cluster_to_scale.cluster_size = cluster_to_scale.cluster_size + 1
+    cluster_to_scale.save()
+    new_slave_private_ip = '192.168.0.{0}'.format(str(1 + cluster_to_scale.cluster_size))
+    new_slave_port = ADD_TO_GET_PORT + cluster_to_scale.cluster_size
+    state = "New datanode {0} was added to cluster network".format(node_name)
     set_cluster_state(token, cluster_id, state, status='Active')
+    new_slave = {'fqdn': new_server['SNF:fqdn'],'private_ip': new_slave_private_ip,
+                 'password': new_server['adminPass'],'port': new_slave_port}
+    return new_slave
 
 def cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient, status):
     """
@@ -290,9 +266,10 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     cyclades = init_cyclades(endpoints['cyclades'], unmask_token(encrypt_key,token))
     netclient = init_cyclades_netclient(endpoints['network'], unmask_token(encrypt_key,token))
     plankton = init_plankton(endpoints['plankton'], unmask_token(encrypt_key,token))
-    # TODO: Code below this point is just a stub so CLI and webapp can be tested and to illustrate the flow of actions.
+    # TODO: Code below this point is just a stub so CLI neand webapp can be tested and to illustrate the flow of actions.
     refresh_timer = 5
     state = ''
+    list_of_new_slaves = []
     ################# remember to rm -r /tmp/uuid directory
     if cluster_delta < 0: # scale down
         # TODO: 1. Ansible to decommission node 2. Destroy VM + update cluster metadata on DB
@@ -305,18 +282,23 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     elif cluster_delta > 0: # scale up
         # TODO: 1. Create VM > attach to cluster + update metadata on DB 2. Ansible to add datanode to hadoop
         for counter in range(1,cluster_delta+1):
-            cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton, status)
+            new_slave = cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton, status)
+            list_of_new_slaves.append(new_slave)
             sleep(refresh_timer)
             state = "Adding Node %s VM to cluster %s" % (counter, cluster_to_scale.cluster_name)
             set_cluster_state(token, cluster_id, state, status=status)
             sleep(refresh_timer)
             state = "Adding Datanode %s to Hadoop" % counter
             set_cluster_state(token, cluster_id, state, status=status)
+            
+    print list_of_new_slaves        
+    cluster_name_suffix_id = '{0}-{1}'.format(cluster_to_scale.cluster_name, cluster_id)
     sleep(refresh_timer)
     state = 'DONE: Scaled cluster %s' % cluster_to_scale.cluster_name
     set_cluster_state(token, cluster_id, state, status=status_map[previous_cluster_status])
     return cluster_to_scale.cluster_name
-    
+
+
 def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     """
     Destroys cluster and deletes network and floating IP. Finds the machines
