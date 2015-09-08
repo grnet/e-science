@@ -18,7 +18,7 @@ from utils import ClusterRequest, ConnectionError, authenticate_escience, get_us
     ssh_call_hadoop, ssh_check_output_hadoop, ssh_stream_to_hadoop, \
     read_replication_factor, ssh_stream_from_hadoop, parse_hdfs_dest, get_file_protocol, \
     ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, is_period, is_default_dir, \
-    check_credentials, endpoints_and_user_id, init_plankton, get_user_id
+    check_credentials, endpoints_and_user_id, init_plankton
 from time import sleep
 
 
@@ -807,8 +807,7 @@ def main():
         kamaki_token = ' '
         kamaki_base_url = ' '
         logging.warning(e.message)
-    user_id = get_user_id(kamaki_token, kamaki_base_url)
-    auto_generated_pass = "".join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(9)).join(" {0}".format(user_id)).lstrip()
+    auto_generated_pass = "".join(random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(12))
     
     orka_subparsers = orka_parser.add_subparsers(help='Choose Hadoop cluster or VRE server action')
     orka_parser.add_argument("-V", "--version", action='version',
@@ -939,13 +938,14 @@ def main():
         
         parser_vre_destroy.add_argument('server_id',
                               help='The id of a VRE server', type=checker.positive_num_is)
-
+        
         parser_vre_list.add_argument('--status', help='Filter by status ({%(choices)s})'
                               ' Default is all: no filtering.', type=str.upper,
                               metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
         parser_vre_list.add_argument('--verbose', help='List extra Virtual Research Environment server details.',
                               action="store_true")
         
+
         # hidden argument with default value so we can set opts['addnode'] 
         # when ANY 'orka node add' command is invoked
         parser_addnode.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='addnode')
