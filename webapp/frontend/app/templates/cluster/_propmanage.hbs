@@ -1,5 +1,6 @@
 <div class="text-center" style="vertical-align: middle">
     <form class="form-horizontal" role="form">
+        {{#if model.boolean_scale_cluster_applicable}}
         <div class="col-sm-6">
             <div class="form-group">
                 <label class="control-label col-sm-5" for="id_scale_cluster_help">Help </label>
@@ -33,6 +34,7 @@
                 </div>
             </div>
         </div>
+        {{/if}}
         <div class="col-sm-6">
             <table class="table table-condensed table-bordered">
                 <thead class="h5"><tr><td>Cluster Status</td><td>Hadoop Status</td></tr></thead>
