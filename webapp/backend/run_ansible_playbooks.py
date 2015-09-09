@@ -95,22 +95,31 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
     return hosts_filename
 
 
-def modify_ansible_hosts_file(cluster_name, list_of_hosts, master_ip):
+def modify_ansible_hosts_file(cluster_name, list_of_hosts='', master_ip='', action='', slave_hostname=''):
     """
     Function that modifies the ansible_hosts file with
-    the scaled cluster slaves.
+    the scaled cluster slave hostnames, adding the new slaves or
+    deleting the removed slaves from the file.
     """
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name.replace(" ", "_")
     # Create ansible_hosts file and write all information that is
     # required from Ansible playbook.
-    new_slaves_host = '[new_slaves]'
-    with open(hosts_filename, 'a+') as target:
-        target.write(new_slaves_host + '\n')
-        for host in list_of_hosts:
-            target.write('{0} private_ip={1} ansible_ssh_port={2} ansible_ssh_host={3}\n'.format(host['fqdn'],
-                                                                                                 host['private_ip'],
-                                                                                                 str(host['port']), master_ip))    
-    return hosts_filename
+    if action == 'add_slaves':
+        new_slaves_host = '[new_slaves]'
+        with open(hosts_filename, 'a+') as target:
+            target.write(new_slaves_host + '\n')
+            for host in list_of_hosts:
+                target.write('{0} private_ip={1} ansible_ssh_port={2} ansible_ssh_host={3}\n'.format(host['fqdn'],
+                                                                                                host['private_ip'],
+                                                                                              str(host['port']), master_ip))    
+        return hosts_filename
+    
+    elif action == 'remove_slaves':
+        remove_slaves_command = "sed -i.bak '/{0}/d' {1}".format(slave_hostname, hosts_filename)
+        subprocess.call(remove_slaves_command, shell=True)
+    elif action == 'join_slaves':
+        join_slaves_command = "sed -i.bak '/\[new\_slaves\]/d' {0}".format(hosts_filename)
+        subprocess.call(join_slaves_command, shell=True)
 
 
 def map_command_to_ansible_actions(action, image, pre_action_status):
@@ -208,14 +217,17 @@ def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_fi
     execute_ansible_playbook(ansible_code)
 
 
-def ansible_scale_cluster(hosts_filename,new_slaves_size,orka_image_uuid, user_id,action='add_slaves'):
+def ansible_scale_cluster(hosts_filename, new_slaves_size=1, orka_image_uuid='', user_id='',action='add_slaves', slave_hostname=''):
     """
     Calls ansible playbook that configures the added nodes in a scaled hadoop cluster.
     """
-    chosen_image = pithos_images_uuids_properties[orka_image_uuid]
-    list_of_ansible_tags = chosen_image['tags'].split(',')
-    scale_cluster_tags = ['{0}scale'.format(t) for t in list_of_ansible_tags]
-    tags = ",".join(scale_cluster_tags)
+    if action == 'add_slaves':
+        chosen_image = pithos_images_uuids_properties[orka_image_uuid]
+        list_of_ansible_tags = chosen_image['tags'].split(',')
+        scale_cluster_tags = ['{0}scale'.format(t) for t in list_of_ansible_tags]
+        tags = ",".join(scale_cluster_tags)       
+    else:
+        tags = '-t remove_yarn_nodes'
     # Create debug file for ansible
     debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
     ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
@@ -226,6 +238,7 @@ def ansible_scale_cluster(hosts_filename,new_slaves_size,orka_image_uuid, user_i
     # Execute ansible
     ansible_code += ansible_log
     execute_ansible_playbook(ansible_code)
+
 
 def execute_ansible_playbook(ansible_command):
     """
