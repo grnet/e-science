@@ -234,10 +234,15 @@ def ansible_scale_cluster(hosts_filename, new_slaves_size=1, orka_image_uuid='',
     
     # -t postconfigscale
     ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
-    '-f {0} -e "manage_cluster={1} uuid={2}" {3}'.format(str(new_slaves_size), action, user_id, tags)
+    '-f {0} -e "manage_cluster={1} hostname={2} uuid={3}" {4}'.format(str(new_slaves_size), action, slave_hostname, user_id, tags)
     # Execute ansible
     ansible_code += ansible_log
-    execute_ansible_playbook(ansible_code)
+    try:
+        execute_ansible_playbook(ansible_code)
+    except Exception, e:
+        msg = str(e.args[0])
+        raise RuntimeError(msg)
+
 
 
 def execute_ansible_playbook(ansible_command):

@@ -1,7 +1,7 @@
 ---
     - name: Create the exclude file with the hosts to be removed
       tags: remove_yarn_nodes
-      shell: echo {{hostname}} > /usr/local/hadoop/etc/hadoop/exclude
+      shell: echo {{hostname}} >> /usr/local/hadoop/etc/hadoop/exclude
 
     - name: Change owner of exclude file
       tags: remove_yarn_nodes
@@ -14,7 +14,7 @@
 
     - name: Create the exclude file with the hosts to be removed
       tags: remove_cloudera_nodes
-      shell: echo {{hostname}} > /etc/hadoop/conf/exclude
+      shell: echo {{hostname}} >> /etc/hadoop/conf/exclude
 
     - name: Change owner of exclude file
       tags: remove_cloudera_nodes

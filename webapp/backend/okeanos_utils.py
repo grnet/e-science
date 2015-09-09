@@ -232,9 +232,9 @@ def cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient
     for server in cluster_servers:
         node_id = server['id']
         node_fqdn = server['SNF:fqdn']
-    cyclades.delete_server(node_id)
     state = "Deleting Node %s from cluster %s (id:%d)" % (node_id, cluster_to_scale.cluster_name, cluster_id)
-    set_cluster_state(token, cluster_id, state, status='Pending')
+    set_cluster_state(token, cluster_id, state)
+    cyclades.delete_server(node_id)    
     new_status = cyclades.wait_server(node_id,current_status='ACTIVE',max_wait=MAX_WAIT)
     if new_status != 'DELETED':
         msg = 'Error deleting server [%s]' % server['name']
@@ -242,12 +242,9 @@ def cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient
         set_cluster_state(token, cluster_id, state=msg, status=status)
         raise ClientError(msg, error_cluster_corrupt)
     state = 'Deleted Node %s from cluster %s (id:%d)' % (node_id, cluster_to_scale.cluster_name, cluster_id)
-    set_cluster_state(token, cluster_id, state, status='Pending')
-    sleep(5)
-    state = ''
     cluster_to_scale.cluster_size = len(cluster_servers)-1
     cluster_to_scale.save()
-    set_cluster_state(token, cluster_id, state, status=status)
+    set_cluster_state(token, cluster_id, state, status='Active')
     return node_fqdn
 
 def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
@@ -258,10 +255,11 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     For scaling down it removes the highest slave. 
     """
     from reroute_ssh import reroute_ssh_to_slaves
-    from run_ansible_playbooks import modify_ansible_hosts_file,ansible_scale_cluster
+    from run_ansible_playbooks import modify_ansible_hosts_file,ansible_scale_cluster,ansible_manage_cluster
     current_task.update_state(state="Started")
     cluster_to_scale = ClusterInfo.objects.get(id=cluster_id)
     previous_cluster_status = cluster_to_scale.cluster_status
+    previous_hadoop_status = cluster_to_scale.hadoop_status
     status_map = {"0":"Destroyed","1":"Active","2":"Pending","3":"Failed"}
     auth = check_credentials(unmask_token(encrypt_key,token))
     current_task.update_state(state="Authenticated")
@@ -278,20 +276,19 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
         for counter in range(cluster_delta,0):
             sleep(refresh_timer)
             state = "Decommissioning Node %s from Hadoop (ansible)" % -counter
-            set_cluster_state(token, cluster_id, state, status=status)
+            set_cluster_state(token, cluster_id, state)
             sleep(refresh_timer)
             node_fqdn = cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient, status_map[previous_cluster_status])
             modify_ansible_hosts_file(cluster_name_suffix_id, action='remove_slaves', slave_hostname=node_fqdn)
             ansible_scale_cluster(cluster_name_suffix_id, action='remove_slaves', slave_hostname=node_fqdn)
-        state = 'DONE: Scaled cluster %s' % cluster_to_scale.cluster_name
-        set_cluster_state(token, cluster_id, state, status=status_map[previous_cluster_status])
-        return cluster_to_scale.cluster_name
     elif cluster_delta > 0: # scale up
         # TODO: 1. Create VM > attach to cluster + update metadata on DB 2. Ansible to add datanode to hadoop
         for counter in range(1,cluster_delta+1):
             new_slave = cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton, status)
             list_of_new_slaves.append(new_slave)
             sleep(refresh_timer)
+        state = 'Configuring communication for new nodes of %s ' % cluster_to_scale.cluster_name
+        set_cluster_state(token, cluster_id, state)
         master_ip = cluster_to_scale.master_IP
         user_id = new_slave['uuid']
         image_id = new_slave['image_id']
@@ -299,13 +296,23 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
             reroute_ssh_to_slaves(new_slave['port'], new_slave['private_ip'], master_ip, new_slave['password'], '')
         ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, list_of_hosts=list_of_new_slaves, master_ip=master_ip,
                                                   action='add_slaves')
-    
+        state = 'Configuring Hadoop for new nodes of %s ' % cluster_to_scale.cluster_name
+        set_cluster_state(token, cluster_id, state)
         ansible_scale_cluster(ansible_hosts, new_slaves_size=len(list_of_new_slaves), orka_image_uuid=image_id, user_id=user_id)
-        state = 'DONE: Scaled cluster %s' % cluster_to_scale.cluster_name
-        set_cluster_state(token, cluster_id, state, status=status_map[previous_cluster_status])
         modify_ansible_hosts_file(cluster_name_suffix_id, action='join_slaves')  
         subprocess.call('rm -r /tmp/{0}'.format(user_id),shell=True)
-        return cluster_to_scale.cluster_name
+    
+    if REVERSE_HADOOP_STATUS[previous_hadoop_status] == 'stop':
+        ansible_manage_cluster(cluster_id, 'start')
+    elif REVERSE_HADOOP_STATUS[previous_hadoop_status] == 'start':
+        ansible_manage_cluster(cluster_id, 'stop')
+        ansible_manage_cluster(cluster_id, 'start')
+    
+    state = 'Scaled cluster %s and new cluster size is %d' %(cluster_to_scale.cluster_name,
+                                                             cluster_to_scale.cluster_size)
+    set_cluster_state(token, cluster_id, state, status=status_map[previous_cluster_status])
+    return cluster_to_scale.cluster_name
+        
 
 
 def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
