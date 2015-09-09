@@ -14,7 +14,6 @@ from time import sleep
 import select
 from celery import current_task
 from cluster_errors_constants import error_hdfs_test_exit_status, const_truncate_limit, FNULL
-from okeanos_utils import read_replication_factor, get_remote_server_file_size
 import xml.etree.ElementTree as ET
 import subprocess
 
@@ -42,6 +41,7 @@ class HdfsRequest(object):
         """
         Checks file size in remote server and compares it with Hdfs available space.
         """
+        from okeanos_utils import read_replication_factor,get_remote_server_file_size
         report = subprocess.check_output("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no hduser@"
                                           + self.opts['master_IP'] + " \"" + HADOOP_HOME + 'hdfs' +
                                           " dfsadmin -report /" + "\"", stderr=FNULL, shell=True).splitlines()

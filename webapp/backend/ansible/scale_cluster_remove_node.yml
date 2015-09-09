@@ -1,7 +1,4 @@
 ---
-- hosts: master
-  remote_user: root
-  tasks:
     - name: Create the exclude file with the hosts to be removed
       tags: remove_yarn_nodes
       shell: echo {{hostname}} > /usr/local/hadoop/etc/hadoop/exclude
