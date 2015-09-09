@@ -267,26 +267,21 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     cyclades = init_cyclades(endpoints['cyclades'], unmask_token(encrypt_key,token))
     netclient = init_cyclades_netclient(endpoints['network'], unmask_token(encrypt_key,token))
     plankton = init_plankton(endpoints['plankton'], unmask_token(encrypt_key,token))
-    # TODO: Code below this point is just a stub so CLI neand webapp can be tested and to illustrate the flow of actions.
-    refresh_timer = 5
+
     state = ''
     list_of_new_slaves = []
     cluster_name_suffix_id = '{0}-{1}'.format(cluster_to_scale.cluster_name, cluster_id)
     if cluster_delta < 0: # scale down
         for counter in range(cluster_delta,0):
-            sleep(refresh_timer)
             state = "Decommissioning Node %s from Hadoop (ansible)" % -counter
             set_cluster_state(token, cluster_id, state)
-            sleep(refresh_timer)
             node_fqdn = cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient, status_map[previous_cluster_status])
             modify_ansible_hosts_file(cluster_name_suffix_id, action='remove_slaves', slave_hostname=node_fqdn)
             ansible_scale_cluster(cluster_name_suffix_id, action='remove_slaves', slave_hostname=node_fqdn)
     elif cluster_delta > 0: # scale up
-        # TODO: 1. Create VM > attach to cluster + update metadata on DB 2. Ansible to add datanode to hadoop
         for counter in range(1,cluster_delta+1):
             new_slave = cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton, status)
             list_of_new_slaves.append(new_slave)
-            sleep(refresh_timer)
         state = 'Configuring communication for new nodes of %s ' % cluster_to_scale.cluster_name
         set_cluster_state(token, cluster_id, state)
         master_ip = cluster_to_scale.master_IP
