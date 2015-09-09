@@ -112,14 +112,14 @@ def modify_ansible_hosts_file(cluster_name, list_of_hosts='', master_ip='', acti
                 target.write('{0} private_ip={1} ansible_ssh_port={2} ansible_ssh_host={3}\n'.format(host['fqdn'],
                                                                                                 host['private_ip'],
                                                                                               str(host['port']), master_ip))    
-        return hosts_filename
-    
     elif action == 'remove_slaves':
         remove_slaves_command = "sed -i.bak '/{0}/d' {1}".format(slave_hostname, hosts_filename)
         subprocess.call(remove_slaves_command, shell=True)
     elif action == 'join_slaves':
         join_slaves_command = "sed -i.bak '/\[new\_slaves\]/d' {0}".format(hosts_filename)
         subprocess.call(join_slaves_command, shell=True)
+        
+    return hosts_filename
 
 
 def map_command_to_ansible_actions(action, image, pre_action_status):

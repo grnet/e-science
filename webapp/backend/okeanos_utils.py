@@ -275,9 +275,11 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
         for counter in range(cluster_delta,0):
             state = "Decommissioning Node %s from Hadoop (ansible)" % -counter
             set_cluster_state(token, cluster_id, state)
-            node_fqdn = cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient, status_map[previous_cluster_status])
-            modify_ansible_hosts_file(cluster_name_suffix_id, action='remove_slaves', slave_hostname=node_fqdn)
-            ansible_scale_cluster(cluster_name_suffix_id, action='remove_slaves', slave_hostname=node_fqdn)
+            node_fqdn = cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient,
+                                            status_map[previous_cluster_status])
+            ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, action='remove_slaves',
+                                                      slave_hostname=node_fqdn)
+            ansible_scale_cluster(ansible_hosts, action='remove_slaves', slave_hostname=node_fqdn)
     elif cluster_delta > 0: # scale up
         for counter in range(1,cluster_delta+1):
             new_slave = cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton, status)
