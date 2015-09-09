@@ -299,7 +299,7 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
         ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, list_of_hosts=list_of_new_slaves, master_ip=master_ip,
                                                   action='add_slaves')
     
-        ansible_scale_cluster(ansible_hosts, new_slaves_size=len(list_of_new_slaves), image_id, user_id)
+        ansible_scale_cluster(ansible_hosts, new_slaves_size=len(list_of_new_slaves), orka_image_uuid=image_id, user_id=user_id)
         state = 'DONE: Scaled cluster %s' % cluster_to_scale.cluster_name
         set_cluster_state(token, cluster_id, state, status=status_map[previous_cluster_status])
         modify_ansible_hosts_file(cluster_name_suffix_id, action='join_slaves')  
