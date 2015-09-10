@@ -191,12 +191,15 @@
                     Destroy Cluster <b {{bind-attr class='model.cluster_status_class_destroy'}}></b>
                 </button>
 			{{/ifeq}}
-			<!--<button {{!--bind-attr id='model.cluster_scale_id'--}} class="btn btn-sm btn-primary btn-block"{{!--action 'apply_resize'--}}{{!--bind-attr disabled="apply_resize_disabled"--}}>
+			<button {{bind-attr id='model.cluster_scale_id'}} class="btn btn-sm btn-primary btn-block"{{action 'apply_resize'}}{{bind-attr disabled="apply_resize_disabled"}}>
                     Scale Cluster <b class="glyphicon glyphicon-resize-full text-warning"></b>
-    </button>-->
+            </button>
+            <button {{bind-attr id='model.id_save_metadata'}} class="btn btn-sm btn-primary btn-block"{{action 'save_metadata'}}>
+                    Save metadata <b class="glyphicon glyphicon-save-file text-success"></b>
+            </button>
 		</div>
 		<div class="col col-sm-10">
-		    {{!--partial 'cluster/propmanage'--}}
+		    {{partial 'cluster/propmanage'}}
 		</div>
 	</div>
 		{{else}}

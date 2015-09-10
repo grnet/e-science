@@ -216,7 +216,17 @@ class StatusView(APIView):
                     return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
                 except Exception, e:
                     return Response({"status": str(e.args[0])})
-
+            # Update existing cluster
+            if serializer.data['cluster_edit']:
+                cluster = ClusterInfo.objects.get(id=serializer.data['cluster_edit'])
+                cluster_delta = serializer.data['cluster_size']-cluster.cluster_size
+                try:
+                    cluster_action = scale_cluster_async.delay(user.okeanos_token, serializer.data['cluster_edit'], cluster_delta)
+                    task_id = cluster_action.id
+                    return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+                except Exception, e:
+                    return Response({"status": str(e.args[0])})
+            # Create cluster
             # Dictionary of YarnCluster arguments
             choices = dict()
             choices = serializer.data.copy()

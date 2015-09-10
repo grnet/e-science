@@ -72,6 +72,23 @@ App.ClusterManagementController = Ember.Controller.extend({
 	}.property('cluster_slaves_delta'),
 	
 	actions : {
+	    save_metadata : function(){
+            var store = this.get('store');
+            var model = this.get('content');
+            var cluster_name = model.get('cluster_name');
+            var project_name = model.get('project_name');
+            var os_image = model.get('os_image');
+            var disk_template = this.get('controllers.clusterCreate').get('reverse_storage_lookup')[model.get('disk_template')];
+            var cluster_size = model.get('cluster_size');
+            var cpu_master = model.get('cpu_master');
+            var ram_master = model.get('ram_master');
+            var disk_master = model.get('disk_master');
+            var cpu_slaves = model.get('cpu_slaves');
+            var ram_slaves = model.get('ram_slaves');
+            var disk_slaves = model.get('disk_slaves');
+            var replication_factor = model.get('replication_factor');
+            var dfs_blocksize = model.get('dfs_blocksize');
+	    },
 	    increment_size : function(){
 	        this.set('cluster_slaves_newsize',this.get('cluster_slaves_newsize')+1);
 	        $('#id_number_of_slaves').focus();
@@ -89,6 +106,20 @@ App.ClusterManagementController = Ember.Controller.extend({
 	        }else{
 	            var str_delta = this.get('cluster_slaves_delta') > 0 && '+'+this.get('cluster_slaves_delta') || this.get('cluster_slaves_delta');
 	            console.log('apply scale: ' + str_delta);
+	            var store = this.get('store');
+	            var model = this.get('content');
+                var cluster_id = model.get('id');
+                var new_size = model.get('cluster_size')+this.get('cluster_slaves_delta');
+                var promise = store.push('clusterchoice',{
+                    'id': 1,
+                    'cluster_edit': cluster_id,
+                    'cluster_size': new_size
+                }).save();
+                promise.then(function(user){
+                    console.log('success');
+                },function(reason){
+                    console.log('failure');
+                });
 	        }
 	    },
 		help_hue_login : function(os_image){
