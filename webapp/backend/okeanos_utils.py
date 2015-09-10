@@ -257,10 +257,10 @@ def cluster_remove_node(node_fqdn, node_id, token, cluster_id, cluster_to_scale,
     if new_status != 'DELETED':
         msg = 'Error deleting server [%s]' % node_fqdn
         logging.error(msg)
-        set_cluster_state(token, cluster_id, state=msg, status=status)
+        set_cluster_state(token, cluster_id, state=msg, status=status, error=msg)
         raise ClientError(msg, error_cluster_corrupt)
     state = 'Deleted Node %s from cluster %s (id:%d)' % (node_fqdn, cluster_to_scale.cluster_name, cluster_id)
-    cluster_to_scale.cluster_size = len(cluster_servers)-1
+    cluster_to_scale.cluster_size -= 1
     cluster_to_scale.save()
     set_cluster_state(token, cluster_id, state, status='Active')
 
@@ -301,7 +301,8 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
                 ansible_scale_cluster(ansible_hosts, action='remove_slaves', slave_hostname=node_fqdn)
             except Exception, e:
                 msg = str(e.args[0])
-                set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status])
+                set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status],
+                                  error=msg)
                 raise RuntimeError(msg)
             state = "Node %s decommissioned from %s and will be deleted"% (node_fqdn, cluster_to_scale.cluster_name)
             cluster_remove_node(node_fqdn, node_id, token, cluster_id, cluster_to_scale, cyclades,
@@ -311,8 +312,11 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
             ret_tuple = check_scale_cluster_up(token, cluster_id, cluster_to_scale)
             # Cannot add any node
             if ret_tuple[1] !=0 and counter == 1:
-                set_cluster_state(token, cluster_id, state=ret_tuple[0], status=status_map[previous_cluster_status])
-                raise RuntimeError(ret_tuple[0],ret_tuple[1])
+                msg = ret_tuple[0]
+                error_code = ret_tuple[1]
+                set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status],
+                                  error=msg)
+                raise RuntimeError(msg,error_code)
             # Node(s) already added but no more can be added, so the already added will be configured
             elif ret_tuple[1] !=0 and counter > 1:
                 break
@@ -323,7 +327,8 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
                 list_of_new_slaves.append(new_slave)               
             except Exception, e:
                 msg = str(e.args[0])
-                set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status])
+                set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status],
+                                  error=msg)
                 raise RuntimeError(msg)
         state = 'Configuring communication for new nodes of %s ' % cluster_to_scale.cluster_name
         set_cluster_state(token, cluster_id, state)
@@ -343,7 +348,8 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
             modify_ansible_hosts_file(cluster_name_suffix_id, action='join_slaves')  
         except Exception, e:
             msg = str(e.args[0])
-            set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status])
+            set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status],
+                              error=msg)
             raise RuntimeError(msg)
         finally:
             subprocess.call('rm -rf /tmp/{0}'.format(user_id),shell=True)
@@ -359,7 +365,7 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     
     except Exception, e:
         msg = 'Restarting %s failed with %s. Try to restart it manually.'%(cluster_to_scale.cluster_name,str(e.args[0]))
-        set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status])
+        set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status], error=msg)
         raise RuntimeError(msg)              
     state = 'Scaled cluster %s and new cluster size is %d' %(cluster_to_scale.cluster_name,
                                                              cluster_to_scale.cluster_size)
