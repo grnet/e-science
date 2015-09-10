@@ -54,9 +54,21 @@ App.ClusterManagementController = Ember.Controller.extend({
 	    return this.get('slaves_resize_disabled') || this.get('cluster_slaves_delta') == 0 || this.get('initial_timer_active');
 	}.property('cluster_slaves_delta','slaves_resize_disabled'),
 	slaves_increment_disabled : function(){
-	    // TODO arithmetic with slave config and available resources (cpu,ram,disk etc)
-	    return false;
-	}.property('cluster_slaves_newsize'),
+        if (this.get('slaves_increment_loader')) return true;
+        var cluster_project_data = this.get('cluster_project_data');
+        if (!Ember.isEmpty(cluster_project_data)){
+            var cluster_delta_next = Number(this.get('cluster_slaves_delta'))+1;
+            var cpu_request_next = Number(this.get('content.cpu_slaves'))*cluster_delta_next;
+            var ram_request_next = Number(this.get('content.ram_slaves'))*cluster_delta_next;
+            var disk_request_next = Number(this.get('content.disk_slaves'))*cluster_delta_next;
+            var cpu_available = Number(cluster_project_data.get('cpu_av'));
+            var ram_available = Number(cluster_project_data.get('ram_av'));
+            var disk_available = Number(cluster_project_data.get('disk_av'));
+            var vms_available = Number(cluster_project_data.get('vms_av').get("lastObject"));
+            return (cluster_delta_next>vms_available) || (cpu_request_next>cpu_available) || (ram_request_next>ram_available) || (disk_request_next>disk_available);
+        }
+        return false;
+	}.property('cluster_slaves_delta','slaves_increment_loader','cluster_project_data'),
 	slaves_decrement_disabled : function(){
 	    var cluster_min_slaves_allowed = Math.max(1,Number(this.get('content.replication_factor')));
 	    return this.get('cluster_slaves_newsize') > cluster_min_slaves_allowed ? false : true;
