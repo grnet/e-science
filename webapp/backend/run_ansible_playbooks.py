@@ -98,8 +98,8 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
 def modify_ansible_hosts_file(cluster_name, list_of_hosts='', master_ip='', action='', slave_hostname=''):
     """
     Function that modifies the ansible_hosts file with
-    the scaled cluster slave hostnames, adding the new slaves or
-    deleting the removed slaves from the file.
+    the scaled cluster slave hostnames, adding the new slaves,
+    deleting the removed slaves or joining in one entry all the slaves.
     """
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name.replace(" ", "_")
     # Create ansible_hosts file and write all information that is
@@ -112,14 +112,14 @@ def modify_ansible_hosts_file(cluster_name, list_of_hosts='', master_ip='', acti
                 target.write('{0} private_ip={1} ansible_ssh_port={2} ansible_ssh_host={3}\n'.format(host['fqdn'],
                                                                                                 host['private_ip'],
                                                                                               str(host['port']), master_ip))    
-        return hosts_filename
-    
     elif action == 'remove_slaves':
         remove_slaves_command = "sed -i.bak '/{0}/d' {1}".format(slave_hostname, hosts_filename)
         subprocess.call(remove_slaves_command, shell=True)
     elif action == 'join_slaves':
         join_slaves_command = "sed -i.bak '/\[new\_slaves\]/d' {0}".format(hosts_filename)
         subprocess.call(join_slaves_command, shell=True)
+        
+    return hosts_filename
 
 
 def map_command_to_ansible_actions(action, image, pre_action_status):
@@ -219,7 +219,8 @@ def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_fi
 
 def ansible_scale_cluster(hosts_filename, new_slaves_size=1, orka_image_uuid='', user_id='',action='add_slaves', slave_hostname=''):
     """
-    Calls ansible playbook that configures the added nodes in a scaled hadoop cluster.
+    Calls the  ansible playbook that configures the added nodes 
+    in a scaled hadoop cluster or decommissions the node to be removed.
     """
     if action == 'add_slaves':
         chosen_image = pithos_images_uuids_properties[orka_image_uuid]
@@ -234,10 +235,14 @@ def ansible_scale_cluster(hosts_filename, new_slaves_size=1, orka_image_uuid='',
     
     # -t postconfigscale
     ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
-    '-f {0} -e "manage_cluster={1} uuid={2}" {3}'.format(str(new_slaves_size), action, user_id, tags)
+    '-f {0} -e "manage_cluster={1} hostname={2} uuid={3}" {4}'.format(str(new_slaves_size), action, slave_hostname, user_id, tags)
     # Execute ansible
     ansible_code += ansible_log
-    execute_ansible_playbook(ansible_code)
+    try:
+        execute_ansible_playbook(ansible_code)
+    except Exception, e:
+        msg = str(e.args[0])
+        raise RuntimeError(msg)
 
 
 def execute_ansible_playbook(ansible_command):
