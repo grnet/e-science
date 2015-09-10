@@ -7,12 +7,13 @@ App.VreserverCreateController = Ember.Controller.extend({
 	 * Static Data
 	 */
 	// client-side only, eventually add data structure to the backend
-	vreCategoryLabels : ['Portal/Cms','Wiki','Project Management','Digital Repository'],
+	vreCategoryLabels : ['Portal/Cms','Wiki','Project Management','Digital Repository', 'Web Conferencing'],
 	vreCategoryData : {
-	    'Portal/Cms' : ['Drupal-7.3.7'],
+	    'Portal/Cms' : ['Drupal-7.37'],
 	    'Wiki' : ['Mediawiki-1.2.4'],
 	    'Project Management': ['Redmine-3.0.4'],
-	    'Digital Repository': ['DSpace-5.3']
+	    'Digital Repository': ['DSpace-5.3'],
+	    'Web Conferencing': ['BigBlueButton-0.81']
 	},
 	// client-side only, eventually move to backend
 	vreFlavorLabels : ['Small', 'Medium', 'Large'],
@@ -22,20 +23,23 @@ App.VreserverCreateController = Ember.Controller.extend({
 	   {cpu:4,ram:6144,disk:20} //Large
 	],
 	vreResourceMin : {
+		'BigBlueButton-0.81':{cpu:2,ram:2048},
 	    'DSpace-5.3':{ram:2048},
-	    'Drupal-7.3.7':{ram:1024},
+	    'Drupal-7.37':{ram:1024},
         'Mediawiki-1.2.4':{ram:1024},
         'Redmine-3.0.4':{ram:1024}
 	},
 	vreImageExtraProperties : {
 	    // controller_show_field : [image,...] / '*' = all images
-	    'show_admin_pass_input' : ['*'],
+	    'show_admin_pass_input' : ['Drupal-7.37','Mediawiki-1.2.4','Redmine-3.0.4','DSpace-5.3'],
 	    'show_admin_email_input': ['DSpace-5.3']
 	},
 	vreImageExtraFields : {
 	   // image : [extra_field,...] / '*' = all images
-	   '*' : ['admin_password'],
-	   'DSpace-5.3' : ['admin_email']
+	   'Drupal-7.37' : ['admin_password'],
+	   'Mediawiki-1.2.4' : ['admin_password'],
+	   'Redmine-3.0.4' : ['admin_password'],
+	   'DSpace-5.3' : ['admin_password','admin_email']
 	},
 	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
 	// mapping of uservreserver model properties to controller computed properties
@@ -86,11 +90,11 @@ App.VreserverCreateController = Ember.Controller.extend({
     selected_category_static : null, // need this one-way bound property to workaround ember #select bug
     selected_category : function(key,value){
         if (arguments.length>1){// setter
-            this.set('selected_category_static',value);
+            this.set('selected_category_id_static',value);
             this.set('selected_image',null);
         }
-        return this.get('selected_category_static'); // getter
-    }.property('selected_category_static','selected_project_id'),
+        return this.get('selected_category_id_static'); // getter
+    }.property('selected_category_id_static','selected_project_id'),
     /*
      * VRE Images
      */
@@ -215,11 +219,13 @@ App.VreserverCreateController = Ember.Controller.extend({
     selected_project_cpu_choices_available : function(){
         var cpu_choices = this.get('selected_project_cpu_choices');
         var available_cpu = Number(this.get('selected_project_available_cpu'));
+        var selected_image = this.get('selected_image');
+        var cpu_minimum = (!Ember.isEmpty(selected_image) && this.get('vreResourceMin')[selected_image]) && this.get('vreResourceMin')[selected_image]['cpu'] || 0;
         var cpu_choices_available = cpu_choices.map(function(item,index,original){
-            return Number(item)<=available_cpu && {value:item,disabled:false} || {value:item,disabled:true};
+            return (Number(item)<=available_cpu && Number(item)>=cpu_minimum) && {value:item,disabled:false} || {value:item,disabled:true};
         },this);
-        return cpu_choices_available; 
-    }.property('selected_project_cpu_choices.[]'),
+        return cpu_choices_available;
+    }.property('selected_project_cpu_choices.[]','selected_image'),
     selected_cpu_value : function(){
         return !this.get('boolean_no_project') && !Ember.isEmpty(this.get('selected_cpu_id')) ? 
         this.get('selected_project_cpu_choices')[this.get('selected_cpu_id')] : 
@@ -547,9 +553,10 @@ App.VreserverCreateController = Ember.Controller.extend({
                 var bound_controller_property = this.get('model_to_controller_map')[model_property];
                 new_server[model_property] = this.get(bound_controller_property);
             }
-            for (image in extra_fields){// remove fields that are not applicable to some images
-                if (image!='*' && new_server['os_image']!=image){
-                    for (i=0;i<extra_fields[image].length;i++){
+            var image_extra_fields = (extra_fields['*'] || []).concat(extra_fields[new_server['os_image']] || []).uniq();
+            for (image in extra_fields){// remove fields that are not applicable to selected image
+                for (i=0;i<extra_fields[image].length;i++){
+                    if (!image_extra_fields.contains(extra_fields[image][i])){
                         delete new_server[extra_fields[image][i]];
                     }
                 }
@@ -567,10 +574,12 @@ App.VreserverCreateController = Ember.Controller.extend({
                 //success
                 var new_record = that.store.createRecord('uservreserver',new_server);
                 new_record.save().then(function(data){
-                    var admin_pass_msg = {'msg_type': 'warning', 'msg_text': 'The admin password for %@ of \"%@%@\" VRE server is %@'.fmt(data.get('os_image'),'[orka]-',data.get('server_name'),data.get('admin_password'))};
-                    that.set('controllers.userWelcome.create_cluster_start', true);
+                	if (!Ember.isEmpty(data.get('admin_password'))){
+	                    var admin_pass_msg = {'msg_type': 'warning', 'msg_text': 'The admin password for %@ of \"%@%@\" VRE server is %@'.fmt(data.get('os_image'),'[orka]-',data.get('server_name'),data.get('admin_password'))};
+	                    that.get('controllers.userWelcome').send('addMessage',admin_pass_msg);
+	                }
+	                that.set('controllers.userWelcome.create_cluster_start', true);
                     that.get('controllers.userWelcome').send('setActiveTab','vreservers');
-                    that.get('controllers.userWelcome').send('addMessage',admin_pass_msg);
                     Ember.run.next(function(){that.transitionToRoute('user.welcome');});
                 },function(reason){
                     console.log(reason);
