@@ -133,28 +133,40 @@ def get_public_ip_id(cyclades_network_client,float_ip):
         if ip['floating_ip_address'] == float_ip:
             return ip
 
+def check_scale_cluster_up(token, cluster_id, cluster_to_scale):
+    """
+    Check user quota if new node can be added to existing cluster.
+    Return tuple with message and value
+    """
+    project_id = get_project_id(unmask_token(encrypt_key,token), cluster_to_scale.project_name)
+    quotas = check_quota(unmask_token(encrypt_key,token), project_id)
+    if quotas['ram']['available'] < cluster_to_scale.ram_slaves:
+        msg = 'Not enough ram for new node.'
+        set_cluster_state(token, cluster_id, state=msg)
+        return (msg, error_quotas_ram)
+    if quotas['cpus']['available'] < cluster_to_scale.cpu_slaves:
+        msg = 'Not enough cpu for new node.'
+        set_cluster_state(token, cluster_id, state=msg)
+        return (msg, error_quotas_cpu)
+    if quotas['disk']['available'] < cluster_to_scale.disk_slaves:
+        msg = 'Not enough disk for new node.'
+        set_cluster_state(token, cluster_id, state=msg)
+        return (msg, error_quotas_cyclades_disk)
+    
+    return ('SUCCESS',0)
+    
 def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton, status):
     """
-    Create VM with options and attach node to cluster with cluster_id
+    Create a VM in ~okeanos and attach it to the network of the requested cluster.
     """
     new_slave = {}
     server_home_path = expanduser('~')
     server_ssh_keys = join(server_home_path, ".ssh/id_rsa.pub")
     pub_keys_path = ''
     project_id = get_project_id(unmask_token(encrypt_key,token), cluster_to_scale.project_name)
-    quotas = check_quota(unmask_token(encrypt_key,token), project_id)
-    if quotas['ram']['available'] < cluster_to_scale.ram_slaves:
-        msg = 'Not enough ram for new node.'
-        raise ClientError(msg, error_quotas_ram)
-    if quotas['cpus']['available'] < cluster_to_scale.cpu_slaves:
-        msg = 'Not enough cpu for new node.'
-        raise ClientError(msg, error_quotas_cpu)
-    if quotas['disk']['available'] < cluster_to_scale.disk_slaves:
-        msg = 'Not enough disk for new node.'
-        raise ClientError(msg, error_quotas_cyclades_disk)  
     node_name = cluster_to_scale.cluster_name + '-' + str(cluster_to_scale.cluster_size + 1)
     state = "Adding new datanode {0}".format(node_name)
-    set_cluster_state(token, cluster_id, state, status='Pending')
+    set_cluster_state(token, cluster_id, state)
     try:
         flavor_list = cyclades.list_flavors(True)
     except ClientError:
@@ -195,8 +207,9 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
 
     new_status = cyclades.wait_server(new_server['id'], max_wait=MAX_WAIT)
     if new_status != 'ACTIVE':
-        msg = ' Status for server [%s] is %s' % \
+        msg = ' Status for server [%s] is %s. Server will be deleted' % \
             (servers[i]['name'], new_status)
+        cyclades.delete_server(new_server['id'])
         raise ClientError(msg, error_create_server)
     cluster_to_scale.cluster_size = cluster_to_scale.cluster_size + 1
     cluster_to_scale.save()
@@ -209,11 +222,11 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
                  'image_id':new_server['image']['id']}
     return new_slave
 
-def cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient, status):
+def find_node_to_remove(cluster_to_scale, cyclades, netclient):
     """
-    Detach highest node from cluster and delete VM
+    Find highest node from cluster and return hostname
+    and ~okeanos id of the node.
     """
-    # TODO structured exception handling
     node_id = None
     cluster_servers = []
     list_of_servers = cyclades.list_servers(detail=True)
@@ -232,20 +245,25 @@ def cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient
     for server in cluster_servers:
         node_id = server['id']
         node_fqdn = server['SNF:fqdn']
-    state = "Deleting Node %s from cluster %s (id:%d)" % (node_id, cluster_to_scale.cluster_name, cluster_id)
+    
+    return node_fqdn,node_id
+
+def cluster_remove_node(node_fqdn, node_id, token, cluster_id, cluster_to_scale, cyclades, status):
+    """Remove a node of a scaled down cluster."""
+    state = "Deleting Node %s from cluster %s (id:%d)" % (node_fqdn, cluster_to_scale.cluster_name, cluster_id)
     set_cluster_state(token, cluster_id, state)
     cyclades.delete_server(node_id)    
     new_status = cyclades.wait_server(node_id,current_status='ACTIVE',max_wait=MAX_WAIT)
     if new_status != 'DELETED':
-        msg = 'Error deleting server [%s]' % server['name']
+        msg = 'Error deleting server [%s]' % node_fqdn
         logging.error(msg)
         set_cluster_state(token, cluster_id, state=msg, status=status)
         raise ClientError(msg, error_cluster_corrupt)
-    state = 'Deleted Node %s from cluster %s (id:%d)' % (node_id, cluster_to_scale.cluster_name, cluster_id)
+    state = 'Deleted Node %s from cluster %s (id:%d)' % (node_fqdn, cluster_to_scale.cluster_name, cluster_id)
     cluster_to_scale.cluster_size = len(cluster_servers)-1
     cluster_to_scale.save()
     set_cluster_state(token, cluster_id, state, status='Active')
-    return node_fqdn
+
 
 def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     """
@@ -267,44 +285,82 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     cyclades = init_cyclades(endpoints['cyclades'], unmask_token(encrypt_key,token))
     netclient = init_cyclades_netclient(endpoints['network'], unmask_token(encrypt_key,token))
     plankton = init_plankton(endpoints['plankton'], unmask_token(encrypt_key,token))
-
     state = ''
     list_of_new_slaves = []
     cluster_name_suffix_id = '{0}-{1}'.format(cluster_to_scale.cluster_name, cluster_id)
     if cluster_delta < 0: # scale down
         for counter in range(cluster_delta,0):
-            state = "Decommissioning Node %s from Hadoop (ansible)" % -counter
-            set_cluster_state(token, cluster_id, state)
-            node_fqdn = cluster_remove_node(token, cluster_id, cluster_to_scale, cyclades, netclient,
-                                            status_map[previous_cluster_status])
-            ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, action='remove_slaves',
-                                                      slave_hostname=node_fqdn)
-            ansible_scale_cluster(ansible_hosts, action='remove_slaves', slave_hostname=node_fqdn)
+            state = "Starting node decommission for %s" % (cluster_to_scale.cluster_name)
+            set_cluster_state(token, cluster_id, state)           
+            try:
+                node_fqdn, node_id = find_node_to_remove(cluster_to_scale, cyclades, netclient)
+                state = "Decommissioning Node %s from %s" % (node_fqdn,cluster_to_scale.cluster_name)
+                set_cluster_state(token, cluster_id, state)
+                ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, action='remove_slaves',
+                                                         slave_hostname=node_fqdn)
+                ansible_scale_cluster(ansible_hosts, action='remove_slaves', slave_hostname=node_fqdn)
+            except Exception, e:
+                msg = str(e.args[0])
+                set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status])
+                raise RuntimeError(msg)
+            state = "Node %s decommissioned from %s and will be deleted"% (node_fqdn, cluster_to_scale.cluster_name)
+            cluster_remove_node(node_fqdn, node_id, token, cluster_id, cluster_to_scale, cyclades,
+                                status_map[previous_cluster_status])
     elif cluster_delta > 0: # scale up
         for counter in range(1,cluster_delta+1):
-            new_slave = cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton, status)
-            list_of_new_slaves.append(new_slave)
+            ret_tuple = check_scale_cluster_up(token, cluster_id, cluster_to_scale)
+            # Cannot add any node
+            if ret_tuple[1] !=0 and counter == 1:
+                set_cluster_state(token, cluster_id, state=ret_tuple[0], status=status_map[previous_cluster_status])
+                raise RuntimeError(ret_tuple[0],ret_tuple[1])
+            # Node(s) already added but no more can be added, so the already added will be configured
+            elif ret_tuple[1] !=0 and counter > 1:
+                break
+            # Add node
+            try:
+                new_slave = cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton,
+                                             status_map[previous_cluster_status])
+                list_of_new_slaves.append(new_slave)               
+            except Exception, e:
+                msg = str(e.args[0])
+                set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status])
+                raise RuntimeError(msg)
         state = 'Configuring communication for new nodes of %s ' % cluster_to_scale.cluster_name
         set_cluster_state(token, cluster_id, state)
         master_ip = cluster_to_scale.master_IP
         user_id = new_slave['uuid']
         image_id = new_slave['image_id']
-        for new_slave in list_of_new_slaves:
-            reroute_ssh_to_slaves(new_slave['port'], new_slave['private_ip'], master_ip, new_slave['password'], '')
-        ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, list_of_hosts=list_of_new_slaves, master_ip=master_ip,
+        try:
+            for new_slave in list_of_new_slaves:
+                reroute_ssh_to_slaves(new_slave['port'], new_slave['private_ip'], master_ip, new_slave['password'], '')
+            ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, list_of_hosts=list_of_new_slaves,
+                                                      master_ip=master_ip,
                                                   action='add_slaves')
-        state = 'Configuring Hadoop for new nodes of %s ' % cluster_to_scale.cluster_name
-        set_cluster_state(token, cluster_id, state)
-        ansible_scale_cluster(ansible_hosts, new_slaves_size=len(list_of_new_slaves), orka_image_uuid=image_id, user_id=user_id)
-        modify_ansible_hosts_file(cluster_name_suffix_id, action='join_slaves')  
-        subprocess.call('rm -r /tmp/{0}'.format(user_id),shell=True)
+            state = 'Configuring Hadoop for new nodes of %s ' % cluster_to_scale.cluster_name
+            set_cluster_state(token, cluster_id, state)
+            ansible_scale_cluster(ansible_hosts, new_slaves_size=len(list_of_new_slaves), orka_image_uuid=image_id,
+                                  user_id=user_id)
+            modify_ansible_hosts_file(cluster_name_suffix_id, action='join_slaves')  
+        except Exception, e:
+            msg = str(e.args[0])
+            set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status])
+            raise RuntimeError(msg)
+        finally:
+            subprocess.call('rm -rf /tmp/{0}'.format(user_id),shell=True)
+    # Restart hadoop cluster for changes to take effect   
+    state = "Restarting %s for the changes to take effect" % (cluster_to_scale.cluster_name)
+    set_cluster_state(token, cluster_id, state)
+    try:
+        if REVERSE_HADOOP_STATUS[previous_hadoop_status] == 'stop':
+            ansible_manage_cluster(cluster_id, 'start')
+        elif REVERSE_HADOOP_STATUS[previous_hadoop_status] == 'start':
+            ansible_manage_cluster(cluster_id, 'stop')
+            ansible_manage_cluster(cluster_id, 'start')
     
-    if REVERSE_HADOOP_STATUS[previous_hadoop_status] == 'stop':
-        ansible_manage_cluster(cluster_id, 'start')
-    elif REVERSE_HADOOP_STATUS[previous_hadoop_status] == 'start':
-        ansible_manage_cluster(cluster_id, 'stop')
-        ansible_manage_cluster(cluster_id, 'start')
-    
+    except Exception, e:
+        msg = 'Restarting %s failed with %s. Try to restart it manually.'%(cluster_to_scale.cluster_name,str(e.args[0]))
+        set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status])
+        raise RuntimeError(msg)              
     state = 'Scaled cluster %s and new cluster size is %d' %(cluster_to_scale.cluster_name,
                                                              cluster_to_scale.cluster_size)
     set_cluster_state(token, cluster_id, state, status=status_map[previous_cluster_status])

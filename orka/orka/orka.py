@@ -955,7 +955,7 @@ def main():
         # hidden argument with default value so we can set opts['removenode'] 
         # when ANY 'orka node remove' command is invoked
         parser_removenode.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='removenode')
-        parser_removenode.add_argument('cluster_id', help='The id of the Hadoop cluster', 
+        parser_removenode.add_argument('cluster_id', help='The id of the Hadoop cluster where the node will be removed', 
                                        type=checker.positive_num_is)
 
         parser_list.add_argument('--status', help='Filter by status ({%(choices)s})'

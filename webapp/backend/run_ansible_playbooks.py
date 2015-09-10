@@ -98,8 +98,8 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
 def modify_ansible_hosts_file(cluster_name, list_of_hosts='', master_ip='', action='', slave_hostname=''):
     """
     Function that modifies the ansible_hosts file with
-    the scaled cluster slave hostnames, adding the new slaves or
-    deleting the removed slaves from the file.
+    the scaled cluster slave hostnames, adding the new slaves,
+    deleting the removed slaves or joining in one entry all the slaves.
     """
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name.replace(" ", "_")
     # Create ansible_hosts file and write all information that is
@@ -219,7 +219,8 @@ def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_fi
 
 def ansible_scale_cluster(hosts_filename, new_slaves_size=1, orka_image_uuid='', user_id='',action='add_slaves', slave_hostname=''):
     """
-    Calls ansible playbook that configures the added nodes in a scaled hadoop cluster.
+    Calls the  ansible playbook that configures the added nodes 
+    in a scaled hadoop cluster or decommissions the node to be removed.
     """
     if action == 'add_slaves':
         chosen_image = pithos_images_uuids_properties[orka_image_uuid]
@@ -242,7 +243,6 @@ def ansible_scale_cluster(hosts_filename, new_slaves_size=1, orka_image_uuid='',
     except Exception, e:
         msg = str(e.args[0])
         raise RuntimeError(msg)
-
 
 
 def execute_ansible_playbook(ansible_command):
