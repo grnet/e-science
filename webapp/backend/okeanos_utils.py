@@ -451,7 +451,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
             if new_status != 'DELETED':
                 logging.error('Error deleting server [%s]' % server['name'])
                 list_of_errors.append(error_cluster_corrupt)
-        set_cluster_state(token, cluster_id, 'Deleting cluster network and public IP')
+        set_cluster_state(token, cluster_id, ' Deleting cluster network and public IP')
     except ClientError:
         logging.exception('Error in deleting server')
         list_of_errors.append(error_cluster_corrupt)

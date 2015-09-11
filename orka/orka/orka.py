@@ -58,7 +58,7 @@ class _ArgCheck(object):
         """
         ival = int(val)
         if ival < vre_ram_min:
-            raise ArgumentTypeError(" %s must be at least 1024 MiB for VRE servers, except for DSpace (2048 MiB)" % val)
+            raise ArgumentTypeError(" %s must be at least 1024 MiB for VRE servers, except for DSpace and BigBlueButton (2048 MiB)" % val)
         return ival
 
     def two_or_larger_is(self, val):
@@ -161,8 +161,11 @@ class HadoopCluster(object):
     
     def create_vre_machine(self):
         """ Method for creating VRE server in~okeanos."""
-        if 'dspace' in self.opts['image'].lower() and self.opts['ram'] < dspace_ram_min:
-            logging.error('argument ram: {0} must be at least 1024 MiB for VRE servers, except for DSpace (2048 MiB).'.format(self.opts['ram']))
+        if any(image in self.opts['image'].lower() for image in ('dspace', 'bigbluebutton'))  and self.opts['ram'] < dspace_bbb_ram_min:
+            logging.error('argument ram: {0} must be at least 1024 MiB for VRE servers, except for DSpace and BigBlueButton (2048 MiB).'.format(self.opts['ram']))
+            exit(error_fatal)
+        elif 'bigbluebutton' in self.opts['image'].lower() and self.opts['cpu'] < bbb_cpu_min:
+            logging.error('argument cpu: {0} must be at least 2 for BigBlueButton.'.format(self.opts['cpu']))
             exit(error_fatal)
         try:
             payload = {"vreserver":{"project_name": self.opts['project_name'], "server_name": self.opts['name'],
@@ -179,8 +182,9 @@ class HadoopCluster(object):
             result = task_message(task_id, self.escience_token, self.server_url, wait_timer_create)
             logging.log(SUMMARY, "VRE server is active and has the following properties:")
             stdout.write("server_id: {0}\nserver_IP: {1}\n"
-                         "VM root password: {2}\n{3} admin user's password: {4}\n".format(result['server_id'], result['server_IP'],
-                                                        result['VRE_VM_password'], filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_password']))
+                         "VM root password: {2}\n".format(result['server_id'], result['server_IP'], result['VRE_VM_password']))
+            if not 'bigbluebutton' in self.opts['image'].lower():
+                stdout.write("{0} admin user's password: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_password']))
             if 'dspace' in self.opts['image'].lower():
                 stdout.write("{0} admin user's email: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_email']))
             exit(SUCCESS)
@@ -915,9 +919,9 @@ def main():
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         
         parser_vre_create.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='vre_create')
-        parser_vre_create.add_argument("cpu", help='Number of CPU cores for VRE server',
+        parser_vre_create.add_argument("cpu", help='Number of CPU cores for VRE server. Must be at least 2 for BigBlueButton.',
                                    type=checker.positive_num_is)
-        parser_vre_create.add_argument("ram", help='Size of RAM (MB) for VRE servers must be at least 1024 MiB, except for DSpace (2048 MiB)',
+        parser_vre_create.add_argument("ram", help='Size of RAM (MB) for VRE servers must be at least 1024 MiB, except for DSpace and BigBlueButton (2048 MiB)',
                                    type=checker.greater_than_min_vre_ram_is)
     
         parser_vre_create.add_argument("disk", help='Disk size (GB) for VRE server',

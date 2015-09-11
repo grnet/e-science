@@ -81,4 +81,5 @@ block_size = 67108864 # block size in bytes,used in division when transfering fi
 ORKA_IMAGES = {'action':'orka_images','resource_name':'orkaimage'}
 VRE_IMAGES = {'action':'vre_images','resource_name':'vreimage'}
 vre_ram_min = 1024
-dspace_ram_min = 2048
+dspace_bbb_ram_min = 2048
+bbb_cpu_min = 2
