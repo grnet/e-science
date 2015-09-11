@@ -76,6 +76,8 @@ App.ClusterManagementController = Ember.Controller.extend({
             var store = this.get('store');
             var model = this.get('content');
             var cluster_id = model.get('id');
+            // unload cached records
+            store.unloadAll('clusterchoice');
             store.push('clusterchoice',{
                     'id': 1,
                     'cluster_edit': cluster_id,
@@ -102,6 +104,8 @@ App.ClusterManagementController = Ember.Controller.extend({
 	            var model = this.get('content');
                 var cluster_id = model.get('id');
                 var new_size = model.get('cluster_size')+this.get('cluster_slaves_delta');
+                // unload cached records
+                store.unloadAll('clusterchoice');
                 var promise = store.push('clusterchoice',{
                     'id': 1,
                     'cluster_edit': cluster_id,

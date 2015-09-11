@@ -21,6 +21,7 @@ from django_db_after_login import db_cluster_update, get_user_id, db_server_upda
 from backend.models import UserInfo, ClusterInfo, VreServer
 import re
 import subprocess
+import yaml
 
 
 
@@ -480,17 +481,8 @@ def init_cyclades(endpoint, token):
     except ClientError:
         msg = ' Failed to initialize cyclades client'
         raise ClientError(msg)
-    
-    
-def init_storage(endpoint, token):
-    logging.log(REPORT, ' Initialize storage client')
-    try:
-        return StorageClient(endpoint, token)
-    except ClientError:
-        msg = 'Failed to initialize storage client'
-        raise ClientError(msg)
 
-  
+
 def get_float_network_id(cyclades_network_client, project_id):
         """
         Gets an Ipv4 floating network id from the list of public networks Ipv4
@@ -772,17 +764,20 @@ def get_remote_server_file_size(url, user='', password=''):
 
 
 def save_metadata(token, cluster_id):
-    auth = check_credentials(token)
-    endpoints, user_id = endpoints_and_user_id(auth)
-    storage = init_storage(endpoints['pithos'], token)
+    uuid = get_user_id(unmask_token(encrypt_key,token))
     cluster = ClusterInfo.objects.get(id=cluster_id)
-    file_ = open('TEST_FILE', 'w')
-    file_.write('test')
-    file_.close()
-    try:
-        upload_metadata = storage.upload_object(cluster, f)
-    except ClientError:
-        msg = ' Could not upload metadata.'
-        raise ClientError(msg, error_upload_metadata)
-    #result = {"cluster_size":cluster.cluster_size, "master_IP":cluster.master_IP}
-    return upload_metadata
+    cluster_name = cluster.cluster_name.split("-", 1)[1]
+    filename = '{0}_metadata-{1}.yml'.format(cluster_name, cluster_id).replace(" ", "_")
+    data = {'cluster': {'name': cluster.cluster_name, 'project_name': cluster.project_name, 'image': cluster.os_image, 'disk_template': u'{0}'.format(cluster.disk_template),
+                        'cluster_size': cluster.cluster_size, 'flavor_master':[cluster.cpu_master, cluster.ram_master,cluster.disk_master], 'flavor_slaves': [cluster.cpu_slaves, cluster.ram_slaves, cluster.disk_slaves]}, 
+            'configuration': {'replication_factor': cluster.replication_factor, 'dfs_blocksize': cluster.dfs_blocksize}}
+    #yaml.add_representer(unicode, lambda dumper, value: dumper.represent_scalar(u'tag:yaml.org,2002:str', value))
+    with open(filename, 'w') as metadata_yml:
+        metadata_yml.write(yaml.dump(data, default_flow_style=False))
+    command = 'curl -X PUT -D - --http1.0 -H "X-Auth-Token: {0}"\
+              -H "Content-Type: text/plain" -T {1} \
+              https://pithos.okeanos.grnet.gr/v1/{2}/pithos/{1}'.format(unmask_token(encrypt_key,token), filename, uuid)
+    p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
+    out, err = p.communicate()
+    subprocess.call('rm ' + filename, shell=True)
+    return out
