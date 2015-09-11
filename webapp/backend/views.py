@@ -24,7 +24,8 @@ from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async, \
-    hadoop_cluster_action_async, put_hdfs_async, create_server_async, destroy_server_async
+    hadoop_cluster_action_async, put_hdfs_async, create_server_async, destroy_server_async, \
+    save_metadata_async
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
 from reroute_ssh import HdfsRequest
@@ -217,11 +218,19 @@ class StatusView(APIView):
                 except Exception, e:
                     return Response({"status": str(e.args[0])})
             # Update existing cluster
-            if serializer.data['cluster_edit']:
+            if serializer.data['cluster_edit'] and serializer.data['cluster_size']:
                 cluster = ClusterInfo.objects.get(id=serializer.data['cluster_edit'])
                 cluster_delta = serializer.data['cluster_size']-cluster.cluster_size
                 try:
                     cluster_action = scale_cluster_async.delay(user.okeanos_token, serializer.data['cluster_edit'], cluster_delta)
+                    task_id = cluster_action.id
+                    return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+                except Exception, e:
+                    return Response({"status": str(e.args[0])})
+            # Get metadata and send them to pithos
+            if serializer.data['cluster_edit']:
+                try:
+                    cluster_action = save_metadata_async.delay(user.okeanos_token, serializer.data['cluster_edit'])
                     task_id = cluster_action.id
                     return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
                 except Exception, e:
