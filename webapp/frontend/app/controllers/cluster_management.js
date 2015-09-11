@@ -109,6 +109,8 @@ App.ClusterManagementController = Ember.Controller.extend({
 	            var str_delta = this.get('cluster_slaves_delta') > 0 && '+'+this.get('cluster_slaves_delta') || this.get('cluster_slaves_delta');
                 var cluster_id = model.get('id');
                 var new_size = model.get('cluster_size')+this.get('cluster_slaves_delta');
+                // unload cached records
+                store.unloadAll('clusterchoice');
                 var promise = store.push('clusterchoice',{
                     'id': 1,
                     'cluster_edit': cluster_id,
@@ -120,7 +122,7 @@ App.ClusterManagementController = Ember.Controller.extend({
                     self.set('count', extend);
                     self.send('timer', true, store);
                 },function(reason){
-                    console.log('failure');
+                    console.log(reason.message);
                 });
 	        }
 	    },

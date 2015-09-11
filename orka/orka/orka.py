@@ -186,7 +186,7 @@ class HadoopCluster(object):
             if not 'bigbluebutton' in self.opts['image'].lower():
                 stdout.write("{0} admin user's password: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_password']))
             if 'dspace' in self.opts['image'].lower():
-                stdout.write("{0} admin user's email: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_email']))
+                logging.log(SUMMARY, "{0} admin user's email: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_email']))
             exit(SUCCESS)
 
         except Exception, e:
@@ -256,7 +256,7 @@ class HadoopCluster(object):
                     hue_user = 'hdfs'
                 else:
                     hue_user = 'hduser'
-                stdout.write("You can access Hue browser with username {0} and password: {1}\n".format(hue_user, self.opts['admin_password']))
+                logging.log(SUMMARY, "You can access Hue browser with username {0} and password: {1}\n".format(hue_user, self.opts['admin_password']))
 
             exit(SUCCESS)
 
@@ -789,8 +789,8 @@ class ImagesInfo(object):
                        
     def list_image(self,image):
         """Method for listing info about one image"""
-        stdout.write('{0}: {1}\n'.format('name',image['image_name']))
-        stdout.write('{0}: {1}\n\n'.format('pithos uuid',image['image_pithos_uuid']))
+        print '{0}: {1}'.format('name',image['image_name'])
+        print '{0}: {1}\n'.format('pithos uuid',image['image_pithos_uuid'])
             
     
 def main():
