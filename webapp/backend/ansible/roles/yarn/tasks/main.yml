@@ -255,12 +255,13 @@
       - { src: 'hbase-site.j2', dest: '/usr/local/hbase/conf/hbase-site.xml', owner: 'hduser', group: 'hadoop' }
       - { src: 'hive-site.j2', dest: '/usr/local/hive/conf/hive-site.xml', owner: 'hduser', group: 'hadoop' }
 
-  - name: create masters and slaves files in hadoop-yarn master node
+  - name: create masters and slaves files in hadoop-yarn master node (and create include file)
     tags: postconfig
     template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
     with_items:
       - { src: 'masters.j2', dest: '/usr/local/hadoop/etc/hadoop/masters', owner: 'hduser', group: 'hadoop' }
       - { src: 'slaves.j2', dest: '/usr/local/hadoop/etc/hadoop/slaves', owner: 'hduser', group: 'hadoop' }
+      - { src: 'slaves.j2', dest: '/usr/local/hadoop/etc/hadoop/include', owner: 'hduser', group: 'hadoop' }
     when: is_master
 
   - name: create masters and slaves files in spark master node
