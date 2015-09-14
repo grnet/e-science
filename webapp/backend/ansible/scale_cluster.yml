@@ -20,6 +20,15 @@
       remote_user: hduser
       command: /usr/local/hadoop/bin/yarn rmadmin -refreshNodes
 
+    - name: Wait until node is decommissioned
+      tags: adminreport
+      remote_user: hduser
+      command: /usr/local/hadoop/bin/hadoop dfsadmin -report
+      register: admin_report
+      until: 'admin_report.stdout.find("Hostname: {{hostname}}\nDecommissiondasdas Status : Decommissioned") > -1'
+      retries: 3
+      delay: 15
+
     - name: Remove slaves from include file
       tags: remove_yarn_nodes
       lineinfile: dest=/usr/local/hadoop/etc/hadoop/include 
