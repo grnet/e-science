@@ -15,7 +15,6 @@ from django_db_after_login import db_hadoop_update
 from celery import current_task
 from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS, REPORT, SUMMARY, \
     error_ansible_playbook, const_hadoop_status_started, hadoop_images_ansible_tags, pithos_images_uuids_properties, unmask_token, encrypt_key
-from okeanos_utils import set_cluster_state
 from backend.models import OrkaImage
 from ansible import errors
 
@@ -34,7 +33,7 @@ def install_yarn(*args):
     Takes positional arguments as args tuple.
     args: token, hosts_list, master_ip, cluster_name, orka_image_uuid, ssh_file, replication_factor, dfs_blocksize
     """
-
+    from okeanos_utils import set_cluster_state
     list_of_hosts = args[1]
     master_hostname = list_of_hosts[0]['fqdn'].split('.', 1)[0]
     cluster_size = len(list_of_hosts)
@@ -93,6 +92,33 @@ def create_ansible_hosts(cluster_name, list_of_hosts, hostname_master):
             target.write(' private_ip='+host['private_ip'])
             target.write(' ansible_ssh_port='+str(host['port']))
             target.write(' ansible_ssh_host='+ hostname_master +'\n')
+    return hosts_filename
+
+
+def modify_ansible_hosts_file(cluster_name, list_of_hosts='', master_ip='', action='', slave_hostname=''):
+    """
+    Function that modifies the ansible_hosts file with
+    the scaled cluster slave hostnames, adding the new slaves,
+    deleting the removed slaves or joining in one entry all the slaves.
+    """
+    hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name.replace(" ", "_")
+    # Create ansible_hosts file and write all information that is
+    # required from Ansible playbook.
+    if action == 'add_slaves':
+        new_slaves_host = '[new_slaves]'
+        with open(hosts_filename, 'a+') as target:
+            target.write(new_slaves_host + '\n')
+            for host in list_of_hosts:
+                target.write('{0} private_ip={1} ansible_ssh_port={2} ansible_ssh_host={3}\n'.format(host['fqdn'],
+                                                                                                host['private_ip'],
+                                                                                              str(host['port']), master_ip))    
+    elif action == 'remove_slaves':
+        remove_slaves_command = "sed -i.bak '/{0}/d' {1}".format(slave_hostname, hosts_filename)
+        subprocess.call(remove_slaves_command, shell=True)
+    elif action == 'join_slaves':
+        join_slaves_command = "sed -i.bak '/\[new\_slaves\]/d' {0}".format(hosts_filename)
+        subprocess.call(join_slaves_command, shell=True)
+        
     return hosts_filename
 
 
@@ -185,10 +211,38 @@ def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_fi
     ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
     '-f {0} -e "choose_role={1} ssh_file_name={2} token={3} '.format(str(cluster_size), chosen_image['role'], ssh_file, unmask_token(encrypt_key, token)) + \
     'dfs_blocksize={0}m dfs_replication={1} uuid={2} admin_password={3}" {4}'.format(dfs_blocksize, replication_factor, uuid, admin_password, chosen_image['tags'])
-
+    # for scale cluster-add, unmasked_token and uuid are mandatory, should think for dfs blocksize and replication factor
     # Execute ansible
     ansible_code += ansible_log
     execute_ansible_playbook(ansible_code)
+
+
+def ansible_scale_cluster(hosts_filename, new_slaves_size=1, orka_image_uuid='', user_id='',action='add_slaves', slave_hostname=''):
+    """
+    Calls the  ansible playbook that configures the added nodes 
+    in a scaled hadoop cluster or decommissions the node to be removed.
+    """
+    if action == 'add_slaves':
+        chosen_image = pithos_images_uuids_properties[orka_image_uuid]
+        list_of_ansible_tags = chosen_image['tags'].split(',')
+        scale_cluster_tags = ['{0}scale'.format(t) for t in list_of_ansible_tags]
+        tags = ",".join(scale_cluster_tags)       
+    else:
+        tags = '-t remove_yarn_nodes'
+    # Create debug file for ansible
+    debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
+    ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
+    
+    # -t postconfigscale
+    ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
+    '-f {0} -e "manage_cluster={1} hostname={2} uuid={3}" {4}'.format(str(new_slaves_size), action, slave_hostname, user_id, tags)
+    # Execute ansible
+    ansible_code += ansible_log
+    try:
+        execute_ansible_playbook(ansible_code)
+    except Exception, e:
+        msg = str(e.args[0])
+        raise RuntimeError(msg)
 
 
 def execute_ansible_playbook(ansible_command):

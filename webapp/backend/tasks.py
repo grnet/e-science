@@ -8,7 +8,7 @@ This script contains the celery tasks that will be executed from django views.
 """
 from celery.task import task
 from create_cluster import YarnCluster
-from okeanos_utils import destroy_cluster, destroy_server, save_metadata
+from okeanos_utils import destroy_cluster, destroy_server, save_metadata, scale_cluster
 from run_ansible_playbooks import ansible_manage_cluster
 from reroute_ssh import HdfsRequest
 
@@ -24,6 +24,13 @@ def create_cluster_async(choices):
 
     return task_result
 
+@task()
+def scale_cluster_async(token, cluster_id, cluster_delta):
+    """
+    Asynchronous scale cluster task.
+    """
+    result = scale_cluster(token, cluster_id, cluster_delta)
+    return result
 
 @task()
 def save_metadata_async(token, cluster_id):
@@ -32,7 +39,6 @@ def save_metadata_async(token, cluster_id):
     """
     result = save_metadata(token, cluster_id)
     return result
-
 
 @task()
 def destroy_cluster_async(token, cluster_id):

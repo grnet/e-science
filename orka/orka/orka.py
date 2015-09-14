@@ -184,9 +184,9 @@ class HadoopCluster(object):
             stdout.write("server_id: {0}\nserver_IP: {1}\n"
                          "VM root password: {2}\n".format(result['server_id'], result['server_IP'], result['VRE_VM_password']))
             if not 'bigbluebutton' in self.opts['image'].lower():
-                stdout.write("{0} admin user's password: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_password']))
+                logging.log(SUMMARY, "{0} admin user's password: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_password']))
             if 'dspace' in self.opts['image'].lower():
-                stdout.write("{0} admin user's email: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_email']))
+                logging.log(SUMMARY, "{0} admin user's email: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_email']))
             exit(SUCCESS)
 
         except Exception, e:
@@ -256,7 +256,7 @@ class HadoopCluster(object):
                     hue_user = 'hdfs'
                 else:
                     hue_user = 'hduser'
-                stdout.write("You can access Hue browser with username {0} and password: {1}\n".format(hue_user, self.opts['admin_password']))
+                logging.log(SUMMARY, "You can access Hue browser with username {0} and password: {1}\n".format(hue_user, self.opts['admin_password']))
 
             exit(SUCCESS)
 
@@ -288,6 +288,52 @@ class HadoopCluster(object):
             logging.error(str(e.args[0]))
             exit(error_fatal)
             
+            
+    def node_action(self):
+        """ Method for taking node actions in a Hadoop cluster in~okeanos."""
+        opt_addnode = self.opts.get('addnode', False)
+        opt_removenode = self.opts.get('removenode', False)
+        
+        clusters = get_user_clusters(self.opts['token'], self.opts['server_url'])
+        for cluster in clusters:
+            if ((cluster['id'] == self.opts['cluster_id'])):
+                if cluster['cluster_status'] == const_cluster_status_active:
+                    if opt_removenode == True:
+                        if int(cluster['cluster_size']) == int(cluster['replication_factor']) +1:
+                            print "Limited resources. Cannot remove node."
+                            exit(error_remove_node)
+                        else:
+                            print "Removing node"
+                            new_cluster_size = int(cluster['cluster_size'])-1
+                    elif opt_addnode == True:
+                        print "Adding node"
+                        new_cluster_size = int(cluster['cluster_size'])+1
+                    else:
+                        break
+                    try:
+                        payload = {"clusterchoice":{ 
+                                    'cluster_edit': self.opts['cluster_id'],
+                                    'cluster_size': new_cluster_size
+                                    }}
+                        yarn_cluster_req = ClusterRequest(self.escience_token, self.server_url, 
+                                                          payload, action='cluster')
+                        response = yarn_cluster_req.create_cluster()
+                        if 'task_id' in response['clusterchoice']:
+                            task_id = response['clusterchoice']['task_id']
+                        else:
+                            logging.error(response['clusterchoice']['message'])
+                            exit(error_fatal)
+                        result = task_message(task_id, self.escience_token, self.server_url, 
+                                             wait_timer_create)
+                        exit(SUCCESS)
+                    except Exception, e:
+                        stderr.write('{0}'.format('\r'))
+                        logging.error(str(e.args[0]))
+                        exit(error_fatal)
+                else:
+                    logging.error('You can take node actions only in an active cluster.')
+                    exit(error_fatal)
+
 
     def hadoop_action(self):
         """ Method for applying an action to a Hadoop cluster"""
@@ -743,8 +789,8 @@ class ImagesInfo(object):
                        
     def list_image(self,image):
         """Method for listing info about one image"""
-        stdout.write('{0}: {1}\n'.format('name',image['image_name']))
-        stdout.write('{0}: {1}\n\n'.format('pithos uuid',image['image_pithos_uuid']))
+        print '{0}: {1}'.format('name',image['image_name'])
+        print '{0}: {1}\n'.format('pithos uuid',image['image_pithos_uuid'])
             
     
 def main():
@@ -809,6 +855,8 @@ def main():
     parser_destroy = orka_subparsers.add_parser('destroy', parents=[common_parser],
                                      help='Destroy a Hadoop-Yarn cluster'
                                      ' on ~okeanos.')
+    parser_node = orka_subparsers.add_parser('node', parents=[common_parser],
+                                     help='Operations on a Hadoop-Yarn cluster for adding or deleting a node.')
     parser_list = orka_subparsers.add_parser('list', parents=[common_parser],
                                      help='List user clusters.')
     parser_info = orka_subparsers.add_parser('info', parents=[common_parser],
@@ -828,6 +876,11 @@ def main():
                                      help='Get/Download a file from the Hadoop-Yarn filesystem to <destination>.')
     parser_file_list = file_subparsers.add_parser('list',
                                              help='List pithos+ files.')
+    parser_node_subparsers = parser_node.add_subparsers(help='Choose node action add or delete')
+    parser_addnode = parser_node_subparsers.add_parser('add',
+                                                       help='Add a node in a Hadoop-Yarn cluster on ~okeanos.')
+    parser_removenode = parser_node_subparsers.add_parser('remove',
+                                                          help='Remove a node from a Hadoop-Yarn cluster on ~okeanos.')
     
     if len(argv) > 1:
         
@@ -896,6 +949,19 @@ def main():
         parser_vre_list.add_argument('--verbose', help='List extra Virtual Research Environment server details.',
                               action="store_true")
         
+
+        # hidden argument with default value so we can set opts['addnode'] 
+        # when ANY 'orka node add' command is invoked
+        parser_addnode.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='addnode')
+        parser_addnode.add_argument('cluster_id', help='The id of the Hadoop cluster where the node will be added',
+                                   type=checker.positive_num_is)
+
+        # hidden argument with default value so we can set opts['removenode'] 
+        # when ANY 'orka node remove' command is invoked
+        parser_removenode.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='removenode')
+        parser_removenode.add_argument('cluster_id', help='The id of the Hadoop cluster where the node will be removed', 
+                                       type=checker.positive_num_is)
+
         parser_list.add_argument('--status', help='Filter by status ({%(choices)s})'
                               ' Default is all: no filtering.', type=str.upper,
                               metavar='status', choices=['ACTIVE','DESTROYED','PENDING'])
@@ -987,6 +1053,8 @@ def main():
                 c_userservers.list('server', 'vreservers')
             else:
                 c_hadoopcluster.vre_action()
+        elif verb == 'node':
+            c_hadoopcluster.node_action()
 
     else:
         logging.error('No arguments were given')

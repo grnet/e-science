@@ -1,0 +1,25 @@
+---
+    - name: Create the exclude file with the hosts to be removed
+      tags: remove_yarn_nodes
+      shell: echo {{hostname}} >> /usr/local/hadoop/etc/hadoop/exclude
+
+    - name: Change owner of exclude file
+      tags: remove_yarn_nodes
+      shell: chown hduser:hadoop /usr/local/hadoop/etc/hadoop/exclude
+
+    - name: Refresh datanodes
+      tags: remove_yarn_nodes
+      remote_user: hduser
+      command: /usr/local/hadoop/bin/hadoop dfsadmin -refreshNodes
+
+    - name: Create the exclude file with the hosts to be removed
+      tags: remove_cloudera_nodes
+      shell: echo {{hostname}} >> /etc/hadoop/conf/exclude
+
+    - name: Change owner of exclude file
+      tags: remove_cloudera_nodes
+      shell: chown root:hadoop /etc/hadoop/conf/exclude
+
+    - name: Refresh datanodes
+      tags: remove_cloudera_nodes
+      shell: sudo -u hdfs hdfs dfsadmin -refreshNodes

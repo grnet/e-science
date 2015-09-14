@@ -23,7 +23,7 @@ from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     OrkaImagesSerializer, VreImagesSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
-from tasks import create_cluster_async, destroy_cluster_async, \
+from tasks import create_cluster_async, destroy_cluster_async, scale_cluster_async, \
     hadoop_cluster_action_async, put_hdfs_async, create_server_async, destroy_server_async, \
     save_metadata_async
 from create_cluster import YarnCluster

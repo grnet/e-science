@@ -152,6 +152,41 @@ example for destroy cluster:
 
     orka destroy <cluster_id>
 
+## "node" command
+
+orka node command provides sub-commands for adding or deleting a node to/from a Hadoop-Yarn cluster.
+
+### "node add" command
+
+Required positional arguments for node add command:
+         
+    cluster_id: "Cluster id in e-science database"
+
+(cluster_id can be found with **orka list** command)
+
+
+####{orka node add} command example
+
+example for adding node to a cluster:
+
+    orka node add <cluster_id>
+
+    
+### "node remove" command
+
+Required positional arguments for node remove command:
+         
+    cluster_id: "Cluster id in e-science database"
+
+(cluster_id can be found with **orka list** command)
+
+
+####{orka node remove} command example
+
+example for removing node from a cluster:
+
+    orka node remove <cluster_id>
+
 ##"file" command
 
 orka file command provides sub-commands for puting files to Hadoop filesystem from local, ftp/http and pithos sources, and getting files from Hadoop filesystem to local and pithos destinations.  
@@ -238,7 +273,7 @@ example for recursive HDFS folder creation:
 Also, with
 
     orka -h
-    orka { images | create | vre | destroy | list | info | hadoop | file } -h
+    orka { images | create | vre | destroy | node | list | info | hadoop | file } -h
 
 helpful information about the orka CLI is depicted and
 
