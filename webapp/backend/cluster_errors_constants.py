@@ -12,75 +12,109 @@ from encrypt_key import key #file with only one variable key = encrypt_key file 
 encrypt_key = key
 
 # Definitions of return value errors
-error_syntax_clustersize = -1
-error_syntax_cpu_master = -2
-error_syntax_ram_master = -3
-error_syntax_disk_master = -4
-error_syntax_cpu_slave = -5
-error_syntax_ram_slave = -6
-error_syntax_disk_slave = -7
-error_syntax_logging_level = -8
-error_syntax_disk_template = -9
-error_quotas_cyclades_disk = -10
-error_quotas_cpu = -11
-error_quotas_ram = -12
-error_quotas_cluster_size = -13
-error_quotas_network = -14
-error_flavor_id = -15
-error_image_id = -16
-error_syntax_token = -17
-error_ready_reroute = -18
-error_no_arguments = -19
-error_fatal = -20
-error_user_quota = -22
-error_flavor_list = -23
-error_get_list_servers = -24
-error_get_list_projects = -25
-error_get_network_quota = -28
-error_create_network = -29
-error_get_ip = -30
-error_create_server = -31
-error_syntax_auth_token = -32
-error_ansible_playbook = -34
-error_ssh_client = -35
-error_cluster_not_exist = -69
-error_cluster_corrupt = -70
-error_proj_id = -71
-error_multiple_entries = -72
-error_project_quota = -73
-error_authentication = -99
-FNULL = open(os.devnull, 'w')
+
+
+error_syntax_clustersize = -1 # Not used anywhere   
+error_syntax_cpu_master = -2 # Not used anywhere
+error_syntax_ram_master = -3 # Not used anywhere
+error_syntax_disk_master = -4 # Not used anywhere
+error_syntax_cpu_slave = -5  # Not used anywhere
+error_syntax_ram_slave = -6  # Not used anywhere
+error_syntax_disk_slave = -7  # Not used anywhere
+error_syntax_logging_level = -8  # Not used anywhere
+error_syntax_disk_template = -9  # Not used anywhere
+error_quotas_cyclades_disk = -10 # Not enough disksize quota in cyclades 
+error_quotas_cpu = -11 # Not enough cpu quota in cyclades 
+error_quotas_ram = -12 # Not enough ram quota in cyclades
+error_quotas_cluster_size = -13 # Not enough VM quota in cyclades
+error_quotas_network = -14 # Not enough private network quota 
+error_flavor_id = -15 # Not used anywhere
+error_image_id = -16 # Not a valid image given
+error_syntax_token = -17 # Not used anywhere
+error_ready_reroute = -18 # Not used anywhere
+error_no_arguments = -19 # Used in orka errors_contants for no arguments given in cli, not used anywhere in backend
+error_fatal = -20 # Often used in orka cli for many errors(ClientError,ConnectionError), only once in backend(deletion error in delete vre)
+error_user_quota = -22 # Error requesting/getting user quota from ~okeanos
+error_flavor_list = -23 # Error requesting/getting flavors list from ~okeanos
+error_get_list_servers = -24 # Error requesting/getting user's servers from ~okeanos
+error_get_list_projects = -25 # Error requesting/getting user's projects from ~okeanos
+error_get_network_quota = -28 # Not used anywhere
+error_create_network = -29 # Error creating private network in ~okeanos
+error_get_ip = -30 # General floating ip error (e.g. not enough ip quota and error while requesting list of ips)
+error_create_server = -31 # Error while creating ~okeanos server (e.g. stay in BUILD status more than 5 minutes).
+error_syntax_auth_token = -32 # Error reading ~okeanos token from .kamakirc for cli (e.g. no token in .kamakirc)
+error_ansible_playbook = -34 # General error while running create cluster Ansible playbook
+error_ssh_client = -35 # Error for staging server not be able to connect to cluster during reroute steps
+error_cluster_not_exist = -69 # Not used anywhere
+error_cluster_corrupt = -70 # Error while deleting cluster and not all VMs are deleted(e.g. Error before deleting all cluster VMs)
+
+    # rename to error_project_id
+error_proj_id = -71 # No project id for given project name
+
+error_multiple_entries = -72 # Multiple entries in database for something unique
+error_project_quota = -73 # Zero user quota for a given project
+
+        
+error_authentication = -99 # Invalid token
+
+
+
+FNULL = open(os.devnull, 'w') # Redirects whatever is assigned to FNULL to nothingness (e.g. stderr=FNULL)
+
 # Hadoop test command error return status
-error_hdfs_test_exit_status = 1
+error_hdfs_test_exit_status = 1 # 1 is error exit status returned from hadoop test commands (e.g. hadoop fs -test -e <some_path> )
 
 # Package constants
-ADD_TO_GET_PORT = 9998  # Value to add in order to get slave port numbers
-REPORT = 25  # Define logging level of REPORT
-SUMMARY = 29  # Define logging level of SUMMARY
-MAX_WAIT = 300  # Max number of seconds for wait function of Cyclades
-Mbytes_to_GB = 1024  # Global to convert megabytes to gigabytes
+ADD_TO_GET_PORT = 9998  # Value offset in order to get slave port numbers, STARTING FROM?...
+REPORT = 25             # Define logging level of REPORT
+SUMMARY = 29            # Define logging level of SUMMARY
+MAX_WAIT = 300          # Max number of seconds for wait function of Cyclades
+
+# MiB <-> GiB easy conversion constants
+Mbytes_to_GB = 1024     # Global to convert megabytes to gigabytes
+Bytes_to_MB = 1048576   # Global to convert bytes to megabytes
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
-Bytes_to_MB = 1048576  # Global to convert bytes to megabytes
+
+        # Used for storage template conversion in get_flavors_quotas, so user-friendly args can be used in cli and gui
 storage_template = {'ext_vlmc':'Archipelago','drbd':'Standard'} # ~okeanos available storage templates with user friendly name
+# Reverse storage template not used anywhere
 reverse_storage_template = {'Archipelago':'ext_vlmc','Standard':'drbd'} # ~okeanos available storage templates with user friendly name
+
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
+
+        # If no image is given in orka-cli, this is the default image. Not used in backed/cluster_errors_constants
 default_image = 'Debian Base'
+
+# Default orka logging level 
 default_logging = 'summary'
+
+# REST-API endpoints
+    # Non of these are required in backend/cluster_errors_constants, used only in orka/cluster_errors_contants
 login_endpoint = '/api/users'
 cluster_endpoint = '/api/clusterchoices'
 job_endpoint = '/api/jobs'
 hdfs_endpoint = '/api/hdfs'
+
+# Cluster status constants
 const_cluster_status_destroyed = "0"
 const_cluster_status_active = "1"
 const_cluster_status_pending = "2"
 const_cluster_status_failed = "3"
+# Hadoop status constants
 const_hadoop_status_stopped = "0"
 const_hadoop_status_started = "1"
 const_hadoop_status_format = "2"
+
+        #Set hadoop pending status to 2 (same as hadoop status format and cluster status pending)
 const_hadoop_status_pending = const_hadoop_status_format
+
+        # If celery message is bigger than following value, it truncates the message. We check if message length is bigger than const_truncate_limit, then add dots (..) at the end of message to indicate truncation. Used for orka cli mainly.
 const_truncate_limit = 350
+
 const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
 const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
+
+        # FOLLOWING 2 VARIABLES A BIT CONFUSING
 HADOOP_STATUS_ACTIONS = {"stop": ["0", "Stopping", "Stopped"],
                          "start": ["1", "Starting", "Started"],
                          "format": ["2", "Formatting", "Formatted"],
@@ -95,13 +129,15 @@ hadoop_images_ansible_tags = {"debianbase": {"stop": "stop", "start": "start"},
                               "ecosystem": {"start": "start,FLUMEstart,ECOSYSTEMstart,HUEstart",
                                             "stop": "stop,FLUMEstop,ECOSYSTEMstop,HUEstop"},
                               "cloudera": {"start": "start,CLOUDstart", "stop": "stop,CLOUDstop"}}
-# Dictionary of pithos images UUIDs with their corresponding properties
+
+# Dictionary of pithos Hadoop images UUIDs with their corresponding properties
 pithos_images_uuids_properties = {"d3782488-1b6d-479d-8b9b-363494064c52": {"role":"yarn", "tags":"-t preconfig,postconfig", "image":"debianbase"},
                              "3f1f5195-7769-44ba-a4c2-418d86e30f97": {"role":"yarn", "tags":"-t postconfig", "image":"hadoopbase"},
                              "7a8423da-0cfb-414c-9491-1dcb81a87eb6": {"role":"yarn", "tags":"-t postconfig,hueconfig", "image":"hue"},
                              "dc171a3d-09bf-469d-9b7a-d3fb5c0afebc": {"role":"yarn", "tags":"-t postconfig,hueconfig,ecoconfig", "image":"ecosystem"},
                              "05f23bb1-5415-4da3-8e8a-93daa384b2f8": {"role":"cloudera", "tags":"-t preconfig,postconfig", "image":"cloudera"}}
-# Dictionary of pithos vre images UUIDs with their corresponding actions
+
+# Dictionary of pithos VRE images UUIDs with their corresponding actions
 pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"image":"drupal","db_name":"db","default_password":"@test123",
                                                                             "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}",
                                                                             "change_db_pass":"hash=$(docker exec -t -i drupal bash -c \"php scripts/password-hash.sh {0} | grep hash | sed -e 's#.*hash: \\(\)#\\1#'\")\
@@ -122,8 +158,14 @@ pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"ima
                                "6a6676d4-213c-464b-a321-04998c1d8dc7": {"image":"dspace","update_password":"/usr/bin/docker exec -d dspace sudo -u postgres psql -U postgres -d dspace -c \"alter user dspace password '{0}';\"",
                                                                         "change_db_pass":"docker exec -d dspace sed -i 's/db.password *= * *dspace/db.password={0}/g' /dspace/config/dspace.cfg"}}
 
-#encrypt decrypt token in django db
+                                                                        
+# encrypt/decrypt token in django db
+from encrypt_key import key     # File with only one variable key = encrypt_key, keep it outside git
+        # Encrypts  and decrypts every user's ~okeanos token in database.
+encrypt_key = key
+
 def mask_token(key, token):
+        # INSERT COMMENTS HERE
     enc = []
     for i in range(len(token)):
         key_c = key[i % len(key)]
@@ -132,6 +174,7 @@ def mask_token(key, token):
     return base64.urlsafe_b64encode("".join(enc))
 
 def unmask_token(key, masked_token):
+        # INSERT COMMENTS HERE
     dec = []
     masked_token = base64.urlsafe_b64decode(masked_token.encode('ascii'))
     for i in range(len(masked_token)):
