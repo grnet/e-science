@@ -1,4 +1,4 @@
-###Virtual Research Environment (VRE) Images
+#Virtual Research Environment (VRE) Images
 
 orka vre commands are used to manage VM appliances which cover a wide range of open-software stacks needed for everyday Research and Academic activities. These images are ~okeanos pre-cooked VMs created with Docker.
 
@@ -8,16 +8,16 @@ Required positional arguments for vre create command:
 
     name: "name of the VRE server",
     cpu: "number of CPU cores of VRE server",
-    ram: "ram in MB of VRE server",
-    disk: "hard drive in GB of VRE server",
+    ram: "ram in MiB of VRE server",
+    disk: "hard drive in GiB of VRE server",
     disk_template: "Standard or Archipelago",
     project_name: "name of a ~okeanos project, to pull resources from",
     image: "name of VRE image"
     
 Optional arguments for vre create command:
 
-    admin_password: "Admin password for VRE servers. Default is auto-generated if not given from user",
-    admin_email: "Admin email for VRE DSpace image. Default is admin@dspace.gr if not given from user"
+    admin_password: "Admin password for VRE servers. Default is auto-generated",
+    admin_email: "Admin email for VRE DSpace image. Default is admin@dspace.gr"
     
  **admin_password must contain only uppercase and lowercase letters and numbers and be at least eight characters long**.
 
@@ -25,7 +25,7 @@ Optional arguments for vre create command:
 
 example for orka vre create with Drupal and DSpace images:
 
-    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Drupal-7.3.7 --admin_password=My21PaSswOrd
+    orka vre create Drupal_Test 2 2048 20 Standard <project_name> Drupal-7.37 --admin_password=My21PaSswOrd
     orka vre create DSpace_Test 2 2048 20 Standard <project_name> DSpace-5.3 --admin_password=sOmEoTheRPassWorD --admin_email=mymail@gmail.com
     
 ##"vre destroy" command
@@ -50,6 +50,18 @@ vre images command has no required positional or optional arguments.
 example for listing available VRE images and their pithos uuid values
 
     orka vre images
+## "vre list" command
+Optional arguments for vre list command:
+
+    --status="Choose from:ACTIVE, PENDING, DESTROYED (case insensitive, shows only VRE servers with specified status)"
+    --verbose (outputs full VRE server details. Default: off)
+vre list command has no required positional arguments.
+
+### {orka vre list} command example
+
+example for listing user VRE servers:
+
+	orka vre list --status=active --verbose
 
 ## General Docker Info
 
@@ -62,7 +74,7 @@ For example, to access the mysql layer (db) in the **Drupal** or **Mediawiki** i
     docker exec -t -i db bash
     mysql -p
 
-and give the admin_password when prompt for password.
+and give the admin_password when prompted for password.
 
 In order to change the mysql root password, type:
 
@@ -114,15 +126,17 @@ Finally, start docker and containers:
     docker start redmine_postgresql_1
     docker start redmine_redmine_1
     
-For **DSpace image**, the database is in the same container with the dspace.
+For **DSpace image**, the database resides in the same container with DSpace.
 So, in order for the postgresql database to be accessed, the following commands are needed:
 
     docker exec -t -i dspace bash
     psql -U dspace -d dspace -h localhost
     
-and give the admin_password. If the postgresql dspace password is changed, it must be also changed in the file /dspace/config/dspace.cfg, which is inside the dspace container.
+and give the admin_password. If the postgresql dspace password is changed, it must be also changed in the file /dspace/config/dspace.cfg, which is inside the DSpace container.
 
-The entry db.password=<old_password> inside the dspace.cfg file must be changed to reflect the change in postgresql.After the change, stop and start the docker dspace container. It needs 3,5 to 4 minutes to be up and running,so the dspace urls can be accessed.
+The entry db.password=<old_password> inside the dspace.cfg file must be changed to reflect the change in postgresql. After the change, stop and start the docker dspace container. It needs around 4 minutes to be up and running, before DSpace URLs can be accessed.
+
+In case of **BigBlueButton**, there is no admin account and no database. The recommended minimum hardware requirements are: 4 CPUs and 4 GiB ram.
 
 ## Access VRE servers
 
@@ -132,8 +146,61 @@ The entry db.password=<old_password> inside the dspace.cfg file must be changed 
 | Mediawiki   | *VRE server IP*
 | Redmine     | *VRE server IP*`:10083`
 | DSpace      | *VRE server IP*`:8080/jspui` && *VRE server IP*`:8080/xmlui`
+| BigBlueButton | *VRE server IP*
 
-## Useful links:
+## Backup and Restore procedure of docker container's directories and database
+
+For example, in **DSpace image** case:
+
+First, determine which directories are needed to be backed up.
+
+    - installation directory
+    - web deployment directory
+        - In our case it resides inside the installation directory.
+
+Next, open bash inside the DSpace container:
+
+    docker exec -it dspace bash
+
+**DSpace installation folder backup**
+
+    nano /dspace/config/dspace.cfg
+        #find line: <dspace.dir = {{dspace installation folder}}>
+        #here it is /dspace
+    cd
+        #backup will be saved on your (root) home directory
+    tar zcC /dspace > dspace_installation-backup-$(date +%Y-%m-%d).tar.gz .
+
+**DSpace installation folder restore**
+
+    cd
+    tar zxC / -f dspace_installation-backup-{{select date}}.tar.gz
+
+**DSpace db backup**
+
+    cd
+    #store password, so that dump doesn't ask for password for each database dumped
+        nano .pgpass
+            localhost:*:*:dspace:dspace
+        chmod 600 .pgpass
+    pg_dump -Fc dspace -U dspace -h localhost > dspace_db-backup-$(date +%Y-%m-%d).bak
+
+**DSpace db restore**
+
+    cd 
+    pg_restore -Fc dspace_db-backup-{{select date}}.bak -U dspace -h localhost
+
+**Docker installation directories**
+
+| VRE image   | Installation directory
+|------------ |:---------------------
+| Drupal      | */var/www/html*
+| Mediawiki   | */var/www/html*
+| Redmine     | */home/redmine*
+| DSpace      | */dspace*
+| BigBlueButton | */var/lib/tomcat6/webapps*
+
+## Useful Docker links:
 
 https://www.docker.com/
 

@@ -158,21 +158,34 @@ orka node command provides sub-commands for adding or deleting a node to/from a 
 
 ### "node add" command
 
-Required positional arguments for create command:
+Required positional arguments for node add command:
          
     cluster_id: "Cluster id in e-science database"
-    cpu: "number of CPU cores for server"
-    ram: "ram in MB"
-    disk: "hard drive in GB"
+
 (cluster_id can be found with **orka list** command)
 
-Ram should not be lower than the memory which is preconfigured in hadoop xml files of the cluster that the node will be added.
 
 ####{orka node add} command example
 
 example for adding node to a cluster:
 
-    orka node add <cluster_id> 2 2048 10
+    orka node add <cluster_id>
+
+    
+### "node remove" command
+
+Required positional arguments for node remove command:
+         
+    cluster_id: "Cluster id in e-science database"
+
+(cluster_id can be found with **orka list** command)
+
+
+####{orka node remove} command example
+
+example for removing node from a cluster:
+
+    orka node remove <cluster_id>
 
 ##"file" command
 

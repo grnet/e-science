@@ -39,6 +39,26 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 		});
 	 	return promise;
 	},
+	setupController : function(controller, model){
+	    this._super(controller,model);
+	    controller.set('slaves_increment_loader',true);
+        var store = this.get('store');
+        var project_name = model.get('project_name');
+        var promise = store.find('cluster');
+        promise.then(function(data){
+            var arr_projects = data.get('content');
+            for (i=0;i<arr_projects.length;i++){
+                if (arr_projects[i].get('project_name') == project_name){
+                    controller.set('cluster_project_data',arr_projects[i]);
+                    controller.set('slaves_increment_loader',false);
+                    break;
+                }
+            }
+        },function(reason){
+            controller.set('slaves_increment_loader',false);
+            console.log(reason.message);
+        });	    
+	},
 	
 	// possible actions
 	actions: {

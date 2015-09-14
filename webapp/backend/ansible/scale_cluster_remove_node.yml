@@ -1,0 +1,47 @@
+---
+    - name: Create the exclude file with the hosts to be removed
+      tags: remove_yarn_nodes
+      shell: echo {{hostname}} > /usr/local/hadoop/etc/hadoop/exclude
+
+    - name: Change owner of exclude file
+      tags: remove_yarn_nodes
+      shell: chown hduser:hadoop /usr/local/hadoop/etc/hadoop/exclude
+
+    - name: Refresh datanodes after adding the node to be decommissioned in exclude file (hdfs)
+      tags: remove_yarn_nodes
+      remote_user: hduser
+      command: /usr/local/hadoop/bin/hadoop dfsadmin -refreshNodes
+
+    - name: Refresh datanodes after adding the node to be decommissioned in exclude file (yarn)
+      tags: remove_yarn_nodes
+      remote_user: hduser
+      command: /usr/local/hadoop/bin/yarn  rmadmin -refreshNodes
+
+    - name: Wait until node is decommissioned
+      tags: remove_yarn_nodes
+      remote_user: hduser
+      command: /usr/local/hadoop/bin/hadoop dfsadmin -report
+      register: admin_report
+      until: 'admin_report.stdout.find("Hostname: {{hostname}}\nDecommission Status : Normal") > -1'
+      retries: 3
+      delay: 15
+
+    - name: Remove decommissioned slave from hadoop include file
+      tags: remove_yarn_nodes
+      remote_user: hduser
+      lineinfile: dest=/usr/local/hadoop/etc/hadoop/include regexp={{hostname}} state=absent
+
+    - name: Refresh datanodes after removing the decommissioned node from the include file (hdfs)
+      tags: remove_yarn_nodes
+      remote_user: hduser
+      command: /usr/local/hadoop/bin/hadoop dfsadmin -refreshNodes
+
+    - name: Refresh datanodes after removing the decommissioned node from the include file (yarn)
+      tags: remove_yarn_nodes
+      remote_user: hduser
+      command: /usr/local/hadoop/bin/yarn  rmadmin -refreshNodes
+
+    - name: Remove decommissioned slave from hadoop slaves file
+      tags: remove_yarn_nodes
+      remote_user: hduser
+      lineinfile: dest=/usr/local/hadoop/etc/hadoop/slaves regexp={{hostname}} state=absent

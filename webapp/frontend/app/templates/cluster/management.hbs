@@ -141,7 +141,7 @@
    </div>
    <div {{bind-attr id="content_tabs.manage.id" class=":tab-pane content_tabs.manage.active:active"}}>
        <div class="row">
-		{{#if model.cluster_status_active}}
+		{{#if model.cluster_manage_enabled}}
 		 <div class='btn-group-vertical btn-group-sm col col-sm-2'>
 			{{#ifeq model.cluster_confirm_action 'hadoop_start'}}
 			<div class='btn-toolbar-horizontal btn-toolbar-sm'>
@@ -191,9 +191,11 @@
                     Destroy Cluster <b {{bind-attr class='model.cluster_status_class_destroy'}}></b>
                 </button>
 			{{/ifeq}}
+			{{#if model.boolean_scale_cluster_applicable}}
 			<button {{bind-attr id='model.cluster_scale_id'}} class="btn btn-sm btn-primary btn-block"{{action 'apply_resize'}}{{bind-attr disabled="apply_resize_disabled"}}>
                     Scale Cluster <b class="glyphicon glyphicon-resize-full text-warning"></b>
             </button>
+            {{/if}}
 		</div>
 		<div class="col col-sm-10">
 		    {{partial 'cluster/propmanage'}}

@@ -5,16 +5,18 @@
 
 # Tests
 # 01. Create Cluster
-# 02. Stop Hadoop
-# 03. Format Hadoop
-# 04. (Re)Start Hadoop
-# 05. runPI
-# 06. wordcount
-# 07. teragen
-# 08. pithosFS is registered
-# 09. wordcount pithosFS
-# 10. teragen pithosFS
-# 11. Destroy Cluster
+# 02. Scale Cluster Up
+# 03. Scale Cluster Down
+# 04. Stop Hadoop
+# 05. Format Hadoop
+# 06. (Re)Start Hadoop
+# 07. runPI
+# 08. wordcount
+# 09. teragen
+# 10. pithosFS is registered
+# 11. wordcount pithosFS
+# 12. teragen pithosFS
+# 13. Destroy Cluster
 
 # Load test helpers
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -75,6 +77,36 @@ testClusterCreate(){
 }
 
 # 02
+testClusterScaleUp(){
+	# arrange
+	# act
+	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
+		# orka node add cluster_id
+		orka node add $CLUSTER_ID
+		RESULT="$?"
+	else
+		startSkipping
+	fi
+	# assert (assert* "fail message" <success_condition>)
+	assertTrue 'Cluster Scale Up Failed' '[ "$RESULT" -eq 0 ]'	
+}
+
+# 03
+testClusterScaleDown(){
+	# arrange
+	# act
+	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
+		# orka node remove cluster_id
+		orka node remove $CLUSTER_ID
+		RESULT="$?"
+	else
+		startSkipping
+	fi
+	# assert (assert* "fail message" <success_condition>)
+	assertTrue 'Cluster Scale Down Failed' '[ "$RESULT" -eq 0 ]'	
+}
+
+# 04
 testHadoopStop(){
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		orka hadoop stop $CLUSTER_ID
@@ -85,7 +117,7 @@ testHadoopStop(){
 	assertTrue 'Stop Hadoop Failed' '[ "$RESULT" -eq 0 ]'
 }
 
-# 03
+# 05
 testHadoopFormat(){
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		orka hadoop format $CLUSTER_ID
@@ -96,7 +128,7 @@ testHadoopFormat(){
 	assertTrue 'Format Hadoop Failed' '[ "$RESULT" -eq 0 ]'
 }
 
-# 04
+# 06
 testHadoopRestart(){
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		orka hadoop start $CLUSTER_ID
@@ -107,7 +139,7 @@ testHadoopRestart(){
 	assertTrue 'Start Hadoop Failed' '[ "$RESULT" -eq 0 ]'
 }
 
-# 05 runPI
+# 07 runPI
 testHDFSrunPI(){
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
@@ -120,7 +152,7 @@ testHDFSrunPI(){
 	assertTrue 'HDFS runPI Failed' '[ -n "$RESULT" ]'
 }
 
-# 06 wordcount
+# 08 wordcount
 testHDFSwordcount(){
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
@@ -136,7 +168,7 @@ testHDFSwordcount(){
 	assertTrue 'HDFS wordcount Failed' '[ "$RESULT" -eq 0 ]'
 }
 
-# 07 teragen
+# 09 teragen
 testHDFSteragen(){
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
@@ -150,7 +182,7 @@ testHDFSteragen(){
 	assertTrue 'HDFS teragen Failed' '[ "$RESULT" -eq 0 ]'
 }
 
-# 08 pithosFS registered
+# 10 pithosFS registered
 testRegisteredpithosFS(){
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
@@ -164,7 +196,7 @@ testRegisteredpithosFS(){
 	assertTrue 'pithosFS registration Failed' '[ "$RESULT" -eq 0 ]'
 }
 
-# 09. wordcount pithosFS
+# 11. wordcount pithosFS
 testpithosFSwordcount(){
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 #		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
@@ -180,7 +212,7 @@ testpithosFSwordcount(){
 	assertTrue 'pithosFS wordcount Failed' '[ "$RESULT" -eq 0 ]'
 }
 
-# 10. teragen pithosFS
+# 12. teragen pithosFS
 testpithosFSteragen(){
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
@@ -194,7 +226,7 @@ testpithosFSteragen(){
 	assertTrue 'pithosFS teragen Failed' '[ "$RESULT" -eq 0 ]'
 }
 
-# 11 Destroy
+# 13 Destroy
 testClusterDestroy(){
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		orka destroy $CLUSTER_ID

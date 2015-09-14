@@ -40,13 +40,14 @@ error_create_server = -31
 error_syntax_auth_token = -32
 error_ansible_playbook = -34
 error_ssh_client = -35
+error_replication_factor = -36
+error_remove_node = -37
 error_cluster_not_exist = -69
 error_cluster_corrupt = -70
 error_proj_id = -71
 error_multiple_entries = -72
 error_project_quota = -73
 error_authentication = -99
-error_replication_factor = -36
 SUCCESS = 0
 
 # Package constants
@@ -80,4 +81,5 @@ block_size = 67108864 # block size in bytes,used in division when transfering fi
 ORKA_IMAGES = {'action':'orka_images','resource_name':'orkaimage'}
 VRE_IMAGES = {'action':'vre_images','resource_name':'vreimage'}
 vre_ram_min = 1024
-dspace_ram_min = 2048
+dspace_bbb_ram_min = 2048
+bbb_cpu_min = 2

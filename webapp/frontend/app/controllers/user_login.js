@@ -3,6 +3,7 @@ App.UserLoginController = Ember.Controller.extend({
 	needs: 'application',
 	token : '',
 	runLater : null,
+	okeanos_api_url : 'https://accounts.okeanos.grnet.gr/ui/api_access',
 	isLoggedIn : function() {
 		// Check local storage auth token for user login status.
 		if (window.localStorage.escience_auth_token != 'null' && !Ember.isEmpty(window.localStorage.escience_auth_token) && window.localStorage.escience_auth_token !== 'undefined') {
@@ -63,6 +64,10 @@ App.UserLoginController = Ember.Controller.extend({
 			$('#token').focus();
 			$('#id_alert_wrongtoken > button').click();
 			this.set('loginFailed', false);
+		},
+		visit_okeanos : function(){
+		    $('#token').focus();
+		    window.open(this.get('okeanos_api_url'),'_blank');
 		},
 	},
 	

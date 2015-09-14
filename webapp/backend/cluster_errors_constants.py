@@ -43,6 +43,7 @@ error_create_server = -31
 error_syntax_auth_token = -32
 error_ansible_playbook = -34
 error_ssh_client = -35
+error_remove_node = -37
 error_cluster_not_exist = -69
 error_cluster_corrupt = -70
 error_proj_id = -71
@@ -77,6 +78,7 @@ const_cluster_status_failed = "3"
 const_hadoop_status_stopped = "0"
 const_hadoop_status_started = "1"
 const_hadoop_status_format = "2"
+const_hadoop_status_undefined = "3"
 const_hadoop_status_pending = const_hadoop_status_format
 const_truncate_limit = 350
 const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
@@ -120,7 +122,8 @@ pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"ima
                                                                         "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}",
                                                                         "change_db_pass":"docker exec -t -i db bash -c \"mysql -p{0} mediawiki -e \\\"UPDATE user SET user_password = CONCAT(':A:', MD5('{0}')) WHERE user_name = 'Admin';\\\"\""},
                                "6a6676d4-213c-464b-a321-04998c1d8dc7": {"image":"dspace","update_password":"/usr/bin/docker exec -d dspace sudo -u postgres psql -U postgres -d dspace -c \"alter user dspace password '{0}';\"",
-                                                                        "change_db_pass":"docker exec -d dspace sed -i 's/db.password *= * *dspace/db.password={0}/g' /dspace/config/dspace.cfg"}}
+                                                                        "change_db_pass":"docker exec -d dspace sed -i 's/db.password *= * *dspace/db.password={0}/g' /dspace/config/dspace.cfg"},
+                               "0d26fd55-31a4-46b3-955d-d94ecf04a323": {"image":"bigbluebutton"}}
 
 #encrypt decrypt token in django db
 def mask_token(key, token):
