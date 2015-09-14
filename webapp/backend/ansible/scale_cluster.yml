@@ -10,19 +10,34 @@
       tags: remove_yarn_nodes
       shell: chown hduser:hadoop /usr/local/hadoop/etc/hadoop/exclude
 
-    - name: Refresh datanodes
+    - name: Update the namenode
       tags: remove_yarn_nodes
       remote_user: hduser
       command: /usr/local/hadoop/bin/hadoop dfsadmin -refreshNodes
 
-    - name: Create the exclude file with the hosts to be removed
-      tags: remove_cloudera_nodes
-      shell: echo {{hostname}} > /etc/hadoop/conf/exclude
+    - name: Update the resource manager
+      tags: remove_yarn_nodes
+      remote_user: hduser
+      command: /usr/local/hadoop/bin/yarn rmadmin -refreshNodes
 
-    - name: Change owner of exclude file
-      tags: remove_cloudera_nodes
-      shell: chown root:hadoop /etc/hadoop/conf/exclude
+    - name: Remove slaves from include file
+      tags: remove_yarn_nodes
+      lineinfile: dest=/usr/local/hadoop/etc/hadoop/include 
+                  regexp={{hostname}}
+                  state=absent
 
-    - name: Refresh datanodes
-      tags: remove_cloudera_nodes
-      shell: sudo -u hdfs hdfs dfsadmin -refreshNodes
+    - name: Update the namenode
+      tags: remove_yarn_nodes
+      remote_user: hduser
+      command: /usr/local/hadoop/bin/hadoop dfsadmin -refreshNodes
+
+    - name: Update the resource manager
+      tags: remove_yarn_nodes
+      remote_user: hduser
+      command: /usr/local/hadoop/bin/yarn rmadmin -refreshNodes
+
+    - name: Remove slaves from master (slaves file)
+      tags: remove_yarn_nodes
+      lineinfile: dest=/usr/local/hadoop/etc/hadoop/slaves 
+                  regexp={{hostname}}
+                  state=absent
