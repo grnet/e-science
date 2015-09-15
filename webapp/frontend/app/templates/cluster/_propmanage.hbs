@@ -3,11 +3,11 @@
         {{#if model.boolean_scale_cluster_applicable}}
         <div class="col-sm-6">
             <div class="form-group">
+                <fieldset {{bind-attr disabled="slaves_resize_disabled"}}>
                 <label class="control-label col-sm-5" for="id_scale_cluster_help">Help </label>
                 <div class="col-sm-7">
                     <p class="form-control-static"><span class="text text-left text-info">Set the desired new size and use Scale Cluster to apply changes </span></p>
                 </div>
-                <fieldset {{bind-attr disabled="slaves_resize_disabled"}}>
                 <label class="control-label col-sm-5" for="id_number_of_slaves">Number of Slaves </label>
                 <div class="col col-sm-7">
                     <div class="input-group input-group-sm">
@@ -26,12 +26,12 @@
                         </span>
                     </div>
                 </div>
-                </fieldset>
                 <label class="control-label col-sm-5" for="id_slaves_settings">Resources per Slave </label>
                 <div class="col-sm-7">
                     <p class="form-control-static"><span class="text text-info"> CPUs:{{content.cpu_slaves}}, RAM:{{content.ram_slaves}}MiB, 
                         Disk size:{{content.disk_slaves}}GiB </span></p>
                 </div>
+                </fieldset>
             </div>
         </div>
         {{/if}}

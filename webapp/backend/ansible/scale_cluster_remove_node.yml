@@ -22,9 +22,9 @@
       remote_user: hduser
       command: /usr/local/hadoop/bin/hadoop dfsadmin -report
       register: admin_report
-      until: 'admin_report.stdout.find("Hostname: {{hostname}}\nDecommission Status : Normal") > -1'
+      until: 'admin_report.stdout.find("Hostname: {{hostname}}\nDecommission Status : Decommissioned") > -1'
       retries: 100
-      delay: 30
+      delay: 60
 
     - name: Remove decommissioned slave from hadoop include file
       tags: remove_yarn_nodes
