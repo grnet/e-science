@@ -6,7 +6,8 @@ App.User = DS.Model.extend({
 	user_name : attr('string'),         // user name or email
 	user_theme : attr('string'),        // user's theme in backend database
 	cluster : attr(), // number of user active clusters
-	vrenum : attr(), // number of user active VREs 
+	vrenum : attr(), // number of user active VREs
+	dslnum : attr(), // number of user DSLs
 	escience_token : attr(),
     master_vm_password: attr('string'),
     error_message: attr('string'),
@@ -17,7 +18,54 @@ App.User = DS.Model.extend({
     vreservers : DS.hasMany('uservreserver', {
         async : true,
         inverse : 'user'
-    })                           // user VRE server records
+    }),                           // user VRE server records
+    dsls : DS.hasMany('dsl', {
+        async : true,
+        inverse : 'user'
+    })
+});
+
+// Information about user's DSLs
+App.Dsl = DS.Model.extend({
+    dsl_name : attr('string'),
+    action_date : attr('isodate'),
+    cluster_id : attr('number'),
+    pithos_path : attr('string'),
+    task_id : attr(), 
+    state : attr(),
+    // user that created the VRE
+    user : DS.belongsTo('user', {
+        inverse : 'dsls'
+    }),
+    // computed properties
+    class_button_dsl_destroy : function(){
+        return !Ember.isEmpty(this.get('pithos_path')) ? "glyphicon glyphicon-trash text-danger" : "";
+    }.property('pithos_path'),
+    action_dsl_confirm : function(key, value){
+        this.set('confirm_action', value);
+        return this.get('confirm_action');
+    }.property(),
+    description_action_dsl_confirm : function(key, value){
+        var confirm_action = this.get('action_dsl_confirm');
+        switch(confirm_action){
+        case 'dsl_delete':
+            return 'Delete DSL';
+        default:
+            return 'Confirm';
+        }
+    }.property('action_dsl_confirm'),
+    id_dsl_name : function(key){
+        return '%@%@'.fmt(key,this.get('dsl_name'));
+    }.property('dsl_name'),
+    id_pithos_path : function(key){
+        return '%@%@'.fmt(key,this.get('dsl_name'));
+    }.property('dsl_name'),
+    id_dsl_confirm : function(key){
+        return '%@%@'.fmt(key,this.get('dsl_name'));
+    }.property('dsl_name'),
+    id_dsl_destroy : function(key){
+        return '%@%@'.fmt(key,this.get('dsl_name'));
+    }.property('dsl_name'),
 });
 
 // Information about user's VREs

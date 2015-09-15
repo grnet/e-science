@@ -170,8 +170,8 @@ App.UserclusterSerializer = DS.RESTSerializer.extend({
         project_name : {serialize : false},
         task_id : {serialize : false},
         state : {serialize : false},
-        replication_factor : {serialize : false}, // check if needed
-        dfs_blocksize : {serialize : false},       // check if needed
+        replication_factor : {serialize : false},
+        dfs_blocksize : {serialize : false},
         user : {serialize : false}
     }
 });
@@ -182,6 +182,9 @@ App.UserSerializer = DS.RESTSerializer.extend(DS.EmbeddedRecordsMixin, {
             embedded : 'always',
         },
         vreservers : {
+            embedded : 'always',
+        },
+        dsls : {
             embedded : 'always',
         }
     },

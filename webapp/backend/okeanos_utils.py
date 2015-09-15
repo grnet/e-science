@@ -125,6 +125,15 @@ def destroy_server(token, id):
 
     return vre_server.server_name
 
+def create_dsl(choices):
+    print "create_dsl"
+    # TODO placeholders for actual implementation
+    pass
+
+def destroy_dsl(token, id):
+    print "destroy_dsl"
+    # TODO placeholders for actual implementation
+    pass
 
 def get_public_ip_id(cyclades_network_client,float_ip):  
     """Return IP dictionary of an ~okeanos public IP"""

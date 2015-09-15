@@ -1,0 +1,41 @@
+<div class="table-responsive">
+    <table class="table table-striped table-hover table-border">
+        <thead class="h4 text-left">
+            <tr>
+                <td class="col col-sm-2"><a href="#" {{action 'sortBy' controller.sortable_dsls 'ud' 'dsl_name'}}>Name</a> 
+                	<i {{bind-attr class="sorting_info.ud_dsl_name_show:glyphicon:hide sorting_info.ud_dsl_name_show:small:hide sorting_info.ud_dsl_name_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                <td><a href="#" {{action 'sortBy' controller.sortable_dsls 'ud' 'action_date'}}>Creation Date</a> 
+                	<i {{bind-attr class="sorting_info.ud_action_date_show:glyphicon:hide sorting_info.ud_action_date_show:small:hide sorting_info.ud_action_date_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i> </td>
+                <td><a href="#" {{action 'sortBy' controller.sortable_dsls 'ud' 'pithos_path'}}>Pithos path</a>
+                	<i {{bind-attr class="sorting_info.ud_pithos_path_show:glyphicon:hide sorting_info.ud_pithos_path_show:small:hide sorting_info.ud_pithos_path_dir:glyphicon-arrow-up:glyphicon-arrow-down"}}></i></td>
+                <td class="col col-sm-2"><a class="nounder">Actions</a></td>
+            </tr>
+        </thead>
+        <tbody class="text-left">
+            {{#each dsl in controller.sortable_dsls}}
+            <tr>
+            	<td {{bind-attr id='dsl.id_dsl_name'}}>{{dsl.dsl_name}}</td>
+                <td>{{formatDate dsl.action_date format='shortdatetime'}}</td>
+               	<td><a {{bind-attr href='dsl.dsl_pithos_path' id='dsl.id_pithos_path'}} target="_blank">{{dsl.pithos_path}}</a></td>
+               	<td>
+                {{#if dsl.action_dsl_confirm}}
+                <div class="btn-group  btn-block">
+				    <a role="button" {{bind-attr id='dsl.id_dsl_confirm'}} {{action 'takeDslAction' dsl}} class="btn btn-danger btn-xs active">{{dsl.description_action_dsl_confirm}}</a>
+				    <a role="button" {{action 'confirmDslAction' dsl false}} class="btn btn-danger btn-xs active">x</a>
+				</div>
+                {{else}}
+                <div class='btn-group btn-block'>
+                	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DELETE DSL'><button {{bind-attr id='dsl.id_dsl_destroy'}} class="btn btn-xs btn-default"{{action 'confirmDslAction' dsl 'dsl_delete'}}>
+                		<b {{bind-attr class='dsl.class_button_dsl_destroy'}}></b> </button></div>
+                </div>
+                {{/if}}
+                </td>
+            </tr>
+            {{else}}
+            <tr>
+                <td colspan="4" class="text-center text-info">No user Domain Specific Language (DSL) metadata found</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+</div>
