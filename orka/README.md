@@ -83,7 +83,7 @@ Optional arguments for create command:
 
 ### Create Hadoop cluster from a pre-configured image
 
-Using the --image=Hadoop-2.5.2-Debian-8.0 argument creates the Hadoop cluster much faster because it utilises a specially created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest stable YARN version will be installed (but at the cost of lower speed).
+Using the --image=Hadoop-2.5.2 argument creates the Hadoop cluster much faster because it utilises a specially created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest stable YARN version will be installed (but at the cost of lower speed).
 
 ###{orka create} command examples
 

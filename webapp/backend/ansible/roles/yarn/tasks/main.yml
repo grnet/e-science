@@ -264,6 +264,11 @@
       - { src: 'slaves.j2', dest: '/usr/local/hadoop/etc/hadoop/include', owner: 'hduser', group: 'hadoop' }
     when: is_master
 
+  - name: Create empty exclude file
+    tags: postconfig
+    file: path=/usr/local/hadoop/etc/hadoop/exclude state=touch owner=hduser group=hadoop
+    when: is_master
+
   - name: create masters and slaves files in spark master node
     tags: ecoconfig
     template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
