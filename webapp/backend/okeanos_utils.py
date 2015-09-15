@@ -7,6 +7,10 @@ This script contains useful classes and fuctions for orka package.
 @author: Ioannis Stenos, Nick Vrionis
 """
 import logging
+import re
+import subprocess
+import yaml
+import urllib
 from base64 import b64encode
 from os.path import abspath, join, expanduser
 from kamaki.clients import ClientError
@@ -14,13 +18,11 @@ from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.cyclades import CycladesClient, CycladesNetworkClient
 from time import sleep
+from datetime import datetime
 from cluster_errors_constants import *
 from celery import current_task
 from django_db_after_login import db_cluster_update, get_user_id, db_server_update
 from backend.models import UserInfo, ClusterInfo, VreServer
-import re
-import subprocess
-
 
 
 def retrieve_pending_clusters(token, project_name):
@@ -1008,3 +1010,30 @@ def get_remote_server_file_size(url, user='', password=''):
                                 " | grep -i content-length | awk \'{print $2}\' | tr -d '\r\n'", shell=True)
 
     return int(r)
+
+def save_metadata(token, cluster_id):
+    """
+    Creates a yaml file with the cluster metadata.
+    File is sored in Pithos in user's acount.
+    """
+    #TODO: move to create_dsl method, replace use of curl with requests lib
+    uuid = get_user_id(unmask_token(encrypt_key,token))
+    cluster = ClusterInfo.objects.get(id=cluster_id)
+    cluster_name = cluster.cluster_name.split("-", 1)[1]
+    timestamp = datetime.now().replace(microsecond=0)
+    filename = '{0}-{1}-{2}-cluster-metadata.yml'.format(cluster_name, cluster_id, timestamp).replace(" ", "-")
+    filename = filename.replace(":", "-")
+    data = {'cluster': {'cluster_name': cluster_name, 'project_name': cluster.project_name, 'image': cluster.os_image, 'disk_template': u'{0}'.format(cluster.disk_template),
+                        'cluster_size': cluster.cluster_size, 'flavor_master':[cluster.cpu_master, cluster.ram_master,cluster.disk_master], 'flavor_slaves': [cluster.cpu_slaves, cluster.ram_slaves, cluster.disk_slaves]}, 
+            'configuration': {'replication_factor': cluster.replication_factor, 'dfs_blocksize': cluster.dfs_blocksize}}
+    with open('/tmp/{0}'.format(filename), 'w') as metadata_yml:
+        metadata_yml.write(yaml.safe_dump(data, default_flow_style=False))
+    command = 'curl -g -X PUT -D - --http1.0 -H "X-Auth-Token: {0}"\
+              -H "Content-Type: text/plain" -T /tmp/{1} \
+              {2}/{3}/pithos/{4}'.format(unmask_token(encrypt_key,token), filename, pithos_url, uuid, urllib.quote(filename))
+    p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
+    out, err = p.communicate()
+    subprocess.call('rm /tmp/' + filename, shell=True)
+    if success_response in out:
+        return out
+    return err

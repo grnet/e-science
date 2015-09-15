@@ -227,6 +227,10 @@ App.Usercluster = DS.Model.extend({
 		inverse : 'clusters'
 	}),
 	// computed properties
+	cluster_name_noprefix : function(){
+        // remove the '[orka]-' prefix
+        return this.get('cluster_name').slice(7);
+    }.property('cluster_name'),
     cluster_slaves_num : function(){
         return this.get('cluster_size')-1;
     }.property('cluster_size'),
@@ -466,6 +470,9 @@ App.Usercluster = DS.Model.extend({
 	hadoop_status_class_format : function(){
 		return "glyphicon glyphicon-erase text-warning";
 	}.property(),
+	id_save_metadata : function(key) {
+        return '%@%@'.fmt(key,this.get('cluster_name_noprefix'));	    
+	}.property('cluster_name_noprefix'),
 	cluster_scale_id : function(){
         var cluster_name_short = this.get('cluster_name').slice(7);
         var cluster_scale_id = "id_".concat("cluster_scale_",cluster_name_short);

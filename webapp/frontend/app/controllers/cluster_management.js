@@ -88,6 +88,17 @@ App.ClusterManagementController = Ember.Controller.extend({
 	}.property('cluster_slaves_delta'),
 	
 	actions : {
+	    save_metadata : function(){
+            var store = this.get('store');
+            var model = this.get('content');
+            var cluster_id = model.get('id');
+            // unload cached records
+            store.unloadAll('clusterchoice');
+            store.push('clusterchoice',{
+                    'id': 1,
+                    'cluster_edit': cluster_id,
+                }).save();
+	    },
 	    increment_size : function(){
 	        this.set('cluster_slaves_newsize',this.get('cluster_slaves_newsize')+1);
 	        $('#id_number_of_slaves').focus();
