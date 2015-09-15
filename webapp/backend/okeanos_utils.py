@@ -309,7 +309,7 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
                 set_cluster_state(token, cluster_id, state)
                 ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, action='remove_slaves',
                                                          slave_hostname=node_fqdn)
-                ansible_scale_cluster(ansible_hosts, action='remove_slaves', slave_hostname=node_fqdn)
+                ansible_scale_cluster(ansible_hosts, action='remove_slaves', slave_hostname=node_fqdn.split('.')[0])
             except Exception, e:
                 msg = str(e.args[0])
                 set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status],
