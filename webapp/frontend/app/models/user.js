@@ -470,7 +470,7 @@ App.Usercluster = DS.Model.extend({
 	hadoop_status_class_format : function(){
 		return "glyphicon glyphicon-erase text-warning";
 	}.property(),
-	id_save_metadata : function(key) {
+	id_dsl_create : function(key) {
         return '%@%@'.fmt(key,this.get('cluster_name_noprefix'));	    
 	}.property('cluster_name_noprefix'),
 	cluster_scale_id : function(){

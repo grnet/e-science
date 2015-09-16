@@ -86,9 +86,22 @@ App.ClusterManagementController = Ember.Controller.extend({
 	        return new safestr('<b class="glyphicon glyphicon-resize-full"></b>');   
 	    }
 	}.property('cluster_slaves_delta'),
-	
+	dsl_filename_static : null,
+	dsl_filename : function(key,value){
+	    if (arguments.length > 1){//setter
+	        this.set('dsl_filename_static',value);
+	    }
+	    return Ember.isEmpty(this.get('dsl_filename_static')) ? '' : this.get('dsl_filename_static'); //getter
+	}.property(),
+	dsl_pithos_path_static : null,
+	dsl_pithos_path : function(key,value){
+	    if (arguments.length > 1){//setter
+            this.set('dsl_pithos_path_static',value);
+        }
+        return Ember.isEmpty(this.get('dsl_pithos_path_static')) ? '' : this.get('dsl_pithos_path_static'); //getter
+	}.property(),
 	actions : {
-	    save_metadata : function(){
+	    dsl_create : function(){
             var store = this.get('store');
             var model = this.get('content');
             var cluster_id = model.get('id');
@@ -98,6 +111,15 @@ App.ClusterManagementController = Ember.Controller.extend({
                     'id': 1,
                     'cluster_edit': cluster_id,
                 }).save();
+	    },
+	    dsl_filename_default : function(){
+	        var model = this.get('content');
+	        var date_now = new safestr(moment(Date.now()).format('YYYY-MM-DD_HH:mm:ss'))['string'];
+	        var default_filename = "%@-%@-%@-%@".fmt(model.get('cluster_name_noprefix'),model.get('id'),date_now,'cluster-metadata');
+	        this.set('dsl_filename',default_filename);
+	    },
+	    dsl_pithospath_default : function(){
+	        this.set('dsl_pithos_path', 'pithos');
 	    },
 	    increment_size : function(){
 	        this.set('cluster_slaves_newsize',this.get('cluster_slaves_newsize')+1);
