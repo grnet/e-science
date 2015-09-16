@@ -140,15 +140,16 @@ def create_dsl(choices):
     yaml.add_representer(unicode, lambda dumper, value: dumper.represent_scalar(u'tag:yaml.org,2002:str', value))
     with open('/tmp/{0}'.format(choices.dsl_name), 'w') as metadata_yml:
         metadata_yml.write(yaml.dump(data, default_flow_style=False))
-    command = 'curl -g -X PUT -D - --http1.0 -H "X-Auth-Token: {0}"\
-              -H "Content-Type: text/plain" -T /tmp/{1} \
-              {2}/{3}/{4}/{5}'.format(unmask_token(encrypt_key,token), choices.dsl_name, pithos_url, uuid, choices.pithos_path, urllib.quote(choices.dsl_name))
-    p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
-    out, err = p.communicate()
+    with open('/tmp/{0}'.format(choices.dsl_name), 'r') as metadata_yml:
+        url = '{0}/{1}/pithos/{2}'.format(choices.pithos_url, uuid, urllib.quote(choices.dsl_name))
+        headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,token)),'content-type':'text/plain'}
+        r = requests.put(url, headers=headers, data=metadata_yml)
+        response = r.status_code
     subprocess.call('rm /tmp/' + choices.dsl_name, shell=True)
-    if success_response in out:
-        return choices.dsl_name, choices.pithos_path, choices.id
-    return err
+    if response == pithos_put_success:
+        return response
+    msg = 'Pithos error {0}'.format(response)
+    raise ClientError(msg, error_create_dsl)
 
 def destroy_dsl(token, id):
     print "destroy_dsl"

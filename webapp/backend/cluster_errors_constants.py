@@ -49,6 +49,7 @@ error_cluster_corrupt = -70
 error_proj_id = -71
 error_multiple_entries = -72
 error_project_quota = -73
+error_create_dsl = -75
 error_authentication = -99
 FNULL = open(os.devnull, 'w')
 # Hadoop test command error return status
@@ -66,7 +67,7 @@ storage_template = {'ext_vlmc':'Archipelago','drbd':'Standard'} # ~okeanos avail
 reverse_storage_template = {'Archipelago':'ext_vlmc','Standard':'drbd'} # ~okeanos available storage templates with user friendly name
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 pithos_url = 'https://pithos.okeanos.grnet.gr/v1'
-success_response = '201 CREATED'  # Success response of curl file transfer to pithos
+pithos_put_success = 201  # Success pithos response
 default_image = 'Debian Base'
 default_logging = 'summary'
 login_endpoint = '/api/users'
