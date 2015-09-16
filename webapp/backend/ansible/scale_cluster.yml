@@ -41,7 +41,7 @@
       command: /usr/local/hadoop/bin/hadoop dfsadmin -refreshNodes
 
     - name: Update the resource manager
-      tags: remove_yarn_nodes
+        tags: remove_yarn_nodes
       remote_user: hduser
       command: /usr/local/hadoop/bin/yarn rmadmin -refreshNodes
 
