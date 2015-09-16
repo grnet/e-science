@@ -1,10 +1,12 @@
 safestr = Ember.Handlebars.SafeString;
 App.ClusterManagementController = Ember.Controller.extend({
 	
-	needs : ['clusterCreate','helpImages'],
+	needs : ['clusterCreate','helpImages','userWelcome'],
 	hue_login_message : '',
 	hue_message : '',
     count : 0,
+    dsl_name: null,
+    pithos_path: null,
     initial_timer_active : function(){
         return this.get('count')>0;
     }.property('count'),
@@ -89,15 +91,31 @@ App.ClusterManagementController = Ember.Controller.extend({
 	
 	actions : {
 	    save_metadata : function(){
+	    	var self = this;
             var store = this.get('store');
             var model = this.get('content');
             var cluster_id = model.get('id');
+            var dsl_name = this.get('dsl_name');
+            var pithos_path = this.get('pithos_path');
+            var action_date = model.get('action_date');
             // unload cached records
-            store.unloadAll('clusterchoice');
-            store.push('clusterchoice',{
-                    'id': 1,
-                    'cluster_edit': cluster_id,
-                }).save();
+            store.unloadAll('dsl');
+            var response = store.push('dsl',{
+	                    'id': 1,
+	                    'dsl_name': dsl_name,
+	                    'pithos_path': pithos_path,
+	                    'cluster_id': cluster_id,
+	                    'action_date': action_date,
+	                }).save();
+            response.then(function(data){
+                    var msg = {'msg_type':'warning','msg_text':'Cluster metadata have transferred to pithos container'};
+                    self.get('controllers.userWelcome').send('addMessage',msg);
+                },function(reason){
+                	var msg = {'msg_type':'danger','msg_text':'Failed to transfer cluster metadata to pithos container'};
+                	self.get('controllers.userWelcome').send('addMessage',msg);
+                });
+            this.get('controllers.userWelcome').send('setActiveTab','clusters');
+			this.transitionToRoute('user.welcome');
 	    },
 	    increment_size : function(){
 	        this.set('cluster_slaves_newsize',this.get('cluster_slaves_newsize')+1);

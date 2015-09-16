@@ -127,6 +127,33 @@ def destroy_server(token, id):
 
     return vre_server.server_name
 
+def create_dsl(choices):
+    uuid = get_user_id(unmask_token(encrypt_key,token))
+    cluster = ClusterInfo.objects.get(id=choices.cluster_id)
+    cluster_name = cluster.cluster_name.split("-", 1)[1]
+    timestamp = datetime.now().replace(microsecond=0)
+    if not choices.dsl_name:
+        choices.dsl_name = '{0}-{1}-{2}-cluster-metadata.yml'.format(cluster_name, choices.cluster_id, timestamp).replace(" ", "_")
+    data = {'cluster': {'name': cluster.cluster_name, 'project_name': cluster.project_name, 'image': cluster.os_image, 'disk_template': u'{0}'.format(cluster.disk_template),
+                        'cluster_size': cluster.cluster_size, 'flavor_master':[cluster.cpu_master, cluster.ram_master,cluster.disk_master], 'flavor_slaves': [cluster.cpu_slaves, cluster.ram_slaves, cluster.disk_slaves]}, 
+            'configuration': {'replication_factor': cluster.replication_factor, 'dfs_blocksize': cluster.dfs_blocksize}}
+    yaml.add_representer(unicode, lambda dumper, value: dumper.represent_scalar(u'tag:yaml.org,2002:str', value))
+    with open('/tmp/{0}'.format(choices.dsl_name), 'w') as metadata_yml:
+        metadata_yml.write(yaml.dump(data, default_flow_style=False))
+    command = 'curl -g -X PUT -D - --http1.0 -H "X-Auth-Token: {0}"\
+              -H "Content-Type: text/plain" -T /tmp/{1} \
+              {2}/{3}/{4}/{5}'.format(unmask_token(encrypt_key,token), choices.dsl_name, pithos_url, uuid, choices.pithos_path, urllib.quote(choices.dsl_name))
+    p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
+    out, err = p.communicate()
+    subprocess.call('rm /tmp/' + choices.dsl_name, shell=True)
+    if success_response in out:
+        return choices.dsl_name, choices.pithos_path, choices.id
+    return err
+
+def destroy_dsl(token, id):
+    print "destroy_dsl"
+    # TODO placeholders for actual implementation
+    pass
 
 def get_public_ip_id(cyclades_network_client,float_ip):  
     """Return IP dictionary of an ~okeanos public IP"""
@@ -1001,26 +1028,3 @@ def get_remote_server_file_size(url, user='', password=''):
                                 " | grep -i content-length | awk \'{print $2}\' | tr -d '\r\n'", shell=True)
 
     return int(r)
-
-
-def save_metadata(token, cluster_id):
-    uuid = get_user_id(unmask_token(encrypt_key,token))
-    cluster = ClusterInfo.objects.get(id=cluster_id)
-    cluster_name = cluster.cluster_name.split("-", 1)[1]
-    timestamp = datetime.now().replace(microsecond=0)
-    filename = '{0}-{1}-{2}-cluster-metadata.yml'.format(cluster_name, cluster_id, timestamp).replace(" ", "_")
-    data = {'cluster': {'name': cluster.cluster_name, 'project_name': cluster.project_name, 'image': cluster.os_image, 'disk_template': u'{0}'.format(cluster.disk_template),
-                        'cluster_size': cluster.cluster_size, 'flavor_master':[cluster.cpu_master, cluster.ram_master,cluster.disk_master], 'flavor_slaves': [cluster.cpu_slaves, cluster.ram_slaves, cluster.disk_slaves]}, 
-            'configuration': {'replication_factor': cluster.replication_factor, 'dfs_blocksize': cluster.dfs_blocksize}}
-    yaml.add_representer(unicode, lambda dumper, value: dumper.represent_scalar(u'tag:yaml.org,2002:str', value))
-    with open('/tmp/{0}'.format(filename), 'w') as metadata_yml:
-        metadata_yml.write(yaml.dump(data, default_flow_style=False))
-    command = 'curl -g -X PUT -D - --http1.0 -H "X-Auth-Token: {0}"\
-              -H "Content-Type: text/plain" -T /tmp/{1} \
-              {2}/{3}/pithos/{4}'.format(unmask_token(encrypt_key,token), filename, pithos_url, uuid, urllib.quote(filename))
-    p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
-    out, err = p.communicate()
-    subprocess.call('rm /tmp/' + filename, shell=True)
-    if success_response in out:
-        return out
-    return err

@@ -62,9 +62,11 @@
                 	<div class="pull-left"  data-toggle="tooltip" data-placement="top" data-title='FORMAT HDFS'> <button {{bind-attr id='usercluster.hadoop_format_id'}} class="btn btn-xs btn-default" {{action 'confirmClusterAction' usercluster 'hadoop_format'}}{{bind-attr disabled=usercluster.hadoop_action_format_disabled}}> 
                 		<b {{bind-attr class='usercluster.hadoop_status_class_format'}}></b> </button></div>
                 	{{#if usercluster.boolean_scale_cluster_applicable}}
-                    <div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='SCALE_CLUSTER'> <button {{bind-attr id='usercluster.cluster_scale_id'}} class="btn btn-xs btn-default" {{action 'goto_scale_cluster' usercluster.id}}{{bind-attr disabled='slaves_resize_disabled'}}> 
+                    <div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='SCALE_CLUSTER'> <button {{bind-attr id='usercluster.cluster_scale_id'}} class="btn btn-xs btn-default" {{action 'goto_scale_cluster' usercluster.id}}> 
                         <b class="glyphicon glyphicon-resize-full text-warning"></b> </button></div>
                     {{/if}}
+                    <div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='SAVE METADATA'> <button {{bind-attr id='usercluster.save_metadata_id'}} class="btn btn-xs btn-default" {{action 'goto_scale_cluster' usercluster.id}}{{bind-attr disabled='slaves_resize_disabled'}}> 
+                        <b class="glyphicon glyphicon-save-file text-success"></b> </button></div>
                 </div>
                 {{/if}}	
                 {{/if}}

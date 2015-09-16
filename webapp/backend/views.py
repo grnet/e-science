@@ -20,12 +20,12 @@ from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
     DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, \
     HdfsSerializer, StatisticsSerializer, NewsSerializer, \
-    OrkaImagesSerializer, VreImagesSerializer
+    OrkaImagesSerializer, VreImagesSerializer, DslsSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async, scale_cluster_async, \
     hadoop_cluster_action_async, put_hdfs_async, create_server_async, destroy_server_async, \
-    save_metadata_async
+    create_dsl_async, destroy_dsl_async
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
 from reroute_ssh import HdfsRequest
@@ -218,19 +218,11 @@ class StatusView(APIView):
                 except Exception, e:
                     return Response({"status": str(e.args[0])})
             # Update existing cluster
-            if serializer.data['cluster_edit'] and serializer.data['cluster_size']:
+            if serializer.data['cluster_edit']:
                 cluster = ClusterInfo.objects.get(id=serializer.data['cluster_edit'])
                 cluster_delta = serializer.data['cluster_size']-cluster.cluster_size
                 try:
                     cluster_action = scale_cluster_async.delay(user.okeanos_token, serializer.data['cluster_edit'], cluster_delta)
-                    task_id = cluster_action.id
-                    return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
-                except Exception, e:
-                    return Response({"status": str(e.args[0])})
-            # Get metadata and send them to pithos
-            if serializer.data['cluster_edit']:
-                try:
-                    cluster_action = save_metadata_async.delay(user.okeanos_token, serializer.data['cluster_edit'])
                     task_id = cluster_action.id
                     return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
                 except Exception, e:
@@ -395,3 +387,57 @@ class VreServerView(APIView):
         # correctly.
         return Response(serializer.errors)
     
+class DslView(APIView):
+    """
+    View to handle requests for User DSL management.
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (IsAuthenticated, )
+    resource_name = 'dsl'
+    serializer_class = DslsSerializer
+    
+    def get(self, request, *args, **kwargs):
+        """
+        Return a serialized Cluster DSL model. User with corresponding status will be
+        found by the escience token.
+        """
+        user_token = Token.objects.get(key=request.auth)
+        self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
+        serializer = self.serializer_class(data=request.DATA, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request, *args, **kwargs):
+        """
+        Handles requests with user's DSL creation parameters.
+        """
+        serializer = self.serializer_class(data=request.DATA)
+        if serializer.is_valid():
+            user_token = Token.objects.get(key=request.auth)
+            user = UserInfo.objects.get(user_id=user_token.user.user_id)
+
+            # Dictionary of UserDSL arguments
+            choices = dict()
+            choices = serializer.data.copy()
+            choices.update({'token': user.okeanos_token})
+            c_dsl = create_dsl_async.delay(choices)
+            task_id = c_dsl.id
+            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+
+        # This will be send if user's parameters are not de-serialized
+        # correctly.
+        return Response(serializer.errors)
+    
+    def delete(self, request, *args, **kwargs):
+        """
+        Delete VRE server from ~okeanos.
+        """ 
+        serializer = DeleteClusterSerializer(data=request.DATA)
+        if serializer.is_valid():
+            user_token = Token.objects.get(key=request.auth)
+            user = UserInfo.objects.get(user_id=user_token.user.user_id)
+            d_dsl = destroy_dsl_async.delay(user.okeanos_token, serializer.data['id'])
+            task_id = d_dsl.id
+            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+        # This will be send if user's delete server parameters are not de-serialized
+        # correctly.
+        return Response(serializer.errors)    
