@@ -1,7 +1,7 @@
 safestr = Ember.Handlebars.SafeString;
 App.ClusterManagementController = Ember.Controller.extend({
 	
-	needs : ['clusterCreate','helpImages'],
+	needs : ['clusterCreate','helpImages','userWelcome'],
 	hue_login_message : '',
 	hue_message : '',
     count : 0,
@@ -38,7 +38,18 @@ App.ClusterManagementController = Ember.Controller.extend({
             return tabs_object;
         }
         return tabs_object;
-    }.property(),	
+    }.property(),
+    state_message : function() {
+        var stat_message = this.get('content.state');
+        if (!Ember.isBlank(stat_message)) {
+            var cluster_name = this.get('content.cluster_name');
+            var msg = {
+                'msg_type' : 'warning',
+                'msg_text' : cluster_name +': ' + stat_message
+            };
+            this.controllerFor('userWelcome').send('addMessage', msg);
+        }
+    }.observes('content.state'),
 	cluster_slaves_newsize_static : null,
 	cluster_slaves_newsize : function(key, value){
 	    if (arguments.length > 1){//setter
@@ -52,7 +63,7 @@ App.ClusterManagementController = Ember.Controller.extend({
 	}.property('content.cluster_status','content.hadoop_status'),
 	apply_resize_disabled : function(){
 	    return this.get('slaves_resize_disabled') || this.get('cluster_slaves_delta') == 0 || this.get('initial_timer_active');
-	}.property('cluster_slaves_delta','slaves_resize_disabled'),
+	}.property('cluster_slaves_delta','slaves_resize_disabled','cluster_slaves_newsize'),
 	slaves_increment_disabled : function(){
         if (this.get('slaves_increment_loader')) return true;
         var cluster_project_data = this.get('cluster_project_data');
@@ -181,11 +192,13 @@ App.ClusterManagementController = Ember.Controller.extend({
                                         that.set('count', that.get('count') - 1);
                                     } else {
                                         that.get('timer').stop();
+                                        that.set('count', 0);
                                         status = false;
                                     }
                                 }
                             }, function(reason) {
                                 that.get('timer').stop();
+                                that.set('count', 0);
                                 status = false;
                                 console.log(reason.message);
                             });
@@ -198,12 +211,14 @@ App.ClusterManagementController = Ember.Controller.extend({
                     that.get('timer').start();
                 } else {
                     that.get('timer').stop();
+                    that.set('count', 0);
                 }
             }
             if (status) {
                 this.get('timer').start();
             } else {
                 this.get('timer').stop();
+                that.set('count',0);
             }
         },
     }

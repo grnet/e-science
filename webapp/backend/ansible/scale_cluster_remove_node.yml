@@ -2,20 +2,28 @@
     - name: Create the exclude file with the hosts to be removed
       tags: remove_yarn_nodes
       shell: echo {{hostname}} > /usr/local/hadoop/etc/hadoop/exclude
+      when: is_master
+
+    - name: Remove decommissioned slave from /etc/hosts file
+      tags: remove_yarn_nodes
+      lineinfile: dest=/etc/hosts regexp={{hostname}} state=absent
 
     - name: Change owner of exclude file
       tags: remove_yarn_nodes
       shell: chown hduser:hadoop /usr/local/hadoop/etc/hadoop/exclude
+      when: is_master
 
     - name: Refresh datanodes after adding the node to be decommissioned in exclude file (hdfs)
       tags: remove_yarn_nodes
       remote_user: hduser
       command: /usr/local/hadoop/bin/hadoop dfsadmin -refreshNodes
+      when: is_master
 
     - name: Refresh datanodes after adding the node to be decommissioned in exclude file (yarn)
       tags: remove_yarn_nodes
       remote_user: hduser
       command: /usr/local/hadoop/bin/yarn  rmadmin -refreshNodes
+      when: is_master
 
     - name: Wait until node is decommissioned
       tags: remove_yarn_nodes
@@ -25,23 +33,28 @@
       until: 'admin_report.stdout.find("Hostname: {{hostname}}\nDecommission Status : Decommissioned") > -1'
       retries: 100
       delay: 60
+      when: is_master
 
     - name: Remove decommissioned slave from hadoop include file
       tags: remove_yarn_nodes
       remote_user: hduser
       lineinfile: dest=/usr/local/hadoop/etc/hadoop/include regexp={{hostname}} state=absent
+      when: is_master
 
     - name: Refresh datanodes after removing the decommissioned node from the include file (hdfs)
       tags: remove_yarn_nodes
       remote_user: hduser
       command: /usr/local/hadoop/bin/hadoop dfsadmin -refreshNodes
+      when: is_master
 
     - name: Refresh datanodes after removing the decommissioned node from the include file (yarn)
       tags: remove_yarn_nodes
       remote_user: hduser
       command: /usr/local/hadoop/bin/yarn  rmadmin -refreshNodes
+      when: is_master
 
     - name: Remove decommissioned slave from hadoop slaves file
       tags: remove_yarn_nodes
       remote_user: hduser
       lineinfile: dest=/usr/local/hadoop/etc/hadoop/slaves regexp={{hostname}} state=absent
+      when: is_master

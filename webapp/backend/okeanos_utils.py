@@ -16,7 +16,7 @@ from kamaki.clients.cyclades import CycladesClient, CycladesNetworkClient
 from time import sleep
 from cluster_errors_constants import *
 from celery import current_task
-from django_db_after_login import db_cluster_update, get_user_id, db_server_update
+from django_db_after_login import db_cluster_update, get_user_id, db_server_update, db_hadoop_update
 from backend.models import UserInfo, ClusterInfo, VreServer
 import re
 import subprocess
@@ -217,7 +217,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     new_slave_port = ADD_TO_GET_PORT + cluster_to_scale.cluster_size
     state = "New datanode {0} was added to cluster network".format(node_name)
     set_cluster_state(token, cluster_id, state, status='Active')
-    new_slave = {'fqdn': new_server['SNF:fqdn'],'private_ip': new_slave_private_ip,
+    new_slave = {'id':new_server['id'], 'fqdn': new_server['SNF:fqdn'],'private_ip': new_slave_private_ip,
                  'password': new_server['adminPass'],'port': new_slave_port,'uuid': new_server['user_id'],
                  'image_id':new_server['image']['id']}
     return new_slave
@@ -263,6 +263,24 @@ def cluster_remove_node(node_fqdn, node_id, token, cluster_id, cluster_to_scale,
     cluster_to_scale.cluster_size -= 1
     cluster_to_scale.save()
     set_cluster_state(token, cluster_id, state, status='Active')
+    
+
+def rollback_scale_cluster(list_of_slaves, cyclades, cluster_to_scale, size, ansible=False):
+    """
+    Rollback cluster when scale add node fail. More rollback actions when ansible has failed during
+    hadoop configurations for the new nodes.
+    """
+    cluster_name_suffix_id = '{0}-{1}'.format(cluster_to_scale.cluster_name, cluster_to_scale.id)
+    for slave in list_of_slaves:
+        cyclades.delete_server(slave['id'])
+    if ansible:
+        for slave in list_of_slaves:
+            modify_ansible_hosts_file(cluster_name_suffix_id, action='remove_slaves', slave_hostname=slave['fqdn'])           
+        ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, action='join_slaves')
+        ansible_scale_cluster(ansible_hosts, action='rollback_scale_cluster')
+          
+    cluster_to_scale.cluster_size = size
+    cluster_to_scale.save()
 
 
 def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
@@ -276,6 +294,7 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     from run_ansible_playbooks import modify_ansible_hosts_file,ansible_scale_cluster,ansible_manage_cluster
     current_task.update_state(state="Started")
     cluster_to_scale = ClusterInfo.objects.get(id=cluster_id)
+    pre_scale_size = cluster_to_scale.cluster_size
     previous_cluster_status = cluster_to_scale.cluster_status
     previous_hadoop_status = cluster_to_scale.hadoop_status
     status_map = {"0":"Destroyed","1":"Active","2":"Pending","3":"Failed"}
@@ -327,6 +346,8 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
                 list_of_new_slaves.append(new_slave)               
             except Exception, e:
                 msg = str(e.args[0])
+                #db_hadoop_update(cluster_id, 'Pending', msg)
+                rollback_scale_cluster(list_of_new_slaves, cyclades, cluster_to_scale, pre_scale_size)
                 set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status],
                                   error=msg)
                 raise RuntimeError(msg)
@@ -338,6 +359,13 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
         try:
             for new_slave in list_of_new_slaves:
                 reroute_ssh_to_slaves(new_slave['port'], new_slave['private_ip'], master_ip, new_slave['password'], '')
+        except Exception, e:
+            msg = str(e.args[0])
+            rollback_scale_cluster(list_of_new_slaves, cyclades, cluster_to_scale, pre_scale_size)
+            set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status],
+                              error=msg)
+            raise RuntimeError(msg)
+        try:
             ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, list_of_hosts=list_of_new_slaves,
                                                       master_ip=master_ip,
                                                   action='add_slaves')
@@ -348,6 +376,7 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
             modify_ansible_hosts_file(cluster_name_suffix_id, action='join_slaves')  
         except Exception, e:
             msg = str(e.args[0])
+            rollback_scale_cluster(list_of_new_slaves, cyclades, cluster_to_scale, pre_scale_size,ansible=True)
             set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status],
                               error=msg)
             raise RuntimeError(msg)
