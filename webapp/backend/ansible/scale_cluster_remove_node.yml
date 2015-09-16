@@ -4,10 +4,6 @@
       shell: echo {{hostname}} > /usr/local/hadoop/etc/hadoop/exclude
       when: is_master
 
-    - name: Remove decommissioned slave from /etc/hosts file
-      tags: remove_yarn_nodes
-      lineinfile: dest=/etc/hosts regexp={{hostname}} state=absent
-
     - name: Change owner of exclude file
       tags: remove_yarn_nodes
       shell: chown hduser:hadoop /usr/local/hadoop/etc/hadoop/exclude
@@ -58,3 +54,7 @@
       remote_user: hduser
       lineinfile: dest=/usr/local/hadoop/etc/hadoop/slaves regexp={{hostname}} state=absent
       when: is_master
+
+    - name: Remove decommissioned slave from /etc/hosts file
+      tags: remove_yarn_nodes
+      lineinfile: dest=/etc/hosts regexp={{hostname}} state=absent
