@@ -4,6 +4,7 @@
         	{{#if model.boolean_scale_cluster_applicable}}
             <div class="form-group">
                 <fieldset {{bind-attr disabled="slaves_resize_disabled"}}>
+                <legend class="h5"> Scale Cluster Form</legend>
                 <label class="control-label col-sm-5" for="id_scale_cluster_help">Help </label>
                 <div class="col-sm-7">
                     <p class="form-control-static"><span class="text text-left text-info">Set the desired new size and use Scale Cluster to apply changes </span></p>
@@ -35,25 +36,32 @@
             </div>
         	{{/if}}
         	<div class="form-group">
-        		<!--
-                <label class="control-label col-sm-5" for="id_scale_cluster_help">Help </label>
-                <div class="col-sm-7">
-                    <p class="form-control-static"><span class="text text-left text-info">Set the desired DSL filename and  pithos destination use Save Metadata to apply changes </span></p>
-                </div>
-               -->
+        	    <fieldset>
+        	    <legend class="h5">Create DSL Form</legend>
                 <label class="control-label col-sm-5" for="id_dsl_filename">DSL filename </label>
                 <div class="col col-sm-7">
                     <div class="input-group input-group-sm">
-                        {{input id="id_dsl_filename" type="text" class="form-control" placeholder="cluster_name-cluster_id-YY-MM-DD-HH-MM-SS" valueBinding="dsl_name"}}
+                        <input id="id_dsl_filename" type="text" class="form-control" placeholder="cluster_name-cluster_id-YYYY-MM-DD_HH:mm:ss" {{bind-attr value="dsl_filename"}}/>
+                        <span class="input-group-btn">
+                            <button id="id_dsl_filename_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="top" data-title='Set Default' {{action "dsl_filename_default"}}>
+                                <i class="glyphicon glyphicon-pencil"></i>
+                            </button>
+                        </span>
                     </div>
                 </div>
-                <div class="col col-sm-12"></div>
+
                 <label class="control-label col-sm-5" for="id_pithos_destination">Pithos destination </label>
                 <div class="col col-sm-7">
                     <div class="input-group input-group-sm">
-                        {{input id="id_pithos_destination" type="text" class="form-control" placeholder="pithos" valueBinding="pithos_path"}}
+                        <input id="id_pithos_destination" type="text" class="form-control" placeholder="pithos" {{bind-attr value="dsl_pithos_path"}}/>
+                        <span class="input-group-btn">
+                            <button id="id_dsl_pithos_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="top" data-title='Set Default' {{action "dsl_pithospath_default"}}>
+                                <i class="glyphicon glyphicon-pencil"></i>
+                            </button>
+                        </span>
                     </div>
                 </div>
+                </fieldset>
             </div>
         </div>
         <div class="col-sm-6">

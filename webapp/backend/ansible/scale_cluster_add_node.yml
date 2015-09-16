@@ -139,12 +139,13 @@
       - { path: '/var/run/flume', owner: 'hduser', group: 'hadoop' }
     when: is_new_slave
 
-  - name: create masters and slaves files in hadoop-yarn master node
+  - name: Update masters, slaves and include files in hadoop-yarn master node
     tags: postconfigscale
     template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
     with_items:
       - { src: '{{masters_template_path}}', dest: '/usr/local/hadoop/etc/hadoop/masters', owner: 'hduser', group: 'hadoop' }
       - { src: '{{slaves_template_path}}', dest: '/usr/local/hadoop/etc/hadoop/slaves', owner: 'hduser', group: 'hadoop' }
+      - { src: '{{slaves_template_path}}', dest: '/usr/local/hadoop/etc/hadoop/include', owner: 'hduser', group: 'hadoop' }
     when: is_master
 
   - name: create masters and slaves files in spark master node
@@ -198,3 +199,15 @@
       - { src: '/tmp/{{uuid}}/hbase-env.sh', dest: '/usr/local/hbase/conf/hbase-env.sh', owner: 'hduser', group: 'hadoop'}
       - { src: '/tmp/{{uuid}}/.bashrc_root', dest: '/root/.bashrc', owner: 'root', group: 'root'}
     when: is_new_slave
+
+  - name: Refresh datanodes with include file
+    tags: postconfigscale
+    remote_user: hduser
+    command: /usr/local/hadoop/bin/hadoop dfsadmin -refreshNodes
+    when: is_master
+
+  - name: Refresh datanodes with include file
+    tags: postconfigscale
+    remote_user: hduser
+    command: /usr/local/hadoop/bin/yarn  rmadmin -refreshNodes
+    when: is_master

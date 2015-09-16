@@ -5,8 +5,6 @@ App.ClusterManagementController = Ember.Controller.extend({
 	hue_login_message : '',
 	hue_message : '',
     count : 0,
-    dsl_name: null,
-    pithos_path: null,
     initial_timer_active : function(){
         return this.get('count')>0;
     }.property('count'),
@@ -54,7 +52,7 @@ App.ClusterManagementController = Ember.Controller.extend({
 	}.property('content.cluster_status','content.hadoop_status'),
 	apply_resize_disabled : function(){
 	    return this.get('slaves_resize_disabled') || this.get('cluster_slaves_delta') == 0 || this.get('initial_timer_active');
-	}.property('cluster_slaves_delta','slaves_resize_disabled'),
+	}.property('cluster_slaves_delta','slaves_resize_disabled','cluster_slaves_newsize'),
 	slaves_increment_disabled : function(){
         if (this.get('slaves_increment_loader')) return true;
         var cluster_project_data = this.get('cluster_project_data');
@@ -88,15 +86,28 @@ App.ClusterManagementController = Ember.Controller.extend({
 	        return new safestr('<b class="glyphicon glyphicon-resize-full"></b>');   
 	    }
 	}.property('cluster_slaves_delta'),
-	
+	dsl_filename_static : null,
+	dsl_filename : function(key,value){
+	    if (arguments.length > 1){//setter
+	        this.set('dsl_filename_static',value);
+	    }
+	    return Ember.isEmpty(this.get('dsl_filename_static')) ? '' : this.get('dsl_filename_static'); //getter
+	}.property(),
+	dsl_pithos_path_static : null,
+	dsl_pithos_path : function(key,value){
+	    if (arguments.length > 1){//setter
+            this.set('dsl_pithos_path_static',value);
+        }
+        return Ember.isEmpty(this.get('dsl_pithos_path_static')) ? '' : this.get('dsl_pithos_path_static'); //getter
+	}.property(),
 	actions : {
-	    save_metadata : function(){
+	    dsl_create : function(){
 	    	var self = this;
             var store = this.get('store');
             var model = this.get('content');
             var cluster_id = model.get('id');
-            var dsl_name = this.get('dsl_name');
-            var pithos_path = this.get('pithos_path');
+            var dsl_name = this.get('dsl_filename');
+            var pithos_path = this.get('dsl_pithos_path');
             var action_date = model.get('action_date');
             // unload cached records
             store.unloadAll('dsl');
@@ -116,6 +127,15 @@ App.ClusterManagementController = Ember.Controller.extend({
                 });
             this.get('controllers.userWelcome').send('setActiveTab','clusters');
 			this.transitionToRoute('user.welcome');
+	    },
+	    dsl_filename_default : function(){
+	        var model = this.get('content');
+	        var date_now = new safestr(moment(Date.now()).format('YYYY-MM-DD_HH:mm:ss'))['string'];
+	        var default_filename = "%@-%@-%@-%@".fmt(model.get('cluster_name_noprefix'),model.get('id'),date_now,'cluster-metadata');
+	        this.set('dsl_filename',default_filename);
+	    },
+	    dsl_pithospath_default : function(){
+	        this.set('dsl_pithos_path', 'pithos');
 	    },
 	    increment_size : function(){
 	        this.set('cluster_slaves_newsize',this.get('cluster_slaves_newsize')+1);
@@ -210,11 +230,13 @@ App.ClusterManagementController = Ember.Controller.extend({
                                         that.set('count', that.get('count') - 1);
                                     } else {
                                         that.get('timer').stop();
+                                        that.set('count', 0);
                                         status = false;
                                     }
                                 }
                             }, function(reason) {
                                 that.get('timer').stop();
+                                that.set('count', 0);
                                 status = false;
                                 console.log(reason.message);
                             });
@@ -227,12 +249,14 @@ App.ClusterManagementController = Ember.Controller.extend({
                     that.get('timer').start();
                 } else {
                     that.get('timer').stop();
+                    that.set('count', 0);
                 }
             }
             if (status) {
                 this.get('timer').start();
             } else {
                 this.get('timer').stop();
+                that.set('count', 0);
             }
         },
     }

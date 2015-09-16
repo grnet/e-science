@@ -136,7 +136,7 @@ App.UserWelcomeController = Ember.Controller.extend({
             }
             this.setProperties(this.get_sorting_info(short_model_name,sortAscending,column));
         },
-        goto_scale_cluster : function(cluster_id){
+        goto_cluster_manage : function(cluster_id){
             this.get('controllers.clusterManagement').send('setActiveTab','manage');
             this.transitionToRoute('cluster.management',cluster_id);
         },

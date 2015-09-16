@@ -416,7 +416,7 @@ App.Usercluster = DS.Model.extend({
 		    return false;
 		default:
 			return true;
-		}cluster_name_noprefix
+		}
 	}.property('hadoop_status','cluster_status'),
 	hadoop_action_stop_disabled : function(){
 		var status = this.get('hadoop_status');
@@ -470,7 +470,7 @@ App.Usercluster = DS.Model.extend({
 	hadoop_status_class_format : function(){
 		return "glyphicon glyphicon-erase text-warning";
 	}.property(),
-	id_save_metadata : function(key) {
+	id_dsl_create : function(key) {
         return '%@%@'.fmt(key,this.get('cluster_name_noprefix'));	    
 	}.property('cluster_name_noprefix'),
 	cluster_scale_id : function(){
