@@ -124,6 +124,37 @@ App.UserclusterAdapter = DS.ActiveModelAdapter.extend({
     }
 });
 
+App.UserdslAdapter = DS.ActiveModelAdapter.extend({
+	headers : function() {
+        return {
+            "Authorization" : App.escience_token,
+        };
+    }.property("App.escience_token"),
+    createRecord: function(store, type, record) {
+        var data = this.serialize(record, {
+            includeId : true
+        });
+        var url = 'api/dsls';
+        var headers = this.get('headers');
+
+        return new Ember.RSVP.Promise(function(resolve, reject) {
+            jQuery.ajax({
+                type : 'POST',
+                headers : headers,
+                url : url,
+                dataType : 'json',
+                data : data
+            }).then(function(data) {
+                Ember.run(null, resolve, data);
+            }, function(jqXHR) {
+                jqXHR.then = null;
+                // tame jQuery's ill mannered promises
+                Ember.run(null, reject, jqXHR);
+            });
+        });
+    }
+});
+
 App.UservreserverSerializer = DS.RESTSerializer.extend({
     attrs : {
         server_IP : {
@@ -148,6 +179,12 @@ App.UservreserverSerializer = DS.RESTSerializer.extend({
         //admin_password : {serialize : false},
         //admin_email : {serialize : false}
     } 
+});
+
+App.UserdslSerializer = DS.RESTSerializer.extend({
+	attrs : {
+		user : {serialize : false}
+	}
 });
 
 App.UserclusterSerializer = DS.RESTSerializer.extend({
