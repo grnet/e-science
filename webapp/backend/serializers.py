@@ -193,7 +193,7 @@ class DslsSerializer(serializers.ModelSerializer):
     """   
     class Meta:
         model = Dsl
-        fields = ('id', 'dsl_name', 'pithos_path', 'cluster_id', 'action_date')  
+        fields = ('id', 'dsl_name', 'pithos_path', 'cluster_id')
 
 
 class UserInfoSerializer(serializers.ModelSerializer):

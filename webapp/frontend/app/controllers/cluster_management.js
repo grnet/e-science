@@ -5,6 +5,7 @@ App.ClusterManagementController = Ember.Controller.extend({
 	hue_login_message : '',
 	hue_message : '',
     count : 0,
+    file_count : 0,
     initial_timer_active : function(){
         return this.get('count')>0;
     }.property('count'),
@@ -119,25 +120,30 @@ App.ClusterManagementController = Ember.Controller.extend({
             var cluster_id = model.get('id');
             var dsl_name = this.get('dsl_filename');
             var pithos_path = this.get('dsl_pithos_path');
-            var action_date = model.get('action_date');
             // unload cached records
             store.unloadAll('dsl');
-            var response = store.push('dsl',{
-	                    'id': 1,
-	                    'dsl_name': dsl_name,
-	                    'pithos_path': pithos_path,
-	                    'cluster_id': cluster_id,
-	                    'action_date': action_date,
-	                }).save();
-            response.then(function(data){
-                    var msg = {'msg_type':'warning','msg_text':'Cluster metadata have transferred to pithos container'};
-                    self.get('controllers.userWelcome').send('addMessage',msg);
-                },function(reason){
-                	var msg = {'msg_type':'danger','msg_text':'Failed to transfer cluster metadata to pithos container'};
-                	self.get('controllers.userWelcome').send('addMessage',msg);
-                });
-            this.get('controllers.userWelcome').send('setActiveTab','dsls');
-			this.transitionToRoute('user.welcome');
+            store.fetch('user',1).then(function(user){
+                //success
+	            var response = store.createRecord('dsl',{
+		                    'id': 1,
+		                    'dsl_name': dsl_name,
+		                    'pithos_path': pithos_path,
+		                    'cluster_id': cluster_id,
+		                }).save();
+	            response.then(function(data){
+	                    var msg = {'msg_type':'success','msg_text':'File(%@) with cluster metadata has transferred to pithos container'.fmt(self.get('file_count'))};
+	                    self.get('controllers.userWelcome').send('addMessage',msg);
+	                },function(reason){
+	                	var msg = {'msg_type':'danger','msg_text':'Failed to transfer file(%@) with cluster metadata to pithos container'.fmt(self.get('file_count'))};
+	                	self.get('controllers.userWelcome').send('addMessage',msg);
+	                });
+	            self.set('file_count', self.get('file_count')+1);
+	            self.get('controllers.userWelcome').send('setActiveTab','dsls');
+				self.transitionToRoute('user.welcome');
+			},function(reason){
+                //error
+                console.log(reason);
+            });
 	    },
 	    dsl_filename_default : function(){
 	        var model = this.get('content');
