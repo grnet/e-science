@@ -1,7 +1,7 @@
 safestr = Ember.Handlebars.SafeString;
 App.ClusterManagementController = Ember.Controller.extend({
 	
-	needs : ['clusterCreate','helpImages'],
+	needs : ['clusterCreate','helpImages','userWelcome'],
 	hue_login_message : '',
 	hue_message : '',
     count : 0,
@@ -38,7 +38,18 @@ App.ClusterManagementController = Ember.Controller.extend({
             return tabs_object;
         }
         return tabs_object;
-    }.property(),	
+    }.property(),
+    state_message : function() {
+        var stat_message = this.get('content.state');
+        if (!Ember.isBlank(stat_message)) {
+            var cluster_name = this.get('content.cluster_name');
+            var msg = {
+                'msg_type' : 'warning',
+                'msg_text' : cluster_name +': ' + stat_message
+            };
+            this.controllerFor('userWelcome').send('addMessage', msg);
+        }
+    }.observes('content.state'),
 	cluster_slaves_newsize_static : null,
 	cluster_slaves_newsize : function(key, value){
 	    if (arguments.length > 1){//setter
@@ -102,20 +113,36 @@ App.ClusterManagementController = Ember.Controller.extend({
 	}.property(),
 	actions : {
 	    dsl_create : function(){
+	    var self = this;
             var store = this.get('store');
             var model = this.get('content');
             var cluster_id = model.get('id');
+            var dsl_name = this.get('dsl_filename');
+            var pithos_path = this.get('dsl_pithos_path');
+            var action_date = model.get('action_date');
             // unload cached records
-            store.unloadAll('clusterchoice');
-            store.push('clusterchoice',{
-                    'id': 1,
-                    'cluster_edit': cluster_id,
-                }).save();
+            store.unloadAll('dsl');
+            var response = store.push('dsl',{
+	                    'id': 1,
+	                    'dsl_name': dsl_name,
+	                    'pithos_path': pithos_path,
+	                    'cluster_id': cluster_id,
+	                    'action_date': action_date,
+	                }).save();
+            response.then(function(data){
+                    var msg = {'msg_type':'warning','msg_text':'Cluster metadata have transferred to pithos container'};
+                    self.get('controllers.userWelcome').send('addMessage',msg);
+                },function(reason){
+                	var msg = {'msg_type':'danger','msg_text':'Failed to transfer cluster metadata to pithos container'};
+                	self.get('controllers.userWelcome').send('addMessage',msg);
+                });
+            this.get('controllers.userWelcome').send('setActiveTab','dsls');
+			this.transitionToRoute('user.welcome');
 	    },
 	    dsl_filename_default : function(){
 	        var model = this.get('content');
-	        var date_now = new safestr(moment(Date.now()).format('YYYY-MM-DD_HH:mm:ss'))['string'];
-	        var default_filename = "%@-%@-%@-%@".fmt(model.get('cluster_name_noprefix'),model.get('id'),date_now,'cluster-metadata');
+	        var date_now = new safestr(moment(Date.now()).format('YYYY-MM-DD_HH-mm-ss'))['string'];
+	        var default_filename = "%@_%@_%@-%@".fmt(model.get('cluster_name_noprefix'),model.get('id'),date_now,'cluster-metadata');
 	        this.set('dsl_filename',default_filename);
 	    },
 	    dsl_pithospath_default : function(){

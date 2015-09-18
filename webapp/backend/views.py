@@ -218,19 +218,11 @@ class StatusView(APIView):
                 except Exception, e:
                     return Response({"status": str(e.args[0])})
             # Update existing cluster
-            if serializer.data['cluster_edit'] and serializer.data['cluster_size']:
+            if serializer.data['cluster_edit']:
                 cluster = ClusterInfo.objects.get(id=serializer.data['cluster_edit'])
                 cluster_delta = serializer.data['cluster_size']-cluster.cluster_size
                 try:
                     cluster_action = scale_cluster_async.delay(user.okeanos_token, serializer.data['cluster_edit'], cluster_delta)
-                    task_id = cluster_action.id
-                    return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
-                except Exception, e:
-                    return Response({"status": str(e.args[0])})
-            # Get metadata and send them to pithos
-            if serializer.data['cluster_edit']:
-                try:
-                    cluster_action = create_dsl_async.delay(user.okeanos_token, serializer.data['cluster_edit'])
                     task_id = cluster_action.id
                     return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
                 except Exception, e:
