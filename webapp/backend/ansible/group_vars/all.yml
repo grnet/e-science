@@ -28,7 +28,7 @@
   filename: /home/hduser/.ssh/id_rsa
   etchosts_filename: /etc/hosts_2 
   yarn_common_url: http://archive.apache.org/dist/hadoop/common
-  yarn_version: hadoop-2.5.2
+  yarn_version: hadoop-*
   path_to_hadoop: /usr/local
   hadoop_home: "{{path_to_hadoop}}/hadoop"
   path: ~/.ssh/id_rsa.pub
