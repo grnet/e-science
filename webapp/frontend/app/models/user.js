@@ -66,6 +66,9 @@ App.Dsl = DS.Model.extend({
     id_dsl_destroy : function(key){
         return '%@%@'.fmt(key,this.get('dsl_name'));
     }.property('dsl_name'),
+    id_dsl_create : function(key) {
+        return '%@%@'.fmt(key,this.get('dsl_name'));       
+    }.property('dsl_name')
 });
 
 // Information about user's VREs
@@ -470,9 +473,6 @@ App.Usercluster = DS.Model.extend({
 	hadoop_status_class_format : function(){
 		return "glyphicon glyphicon-erase text-warning";
 	}.property(),
-	id_dsl_create : function(key) {
-        return '%@%@'.fmt(key,this.get('cluster_name_noprefix'));	    
-	}.property('cluster_name_noprefix'),
 	cluster_scale_id : function(){
         var cluster_name_short = this.get('cluster_name').slice(7);
         var cluster_scale_id = "id_".concat("cluster_scale_",cluster_name_short);

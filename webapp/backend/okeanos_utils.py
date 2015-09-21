@@ -136,6 +136,8 @@ def create_dsl(choices):
                         'cluster_size': cluster.cluster_size, 'flavor_master':[cluster.cpu_master, cluster.ram_master,cluster.disk_master], 'flavor_slaves': [cluster.cpu_slaves, cluster.ram_slaves, cluster.disk_slaves]}, 
             'configuration': {'replication_factor': cluster.replication_factor, 'dfs_blocksize': cluster.dfs_blocksize}}
     yaml.add_representer(unicode, lambda dumper, value: dumper.represent_scalar(u'tag:yaml.org,2002:str', value))
+    if not (choices['dsl_name'].endswith('.yml') or choices['dsl_name'].endswith('.yaml')):
+        choices['dsl_name'] = '{0}.yaml'.format(choices['dsl_name'])
     with open('/tmp/{0}'.format(choices['dsl_name']), 'w') as metadata_yml:
         metadata_yml.write(yaml.dump(data, default_flow_style=False))
     with open('/tmp/{0}'.format(choices['dsl_name']), 'r') as metadata_yml:
