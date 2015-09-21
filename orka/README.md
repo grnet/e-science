@@ -83,7 +83,7 @@ Optional arguments for create command:
 
 ### Create Hadoop cluster from a pre-configured image
 
-Using the --image=Hadoop-2.5.2-Debian-8.0 argument creates the Hadoop cluster much faster because it utilises a specially created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest stable YARN version will be installed (but at the cost of lower speed).
+Using the --image=Hadoop-2.5.2 argument creates the Hadoop cluster much faster because it utilises a specially created ~okeanos VM image with Java and YARN pre-installed. Omitting this argument ensures that the latest stable YARN version will be installed (but at the cost of lower speed).
 
 ###{orka create} command examples
 
@@ -151,6 +151,41 @@ Required positional arguments for destroy command:
 example for destroy cluster:
 
     orka destroy <cluster_id>
+
+## "node" command
+
+orka node command provides sub-commands for adding or deleting a node to/from a Hadoop-Yarn cluster.
+
+### "node add" command
+
+Required positional arguments for node add command:
+         
+    cluster_id: "Cluster id in e-science database"
+
+(cluster_id can be found with **orka list** command)
+
+
+####{orka node add} command example
+
+example for adding node to a cluster:
+
+    orka node add <cluster_id>
+
+    
+### "node remove" command
+
+Required positional arguments for node remove command:
+         
+    cluster_id: "Cluster id in e-science database"
+
+(cluster_id can be found with **orka list** command)
+
+
+####{orka node remove} command example
+
+example for removing node from a cluster:
+
+    orka node remove <cluster_id>
 
 ##"file" command
 
@@ -238,7 +273,7 @@ example for recursive HDFS folder creation:
 Also, with
 
     orka -h
-    orka { images | create | vre | destroy | list | info | hadoop | file } -h
+    orka { images | create | vre | destroy | node | list | info | hadoop | file } -h
 
 helpful information about the orka CLI is depicted and
 

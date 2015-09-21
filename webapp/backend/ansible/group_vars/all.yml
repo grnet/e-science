@@ -11,6 +11,8 @@
   hive_home: /usr/local/hive
   flume_home: /usr/local/flume
   choose_role: webserver
+  manage_cluster: create
+  is_new_slave: False
 
   # Hadoop-yarn variables
   path_to_common_libs: /usr/local/hadoop/share/hadoop/common
@@ -34,3 +36,7 @@
   master_key_root: master_{{ hostvars[groups['master'][0]].inventory_hostname_short}}_pub_key_root
   master_key_cloudera: master_{{ hostvars[groups['master_cloud'][0]].inventory_hostname_short}}_pub_key_root
   ssh_file_name: no_ssh_key_selected
+  etc_hosts_template_path: roles/yarn/templates/hosts.j2
+  masters_template_path: roles/yarn/templates/masters.j2
+  slaves_template_path: roles/yarn/templates/slaves.j2
+  yarn_java_folders: roles/yarn/files

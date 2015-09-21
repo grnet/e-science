@@ -1330,6 +1330,8 @@ App.ClusterCreateController = Ember.Controller.extend({
 					if ((this.get('ssh_key_selection')=='') || (this.get('ssh_key_selection')==null)){
 						this.set('ssh_key_selection', 'no_ssh_key_selected');
 					}
+					// unload cached records
+					this.store.unloadAll('clusterchoice');
 					var cluster_selection = this.store.push('clusterchoice', {
 						// set the clusterchoice model with the user choices
 						'id' : 1,

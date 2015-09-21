@@ -1,0 +1,21 @@
+---
+  - name: Clean /etc/hosts file before rollback for failed scale cluster
+    shell: sed -i.bak '/192.168*/,$d' /etc/hosts
+    tags: rollback_cluster
+
+  - name: Add virtual machine private ips in /etc/hosts
+    template: src={{etc_hosts_template_path}} dest={{etchosts_filename}}
+    tags: rollback_cluster
+
+  - name: Append the host file
+    shell: cat {{etchosts_filename}} >> /etc/hosts
+    tags: rollback_cluster
+
+  - name: Update masters, slaves and include files in hadoop-yarn master node
+    tags: rollback_cluster
+    template: "src={{item.src}} dest={{item.dest}} owner={{item.owner}} group={{item.group}}"
+    with_items:
+      - { src: '{{masters_template_path}}', dest: '/usr/local/hadoop/etc/hadoop/masters', owner: 'hduser', group: 'hadoop' }
+      - { src: '{{slaves_template_path}}', dest: '/usr/local/hadoop/etc/hadoop/slaves', owner: 'hduser', group: 'hadoop' }
+      - { src: '{{slaves_template_path}}', dest: '/usr/local/hadoop/etc/hadoop/include', owner: 'hduser', group: 'hadoop' }
+    when: is_master

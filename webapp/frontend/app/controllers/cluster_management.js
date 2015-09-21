@@ -1,10 +1,13 @@
 safestr = Ember.Handlebars.SafeString;
 App.ClusterManagementController = Ember.Controller.extend({
 	
-	needs : ['clusterCreate','helpImages'],
+	needs : ['clusterCreate','helpImages','userWelcome'],
 	hue_login_message : '',
 	hue_message : '',
     count : 0,
+    initial_timer_active : function(){
+        return this.get('count')>0;
+    }.property('count'),
 	orkaImages : [],
     // tabs info for template
     content_tabs_info : {
@@ -35,7 +38,18 @@ App.ClusterManagementController = Ember.Controller.extend({
             return tabs_object;
         }
         return tabs_object;
-    }.property(),	
+    }.property(),
+    state_message : function() {
+        var stat_message = this.get('content.state');
+        if (!Ember.isBlank(stat_message)) {
+            var cluster_name = this.get('content.cluster_name');
+            var msg = {
+                'msg_type' : 'warning',
+                'msg_text' : cluster_name +': ' + stat_message
+            };
+            this.controllerFor('userWelcome').send('addMessage', msg);
+        }
+    }.observes('content.state'),
 	cluster_slaves_newsize_static : null,
 	cluster_slaves_newsize : function(key, value){
 	    if (arguments.length > 1){//setter
@@ -48,14 +62,27 @@ App.ClusterManagementController = Ember.Controller.extend({
 	    return !enabled;
 	}.property('content.cluster_status','content.hadoop_status'),
 	apply_resize_disabled : function(){
-	    return this.get('slaves_resize_disabled') || this.get('cluster_slaves_delta') == 0;
-	}.property('cluster_slaves_delta','slaves_resize_disabled'),
+	    return this.get('slaves_resize_disabled') || this.get('cluster_slaves_delta') == 0 || this.get('initial_timer_active');
+	}.property('cluster_slaves_delta','slaves_resize_disabled','cluster_slaves_newsize'),
 	slaves_increment_disabled : function(){
-	    // TODO arithmetic with slave config and available resources (cpu,ram,disk etc)
-	    return false;
-	}.property('cluster_slaves_newsize'),
+        if (this.get('slaves_increment_loader')) return true;
+        var cluster_project_data = this.get('cluster_project_data');
+        if (!Ember.isEmpty(cluster_project_data)){
+            var cluster_delta_next = Number(this.get('cluster_slaves_delta'))+1;
+            var cpu_request_next = Number(this.get('content.cpu_slaves'))*cluster_delta_next;
+            var ram_request_next = Number(this.get('content.ram_slaves'))*cluster_delta_next;
+            var disk_request_next = Number(this.get('content.disk_slaves'))*cluster_delta_next;
+            var cpu_available = Number(cluster_project_data.get('cpu_av'));
+            var ram_available = Number(cluster_project_data.get('ram_av'));
+            var disk_available = Number(cluster_project_data.get('disk_av'));
+            var vms_available = Number(cluster_project_data.get('vms_av').get("lastObject"));
+            return (cluster_delta_next>vms_available) || (cpu_request_next>cpu_available) || (ram_request_next>ram_available) || (disk_request_next>disk_available);
+        }
+        return false;
+	}.property('cluster_slaves_delta','slaves_increment_loader','cluster_project_data'),
 	slaves_decrement_disabled : function(){
-	    return this.get('cluster_slaves_newsize') > 1 ? false : true;
+	    var cluster_min_slaves_allowed = Math.max(1,Number(this.get('content.replication_factor')));
+	    return this.get('cluster_slaves_newsize') > cluster_min_slaves_allowed ? false : true;
 	}.property('cluster_slaves_newsize'),
 	cluster_slaves_delta : function(){
 	    return this.get('cluster_slaves_newsize') - this.get('content.cluster_slaves_num');
@@ -84,11 +111,30 @@ App.ClusterManagementController = Ember.Controller.extend({
 	        this.set('cluster_slaves_newsize',this.get('content.cluster_slaves_num'));
 	    },
 	    apply_resize : function(){
+	        var self = this;
+	        var store = this.get('store');
+            var model = this.get('content');
 	        if (this.get('cluster_slaves_delta')==0){
 	            console.log('no changes to apply');
 	        }else{
 	            var str_delta = this.get('cluster_slaves_delta') > 0 && '+'+this.get('cluster_slaves_delta') || this.get('cluster_slaves_delta');
-	            console.log('apply scale: ' + str_delta);
+                var cluster_id = model.get('id');
+                var new_size = model.get('cluster_size')+this.get('cluster_slaves_delta');
+                // unload cached records
+                store.unloadAll('clusterchoice');
+                var promise = store.push('clusterchoice',{
+                    'id': 1,
+                    'cluster_edit': cluster_id,
+                    'cluster_size': new_size
+                }).save();
+                promise.then(function(data){
+                    var count = self.get('count');
+                    var extend = Math.max(5, count);
+                    self.set('count', extend);
+                    self.send('timer', true, store);
+                },function(reason){
+                    console.log(reason.message);
+                });
 	        }
 	    },
 		help_hue_login : function(os_image){
@@ -146,11 +192,13 @@ App.ClusterManagementController = Ember.Controller.extend({
                                         that.set('count', that.get('count') - 1);
                                     } else {
                                         that.get('timer').stop();
+                                        that.set('count', 0);
                                         status = false;
                                     }
                                 }
                             }, function(reason) {
                                 that.get('timer').stop();
+                                that.set('count', 0);
                                 status = false;
                                 console.log(reason.message);
                             });
@@ -163,12 +211,14 @@ App.ClusterManagementController = Ember.Controller.extend({
                     that.get('timer').start();
                 } else {
                     that.get('timer').stop();
+                    that.set('count', 0);
                 }
             }
             if (status) {
                 this.get('timer').start();
             } else {
                 this.get('timer').stop();
+                that.set('count',0);
             }
         },
     }

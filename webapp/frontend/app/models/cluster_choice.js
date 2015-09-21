@@ -16,5 +16,6 @@ App.Clusterchoice = DS.Model.extend({
 	ssh_key_selection : attr('string'),	// ssh_key_name
 	replication_factor : attr('string'), // hdfs replication factor
 	dfs_blocksize : attr('string'),    // hdfs blocksize
-	admin_password : attr('string')    // admin_password for hue login
+	admin_password : attr('string'),    // admin_password for hue login
+	cluster_edit : attr('number')      // edit property of existing cluster
 });
