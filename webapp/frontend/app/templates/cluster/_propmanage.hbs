@@ -41,7 +41,7 @@
                 <label class="control-label col-sm-5" for="id_dsl_filename">DSL filename </label>
                 <div class="col col-sm-7">
                     <div class="input-group input-group-sm">
-                        <input id="id_dsl_filename" type="text" class="form-control" placeholder="cluster_name-cluster_id-YYYY-MM-DD-HH-mm-ss" {{bind-attr value="dsl_filename"}}/>
+                        {{input id="id_dsl_filename" type="text" class="form-control" placeholder="cluster_name-cluster_id-YYYY-MM-DD-HH-mm-ss" valueBinding="dsl_filename"}}
                         <span class="input-group-btn">
                             <button id="id_dsl_filename_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="top" data-title='Set Default' {{action "dsl_filename_default"}}>
                                 <i class="glyphicon glyphicon-pencil"></i>
@@ -53,7 +53,7 @@
                 <label class="control-label col-sm-5" for="id_pithos_destination">Pithos destination </label>
                 <div class="col col-sm-7">
                     <div class="input-group input-group-sm">
-                        <input id="id_pithos_destination" type="text" class="form-control" placeholder="pithos" {{bind-attr value="dsl_pithos_path"}}/>
+                        {{input id="id_pithos_destination" type="text" class="form-control" placeholder="pithos" valueBinding="dsl_pithos_path"}}
                         <span class="input-group-btn">
                             <button id="id_dsl_pithos_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="top" data-title='Set Default' {{action "dsl_pithospath_default"}}>
                                 <i class="glyphicon glyphicon-pencil"></i>

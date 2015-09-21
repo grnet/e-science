@@ -127,7 +127,9 @@ App.ClusterManagementController = Ember.Controller.extend({
 	                	self.get('controllers.userWelcome').send('addMessage',msg);
 	                });
 	            self.set('file_count', self.get('file_count')+1);
-	            self.get('controllers.userWelcome').send('setActiveTab','clusters');
+	            self.set('dsl_filename','');
+	            self.set('dsl_pithos_path','');
+	            self.get('controllers.userWelcome').send('setActiveTab','dsls');
 				self.transitionToRoute('user.welcome');
 			},function(reason){
                 //error
@@ -137,7 +139,7 @@ App.ClusterManagementController = Ember.Controller.extend({
 	    dsl_filename_default : function(){
 	        var model = this.get('content');
 	        var date_now = new safestr(moment(Date.now()).format('YYYY-MM-DD-HH-mm-ss'))['string'];
-	        var default_filename = "%@-%@-%@-%@".fmt(model.get('cluster_name_noprefix'),model.get('id'),date_now,'cluster-metadata');
+	        var default_filename = "%@-%@-%@-%@.yaml".fmt(model.get('cluster_name_noprefix'),model.get('id'),date_now,'cluster-metadata');
 	        this.set('dsl_filename',default_filename);
 	    },
 	    dsl_pithospath_default : function(){

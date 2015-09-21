@@ -124,7 +124,7 @@ App.UserclusterAdapter = DS.ActiveModelAdapter.extend({
     }
 });
 
-App.UserdslAdapter = DS.ActiveModelAdapter.extend({
+App.DslAdapter = DS.ActiveModelAdapter.extend({
 	headers : function() {
         return {
             "Authorization" : App.escience_token,
@@ -181,7 +181,7 @@ App.UservreserverSerializer = DS.RESTSerializer.extend({
     } 
 });
 
-App.UserdslSerializer = DS.RESTSerializer.extend({
+App.DslSerializer = DS.RESTSerializer.extend({
 	attrs : {
 		user : {serialize : false}
 	}
