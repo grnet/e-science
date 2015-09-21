@@ -129,7 +129,15 @@ def destroy_server(token, id):
     return vre_server.server_name
 
 def create_dsl(choices):
+    if choices['pithos_path'].startswith('/'):
+        choices['pithos_path'] = choices['pithos_path'][1:]
+    if choices['pithos_path'].endswith('/'):
+        choices['pithos_path'] = choices['pithos_path'][:-1]
     uuid = get_user_id(unmask_token(encrypt_key,choices['token']))
+    container_status_code = get_pithos_container_info(uuid, choices['pithos_path'], choices['token'])
+    if container_status_code == pithos_container_not_found:
+        msg = 'Container not found error {0}'.format(container_status_code)
+        raise ClientError(msg, error_container)
     action_date = datetime.now().replace(microsecond=0)
     cluster = ClusterInfo.objects.get(id=choices['cluster_id'])
     data = {'cluster': {'name': cluster.cluster_name, 'project_name': cluster.project_name, 'image': cluster.os_image, 'disk_template': u'{0}'.format(cluster.disk_template),
@@ -155,6 +163,15 @@ def destroy_dsl(token, id):
     print "destroy_dsl"
     # TODO placeholders for actual implementation
     pass
+
+def get_pithos_container_info(uuid, pithos_path, token):
+    if '/' in pithos_path:
+        pithos_path = pithos_path.split("/", 1)[0]
+    url = '{0}/{1}/{2}'.format(pithos_url, uuid, pithos_path)
+    headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,token))}
+    r = requests.head(url, headers=headers)
+    response = r.status_code
+    return response
 
 def get_public_ip_id(cyclades_network_client,float_ip):  
     """Return IP dictionary of an ~okeanos public IP"""

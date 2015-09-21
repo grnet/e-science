@@ -50,6 +50,7 @@ error_proj_id = -71
 error_multiple_entries = -72
 error_project_quota = -73
 error_create_dsl = -75
+error_container = -76
 error_authentication = -99
 FNULL = open(os.devnull, 'w')
 # Hadoop test command error return status
@@ -68,6 +69,7 @@ reverse_storage_template = {'Archipelago':'ext_vlmc','Standard':'drbd'} # ~okean
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 pithos_url = 'https://pithos.okeanos.grnet.gr/v1'
 pithos_put_success = 201  # Success pithos response
+pithos_container_not_found = 404
 default_image = 'Debian Base'
 default_logging = 'summary'
 login_endpoint = '/api/users'
