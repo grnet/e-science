@@ -51,6 +51,7 @@
 		<script src="{{ STATIC_URL }}controllers/cluster_management.js"></script>
 		<script src="{{ STATIC_URL }}controllers/vreserver_create.js"></script>
 		<script src="{{ STATIC_URL }}controllers/vreserver_management.js"></script>
+		<script src="{{ STATIC_URL }}controllers/dsl_create.js"></script>
 		<script src="{{ STATIC_URL }}controllers/help_images.js"></script>
 		<script src="{{ STATIC_URL }}controllers/help_vreimages.js"></script>
 
@@ -66,6 +67,7 @@
 		<script src="{{ STATIC_URL }}routes/cluster_management.js"></script>
 		<script src="{{ STATIC_URL }}routes/vreserver_create.js"></script>
 		<script src="{{ STATIC_URL }}routes/vreserver_management.js"></script>
+		<script src="{{ STATIC_URL }}routes/dsl_create.js"></script>
 		<script src="{{ STATIC_URL }}routes/help_images.js"></script>
 		<script src="{{ STATIC_URL }}routes/help_vreimages.js"></script>
 		<script src="{{ STATIC_URL }}routes/homepage.js"></script>
@@ -100,8 +102,9 @@
 		<script>EmberHandlebarsLoader.loadTemplates([
 			'application', 'homepage', 
 			'user/login', 'user/welcome',  'user/_userclusters', 'user/_uservres',  'user/_userdsls',
-			'cluster/create', 'cluster/management', 'cluster/_propmanage',
-			'vreserver/create', 'vreserver/management', 
+			'cluster/create', 'cluster/management',
+			'vreserver/create', 'vreserver/management',
+			'dsl/create',
 			'help/images', 'help/vreimages'
 		]);</script>
 	

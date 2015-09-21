@@ -1,7 +1,7 @@
 // User Welcome controller
 App.UserWelcomeController = Ember.Controller.extend({
 
-    needs : ['clusterCreate','vreserverCreate','clusterManagement'],
+    needs : ['clusterCreate','vreserverCreate','clusterManagement','dslCreate'],
     // flag to denote transition from a create action
     create_cluster_start : false,
     count : 0,
@@ -12,9 +12,9 @@ App.UserWelcomeController = Ember.Controller.extend({
     blacklist_messages : {},
     // tabs info for template
     content_tabs_info : {
-        clusters: {id:'id_userclusters_tab',href:'#id_userclusters_tab',name:'User Clusters',active:true},
-        vreservers: {id:'id_uservres_tab',href:'#id_uservres_tab',name:'User VREs'},
-        dsls: {id:'id_userdsls_tab',href:'#id_userdsls_tab',name:'User DSLs'}
+        clusters: {id:'id_userclusters_tab',href:'#id_userclusters_tab',name:'Hadoop Clusters',active:true},
+        vreservers: {id:'id_uservres_tab',href:'#id_uservres_tab',name:'Virtual Research Environments'},
+        dsls: {id:'id_userdsls_tab',href:'#id_userdsls_tab',name:'Reproducible Research DSLs'}
     },
     content_tabs : function(key,value){
         var tabs_object = this.get('content_tabs_info');
@@ -136,8 +136,13 @@ App.UserWelcomeController = Ember.Controller.extend({
             }
             this.setProperties(this.get_sorting_info(short_model_name,sortAscending,column));
         },
-        goto_cluster_manage : function(cluster_id){
-            this.get('controllers.clusterManagement').send('setActiveTab','manage');
+        goto_dsl_create : function(cluster){
+            this.get('controllers.dslCreate').set('cluster_id',cluster.get('id'));
+            this.get('controllers.dslCreate').set('cluster_name',cluster.get('cluster_name_noprefix'));
+            this.transitionToRoute('dsl.create');
+        },
+        goto_cluster_scale : function(cluster_id){
+            this.get('controllers.clusterManagement').send('setActiveTab','scale');
             this.transitionToRoute('cluster.management',cluster_id);
         },
         setActiveTab : function(tab){

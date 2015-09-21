@@ -23,7 +23,7 @@ App.VreserverCreateController = Ember.Controller.extend({
 	   {cpu:4,ram:6144,disk:20} //Large
 	],
 	vreResourceMin : {
-		'BigBlueButton-0.81':{cpu:2,ram:2048},
+	    'BigBlueButton-0.81':{cpu:2,ram:2048},
 	    'DSpace-5.3':{ram:2048},
 	    'Drupal-7.37':{ram:1024},
         'Mediawiki-1.2.4':{ram:1024},

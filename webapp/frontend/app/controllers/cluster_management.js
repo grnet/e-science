@@ -5,7 +5,6 @@ App.ClusterManagementController = Ember.Controller.extend({
 	hue_login_message : '',
 	hue_message : '',
     count : 0,
-    file_count : 0,
     initial_timer_active : function(){
         return this.get('count')>0;
     }.property('count'),
@@ -14,7 +13,8 @@ App.ClusterManagementController = Ember.Controller.extend({
     content_tabs_info : {
         info: {id:'id_tab_info',href:'#id_tab_info',name:'Info',active:true},
         access: {id:'id_tab_access',href:'#id_tab_access',name:'Access'},
-        manage : {id:'id_tab_manage',href:'#id_tab_manage',name:'Manage'}
+        manage : {id:'id_tab_manage',href:'#id_tab_manage',name:'Manage'},
+        scale : {id:'id_tab_scale',href:'#id_tab_scale',name:'Scale'}
     },
     content_tabs : function(key,value){
         var tabs_object = this.get('content_tabs_info');
@@ -24,6 +24,7 @@ App.ClusterManagementController = Ember.Controller.extend({
             Ember.set(tabs_object.info,'active',false);
             Ember.set(tabs_object.access,'active',false);
             Ember.set(tabs_object.manage,'active',false);
+            Ember.set(tabs_object.scale,'active',false);
             switch(value) {
             case "info":
                 Ember.set(tabs_object.info,'active',true);
@@ -34,12 +35,26 @@ App.ClusterManagementController = Ember.Controller.extend({
             case "manage":
                 Ember.set(tabs_object.manage,'active',true);
                 break;
+            case "scale":
+                Ember.set(tabs_object.scale,'active',true);
+                break;
             }
             this.set('content_tabs_info',tabs_object);
             return tabs_object;
         }
         return tabs_object;
-    }.property(),	
+    }.property(),
+    state_message : function() {
+        var stat_message = this.get('content.state');
+        if (!Ember.isBlank(stat_message)) {
+            var cluster_name = this.get('content.cluster_name');
+            var msg = {
+                'msg_type' : 'default',
+                'msg_text' : cluster_name +': ' + stat_message
+            };
+            this.controllerFor('userWelcome').send('addMessage', msg);
+        }
+    }.observes('content.state'),
 	cluster_slaves_newsize_static : null,
 	cluster_slaves_newsize : function(key, value){
 	    if (arguments.length > 1){//setter
@@ -87,64 +102,8 @@ App.ClusterManagementController = Ember.Controller.extend({
 	        return new safestr('<b class="glyphicon glyphicon-resize-full"></b>');   
 	    }
 	}.property('cluster_slaves_delta'),
-	dsl_filename_static : null,
-	dsl_filename : function(key,value){
-	    if (arguments.length > 1){//setter
-	        this.set('dsl_filename_static',value);
-	    }
-	    return Ember.isEmpty(this.get('dsl_filename_static')) ? '' : this.get('dsl_filename_static'); //getter
-	}.property(),
-	dsl_pithos_path_static : null,
-	dsl_pithos_path : function(key,value){
-	    if (arguments.length > 1){//setter
-            this.set('dsl_pithos_path_static',value);
-        }
-        return Ember.isEmpty(this.get('dsl_pithos_path_static')) ? '' : this.get('dsl_pithos_path_static'); //getter
-	}.property(),
+
 	actions : {
-	    dsl_create : function(){
-	    	var self = this;
-            var store = this.get('store');
-            var model = this.get('content');
-            var cluster_id = model.get('id');
-            var dsl_name = this.get('dsl_filename');
-            var pithos_path = this.get('dsl_pithos_path');
-            // unload cached records
-            store.unloadAll('dsl');
-            store.fetch('user',1).then(function(user){
-                //success
-	            var response = store.createRecord('dsl',{
-		                    'id': 1,
-		                    'dsl_name': dsl_name,
-		                    'pithos_path': pithos_path,
-		                    'cluster_id': cluster_id,
-		                }).save();
-	            response.then(function(data){
-	                    var msg = {'msg_type':'success','msg_text':'File(%@) with cluster metadata has transferred to pithos container'.fmt(self.get('file_count'))};
-	                    self.get('controllers.userWelcome').send('addMessage',msg);
-	                },function(reason){
-	                	var msg = {'msg_type':'danger','msg_text':'Failed to transfer file(%@) with cluster metadata to pithos container'.fmt(self.get('file_count'))};
-	                	self.get('controllers.userWelcome').send('addMessage',msg);
-	                });
-	            self.set('file_count', self.get('file_count')+1);
-	            self.set('dsl_filename','');
-	            self.set('dsl_pithos_path','');
-	            self.get('controllers.userWelcome').send('setActiveTab','dsls');
-				self.transitionToRoute('user.welcome');
-			},function(reason){
-                //error
-                console.log(reason);
-            });
-	    },
-	    dsl_filename_default : function(){
-	        var model = this.get('content');
-	        var date_now = new safestr(moment(Date.now()).format('YYYY-MM-DD-HH-mm-ss'))['string'];
-	        var default_filename = "%@-%@-%@-%@.yaml".fmt(model.get('cluster_name_noprefix'),model.get('id'),date_now,'cluster-metadata');
-	        this.set('dsl_filename',default_filename);
-	    },
-	    dsl_pithospath_default : function(){
-	        this.set('dsl_pithos_path', 'pithos');
-	    },
 	    increment_size : function(){
 	        this.set('cluster_slaves_newsize',this.get('cluster_slaves_newsize')+1);
 	        $('#id_number_of_slaves').focus();
