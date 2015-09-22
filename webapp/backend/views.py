@@ -420,8 +420,12 @@ class DslView(APIView):
             choices = serializer.data.copy()
             choices.update({'token': user.okeanos_token})
             c_dsl = create_dsl_async.delay(choices)
-            task_id = c_dsl.id
-            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+            try:
+                c_dsl.get()
+                task_id = c_dsl.id
+                return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+            except ClientError:
+                raise
 
         # This will be send if user's parameters are not de-serialized
         # correctly.
