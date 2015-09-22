@@ -30,7 +30,6 @@ App.DslCreateController = Ember.Controller.extend({
             var cluster_id = this.get('cluster_id');
             var dsl_name = this.get('dsl_filename');
             var pithos_path = this.get('dsl_pithos_path');
-            console.log(pithos_path);
             // unload cached records
             store.unloadAll('dsl');
             store.fetch('user', 1).then(function(user) {
@@ -56,6 +55,9 @@ App.DslCreateController = Ember.Controller.extend({
                 });
                 self.set('file_count', self.get('file_count') + 1);
                 self.get('controllers.userWelcome').send('setActiveTab', 'dsls');
+                // TODO: reset action
+                self.set('dsl_filename','');
+                self.set('dsl_pithos_path','');
                 self.transitionToRoute('user.welcome');
             }, function(reason) {
                 //error
