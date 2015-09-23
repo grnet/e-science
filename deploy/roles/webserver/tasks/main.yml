@@ -108,6 +108,7 @@
     tags: postimage
 
   - name: Create directory ssl in /etc/nginx
+    sudo: yes
     file: path=/etc/nginx/ssl state=directory
     tags: postimage
 
