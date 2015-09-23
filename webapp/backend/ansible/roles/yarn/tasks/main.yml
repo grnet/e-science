@@ -363,6 +363,7 @@
       - { path: '/usr/local/hbase/', owner: '{{eco_db_user}}', group: 'hadoop' }
       - { path: '/usr/local/oozie/', owner: '{{eco_db_user}}', group: 'hadoop' }
       - { path: '/usr/local/pig/', owner: '{{eco_db_user}}', group: 'hadoop' }
+      - { path: '/usr/local/spark/', owner: '{{eco_db_user}}', group: 'hadoop' }
 
   - name: Create PostgreSql database for Hive
     tags: ecoconfig
