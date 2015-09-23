@@ -1,10 +1,7 @@
-// escience reproducible research DSL Create controller
+// escience reproducible experiments DSL Create controller
 App.DslCreateController = Ember.Controller.extend({
     needs : ['userWelcome'],
-    file_count : 0,
-    cluster_id : 0,
-    cluster_name : '',
-    // data-bound to template
+    
     dsl_filename_static : null,
     dsl_filename : function(key, value) {
         if (arguments.length > 1) {//setter
@@ -21,58 +18,138 @@ App.DslCreateController = Ember.Controller.extend({
         return Ember.isEmpty(this.get('dsl_pithos_path_static')) ? '' : this.get('dsl_pithos_path_static');
         //getter
     }.property('dsl_pithos_path_static'),
-
+    
+    // userclusters block
+    filtered_clusters : function(){
+        return this.get('user_clusters').filterBy('id').filterBy('cluster_status_verbose','ACTIVE');
+    }.property('user_clusters.[]','user_clusters.isLoaded'),
+    
+    boolean_no_cluster : true,
+    cluster_select_observer : function(){
+        if (!Ember.isEmpty(this.get('selected_cluster_id'))){
+            this.set('selected_cluster',this.get('filtered_clusters').filterBy('id',this.get('selected_cluster_id')));
+            this.set('boolean_no_cluster',false);
+        }else{
+            this.set('selected_cluster',null);
+            this.set('boolean_no_cluster',true);
+        }
+    }.observes('selected_cluster_id'),
+    selectec_cluster_size : function(){
+        return Ember.isEmpty(this.get('selected_cluster')) ? '' : this.get('selected_cluster').objectAt(0).get('cluster_size');
+    }.property('selected_cluster'),
+    selected_cluster_master_flavor : function(){
+        var cluster = Ember.isEmpty(this.get('selected_cluster')) ? null : this.get('selected_cluster').objectAt(0);
+        return cluster && '[CPUx%@, RAM:%@MiB, DISK:%@GiB]'.fmt(cluster.get('cpu_master'),cluster.get('ram_master'),cluster.get('disk_master')) || '';
+    }.property('selected_cluster'),
+    selected_cluster_slaves_flavor : function(){
+        var cluster = Ember.isEmpty(this.get('selected_cluster')) ? null : this.get('selected_cluster').objectAt(0);
+        return cluster && '[CPUx%@, RAM:%@MiB, DISK:%@GiB]'.fmt(cluster.get('cpu_slaves'),cluster.get('ram_slaves'),cluster.get('disk_slaves')) || '';
+    }.property('selected_cluster'),
+    selected_cluster_project : function(){
+        return Ember.isEmpty(this.get('selected_cluster')) ? '' : this.get('selected_cluster').objectAt(0).get('project_name');
+    }.property('selected_cluster'),
+    
+    //utility functions
+    alert_input_missing_boundto : {
+        // data column > alert message property, input control element id
+        cluster_id : ['alert_missing_input_dsl_source','#id_dsl_cluster'],
+        dsl_name : ['alert_missing_input_dsl_name','#id_dsl_filename'],
+        pithos_path : ['alert_missing_input_pithos_path','#id_pithos_destination'],
+    },
+    alert_input_missing_text : {
+        // alert message property > message text
+        alert_missing_input_dsl_source : 'Please select a cluster to save config metadata from',
+        alert_missing_input_dsl_name : 'Please type in or generate default metadata filename',
+        alert_missing_input_pithos_path : 'Please type in or generate default pithos container/path',
+    },
+    missing_input : function(that, new_dsl){
+        var self = that; // get the controller reference into self
+        // clear alerts on new check
+        for (alert in self.get('alert_input_missing_text')){
+            self.set(alert,null);
+        }
+        for (property in new_dsl) {
+            if (Ember.isEmpty(new_dsl[property])) {
+                var alert_prop_name = self.get('alert_input_missing_boundto')[property][0];
+                self.set(alert_prop_name,self.get('alert_input_missing_text')[alert_prop_name]);
+                var input_element = $(self.get('alert_input_missing_boundto')[property][1]);
+                window.scrollTo(input_element.offsetLeft, input_element.offsetTop);
+                input_element.focus();
+                return true;
+            }
+        }
+        return false;
+    },
+    
     actions : {
         dsl_create : function() {
             var self = this;
             var store = this.get('store');
             var model = this.get('content');
-            var cluster_id = this.get('cluster_id');
+            var cluster_id = this.get('selected_cluster_id');
             var dsl_name = this.get('dsl_filename');
             var pithos_path = this.get('dsl_pithos_path');
+            var new_dsl = {
+                'cluster_id' : cluster_id,
+                'dsl_name' : dsl_name,
+                'pithos_path' : pithos_path
+            }; 
+            if (this.get('missing_input')(self, new_dsl)){
+                return;
+            }
             // unload cached records
             store.unloadAll('dsl');
             store.fetch('user', 1).then(function(user) {
                 //success
-                var response = store.createRecord('dsl', {
-                    'id' : 1,
-                    'dsl_name' : dsl_name,
-                    'pithos_path' : pithos_path,
-                    'cluster_id' : cluster_id,
-                }).save();
-                response.then(function(data) {
+                var new_record = store.createRecord('dsl', new_dsl);
+                new_record.save().then(function(data) {
                     var msg = {
                         'msg_type' : 'success',
-                        'msg_text' : 'File(%@) with cluster metadata has transferred to pithos container'.fmt(self.get('file_count'))
+                        'msg_text' : 'Metadata saved as \"%@\" in %@'.fmt(dsl_name,pithos_path)
                     };
                     self.get('controllers.userWelcome').send('addMessage', msg);
+                    self.set('controllers.userWelcome.create_cluster_start', true);
+                    self.get('controllers.userWelcome').send('setActiveTab','dsls');
+                    Ember.run.next(function(){self.transitionToRoute('user.welcome');});
                 }, function(reason) {
                     var msg = {
                         'msg_type' : 'danger',
-                        'msg_text' : 'Failed to transfer file(%@) with cluster metadata to pithos container'.fmt(self.get('file_count'))
+                        'msg_text' : 'Failed to create file \"%@\" in %@ with error: %@'.fmt(dsl_name,pithos_path,reason.message)
                     };
                     self.get('controllers.userWelcome').send('addMessage', msg);
                 });
-                self.set('file_count', self.get('file_count') + 1);
-                self.get('controllers.userWelcome').send('setActiveTab', 'dsls');
-                // TODO: reset action
-                self.set('dsl_filename','');
-                self.set('dsl_pithos_path','');
-                self.transitionToRoute('user.welcome');
             }, function(reason) {
                 //error
-                console.log(reason);
+                console.log(reason.message);
             });
         },
         dsl_filename_default : function() {
             var model = this.get('content');
             var store = this.get('store');
             var date_now = new safestr(moment(Date.now()).format('YYYY-MM-DD_HH-mm-ss'))['string'];
-            var default_filename = "%@_%@_%@-%@".fmt(this.get('cluster_name'), this.get('cluster_id'), date_now, 'cluster-metadata');
+            var cluster_id = null;
+            var cluster_name = null;
+            if (!Ember.isEmpty(this.get('selected_cluster'))){
+                cluster_id = this.get('selected_cluster_id');
+                cluster_name = this.get('selected_cluster').objectAt(0).get('cluster_name_noprefix') || '';
+            }
+            if (Ember.isEmpty(cluster_id) || Ember.isEmpty(cluster_name)){
+                this.set('alert_missing_input_dsl_source',this.get('alert_input_missing_text')['alert_missing_input_dsl_source']);
+                return;
+            }
+            var default_filename = "%@_%@_%@-%@".fmt(cluster_name, cluster_id, date_now, 'cluster-metadata');
             this.set('dsl_filename', default_filename);
         },
         dsl_pithospath_default : function() {
             this.set('dsl_pithos_path', 'pithos');
         },
+        set_selected_cluster : function(cluster_id){
+            this.set('selected_cluster_id',cluster_id);
+        },
+        reset : function(){
+            this.set('dsl_filename','');
+            this.set('dsl_pithos_path','');
+            this.set('selected_cluster_id',null);
+        }
     }
 });

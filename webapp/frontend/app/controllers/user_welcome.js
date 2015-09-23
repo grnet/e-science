@@ -14,7 +14,7 @@ App.UserWelcomeController = Ember.Controller.extend({
     content_tabs_info : {
         clusters: {id:'id_userclusters_tab',href:'#id_userclusters_tab',name:'Hadoop Clusters',active:true},
         vreservers: {id:'id_uservres_tab',href:'#id_uservres_tab',name:'Virtual Research Environments'},
-        dsls: {id:'id_userdsls_tab',href:'#id_userdsls_tab',name:'Reproducible Research DSLs'}
+        dsls: {id:'id_userdsls_tab',href:'#id_userdsls_tab',name:'Reproducible Experiments DSLs'}
     },
     content_tabs : function(key,value){
         var tabs_object = this.get('content_tabs_info');
@@ -64,7 +64,7 @@ App.UserWelcomeController = Ember.Controller.extend({
     filtered_dsls : function(){
         return this.get('content.dsls').filterBy('id');
     }.property('content.dsls.[]','content.dsls.isLoaded'),
-    sorted_dsls_prop : ['dsl_name:asc','action_date:desc'],
+    sorted_dsls_prop : ['action_date:desc'],
     sorted_dsls_dir : true,
     sorted_dsls : Ember.computed.sort('filtered_dsls','sorted_dsls_prop'),
     sortable_dsls : function(){
@@ -137,8 +137,7 @@ App.UserWelcomeController = Ember.Controller.extend({
             this.setProperties(this.get_sorting_info(short_model_name,sortAscending,column));
         },
         goto_dsl_create : function(cluster){
-            this.get('controllers.dslCreate').set('cluster_id',cluster.get('id'));
-            this.get('controllers.dslCreate').set('cluster_name',cluster.get('cluster_name_noprefix'));
+            this.get('controllers.dslCreate').send('set_selected_cluster',cluster.get('id'));
             this.transitionToRoute('dsl.create');
         },
         goto_cluster_scale : function(cluster_id){
@@ -216,6 +215,9 @@ App.UserWelcomeController = Ember.Controller.extend({
                 }
             }
             this.set('user_messages', messages);
+        },
+        dismiss : function(){
+            $('#id_alert_welcome > button').click();  
         },
         timer : function(status, store) {
             var that = this;

@@ -3,9 +3,11 @@
 	<div class="row">
 	<h3 id = 'id_title_user_welcome_route'> Welcome </h3>
 	<div class="col col-sm-3"></div>
-	<div class="alert alert-dismissable alert-success col-sm-6">
+	<div id="id_alert_welcome" class="alert alert-dismissable alert-success col-sm-6">
 		<button type="button" class="close" data-dismiss="alert">×</button>
-		You can create a {{#link-to 'cluster.create'}}Hadoop Cluster{{/link-to}} or a {{#link-to 'vreserver.create' class="disabled"}}Virtual Research Environment{{/link-to}} (VRE) Server from the Services menu.
+		You can create a {{#link-to 'cluster.create'}}Hadoop Cluster{{/link-to}} 
+		or {{#link-to 'vreserver.create'}}Virtual Research Environment{{/link-to}} (VRE) Server 
+		or save {{#link-to 'dsl.create'}}Reproducible Experiments Metadata{{/link-to}} from the Services menu.
 	</div>
 	<div class="col col-sm-3"></div>
 	</div>

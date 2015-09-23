@@ -189,12 +189,25 @@ class VreServerSerializer(serializers.ModelSerializer):
 
 class DslsSerializer(serializers.ModelSerializer):
     """
-    Serializer for User Cluster DSL metadata
+    Serializer for getting User Reproducible Experiments DSL metadata
     """   
     class Meta:
         model = Dsl
-        fields = ('id', 'dsl_name', 'pithos_path', 'cluster_id')
+        fields = ('id', 'dsl_name', 'action_date', 'pithos_path', 'cluster_id', 'task_id', 'state')
 
+class DslOptionsSerializer(serializers.Serializer):
+    """
+    Serializer for submitting Reproducible Experiments DSL options
+    """
+    dsl_name = serializers.CharField(required=True)
+    pithos_path = serializers.CharField(required=True)
+    cluster_id = serializers.IntegerField(required=False)
+    
+class DslDeleteSerializer(serializers.Serializer):
+    """
+    Serializer for submitting Reproducible Experiment metadata delete request
+    """
+    id = serializers.IntegerField()
 
 class UserInfoSerializer(serializers.ModelSerializer):
     """

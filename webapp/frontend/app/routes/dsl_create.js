@@ -1,20 +1,19 @@
-// Escience reproducible research DSL create route
+// Escience reproducible experiments DSL create route
 App.DslCreateRoute = App.RestrictedRoute.extend({
     // model for create DSL choices (input form)
-    model : function() {
+    model : function(params, transition) {
         $.loader.close(true);
         var promise = this.store.fetch('user',1);
-        promise.then(function(user){
-            var dsls = user.get('dsls');
-            return dsls;
-        },function(reason){
-            console.log(reason.message);
-        });
         return promise;
+    },
+    setupController : function(controller, model){
+        controller.set('user_clusters',model.get('clusters'));
+        controller.set('user_dsls',model.get('dsls'));
+        this._super(controller,model);
     },
     deactivate : function(){
         // left this route
-        //this.controller.send('reset');
+        this.controller.send('reset');
     },
     actions : {
         error : function(err) {
@@ -28,7 +27,7 @@ App.DslCreateRoute = App.RestrictedRoute.extend({
         },
         willTransition: function(){
             // leaving this route
-            //this.controller.send('reset');
+            this.controller.send('reset');
         }
     }
 });

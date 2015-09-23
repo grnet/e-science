@@ -22,8 +22,8 @@ from time import sleep
 from datetime import datetime
 from cluster_errors_constants import *
 from celery import current_task
-from django_db_after_login import db_cluster_update, get_user_id, db_server_update, db_hadoop_update
-from backend.models import UserInfo, ClusterInfo, VreServer
+from django_db_after_login import db_cluster_update, get_user_id, db_server_update, db_hadoop_update, db_dsl_create, db_dsl_update, db_dsl_delete
+from backend.models import UserInfo, ClusterInfo, VreServer, Dsl
 
 
 def retrieve_pending_clusters(token, project_name):
@@ -145,20 +145,24 @@ def create_dsl(choices):
             'configuration': {'replication_factor': cluster.replication_factor, 'dfs_blocksize': cluster.dfs_blocksize}}
     if not (choices['dsl_name'].endswith('.yml') or choices['dsl_name'].endswith('.yaml')):
         choices['dsl_name'] = '{0}.yaml'.format(choices['dsl_name'])
+    task_id = current_task.request.id
+    dsl_id = db_dsl_create(choices, task_id)
     yaml_data = yaml.safe_dump(data,default_flow_style=False)
     url = '{0}/{1}/{2}/{3}'.format(pithos_url, uuid, choices['pithos_path'], urllib.quote(choices['dsl_name']))
     headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,choices['token'])),'content-type':'text/plain'}
     r = requests.put(url, headers=headers, data=yaml_data)
     response = r.status_code
     if response == pithos_put_success:
-        return choices['id'], choices['pithos_path'], choices['dsl_name']
-    msg = 'Pithos error {0}'.format(response)
-    raise ClientError(msg, error_create_dsl)
-
+        db_dsl_update(choices['token'],dsl_id,state='Created')
+        
+        
 def destroy_dsl(token, id):
-    print "destroy_dsl"
     # TODO placeholders for actual implementation
-    pass
+    # just remove from our DB for now
+    dsl = Dsl.objects.get(id=id)
+    db_dsl_delete(token,id)
+    return dsl.id
+
 
 def get_pithos_container_info(uuid, pithos_path, token):
     if '/' in pithos_path:

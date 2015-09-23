@@ -16,7 +16,7 @@
             <tr>
             	<td {{bind-attr id='dsl.id_dsl_name'}}>{{dsl.dsl_name}}</td>
                 <td>{{formatDate dsl.action_date format='shortdatetime'}}</td>
-               	<td><a {{bind-attr href='dsl.dsl_pithos_path' id='dsl.id_pithos_path'}} target="_blank">{{dsl.pithos_path}}</a></td>
+               	<td>{{dsl.pithos_path}}</td>
                	<td>
                 {{#if dsl.action_dsl_confirm}}
                 <div class="btn-group  btn-block">
@@ -33,7 +33,7 @@
             </tr>
             {{else}}
             <tr>
-                <td colspan="4" class="text-center text-info">No user Domain Specific Language (DSL) metadata found</td>
+                <td colspan="4" class="text-center text-info">No user Reproducible Experiments metadata found</td>
             </tr>
             {{/each}}
         </tbody>

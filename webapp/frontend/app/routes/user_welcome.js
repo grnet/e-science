@@ -63,11 +63,13 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		},
 		didTransition : function() {
 			// arrived at this route
+			var self = this;
 			var from_create = this.controller.get('create_cluster_start');
 			if (from_create) {
 				this.controller.set('count', 15);
 				this.controller.send('timer', true, this.store);
 			}
+			Ember.run.later(function(){self.controller.send('dismiss');},15*1000); // 15 sec
 			return true;
 		},
 		takeDslAction : function(dsl){
