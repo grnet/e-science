@@ -5,6 +5,14 @@ upstream django {
 server {
     listen 80;
     server_name {{ inventory_hostname }};
+    rewrite ^ https://$host$request_uri? permanent;
+}
+
+server {
+    listen 443 ssl;
+    server_name {{ inventory_hostname }};
+    ssl_certificate /etc/nginx/ssl/nginx.crt;
+    ssl_certificate_key /etc/nginx/ssl/nginx.key;
     root /home/orka_admin/projects/e-science/webapp;
     access_log /home/orka_admin/logs/access.log;
     error_log /home/orka_admin/logs/error.log;

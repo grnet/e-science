@@ -101,10 +101,19 @@
   - name: Rename nginx.j2 template to nginx.conf
     tags: postimage
     command: mv nginx.j2 nginx.conf chdir=./conf
-  
-  - name: Edit ngnix.conf in /etc/nginx
+
+  - name: Edit nginx.conf in /etc/nginx
     sudo: yes
     lineinfile: line="include {{user_home}}/conf/nginx.conf;" insertafter="http {" dest="/etc/nginx/nginx.conf"
+    tags: postimage
+
+  - name: Create directory ssl in /etc/nginx
+    file: path=/etc/nginx/ssl state=directory
+    tags: postimage
+
+  - name: Create the SSL certificate
+    sudo: yes
+    command: openssl req -x509 -nodes -days {{certificate_key_lifetime}} -newkey rsa:{{key_rsa}} -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt -subj "/C=GR/ST=Athens/L=Athens/O= /OU= /CN={{inventory_hostname}}"
     tags: postimage
 
   - name: Copy encryption file for ~okeanos token
