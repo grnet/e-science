@@ -32,13 +32,15 @@
                             <div class="row text-center text-danger col col-sm-12">
                                 {{alert_missing_input_dsl_source}}
                             </div>
-                            <div class="col col-sm-5">
-                                <label class="control-label pull-right" for="id_dsl_cluster_filter">Only Active</label>
+                            <div class="row">
+                                <div class="col col-sm-5">
+                                    <label class="control-label pull-right" for="id_dsl_cluster_filter">Only Active</label>
+                                </div>
+                                <div class="col col-sm-7">
+                                    {{input type="checkbox" name="active_filter" id="id_dsl_cluster_filter" class="checkbox" checked=cluster_active_filter}}
+                                </div>
                             </div>
-                            <div class="col col-sm-7">
-                                {{input type="checkbox" name="active_filter" id="id_dsl_cluster_filter" class="checkbox" checked=cluster_active_filter}}
-                            </div>
-                            <label class="control-label col-sm-5" for="id_dsl_filename">Metadata filename </label>
+                            <label class="control-label col-sm-5" for="id_dsl_filename">Metadata Filename </label>
                             <div class="col col-sm-7">
                                 <div class="input-group input-group-sm">
                                     {{input type="text" 
