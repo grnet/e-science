@@ -24,10 +24,10 @@ li.spacious{
   margin: 1px;
   border: 1px;
 }
-/*
- */
-css for the jquery spinner plugin
- */
+.textarea_100 {
+    width: 100% !important;
+}
+/* css for the jquery spinner plugin */
 .loading { margin: auto; }
 
 .loading span {

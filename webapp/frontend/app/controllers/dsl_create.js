@@ -1,41 +1,52 @@
+safestr = Ember.Handlebars.SafeString;
 // escience reproducible experiments DSL Create controller
 App.DslCreateController = Ember.Controller.extend({
     needs : ['userWelcome'],
     
+    // NYI
+    experiment_yaml_static : null,
+    experiment_yaml : function(key, value){
+        if (arguments.length > 1){//setter
+            var formatted = new safestr(value);
+            this.set('experiment_yaml_static',formatted);
+        }
+        return Ember.isEmpty(this.get('experiment_yaml_static')) ? '' : this.get('experiment_yaml_static');//getter
+    }.property('experiment_yaml_static'),
+       
     dsl_filename_static : null,
     dsl_filename : function(key, value) {
         if (arguments.length > 1) {//setter
             this.set('dsl_filename_static', value);
         }
-        return Ember.isEmpty(this.get('dsl_filename_static')) ? '' : this.get('dsl_filename_static');
-        //getter
+        return Ember.isEmpty(this.get('dsl_filename_static')) ? '' : this.get('dsl_filename_static');//getter
     }.property('dsl_filename_static'),
     dsl_pithos_path_static : null,
     dsl_pithos_path : function(key, value) {
         if (arguments.length > 1) {//setter
             this.set('dsl_pithos_path_static', value);
         }
-        return Ember.isEmpty(this.get('dsl_pithos_path_static')) ? '' : this.get('dsl_pithos_path_static');
-        //getter
+        return Ember.isEmpty(this.get('dsl_pithos_path_static')) ? '' : this.get('dsl_pithos_path_static');//getter
     }.property('dsl_pithos_path_static'),
     
     // userclusters block
     filtered_clusters : function(){
-        var filter_by = ['DESTROYED','ACTIVE'];
+        var filter_by = this.get('cluster_active_filter') && ['ACTIVE'] || ['DESTROYED','ACTIVE'];
         return Ember.isEmpty(this.get('user_clusters')) ? [] : this.get('user_clusters').filter(function(item, index, original) {
             return filter_by.contains(item.get('cluster_status_verbose'));
         });
-    }.property('user_clusters.[]','user_clusters.isLoaded'),
+    }.property('user_clusters.[]','user_clusters.isLoaded','cluster_active_filter'),
     
     boolean_no_cluster : true,
     cluster_select_observer : function(){
-        if (!Ember.isEmpty(this.get('selected_cluster_id'))){
-            this.set('selected_cluster',this.get('filtered_clusters').filterBy('id',this.get('selected_cluster_id')));
+        if (Ember.isEmpty(this.get('selected_cluster_id'))){
+            this.set('boolean_no_cluster',true);
+            this.set('selected_cluster',null);
+        }else{
+            var selected_cluster = this.get('filtered_clusters').filterBy('id',this.get('selected_cluster_id'));
+            if (Ember.isEmpty(selected_cluster)) this.set('selected_cluster_id',null);
+            this.set('selected_cluster',selected_cluster);
             this.set('boolean_no_cluster',false);
             this.set('alert_missing_input_dsl_source',null);
-        }else{
-            this.set('selected_cluster',null);
-            this.set('boolean_no_cluster',true);
         }
     }.observes('selected_cluster_id','filtered_clusters'),
     selectec_cluster_size : function(){
@@ -148,13 +159,15 @@ App.DslCreateController = Ember.Controller.extend({
             this.set('dsl_pithos_path', 'pithos');
         },
         set_selected_cluster : function(cluster_id){
-            this.set('selected_cluster_id',cluster_id);
+            var clusterid = cluster_id || this.get('cluster_id') || 0;
+            Ember.isEmpty(this.get('selected_cluster_id')) ? this.set('selected_cluster_id',cluster_id) : this.set('selected_cluster_id',this.get('selected_cluster_id'));
         },
         reset : function(){
             var self = this;
             this.set('dsl_filename','');
             this.set('dsl_pithos_path','');
             this.set('selected_cluster_id',null);
+            this.set('cluster_active_filter',null);
             for (alert in self.get('alert_input_missing_text')){
                 self.set(alert,null);
             }

@@ -13,7 +13,7 @@
         <h3 class="panel-title">Reproducible Experiment Metadata</h3>
     </div>
     <div class="panel-body">
-        <div class="col col-sm-10">
+        <div class="col col-sm-12">
             <div class="text-center" style="vertical-align: middle">
                 <form class="form-horizontal" role="form">
                     <div class="col-sm-6">
@@ -31,6 +31,12 @@
                             </div>
                             <div class="row text-center text-danger col col-sm-12">
                                 {{alert_missing_input_dsl_source}}
+                            </div>
+                            <div class="col col-sm-5">
+                                <label class="control-label pull-right" for="id_dsl_cluster_filter">Only Active</label>
+                            </div>
+                            <div class="col col-sm-7">
+                                {{input type="checkbox" name="active_filter" id="id_dsl_cluster_filter" class="checkbox" checked=cluster_active_filter}}
                             </div>
                             <label class="control-label col-sm-5" for="id_dsl_filename">Metadata filename </label>
                             <div class="col col-sm-7">
@@ -78,6 +84,14 @@
                             </div>
                         </div>
                     </div>
+                    <!--<div class="form col-sm-6" role="form">
+                        <div class="form-group">
+                            <div class="col-sm-12">
+                                {{!--textarea rows="8" value=experiment_yaml class="textarea form-control textarea_100" classNames="textarea form-control textarea_100"--}}
+                            </div>
+                            <label class="control-label">{{!--dsl_filename--}}</label>
+                        </div>
+                    </div>-->
                 </form>
             </div>
         
