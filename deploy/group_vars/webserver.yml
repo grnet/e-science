@@ -29,3 +29,7 @@
  remote_encrypt_file_path: "{{settings_path}}/encrypt_key.py"
  # Paths for project
  project_path: "{{my_project_dir}}/{{my_project_name}}"
+ # Openssl variables
+ certificate_key_lifetime: 3650
+ key_rsa: 2048
+ 

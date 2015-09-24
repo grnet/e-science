@@ -8,7 +8,9 @@ Serializers file for django rest framework.
 """
 
 from rest_framework import serializers
-from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, PublicNewsItem, OrkaImage, VreServer, VreImage
+from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, \
+PublicNewsItem, OrkaImage, VreServer, VreImage, Dsl
+  
 
 class VreImagesSerializer(serializers.ModelSerializer):
     """
@@ -185,6 +187,15 @@ class VreServerSerializer(serializers.ModelSerializer):
                   'os_image','server_IP', 'project_name', 'task_id', 'state')
 
 
+class DslsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for User Cluster DSL metadata
+    """   
+    class Meta:
+        model = Dsl
+        fields = ('id', 'dsl_name', 'pithos_path', 'cluster_id')
+
+
 class UserInfoSerializer(serializers.ModelSerializer):
     """
     Serializer for UserInfo object with cluster and escience_token
@@ -192,15 +203,17 @@ class UserInfoSerializer(serializers.ModelSerializer):
     """
     cluster = serializers.SerializerMethodField('number_of_clusters')
     vrenum = serializers.SerializerMethodField('number_of_vres')
+    dslnum = serializers.SerializerMethodField('number_of_dsls')
     escience_token = serializers.RelatedField()
     id = serializers.SerializerMethodField('get_ember_id')
     clusters = ClusterInfoSerializer(many=True)
     vreservers = VreServerSerializer(many=True)
+    dsls = DslsSerializer(many=True)
 
     class Meta:
         model = UserInfo
-        fields = ('id', 'user_id', 'user_name', 'user_theme', 'cluster', 'vrenum', 'master_vm_password', 'error_message',
-                  'escience_token', 'clusters', 'vreservers')
+        fields = ('id', 'user_id', 'user_name', 'user_theme', 'cluster', 'vrenum', 'dslnum', 'master_vm_password', 'error_message',
+                  'escience_token', 'clusters', 'vreservers', 'dsls')
 
     def number_of_clusters(self, obj):
         """
@@ -217,6 +230,13 @@ class UserInfoSerializer(serializers.ModelSerializer):
         vres = VreServer.objects.all().filter(user_id=obj.user_id). \
             filter(server_status=1).count()
         return vres
+    
+    def number_of_dsls(self, obj):
+        """
+        Function that returns the number of DSLs in a UserInfo instance.
+        """
+        dsls = Dsl.objects.all().filter(user_id=obj.user_id).count()
+        return dsls
 
     def get_ember_id(self, obj):
         """"Always returns id 1 for ember.js"""

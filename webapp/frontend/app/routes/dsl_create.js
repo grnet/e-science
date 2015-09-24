@@ -1,13 +1,20 @@
-// VRE server Create route
-App.VreserverCreateRoute = App.RestrictedRoute.extend({
-    // model for create VRE server choices (input form)
+// Escience reproducible research DSL create route
+App.DslCreateRoute = App.RestrictedRoute.extend({
+    // model for create DSL choices (input form)
     model : function() {
         $.loader.close(true);
-        return this.store.find('vreserver');
+        var promise = this.store.fetch('user',1);
+        promise.then(function(user){
+            var dsls = user.get('dsls');
+            return dsls;
+        },function(reason){
+            console.log(reason.message);
+        });
+        return promise;
     },
     deactivate : function(){
         // left this route
-        this.controller.send('reset');
+        //this.controller.send('reset');
     },
     actions : {
         error : function(err) {
@@ -18,11 +25,10 @@ App.VreserverCreateRoute = App.RestrictedRoute.extend({
         },
         didTransition : function(transition) {
             // came to this route
-            this.controller.send('find_last_config');
         },
         willTransition: function(){
             // leaving this route
-            this.controller.send('reset');
+            //this.controller.send('reset');
         }
     }
 });

@@ -57,6 +57,8 @@ error_project_quota = -73 # Zero user quota for a given project
 
         
 error_authentication = -99 # Invalid token
+error_create_dsl = -75
+error_container = -76
 
 
 
@@ -82,8 +84,9 @@ storage_template = {'ext_vlmc':'Archipelago','drbd':'Standard'} # ~okeanos avail
 reverse_storage_template = {'Archipelago':'ext_vlmc','Standard':'drbd'} # ~okeanos available storage templates with user friendly name
 
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
-
-        # If no image is given in orka-cli, this is the default image. Not used in backed/cluster_errors_constants
+pithos_url = 'https://pithos.okeanos.grnet.gr/v1'
+pithos_put_success = 201  # Success pithos response
+pithos_container_not_found = 404
 default_image = 'Debian Base'
 
 # Default orka logging level 
@@ -105,7 +108,7 @@ const_cluster_status_failed = "3"
 const_hadoop_status_stopped = "0"
 const_hadoop_status_started = "1"
 const_hadoop_status_format = "2"
-
+const_hadoop_status_undefined = "3"
         #Set hadoop pending status to 2 (same as hadoop status format and cluster status pending)
 const_hadoop_status_pending = const_hadoop_status_format
 

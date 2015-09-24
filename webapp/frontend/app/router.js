@@ -23,6 +23,13 @@ App.Router.map(function() {
 	    // /vreserver/server_id
 	    this.route('management', { path: "/:vreserver.id" });
 	});
+	this.resource('dsl', function() {
+        // /dsl/create
+        this.route('create');
+        // dsl management route
+        // /dsl/dsl_id
+        // this.route('management', { path: "/:dsl.id" });
+    });
 	this.resource('help', function() {
 		// /help/images
 		this.route('images');

@@ -1,0 +1,63 @@
+<!--User picks a cluster_id and pithos metadata and saves cluster configuration for use in reproducible research-->
+<p></p>
+<div class="well well-lg text-center v-center">
+	<div class="row">
+	<h3 id = 'id_title_cluster_create_route'>e-science reproducible research</h3>
+	<div class="col col-sm-3"></div>
+	<div class="col col-sm-3"></div>
+	</div>    
+</div>
+
+<div class="col col-sm-10">
+    <div class="text-center" style="vertical-align: middle">
+        <form class="form-horizontal" role="form">
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <fieldset>
+                    <label class="control-label col-sm-5" for="id_dsl_filename">DSL filename </label>
+                    <div class="col col-sm-7">
+                        <div class="input-group input-group-sm">
+                            {{input type="text" 
+                            value=dsl_filename
+                            placeholder="name_id_date_time-cluster-metadata"
+                            required="true"
+                            id="id_dsl_filename"
+                            classNames="form-control"}}
+                            <span class="input-group-btn">
+                                <button id="id_dsl_filename_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="top" data-title='Set Default' {{action "dsl_filename_default"}}>
+                                    <i class="glyphicon glyphicon-pencil"></i>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+    
+                    <label class="control-label col-sm-5" for="id_pithos_destination">Pithos destination </label>
+                    <div class="col col-sm-7">
+                        <div class="input-group input-group-sm">
+                            {{input type="text" 
+                            value=dsl_pithos_path
+                            placeholder="container"
+                            required="true"
+                            id="id_pithos_destination"
+                            classNames="form-control"}}
+                            <span class="input-group-btn">
+                                <button id="id_dsl_pithos_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="top" data-title='Set Default' {{action "dsl_pithospath_default"}}>
+                                    <i class="glyphicon glyphicon-pencil"></i>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                    </fieldset>
+                    <p></p>
+                    <div class="col col-sm-5"></div>
+                    <div class="col col-sm-7">
+                        <button {{bind-attr id='model.id_dsl_create'}} class="btn btn-sm btn-primary btn-block"{{action 'dsl_create'}}>
+                                Create DSL <b class="glyphicon glyphicon-save-file text-success"></b>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+</div>

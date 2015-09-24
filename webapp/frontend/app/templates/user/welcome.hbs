@@ -22,6 +22,9 @@
 		  <li class="list-group-item text-md">
             <span class="badge">{{model.vrenum}}</span><span class="h4">Active VREs: </h4>
           </li>
+          <li class="list-group-item text-md">
+            <span class="badge">{{model.dslnum}}</span><span class="h4">DSLs: </h4>
+          </li>
 		</ul>
 	</div>
 	<div class="col col-sm-7 pull-right">
@@ -53,13 +56,19 @@
             <li {{bind-attr class="content_tabs.vreservers.active:active"}}>
                 <a data-toggle="tab" href="#id_uservres_tab"><span class="h4 text-left">{{content_tabs.vreservers.name}} (<span class="text text-success">{{model.vrenum}}</span>/<span class="text text-muted small">{{model.vreservers.length}}</span>)</span></a>
             </li>
+            <li {{bind-attr class="content_tabs.dsls.active:active"}}>
+                <a data-toggle="tab" href="#id_userdsls_tab"><span class="h4 text-left">{{content_tabs.dsls.name}} (<span class="text text-success">{{model.dslnum}}</span>/<span class="text text-muted small">{{model.dsls.length}}</span>)</span></a>
+            </li>
         </ul>
-        <div id="id_clusters_and_vres" class="tab-content">
+        <div id="id_clusters_vres_dsls" class="tab-content">
             <div {{bind-attr id="content_tabs.clusters.id" class=":tab-pane content_tabs.clusters.active:active"}}>
                 {{partial 'user/userclusters'}}
             </div>
             <div {{bind-attr id="content_tabs.vreservers.id" class=":tab-pane content_tabs.vreservers.active:active"}}>
                 {{partial 'user/uservres'}}
+            </div>
+            <div {{bind-attr id="content_tabs.dsls.id" class=":tab-pane content_tabs.dsls.active:active"}}>
+                {{partial 'user/userdsls'}}
             </div>
         </div>
     </div>

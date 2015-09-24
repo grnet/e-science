@@ -7,6 +7,11 @@ This script contains useful classes and fuctions for orka package.
 @author: Ioannis Stenos, Nick Vrionis
 """
 import logging
+import re
+import subprocess
+import yaml
+import urllib
+import requests
 from base64 import b64encode
 from os.path import abspath, join, expanduser
 from kamaki.clients import ClientError
@@ -14,13 +19,11 @@ from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.cyclades import CycladesClient, CycladesNetworkClient
 from time import sleep
+from datetime import datetime
 from cluster_errors_constants import *
 from celery import current_task
 from django_db_after_login import db_cluster_update, get_user_id, db_server_update, db_hadoop_update
 from backend.models import UserInfo, ClusterInfo, VreServer
-import re
-import subprocess
-
 
 
 def retrieve_pending_clusters(token, project_name):
@@ -125,6 +128,50 @@ def destroy_server(token, id):
 
     return vre_server.server_name
 
+def create_dsl(choices):
+    if choices['pithos_path'].startswith('/'):
+        choices['pithos_path'] = choices['pithos_path'][1:]
+    if choices['pithos_path'].endswith('/'):
+        choices['pithos_path'] = choices['pithos_path'][:-1]
+    uuid = get_user_id(unmask_token(encrypt_key,choices['token']))
+    container_status_code = get_pithos_container_info(uuid, choices['pithos_path'], choices['token'])
+    if container_status_code == pithos_container_not_found:
+        msg = 'Container not found error {0}'.format(container_status_code)
+        raise ClientError(msg, error_container)
+    action_date = datetime.now().replace(microsecond=0)
+    cluster = ClusterInfo.objects.get(id=choices['cluster_id'])
+    data = {'cluster': {'name': cluster.cluster_name, 'project_name': cluster.project_name, 'image': cluster.os_image, 'disk_template': u'{0}'.format(cluster.disk_template),
+                        'cluster_size': cluster.cluster_size, 'flavor_master':[cluster.cpu_master, cluster.ram_master,cluster.disk_master], 'flavor_slaves': [cluster.cpu_slaves, cluster.ram_slaves, cluster.disk_slaves]}, 
+            'configuration': {'replication_factor': cluster.replication_factor, 'dfs_blocksize': cluster.dfs_blocksize}}
+    yaml.add_representer(unicode, lambda dumper, value: dumper.represent_scalar(u'tag:yaml.org,2002:str', value))
+    if not (choices['dsl_name'].endswith('.yml') or choices['dsl_name'].endswith('.yaml')):
+        choices['dsl_name'] = '{0}.yaml'.format(choices['dsl_name'])
+    with open('/tmp/{0}'.format(choices['dsl_name']), 'w') as metadata_yml:
+        metadata_yml.write(yaml.dump(data, default_flow_style=False))
+    with open('/tmp/{0}'.format(choices['dsl_name']), 'r') as metadata_yml:
+        url = '{0}/{1}/{2}/{3}'.format(pithos_url, uuid, choices['pithos_path'], urllib.quote(choices['dsl_name']))
+        headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,choices['token'])),'content-type':'text/plain'}
+        r = requests.put(url, headers=headers, data=metadata_yml)
+        response = r.status_code
+    subprocess.call('rm /tmp/' + choices['dsl_name'], shell=True)
+    if response == pithos_put_success:
+        return choices['id'], choices['pithos_path'], choices['dsl_name']
+    msg = 'Pithos error {0}'.format(response)
+    raise ClientError(msg, error_create_dsl)
+
+def destroy_dsl(token, id):
+    print "destroy_dsl"
+    # TODO placeholders for actual implementation
+    pass
+
+def get_pithos_container_info(uuid, pithos_path, token):
+    if '/' in pithos_path:
+        pithos_path = pithos_path.split("/", 1)[0]
+    url = '{0}/{1}/{2}'.format(pithos_url, uuid, pithos_path)
+    headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,token))}
+    r = requests.head(url, headers=headers)
+    response = r.status_code
+    return response
 
 def get_public_ip_id(cyclades_network_client,float_ip):  
     """Return IP dictionary of an ~okeanos public IP"""
@@ -752,7 +799,7 @@ def init_cyclades(endpoint, token):
         msg = ' Failed to initialize cyclades client'
         raise ClientError(msg)
 
-  
+
 def get_float_network_id(cyclades_network_client, project_id):
         """
         Gets an Ipv4 floating network id from the list of public networks Ipv4
