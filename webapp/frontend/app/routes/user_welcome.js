@@ -69,7 +69,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 				this.controller.set('count', 15);
 				this.controller.send('timer', true, this.store);
 			}
-			Ember.run.later(function(){self.controller.send('dismiss');},15*1000); // 15 sec
 			return true;
 		},
 		takeDslAction : function(dsl){

@@ -21,7 +21,10 @@ App.DslCreateController = Ember.Controller.extend({
     
     // userclusters block
     filtered_clusters : function(){
-        return this.get('user_clusters').filterBy('id').filterBy('cluster_status_verbose','ACTIVE');
+        var filter_by = ['DESTROYED','ACTIVE'];
+        return Ember.isEmpty(this.get('user_clusters')) ? [] : this.get('user_clusters').filter(function(item, index, original) {
+            return filter_by.contains(item.get('cluster_status_verbose'));
+        });
     }.property('user_clusters.[]','user_clusters.isLoaded'),
     
     boolean_no_cluster : true,
@@ -29,11 +32,12 @@ App.DslCreateController = Ember.Controller.extend({
         if (!Ember.isEmpty(this.get('selected_cluster_id'))){
             this.set('selected_cluster',this.get('filtered_clusters').filterBy('id',this.get('selected_cluster_id')));
             this.set('boolean_no_cluster',false);
+            this.set('alert_missing_input_dsl_source',null);
         }else{
             this.set('selected_cluster',null);
             this.set('boolean_no_cluster',true);
         }
-    }.observes('selected_cluster_id'),
+    }.observes('selected_cluster_id','filtered_clusters'),
     selectec_cluster_size : function(){
         return Ember.isEmpty(this.get('selected_cluster')) ? '' : this.get('selected_cluster').objectAt(0).get('cluster_size');
     }.property('selected_cluster'),
@@ -147,9 +151,13 @@ App.DslCreateController = Ember.Controller.extend({
             this.set('selected_cluster_id',cluster_id);
         },
         reset : function(){
+            var self = this;
             this.set('dsl_filename','');
             this.set('dsl_pithos_path','');
             this.set('selected_cluster_id',null);
+            for (alert in self.get('alert_input_missing_text')){
+                self.set(alert,null);
+            }
         }
     }
 });

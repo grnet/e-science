@@ -14,7 +14,7 @@ App.UserWelcomeController = Ember.Controller.extend({
     content_tabs_info : {
         clusters: {id:'id_userclusters_tab',href:'#id_userclusters_tab',name:'Hadoop Clusters',active:true},
         vreservers: {id:'id_uservres_tab',href:'#id_uservres_tab',name:'Virtual Research Environments'},
-        dsls: {id:'id_userdsls_tab',href:'#id_userdsls_tab',name:'Reproducible Experiments DSLs'}
+        dsls: {id:'id_userdsls_tab',href:'#id_userdsls_tab',name:'Reproducible Experiments'}
     },
     content_tabs : function(key,value){
         var tabs_object = this.get('content_tabs_info');

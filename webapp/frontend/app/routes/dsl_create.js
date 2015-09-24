@@ -4,12 +4,17 @@ App.DslCreateRoute = App.RestrictedRoute.extend({
     model : function(params, transition) {
         $.loader.close(true);
         var promise = this.store.fetch('user',1);
+        promise.then(function(user){
+            return user.get('clusters');
+        },function(reason){
+            console.log(reason.message);
+        });
         return promise;
     },
     setupController : function(controller, model){
+        this._super(controller,model);
         controller.set('user_clusters',model.get('clusters'));
         controller.set('user_dsls',model.get('dsls'));
-        this._super(controller,model);
     },
     deactivate : function(){
         // left this route

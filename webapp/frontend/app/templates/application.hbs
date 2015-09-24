@@ -8,7 +8,7 @@
 					<span class="icon-bar"></span>
 					<span class="icon-bar"></span>
 				</button>
-				<div id="logo_overlay"><span class="pull-left">v{{APP_VERSION}}</span>
+				<div id="logo_overlay">
 			        <a {{bind-attr href='homeURL'}} class="navbar-brand">
                         <img class="img-responsive" src="{{unbound STATIC_URL}}images/orka.png" alt="Orka" width="65"/>
                     </a>
@@ -26,7 +26,7 @@
 							    {{#link-to 'vreserver.create' id="id_create_vre"}}<i class="glyphicon glyphicon-blackboard"></i> Create VRE</a>{{/link-to}}
 							</li>
 							<li>
-                                {{#link-to 'dsl.create' id="id_create_dsl"}}<i class="glyphicon glyphicon-share"></i> Create Experiment Metadata</a>{{/link-to}}
+                                {{#link-to 'dsl.create' id="id_create_dsl"}}<i class="glyphicon glyphicon-share"></i> Save Experiment Metadata</a>{{/link-to}}
                             </li>
 						</ul>
 					</li>
