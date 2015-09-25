@@ -141,7 +141,7 @@ def create_dsl(choices):
     action_date = datetime.now().replace(microsecond=0)
     cluster = ClusterInfo.objects.get(id=choices['cluster_id'])
     data = {'cluster': {'name': cluster.cluster_name, 'project_name': cluster.project_name, 'image': cluster.os_image, 'disk_template': u'{0}'.format(cluster.disk_template),
-                        'cluster_size': cluster.cluster_size, 'flavor_master':[cluster.cpu_master, cluster.ram_master,cluster.disk_master], 'flavor_slaves': [cluster.cpu_slaves, cluster.ram_slaves, cluster.disk_slaves]}, 
+                        'size': cluster.cluster_size, 'flavor_master':[cluster.cpu_master, cluster.ram_master,cluster.disk_master], 'flavor_slaves': [cluster.cpu_slaves, cluster.ram_slaves, cluster.disk_slaves]}, 
             'configuration': {'replication_factor': cluster.replication_factor, 'dfs_blocksize': cluster.dfs_blocksize}}
     if not (choices['dsl_name'].endswith('.yml') or choices['dsl_name'].endswith('.yaml')):
         choices['dsl_name'] = '{0}.yaml'.format(choices['dsl_name'])
