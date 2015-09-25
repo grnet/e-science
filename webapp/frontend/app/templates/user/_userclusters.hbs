@@ -53,7 +53,7 @@
 				</div>
                 {{else}}
                 <div class='btn-group btn-block'>
-                	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY CLUSTER'><button {{bind-attr id='usercluster.cluster_destroy_id'}} class="btn btn-xs btn-default"{{action 'confirmClusterAction' usercluster 'cluster_delete'}}>
+                	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='DESTROY CLUSTER'><button {{bind-attr id='usercluster.cluster_destroy_id'}} class="btn btn-xs btn-default"{{action 'confirmClusterAction' usercluster 'cluster_delete'}}{{bind-attr disabled=usercluster.cluster_action_destroy_disabled}}>
                 		<b {{bind-attr class='usercluster.cluster_status_class_destroy'}}></b> </button></div>
                 	<div class="pull-left" data-toggle="tooltip" data-placement="top" data-title='START HADOOP'><button {{bind-attr id='usercluster.hadoop_start_id'}} class="btn btn-xs btn-default" {{action 'confirmClusterAction' usercluster 'hadoop_start'}}{{bind-attr disabled=usercluster.hadoop_action_start_disabled}}> 
                 		<b {{bind-attr class='usercluster.hadoop_status_class_start'}}></b> </button></div>
