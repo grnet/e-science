@@ -357,3 +357,33 @@ class VreServer(models.Model):
     def __unicode__(self):
 
         return ("%d, %s, %s") % (self.id, self.server_name, self.server_status)
+    
+class Dsl(models.Model):
+    """Definition of a User Cluster DSL object model."""
+    dsl_name = models.CharField("DSL Name", max_length=255, null=False,
+                                    help_text="Name of the DSL")
+    pithos_path = models.CharField("Pithos path", max_length=255, null=False,
+                                     help_text="Pithos path of DSL file")
+    action_date = models.DateTimeField("Action Date", null=False,
+                                       help_text="Date and time for"
+                                       " the creation of this entry")
+    cluster_id = models.IntegerField("Linked Cluster Id", null=True, blank=True,
+                                     help_text="Cluster Id from which the DSL metadata was extracted.")
+
+    user = models.ForeignKey(UserInfo, null=False, related_name='dsls',
+                                help_text="User ID "
+                                "(user ID who owns the DSL File)")
+
+    task_id = models.CharField("Task Id", max_length=255,
+                               blank=True, help_text="Celery task id")
+
+    state = models.CharField("Task State", max_length=255,
+                               blank=True, help_text="Celery task state")
+    
+    class Meta:
+        verbose_name = "DSL"
+        app_label = 'backend'
+
+    def __unicode__(self):
+
+        return ("%d, %s, %s") % (self.id, self.dsl_name, self.cluster_id)    

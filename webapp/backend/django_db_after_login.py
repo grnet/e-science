@@ -14,6 +14,7 @@ from kamaki.clients.astakos import AstakosClient, CachedAstakosClient
 from kamaki.clients import ClientError
 from backend.models import *
 from django.core.exceptions import *
+from django.db.models.fields import FieldDoesNotExist
 from authenticate_user import *
 from django.utils import timezone
 from cluster_errors_constants import *
@@ -122,6 +123,15 @@ def db_server_create(choices, task_id):
 
     return new_server.id
 
+def db_dsl_create(choices, task_id):
+    """Updates DB after user request for Reproducible Experiments DSL creation"""
+    user =  UserInfo.objects.get(okeanos_token=choices['token'])
+    new_dsl = Dsl.objects.create(dsl_name=choices['dsl_name'], pithos_path=choices['pithos_path'],action_date=timezone.now(),
+                                 cluster_id=choices['cluster_id'],
+                                 user_id=user.user_id,
+                                 task_id=task_id,
+                                 state='Authenticated')
+    return new_dsl.id    
 
 def db_server_update(token, status, id, server_IP='', state='', okeanos_server_id='', password='', error=''):
     """
@@ -219,6 +229,42 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
     user.save()
     cluster.save()
 
+def db_dsl_update(token, id, **kwargs):
+    """
+    Updates DB when reproducible DSL status or metadata is changed.
+    Pass the value(s) to update as a named name=value pair.
+    Example: db_dsl_update(token, id, state='new state')
+    """
+    try:
+        user = UserInfo.objects.get(okeanos_token=token)
+        dsl = Dsl.objects.get(id=id)
+    except ObjectDoesNotExist:
+        msg = 'Reproducible Experiments DSL was not found'
+        raise ObjectDoesNotExist(msg)
+    model_dirty = False
+    if kwargs is not None:
+        for key,value in kwargs.iteritems():
+            try:
+                field = Dsl._meta.get_field_by_name(key)
+                setattr(dsl, key, value)
+                model_dirty = True
+            except FieldDoesNotExist:
+                #ignore keyword arguments not present on the model
+                pass
+        if model_dirty:
+            dsl.save()
+
+def db_dsl_delete(token, id):
+    """
+    Removes a dsl record from DB
+    """
+    try:
+        user = UserInfo.objects.get(okeanos_token=token)
+        dsl = Dsl.objects.get(id=id)
+    except ObjectDoesNotExist:
+        msg = 'Reproducible Experiments DSL was not found'
+        raise ObjectDoesNotExist(msg)
+    dsl.delete()
 
 def db_login_entry(user):
     """

@@ -13,7 +13,8 @@ App.ClusterManagementController = Ember.Controller.extend({
     content_tabs_info : {
         info: {id:'id_tab_info',href:'#id_tab_info',name:'Info',active:true},
         access: {id:'id_tab_access',href:'#id_tab_access',name:'Access'},
-        manage : {id:'id_tab_manage',href:'#id_tab_manage',name:'Manage'}
+        manage : {id:'id_tab_manage',href:'#id_tab_manage',name:'Manage'},
+        scale : {id:'id_tab_scale',href:'#id_tab_scale',name:'Scale'}
     },
     content_tabs : function(key,value){
         var tabs_object = this.get('content_tabs_info');
@@ -23,6 +24,7 @@ App.ClusterManagementController = Ember.Controller.extend({
             Ember.set(tabs_object.info,'active',false);
             Ember.set(tabs_object.access,'active',false);
             Ember.set(tabs_object.manage,'active',false);
+            Ember.set(tabs_object.scale,'active',false);
             switch(value) {
             case "info":
                 Ember.set(tabs_object.info,'active',true);
@@ -32,6 +34,9 @@ App.ClusterManagementController = Ember.Controller.extend({
                 break;
             case "manage":
                 Ember.set(tabs_object.manage,'active',true);
+                break;
+            case "scale":
+                Ember.set(tabs_object.scale,'active',true);
                 break;
             }
             this.set('content_tabs_info',tabs_object);
@@ -44,7 +49,7 @@ App.ClusterManagementController = Ember.Controller.extend({
         if (!Ember.isBlank(stat_message)) {
             var cluster_name = this.get('content.cluster_name');
             var msg = {
-                'msg_type' : 'warning',
+                'msg_type' : 'default',
                 'msg_text' : cluster_name +': ' + stat_message
             };
             this.controllerFor('userWelcome').send('addMessage', msg);
@@ -97,7 +102,10 @@ App.ClusterManagementController = Ember.Controller.extend({
 	        return new safestr('<b class="glyphicon glyphicon-resize-full"></b>');   
 	    }
 	}.property('cluster_slaves_delta'),
-	
+	cluster_action_destroy_disable : function(){
+	    return this.get('content.cluster_action_destroy_disabled') || this.get('initial_timer_active');
+	}.property('content.cluster_action_destroy_disabled','initial_timer_active'),
+
 	actions : {
 	    increment_size : function(){
 	        this.set('cluster_slaves_newsize',this.get('cluster_slaves_newsize')+1);
@@ -218,7 +226,7 @@ App.ClusterManagementController = Ember.Controller.extend({
                 this.get('timer').start();
             } else {
                 this.get('timer').stop();
-                that.set('count',0);
+                that.set('count', 0);
             }
         },
     }

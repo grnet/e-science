@@ -124,6 +124,60 @@ App.UserclusterAdapter = DS.ActiveModelAdapter.extend({
     }
 });
 
+App.DslAdapter = DS.ActiveModelAdapter.extend({
+	headers : function() {
+        return {
+            "Authorization" : App.escience_token,
+        };
+    }.property("App.escience_token"),
+    createRecord: function(store, type, record) {
+        var data = this.serialize(record, {
+            includeId : true
+        });
+        var url = 'api/dsls';
+        var headers = this.get('headers');
+
+        return new Ember.RSVP.Promise(function(resolve, reject) {
+            jQuery.ajax({
+                type : 'POST',
+                headers : headers,
+                url : url,
+                dataType : 'json',
+                data : data
+            }).then(function(data) {
+                Ember.run(null, resolve, data);
+            }, function(jqXHR) {
+                jqXHR.then = null;
+                // tame jQuery's ill mannered promises
+                Ember.run(null, reject, jqXHR);
+            });
+        });
+    },
+    deleteRecord : function(store, type, record) {
+        var data = this.serialize(record, {
+            includeId : true
+        });
+        var url = 'api/dsls';
+        var headers = this.get('headers');
+    
+        return new Ember.RSVP.Promise(function(resolve, reject) {
+            jQuery.ajax({
+                type : 'DELETE',
+                headers : headers,
+                url : url,
+                dataType : 'json',
+                data : data
+            }).then(function(data) {
+                Ember.run(null, resolve, data);
+            }, function(jqXHR) {
+                jqXHR.then = null;
+                // tame jQuery's ill mannered promises
+                Ember.run(null, reject, jqXHR);
+            });
+        });
+    }
+});
+
 App.UservreserverSerializer = DS.RESTSerializer.extend({
     attrs : {
         server_IP : {
@@ -150,6 +204,15 @@ App.UservreserverSerializer = DS.RESTSerializer.extend({
     } 
 });
 
+App.DslSerializer = DS.RESTSerializer.extend({
+	attrs : {
+	    action_date : {serialize : false},
+	    task_id : {serialize : false},
+        state : {serialize : false},
+		user : {serialize : false}
+	}
+});
+
 App.UserclusterSerializer = DS.RESTSerializer.extend({
     attrs : {
         master_IP : {
@@ -170,8 +233,8 @@ App.UserclusterSerializer = DS.RESTSerializer.extend({
         project_name : {serialize : false},
         task_id : {serialize : false},
         state : {serialize : false},
-        replication_factor : {serialize : false}, // check if needed
-        dfs_blocksize : {serialize : false},       // check if needed
+        replication_factor : {serialize : false},
+        dfs_blocksize : {serialize : false},
         user : {serialize : false}
     }
 });
@@ -182,6 +245,9 @@ App.UserSerializer = DS.RESTSerializer.extend(DS.EmbeddedRecordsMixin, {
             embedded : 'always',
         },
         vreservers : {
+            embedded : 'always',
+        },
+        dsls : {
             embedded : 'always',
         }
     },
