@@ -102,6 +102,9 @@ App.ClusterManagementController = Ember.Controller.extend({
 	        return new safestr('<b class="glyphicon glyphicon-resize-full"></b>');   
 	    }
 	}.property('cluster_slaves_delta'),
+	cluster_action_destroy_disable : function(){
+	    return this.get('content.cluster_action_destroy_disabled') || this.get('initial_timer_active');
+	}.property('content.cluster_action_destroy_disabled','initial_timer_active'),
 
 	actions : {
 	    increment_size : function(){

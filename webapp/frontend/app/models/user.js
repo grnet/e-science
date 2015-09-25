@@ -395,6 +395,12 @@ App.Usercluster = DS.Model.extend({
 			return "glyphicon glyphicon-question-sign text-muted";
 		}
 	}.property('hadoop_status','cluster_status'),
+	cluster_action_destroy_disabled : function(){
+	    var status_final = ['ACTIVE','STARTED','STOPPED'];
+	    var cluster_status = this.get('cluster_status_verbose');
+        var hadoop_status = this.get('cluster_hadoop_status');
+        return !(status_final.contains(cluster_status) && status_final.contains(hadoop_status));
+	}.property('cluster_status_verbose','cluster_hadoop_status'),
 	hadoop_status_verbose : function(){
 		var cluster_status = this.get('cluster_status');
 		var hadoop_status = this.get('hadoop_status');
