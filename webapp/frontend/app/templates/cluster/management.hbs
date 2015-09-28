@@ -190,7 +190,7 @@
 			    </div>
             </div>
 			{{else}}
-				<button {{bind-attr id='model.cluster_destroy_id'}} class="btn btn-sm btn-primary btn-block"{{action 'confirmClusterAction' model 'cluster_delete'}}>
+				<button {{bind-attr id='model.cluster_destroy_id'}} class="btn btn-sm btn-primary btn-block"{{action 'confirmClusterAction' model 'cluster_delete'}}{{bind-attr disabled=cluster_action_destroy_disable}}>
                     Destroy Cluster <b {{bind-attr class='model.cluster_status_class_destroy'}}></b>
                 </button>
 			{{/ifeq}}

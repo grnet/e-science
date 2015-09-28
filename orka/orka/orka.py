@@ -802,7 +802,7 @@ def main():
                                         ' cluster or a Virtual Research Environment server in ~okeanos ')
     checker = _ArgCheck()
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
-                                level=checker.logging_levels['summary'],
+                                level=checker.logging_levels[default_logging],
                                 datefmt='%Y-%m-%d %H:%M:%S')
     try:
         kamaki_token = get_from_kamaki_conf('cloud "~okeanos"', 'token')

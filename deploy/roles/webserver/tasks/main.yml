@@ -114,7 +114,7 @@
 
   - name: Create the SSL certificate
     sudo: yes
-    command: openssl req -x509 -nodes -days {{certificate_key_lifetime}} -newkey rsa:{{key_rsa}} -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt -subj "/C=GR/ST=Athens/L=Athens/O= /OU= /CN={{inventory_hostname}}"
+    command: openssl req -x509 -nodes -days {{certificate_key_lifetime}} -newkey rsa:{{key_rsa}} -sha256 -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt -subj "/C=GR/ST=Athens/L=Athens/O= /OU= /CN={{inventory_hostname}}"
     tags: postimage
 
   - name: Copy encryption file for ~okeanos token

@@ -20,7 +20,7 @@ from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
     DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, \
     HdfsSerializer, StatisticsSerializer, NewsSerializer, \
-    OrkaImagesSerializer, VreImagesSerializer, DslsSerializer
+    OrkaImagesSerializer, VreImagesSerializer, DslsSerializer, DslOptionsSerializer, DslDeleteSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async, scale_cluster_async, \
@@ -398,7 +398,7 @@ class DslView(APIView):
     
     def get(self, request, *args, **kwargs):
         """
-        Return a serialized Cluster DSL model. User with corresponding status will be
+        Return a serialized Cluster metadata model. User with corresponding status will be
         found by the escience token.
         """
         user_token = Token.objects.get(key=request.auth)
@@ -408,9 +408,9 @@ class DslView(APIView):
     
     def post(self, request, *args, **kwargs):
         """
-        Handles requests with user's DSL creation parameters.
+        Handles requests with user's Reproducible Experiments metadata file creation parameters.
         """
-        serializer = self.serializer_class(data=request.DATA)
+        serializer = DslOptionsSerializer(data=request.DATA)
         if serializer.is_valid():
             user_token = Token.objects.get(key=request.auth)
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
@@ -420,12 +420,8 @@ class DslView(APIView):
             choices = serializer.data.copy()
             choices.update({'token': user.okeanos_token})
             c_dsl = create_dsl_async.delay(choices)
-            try:
-                c_dsl.get()
-                task_id = c_dsl.id
-                return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
-            except ClientError:
-                raise
+            task_id = c_dsl.id
+            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
 
         # This will be send if user's parameters are not de-serialized
         # correctly.
@@ -433,15 +429,16 @@ class DslView(APIView):
     
     def delete(self, request, *args, **kwargs):
         """
-        Delete VRE server from ~okeanos.
+        Delete Reproducible Experiments metadata file from pithos.
         """ 
-        serializer = DeleteClusterSerializer(data=request.DATA)
+        serializer = DslDeleteSerializer(data=request.DATA)
         if serializer.is_valid():
             user_token = Token.objects.get(key=request.auth)
             user = UserInfo.objects.get(user_id=user_token.user.user_id)
-            d_dsl = destroy_dsl_async.delay(user.okeanos_token, serializer.data['id'])
+            dsl_id = serializer.data['id']
+            d_dsl = destroy_dsl_async.delay(user.okeanos_token, dsl_id)
             task_id = d_dsl.id
-            return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+            return Response({"id":dsl_id, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
         # This will be send if user's delete server parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)    
