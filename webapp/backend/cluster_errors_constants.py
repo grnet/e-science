@@ -45,22 +45,15 @@ error_create_server = -31 # Error while creating ~okeanos server (e.g. stay in B
 error_syntax_auth_token = -32 # Error reading ~okeanos token from .kamakirc for cli (e.g. no token in .kamakirc)
 error_ansible_playbook = -34 # General error while running create cluster Ansible playbook
 error_ssh_client = -35 # Error for staging server not be able to connect to cluster during reroute steps
+error_remove_node = -37#Error while removing a node when scaling a cluster
 error_cluster_not_exist = -69 # Not used anywhere
 error_cluster_corrupt = -70 # Error while deleting cluster and not all VMs are deleted(e.g. Error before deleting all cluster VMs)
-error_remove_node = -37
-
-    # rename to error_project_id
-error_proj_id = -71 # No project id for given project name
-
+error_project_id = -71 # No project id for given project name
 error_multiple_entries = -72 # Multiple entries in database for something unique
-error_project_quota = -73 # Zero user quota for a given project
-
-        
+error_project_quota = -73 # Zero user quota for a given project       
 error_authentication = -99 # Invalid token
-error_create_dsl = -75
-error_container = -76
-
-
+error_create_dsl = -75#Error while upload dsl file to pithos
+error_container = -76#Error pithos container not found while upload dsl file
 
 FNULL = open(os.devnull, 'w') # Redirects whatever is assigned to FNULL to nothingness (e.g. stderr=FNULL)
 
@@ -78,7 +71,7 @@ Mbytes_to_GB = 1024     # Global to convert megabytes to gigabytes
 Bytes_to_MB = 1048576   # Global to convert bytes to megabytes
 Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
 
-        # Used for storage template conversion in get_flavors_quotas, so user-friendly args can be used in cli and gui
+ # Used for storage template conversion in get_flavors_quotas, so user-friendly args can be used in cli and gui
 storage_template = {'ext_vlmc':'Archipelago','drbd':'Standard'} # ~okeanos available storage templates with user friendly name
 # Reverse storage template not used anywhere
 reverse_storage_template = {'Archipelago':'ext_vlmc','Standard':'drbd'} # ~okeanos available storage templates with user friendly name
@@ -87,17 +80,9 @@ auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 pithos_url = 'https://pithos.okeanos.grnet.gr/v1'
 pithos_put_success = 201  # Success pithos response
 pithos_container_not_found = 404
+
+# If no image is given in orka-cli, this is the default image. Not used in backed/cluster_errors_constants
 default_image = 'Debian Base'
-
-# Default orka logging level 
-default_logging = 'summary'
-
-# REST-API endpoints
-    # Non of these are required in backend/cluster_errors_constants, used only in orka/cluster_errors_contants
-login_endpoint = '/api/users'
-cluster_endpoint = '/api/clusterchoices'
-job_endpoint = '/api/jobs'
-hdfs_endpoint = '/api/hdfs'
 
 # Cluster status constants
 const_cluster_status_destroyed = "0"
@@ -109,6 +94,7 @@ const_hadoop_status_stopped = "0"
 const_hadoop_status_started = "1"
 const_hadoop_status_format = "2"
 const_hadoop_status_undefined = "3"
+
         #Set hadoop pending status to 2 (same as hadoop status format and cluster status pending)
 const_hadoop_status_pending = const_hadoop_status_format
 
@@ -117,8 +103,6 @@ const_truncate_limit = 350
 
 const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
 const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
-
-        # FOLLOWING 2 VARIABLES A BIT CONFUSING
 HADOOP_STATUS_ACTIONS = {"stop": ["0", "Stopping", "Stopped"],
                          "start": ["1", "Starting", "Started"],
                          "format": ["2", "Formatting", "Formatted"],
@@ -159,7 +143,7 @@ pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"ima
                                "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"image":"mediawiki","db_name":"db","default_password":"@test123",
                                                                         "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}",
                                                                         "change_db_pass":"docker exec -t -i db bash -c \"mysql -p{0} mediawiki -e \\\"UPDATE user SET user_password = CONCAT(':A:', MD5('{0}')) WHERE user_name = 'Admin';\\\"\""},
-                               "6a6676d4-213c-464b-a321-04998c1d8dc7": {"image":"dspace","update_password":"/usr/bin/docker exec -d dspace sudo -u postgres psql -U postgres -d dspace -c \"alter user dspace password '{0}';\"",
+                               "c5850bc1-255d-4847-9b89-ce8e86667250": {"image":"dspace","update_password":"/usr/bin/docker exec -d dspace sudo -u postgres psql -U postgres -d dspace -c \"alter user dspace password '{0}';\"",
                                                                         "change_db_pass":"docker exec -d dspace sed -i 's/db.password *= * *dspace/db.password={0}/g' /dspace/config/dspace.cfg"},
                                "0d26fd55-31a4-46b3-955d-d94ecf04a323": {"image":"bigbluebutton"}}
 
@@ -170,7 +154,6 @@ from encrypt_key import key     # File with only one variable key = encrypt_key,
 encrypt_key = key
 
 def mask_token(key, token):
-        # INSERT COMMENTS HERE
     enc = []
     for i in range(len(token)):
         key_c = key[i % len(key)]
@@ -179,7 +162,6 @@ def mask_token(key, token):
     return base64.urlsafe_b64encode("".join(enc))
 
 def unmask_token(key, masked_token):
-        # INSERT COMMENTS HERE
     dec = []
     masked_token = base64.urlsafe_b64decode(masked_token.encode('ascii'))
     for i in range(len(masked_token)):

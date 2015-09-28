@@ -35,6 +35,8 @@ App.Router.map(function() {
 		this.route('images');
 		// /help/vreimages
 		this.route('vreimages');
+		// /help/experiments
+		this.route('experiments');
 	});
 	// Route to enforce login policy
 	// other routes that require login extend this

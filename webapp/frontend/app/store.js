@@ -152,6 +152,29 @@ App.DslAdapter = DS.ActiveModelAdapter.extend({
                 Ember.run(null, reject, jqXHR);
             });
         });
+    },
+    deleteRecord : function(store, type, record) {
+        var data = this.serialize(record, {
+            includeId : true
+        });
+        var url = 'api/dsls';
+        var headers = this.get('headers');
+    
+        return new Ember.RSVP.Promise(function(resolve, reject) {
+            jQuery.ajax({
+                type : 'DELETE',
+                headers : headers,
+                url : url,
+                dataType : 'json',
+                data : data
+            }).then(function(data) {
+                Ember.run(null, resolve, data);
+            }, function(jqXHR) {
+                jqXHR.then = null;
+                // tame jQuery's ill mannered promises
+                Ember.run(null, reject, jqXHR);
+            });
+        });
     }
 });
 
@@ -183,6 +206,9 @@ App.UservreserverSerializer = DS.RESTSerializer.extend({
 
 App.DslSerializer = DS.RESTSerializer.extend({
 	attrs : {
+	    action_date : {serialize : false},
+	    task_id : {serialize : false},
+        state : {serialize : false},
 		user : {serialize : false}
 	}
 });
