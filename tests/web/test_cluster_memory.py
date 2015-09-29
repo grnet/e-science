@@ -84,7 +84,7 @@ class TestClusterMemory(ClusterTest):
 	    opts = {"name": self.name,
                               "clustersize": 2,
                               "cpu_master": 1, "ram_master": 1024, "disk_master": 5,
-                              "disk_template":'Archipelago', "cpu_slave": 1,
+                              "disk_template":'Standard', "cpu_slave": 1,
                               "ram_slave": 1024, "disk_slave": 5, "token": self.token,
                               "image": 'Debian Base', "project_name": self.project_name}
 	    c_yarn_cluster = YarnCluster(opts)
@@ -97,7 +97,7 @@ class TestClusterMemory(ClusterTest):
                     opts = {"name": self.name,
                               "clustersize": 2,
                               "cpu_master": 1, "ram_master": remaining_ram, "disk_master": 5,
-                              "disk_template":'Archipelago', "cpu_slave": 1,
+                              "disk_template":'Standard', "cpu_slave": 1,
                               "ram_slave": remaining_ram, "disk_slave": 5, "token": self.token,
                               "image": 'Debian Base', "project_name": self.project_name}
 	            c_yarn_cluster = YarnCluster(opts)

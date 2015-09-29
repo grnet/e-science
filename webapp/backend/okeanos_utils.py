@@ -101,7 +101,7 @@ def get_project_id(token, project_name):
         if project['name'] == project_name and project['id'] in dict_quotas:
             return project['id']
     msg = ' No project id was found for ' + project_name
-    raise ClientError(msg, error_proj_id)
+    raise ClientError(msg, error_project_id)
 
 
 def destroy_server(token, id):

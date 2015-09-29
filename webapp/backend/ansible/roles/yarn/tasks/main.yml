@@ -139,13 +139,13 @@
       - /tmp/{{master_key_root}}
     when: is_slave
 
-  - name: chown hadoop-src from root to hadoop group
-    tags: postconfig
-    file: path={{path_to_hadoop}}/{{yarn_version}} state=directory owner=hduser group=hadoop recurse=yes
-
   - name: Rename hadoop directory
     tags: postconfig
-    command: mv {{path_to_hadoop}}/{{yarn_version}} {{hadoop_home}}
+    shell: mv {{path_to_hadoop}}/{{yarn_version}} {{hadoop_home}}
+
+  - name: chown hadoop-src from root to hadoop group
+    tags: postconfig
+    file: path={{hadoop_home}} state=directory owner=hduser group=hadoop recurse=yes
 
   - name: update ~/.bashrc and hadoop-env.sh files
     tags: postconfig
@@ -363,6 +363,7 @@
       - { path: '/usr/local/hbase/', owner: '{{eco_db_user}}', group: 'hadoop' }
       - { path: '/usr/local/oozie/', owner: '{{eco_db_user}}', group: 'hadoop' }
       - { path: '/usr/local/pig/', owner: '{{eco_db_user}}', group: 'hadoop' }
+      - { path: '/usr/local/spark/', owner: '{{eco_db_user}}', group: 'hadoop' }
 
   - name: Create PostgreSql database for Hive
     tags: ecoconfig

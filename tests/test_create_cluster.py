@@ -186,7 +186,7 @@ class TestCreateCluster(TestCase):
             self.opts = {'name': 'Test', 'cluster_size': 2, 'cpu_master': 2,
                 'ram_master': 4096, 'disk_master': 5, 'cpu_slaves': 2,
                 'ram_slaves': 2048, 'disk_slaves': 5, 'token': self.token,
-                'disk_template': 'Archipelago', 'os_choice': 'ubuntu',
+                'disk_template': 'Standard', 'os_choice': 'ubuntu',
                 'auth_url': self.auth_url, 'project_name': self.project_name}
         except NoSectionError:
             self.token = 'INVALID_TOKEN'

@@ -4,9 +4,10 @@ App.UserLoginController = Ember.Controller.extend({
 	token : '',
 	runLater : null,
 	okeanos_api_url : 'https://accounts.okeanos.grnet.gr/ui/api_access',
+	logout_time_limit : 7200000, //time in milliseconds after which user will be logged out
 	isLoggedIn : function() {
 		// Check local storage auth token for user login status.
-		if (window.localStorage.escience_auth_token != 'null' && !Ember.isEmpty(window.localStorage.escience_auth_token) && window.localStorage.escience_auth_token !== 'undefined') {
+		if (window.sessionStorage.escience_auth_token != 'null' && !Ember.isEmpty(window.sessionStorage.escience_auth_token) && window.sessionStorage.escience_auth_token !== 'undefined') {
 			this.set('controllers.application.loggedIn', true);
 			return true;
 		} else {
@@ -28,9 +29,9 @@ App.UserLoginController = Ember.Controller.extend({
 				// Handling the promise of POST request
 				response.then(function(user) {
 					// Succesfull login.
-					// Set global and localStorage variables to escience token.
+					// Set global and sessionStorage variables to escience token.
 					App.set('escience_token', "Token " + user.get('escience_token'));
-					window.localStorage.escience_auth_token = App.get('escience_token');
+					window.sessionStorage.escience_auth_token = App.get('escience_token');
 					// Push to store the user retrieved from Django backend.
 					self.store.push('user', {
 						id : 1,
@@ -77,7 +78,7 @@ App.UserLoginController = Ember.Controller.extend({
 			self.set('controllers.application.loggedIn', false);
 			self.set('token', '');
 			self.transitionToRoute('user.logout');
-        }, 14400000));
+        }, self.get('logout_time_limit')));
 	},
 	
 	cancelRunTimer : function(){

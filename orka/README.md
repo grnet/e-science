@@ -89,11 +89,11 @@ Using the --image=Hadoop-2.5.2 argument creates the Hadoop cluster much faster b
 
 example for create cluster with default optionals (not hadoop_image):
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <project_name>
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 Standard <project_name>
 
 example for create cluster with a specific image:
 
-    orka create Yarn_Test 2 2 2048 10 2 1024 10 Archipelago <project_name> --image=hadoop_image_name
+    orka create Yarn_Test 2 2 2048 10 2 1024 10 Standard <project_name> --image=hadoop_image_name
 
 ##"list" command
 
