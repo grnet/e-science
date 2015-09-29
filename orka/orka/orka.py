@@ -152,7 +152,8 @@ class HadoopCluster(object):
         try: 
             self.escience_token = authenticate_escience(self.opts['token'], self.opts['server_url'])
             self.server_url = self.opts['server_url']
-        except ConnectionError:
+        except ConnectionError, e:
+            print e.args
             logging.error('e-science server unreachable or down.')
             exit(error_fatal)
         except ClientError, e:
@@ -807,7 +808,7 @@ def main():
     try:
         kamaki_token = get_from_kamaki_conf('cloud "~okeanos"', 'token')
         kamaki_base_url = get_from_kamaki_conf('orka','base_url')
-    except ClientError, e:
+    except (NoSectionError, NoOptionError), e:
         kamaki_token = ' '
         kamaki_base_url = ' '
         logging.warning(e.message)

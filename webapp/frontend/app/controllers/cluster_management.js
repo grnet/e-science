@@ -52,8 +52,7 @@ App.ClusterManagementController = Ember.Controller.extend({
                 'msg_type' : 'default',
                 'msg_text' : cluster_name +': ' + stat_message
             };
-            // TODO controllerFor is depracated
-            this.controllerFor('userWelcome').send('addMessage', msg);
+            this.get('controllers.userWelcome').send('addMessage', msg);
         }
     }.observes('content.state'),
 	cluster_slaves_newsize_static : null,

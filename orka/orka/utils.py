@@ -8,7 +8,7 @@ import re
 import subprocess
 import xml.etree.ElementTree as ET
 from cluster_errors_constants import *
-from os.path import abspath, dirname, join, expanduser
+from os.path import abspath, dirname, join, expanduser, isfile
 from kamaki.clients import ClientError
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.image import ImageClient
@@ -19,7 +19,8 @@ from operator import itemgetter, attrgetter, methodcaller
 from datetime import datetime
 from subprocess import PIPE
 from pipes import quote
-
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def get_from_kamaki_conf(section, option, action=None):
@@ -35,10 +36,10 @@ def get_from_kamaki_conf(section, option, action=None):
         option_value = parser.get(section,option)
     except NoSectionError:
         msg = ' Could not find section \'{0}\' in .kamakirc'.format(section)
-        raise ClientError(msg, error_syntax_auth_token)
+        raise NoSectionError(msg, error_syntax_auth_token)
     except NoOptionError:
         msg = ' Could not find option \'{0}\' in section \'{1}\' in .kamakirc'.format(option,section)
-        raise ClientError(msg, error_syntax_auth_token)
+        raise NoOptionError(msg, error_syntax_auth_token)
     
     if option_value:
         if not action:
@@ -83,7 +84,13 @@ class ClusterRequest(object):
         self.escience_token = escience_token
         self.payload = payload
         self.url = get_from_kamaki_conf('orka','base_url',action)
-        self.url = server_url + re.split('http://[^/]+',self.url)[-1]
+        self.url = server_url + re.split('https://[^/]+',self.url)[-1]
+        try:
+            ssl_property = get_from_kamaki_conf('orka','verify_ssl')
+            self.VERIFY_SSL = validate_ssl_property(ssl_property)
+        except (NoOptionError, IOError):
+            print 'SSL certificate not found or verify_ssl property is not set in .kamakirc. SSL Verification disabled.'
+            self.VERIFY_SSL = DEFAULT_SSL_VALUE
         self.headers = {'Accept': 'application/json','content-type': 'application/json'}
         
         if self.escience_token:
@@ -92,28 +99,28 @@ class ClusterRequest(object):
     def create_cluster(self):
         """Request to create a Hadoop Cluster in ~okeanos."""
         r = requests.put(self.url, data=json.dumps(self.payload),
-                         headers=self.headers)
+                         headers=self.headers, verify=self.VERIFY_SSL)
         response = json.loads(r.text)
         return response
 
     def delete_cluster(self):
         """Request to delete a Hadoop Cluster in ~okeanos."""
         r = requests.delete(self.url, data=json.dumps(self.payload),
-                            headers=self.headers)
+                            headers=self.headers, verify=self.VERIFY_SSL)
         response = json.loads(r.text)
         return response
 
     def retrieve(self):
         """Request to retrieve info from an endpoint."""
         r = requests.get(self.url, data=json.dumps(self.payload),
-                         headers=self.headers)
+                         headers=self.headers, verify=self.VERIFY_SSL)
         response = json.loads(r.text)
         return response
 
     def post(self):
         """POST request to server"""
         r = requests.post(self.url, data=json.dumps(self.payload),
-                         headers=self.headers)
+                         headers=self.headers, verify=self.VERIFY_SSL)
         response = json.loads(r.text)
         return response
 
@@ -138,6 +145,21 @@ def get_user_clusters(token, server_url, choice='clusters'):
     return user_clusters
 
 
+def validate_ssl_property(ssl_property):
+    """
+    Validate ssl_property from kamakirc configuration file.
+    """
+    # Check if ssl_property is set to false or no.
+    regex = re.compile(r"\bno\b|\bfalse\b", re.I)
+    if regex.match(ssl_property):
+        return False
+    # Check if SSL certificate exists.
+    if isfile(ssl_property):
+        return ssl_property
+    else:
+        raise IOError('SSL certificate not found')
+
+
 def authenticate_escience(token, server_url):
     """
     Authenticate with escience database and retrieve escience token
@@ -146,10 +168,16 @@ def authenticate_escience(token, server_url):
     payload = {"user": {"token": token}}
     headers = {'content-type': 'application/json'}
     try:
+        ssl_property = get_from_kamaki_conf('orka','verify_ssl')
+        VERIFY_SSL = validate_ssl_property(ssl_property)
+    except (NoOptionError, IOError):
+        print 'SSL certificate not found or verify_ssl property is not set in .kamakirc. SSL Verification disabled.'
+        VERIFY_SSL = DEFAULT_SSL_VALUE
+    try:
         url_login = server_url + login_endpoint
     except ClientError, e:
         raise e
-    r = requests.post(url_login, data=json.dumps(payload), headers=headers)
+    r = requests.post(url_login, data=json.dumps(payload), headers=headers, verify=VERIFY_SSL)
     response = json.loads(r.text)
     try:
         escience_token = response['user']['escience_token']
