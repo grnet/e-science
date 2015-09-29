@@ -21,6 +21,7 @@ from utils import ClusterRequest, ConnectionError, authenticate_escience, get_us
     check_credentials, endpoints_and_user_id, init_plankton
 from time import sleep
 from requests.exceptions import SSLError
+from ConfigParser import NoSectionError, NoOptionError
 
 
 class _ArgCheck(object):

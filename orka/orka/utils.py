@@ -88,7 +88,7 @@ class ClusterRequest(object):
         try:
             ssl_property = get_from_kamaki_conf('orka','verify_ssl')
             self.VERIFY_SSL = validate_ssl_property(ssl_property)
-        except (NoOptionError, IOError):
+        except (NoOptionError, IOError, TypeError):
             self.VERIFY_SSL = DEFAULT_SSL_VALUE
         self.headers = {'Accept': 'application/json','content-type': 'application/json'}
         
@@ -169,7 +169,7 @@ def authenticate_escience(token, server_url):
     try:
         ssl_property = get_from_kamaki_conf('orka','verify_ssl')
         VERIFY_SSL = validate_ssl_property(ssl_property)
-    except (NoOptionError, IOError):
+    except (NoOptionError, IOError, TypeError):
         print 'SSL certificate not found or verify_ssl property is not set in .kamakirc. SSL Verification disabled.'
         VERIFY_SSL = DEFAULT_SSL_VALUE
     try:
