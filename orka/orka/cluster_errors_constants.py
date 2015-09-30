@@ -52,6 +52,7 @@ SUCCESS = 0
 # Package constants
 REPORT = 25  # Define logging level of REPORT
 SUMMARY = 29  # Define logging level of SUMMARY
+DEFAULT_SSL_VALUE = False
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 default_image = 'Debian Base'
 images_without_hue = ['Debian Base', 'Hadoop-2.5.2']

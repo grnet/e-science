@@ -20,6 +20,8 @@ from utils import ClusterRequest, ConnectionError, authenticate_escience, get_us
     ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, is_period, is_default_dir, \
     check_credentials, endpoints_and_user_id, init_plankton
 from time import sleep
+from requests.exceptions import SSLError
+from ConfigParser import NoSectionError, NoOptionError
 
 
 class _ArgCheck(object):
@@ -152,7 +154,10 @@ class HadoopCluster(object):
         try: 
             self.escience_token = authenticate_escience(self.opts['token'], self.opts['server_url'])
             self.server_url = self.opts['server_url']
-        except ConnectionError:
+        except SSLError, e:
+            logging.error('Invalid SSL certificate on .kamakirc')
+            exit(error_fatal)
+        except ConnectionError, e:
             logging.error('e-science server unreachable or down.')
             exit(error_fatal)
         except ClientError, e:
@@ -807,7 +812,7 @@ def main():
     try:
         kamaki_token = get_from_kamaki_conf('cloud "~okeanos"', 'token')
         kamaki_base_url = get_from_kamaki_conf('orka','base_url')
-    except ClientError, e:
+    except (NoSectionError, NoOptionError), e:
         kamaki_token = ' '
         kamaki_base_url = ' '
         logging.warning(e.message)
