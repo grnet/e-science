@@ -170,7 +170,7 @@ def authenticate_escience(token, server_url):
         ssl_property = get_from_kamaki_conf('orka','verify_ssl')
         VERIFY_SSL = validate_ssl_property(ssl_property)
     except (NoOptionError, IOError, TypeError):
-        print 'SSL certificate not found or verify_ssl property is not set in .kamakirc. SSL Verification disabled.'
+        #print 'SSL certificate not found or verify_ssl property is not set in .kamakirc. SSL Verification disabled.'
         VERIFY_SSL = DEFAULT_SSL_VALUE
     try:
         url_login = server_url + login_endpoint
