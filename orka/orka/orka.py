@@ -873,13 +873,13 @@ def main():
     parser_file = orka_subparsers.add_parser('file', parents=[common_parser],
                                         help='File operations between various file sources and Hadoop-Yarn filesystem.')
     file_subparsers = parser_file.add_subparsers(help='Choose file action put, get or list')
-    parser_file_put = file_subparsers.add_parser('put', usage='%(prog)s cluster_id source [source ...] destination',
+    parser_file_put = file_subparsers.add_parser('put', parents=[common_parser], usage='%(prog)s cluster_id source [source ...] destination',
                                      help='Put/Upload a file from <source> to the Hadoop-Yarn filesystem.')
-    parser_file_mkdir = file_subparsers.add_parser('mkdir',
+    parser_file_mkdir = file_subparsers.add_parser('mkdir',parents=[common_parser],
                                                    help='Create a directory on the Hadoop-Yarn filesystem')
-    parser_file_get = file_subparsers.add_parser('get',
+    parser_file_get = file_subparsers.add_parser('get',parents=[common_parser],
                                      help='Get/Download a file from the Hadoop-Yarn filesystem to <destination>.')
-    parser_file_list = file_subparsers.add_parser('list',
+    parser_file_list = file_subparsers.add_parser('list',parents=[common_parser],
                                              help='List pithos+ files.')
     parser_node_subparsers = parser_node.add_subparsers(help='Choose node action add or delete')
     parser_addnode = parser_node_subparsers.add_parser('add',
