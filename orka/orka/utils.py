@@ -13,14 +13,13 @@ from kamaki.clients import ClientError
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.image import ImageClient
 from ConfigParser import RawConfigParser, NoSectionError, NoOptionError
-from requests import ConnectionError
+from requests.exceptions import ConnectionError, MissingSchema
 from collections import OrderedDict
 from operator import itemgetter, attrgetter, methodcaller
 from datetime import datetime
 from subprocess import PIPE
 from pipes import quote
-import warnings
-warnings.filterwarnings("ignore")
+requests.packages.urllib3.disable_warnings()
 
 
 def get_from_kamaki_conf(section, option, action=None):
@@ -35,10 +34,10 @@ def get_from_kamaki_conf(section, option, action=None):
     try:
         option_value = parser.get(section,option)
     except NoSectionError:
-        msg = ' Could not find section \'{0}\' in .kamakirc'.format(section)
+        msg = 'Could not find section \'{0}\' in .kamakirc'.format(section)
         raise NoSectionError(msg, error_syntax_auth_token)
     except NoOptionError:
-        msg = ' Could not find option \'{0}\' in section \'{1}\' in .kamakirc'.format(option,section)
+        msg = 'Could not find option \'{0}\' in section \'{1}\' in .kamakirc'.format(option,section)
         raise NoOptionError(msg, error_syntax_auth_token)
     
     if option_value:
@@ -84,7 +83,7 @@ class ClusterRequest(object):
         self.escience_token = escience_token
         self.payload = payload
         self.url = get_from_kamaki_conf('orka','base_url',action)
-        self.url = server_url + re.split('https://[^/]+',self.url)[-1]
+        self.url = server_url + re.split('http[s]?://[^/]+',self.url)[-1]
         try:
             ssl_property = get_from_kamaki_conf('orka','verify_ssl')
             self.VERIFY_SSL = validate_ssl_property(ssl_property)
@@ -176,12 +175,18 @@ def authenticate_escience(token, server_url):
         url_login = server_url + login_endpoint
     except ClientError, e:
         raise e
-    r = requests.post(url_login, data=json.dumps(payload), headers=headers, verify=VERIFY_SSL)
-    response = json.loads(r.text)
+    try:
+        r = requests.post(url_login, data=json.dumps(payload), headers=headers, timeout=60, verify=VERIFY_SSL)
+        response = json.loads(r.text)
+    except MissingSchema, e:
+        raise ClientError(e.message, error_fatal)
     try:
         escience_token = response['user']['escience_token']
     except TypeError:
         msg = ' Authentication error: Invalid Token'
+        raise ClientError(msg, error_authentication)
+    except KeyError:
+        msg = ' Authentication error: Request for escience_token on %s failed' % (url_login)
         raise ClientError(msg, error_authentication)
     logging.log(REPORT, ' Authenticated with escience database')
     return escience_token
