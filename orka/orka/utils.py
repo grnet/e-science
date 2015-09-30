@@ -83,7 +83,7 @@ class ClusterRequest(object):
         self.escience_token = escience_token
         self.payload = payload
         self.url = get_from_kamaki_conf('orka','base_url',action)
-        self.url = server_url + re.split('https://[^/]+',self.url)[-1]
+        self.url = server_url + re.split('http[s]?://[^/]+',self.url)[-1]
         try:
             ssl_property = get_from_kamaki_conf('orka','verify_ssl')
             self.VERIFY_SSL = validate_ssl_property(ssl_property)
