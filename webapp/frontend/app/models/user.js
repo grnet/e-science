@@ -31,7 +31,7 @@ App.Dsl = DS.Model.extend({
     action_date : attr('isodate'),
     cluster_id : attr('number'),
     pithos_path : attr('string'),
-    task_id : attr(), 
+    task_id : attr(),
     state : attr(),
     // user that created the VRE
     user : DS.belongsTo('user', {
@@ -40,6 +40,9 @@ App.Dsl = DS.Model.extend({
     // computed properties
     class_button_dsl_destroy : function(){
         return !Ember.isEmpty(this.get('pithos_path')) ? "glyphicon glyphicon-trash text-danger" : "";
+    }.property('pithos_path'),
+    class_button_dsl_replay : function(){
+        return !Ember.isEmpty(this.get('pithos_path')) ? "glyphicon glyphicon-play text-success" : "";
     }.property('pithos_path'),
     action_dsl_confirm : function(key, value){
         this.set('confirm_action', value);
@@ -50,6 +53,8 @@ App.Dsl = DS.Model.extend({
         switch(confirm_action){
         case 'dsl_delete':
             return 'Delete DSL';
+        case 'dsl_replay':
+            return 'Replay DSL';
         default:
             return 'Confirm';
         }
@@ -64,6 +69,9 @@ App.Dsl = DS.Model.extend({
         return '%@%@'.fmt(key,this.get('dsl_name'));
     }.property('dsl_name'),
     id_dsl_destroy : function(key){
+        return '%@%@'.fmt(key,this.get('dsl_name'));
+    }.property('dsl_name'),
+    id_dsl_replay : function(key){
         return '%@%@'.fmt(key,this.get('dsl_name'));
     }.property('dsl_name'),
     id_dsl_create : function(key) {
