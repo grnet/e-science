@@ -67,14 +67,14 @@
       - /tmp/{{master_key_root}}
     when: is_new_slave and '/tmp/{{master_key_root}}' is defined
 
-  - name: chown hadoop-src from root to hadoop group
-    tags: postconfigscale
-    file: path={{path_to_hadoop}}/{{yarn_version}} state=directory owner=hduser group=hadoop recurse=yes
-    when: is_new_slave
-
   - name: Rename hadoop directory
     tags: postconfigscale
-    command: mv {{path_to_hadoop}}/{{yarn_version}} {{hadoop_home}}
+    shell: mv {{path_to_hadoop}}/{{yarn_version}} {{hadoop_home}}
+    when: is_new_slave
+
+  - name: chown hadoop-src from root to hadoop group
+    tags: postconfigscale
+    file: path={{hadoop_home}} state=directory owner=hduser group=hadoop recurse=yes
     when: is_new_slave
 
   - name: copy Hadoop files from master to staging server before copying them to new slave

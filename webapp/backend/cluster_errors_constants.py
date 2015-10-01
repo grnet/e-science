@@ -124,27 +124,12 @@ pithos_images_uuids_properties = {"d3782488-1b6d-479d-8b9b-363494064c52": {"role
                              "dc171a3d-09bf-469d-9b7a-d3fb5c0afebc": {"role":"yarn", "tags":"-t postconfig,hueconfig,ecoconfig", "image":"ecosystem"},
                              "05f23bb1-5415-4da3-8e8a-93daa384b2f8": {"role":"cloudera", "tags":"-t preconfig,postconfig", "image":"cloudera"}}
 
-# Dictionary of pithos VRE images UUIDs with their corresponding actions
-pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"image":"drupal","db_name":"db","default_password":"@test123",
-                                                                            "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}",
-                                                                            "change_db_pass":"hash=$(docker exec -t -i drupal bash -c \"php scripts/password-hash.sh {0} | grep hash | sed -e 's#.*hash: \\(\)#\\1#'\")\
-                                                                             && echo \\\'$hash|sed -r 's/[$]+/\\\\$/g' 1> hash\
-                                                                             && docker exec -t -i db bash -c \"echo \\\"UPDATE users SET pass=`cat hash`\\\">mysql.sql\"\
-                                                                             && docker exec -t -i db bash -c \"echo \\\"' where uid='1';\\\">>mysql.sql\"\
-                                                                             && docker exec -t -i db bash -c \"mysql -p{0} drupal < mysql.sql\"\
-                                                                             && docker exec -t -i db bash -c \"mysql -p{0} -e \\\"use drupal;UPDATE users SET pass=REPLACE(pass, '\n', '');\\\"\"\
-                                                                             && rm hash; docker exec -t -i db bash -c \"rm mysql.sql\""},
-                               "f64a11dc-97bd-44cb-a502-6c141cc42bfa": {"image":"redmine_redmine_1","db_name":"redmine_postgresql_1","default_password":"password",
-                                                                        "update_password":"sudo -u postgres psql -U postgres -d redmine_production -c \"alter user redmine password '{0}';\""
-                                                                        ";sed -i \'s/DB_PASS=password/DB_PASS={0}/g\' /usr/local/redmine/docker-compose.yml",
-                                                                        "change_db_pass":"docker exec -t -i redmine_redmine_1 bash -c 'RAILS_ENV=production bin/rails runner \"user = User.first ;\
-                                                                         user.password, user.password_confirmation = \\\"{0}\\\"; user.save!\"'"},
-                               "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"image":"mediawiki","db_name":"db","default_password":"@test123",
-                                                                        "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}",
-                                                                        "change_db_pass":"docker exec -t -i db bash -c \"mysql -p{0} mediawiki -e \\\"UPDATE user SET user_password = CONCAT(':A:', MD5('{0}')) WHERE user_name = 'Admin';\\\"\""},
-                               "c5850bc1-255d-4847-9b89-ce8e86667250": {"image":"dspace","update_password":"/usr/bin/docker exec -d dspace sudo -u postgres psql -U postgres -d dspace -c \"alter user dspace password '{0}';\"",
-                                                                        "change_db_pass":"docker exec -d dspace sed -i 's/db.password *= * *dspace/db.password={0}/g' /dspace/config/dspace.cfg"},
-                               "0d26fd55-31a4-46b3-955d-d94ecf04a323": {"image":"bigbluebutton"}}
+# Dictionary of pithos VRE images UUIDs
+pithos_vre_images_uuids = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": True,
+                            "f64a11dc-97bd-44cb-a502-6c141cc42bfa": True,
+                            "b1ae3738-b7b3-429e-abef-2fa475f30f0b": True,
+                            "c5850bc1-255d-4847-9b89-ce8e86667250": True,
+                            "0d26fd55-31a4-46b3-955d-d94ecf04a323": True}
 
                                                                         
 # encrypt/decrypt token in django db

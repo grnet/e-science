@@ -13,7 +13,7 @@ import yaml
 import urllib
 import requests
 from base64 import b64encode
-from os.path import abspath, join, expanduser
+from os.path import abspath, join, expanduser, basename
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
@@ -727,7 +727,7 @@ def check_images(token, project_id):
         if image['owner'] == const_escience_uuid or image['owner'] == const_system_uuid:
             if pithos_images_uuids_properties.has_key(image['id']):
                 hadoop_images.append(image['name'])
-            if pithos_vre_images_uuids_actions.has_key(image['id']):
+            if pithos_vre_images_uuids.has_key(image['id']):
                 vre_images.append(image['name'])
     # hadoop images at ordinal 0, vre images at 1
     available_images.append(hadoop_images)
@@ -828,7 +828,7 @@ def personality(ssh_keys_path='', pub_keys_path='', vre_script_path=''):
                 with open(abspath(vre_script_path)) as vre_script:
                     personality.append(dict(
                         contents=b64encode(vre_script.read()),
-                        path='/root/redmine.sh',
+                        path='/root/{0}'.format(basename(vre_script.name)),
                         owner='root'))
             except IOError:
                 msg = " No valid VRE shell script in %s" %((abspath(vre_script_path)))
