@@ -95,12 +95,11 @@ const_hadoop_status_started = "1"
 const_hadoop_status_format = "2"
 const_hadoop_status_undefined = "3"
 
-        #Set hadoop pending status to 2 (same as hadoop status format and cluster status pending)
+#Set hadoop pending status to 2 (same as hadoop status format and cluster status pending)
 const_hadoop_status_pending = const_hadoop_status_format
 
-        # If celery message is bigger than following value, it truncates the message. We check if message length is bigger than const_truncate_limit, then add dots (..) at the end of message to indicate truncation. Used for orka cli mainly.
+# If celery message is bigger than following value, it truncates the message. We check if message length is bigger than const_truncate_limit, then add dots (..) at the end of message to indicate truncation. Used for orka cli mainly.
 const_truncate_limit = 350
-
 const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
 const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
 HADOOP_STATUS_ACTIONS = {"stop": ["0", "Stopping", "Stopped"],
@@ -117,7 +116,8 @@ hadoop_images_ansible_tags = {"debianbase": {"stop": "stop", "start": "start"},
                               "ecosystem": {"start": "start,FLUMEstart,ECOSYSTEMstart,HUEstart",
                                             "stop": "stop,FLUMEstop,ECOSYSTEMstop,HUEstop"},
                               "cloudera": {"start": "start,CLOUDstart", "stop": "stop,CLOUDstop"}}
-# Dictionary of pithos images UUIDs with their corresponding properties
+
+# Dictionary of pithos Hadoop images UUIDs with their corresponding properties
 pithos_images_uuids_properties = {"d3782488-1b6d-479d-8b9b-363494064c52": {"role":"yarn", "tags":"-t preconfig,postconfig", "image":"debianbase"},
                              "3f1f5195-7769-44ba-a4c2-418d86e30f97": {"role":"yarn", "tags":"-t postconfig", "image":"hadoopbase"},
                              "7a8423da-0cfb-414c-9491-1dcb81a87eb6": {"role":"yarn", "tags":"-t postconfig,hueconfig", "image":"hue"},
@@ -149,7 +149,7 @@ pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"ima
                                                                         
 # encrypt/decrypt token in django db
 from encrypt_key import key     # File with only one variable key = encrypt_key, keep it outside git
-        # Encrypts  and decrypts every user's ~okeanos token in database.
+# Encrypts  and decrypts every user's ~okeanos token in database.
 encrypt_key = key
 
 def mask_token(key, token):

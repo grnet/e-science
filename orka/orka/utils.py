@@ -19,6 +19,7 @@ from operator import itemgetter, attrgetter, methodcaller
 from datetime import datetime
 from subprocess import PIPE
 from pipes import quote
+import warnings
 
 
 
@@ -83,8 +84,9 @@ class ClusterRequest(object):
         self.escience_token = escience_token
         self.payload = payload
         self.url = get_from_kamaki_conf('orka','base_url',action)
-        self.url = server_url + re.split('http://[^/]+',self.url)[-1]
+        self.url = server_url + re.split('https://[^/]+',self.url)[-1]
         self.headers = {'Accept': 'application/json','content-type': 'application/json'}
+        self.verify = False
         
         if self.escience_token:
             self.headers.update({'Authorization': 'Token ' + self.escience_token})
@@ -106,14 +108,14 @@ class ClusterRequest(object):
     def retrieve(self):
         """Request to retrieve info from an endpoint."""
         r = requests.get(self.url, data=json.dumps(self.payload),
-                         headers=self.headers)
+                         headers=self.headers, verify=self.verify)
         response = json.loads(r.text)
         return response
 
     def post(self):
         """POST request to server"""
         r = requests.post(self.url, data=json.dumps(self.payload),
-                         headers=self.headers)
+                         headers=self.headers, verify=self.verify)
         response = json.loads(r.text)
         return response
 
@@ -145,11 +147,13 @@ def authenticate_escience(token, server_url):
     """
     payload = {"user": {"token": token}}
     headers = {'content-type': 'application/json'}
+    verify = False
     try:
         url_login = server_url + login_endpoint
     except ClientError, e:
         raise e
-    r = requests.post(url_login, data=json.dumps(payload), headers=headers)
+    warnings.filterwarnings("ignore")
+    r = requests.post(url_login, data=json.dumps(payload), headers=headers, verify=verify)
     response = json.loads(r.text)
     try:
         escience_token = response['user']['escience_token']

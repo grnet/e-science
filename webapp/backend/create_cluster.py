@@ -12,7 +12,7 @@ import logging
 import subprocess
 import json
 from os.path import join, expanduser
-from reroute_ssh import reroute_ssh_prep, start_vre
+from reroute_ssh import reroute_ssh_prep, start_vre_script
 from kamaki.clients import ClientError
 from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
@@ -347,12 +347,12 @@ class YarnCluster(object):
             self.ssh_key_file(self.server_name_postfix_id)
             pub_keys_path = self.ssh_file
         try:
-            server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path), project_id=self.project_id)
+            server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path, '/home/developer/git_repos/KPetsas/redmine.sh'), project_id=self.project_id)
         except ClientError, e:
             # If no public IP is free, get a new one
             if e.status == status.HTTP_409_CONFLICT:
                 get_float_network_id(self.net_client, project_id=self.project_id)
-                server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path), project_id=self.project_id)
+                server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path, '/home/developer/git_repos/KPetsas/redmine.sh'), project_id=self.project_id)
             else:
                 msg = u'VRE server \"{0}\" creation failed due to error: {1}'.format(self.opts['server_name'], str(e.args[0]))
                 set_server_state(self.opts['token'], server_id, 'Error',status='Failed', error=msg)
@@ -386,7 +386,7 @@ class YarnCluster(object):
             if vre_image_uuid == server['image']['id']:
                 chosen_vre_image = pithos_vre_images_uuids_actions[vre_image_uuid]
                 if not chosen_vre_image['image'] == 'bigbluebutton':
-                    start_vre(server_ip,server_pass,self.opts['admin_password'], chosen_vre_image, self.opts['admin_email'])
+                    start_vre_script(server_ip,server_pass,self.opts['admin_password'], chosen_vre_image, self.opts['admin_email'])
             else:
                 msg = u'VRE server \"{0}\" creation failed because image {1} exists on database but cannot be found or has different id'
                 u' on Pithos+'.format(self.opts['server_name'],self.opts['os_choice'])                                                                                   
