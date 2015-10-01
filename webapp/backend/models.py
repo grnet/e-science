@@ -187,8 +187,22 @@ HADOOP_STATUS_CHOICES = (
      ("2", "Pending"),
  )
 
+class VreImageCategory(models.Model):
+    """
+    Definition of orka VRE image categories.
+    """
+    id = models.AutoField("VreImageCategory ID", primary_key=True, null=False,
+                          help_text="Auto-increment VreImageCategory id")
+    category_name = models.CharField("VreImageCategory name", max_length=255, unique=True, null=False,
+                                     help_text="VreImageCategory Name")
+    class Meta:
+        verbose_name_plural = "VreImageCategories"
+    
+    def __unicode__(self):
+        return self.category_name
+
 class VreImage(models.Model):
-    """Definition of orka VRE image Components."""
+    """Definition of orka VRE image information."""
     id = models.AutoField("VreImage ID", primary_key=True, null=False,
                                help_text="Auto-increment VreImage id")
     image_name = models.CharField("Pithos image name", max_length=255, null=False,
@@ -197,8 +211,14 @@ class VreImage(models.Model):
                                     help_text="Pithos Image UUID")
     image_components = models.CharField("VreImage components metadata", max_length=4080, null=True, blank=True,
                                         help_text="VreImage components metadata as a json dump")
+    image_min_reqs = models.CharField("VreImage minimum requirements", max_length=2040, null=True, blank=True,
+                                      help_text="VreImage minimum requirements {cpu:xx,ram:xxxx,disk:xx} as a json dump")    
+    image_init_extra = TextArrayField()
+    
+    image_category = models.ForeignKey(VreImageCategory, null=False,
+                                       help_text="VreImageCategory")
     def __unicode__(self):
-        return ("%s : %s") % (self.image_pithos_uuid, self.image_name)
+        return ("%s : %s : %s") % (self.image_category.category_name, self.image_name, self.image_pithos_uuid)
 
 class OrkaImage(models.Model):
     """Definition of orka VM image Components."""
