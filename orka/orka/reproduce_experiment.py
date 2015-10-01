@@ -8,6 +8,7 @@ Reproduces the experiment that is stored in a yaml file
 import os, sys
 import yaml
 import subprocess
+from utils import get_file_protocol
 FNULL = open(os.devnull, 'w')
 
 def create_cluster(script):
@@ -18,25 +19,24 @@ def create_cluster(script):
     if script["cluster"].get("name") is not None:
         create_cluster_command += (" " + script["cluster"]["name"])
 
-    if script["cluster"].get("cluster_size") is not None:
-        create_cluster_command += (" " + str(script["cluster"]["cluster_size"]))  
+    if script["cluster"].get("size") is not None:
+        create_cluster_command += (" " + str(script["cluster"]["size"]))  
 
     if script["cluster"].get("flavor_master") is not None:
-        master_flavor_string = script["cluster"].get("flavor_master").strip('()')
-        master_flavors = master_flavor_string.split(',')
-        create_cluster_command += (" " + master_flavors[0])
-        create_cluster_command += (" " + master_flavors[1])
-        create_cluster_command += (" " + master_flavors[2])
+        create_cluster_command += (" " + str(script["cluster"].get("flavor_master")[0]))
+        create_cluster_command += (" " + str(script["cluster"].get("flavor_master")[1]))
+        create_cluster_command += (" " + str(script["cluster"].get("flavor_master")[2]))
 
-    if script["cluster"].get("flavor_slave") is not None:
-        slave_flavor_string = script["cluster"].get("flavor_slave").strip('()')
-        slave_flavors = slave_flavor_string.split(',')
-        create_cluster_command += (" " + slave_flavors[0])
-        create_cluster_command += (" " + slave_flavors[1])
-        create_cluster_command += (" " + slave_flavors[2])
+    if script["cluster"].get("flavor_slaves") is not None:
+        create_cluster_command += (" " + str(script["cluster"].get("flavor_slaves")[0]))
+        create_cluster_command += (" " + str(script["cluster"].get("flavor_slaves")[1]))
+        create_cluster_command += (" " + str(script["cluster"].get("flavor_slaves")[2]))
 
     if script["cluster"].get("disk_template") is not None:
-        create_cluster_command += (" " + script["cluster"]["disk_template"])
+        if script["cluster"]["disk_template"] == 'drbd':
+            create_cluster_command += (" Standard")
+        if script["cluster"]["disk_template"] == 'ext_vlmc':
+            create_cluster_command += (" Archipelago")
 
     if script["cluster"].get("project_name") is not None:
         create_cluster_command += (" " + script["cluster"]["project_name"])        
@@ -53,14 +53,14 @@ def create_cluster(script):
                                    + str(script["configuration"]["dfs_blocksize"]))
 
     # temp file to store cluster details
-    create_cluster_command += (" >_tmp.txt")
+    create_cluster_command += (" | tee _tmp.txt")
  
     # create cluster
     print create_cluster_command
-    exit_status = os.system(create_cluster_command)
-    if exit_status != 0:
-        print 'Cluster (re-)creation failed with exit status %d' % exit_status
-        sys.exit(0)
+#    exit_status = os.system(create_cluster_command)
+#    if exit_status != 0:
+#        print 'Cluster (re-)creation failed with exit status %d' % exit_status
+#        sys.exit(0)
 
     # retrieve cluster id and master IP
     with open('_tmp.txt', 'r') as f:
@@ -69,7 +69,7 @@ def create_cluster(script):
         root_pass = f.readline().strip().split(': ')[1]
 
     # copy ssh keys to master
-    copy_ssh_keys(master_IP, root_pass)
+#    copy_ssh_keys(master_IP, root_pass)
     
     return cluster_id, master_IP
 
@@ -135,10 +135,16 @@ def run_job(action, master_IP):
                                 , stderr=FNULL, shell=True)
 
 
-def main(argv):
+def replay(argv):
+
+    # retrieve file (if pithos)
+    file_protocol, remain = get_file_protocol(argv, 'fileput', 'source')
+
+    
+    
 
     # load the experiment
-    with open(argv[1], 'r') as f:
+    with open(argv, 'r') as f:
         script = yaml.load(f)
 
     # check if cluster info is given (this is mandatory)
@@ -155,9 +161,5 @@ def main(argv):
         master_IP = script["cluster"].get("master_IP")
     
     # proceed to the list of actions
-    if script.get("actions") is not None:
-        enforce_actions(script, cluster_id, master_IP)
-
-
-if __name__ == "__main__":
-    main(sys.argv)
+    #if script.get("actions") is not None:
+    #    enforce_actions(script, cluster_id, master_IP)

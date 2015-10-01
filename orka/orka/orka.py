@@ -19,6 +19,7 @@ from utils import ClusterRequest, ConnectionError, authenticate_escience, get_us
     read_replication_factor, ssh_stream_from_hadoop, parse_hdfs_dest, get_file_protocol, \
     ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, is_period, is_default_dir, \
     check_credentials, endpoints_and_user_id, init_plankton
+from reproduce_experiment import replay
 from time import sleep
 from requests.exceptions import SSLError
 from ConfigParser import NoSectionError, NoOptionError
@@ -862,6 +863,8 @@ def main():
                                      ' on ~okeanos.')
     parser_node = orka_subparsers.add_parser('node', parents=[common_parser],
                                      help='Operations on a Hadoop-Yarn cluster for adding or deleting a node.')
+    parser_replay = orka_subparsers.add_parser('replay', parents=[common_parser],
+                                     help='Replay an experiment.')
     parser_list = orka_subparsers.add_parser('list', parents=[common_parser],
                                      help='List user clusters.')
     parser_info = orka_subparsers.add_parser('info', parents=[common_parser],
@@ -997,6 +1000,9 @@ def main():
         parser_file_put.add_argument('--password',
                               help='Ftp-Http password')
         
+        parser_replay.add_argument('file',
+                              help='The file that describes the experiment to be replayed.')        
+        
         parser_file_mkdir.add_argument('--foo', nargs="?", help=SUPPRESS, default=True, dest='filemkdir')
         parser_file_mkdir.add_argument('cluster_id',
                                        help='The id of the Hadoop cluster', type=checker.positive_num_is)
@@ -1060,6 +1066,8 @@ def main():
                 c_hadoopcluster.vre_action()
         elif verb == 'node':
             c_hadoopcluster.node_action()
+        elif verb == 'replay':
+            replay(opts['file'])
 
     else:
         logging.error('No arguments were given')
