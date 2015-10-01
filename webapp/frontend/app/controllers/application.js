@@ -49,12 +49,14 @@ App.ApplicationController = Ember.Controller.extend({
         case "handlebars":
             var arrImages = Ember.makeArray(images);
             for (i=0;i<arrImages.length;i++){
-                var components = JSON.parse(arrImages[i].get('image_components'));
+                var components = Ember.isEmpty(arrImages[i].get('image_components')) ? [] : JSON.parse(arrImages[i].get('image_components'));
+                var objMinreqs = Ember.isEmpty(arrImages[i].get('image_min_reqs')) ? {} : JSON.parse(arrImages[i].get('image_min_reqs'));
                 var arrComponents = [];
                 for (k in components){
                     arrComponents.push({"name":k,"property":components[k]});
                 }
                 arrImages[i].set('image_components',arrComponents);
+                arrImages[i].set('image_min_reqs',objMinreqs);
             }
             return arrImages;
             break;

@@ -6,7 +6,7 @@ App.Vreimage = DS.Model.extend({
     image_components : attr('string'), // Stringified VreImage Components metadata (json.dumps)
     image_min_reqs : attr('string'), // stringified VreImage minimum requirements metadaga (json.dumps)
     image_init_extra : attr(), // array of extra creation fields
-    image_category : attr(), // VreImageCategory name (resolving from id at backend)
+    image_category : attr('string'), // VreImageCategory name (resolving from id at backend)
     image_href : function() {
         var uuid = this.get('image_pithos_uuid');
         return '#' + uuid;
