@@ -100,7 +100,7 @@ class HdfsRequest(object):
             
 def start_vre_script(server_ip, password, admin_password, vre_image, admin_email):
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
-    command = ". DSpace-5.3.sh {0} {1}".format(admin_email, admin_password)
+    command = ". DSpace-5.3.sh {0} {1}".format(admin_password, admin_email)
     exec_command(ssh_client, command)
 
 
