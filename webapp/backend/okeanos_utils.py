@@ -13,7 +13,7 @@ import yaml
 import urllib
 import requests
 from base64 import b64encode
-from os.path import abspath, join, expanduser
+from os.path import abspath, join, expanduser, basename
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
@@ -820,9 +820,19 @@ def get_float_network_id(cyclades_network_client, project_id):
 
         return error_get_ip
     
-def personality(ssh_keys_path='', pub_keys_path=''):
+def personality(ssh_keys_path='', pub_keys_path='', vre_script_path=''):
         """Personality injects ssh keys to the virtual machines we create"""
         personality = []
+        if vre_script_path:
+            try:
+                with open(abspath(vre_script_path)) as vre_script:
+                    personality.append(dict(
+                        contents=b64encode(vre_script.read()),
+                        path='/root/{0}'.format(basename(vre_script.name)),
+                        owner='root'))
+            except IOError:
+                msg = " No valid VRE shell script in %s" %((abspath(vre_script_path)))
+                raise IOError(msg)
         if ssh_keys_path and pub_keys_path:
             try:
                 with open(abspath(ssh_keys_path)) as f1, open(abspath(pub_keys_path)) as f2:
