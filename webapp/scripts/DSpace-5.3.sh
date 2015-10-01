@@ -12,7 +12,8 @@ sleep 20
 sleep 20
 /usr/bin/docker exec -d dspace sv start tomcat8
 sleep 20
-/usr/bin/docker exec -d dspace sudo -u postgres psql -U postgres -d dspace -c "alter user dspace password '$1';" -- \"$2\"
-docker exec -d dspace sed -i 's/db.password *= * *dspace/db.password=$2/g' /dspace/config/dspace.cfg
+/usr/bin/docker exec -d dspace sudo -u postgres psql -U postgres -d dspace -c "alter user dspace password '$1';" -- $2
+sleep 20
+docker exec -ti dspace bash -c 'sed -i "s/db.password *= * *dspace/db.password=$1/g" /dspace/config/dspace.cfg' -- $2
 sleep 20
 /usr/bin/docker start dspace
