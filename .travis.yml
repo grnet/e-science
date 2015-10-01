@@ -1,4 +1,6 @@
 language: python
+git:
+  depth: 150
 services: postgresql
 python:
 - '2.7'
