@@ -100,7 +100,7 @@ class HdfsRequest(object):
             
 def start_vre_script(server_ip, password, admin_password, vre_image, admin_email):
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
-    command = ". redmine.sh redmine_postgresql_1 password {0} redmine_redmine_1".format(admin_password)
+    command = ". redmine.sh {0}".format(admin_password)
     exec_command(ssh_client, command)
 
 

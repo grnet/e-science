@@ -347,12 +347,12 @@ class YarnCluster(object):
             self.ssh_key_file(self.server_name_postfix_id)
             pub_keys_path = self.ssh_file
         try:
-            server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path, '/home/developer/git_repos/KPetsas/redmine.sh'), project_id=self.project_id)
+            server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path, '/home/developer/git_repos/KPetsas/e-science/scripts/redmine.sh'), project_id=self.project_id)
         except ClientError, e:
             # If no public IP is free, get a new one
             if e.status == status.HTTP_409_CONFLICT:
                 get_float_network_id(self.net_client, project_id=self.project_id)
-                server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path, '/home/developer/git_repos/KPetsas/redmine.sh'), project_id=self.project_id)
+                server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path, '/home/developer/git_repos/KPetsas/e-science/scripts/redmine.sh'), project_id=self.project_id)
             else:
                 msg = u'VRE server \"{0}\" creation failed due to error: {1}'.format(self.opts['server_name'], str(e.args[0]))
                 set_server_state(self.opts['token'], server_id, 'Error',status='Failed', error=msg)
