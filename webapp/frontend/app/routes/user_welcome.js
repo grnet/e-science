@@ -63,7 +63,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		},
 		didTransition : function() {
 			// arrived at this route
-			var self = this;
 			var from_create = this.controller.get('create_cluster_start');
 			if (from_create) {
 				this.controller.set('count', 15);

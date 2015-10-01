@@ -105,8 +105,6 @@ App.Uservreserver = DS.Model.extend({
         // TODO: add to components info and resolve dynamically
         var image = this.get('os_image');
         switch (image){
-        case 'Redmine-3.0.4':
-            return ['http://%@:%@'.fmt(this.get('server_IP'),'10083')];
         case 'DSpace-5.3':
             return ['http://%@:%@'.fmt(this.get('server_IP'),'8080/xmlui'),'http://%@:%@'.fmt(this.get('server_IP'),'8080/jspui')];
         default:

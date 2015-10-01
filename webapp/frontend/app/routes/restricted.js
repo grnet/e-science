@@ -9,7 +9,7 @@ App.RestrictedRoute = Ember.Route.extend({
 			this.transitionTo('user.login');
 		} else {
 			// set auth_token to global variable
-			App.set('escience_token', window.localStorage.escience_auth_token);
+			App.set('escience_token', window.sessionStorage.escience_auth_token);
 			this.controllerFor('user.login').runTimer();
 		}
 	}
