@@ -55,4 +55,8 @@ checkPrereqs()
 		echo "WARNING: no vre image found in environment. Setting default." >&2;
 		VRE_IMAGE=Mediawiki-1.2.4
 	fi
+	local COMMAND='wget http://www.gutenberg.org/ebooks/2600.txt.utf-8 -O temp.txt > /dev/null 2>&1; kamaki file upload temp.txt WordCount/warpeace.txt --force > /dev/null 2>&1; rm temp.txt > /dev/null 2>&1'
+    eval $COMMAND 
+	local RESULT="$?"
+	[ "$RESULT" -eq 0 ] || { echo "WARNING: WordCount/warpeace.txt failed to upload to pithos. pithosFS wordcount test might fail." >&2; }
 }

@@ -1,7 +1,7 @@
 // User Welcome controller
 App.UserWelcomeController = Ember.Controller.extend({
 
-    needs : ['clusterCreate','vreserverCreate','clusterManagement'],
+    needs : ['clusterCreate','vreserverCreate','clusterManagement','dslCreate'],
     // flag to denote transition from a create action
     create_cluster_start : false,
     count : 0,
@@ -12,8 +12,9 @@ App.UserWelcomeController = Ember.Controller.extend({
     blacklist_messages : {},
     // tabs info for template
     content_tabs_info : {
-        clusters: {id:'id_userclusters_tab',href:'#id_userclusters_tab',name:'User Clusters',active:true},
-        vreservers: {id:'id_uservres_tab',href:'#id_uservres_tab',name:'User VREs'}
+        clusters: {id:'id_userclusters_tab',href:'#id_userclusters_tab',name:'Hadoop Clusters',active:true},
+        vreservers: {id:'id_uservres_tab',href:'#id_uservres_tab',name:'Virtual Research Environments'},
+        dsls: {id:'id_userdsls_tab',href:'#id_userdsls_tab',name:'Reproducible Experiments'}
     },
     content_tabs : function(key,value){
         var tabs_object = this.get('content_tabs_info');
@@ -22,12 +23,16 @@ App.UserWelcomeController = Ember.Controller.extend({
             // ref: http://discuss.emberjs.com/t/ember-1-8-you-must-use-ember-set-to-set-the-property/6582, https://github.com/emberjs/ember.js/issues/10209
             Ember.set(tabs_object.vreservers,'active',false);
             Ember.set(tabs_object.clusters,'active',false);
+            Ember.set(tabs_object.dsls,'active',false);
             switch(value) {
             case "clusters":
                 Ember.set(tabs_object.clusters,'active',true);
                 break;
             case "vreservers":
                 Ember.set(tabs_object.vreservers,'active',true);
+                break;
+            case "dsls":
+                Ember.set(tabs_object.dsls,'active',true);
                 break;
             }
             this.set('content_tabs_info',tabs_object);
@@ -55,6 +60,16 @@ App.UserWelcomeController = Ember.Controller.extend({
     sortable_vreservers : function(){
         return this.get('sorted_vreservers');
     }.property('filtered_vreservers.[]'),
+    // userdsls block
+    filtered_dsls : function(){
+        return this.get('content.dsls').filterBy('id');
+    }.property('content.dsls.[]','content.dsls.isLoaded'),
+    sorted_dsls_prop : ['action_date:desc'],
+    sorted_dsls_dir : true,
+    sorted_dsls : Ember.computed.sort('filtered_dsls','sorted_dsls_prop'),
+    sortable_dsls : function(){
+        return this.get('sorted_dsls');
+    }.property('filtered_dsls.[]'),
     // messages / feedback
     master_vm_password_msg : function() {
         var pwd_message = this.get('content.master_vm_password');
@@ -111,11 +126,22 @@ App.UserWelcomeController = Ember.Controller.extend({
                 var sort_properties = (column == 'action_date') && [primarysort] || [primarysort,'action_date:desc'];
                 this.set('sorted_vreservers_prop',sort_properties);
                 break;
+            case "ud":
+                this.set('sorted_dsls_dir',!this.get('sorted_dsls_dir'));
+                sortAscending = this.get('sorted_dsls_dir');
+                var primarysort = '%@:%@'.fmt(column,sortAscending && 'asc' || 'desc');
+                var sort_properties = (column == 'action_date') && [primarysort] || [primarysort,'action_date:desc'];
+                this.set('sorted_dsls_prop',sort_properties);
+                break;
             }
             this.setProperties(this.get_sorting_info(short_model_name,sortAscending,column));
         },
-        goto_scale_cluster : function(cluster_id){
-            this.get('controllers.clusterManagement').send('setActiveTab','manage');
+        goto_dsl_create : function(cluster){
+            this.get('controllers.dslCreate').send('set_selected_cluster',cluster.get('id'));
+            this.transitionToRoute('dsl.create');
+        },
+        goto_cluster_scale : function(cluster_id){
+            this.get('controllers.clusterManagement').send('setActiveTab','scale');
             this.transitionToRoute('cluster.management',cluster_id);
         },
         setActiveTab : function(tab){
@@ -189,6 +215,9 @@ App.UserWelcomeController = Ember.Controller.extend({
                 }
             }
             this.set('user_messages', messages);
+        },
+        dismiss : function(){
+            $('#id_alert_welcome > button').click();  
         },
         timer : function(status, store) {
             var that = this;

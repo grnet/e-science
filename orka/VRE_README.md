@@ -144,7 +144,7 @@ In case of **BigBlueButton**, there is no admin account and no database. The rec
 |------------ |:---
 | Drupal      | *VRE server IP*
 | Mediawiki   | *VRE server IP*
-| Redmine     | *VRE server IP*`:10083`
+| Redmine     | *VRE server IP*
 | DSpace      | *VRE server IP*`:8080/jspui` && *VRE server IP*`:8080/xmlui`
 | BigBlueButton | *VRE server IP*
 

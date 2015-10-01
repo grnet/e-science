@@ -6,7 +6,8 @@ App.User = DS.Model.extend({
 	user_name : attr('string'),         // user name or email
 	user_theme : attr('string'),        // user's theme in backend database
 	cluster : attr(), // number of user active clusters
-	vrenum : attr(), // number of user active VREs 
+	vrenum : attr(), // number of user active VREs
+	dslnum : attr(), // number of user DSLs
 	escience_token : attr(),
     master_vm_password: attr('string'),
     error_message: attr('string'),
@@ -17,7 +18,57 @@ App.User = DS.Model.extend({
     vreservers : DS.hasMany('uservreserver', {
         async : true,
         inverse : 'user'
-    })                           // user VRE server records
+    }),                           // user VRE server records
+    dsls : DS.hasMany('dsl', {
+        async : true,
+        inverse : 'user'
+    })
+});
+
+// Information about user's DSLs
+App.Dsl = DS.Model.extend({
+    dsl_name : attr('string'),
+    action_date : attr('isodate'),
+    cluster_id : attr('number'),
+    pithos_path : attr('string'),
+    task_id : attr(), 
+    state : attr(),
+    // user that created the VRE
+    user : DS.belongsTo('user', {
+        inverse : 'dsls'
+    }),
+    // computed properties
+    class_button_dsl_destroy : function(){
+        return !Ember.isEmpty(this.get('pithos_path')) ? "glyphicon glyphicon-trash text-danger" : "";
+    }.property('pithos_path'),
+    action_dsl_confirm : function(key, value){
+        this.set('confirm_action', value);
+        return this.get('confirm_action');
+    }.property(),
+    description_action_dsl_confirm : function(key, value){
+        var confirm_action = this.get('action_dsl_confirm');
+        switch(confirm_action){
+        case 'dsl_delete':
+            return 'Delete DSL';
+        default:
+            return 'Confirm';
+        }
+    }.property('action_dsl_confirm'),
+    id_dsl_name : function(key){
+        return '%@%@'.fmt(key,this.get('dsl_name'));
+    }.property('dsl_name'),
+    id_pithos_path : function(key){
+        return '%@%@'.fmt(key,this.get('dsl_name'));
+    }.property('dsl_name'),
+    id_dsl_confirm : function(key){
+        return '%@%@'.fmt(key,this.get('dsl_name'));
+    }.property('dsl_name'),
+    id_dsl_destroy : function(key){
+        return '%@%@'.fmt(key,this.get('dsl_name'));
+    }.property('dsl_name'),
+    id_dsl_create : function(key) {
+        return '%@%@'.fmt(key,this.get('dsl_name'));       
+    }.property('dsl_name')
 });
 
 // Information about user's VREs
@@ -54,8 +105,6 @@ App.Uservreserver = DS.Model.extend({
         // TODO: add to components info and resolve dynamically
         var image = this.get('os_image');
         switch (image){
-        case 'Redmine-3.0.4':
-            return ['http://%@:%@'.fmt(this.get('server_IP'),'10083')];
         case 'DSpace-5.3':
             return ['http://%@:%@'.fmt(this.get('server_IP'),'8080/xmlui'),'http://%@:%@'.fmt(this.get('server_IP'),'8080/jspui')];
         default:
@@ -179,6 +228,10 @@ App.Usercluster = DS.Model.extend({
 		inverse : 'clusters'
 	}),
 	// computed properties
+	cluster_name_noprefix : function(){
+        // remove the '[orka]-' prefix
+        return this.get('cluster_name').slice(7);
+    }.property('cluster_name'),
     cluster_slaves_num : function(){
         return this.get('cluster_size')-1;
     }.property('cluster_size'),
@@ -340,6 +393,12 @@ App.Usercluster = DS.Model.extend({
 			return "glyphicon glyphicon-question-sign text-muted";
 		}
 	}.property('hadoop_status','cluster_status'),
+	cluster_action_destroy_disabled : function(){
+	    var status_final = ['ACTIVE','STARTED','STOPPED'];
+	    var cluster_status = this.get('cluster_status_verbose');
+        var hadoop_status = this.get('cluster_hadoop_status');
+        return !(status_final.contains(cluster_status) && status_final.contains(hadoop_status));
+	}.property('cluster_status_verbose','cluster_hadoop_status'),
 	hadoop_status_verbose : function(){
 		var cluster_status = this.get('cluster_status');
 		var hadoop_status = this.get('hadoop_status');

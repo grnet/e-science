@@ -7,6 +7,11 @@ This script contains useful classes and fuctions for orka package.
 @author: Ioannis Stenos, Nick Vrionis
 """
 import logging
+import re
+import subprocess
+import yaml
+import urllib
+import requests
 from base64 import b64encode
 from os.path import abspath, join, expanduser
 from kamaki.clients import ClientError
@@ -14,13 +19,11 @@ from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.cyclades import CycladesClient, CycladesNetworkClient
 from time import sleep
+from datetime import datetime
 from cluster_errors_constants import *
 from celery import current_task
-from django_db_after_login import db_cluster_update, get_user_id, db_server_update
-from backend.models import UserInfo, ClusterInfo, VreServer
-import re
-import subprocess
-
+from django_db_after_login import db_cluster_update, get_user_id, db_server_update, db_hadoop_update, db_dsl_create, db_dsl_update, db_dsl_delete
+from backend.models import UserInfo, ClusterInfo, VreServer, Dsl
 
 
 def retrieve_pending_clusters(token, project_name):
@@ -98,7 +101,7 @@ def get_project_id(token, project_name):
         if project['name'] == project_name and project['id'] in dict_quotas:
             return project['id']
     msg = ' No project id was found for ' + project_name
-    raise ClientError(msg, error_proj_id)
+    raise ClientError(msg, error_project_id)
 
 
 def destroy_server(token, id):
@@ -125,6 +128,50 @@ def destroy_server(token, id):
 
     return vre_server.server_name
 
+def create_dsl(choices):
+    if choices['pithos_path'].startswith('/'):
+        choices['pithos_path'] = choices['pithos_path'][1:]
+    if choices['pithos_path'].endswith('/'):
+        choices['pithos_path'] = choices['pithos_path'][:-1]
+    uuid = get_user_id(unmask_token(encrypt_key,choices['token']))
+    container_status_code = get_pithos_container_info(uuid, choices['pithos_path'], choices['token'])
+    if container_status_code == pithos_container_not_found:
+        msg = 'Container not found error {0}'.format(container_status_code)
+        raise ClientError(msg, error_container)
+    action_date = datetime.now().replace(microsecond=0)
+    cluster = ClusterInfo.objects.get(id=choices['cluster_id'])
+    data = {'cluster': {'name': cluster.cluster_name, 'project_name': cluster.project_name, 'image': cluster.os_image, 'disk_template': u'{0}'.format(cluster.disk_template),
+                        'size': cluster.cluster_size, 'flavor_master':[cluster.cpu_master, cluster.ram_master,cluster.disk_master], 'flavor_slaves': [cluster.cpu_slaves, cluster.ram_slaves, cluster.disk_slaves]}, 
+            'configuration': {'replication_factor': cluster.replication_factor, 'dfs_blocksize': cluster.dfs_blocksize}}
+    if not (choices['dsl_name'].endswith('.yml') or choices['dsl_name'].endswith('.yaml')):
+        choices['dsl_name'] = '{0}.yaml'.format(choices['dsl_name'])
+    task_id = current_task.request.id
+    dsl_id = db_dsl_create(choices, task_id)
+    yaml_data = yaml.safe_dump(data,default_flow_style=False)
+    url = '{0}/{1}/{2}/{3}'.format(pithos_url, uuid, choices['pithos_path'], urllib.quote(choices['dsl_name']))
+    headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,choices['token'])),'content-type':'text/plain'}
+    r = requests.put(url, headers=headers, data=yaml_data)
+    response = r.status_code
+    if response == pithos_put_success:
+        db_dsl_update(choices['token'],dsl_id,state='Created')
+        
+        
+def destroy_dsl(token, id):
+    # TODO placeholders for actual implementation
+    # just remove from our DB for now
+    dsl = Dsl.objects.get(id=id)
+    db_dsl_delete(token,id)
+    return dsl.id
+
+
+def get_pithos_container_info(uuid, pithos_path, token):
+    if '/' in pithos_path:
+        pithos_path = pithos_path.split("/", 1)[0]
+    url = '{0}/{1}/{2}'.format(pithos_url, uuid, pithos_path)
+    headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,token))}
+    r = requests.head(url, headers=headers)
+    response = r.status_code
+    return response
 
 def get_public_ip_id(cyclades_network_client,float_ip):  
     """Return IP dictionary of an ~okeanos public IP"""
@@ -217,7 +264,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     new_slave_port = ADD_TO_GET_PORT + cluster_to_scale.cluster_size
     state = "New datanode {0} was added to cluster network".format(node_name)
     set_cluster_state(token, cluster_id, state, status='Active')
-    new_slave = {'fqdn': new_server['SNF:fqdn'],'private_ip': new_slave_private_ip,
+    new_slave = {'id':new_server['id'], 'fqdn': new_server['SNF:fqdn'],'private_ip': new_slave_private_ip,
                  'password': new_server['adminPass'],'port': new_slave_port,'uuid': new_server['user_id'],
                  'image_id':new_server['image']['id']}
     return new_slave
@@ -263,6 +310,25 @@ def cluster_remove_node(node_fqdn, node_id, token, cluster_id, cluster_to_scale,
     cluster_to_scale.cluster_size -= 1
     cluster_to_scale.save()
     set_cluster_state(token, cluster_id, state, status='Active')
+    
+
+def rollback_scale_cluster(list_of_slaves, cyclades, cluster_to_scale, size, ansible=False):
+    """
+    Rollback cluster when scale add node fail. More rollback actions when ansible has failed during
+    hadoop configurations for the new nodes.
+    """
+    from run_ansible_playbooks import modify_ansible_hosts_file,ansible_scale_cluster
+    cluster_name_suffix_id = '{0}-{1}'.format(cluster_to_scale.cluster_name, cluster_to_scale.id)
+    for slave in list_of_slaves:
+        cyclades.delete_server(slave['id'])
+    if ansible:
+        for slave in list_of_slaves:
+            modify_ansible_hosts_file(cluster_name_suffix_id, action='remove_slaves', slave_hostname=slave['fqdn'])           
+        ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, action='join_slaves')
+        ansible_scale_cluster(ansible_hosts, action='rollback_scale_cluster')
+          
+    cluster_to_scale.cluster_size = size
+    cluster_to_scale.save()
 
 
 def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
@@ -276,6 +342,7 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     from run_ansible_playbooks import modify_ansible_hosts_file,ansible_scale_cluster,ansible_manage_cluster
     current_task.update_state(state="Started")
     cluster_to_scale = ClusterInfo.objects.get(id=cluster_id)
+    pre_scale_size = cluster_to_scale.cluster_size
     previous_cluster_status = cluster_to_scale.cluster_status
     previous_hadoop_status = cluster_to_scale.hadoop_status
     status_map = {"0":"Destroyed","1":"Active","2":"Pending","3":"Failed"}
@@ -326,7 +393,9 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
                                              status_map[previous_cluster_status])
                 list_of_new_slaves.append(new_slave)               
             except Exception, e:
-                msg = str(e.args[0])
+                msg = '{0}. Scale action failed. Cluster rolled back'.format(str(e.args[0]))
+                set_cluster_state(token, cluster_id, msg)
+                rollback_scale_cluster(list_of_new_slaves, cyclades, cluster_to_scale, pre_scale_size)
                 set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status],
                                   error=msg)
                 raise RuntimeError(msg)
@@ -338,6 +407,14 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
         try:
             for new_slave in list_of_new_slaves:
                 reroute_ssh_to_slaves(new_slave['port'], new_slave['private_ip'], master_ip, new_slave['password'], '')
+        except Exception, e:
+            msg = '{0}. Scale action failed. Cluster rolled back'.format(str(e.args[0]))
+            set_cluster_state(token, cluster_id, msg)
+            rollback_scale_cluster(list_of_new_slaves, cyclades, cluster_to_scale, pre_scale_size)
+            set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status],
+                              error=msg)
+            raise RuntimeError(msg)
+        try:
             ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, list_of_hosts=list_of_new_slaves,
                                                       master_ip=master_ip,
                                                   action='add_slaves')
@@ -347,7 +424,9 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
                                   user_id=user_id)
             modify_ansible_hosts_file(cluster_name_suffix_id, action='join_slaves')  
         except Exception, e:
-            msg = str(e.args[0])
+            msg = '{0}. Scale action failed. Cluster rolled back'.format(str(e.args[0]))
+            set_cluster_state(token, cluster_id, msg)
+            rollback_scale_cluster(list_of_new_slaves, cyclades, cluster_to_scale, pre_scale_size,ansible=True)
             set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status],
                               error=msg)
             raise RuntimeError(msg)
@@ -451,7 +530,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
             if new_status != 'DELETED':
                 logging.error('Error deleting server [%s]' % server['name'])
                 list_of_errors.append(error_cluster_corrupt)
-        set_cluster_state(token, cluster_id, ' Deleting cluster network and public IP')
+        set_cluster_state(token, cluster_id, 'Deleting cluster network and public IP')
     except ClientError:
         logging.exception('Error in deleting server')
         list_of_errors.append(error_cluster_corrupt)
@@ -720,7 +799,7 @@ def init_cyclades(endpoint, token):
         msg = ' Failed to initialize cyclades client'
         raise ClientError(msg)
 
-  
+
 def get_float_network_id(cyclades_network_client, project_id):
         """
         Gets an Ipv4 floating network id from the list of public networks Ipv4

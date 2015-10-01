@@ -227,8 +227,10 @@ def ansible_scale_cluster(hosts_filename, new_slaves_size=1, orka_image_uuid='',
         list_of_ansible_tags = chosen_image['tags'].split(',')
         scale_cluster_tags = ['{0}scale'.format(t) for t in list_of_ansible_tags]
         tags = ",".join(scale_cluster_tags)       
-    else:
+    elif action == 'remove_slaves':
         tags = '-t remove_yarn_nodes'
+    elif action == 'rollback_scale_cluster':
+        tags = '-t rollback_cluster'
     # Create debug file for ansible
     debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
     ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)

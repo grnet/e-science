@@ -70,6 +70,29 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			}
 			return true;
 		},
+		takeDslAction : function(dsl){
+            var self = this;
+            var store = this.store;
+            var action = dsl.get('action_dsl_confirm');
+            dsl.set('action_dsl_confirm', false);
+            switch(action) {
+            case 'dsl_delete':
+                dsl.destroyRecord().then(function(data) {
+                    var count = self.controller.get('count');
+                    var extend = Math.max(5, count);
+                    self.controller.set('count', extend);
+                    self.controller.set('create_cluster_start', true);
+                    self.controller.send('timer', true, store);
+                }, function(reason) {
+                    console.log(reason.message);
+                    if (!Ember.isBlank(reason.message)){
+                        var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+                    }
+                });
+                break;
+            }
+        },
 		takeVreAction : function(vreserver){
 		    var self = this;
             var store = this.store;
@@ -164,6 +187,9 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 				break;
 			}
 		},
+		confirmDslAction : function(dsl, value) {
+            dsl.set('action_dsl_confirm', value);
+        },
 		confirmVreAction : function(vreserver, value) {
             vreserver.set('action_server_confirm', value);
         },

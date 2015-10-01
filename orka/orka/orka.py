@@ -20,6 +20,8 @@ from utils import ClusterRequest, ConnectionError, authenticate_escience, get_us
     ssh_pithos_stream_to_hadoop, bytes_to_shorthand, from_hdfs_to_pithos, is_period, is_default_dir, \
     check_credentials, endpoints_and_user_id, init_plankton
 from time import sleep
+from requests.exceptions import SSLError
+from ConfigParser import NoSectionError, NoOptionError
 
 
 class _ArgCheck(object):
@@ -152,7 +154,10 @@ class HadoopCluster(object):
         try: 
             self.escience_token = authenticate_escience(self.opts['token'], self.opts['server_url'])
             self.server_url = self.opts['server_url']
-        except ConnectionError:
+        except SSLError, e:
+            logging.error('Invalid SSL certificate on .kamakirc')
+            exit(error_fatal)
+        except ConnectionError, e:
             logging.error('e-science server unreachable or down.')
             exit(error_fatal)
         except ClientError, e:
@@ -184,7 +189,7 @@ class HadoopCluster(object):
             stdout.write("server_id: {0}\nserver_IP: {1}\n"
                          "VM root password: {2}\n".format(result['server_id'], result['server_IP'], result['VRE_VM_password']))
             if not 'bigbluebutton' in self.opts['image'].lower():
-                stdout.write("{0} admin user's password: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_password']))
+                logging.log(SUMMARY, "{0} admin user's password: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_password']))
             if 'dspace' in self.opts['image'].lower():
                 logging.log(SUMMARY, "{0} admin user's email: {1}\n".format(filter(lambda l: l.isalpha(), self.opts['image']), self.opts['admin_email']))
             exit(SUCCESS)
@@ -802,12 +807,12 @@ def main():
                                         ' cluster or a Virtual Research Environment server in ~okeanos ')
     checker = _ArgCheck()
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
-                                level=checker.logging_levels['summary'],
+                                level=checker.logging_levels[default_logging],
                                 datefmt='%Y-%m-%d %H:%M:%S')
     try:
         kamaki_token = get_from_kamaki_conf('cloud "~okeanos"', 'token')
         kamaki_base_url = get_from_kamaki_conf('orka','base_url')
-    except ClientError, e:
+    except (NoSectionError, NoOptionError), e:
         kamaki_token = ' '
         kamaki_base_url = ' '
         logging.warning(e.message)
@@ -868,13 +873,13 @@ def main():
     parser_file = orka_subparsers.add_parser('file', parents=[common_parser],
                                         help='File operations between various file sources and Hadoop-Yarn filesystem.')
     file_subparsers = parser_file.add_subparsers(help='Choose file action put, get or list')
-    parser_file_put = file_subparsers.add_parser('put', usage='%(prog)s cluster_id source [source ...] destination',
+    parser_file_put = file_subparsers.add_parser('put', parents=[common_parser], usage='%(prog)s cluster_id source [source ...] destination',
                                      help='Put/Upload a file from <source> to the Hadoop-Yarn filesystem.')
-    parser_file_mkdir = file_subparsers.add_parser('mkdir',
+    parser_file_mkdir = file_subparsers.add_parser('mkdir',parents=[common_parser],
                                                    help='Create a directory on the Hadoop-Yarn filesystem')
-    parser_file_get = file_subparsers.add_parser('get',
+    parser_file_get = file_subparsers.add_parser('get',parents=[common_parser],
                                      help='Get/Download a file from the Hadoop-Yarn filesystem to <destination>.')
-    parser_file_list = file_subparsers.add_parser('list',
+    parser_file_list = file_subparsers.add_parser('list',parents=[common_parser],
                                              help='List pithos+ files.')
     parser_node_subparsers = parser_node.add_subparsers(help='Choose node action add or delete')
     parser_addnode = parser_node_subparsers.add_parser('add',

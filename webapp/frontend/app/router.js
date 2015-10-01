@@ -23,11 +23,20 @@ App.Router.map(function() {
 	    // /vreserver/server_id
 	    this.route('management', { path: "/:vreserver.id" });
 	});
+	this.resource('dsl', function() {
+        // /dsl/create
+        this.route('create');
+        // dsl management route
+        // /dsl/dsl_id
+        // this.route('management', { path: "/:dsl.id" });
+    });
 	this.resource('help', function() {
 		// /help/images
 		this.route('images');
 		// /help/vreimages
 		this.route('vreimages');
+		// /help/experiments
+		this.route('experiments');
 	});
 	// Route to enforce login policy
 	// other routes that require login extend this

@@ -51,6 +51,7 @@
 		<script src="{{ STATIC_URL }}controllers/cluster_management.js"></script>
 		<script src="{{ STATIC_URL }}controllers/vreserver_create.js"></script>
 		<script src="{{ STATIC_URL }}controllers/vreserver_management.js"></script>
+		<script src="{{ STATIC_URL }}controllers/dsl_create.js"></script>
 		<script src="{{ STATIC_URL }}controllers/help_images.js"></script>
 		<script src="{{ STATIC_URL }}controllers/help_vreimages.js"></script>
 
@@ -66,8 +67,7 @@
 		<script src="{{ STATIC_URL }}routes/cluster_management.js"></script>
 		<script src="{{ STATIC_URL }}routes/vreserver_create.js"></script>
 		<script src="{{ STATIC_URL }}routes/vreserver_management.js"></script>
-		<script src="{{ STATIC_URL }}routes/help_images.js"></script>
-		<script src="{{ STATIC_URL }}routes/help_vreimages.js"></script>
+		<script src="{{ STATIC_URL }}routes/dsl_create.js"></script>
 		<script src="{{ STATIC_URL }}routes/homepage.js"></script>
 		
 		<!--views-->
@@ -76,6 +76,7 @@
 		<script src="{{ STATIC_URL }}views/user_welcome.js"></script>
 		<script src="{{ STATIC_URL }}views/cluster_create.js"></script>	
 		<script src="{{ STATIC_URL }}views/vreserver_create.js"></script>
+		<script src="{{ STATIC_URL }}views/dsl_create.js"></script>
 		<script src="{{ STATIC_URL }}views/cpu_selection_button.js"></script>
 		<script src="{{ STATIC_URL }}views/ram_selection_button.js"></script>
 		<script src="{{ STATIC_URL }}views/disk_selection_button.js"></script>
@@ -99,10 +100,11 @@
 		<!--load templates-->
 		<script>EmberHandlebarsLoader.loadTemplates([
 			'application', 'homepage', 
-			'user/login', 'user/welcome',  'user/_userclusters', 'user/_uservres', 
-			'cluster/create', 'cluster/management', 'cluster/_propmanage',
-			'vreserver/create', 'vreserver/management', 
-			'help/images', 'help/vreimages'
+			'user/login', 'user/welcome',  'user/_userclusters', 'user/_uservres',  'user/_userdsls',
+			'cluster/create', 'cluster/management',
+			'vreserver/create', 'vreserver/management',
+			'dsl/create',
+			'help/images', 'help/vreimages', 'help/experiments'
 		]);</script>
 	
 	</body>
