@@ -13,20 +13,6 @@ App.VreserverCreateController = Ember.Controller.extend({
        {cpu:2,ram:4096,disk:10},//Medium
        {cpu:4,ram:6144,disk:20} //Large
     ],
-	vreImageExtraProperties : {
-	    // controller_show_field : [image,...] / '*' = all images
-	    //'show_admin_pass_input' : ['*'],
-	    'show_admin_pass_input' : ['Drupal-7.37','Mediawiki-1.2.4','Redmine-3.0.4','DSpace-5.3'],
-	    'show_admin_email_input': ['DSpace-5.3']
-	},
-	vreImageExtraFields : {
-	   // image : [extra_field,...] / '*' = all images
-	   //'*' : ['admin_password'],
-	   'Drupal-7.37' : ['admin_password'],
-	   'Mediawiki-1.2.4' : ['admin_password'],
-	   'Redmine-3.0.4' : ['admin_password'],
-	   'DSpace-5.3' : ['admin_password','admin_email']
-	},
 	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
 	// mapping of uservreserver model properties to controller computed properties
 	model_to_controller_map : {
@@ -92,6 +78,34 @@ App.VreserverCreateController = Ember.Controller.extend({
     /*
      * VRE Images
      */
+    vreImageExtraProperties_static : {},
+    vreImageExtraProperties : function(that){
+        // follow a naming convention when referencing in templates
+        // "show_<extra_field_name>_input" (eg. show_admin_password_input)
+        // data structure {'controller_field_boolean': ['image_name1','image_name2',...]}
+        var self = that; // get the controller into self
+        var vreImages = self.get('vreImages');
+        var extra_properties = self.get('vreImageExtraProperties_static');
+        for (i=0;i<vreImages.length;i++){
+            var imageName = vreImages[i].get('image_name');
+            var arrImageFields = vreImages[i].get('image_init_extra');
+            for (j=0;j<arrImageFields.length;j++) {
+                var propName = 'show_%@_input'.fmt(arrImageFields[j]);
+                Ember.isEmpty(extra_properties[propName]) ? extra_properties[propName] = [] : $.noop();
+                !(extra_properties[propName]).contains(imageName) && (extra_properties[propName]).push(imageName);
+            }
+        }
+        return extra_properties;
+    },    
+    vreImageExtraFields : function(){
+        // data structure {'image_name': ['field1','field2',...]}
+        var objExtraFields = {};
+        var vreImages = this.get('vreImages');
+        for (i=0;i<vreImages.length;i++){
+            objExtraFields[vreImages[i].get('image_name')]=vreImages[i].get('image_init_extra');
+        }
+        return objExtraFields;
+    }.property(),    
     vreResourceMin : function(){
         var objRequirements = {};
         var vreImages = this.get('vreImages');
@@ -126,7 +140,7 @@ App.VreserverCreateController = Ember.Controller.extend({
         var html_templ = '%@%@: <span class="text text-info pull-right">%@</span><br>';
         var html_snippet = '<h5 class="strong">Component: <span class="text text-info">Version</span></h5>';
         var image_data = this.get('vreImages');
-        var extra_fields = this.get('vreImageExtraProperties');
+        var extra_fields = this.get('vreImageExtraProperties')(this);
         for (property in extra_fields){
             this.set(property,null);
         }
