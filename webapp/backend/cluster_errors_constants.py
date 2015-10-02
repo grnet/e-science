@@ -14,46 +14,29 @@ encrypt_key = key
 # Definitions of return value errors
 
 
-error_syntax_clustersize = -1 # Not used anywhere   
-error_syntax_cpu_master = -2 # Not used anywhere
-error_syntax_ram_master = -3 # Not used anywhere
-error_syntax_disk_master = -4 # Not used anywhere
-error_syntax_cpu_slave = -5  # Not used anywhere
-error_syntax_ram_slave = -6  # Not used anywhere
-error_syntax_disk_slave = -7  # Not used anywhere
-error_syntax_logging_level = -8  # Not used anywhere
-error_syntax_disk_template = -9  # Not used anywhere
 error_quotas_cyclades_disk = -10 # Not enough disksize quota in cyclades 
 error_quotas_cpu = -11 # Not enough cpu quota in cyclades 
 error_quotas_ram = -12 # Not enough ram quota in cyclades
 error_quotas_cluster_size = -13 # Not enough VM quota in cyclades
 error_quotas_network = -14 # Not enough private network quota 
-error_flavor_id = -15 # Not used anywhere
+error_flavor_id = -15
 error_image_id = -16 # Not a valid image given
-error_syntax_token = -17 # Not used anywhere
-error_ready_reroute = -18 # Not used anywhere
-error_no_arguments = -19 # Used in orka errors_contants for no arguments given in cli, not used anywhere in backend
 error_fatal = -20 # Often used in orka cli for many errors(ClientError,ConnectionError), only once in backend(deletion error in delete vre)
 error_user_quota = -22 # Error requesting/getting user quota from ~okeanos
 error_flavor_list = -23 # Error requesting/getting flavors list from ~okeanos
 error_get_list_servers = -24 # Error requesting/getting user's servers from ~okeanos
 error_get_list_projects = -25 # Error requesting/getting user's projects from ~okeanos
-error_get_network_quota = -28 # Not used anywhere
 error_create_network = -29 # Error creating private network in ~okeanos
 error_get_ip = -30 # General floating ip error (e.g. not enough ip quota and error while requesting list of ips)
 error_create_server = -31 # Error while creating ~okeanos server (e.g. stay in BUILD status more than 5 minutes).
-error_syntax_auth_token = -32 # Error reading ~okeanos token from .kamakirc for cli (e.g. no token in .kamakirc)
 error_ansible_playbook = -34 # General error while running create cluster Ansible playbook
 error_ssh_client = -35 # Error for staging server not be able to connect to cluster during reroute steps
-error_remove_node = -37#Error while removing a node when scaling a cluster
-error_cluster_not_exist = -69 # Not used anywhere
 error_cluster_corrupt = -70 # Error while deleting cluster and not all VMs are deleted(e.g. Error before deleting all cluster VMs)
 error_project_id = -71 # No project id for given project name
 error_multiple_entries = -72 # Multiple entries in database for something unique
 error_project_quota = -73 # Zero user quota for a given project       
 error_authentication = -99 # Invalid token
-error_create_dsl = -75#Error while upload dsl file to pithos
-error_container = -76#Error pithos container not found while upload dsl file
+error_container = -76 # Error pithos container not found while upload dsl file
 
 FNULL = open(os.devnull, 'w') # Redirects whatever is assigned to FNULL to nothingness (e.g. stderr=FNULL)
 
