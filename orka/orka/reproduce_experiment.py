@@ -8,7 +8,9 @@ Reproduces the experiment that is stored in a yaml file
 import os, sys
 import yaml
 import subprocess
-from utils import get_file_protocol
+import requests
+from cluster_errors_constants import *
+from utils import get_file_protocol, get_user_id
 FNULL = open(os.devnull, 'w')
 
 def create_cluster(script):
@@ -135,17 +137,24 @@ def run_job(action, master_IP):
                                 , stderr=FNULL, shell=True)
 
 
-def replay(argv):
-
-    # retrieve file (if pithos)
+def replay(argv, token):
+    
+    # get user's uuid
+    uuid = get_user_id(token)
+    
+    # check files's protocol
     file_protocol, remain = get_file_protocol(argv, 'fileput', 'source')
 
-    
-    
-
-    # load the experiment
-    with open(argv, 'r') as f:
-        script = yaml.load(f)
+    if file_protocol == 'pithos':
+        url = pithos_url + "/" + uuid + remain
+        headers = {'X-Auth-Token':'{0}'.format(token)}
+        r=requests.get(url, headers=headers)
+        # load the experiment
+        script = yaml.load(r.text)
+    else:
+        # load the experiment
+        with open(argv, 'r') as f:
+            script = yaml.load(f)
 
     # check if cluster info is given (this is mandatory)
     if script.get("cluster") is None:

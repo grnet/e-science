@@ -1067,7 +1067,7 @@ def main():
         elif verb == 'node':
             c_hadoopcluster.node_action()
         elif verb == 'replay':
-            replay(opts['file'])
+            replay(opts['file'], opts['token'])
 
     else:
         logging.error('No arguments were given')
