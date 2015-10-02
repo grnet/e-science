@@ -96,60 +96,6 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
                 // retrieve parameters from yaml            
                 
 
-                // create cluster
-                // unload cached records
-                this.store.unloadAll('clusterchoice');
-                var cluster_selection = this.store.push('clusterchoice', {
-                    // set the clusterchoice model with the user choices
-                    'id' : 1,
-                    'project_name' : self.get('project_name'),
-                    'cluster_name' : self.get('cluster_name'),
-                    'cluster_size' : self.get('cluster_size'),
-                    'cpu_master' : self.get('master_cpu_selection'),
-                    'ram_master' : self.get('master_ram_selection'),
-                    'disk_master' : self.get('master_disk_selection'),
-                    'cpu_slaves' : self.get('slaves_cpu_selection'),
-                    'ram_slaves' : self.get('slaves_ram_selection'),
-                    'disk_slaves' : self.get('slaves_disk_selection'),
-                    'disk_template' : self.get('disk_temp'),
-                    'os_choice' : self.get('operating_system'),
-                    'ssh_key_selection' : self.get('ssh_key_selection'),
-                    'replication_factor' : self.get('replication_factor'),
-                    'dfs_blocksize': self.get('dfs_blocksize'),
-                    'admin_password': self.get('admin_password')
-                }).save();
-                    
-                this.message_hue_login();
-                    
-                cluster_selection.then(function(clusterchoice) {
-                    // Set the response to user's create cluster click when put succeeds.
-                    $.loader.close(true);
-                    var message = clusterchoice.get('data').message || "";
-                    self.set('message', message);
-                    if (!Ember.isBlank(message)){
-                        var msg = {'msg_type':'danger','msg_text':message};
-                        self.get('controllers.userWelcome').send('addMessage',msg);
-                    }
-                    self.set('controllers.userWelcome.create_cluster_start', true);
-                    self.store.fetch('user', 1).then(function(user){
-                        self.get('controllers.userWelcome').send('setActiveTab','clusters');
-                        self.transitionToRoute('user.welcome');
-                    },function(reason){
-                        console.log(reason.message);
-                    });
-                }, function(reason) {
-                    // Set the response to user's create cluster click when put fails.
-                    console.log(reason.message);
-                    $.loader.close(true);
-                    self.set('message', reason.message);
-                    if (!Ember.isBlank(reason.message)){
-                        var msg = {'msg_type':'danger','msg_text':reason.message};
-                        self.get('controllers.userWelcome').send('addMessage',msg);
-                    }
-                    self.set('controllers.userWelcome.create_cluster_start', false);
-                    self.store.fetch('user', 1);
-                });
-                break;
             }
         },
 		takeVreAction : function(vreserver){
