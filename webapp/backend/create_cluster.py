@@ -383,11 +383,11 @@ class YarnCluster(object):
         sleep(30)
         try:
             vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
-            if vre_image_uuid == server['image']['id']:
-                chosen_vre_image = pithos_vre_images_uuids_actions[vre_image_uuid]
-                if not chosen_vre_image['image'] == 'bigbluebutton':
-                    start_vre_script(server_ip,server_pass,self.opts['admin_password'], chosen_vre_image, self.opts['admin_email'])
-            else:
+            # TODO: Replace the Big Blue Button's uuid below !! 
+            # TODO: From CLI the user can give admin_email for any image  ????
+            if vre_image_uuid == server['image']['id'] and (vre_image_uuid is not '0d26fd55-31a4-46b3-955d-d94ecf04a323'):
+                start_vre_script(server_ip,server_pass,self.opts['admin_password'], self.opts['os_choice'], self.opts['admin_email'])
+            elif vre_image_uuid != server['image']['id']:
                 msg = u'VRE server \"{0}\" creation failed because image {1} exists on database but cannot be found or has different id'
                 u' on Pithos+'.format(self.opts['server_name'],self.opts['os_choice'])                                                                                   
                 set_server_state(self.opts['token'],server_id,'Error',status='Failed',error=msg)

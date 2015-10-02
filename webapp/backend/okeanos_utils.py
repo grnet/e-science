@@ -727,7 +727,7 @@ def check_images(token, project_id):
         if image['owner'] == const_escience_uuid or image['owner'] == const_system_uuid:
             if pithos_images_uuids_properties.has_key(image['id']):
                 hadoop_images.append(image['name'])
-            if pithos_vre_images_uuids_actions.has_key(image['id']):
+            if pithos_vre_images_uuids.has_key(image['id']):
                 vre_images.append(image['name'])
     # hadoop images at ordinal 0, vre images at 1
     available_images.append(hadoop_images)
