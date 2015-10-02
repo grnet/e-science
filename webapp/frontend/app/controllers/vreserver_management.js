@@ -31,6 +31,21 @@ App.VreserverManagementController = Ember.Controller.extend({
         }
         return tabs_object;
     }.property(),
+    
+    // computed properties
+    vre_access_url : function(){
+        // TODO: add to vreimage info and resolve dynamically
+        var image = this.get('content.os_image');
+        switch (image){
+        case 'DSpace-5.3':
+            return ['http://%@:%@'.fmt(this.get('content.server_IP'),'8080/xmlui'),'http://%@:%@'.fmt(this.get('content.server_IP'),'8080/jspui')];
+        default:
+            return ['http://%@'.fmt(this.get('content.server_IP'))];
+        }
+    }.property('content.server_IP','contet.os_image'),
+    vre_access_base_url : function(){
+        return this.get('vre_access_url')[0];
+    }.property('vre_access_url'),
     	
 	actions : {
         setActiveTab : function(tab){

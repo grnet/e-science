@@ -101,19 +101,6 @@ App.Uservreserver = DS.Model.extend({
         // Return url with helpful info for docker operations in VRE servers
         return 'https://github.com/grnet/e-science/blob/master/orka/VRE_README.md';
     }.property('os_image'),
-    vre_access_url : function(){
-        // TODO: add to components info and resolve dynamically
-        var image = this.get('os_image');
-        switch (image){
-        case 'DSpace-5.3':
-            return ['http://%@:%@'.fmt(this.get('server_IP'),'8080/xmlui'),'http://%@:%@'.fmt(this.get('server_IP'),'8080/jspui')];
-        default:
-            return ['http://%@'.fmt(this.get('server_IP'))];
-        }
-    }.property('server_IP','os_image'),
-    vre_access_base_url : function(){
-        return this.get('vre_access_url')[0];
-    }.property('vre_access_url'),
     class_vre_status : function (){
         var status = this.get('server_status');
         switch (status) {

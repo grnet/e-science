@@ -112,7 +112,7 @@ class ClusterCreationParams(models.Model):
 
 
     class Meta:
-        verbose_name = "Cluster"
+        verbose_name = "ClusterParam"
         app_label = 'backend'
 
 
@@ -196,7 +196,7 @@ class VreImageCategory(models.Model):
     category_name = models.CharField("VreImageCategory name", max_length=255, unique=True, null=False,
                                      help_text="VreImageCategory Name")
     class Meta:
-        verbose_name_plural = "VreImageCategories"
+        verbose_name_plural = "VRE Image Categories"
     
     def __unicode__(self):
         return self.category_name
@@ -217,6 +217,9 @@ class VreImage(models.Model):
     
     image_category = models.ForeignKey(VreImageCategory, null=False,
                                        help_text="VreImageCategory")
+    
+    class Meta:
+        verbose_name = "VRE Image"
     def __unicode__(self):
         return ("%s : %s : %s") % (self.image_category.category_name, self.image_name, self.image_pithos_uuid)
 
@@ -230,6 +233,8 @@ class OrkaImage(models.Model):
                                     help_text="Pithos Image UUID")
     image_components = models.CharField("OrkaImage components metadata", max_length=4080, null=True, blank=True,
                                         help_text="OrkaImage components metadata as a json dump")
+    class Meta:
+        verbose_name = "Orka Image"
     def __unicode__(self):
         return ("%s : %s") % (self.image_pithos_uuid, self.image_name)
 
@@ -244,6 +249,8 @@ class PublicNewsItem(models.Model):
                                     help_text="News Item")
     news_category = models.IntegerField("News Item Category", null=True, blank=True,
                                      help_text="Category ID for News Item")
+    class Meta:
+        verbose_name = "Public News Item"
 
 class ClusterStatistics(models.Model):
     """Definition of Cluster statistics."""
@@ -371,7 +378,7 @@ class VreServer(models.Model):
                                blank=True, help_text="Celery task state")
     
     class Meta:
-        verbose_name = "VREserver"
+        verbose_name = "VRE Server"
         app_label = 'backend'
 
     def __unicode__(self):
@@ -401,7 +408,7 @@ class Dsl(models.Model):
                                blank=True, help_text="Celery task state")
     
     class Meta:
-        verbose_name = "DSL"
+        verbose_name = "Experiment"
         app_label = 'backend'
 
     def __unicode__(self):
