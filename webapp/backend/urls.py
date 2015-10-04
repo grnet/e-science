@@ -12,6 +12,9 @@ from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from views import SessionView, StatusView, JobsView, HdfsView, MainPageView, \
 StatisticsView, NewsView, OrkaImagesView, VreServerView, VreImagesView, DslView
+admin.site.site_header = "GRNET e-Science Administration"
+admin.site.site_title = admin.site.site_header
+admin.site.index_title = ''
 
 urlpatterns = patterns('', url(r'^$', MainPageView.as_view()),
                        url(r'^api/statistics', StatisticsView.as_view()),

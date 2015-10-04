@@ -53,7 +53,7 @@ class VreImageAdmin(admin.ModelAdmin):
 admin.site.register(UserInfo)
 admin.site.register(UserLogin)
 admin.site.register(ClusterInfo)
-admin.site.register(Token)
+#admin.site.register(Token)
 admin.site.register(PublicNewsItem)
 admin.site.register(OrkaImage,OrkaImageAdmin)
 admin.site.register(VreImage,VreImageAdmin)
