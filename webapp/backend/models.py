@@ -184,6 +184,7 @@ HADOOP_STATUS_CHOICES = (
      ("0", "Stopped"),
      ("1", "Started"),
      ("2", "Pending"),
+     ("3", "Undefined"),
  )
 
 class VreImageCategory(models.Model):
