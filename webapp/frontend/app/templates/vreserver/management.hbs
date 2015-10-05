@@ -36,7 +36,7 @@
       			</tr>
       			<tr>
       			    <td class="col-sm-2"> <b>Image</b> </td>
-                    <td class="col-sm-2"> <a href="#" {{action 'visitActiveImage' model.os_image}}><span class="text text-info"> {{model.os_image}} </span></a></td>
+                    <td class="col-sm-2"> <a href="#" {{action 'visitActiveImage' model.os_image}}><span class="text text-info"> {{model.os_image}} <small><i class="glyphicon glyphicon-link"></i></small></span></a></td>
       			</tr>
       			<tr>
       				<td class="col-sm-2"> <b>Server IP</b> </td>
@@ -46,14 +46,12 @@
       				<td class="col-sm-2"> <b>~Okeanos Project</b> </td>
       				<td class="col-sm-2"> <span class="text text-info"> {{model.project_name}} </span></td>
       			</tr>
+      			{{#each faqitem in vre_faq_links}}
       			<tr>
-                    <td class="col-sm-2"> <b>~Okeanos info for email port setup</b> </td>
-                    <td class="col-sm-2"> <a {{bind-attr href="model.vre_okeanos_faq"}} target="_blank"><span class="text text-info"> {{model.vre_okeanos_faq}} </span></a></td>
-                </tr>
-                <tr>
-                    <td class="col-sm-2"> <b>Info for docker operations</b> </td>
-                    <td class="col-sm-2"> <a {{bind-attr href="model.vre_readme_url"}} target="_blank"><span class="text text-info"> {{model.vre_readme_url}} </span></a></td>
-                </tr>
+      			    <td class="col-sm-2"><b>{{faqitem.label}}</b></td>
+      			    <td class="col-sm-2"><a {{bind-attr href="faqitem.url"}} target="_blank"><span class="text text-info">Visit <small><i class="glyphicon glyphicon-link"></i></small></span></a></td>
+      			</tr>
+      			{{/each}}
  			</table>
       	<p></p>
       	<p></p>

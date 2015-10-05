@@ -30,10 +30,11 @@ class VreImagesSerializer(serializers.ModelSerializer):
     Serializer for VreImages metadata
     """
     image_init_extra = PGArrayField(required=False)
+    image_access_url = PGArrayField(required=False)
     image_category = serializers.SerializerMethodField("category_name")
     class Meta:
         model = VreImage
-        fields = ('id', 'image_name', 'image_pithos_uuid', 'image_components', 'image_min_reqs', 'image_init_extra', 'image_category')
+        fields = ('id', 'image_name', 'image_pithos_uuid', 'image_components', 'image_min_reqs', 'image_faq_links', 'image_init_extra', 'image_access_url', 'image_category')
     
     def category_name(self,obj):
         return VreImageCategory.objects.all().filter(id=obj.image_category_id).values()[0]['category_name']

@@ -93,14 +93,6 @@ App.Uservreserver = DS.Model.extend({
         inverse : 'vreservers'
     }),
     // computed properties
-    vre_okeanos_faq: function(){
-        // Return url with helpful info for setting up email port inside ~okeanos
-        return 'https://okeanos.grnet.gr/support/faq/cyclades-why-is-port-x-closed-is-it-blocked-by-design/';
-    }.property('os_image'),
-    vre_readme_url: function(){
-        // Return url with helpful info for docker operations in VRE servers
-        return 'https://github.com/grnet/e-science/blob/master/orka/VRE_README.md';
-    }.property('os_image'),
     class_vre_status : function (){
         var status = this.get('server_status');
         switch (status) {
@@ -266,10 +258,11 @@ App.Usercluster = DS.Model.extend({
 		return 'http://%@%@'.fmt(this.get('master_IP'), hdfs_explorer_default);
 	}.property('master_IP'),
 	boolean_scale_cluster_applicable : function(){
+	    var manage_enabled = this.get('cluster_manage_enabled');
 	    var image = this.get('os_image');
 	    var re = /Cloudera/i;
-	    return !re.test(image);
-	}.property('os_image'),
+	    return !re.test(image) && manage_enabled;
+	}.property('os_image','cluster_manage_enabled'),
 	ecosystem_or_cloudera : function() {
 		if (this.get('selected_image') > -1 && this.get('selected_image') < 2) {
             return true;

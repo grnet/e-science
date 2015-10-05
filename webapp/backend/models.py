@@ -14,7 +14,7 @@ from django.db import models
 from djorm_pgarray.fields import IntegerArrayField, TextArrayField
 from django.utils import timezone
 from django.apps import apps as django_apps
-django_apps.get_app_config('backend').verbose_name = ' e-Science'
+django_apps.get_app_config('backend').verbose_name = ' E-Science'
 
 class UserInfo(models.Model):
     """Definition of a User object model."""
@@ -212,9 +212,11 @@ class VreImage(models.Model):
     image_components = models.CharField("VreImage components metadata", max_length=4080, null=True, blank=True,
                                         help_text="VreImage components metadata as a json dump")
     image_min_reqs = models.CharField("VreImage minimum requirements", max_length=2040, null=True, blank=True,
-                                      help_text="VreImage minimum requirements {cpu:xx,ram:xxxx,disk:xx} as a json dump")    
-    image_init_extra = TextArrayField()
-    
+                                      help_text="VreImage minimum requirements {cpu:xx,ram:xxxx,disk:xx} as a json dump")
+    image_faq_links = models.CharField("VreImage F.A.Q. Links", max_length=2040, null=True, blank=True,
+                                      help_text="VreImage F.A.Q. Items {label1:url1,label2:url2} as a json dump") 
+    image_init_extra = TextArrayField() # extra property fields as field names applying to specific images
+    image_access_url = TextArrayField() # array [:port]/path for accessing VRE, base url not included, absence of value assumes base url is access url
     image_category = models.ForeignKey(VreImageCategory, null=False,
                                        help_text="VreImageCategory")
     
@@ -330,9 +332,10 @@ class ClusterInfo(models.Model):
         verbose_name = "Cluster"
 
     def __unicode__(self):
-        return ("%d : %s : size(%d) : status(%s) : hadoop(%s)") % (self.id, self.cluster_name, self.cluster_size,
-                                          CLUSTER_STATUS_CHOICES[int(self.cluster_status)][1], 
-                                          HADOOP_STATUS_CHOICES[int(self.hadoop_status)][1])
+        return ("%d : %s : %s : size(%d) : status(%s) : hadoop(%s)") % (self.id, self.cluster_name, self.os_image, 
+                                                                        self.cluster_size,
+                                                                        CLUSTER_STATUS_CHOICES[int(self.cluster_status)][1],
+                                                                        HADOOP_STATUS_CHOICES[int(self.hadoop_status)][1])
        
 class VreServer(models.Model):
     """Definition of a VRE Server object model."""
@@ -382,7 +385,7 @@ class VreServer(models.Model):
         verbose_name = "VRE Server"
 
     def __unicode__(self):
-        return ("%d : %s : %s") % (self.id, self.server_name, CLUSTER_STATUS_CHOICES[int(self.server_status)][1])
+        return ("%d : %s : %s : %s") % (self.id, self.server_name, self.os_image, CLUSTER_STATUS_CHOICES[int(self.server_status)][1])
     
 class Dsl(models.Model):
     """Definition of a User Cluster DSL object model."""

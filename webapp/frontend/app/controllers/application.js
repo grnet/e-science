@@ -50,13 +50,19 @@ App.ApplicationController = Ember.Controller.extend({
             var arrImages = Ember.makeArray(images);
             for (i=0;i<arrImages.length;i++){
                 var components = Ember.isEmpty(arrImages[i].get('image_components')) ? {} : JSON.parse(arrImages[i].get('image_components'));
-                var objMinreqs = Ember.isEmpty(arrImages[i].get('image_min_reqs')) ? {} : JSON.parse(arrImages[i].get('image_min_reqs'));
+                var minreqs = Ember.isEmpty(arrImages[i].get('image_min_reqs')) ? {} : JSON.parse(arrImages[i].get('image_min_reqs'));
+                var faqlinks = Ember.isEmpty(arrImages[i].get('image_faq_links')) ? {} : JSON.parse(arrImages[i].get('image_faq_links'));
                 var arrComponents = [];
-                for (k in components){
-                    arrComponents.push({"name":k,"property":components[k]});
+                var arrFaq = [];
+                for (c in components){
+                    arrComponents.push({"name":c,"property":components[c]});
+                }
+                for (f in faqlinks){
+                    arrFaq.push({"label":f,"url":faqlinks[f]});
                 }
                 arrImages[i].set('image_components',arrComponents);
-                arrImages[i].set('image_min_reqs',objMinreqs);
+                arrImages[i].set('image_faq_links',arrFaq);
+                arrImages[i].set('image_min_reqs',minreqs);
             }
             return arrImages;
             break;

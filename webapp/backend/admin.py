@@ -40,8 +40,11 @@ class VreImageForm(forms.ModelForm):
                                        widget=Textarea(attrs={'cols':'80'}), \
                                        help_text='VRE Image Component metadata info in json.dumps format.',required=False)
     image_min_reqs = forms.CharField(validators=[MaxLengthValidator(2040),validate_json], \
-                                       widget=Textarea(attrs={'cols':'80','rows':'2'}), \
+                                       widget=Textarea(attrs={'cols':'80','rows':'1'}), \
                                        help_text='VRE Image minimum requirements info in json.dumps format.',required=False)
+    image_faq_links = forms.CharField(validators=[MaxLengthValidator(2040),validate_json], \
+                                       widget=Textarea(attrs={'cols':'80','rows':'3'}), \
+                                       help_text='VRE Image faq links in json.dumps format.',required=False)
     class Meta:
         model = VreImage
         fields = '__all__'
