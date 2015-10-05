@@ -36,7 +36,7 @@ class VreImagesSerializer(serializers.ModelSerializer):
         fields = ('id', 'image_name', 'image_pithos_uuid', 'image_components', 'image_min_reqs', 'image_init_extra', 'image_category')
     
     def category_name(self,obj):
-        return VreImageCategory.objects.all().filter(id=obj.image_category_id)[0]
+        return VreImageCategory.objects.all().filter(id=obj.image_category_id).values()[0]['category_name']
 
 class OrkaImagesSerializer(serializers.ModelSerializer):
     """
