@@ -14,15 +14,6 @@ encrypt_key = key
 # Definitions of return value errors
 
 
-error_syntax_clustersize = -1 # Not used anywhere   
-error_syntax_cpu_master = -2 # Not used anywhere
-error_syntax_ram_master = -3 # Not used anywhere
-error_syntax_disk_master = -4 # Not used anywhere
-error_syntax_cpu_slave = -5  # Not used anywhere
-error_syntax_ram_slave = -6  # Not used anywhere
-error_syntax_disk_slave = -7  # Not used anywhere
-error_syntax_logging_level = -8  # Not used anywhere
-error_syntax_disk_template = -9  # Not used anywhere
 error_quotas_cyclades_disk = -10 # Not enough disksize quota in cyclades 
 error_quotas_cpu = -11 # Not enough cpu quota in cyclades 
 error_quotas_ram = -12 # Not enough ram quota in cyclades
@@ -30,30 +21,22 @@ error_quotas_cluster_size = -13 # Not enough VM quota in cyclades
 error_quotas_network = -14 # Not enough private network quota 
 error_flavor_id = -15 # Not a valid combination of resources
 error_image_id = -16 # Not a valid image given
-error_syntax_token = -17 # Not used anywhere
-error_ready_reroute = -18 # Not used anywhere
-error_no_arguments = -19 # Used in orka errors_contants for no arguments given in cli, not used anywhere in backend
 error_fatal = -20 # Often used in orka cli for many errors(ClientError,ConnectionError), only once in backend(deletion error in delete vre)
 error_user_quota = -22 # Error requesting/getting user quota from ~okeanos
 error_flavor_list = -23 # Error requesting/getting flavors list from ~okeanos
 error_get_list_servers = -24 # Error requesting/getting user's servers from ~okeanos
 error_get_list_projects = -25 # Error requesting/getting user's projects from ~okeanos
-error_get_network_quota = -28 # Not used anywhere
 error_create_network = -29 # Error creating private network in ~okeanos
 error_get_ip = -30 # General floating ip error (e.g. not enough ip quota and error while requesting list of ips)
 error_create_server = -31 # Error while creating ~okeanos server (e.g. stay in BUILD status more than 5 minutes).
-error_syntax_auth_token = -32 # Error reading ~okeanos token from .kamakirc for cli (e.g. no token in .kamakirc)
 error_ansible_playbook = -34 # General error while running create cluster Ansible playbook
 error_ssh_client = -35 # Error for staging server not be able to connect to cluster during reroute steps
-error_remove_node = -37#Error while removing a node when scaling a cluster
-error_cluster_not_exist = -69 # Not used anywhere
 error_cluster_corrupt = -70 # Error while deleting cluster and not all VMs are deleted(e.g. Error before deleting all cluster VMs)
 error_project_id = -71 # No project id for given project name
 error_multiple_entries = -72 # Multiple entries in database for something unique
 error_project_quota = -73 # Zero user quota for a given project       
 error_authentication = -99 # Invalid token
-error_create_dsl = -75#Error while upload dsl file to pithos
-error_container = -76#Error pithos container not found while upload dsl file
+error_container = -76 # Error pithos container not found while upload dsl file
 
 FNULL = open(os.devnull, 'w') # Redirects whatever is assigned to FNULL to nothingness (e.g. stderr=FNULL)
 
@@ -124,27 +107,12 @@ pithos_images_uuids_properties = {"d3782488-1b6d-479d-8b9b-363494064c52": {"role
                              "dc171a3d-09bf-469d-9b7a-d3fb5c0afebc": {"role":"yarn", "tags":"-t postconfig,hueconfig,ecoconfig", "image":"ecosystem"},
                              "05f23bb1-5415-4da3-8e8a-93daa384b2f8": {"role":"cloudera", "tags":"-t preconfig,postconfig", "image":"cloudera"}}
 
-# Dictionary of pithos VRE images UUIDs with their corresponding actions
-pithos_vre_images_uuids_actions = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": {"image":"drupal","db_name":"db","default_password":"@test123",
-                                                                            "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}",
-                                                                            "change_db_pass":"hash=$(docker exec -t -i drupal bash -c \"php scripts/password-hash.sh {0} | grep hash | sed -e 's#.*hash: \\(\)#\\1#'\")\
-                                                                             && echo \\\'$hash|sed -r 's/[$]+/\\\\$/g' 1> hash\
-                                                                             && docker exec -t -i db bash -c \"echo \\\"UPDATE users SET pass=`cat hash`\\\">mysql.sql\"\
-                                                                             && docker exec -t -i db bash -c \"echo \\\"' where uid='1';\\\">>mysql.sql\"\
-                                                                             && docker exec -t -i db bash -c \"mysql -p{0} drupal < mysql.sql\"\
-                                                                             && docker exec -t -i db bash -c \"mysql -p{0} -e \\\"use drupal;UPDATE users SET pass=REPLACE(pass, '\n', '');\\\"\"\
-                                                                             && rm hash; docker exec -t -i db bash -c \"rm mysql.sql\""},
-                               "f64a11dc-97bd-44cb-a502-6c141cc42bfa": {"image":"redmine_redmine_1","db_name":"redmine_postgresql_1","default_password":"password",
-                                                                        "update_password":"sudo -u postgres psql -U postgres -d redmine_production -c \"alter user redmine password '{0}';\""
-                                                                        ";sed -i \'s/DB_PASS=password/DB_PASS={0}/g\' /usr/local/redmine/docker-compose.yml",
-                                                                        "change_db_pass":"docker exec -t -i redmine_redmine_1 bash -c 'RAILS_ENV=production bin/rails runner \"user = User.first ;\
-                                                                         user.password, user.password_confirmation = \\\"{0}\\\"; user.save!\"'"},
-                               "b1ae3738-b7b3-429e-abef-2fa475f30f0b": {"image":"mediawiki","db_name":"db","default_password":"@test123",
-                                                                        "update_password":"/usr/bin/mysqladmin -u root -p@test123 password {0}",
-                                                                        "change_db_pass":"docker exec -t -i db bash -c \"mysql -p{0} mediawiki -e \\\"UPDATE user SET user_password = CONCAT(':A:', MD5('{0}')) WHERE user_name = 'Admin';\\\"\""},
-                               "c5850bc1-255d-4847-9b89-ce8e86667250": {"image":"dspace","update_password":"/usr/bin/docker exec -d dspace sudo -u postgres psql -U postgres -d dspace -c \"alter user dspace password '{0}';\"",
-                                                                        "change_db_pass":"docker exec -d dspace sed -i 's/db.password *= * *dspace/db.password={0}/g' /dspace/config/dspace.cfg"},
-                               "0d26fd55-31a4-46b3-955d-d94ecf04a323": {"image":"bigbluebutton"}}
+# Dictionary of pithos VRE images UUIDs
+pithos_vre_images_uuids = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": True,
+                            "f64a11dc-97bd-44cb-a502-6c141cc42bfa": True,
+                            "b1ae3738-b7b3-429e-abef-2fa475f30f0b": True,
+                            "c5850bc1-255d-4847-9b89-ce8e86667250": True,
+                            "0d26fd55-31a4-46b3-955d-d94ecf04a323": True}
 
                                                                         
 # encrypt/decrypt token in django db
