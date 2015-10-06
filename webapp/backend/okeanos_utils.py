@@ -720,17 +720,16 @@ def check_images(token, project_id):
     endpoints, user_id = endpoints_and_user_id(auth)    
     plankton = init_plankton(endpoints['plankton'], token)
     list_current_images = plankton.list_public(True, 'default')
-    vre_images_in_db = VreImage.objects.all()
-    orka_images_in_db = OrkaImage.objects.all()
+    vre_images_in_db = VreImage.objects.values('image_pithos_uuid')
+    orka_images_in_db = OrkaImage.objects.values('image_pithos_uuid')
     available_images = []
     hadoop_images = []
     vre_images = []
-    for db_image in orka_images_in_db:
-        if any(image['id'] == db_image.image_pithos_uuid for image in list_current_images):
-            hadoop_images.append(image['name'])
-    for db_image in vre_images_in_db:
-        if any(image['id'] == db_image.image_pithos_uuid for image in list_current_images):
+    for image in list_current_images:
+        if any(d['image_pithos_uuid'] == image['id'] for d in vre_images_in_db):
             vre_images.append(image['name'])
+        if any(d['image_pithos_uuid'] == image['id'] for d in orka_images_in_db):         
+            hadoop_images.append(image['name'])
     # hadoop images at ordinal 0, vre images at 1
     available_images.append(hadoop_images)
     available_images.append(vre_images)
