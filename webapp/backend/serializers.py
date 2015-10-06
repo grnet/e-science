@@ -9,7 +9,7 @@ Serializers file for django rest framework.
 
 from rest_framework import serializers
 from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, \
-PublicNewsItem, OrkaImage, VreServer, VreImage, VreImageCategory, Dsl
+PublicNewsItem, OrkaImage, VreServer, VreImage, VreImageCategory, Dsl, Setting
 
 
 class PGArrayField(serializers.WritableField):
@@ -24,6 +24,14 @@ class PGArrayField(serializers.WritableField):
     def to_native(self, obj):
         return obj
       
+      
+class SettingsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Settings
+    """
+    class Meta:
+        model = Setting
+        fields = ('id', 'section', 'property_name', 'property_value', 'comment')
 
 class VreImagesSerializer(serializers.ModelSerializer):
     """

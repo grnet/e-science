@@ -19,7 +19,7 @@ from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
     DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, \
-    HdfsSerializer, StatisticsSerializer, NewsSerializer, \
+    HdfsSerializer, StatisticsSerializer, NewsSerializer, SettingsSerializer, \
     OrkaImagesSerializer, VreImagesSerializer, DslsSerializer, DslOptionsSerializer, DslDeleteSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
@@ -43,6 +43,20 @@ class MainPageView(generic.TemplateView):
     """Load the template file"""
     template_name = 'index.html'
 
+class SettingsView(APIView):
+    """
+    View to handle requests for instance settings.
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (AllowAny, )
+    resource_name = 'setting'
+    
+    def get(self, request, *args, **kwargs):
+        settings = Setting.objects.all()
+        serializer_class = SettingsSerializer(settings, many=True)
+        return Response(serializer_class.data)
+
+
 class VreImagesView(APIView):
     """
     View to handle requests from ember for VRE image metadata
@@ -53,7 +67,7 @@ class VreImagesView(APIView):
 
     def get(self, request, *args, **kwargs):
         """
-        Return news items.
+        Return VRE image data.
         """
         image_data = VreImage.objects.all()
         serializer_class = VreImagesSerializer(image_data, many=True)

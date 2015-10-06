@@ -48,13 +48,33 @@ class VreImageForm(forms.ModelForm):
     class Meta:
         model = VreImage
         fields = '__all__'
- 
+
+
 class VreImageAdmin(admin.ModelAdmin):
     form = VreImageForm
-    
+
+# Customize form to enforce case-insensitive unique check
+class SettingAdminForm(forms.ModelForm):
+    def clean(self):
+        _new = True if not self.instance.pk else False
+        section = self.cleaned_data['section']
+        property_name = self.cleaned_data['property_name']
+        breaks_unique = Setting.objects.all().filter(section__iexact=section,property_name__iexact=property_name).exists()
+        if _new and breaks_unique:
+            raise forms.ValidationError('Duplicate section, property_name pair already exists.')
+        return self.cleaned_data
+        
+    class Meta:
+        model = Setting
+        fields = '__all__'
+     
+class SettingAdmin(admin.ModelAdmin):
+    form = SettingAdminForm
+
 
 admin.site.register(UserInfo)
 admin.site.register(UserLogin)
+admin.site.register(Setting,SettingAdmin)
 admin.site.register(ClusterInfo)
 admin.site.register(PublicNewsItem)
 admin.site.register(OrkaImage,OrkaImageAdmin)
