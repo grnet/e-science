@@ -8,9 +8,6 @@ This module contains the definitions of returned errors and package constants.
 """
 import os
 import base64
-from encrypt_key import key #file with only one variable key = encrypt_key file is not in git repo
-encrypt_key = key
-
 # Definitions of return value errors
 
 
@@ -113,26 +110,4 @@ pithos_vre_images_uuids = {"d6593183-39c7-4f64-98fe-e74c49ea00b1": True,
                             "b1ae3738-b7b3-429e-abef-2fa475f30f0b": True,
                             "c5850bc1-255d-4847-9b89-ce8e86667250": True,
                             "0d26fd55-31a4-46b3-955d-d94ecf04a323": True}
-
-                                                                        
-# encrypt/decrypt token in django db
-from encrypt_key import key     # File with only one variable key = encrypt_key, keep it outside git
-# Encrypts  and decrypts every user's ~okeanos token in database.
-encrypt_key = key
-
-def mask_token(key, token):
-    enc = []
-    for i in range(len(token)):
-        key_c = key[i % len(key)]
-        enc_c = chr((ord(token[i]) + ord(key_c)) % 256)
-        enc.append(enc_c)
-    return base64.urlsafe_b64encode("".join(enc))
-
-def unmask_token(key, masked_token):
-    dec = []
-    masked_token = base64.urlsafe_b64decode(masked_token.encode('ascii'))
-    for i in range(len(masked_token)):
-        key_c = key[i % len(key)]
-        dec_c = chr((256 + ord(masked_token[i]) - ord(key_c)) % 256)
-        dec.append(dec_c)
-    return "".join(dec)
+                   

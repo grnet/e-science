@@ -22,6 +22,7 @@ from time import sleep
 from datetime import datetime
 from cluster_errors_constants import *
 from celery import current_task
+from authenticate_user import unmask_token, encrypt_key
 from django_db_after_login import db_cluster_update, get_user_id, db_server_update, db_hadoop_update, db_dsl_create, db_dsl_update, db_dsl_delete
 from backend.models import UserInfo, ClusterInfo, VreServer, Dsl
 

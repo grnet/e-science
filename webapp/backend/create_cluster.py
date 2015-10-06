@@ -12,6 +12,7 @@ import logging
 import subprocess
 import json
 from os.path import join, expanduser
+from authenticate_user import unmask_token, encrypt_key
 from reroute_ssh import reroute_ssh_prep, start_vre_script
 from kamaki.clients import ClientError
 from run_ansible_playbooks import install_yarn
