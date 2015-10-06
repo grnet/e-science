@@ -387,7 +387,7 @@ App.VreserverCreateController = Ember.Controller.extend({
     alert_input_invalid_text : {
         // alert message property > message text
         alert_invalid_input_admin_pass : '%@ Upper/lowercase letters and numbers allowed. Minimum length:8.',
-        alert_invalid_input_admin_email: '%@ not a valid e-mail address. Example: a@b.cc'
+        alert_invalid_input_admin_email: '%@ not a valid e-mail address. Example: admin@example.com'
     },
     alert_input_validators : {
         // model property > true for invalid input, false/null for valid

@@ -305,31 +305,33 @@ class YarnCluster(object):
                 return flavor_master, flavor_slaves, image['id']
         msg = 'Image {0} exists on database but cannot be found or has different id'
         ' on Pithos+'.format(self.opts['os_choice'])
-        raise ClientError(msg, error_flavor_id)         
+        raise ClientError(msg, error_image_id)         
         
     
     def get_image_id(self):
         """
         Return id of given image
         """
-        chosen_image = {}
-        list_current_images = self.plankton.list_public(True, 'default')
-        # Check availability of resources
-        
+        # check image metadata in database and pithos and set vre_image_uuid accordingly
+        self.vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
         # Find image id of the operating system arg given
-        for lst in list_current_images:
-            if lst['name'] == self.opts['os_choice']:
-                chosen_image = lst
-                return chosen_image['id']
-        if not chosen_image:
-            msg = self.opts['os_choice']+' is not a valid image'
-            raise ClientError(msg, error_image_id)
+        list_current_images = self.plankton.list_public(True, 'default')
+        for image in list_current_images:
+            if self.vre_image_uuid == image['id']:
+                return image['id']
+        msg = 'Image {0} exists on database but cannot be found or has different id'
+        ' on Pithos+'.format(self.opts['os_choice'])
+        raise ClientError(msg, error_image_id)
        
     def create_vre_server(self):
         """
         Create VRE server in ~okeanos
         """        
         flavor_id = self.get_flavor_id('master')
+        if flavor_id == 0:
+            msg = 'Combination of cpu, ram, disk and disk_template do' \
+                ' not match an existing id'
+            raise ClientError(msg, error_flavor_id)
         image_id = self.get_image_id()
         retval = self.check_all_resources()
         pub_keys_path = ''
@@ -383,16 +385,16 @@ class YarnCluster(object):
         # Wait for VRE server to be pingable
         sleep(30)
         try:
-            vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
-            # TODO: Replace the Big Blue Button's uuid below !! 
-            if vre_image_uuid == server['image']['id'] and (vre_image_uuid is not '0d26fd55-31a4-46b3-955d-d94ecf04a323'):
-                start_vre_script(server_ip,server_pass,self.opts['admin_password'], vre_script_name, self.opts['admin_email'])
+            vre_image_uuid = self.vre_image_uuid
+            if vre_image_uuid == server['image']['id']:
+                if vre_image_uuid is not '0d26fd55-31a4-46b3-955d-d94ecf04a323':
+                    start_vre_script(server_ip,server_pass,self.opts['admin_password'], vre_script_name, self.opts['admin_email'])
             else:
-                msg = u'VRE server \"{0}\" creation failed because image {1} exists on database but cannot be found or has different id'
-                u' on Pithos+'.format(self.opts['server_name'],self.opts['os_choice'])                                                                                   
+                msg = u'VRE server \"{0}\" creation failed. Created okeanos VM id does not match image {1} id'.format(self.opts['server_name'],
+                                                                                                                      self.opts['os_choice'])                                                                                   
                 set_server_state(self.opts['token'],server_id,'Error',status='Failed',error=msg)
                 self.cyclades.delete_server(server['id'])
-                raise ClientError(msg, error_flavor_id) 
+                raise ClientError(msg, error_image_id) 
         except RuntimeError, e:
             # Exception is raised if a VRE start command is not executed correctly and informs user of its VRE properties
             # so user can ssh connect to the VRE server or delete the server from orkaCLI.

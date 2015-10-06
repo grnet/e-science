@@ -48,11 +48,11 @@
 
   - name: download hadoop-yarn src
     tags: preconfig
-    get_url: dest={{path_to_hadoop}} url={{yarn_common_url}}/{{ yarn_version }}/{{ yarn_version }}.tar.gz
+    get_url: dest={{path_to_hadoop}} url={{yarn_common_url}}/{{ hadoop_latest_stable }}.tar.gz
 
   - name: unzip hadoop-yarn src
     tags: preconfig
-    unarchive: src={{path_to_hadoop}}/{{ yarn_version }}.tar.gz dest=/usr/local copy=no owner=root group=root
+    unarchive: src={{path_to_hadoop}}/{{ hadoop_latest_stable }}.tar.gz dest=/usr/local copy=no owner=root group=root
 
   - name: Add virtual machine private ips in /etc/hosts
     template: src=hosts.j2 dest={{etchosts_filename}}

@@ -98,12 +98,12 @@ class HdfsRequest(object):
             self.ssh_client.close()
             
             
-def start_vre_script(server_ip, password, admin_password, vre_image, admin_email=''):
+def start_vre_script(server_ip, password, admin_password, vre_script, admin_email=''):
     """
     Change vre image's database and login password to user admin_password
     """
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
-    command = ". {0}.sh {1} {2}".format(vre_image, admin_password, admin_email)
+    command = ". {0} {1} {2} >> logs".format(vre_script, admin_password, admin_email)
     exec_command(ssh_client, command)
     
     
