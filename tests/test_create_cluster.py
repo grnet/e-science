@@ -14,6 +14,9 @@ from os.path import join, dirname, abspath
 
 sys.path.append(join(dirname(abspath(__file__)), '../webapp'))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
+from django import setup as django_setup
+django_setup()
+
 # import objects we aim to test
 from backend.create_cluster import YarnCluster, ClientError, current_task, retrieve_pending_clusters
 from backend.cluster_errors_constants import error_quotas_cluster_size, error_quotas_network, \

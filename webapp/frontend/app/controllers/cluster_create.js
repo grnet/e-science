@@ -72,31 +72,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 	workflow_filter_empty : 'no images available',
 	admin_password: '', //password for hue superuser first login
 	hue_in_image: false, //boolean to check if selected image has hue
-	
-	// utility function takes String 'pattern' and numeric count
-	// and returns 'pattern' concatenated 'count' times.
-	str_repeat : function (pattern, count) {
-	    if (count < 1) return '';
-	    var result = '';
-	    while (count > 1) {
-	        if (count & 1) result += pattern;
-	        count >>= 1, pattern += pattern;
-	    }
-	    return result + pattern;
-	},
-	// utility function, uses a hidden span element to copy all text related attributes of an element
-	// and do pixel arithmetic for computing string width.
-	str_pixel_width : function(pattern, element_id) {
-		var pixelcounter = $('#string_pixel_count');
-		var element = $('#'+element_id);
-		var style_attrs = ['font-family','font-size','font-size-adjust','font-stretch','font-style','font-variant','font-weight','height','line-height'];
-		for (var i = 0; i < style_attrs.length ; i++ ){
-			var attr = style_attrs[i];
-			pixelcounter.css(attr, element.css(attr));
-		}
-		pixelcounter.text(pattern);
-		return pixelcounter.width();
-	},	
 	   
 	// reads available ssh_keys
 	// displays ssh_keys names in the drop-down list
@@ -107,7 +82,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 		return keys.sort();
 	}.property('project_details'),
 	
-	
 	// reads available projects
 	// displays projects and available resources in the drop-down list
 	// (spaces inserted just for alignment of projects-resources)
@@ -117,49 +91,19 @@ App.ClusterCreateController = Ember.Controller.extend({
 		this.set('project_name', '');
 		var model = this.get('content');
 		var projects = [];
-		var projects_data = [];
-		var length = this.get('content.length');
-		var regular_exp_project_id = /system:[a-z,0-9]{8}(-[a-z,0-9]{4}){3}-[a-z,0-9]{12}/;
-		var space_separate_project_name_and_quota = this.str_repeat(String.fromCharCode(160), 3);
-		var space_between_quota = this.str_repeat(String.fromCharCode(160), 2);
-		for (var i = 0; i < length; i++) {
-			if (regular_exp_project_id.test(model.objectAt(i).get('project_name'))) {
-				this.set('name_of_project', 'system');
-			} else {
-				this.set('name_of_project', model.objectAt(i).get('project_name'));
-			}
-			var project = {};
-			project['name'] = this.get('name_of_project');
-			project['quotas'] = space_separate_project_name_and_quota + 
-				'VMs:' + model.objectAt(i).get('vms_av').length + space_between_quota +
-				'CPUs:' + model.objectAt(i).get('cpu_av') + space_between_quota +
-				'RAM:' + model.objectAt(i).get('ram_av') + 'MB' + space_between_quota +
-				'Disk:' + model.objectAt(i).get('disk_av') + 'GB';
-			projects_data[i] = project;
-			projects[i] = projects_data[i]['name'] + projects_data[i]['quotas'];
-			var pixel_width = this.str_pixel_width(projects[i],'project_id');
-			// 320px is the phone portrait breakpoint
-			if (pixel_width && (pixel_width < 320)){
-				var spc_width = this.str_pixel_width(String.fromCharCode(160),'project_id');
-				if (spc_width){
-					var pad = Math.floor(((320 - pixel_width)/spc_width)+0.5);
-					projects[i] = projects_data[i]['name'] + this.str_repeat(String.fromCharCode(160),pad) + projects_data[i]['quotas'];
-				}
-			}
-		}
-		for (var i = 0; i < length; i++) {
-			if ((projects[i]) === this.get('project_details'))
-			{ 
-				if(this.get('last_cluster_conf_checked') == false)
-				{
-					this.set('alert_mes_last_conf', '');
-				}
-				this.set('project_current', model.objectAt(i));
-				this.set('project_name', model.objectAt(i).get('project_name'));
-				this.set('project_index', i);
-				
-				break;
-			}
+		for (var i = 0; i < model.get('length'); i++) {
+		    this.set('name_of_project',model.objectAt(i).get('project_name_clean'));
+			projects[i] = model.objectAt(i).get('project_name_decorated');
+			if ((projects[i]) == this.get('project_details'))
+            { 
+                if(this.get('last_cluster_conf_checked') == false)
+                {
+                    this.set('alert_mes_last_conf', '');
+                }
+                this.set('project_current', model.objectAt(i));
+                this.set('project_name', model.objectAt(i).get('project_name'));
+                this.set('project_index', i);               
+            }
 		}
 		return projects.sort();
 	}.property('project_details'),

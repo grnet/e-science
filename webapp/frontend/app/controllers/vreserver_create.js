@@ -6,43 +6,13 @@ App.VreserverCreateController = Ember.Controller.extend({
 	/*
 	 * Static Data
 	 */
-	// client-side only, eventually add data structure to the backend
-	vreCategoryLabels : ['Portal/Cms','Wiki','Project Management','Digital Repository', 'Web Conferencing'],
-	vreCategoryData : {
-	    'Portal/Cms' : ['Drupal-7.37'],
-	    'Wiki' : ['Mediawiki-1.2.4'],
-	    'Project Management': ['Redmine-3.0.4'],
-	    'Digital Repository': ['DSpace-5.3'],
-	    'Web Conferencing': ['BigBlueButton-0.81']
-	},
 	// client-side only, eventually move to backend
-	vreFlavorLabels : ['Small', 'Medium', 'Large'],
-	vreFlavorData : [
-	   {cpu:2,ram:2048,disk:5}, //Small
-	   {cpu:2,ram:4096,disk:10},//Medium
-	   {cpu:4,ram:6144,disk:20} //Large
-	],
-	vreResourceMin : {
-	    'BigBlueButton-0.81':{cpu:2,ram:2048},
-	    'DSpace-5.3':{ram:2048},
-	    'Drupal-7.37':{ram:1024},
-        'Mediawiki-1.2.4':{ram:1024},
-        'Redmine-3.0.4':{ram:1024}
-	},
-	vreImageExtraProperties : {
-	    // controller_show_field : [image,...] / '*' = all images
-	    //'show_admin_pass_input' : ['*'],
-	    'show_admin_pass_input' : ['Drupal-7.37','Mediawiki-1.2.4','Redmine-3.0.4','DSpace-5.3'],
-	    'show_admin_email_input': ['DSpace-5.3']
-	},
-	vreImageExtraFields : {
-	   // image : [extra_field,...] / '*' = all images
-	   //'*' : ['admin_password'],
-	   'Drupal-7.37' : ['admin_password'],
-	   'Mediawiki-1.2.4' : ['admin_password'],
-	   'Redmine-3.0.4' : ['admin_password'],
-	   'DSpace-5.3' : ['admin_password','admin_email']
-	},
+    vreFlavorLabels : ['Small', 'Medium', 'Large'],
+    vreFlavorData : [
+       {cpu:2,ram:2048,disk:5}, //Small
+       {cpu:2,ram:4096,disk:10},//Medium
+       {cpu:4,ram:6144,disk:20} //Large
+    ],
 	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
 	// mapping of uservreserver model properties to controller computed properties
 	model_to_controller_map : {
@@ -85,6 +55,14 @@ App.VreserverCreateController = Ember.Controller.extend({
     /*
      * VRE Categories
      */
+    vreCategoryLabels : function(){
+        var arrLabels = [];
+        var vreImages = this.get('vreImages');
+        for (i=0;i<vreImages.length;i++){
+            arrLabels.push(vreImages[i].get('image_category'));
+        }
+        return arrLabels.uniq();
+    }.property(),
     // wrap categories to a project selection check
     vre_categories : function(){
         return !this.get('boolean_no_project') ? this.get('vreCategoryLabels') : [];
@@ -100,15 +78,54 @@ App.VreserverCreateController = Ember.Controller.extend({
     /*
      * VRE Images
      */
+    vreImageExtraProperties_static : {},
+    vreImageExtraProperties : function(that){
+        // follow a naming convention when referencing in templates
+        // "show_<extra_field_name>_input" (eg. show_admin_password_input)
+        // data structure {'controller_field_boolean': ['image_name1','image_name2',...]}
+        var self = that; // get the controller into self
+        var vreImages = self.get('vreImages');
+        var extra_properties = self.get('vreImageExtraProperties_static');
+        for (i=0;i<vreImages.length;i++){
+            var imageName = vreImages[i].get('image_name');
+            var arrImageFields = vreImages[i].get('image_init_extra');
+            for (j=0;j<arrImageFields.length;j++) {
+                var propName = 'show_%@_input'.fmt(arrImageFields[j]);
+                Ember.isEmpty(extra_properties[propName]) ? extra_properties[propName] = [] : $.noop();
+                !(extra_properties[propName]).contains(imageName) && (extra_properties[propName]).push(imageName);
+            }
+        }
+        return extra_properties;
+    },    
+    vreImageExtraFields : function(){
+        // data structure {'image_name': ['field1','field2',...]}
+        var objExtraFields = {};
+        var vreImages = this.get('vreImages');
+        for (i=0;i<vreImages.length;i++){
+            objExtraFields[vreImages[i].get('image_name')]=vreImages[i].get('image_init_extra');
+        }
+        return objExtraFields;
+    }.property(),    
+    vreResourceMin : function(){
+        var objRequirements = {};
+        var vreImages = this.get('vreImages');
+        for (i=0;i<vreImages.length;i++){
+            objRequirements[vreImages[i].get('image_name')]=vreImages[i].get('image_min_reqs');
+        }
+        return objRequirements;
+    }.property(),    
 	selected_project_images : function(){
-	    //TODO:  model data, not used at moment until we implement dynamic filtering on image category
-	    var arr_images = !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('vre_choices') : [];
-	    // return based on static data defined at top of controller, verify with model data
-	    var arr_filtered_by_category = !Ember.isEmpty(this.get('selected_category')) ? this.get('vreCategoryData')[this.get('selected_category')] : [];
-	    var arr_verified = arr_filtered_by_category.filter(function(item,index,self){// remove any statics not on model
-	        return arr_images.contains(item) ? true : false;
-	    });
-	    return !this.get('boolean_no_project') ? arr_verified : [];
+	    var arr_project_images = !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('vre_choices') : [];
+	    var selected_category = this.get('selected_category') || '';
+	    var arr_images = this.get('vreImages');
+	    var arr_available_images = [];
+	    for (i=0;i<arr_images.get('length');i++){//filter by selected category and verify image is available on selected project
+	        if ((arr_images[i].get('image_category')==selected_category) 
+	        && (arr_project_images.contains(arr_images[i].get('image_name')))){
+	            arr_available_images.push(arr_images[i].get('image_name'));
+	        }
+	    }
+	    return !this.get('boolean_no_project') ? arr_available_images : [];
 	}.property('vre_categories.[]','selected_category'),
 	selected_image_static : null,
 	selected_image : function(key,value){
@@ -123,7 +140,7 @@ App.VreserverCreateController = Ember.Controller.extend({
         var html_templ = '%@%@: <span class="text text-info pull-right">%@</span><br>';
         var html_snippet = '<h5 class="strong">Component: <span class="text text-info">Version</span></h5>';
         var image_data = this.get('vreImages');
-        var extra_fields = this.get('vreImageExtraProperties');
+        var extra_fields = this.get('vreImageExtraProperties')(this);
         for (property in extra_fields){
             this.set(property,null);
         }
@@ -282,10 +299,10 @@ App.VreserverCreateController = Ember.Controller.extend({
      */
     category_from_image : function(that, image_name){
         var self = that; // get controller into self
-        var category_data = self.get('vreCategoryData');
-        for (category in category_data) {
-            if (category_data[category].contains(image_name)) {
-                return category;
+        var arr_images = self.get('vreImages');
+        for (i=0;i<arr_images.get('length');i++) {
+            if (arr_images[i].get('image_name')==image_name) {
+                return arr_images[i].get('image_category');
             }
         }
         return;
@@ -370,7 +387,7 @@ App.VreserverCreateController = Ember.Controller.extend({
     alert_input_invalid_text : {
         // alert message property > message text
         alert_invalid_input_admin_pass : '%@ Upper/lowercase letters and numbers allowed. Minimum length:8.',
-        alert_invalid_input_admin_email: '%@ not a valid e-mail address. Example: a@b.cc'
+        alert_invalid_input_admin_email: '%@ not a valid e-mail address. Example: admin@example.com'
     },
     alert_input_validators : {
         // model property > true for invalid input, false/null for valid

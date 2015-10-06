@@ -119,7 +119,7 @@ Can also select server name, project name, flavor, ssh-key-->
                         {{alert_missing_input_image}}
                     </div>
                 </div>				
-				{{#if show_admin_pass_input}}
+				{{#if show_admin_password_input}}
 				<div class="form-group">
 				    <label for="id_vre_admin_pass" class="control-label col-sm-5"> Admin Pass </label>
 				    <div class="col col-sm-7">
@@ -160,7 +160,7 @@ Can also select server name, project name, flavor, ssh-key-->
                     <div class="col col-sm-7">                       
                         {{input type="email" 
                         value=vre_admin_email
-                        placeholder="a@b.cc"
+                        placeholder="admin@example.com"
                         id="id_vre_admin_email"
                         action="admin_email_validate"
                         on="focus-out"
