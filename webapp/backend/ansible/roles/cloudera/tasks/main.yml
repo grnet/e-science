@@ -68,6 +68,7 @@
       - { src: 'spark-defaults.j2', dest: '/etc/spark/conf/spark-defaults.conf' }
       - { src: 'flume.j2', dest: '/usr/lib/flume-ng/conf/flume.conf' }
       - { src: 'kamakirc.j2', dest: '/var/lib/flume-ng/.kamakirc' }
+      - { src: 'kamakirc.j2', dest: '/var/lib/hadoop-hdfs/.kamakirc',owner: 'hdfs', group: 'hadoop'}
 
   - name: create slaves files in cloudera master node
     tags: postconfig
