@@ -5,6 +5,7 @@
 import logging
 import random
 import string
+import subprocess
 import re
 from sys import argv, stdout, stderr
 from kamaki.clients import ClientError
@@ -263,7 +264,11 @@ class HadoopCluster(object):
                 else:
                     hue_user = 'hduser'
                 logging.log(SUMMARY, "You can access Hue browser with username {0} and password: {1}\n".format(hue_user, self.opts['admin_password']))
-
+            
+            # inject the public key
+            command = "cat " + self.opts['personality'] + " | sshpass -p " + "\'" + result['master_VM_password'] + "\'" + " ssh root@" + result['master_IP'] + " \'" + "cat >> .ssh/authorized_keys\'"
+            subprocess.call(command, shell=True)
+            
             exit(SUCCESS)
 
         except Exception, e:
@@ -922,7 +927,10 @@ def main():
                               help='HDFS block size (in MB). Default is 128.')
         parser_create.add_argument("--admin_password", metavar='admin_password', default=auto_generated_pass, type=checker.valid_admin_password_is,
                               help='Admin password for Hue login. Default is auto-generated')
-        
+
+        parser_create.add_argument("--personality", metavar='personality', default='~/.ssh/id_rsa.pub', 
+                                   help='Defines a public key to be injected to the master VM')
+
         parser_destroy.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
         
