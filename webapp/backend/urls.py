@@ -10,7 +10,7 @@ Urls for backend ember-django application.
 from django.conf import settings
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
-from views import SessionView, StatusView, JobsView, HdfsView, MainPageView, \
+from views import SessionView, StatusView, JobsView, HdfsView, MainPageView, SettingsView, \
 StatisticsView, NewsView, OrkaImagesView, VreServerView, VreImagesView, DslView
 admin.site.site_header = "GRNET e-Science Administration"
 admin.site.site_title = admin.site.site_header
@@ -28,7 +28,8 @@ urlpatterns = patterns('', url(r'^$', MainPageView.as_view()),
                        url(r'^api/jobs', JobsView.as_view()),
                        url(r'^api/vreservers', VreServerView.as_view()),
                        url(r'^api/dsls', DslView.as_view()),
-                       url(r'^api/hdfs', HdfsView.as_view())
+                       url(r'^api/hdfs', HdfsView.as_view()),
+                       url(r'^api/settings', SettingsView.as_view()),
                        )
 
 # if settings.DEBUG:

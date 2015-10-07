@@ -413,4 +413,29 @@ class Dsl(models.Model):
         verbose_name = "Experiment"
 
     def __unicode__(self):
-        return ("%d : %s : cluster_id(%d)") % (self.id, self.dsl_name, self.cluster_id)    
+        return ("%d : %s : cluster_id(%d)") % (self.id, self.dsl_name, self.cluster_id)
+    
+class Setting(models.Model):
+    """
+    Definition of an instance setting kept in backend DB to be managed through Django admin.
+    Roughly follows the .ini spec: section > property, where property is a key=value pair. 
+    property names are unique per section. Validation is done case insensitive but case is preserved. 
+    We also keep an optional comment column.
+    """
+    id = models.AutoField("Setting ID", primary_key=True, null=False, 
+                          help_text="Auto-increment setting id")
+    section = models.CharField("Section", max_length=255, null=False,
+                                     help_text="Settings section label")
+    property_name = models.CharField("Property Name", max_length=255, null=False, 
+                                     help_text="Settings property name, must be unique for section")
+    property_value = models.CharField("Property Value", max_length=1020, null=False, 
+                                     help_text="Settings property value")
+    comment = models.CharField("Comments", max_length=255, null=True, blank=True,
+                               help_text="Setting comment")
+    
+    class Meta:
+        verbose_name = "Application Setting"
+        unique_together = ("section","property_name")
+        
+    def __unicode__(self):
+        return ("%s : %s : %s") % (self.section, self.property_name, self.property_value)

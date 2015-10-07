@@ -736,7 +736,6 @@ def check_images(token, project_id):
             
     return available_images
 
-
 def endpoints_and_user_id(auth):
     """
     Get the endpoints
