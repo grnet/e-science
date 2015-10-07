@@ -20,11 +20,6 @@ App.VreserverCreateRoute = App.RestrictedRoute.extend({
             var that = this;
             // came to this route
             this.controller.send('find_last_config');
-            this.store.fetch('setting',{}).then(function(settings){
-                that.controller.set('AppSettings',settings.get('content'));
-            },function(reason){
-                console.log(reason);
-            });
         },
         willTransition: function(){
             // leaving this route
