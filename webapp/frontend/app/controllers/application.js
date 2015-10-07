@@ -11,6 +11,7 @@ App.ApplicationController = Ember.Controller.extend({
     userTheme : user_themes,
     orkaImageData : {}, // stores raw OrkaImage data in object format
     vreImageData : {}, // stores raw VreImage data in object format
+
     user_name : function() {
         if (this.get('loggedIn')) {
             var that = this;
@@ -131,8 +132,7 @@ App.ApplicationController = Ember.Controller.extend({
         refresh_application_settings : function(){
             var that = this;
             this.store.fetch('setting',{}).then(function(data){
-                // TODO set on global App object or individual controllers
-                console.log(data.get('content'));
+                var settings = data.get('content');
             },function(reason){
                 console.log(reason);
             });

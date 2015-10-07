@@ -1,19 +1,25 @@
 // VRE Server Create controller
 App.VreserverCreateController = Ember.Controller.extend({
-	needs : ['userWelcome', 'vreserverManagement'],
+	needs : ['application', 'userWelcome', 'vreserverManagement'],
 	// populated with VRE image component info from controllers.application
 	vreImages : [],
 	/*
 	 * Static Data
 	 */
 	// client-side only, eventually move to backend
-    vreFlavorLabels : ['Small', 'Medium', 'Large'],
-    vreFlavorData : [
-       {cpu:2,ram:2048,disk:5}, //Small
-       {cpu:2,ram:4096,disk:10},//Medium
-       {cpu:4,ram:6144,disk:20} //Large
-    ],
-	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
+	reverse_storage_lookup : function(){
+	  return {'ext_vlmc': 'Archipelago','drbd': 'Standard'}; 
+	}.property(),
+	vreFlavorLabels : function(){
+	    return ['Small', 'Medium', 'Large'];
+	}.property(),
+	vreFlavorData : function(){
+	    return [
+               {cpu:2,ram:2048,disk:5}, //Small
+               {cpu:2,ram:4096,disk:10},//Medium
+               {cpu:4,ram:6144,disk:20} //Large
+               ];
+	}.property(),
 	// mapping of uservreserver model properties to controller computed properties
 	model_to_controller_map : {
         project_name: 'selected_project_name', 
