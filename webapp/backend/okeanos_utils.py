@@ -22,8 +22,9 @@ from time import sleep
 from datetime import datetime
 from cluster_errors_constants import *
 from celery import current_task
+from authenticate_user import unmask_token, encrypt_key
 from django_db_after_login import db_cluster_update, get_user_id, db_server_update, db_hadoop_update, db_dsl_create, db_dsl_update, db_dsl_delete
-from backend.models import UserInfo, ClusterInfo, VreServer, Dsl
+from backend.models import UserInfo, ClusterInfo, VreServer, Dsl, OrkaImage, VreImage
 
 
 def retrieve_pending_clusters(token, project_name):
@@ -719,16 +720,16 @@ def check_images(token, project_id):
     endpoints, user_id = endpoints_and_user_id(auth)    
     plankton = init_plankton(endpoints['plankton'], token)
     list_current_images = plankton.list_public(True, 'default')
+    vre_images_in_db = VreImage.objects.values('image_pithos_uuid')
+    orka_images_in_db = OrkaImage.objects.values('image_pithos_uuid')
     available_images = []
     hadoop_images = []
     vre_images = []
     for image in list_current_images:
-        # owner of image will be checked based on the uuid
-        if image['owner'] == const_escience_uuid or image['owner'] == const_system_uuid:
-            if pithos_images_uuids_properties.has_key(image['id']):
-                hadoop_images.append(image['name'])
-            if pithos_vre_images_uuids.has_key(image['id']):
-                vre_images.append(image['name'])
+        if any(d['image_pithos_uuid'] == image['id'] for d in vre_images_in_db):
+            vre_images.append(image['name'])
+        if any(d['image_pithos_uuid'] == image['id'] for d in orka_images_in_db):         
+            hadoop_images.append(image['name'])
     # hadoop images at ordinal 0, vre images at 1
     available_images.append(hadoop_images)
     available_images.append(vre_images)

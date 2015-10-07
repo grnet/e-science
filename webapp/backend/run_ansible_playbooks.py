@@ -14,8 +14,9 @@ from backend.models import ClusterInfo, UserInfo
 from django_db_after_login import db_hadoop_update
 from celery import current_task
 from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS, REPORT, SUMMARY, \
-    error_ansible_playbook, const_hadoop_status_started, hadoop_images_ansible_tags, pithos_images_uuids_properties, unmask_token, encrypt_key
+    error_ansible_playbook, const_hadoop_status_started, hadoop_images_ansible_tags, pithos_images_uuids_properties
 from backend.models import OrkaImage
+from authenticate_user import unmask_token, encrypt_key
 from ansible import errors
 
 # Definitions of return value errors

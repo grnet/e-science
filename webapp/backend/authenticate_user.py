@@ -16,6 +16,8 @@ from rest_framework.permissions import BasePermission
 from backend.models import Token
 from rest_framework import exceptions
 from cluster_errors_constants import *
+from encrypt_key import key  #File with one variable key. encrypt_key file is not in source control.
+encrypt_key = key
 
 # Constants
 AUTHENTICATED = 1
@@ -82,3 +84,27 @@ def check_user_credentials(token, auth_url='https://accounts.okeanos.grnet.gr'
         logging.error('Authentication failed with url %s and token %s' % (
                       auth_url, token))
         return NOT_AUTHENTICATED
+    
+
+def mask_token(key, token):
+    """
+    Encrypt user ~okeanos token in database.
+    """
+    enc = []
+    for i in range(len(token)):
+        key_c = key[i % len(key)]
+        enc_c = chr((ord(token[i]) + ord(key_c)) % 256)
+        enc.append(enc_c)
+    return base64.urlsafe_b64encode("".join(enc))
+
+def unmask_token(key, masked_token):
+    """
+    Dencrypt user ~okeanos token in database.
+    """
+    dec = []
+    masked_token = base64.urlsafe_b64decode(masked_token.encode('ascii'))
+    for i in range(len(masked_token)):
+        key_c = key[i % len(key)]
+        dec_c = chr((256 + ord(masked_token[i]) - ord(key_c)) % 256)
+        dec.append(dec_c)
+    return "".join(dec)
