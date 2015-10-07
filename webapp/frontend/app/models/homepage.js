@@ -11,3 +11,10 @@ App.Newsitem = DS.Model.extend({
     news_message : attr('string'),
     news_category : attr('number')
 });
+// Model for application settings
+App.Setting = DS.Model.extend({
+   section : attr('string'),
+   property_name : attr('string'),
+   property_value : attr('string'),
+   comment : attr('string') 
+});

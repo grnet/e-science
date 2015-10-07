@@ -11,6 +11,7 @@ App.ApplicationController = Ember.Controller.extend({
     userTheme : user_themes,
     orkaImageData : {}, // stores raw OrkaImage data in object format
     vreImageData : {}, // stores raw VreImage data in object format
+
     user_name : function() {
         if (this.get('loggedIn')) {
             var that = this;
@@ -40,6 +41,7 @@ App.ApplicationController = Ember.Controller.extend({
     dataLoader : function() {
         this.send('refresh_orkaimages_data');
         this.send('refresh_vreimages_data');
+        this.send('refresh_application_settings');
         return '';
     }.property(),
     
@@ -125,6 +127,14 @@ App.ApplicationController = Ember.Controller.extend({
                 that.get('controllers.vreserverCreate').set('vreImages', handlebarsData);
             }, function(reason) {
                 console.log(reason.message);
+            });
+        },
+        refresh_application_settings : function(){
+            var that = this;
+            this.store.fetch('setting',{}).then(function(data){
+                var settings = data.get('content');
+            },function(reason){
+                console.log(reason);
             });
         }
     }
