@@ -55,7 +55,7 @@ def create_cluster(script):
                                    + str(script["configuration"]["dfs_blocksize"]))
 
     # temp file to store cluster details
-    create_cluster_command += (" | tee _tmp.txt")
+    create_cluster_command += (" --personality=/home/developer/.ssh/id_rsa.pub | tee _tmp.txt")
  
     # create cluster
     exit_status = os.system(create_cluster_command)
