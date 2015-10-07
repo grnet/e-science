@@ -225,6 +225,24 @@ class VreImage(models.Model):
     def __unicode__(self):
         return ("%s : %s : %s") % (self.image_category.category_name, self.image_name, self.image_pithos_uuid)
 
+class OrkaImageCategory(models.Model):
+    """
+    Definition of orka Hadoop image categories.
+    """
+    id = models.AutoField("OrkaImageCategory ID", primary_key=True, null=False,
+                          help_text="Auto-increment OrkaImageCategory id")
+    category_name = models.CharField("OrkaImageCategory name", max_length=255, unique=True, null=False,
+                                     help_text="OrkaImageCategory Name")
+    ansible_cluster_config_tags = models.CharField("OrkaImage ansible cluster config tags", max_length=4080, null=True, blank=True,
+                                        help_text="OrkaImage Hadoop cluster configurations ansible tags as a json dump")
+    ansible_cluster_action_tags = models.CharField("OrkaImage ansible action tags", max_length=4080, null=True, blank=True,
+                                        help_text="OrkaImage Hadoop cluster action (e.g start/stop) ansible tags as a json dump")
+    class Meta:
+        verbose_name_plural = "Hadoop Image Categories"
+    
+    def __unicode__(self):
+        return ('%s : %s') % (self.id, self.category_name)
+
 class OrkaImage(models.Model):
     """Definition of orka VM image Components."""
     id = models.AutoField("OrkaImage ID", primary_key=True, null=False,
@@ -247,24 +265,6 @@ class OrkaImage(models.Model):
         verbose_name = "Orka Image"
     def __unicode__(self):
         return ("%s : %s") % (self.image_name, self.image_pithos_uuid)
-
-class OrkaImageCategory(models.Model):
-    """
-    Definition of orka Hadoop image categories.
-    """
-    id = models.AutoField("OrkaImageCategory ID", primary_key=True, null=False,
-                          help_text="Auto-increment OrkaImageCategory id")
-    category_name = models.CharField("OrkaImageCategory name", max_length=255, unique=True, null=False,
-                                     help_text="OrkaImageCategory Name")
-    ansible_cluster_config_tags = models.CharField("OrkaImage ansible cluster config tags", max_length=4080, null=True, blank=True,
-                                        help_text="OrkaImage Hadoop cluster configurations ansible tags as a json dump")
-    ansible_cluster_action_tags = models.CharField("OrkaImage ansible action tags", max_length=4080, null=True, blank=True,
-                                        help_text="OrkaImage Hadoop cluster action (e.g start/stop) ansible tags as a json dump")
-    class Meta:
-        verbose_name_plural = "Hadoop Image Categories"
-    
-    def __unicode__(self):
-        return ('%s : %s') % (self.id, self.category_name)
 
 class PublicNewsItem(models.Model):
     """Definition of homepage News Items."""
