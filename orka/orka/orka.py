@@ -258,17 +258,22 @@ class HadoopCluster(object):
             stdout.write("cluster_id: {0}\nmaster_IP: {1}\n"
                          "root password: {2}\n".format(result['cluster_id'], result['master_IP'],
                                                         result['master_VM_password']))
+
+            # find the appropriate user based on the selected image
+            if 'CDH' in self.opts['image']:
+                user = 'hdfs'
+            else:
+                user = 'hduser'
+            
+            # message for accessing Hue
             if self.opts['admin_password']:
-                if 'CDH' in self.opts['image']:
-                    hue_user = 'hdfs'
-                else:
-                    hue_user = 'hduser'
-                logging.log(SUMMARY, "You can access Hue browser with username {0} and password: {1}\n".format(hue_user, self.opts['admin_password']))
+                logging.log(SUMMARY, "You can access Hue browser with username {0} and password: {1}\n".format(user, self.opts['admin_password']))
             
-            # inject the public key
-            command = "cat " + self.opts['personality'] + " | sshpass -p " + "\'" + result['master_VM_password'] + "\'" + " ssh root@" + result['master_IP'] + " \'" + "cat >> .ssh/authorized_keys\'"
+            # inject the public key to both root and user
+            command = "export SSHPASS=" + result['master_VM_password'] + " && cat " + self.opts['personality'] + " | sshpass -e " + "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@" + result['master_IP'] + " \'" + "cat >> .ssh/authorized_keys\'"
             subprocess.call(command, shell=True)
-            
+            subprocess.call( "export SSHPASS=" + result['master_VM_password'] + " && sshpass -e " + "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + "root@" + result['master_IP'] + " \'" + "cat ~/.ssh/authorized_keys >> /home/" + user + "/.ssh/authorized_keys" + "\'", stderr=FNULL, shell=True)
+
             exit(SUCCESS)
 
         except Exception, e:
@@ -929,7 +934,7 @@ def main():
                               help='Admin password for Hue login. Default is auto-generated')
 
         parser_create.add_argument("--personality", metavar='personality', default='~/.ssh/id_rsa.pub', 
-                                   help='Defines a public key to be injected to the master VM')
+                                   help='Defines a file that includes a public key to be injected to the master VM')
 
         parser_destroy.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
