@@ -238,7 +238,7 @@ class OrkaImageCategory(models.Model):
     ansible_cluster_action_tags = models.CharField("OrkaImage ansible action tags", max_length=4080, null=True, blank=True,
                                         help_text="OrkaImage Hadoop cluster action (e.g start/stop) ansible tags as a json dump")
     class Meta:
-        verbose_name_plural = "Hadoop Image Categories"
+        verbose_name_plural = "Orka Image Categories"
     
     def __unicode__(self):
         return ('%s : %s') % (self.id, self.category_name)

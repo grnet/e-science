@@ -21,6 +21,7 @@ install:
 - pip install nose-cov
 - pip install requests
 - pip install django-celery
+- pip install django-admin-bootstrapped
 - sudo apt-get install sshpass
 - sudo apt-get install shunit2
 before_script:
