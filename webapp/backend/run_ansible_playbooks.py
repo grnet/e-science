@@ -7,6 +7,7 @@ This script installs and configures a Hadoop-Yarn cluster using Ansible.
 @author: Ioannis Stenos, Nick Vrionis
 """
 import os
+import json
 from os.path import dirname, abspath, isfile
 import logging
 import subprocess
@@ -128,7 +129,7 @@ def map_command_to_ansible_actions(action, image, pre_action_status):
     correct sequence, depending also on the image used. Returns a list of the Ansible
     tags that will run.
     """
-    ansible_tags = image['ansible_cluster_action_tags']
+    ansible_tags = decode_json(image['ansible_cluster_action_tags'])
     # format request for started cluster > stop [> clean ]> format > start
     # if stopped cluster, then only format
     if action == "format" and pre_action_status == const_hadoop_status_started:
@@ -152,7 +153,13 @@ def get_image_category(image_name='', image_uuid=''):
         orka_image_category_id = OrkaImage.objects.get(image_pithos_uuid=image_uuid).image_category
     image_category = OrkaImageCategory.objects.filter(category_name=orka_image_category_id.category_name).values()
     return image_category[0]
-    
+
+def decode_json(object):
+    """
+    Decode Json to python dictionary object
+    """
+    return json.loads(object)
+
 def ansible_manage_cluster(cluster_id, action):
     """
     Perform an action on a Hadoop cluster depending on the action arg.
@@ -165,7 +172,8 @@ def ansible_manage_cluster(cluster_id, action):
     else:
         current_hadoop_status = action
     image_tags = get_image_category(image_name=cluster.os_image)
-    role = image_tags['ansible_cluster_config_tags']['role']
+    decoded_image_tags = decode_json(image_tags['ansible_cluster_config_tags'])  
+    role = decoded_image_tags['role']
     ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, image_tags, pre_action_status)
 
     cluster_name_postfix_id = '%s%s%s' % (cluster.cluster_name, '-', cluster_id)
@@ -212,6 +220,7 @@ def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_fi
     level = logging.getLogger().getEffectiveLevel()
     # chosen image includes role and tags properties
     image_tags = get_image_category(image_uuid=orka_image_uuid)
+    decoded_image_tags = decode_json(image_tags['ansible_cluster_config_tags'])
     # Create debug file for ansible
     debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
     ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
@@ -219,8 +228,8 @@ def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_fi
     uuid = UserInfo.objects.get(okeanos_token=token).uuid
     # Create command that executes ansible playbook
     ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
-    '-f {0} -e "choose_role={1} ssh_file_name={2} token={3} '.format(str(cluster_size), image_tags['ansible_cluster_config_tags']['role'], ssh_file, unmask_token(encrypt_key, token)) + \
-    'dfs_blocksize={0}m dfs_replication={1} uuid={2} admin_password={3}" {4}'.format(dfs_blocksize, replication_factor, uuid, admin_password, image_tags['ansible_cluster_config_tags']['tags'])
+    '-f {0} -e "choose_role={1} ssh_file_name={2} token={3} '.format(str(cluster_size), decoded_image_tags['role'], ssh_file, unmask_token(encrypt_key, token)) + \
+    'dfs_blocksize={0}m dfs_replication={1} uuid={2} admin_password={3}" {4}'.format(dfs_blocksize, replication_factor, uuid, admin_password, decoded_image_tags['tags'])
 
     # Execute ansible
     ansible_code += ansible_log
@@ -234,7 +243,8 @@ def ansible_scale_cluster(hosts_filename, new_slaves_size=1, orka_image_uuid='',
     """
     if action == 'add_slaves':
         image_tags = get_image_category(image_uuid=orka_image_uuid)
-        list_of_ansible_tags = image_tags['ansible_cluster_config_tags']['tags'].split(',')
+        decoded_image_tags = decode_json(image_tags['ansible_cluster_config_tags'])
+        list_of_ansible_tags = decoded_image_tags['tags'].split(',')
         scale_cluster_tags = ['{0}scale'.format(t) for t in list_of_ansible_tags]
         tags = ",".join(scale_cluster_tags)       
     elif action == 'remove_slaves':
