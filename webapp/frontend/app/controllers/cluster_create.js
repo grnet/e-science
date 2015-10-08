@@ -60,14 +60,6 @@ App.ClusterCreateController = Ember.Controller.extend({
 	selected_image : '',
 	selected_storage : '',
 	alert_mes_last_conf : '',	// alert message when resources are not enough to apply last configuration
-	flavor_settings : function(){
-	    return {'Small': {'cpu': 2, 'ram': 2048, 'disk': 10}, 'Medium': {'cpu': 4, 'ram': 4096, 'disk': 20}, 'Large': {'cpu': 4, 'ram': 6144, 'disk': 40}};
-	}.property(),
-	reverse_storage_lookup : function(){
-	    return {'ext_vlmc': 'Archipelago','drbd': 'Standard'};
-	}.property(),
-	list_of_flavors : ['cpu', 'ram', 'disk'], // List of flavors from kamaki except storage space
-	list_of_flavor_sizes : ['Small', 'Medium', 'Large'], // List of sizes of the predefined flavors
 	list_of_roles : ['master', 'slaves'], // Possible roles for vms
 	workflow_filter: false, // workflow_filter initial status
 	workflow_filter_empty : 'no images available',
@@ -350,25 +342,40 @@ App.ClusterCreateController = Ember.Controller.extend({
 		return max_cluster_size_limited_by_current_disks;
 	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size_var', 'cluster_size', 'project_details'),
 
-
-	// Function to set master and slaves vm_flavor_selection
- 	vm_flavor_buttons_response: function (){
- 		var index1;
- 		var index2;
- 		var number_of_flavor_sizes = this.get('list_of_flavor_sizes').length;
- 		var number_of_roles = this.get('list_of_roles').length;
- 		for ( index1 = 0; index1 < this.number_of_flavor_sizes; index1++){
- 			for ( index2 = 0; index2 < this.number_of_roles; index2++){				
- 				if ((this.get('flavor_settings')[this.get('list_of_flavor_sizes')[index1]]['cpu']==this.get(this.get('list_of_roles')[index2] + '_cpu_selection')) && 
- 					(this.get('flavor_settings')[this.get('list_of_flavor_sizes')[index1]]['ram']==this.get(this.get('list_of_roles')[index2] + '_ram_selection')) && 
- 					(this.get('flavor_settings')[this.get('list_of_flavor_sizes')[index1]]['disk']==this.get(this.get('list_of_roles')[index2] + '_disk_selection'))){
-						this.set('vm_flavor_selection_' + this.get('list_of_roles')[index2], this.get('list_of_flavor_sizes')[index1]);
-				}
- 				
- 			}
- 		}
-	},
-
+    
+    flavor_settings : function(){
+        var orkaFlavors = this.get('AppSettings').filterBy('section','VM_Flavor').sortBy('id');
+        var objFlavors = {};
+        for (i=0;i<orkaFlavors.length;i++){
+            objFlavors[orkaFlavors[i].get('property_name')]=JSON.parse(orkaFlavors[i].get('property_value'));
+        }
+        return objFlavors;
+    }.property(),
+    list_of_flavors : ['cpu', 'ram', 'disk'], // List of flavors from kamaki except storage space
+    list_of_flavor_sizes : function(){
+        var orkaFlavors = this.get('AppSettings').filterBy('section','VM_Flavor').sortBy('id');
+        var arrFlavors = [];
+        var objFlavors = this.get('flavor_settings');
+        for (i=0;i<orkaFlavors.length;i++){
+            arrFlavors.push(orkaFlavors[i].get('property_name'));
+        }
+        return arrFlavors;
+    }.property(),
+    // Function to set master and slaves vm_flavor_selection
+    vm_flavor_buttons_response: function (){
+        var number_of_flavor_sizes = this.get('list_of_flavor_sizes').length;
+        var number_of_roles = this.get('list_of_roles').length;
+        for ( i = 0; i < this.number_of_flavor_sizes; i++){
+            for ( j = 0; j < this.number_of_roles; j++){                
+                if ((this.get('flavor_settings')[this.get('list_of_flavor_sizes')[i]]['cpu']==this.get(this.get('list_of_roles')[j] + '_cpu_selection')) && 
+                    (this.get('flavor_settings')[this.get('list_of_flavor_sizes')[i]]['ram']==this.get(this.get('list_of_roles')[j] + '_ram_selection')) && 
+                    (this.get('flavor_settings')[this.get('list_of_flavor_sizes')[i]]['disk']==this.get(this.get('list_of_roles')[j] + '_disk_selection'))){
+                        this.set('vm_flavor_selection_' + this.get('list_of_roles')[j], this.get('list_of_flavor_sizes')[i]);
+                }
+                
+            }
+        }
+    },
     // Functionality about coloring of the vm_flavor buttons and enable-disable responding to user events
 	// First, remove colors from all vm_flavor buttons and then color the role's(master/slaves) selection
     vm_flavor_buttons : function() {
@@ -394,7 +401,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				elements[2].disabled = false;
 			}
-			if ((this.get('vm_flavor_selection_master') !== undefined) && (this.get('vm_flavor_selection_master') !== null) && (this.get('vm_flavor_selection_master') !== '')) {
+			if (!Ember.isEmpty(this.get('vm_flavor_selection_master'))) {
 				var choice = document.getElementById("master_vm_flavors_".concat(this.get('vm_flavor_selection_master')));
 				if ((this.get('master_cpu_selection') == this.get('flavor_settings')['Small']['cpu'])
 					&&(this.get('master_ram_selection') == this.get('flavor_settings')['Small']['ram'])
@@ -439,7 +446,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				elements[2].disabled = false;
 			}
-			if ((this.get('vm_flavor_selection_slaves') !== undefined) && (this.get('vm_flavor_selection_slaves') !== null) && (this.get('vm_flavor_selection_slaves') !== '')) {
+			if (!Ember.isEmpty(this.get('vm_flavor_selection_slaves'))) {
 				var choice = document.getElementById("slave_vm_flavors_".concat(this.get('vm_flavor_selection_slaves')));
 				if ((this.get('slaves_cpu_selection') == this.get('flavor_settings')['Small']['cpu'])
 					&&(this.get('slaves_ram_selection') == this.get('flavor_settings')['Small']['ram'])
@@ -687,6 +694,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 		}
 	},
 
+    reverse_storage_lookup : function(){
+        var storage_lookup = this.get('AppSettings').filterBy('section','Cyclades').filterBy('property_name','Storage');
+        return JSON.parse(storage_lookup[0].get('property_value'));
+    }.property(),
 	// Functionality about storage buttons being colored when user selects one of them
 	storage_buttons : function() {
 		var elements = document.getElementsByName("storage_button");
@@ -732,7 +743,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	
 	// Function which make the size of cluster equal or greater than minimum cluster
 	size_of_cluster : function() {
-		if ((this.get('cluster_size') === null) || (this.get('cluster_size') === undefined) || (this.get('cluster_size') === 0)) {
+		if ((Ember.isEmpty(this.get('cluster_size'))) || (this.get('cluster_size') === 0)) {
 			this.set('cluster_size_var', 2);
 		} else {
 			this.set('cluster_size_var', this.get('cluster_size'));
