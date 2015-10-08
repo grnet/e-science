@@ -137,6 +137,7 @@ App.UserWelcomeController = Ember.Controller.extend({
             this.setProperties(this.get_sorting_info(short_model_name,sortAscending,column));
         },
         goto_dsl_create : function(cluster){
+            this.get('controllers.dslCreate').set('user_clusters',this.get('filtered_clusters'));
             this.get('controllers.dslCreate').send('set_selected_cluster',cluster.get('id'));
             this.transitionToRoute('dsl.create');
         },

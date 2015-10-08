@@ -26,10 +26,10 @@ INSERT INTO backend_vreimage (id, image_name, image_pithos_uuid, image_component
 INSERT INTO backend_publicnewsitem (id, news_date, news_message, news_category) VALUES (1, '2015-06-29 15:35:24+03', 'Flume installed on all existing pre-cooked Hadoop images', NULL);
 INSERT INTO backend_publicnewsitem (id, news_date, news_message, news_category) VALUES (2, '2015-06-15 15:35:31+03', 'Ecosystem, Hue, Cloudera images available', NULL);
 
-INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (1, 'Cyclades', 'Storage', '{ext_vlmc:Archipelago,drbd:Standard}', 'disk templates returned by Cyclades api matched to friendly name');
-INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (2, 'VM_Flavor', 'Small', '{cpu:2,ram:4096,disk:10}', 'cpu in cores, ram in MiB, disk in GiB');
-INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (3, 'VM_Flavor', 'Medium', '{cpu:4,ram:6144,disk:20}', 'cpu in cores, ram in MiB, disk in GiB');
-INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (4, 'VM_Flavor', 'Large', '{cpu:8,ram:8192,disk:40}', 'cpu in cores, ram in MiB, disk in GiB');
-INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (5, 'VRE_Flavor', 'Small', '{cpu:2,ram:2048,disk:5}', 'cpu in cores, ram in MiB, disk in GiB');
-INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (6, 'VRE_Flavor', 'Medium', '{cpu:2,ram:4096,disk:10}', 'cpu in cores, ram in MiB, disk in GiB');
-INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (7, 'VRE_Flavor', 'Large', '{cpu:4,ram:6144,disk:20}', 'cpu in cores, ram in MiB, disk in GiB');
+INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (1, 'Cyclades', 'Storage', '{"ext_vlmc":"Archipelago","drbd":"Standard"}', 'disk templates returned by Cyclades api matched to friendly name');
+INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (2, 'VM_Flavor', 'Small', '{"cpu":2,"ram":2048,"disk":10}', 'cpu in cores, ram in MiB, disk in GiB');
+INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (3, 'VM_Flavor', 'Medium', '{"cpu":4,"ram":4096,"disk":20}', 'cpu in cores, ram in MiB, disk in GiB');
+INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (4, 'VM_Flavor', 'Large', '{"cpu":4,"ram":6144,"disk":40}', 'cpu in cores, ram in MiB, disk in GiB');
+INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (5, 'VRE_Flavor', 'Small', '{"cpu":2,"ram":2048,"disk":5}', 'cpu in cores, ram in MiB, disk in GiB');
+INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (6, 'VRE_Flavor', 'Medium', '{"cpu":2,"ram":4096,"disk":10}', 'cpu in cores, ram in MiB, disk in GiB');
+INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (7, 'VRE_Flavor', 'Large', '{"cpu":4,"ram":6144,"disk":20}', 'cpu in cores, ram in MiB, disk in GiB');

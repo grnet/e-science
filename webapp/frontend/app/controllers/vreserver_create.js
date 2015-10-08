@@ -1,19 +1,11 @@
 // VRE Server Create controller
 App.VreserverCreateController = Ember.Controller.extend({
-	needs : ['userWelcome', 'vreserverManagement'],
+	needs : ['application', 'userWelcome', 'vreserverManagement'],
 	// populated with VRE image component info from controllers.application
 	vreImages : [],
 	/*
 	 * Static Data
 	 */
-	// client-side only, eventually move to backend
-    vreFlavorLabels : ['Small', 'Medium', 'Large'],
-    vreFlavorData : [
-       {cpu:2,ram:2048,disk:5}, //Small
-       {cpu:2,ram:4096,disk:10},//Medium
-       {cpu:4,ram:6144,disk:20} //Large
-    ],
-	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
 	// mapping of uservreserver model properties to controller computed properties
 	model_to_controller_map : {
         project_name: 'selected_project_name', 
@@ -182,6 +174,10 @@ App.VreserverCreateController = Ember.Controller.extend({
 	/*
 	 * Storage
 	 */
+    reverse_storage_lookup : function(){
+        var storage_lookup = this.get('AppSettings').filterBy('section','Storage');
+        return JSON.parse(storage_lookup);
+    }.property(),	
 	selected_project_storage_choices : function(){
 	    return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('disk_template') : [];
 	}.property('boolean_no_project'),
@@ -202,6 +198,22 @@ App.VreserverCreateController = Ember.Controller.extend({
     /*
      * Flavors
      */
+    vreFlavorLabels : function(){
+        var vreFlavors = this.get('AppSettings').filterBy('section','VRE_Flavor').sortBy('id');
+        var arrFlavorLabels = [];
+        for (i=0;i<vreFlavors.length;i++){
+            arrFlavorLabels.push(vreFlavors[i].get('property_name'));
+        }
+        return arrFlavorLabels;
+    }.property(),
+    vreFlavorData : function(){
+        var vreFlavors = this.get('AppSettings').filterBy('section','VRE_Flavor').sortBy('id');
+        var arrFlavorData = [];
+        for (i=0;i<vreFlavors.length;i++){
+            arrFlavorData.push(JSON.parse(vreFlavors[i].get('property_value')));
+        }
+        return arrFlavorData;
+    }.property(),    
     // wrap flavor choices to a project selection check
     vre_flavor_choices : function(){
         return this.get('vreFlavorLabels');

@@ -16,7 +16,8 @@ App.VreserverCreateRoute = App.RestrictedRoute.extend({
             console.log(err['message']);
             this.transitionTo('user.logout');
         },
-        didTransition : function(transition) {
+        didTransition : function() {
+            var that = this;
             // came to this route
             this.controller.send('find_last_config');
         },

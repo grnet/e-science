@@ -22,10 +22,10 @@ App.DslCreateRoute = App.RestrictedRoute.extend({
             console.log(err['message']);
             this.transitionTo('user.logout');
         },
-        didTransition : function(transition) {
+        didTransition : function() {
             // came to this route
             var self = this;
-            Ember.run.later(function(){self.controller.send('set_selected_cluster');},150);
+            Ember.run.later(function(){self.controller.send('set_selected_cluster');},500);
         },
         willTransition: function(){
             // leaving this route
