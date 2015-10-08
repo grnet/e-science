@@ -11,7 +11,7 @@ import json
 from os.path import dirname, abspath, isfile
 import logging
 import subprocess
-from backend.models import ClusterInfo, UserInfo, OrkaImage, OrkaImageCategory
+from backend.models import ClusterInfo, UserInfo, OrkaImage, OrkaImageCategory, Setting
 from django_db_after_login import db_hadoop_update
 from celery import current_task
 from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS, REPORT, SUMMARY, \
@@ -271,10 +271,20 @@ def execute_ansible_playbook(ansible_command):
     """
     Executes ansible command given as argument
     """
+    # get any verbose codes we might have saved in our backend
+    # .first() will helpfully return None if no match found instead of throwing an exception
+    ansible_known_codes = Setting.objects.filter(section='Ansible',property_name='Errors').first() 
+    if ansible_known_codes is not None:
+        ansible_known_codes = decode_json(ansible_known_codes.serializable_value('property_value'))
+        if type(ansible_known_codes) is not dict:
+            ansible_known_codes = {}
+    else:
+        ansible_known_codes = {}
     try:
         exit_status = subprocess.call(ansible_command, shell=True)
         if exit_status > 0:
-            msg = 'Ansible failed with exit status %d' % exit_status
+            exist_status_verbose = ansible_known_codes.get(str(exit_status),'error description is unknown')
+            msg = 'Ansible failed with exit status %d: %s' % (exit_status,exist_status_verbose)
             raise RuntimeError(msg, exit_status)
     except OSError as e:
         msg = 'Ansible command execution failed %s' % e
