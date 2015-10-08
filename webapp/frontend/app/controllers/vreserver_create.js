@@ -175,8 +175,8 @@ App.VreserverCreateController = Ember.Controller.extend({
 	 * Storage
 	 */
     reverse_storage_lookup : function(){
-        var storage_lookup = this.get('AppSettings').filterBy('section','Storage');
-        return JSON.parse(storage_lookup);
+        var storage_lookup = this.get('AppSettings').filterBy('section','Cyclades').filterBy('property_name','Storage');
+        return JSON.parse(storage_lookup[0].get('property_value'));
     }.property(),	
 	selected_project_storage_choices : function(){
 	    return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('disk_template') : [];
