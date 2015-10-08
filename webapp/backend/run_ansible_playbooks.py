@@ -7,15 +7,15 @@ This script installs and configures a Hadoop-Yarn cluster using Ansible.
 @author: Ioannis Stenos, Nick Vrionis
 """
 import os
+import json
 from os.path import dirname, abspath, isfile
 import logging
 import subprocess
-from backend.models import ClusterInfo, UserInfo
+from backend.models import ClusterInfo, UserInfo, OrkaImage, OrkaImageCategory
 from django_db_after_login import db_hadoop_update
 from celery import current_task
 from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS, REPORT, SUMMARY, \
-    error_ansible_playbook, const_hadoop_status_started, hadoop_images_ansible_tags, pithos_images_uuids_properties
-from backend.models import OrkaImage
+    error_ansible_playbook, const_hadoop_status_started
 from authenticate_user import unmask_token, encrypt_key
 from ansible import errors
 
@@ -129,19 +129,36 @@ def map_command_to_ansible_actions(action, image, pre_action_status):
     correct sequence, depending also on the image used. Returns a list of the Ansible
     tags that will run.
     """
-    ansible_tags = hadoop_images_ansible_tags[image]
+    ansible_tags = decode_json(image['ansible_cluster_action_tags'])
     # format request for started cluster > stop [> clean ]> format > start
     # if stopped cluster, then only format
     if action == "format" and pre_action_status == const_hadoop_status_started:
-        return ['stop', 'CLOUDstop', action, 'start', 'CLOUDstart'] if 'cloudera' in image else \
+        return ['stop', 'CLOUDstop', action, 'start', 'CLOUDstart'] if 'cloudera' in image['category_name'].lower() else \
             [ansible_tags['stop'], action, ansible_tags['start']]
 
     elif action == "format" and pre_action_status != const_hadoop_status_started:
         return ['format']
 
     else:
-        return [action, 'CLOUD{0}'.format(action)] if 'cloudera' in image else [ansible_tags[action]]
+        return [action, 'CLOUD{0}'.format(action)] if 'cloudera' in image['category_name'].lower() else [ansible_tags[action]]
 
+
+def get_image_category(image_name='', image_uuid=''):
+    """
+    Return Orka Image Category properties of the requested image as a json.
+    """
+    if image_name:
+        orka_image_category_id = OrkaImage.objects.get(image_name=image_name).image_category
+    elif image_uuid:
+        orka_image_category_id = OrkaImage.objects.get(image_pithos_uuid=image_uuid).image_category
+    image_category = OrkaImageCategory.objects.filter(category_name=orka_image_category_id.category_name).values()
+    return image_category[0]
+
+def decode_json(object):
+    """
+    Decode Json to python dictionary object
+    """
+    return json.loads(object)
 
 def ansible_manage_cluster(cluster_id, action):
     """
@@ -154,10 +171,10 @@ def ansible_manage_cluster(cluster_id, action):
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
         current_hadoop_status = action
-    orka_image = OrkaImage.objects.get(image_name=cluster.os_image)
-    chosen_image = pithos_images_uuids_properties[orka_image.image_pithos_uuid]
-    role = chosen_image['role']
-    ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, chosen_image['image'], pre_action_status)
+    image_tags = get_image_category(image_name=cluster.os_image)
+    decoded_image_tags = decode_json(image_tags['ansible_cluster_config_tags'])  
+    role = decoded_image_tags['role']
+    ANSIBLE_SEQUENCE = map_command_to_ansible_actions(action, image_tags, pre_action_status)
 
     cluster_name_postfix_id = '%s%s%s' % (cluster.cluster_name, '-', cluster_id)
     hosts_filename = os.getcwd() + '/' + ansible_hosts_prefix + cluster_name_postfix_id.replace(" ", "_")
@@ -202,7 +219,8 @@ def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_fi
                         'slave nodes')
     level = logging.getLogger().getEffectiveLevel()
     # chosen image includes role and tags properties
-    chosen_image = pithos_images_uuids_properties[orka_image_uuid]
+    image_tags = get_image_category(image_uuid=orka_image_uuid)
+    decoded_image_tags = decode_json(image_tags['ansible_cluster_config_tags'])
     # Create debug file for ansible
     debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
     ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
@@ -210,8 +228,8 @@ def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_fi
     uuid = UserInfo.objects.get(okeanos_token=token).uuid
     # Create command that executes ansible playbook
     ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \
-    '-f {0} -e "choose_role={1} ssh_file_name={2} token={3} '.format(str(cluster_size), chosen_image['role'], ssh_file, unmask_token(encrypt_key, token)) + \
-    'dfs_blocksize={0}m dfs_replication={1} uuid={2} admin_password={3}" {4}'.format(dfs_blocksize, replication_factor, uuid, admin_password, chosen_image['tags'])
+    '-f {0} -e "choose_role={1} ssh_file_name={2} token={3} '.format(str(cluster_size), decoded_image_tags['role'], ssh_file, unmask_token(encrypt_key, token)) + \
+    'dfs_blocksize={0}m dfs_replication={1} uuid={2} admin_password={3}" {4}'.format(dfs_blocksize, replication_factor, uuid, admin_password, decoded_image_tags['tags'])
 
     # Execute ansible
     ansible_code += ansible_log
@@ -224,8 +242,9 @@ def ansible_scale_cluster(hosts_filename, new_slaves_size=1, orka_image_uuid='',
     in a scaled hadoop cluster or decommissions the node to be removed.
     """
     if action == 'add_slaves':
-        chosen_image = pithos_images_uuids_properties[orka_image_uuid]
-        list_of_ansible_tags = chosen_image['tags'].split(',')
+        image_tags = get_image_category(image_uuid=orka_image_uuid)
+        decoded_image_tags = decode_json(image_tags['ansible_cluster_config_tags'])
+        list_of_ansible_tags = decoded_image_tags['tags'].split(',')
         scale_cluster_tags = ['{0}scale'.format(t) for t in list_of_ansible_tags]
         tags = ",".join(scale_cluster_tags)       
     elif action == 'remove_slaves':

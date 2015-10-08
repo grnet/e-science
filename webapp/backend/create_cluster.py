@@ -388,6 +388,7 @@ class YarnCluster(object):
         try:
             vre_image_uuid = self.vre_image_uuid
             if vre_image_uuid == server['image']['id']:
+                # TODO add property to VreImage model control VRE server start, set BigBlueButton to false
                 if vre_image_uuid is not '0d26fd55-31a4-46b3-955d-d94ecf04a323':
                     start_vre_script(server_ip,server_pass,self.opts['admin_password'], vre_script_name, self.opts['admin_email'])
             else:
