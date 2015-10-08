@@ -67,7 +67,6 @@ def create_cluster(script):
     with open('_tmp.txt', 'r') as f:
         cluster_id = f.readline().strip().split(': ')[1]    
         master_IP = f.readline().strip().split(': ')[1]
-        #root_pass = f.readline().strip().split(': ')[1]
     
     return cluster_id, master_IP
 
@@ -90,6 +89,12 @@ def enforce_actions(script, cluster_id, master_IP):
             action_params = params.split(',')
 #            print ("orka file get " + str(cluster_id) + " " + action_params[0] + " " + action_params[1])
             os.system("orka file get " + str(cluster_id) + " " + action_params[0] + " " + action_params[1])
+        if action == 'node_add':
+#            print ("orka node add " + str(cluster_id))
+            os.system("orka node add " + str(cluster_id))
+        if action == 'node_remove':
+#            print ("orka node remove " + str(cluster_id))
+            os.system("orka node remove " + str(cluster_id))        
         if action.startswith("run_job"):
             run_job(action, master_IP)
             
