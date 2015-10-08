@@ -454,9 +454,9 @@ class Setting(models.Model):
                                      help_text="Settings section label")
     property_name = models.CharField("Property Name", max_length=255, null=False, 
                                      help_text="Settings property name, must be unique for section")
-    property_value = models.CharField("Property Value", max_length=1020, null=False, 
+    property_value = models.CharField("Property Value", max_length=2040, null=False, 
                                      help_text="Settings property value")
-    comment = models.CharField("Comments", max_length=255, null=True, blank=True,
+    comment = models.CharField("Comments", max_length=1020, null=True, blank=True,
                                help_text="Setting comment")
     
     class Meta:
