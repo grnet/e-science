@@ -63,9 +63,6 @@ pithos_url = 'https://pithos.okeanos.grnet.gr/v1'
 pithos_put_success = 201  # Success pithos response
 pithos_container_not_found = 404
 
-# If no image is given in orka-cli, this is the default image. Not used in backed/cluster_errors_constants
-default_image = 'Debian Base'
-
 # Cluster status constants
 const_cluster_status_destroyed = "0"
 const_cluster_status_active = "1"
