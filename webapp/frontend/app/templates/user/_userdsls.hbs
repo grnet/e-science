@@ -14,7 +14,7 @@
         <tbody class="text-left">
             {{#each dsl in controller.sortable_dsls}}
             <tr>
-            	<td {{bind-attr id='dsl.id_dsl_name'}}>{{dsl.dsl_name}}</td>
+                <td {{bind-attr id='dsl.id_dsl_name'}}>{{#link-to 'dsl.management' dsl.id}}{{dsl.dsl_name}}{{/link-to}}</td>
                 <td>{{formatDate dsl.action_date format='shortdatetime'}}</td>
                	<td>{{dsl.pithos_path}}</td>
                	<td>

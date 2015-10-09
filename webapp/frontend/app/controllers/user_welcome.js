@@ -1,7 +1,7 @@
 // User Welcome controller
 App.UserWelcomeController = Ember.Controller.extend({
 
-    needs : ['clusterCreate','vreserverCreate','clusterManagement','dslCreate'],
+    needs : ['application', 'clusterCreate','vreserverCreate','clusterManagement','dslCreate'],
     // flag to denote transition from a create action
     create_cluster_start : false,
     count : 0,
@@ -162,6 +162,7 @@ App.UserWelcomeController = Ember.Controller.extend({
                 }
             }
             if (!Ember.isEmpty(base_url)){
+                console.log(base_url);
                 window.open(base_url,'_blank');
             }        
         },
@@ -250,7 +251,7 @@ App.UserWelcomeController = Ember.Controller.extend({
                         if (!store) {
                             store = that.store;
                         }
-                        if (store && that.controllerFor('application').get('loggedIn')) {
+                        if (store && that.get('controllers.application').get('loggedIn')) {
                             var promise = store.fetch('user', 1);
                             promise.then(function(user) {
                                 // success

@@ -1,7 +1,7 @@
 safestr = Ember.Handlebars.SafeString;
 App.ClusterManagementController = Ember.Controller.extend({
 	
-	needs : ['clusterCreate','helpImages','userWelcome'],
+	needs : ['application','clusterCreate','helpImages','userWelcome'],
 	hue_login_message : '',
 	hue_message : '',
     count : 0,
@@ -179,7 +179,7 @@ App.ClusterManagementController = Ember.Controller.extend({
                         if (!store) {
                             store = that.store;
                         }
-                        if (store && that.controllerFor('application').get('loggedIn')) {
+                        if (store && that.get('controllers.application').get('loggedIn')) {
                             var promise = store.fetch('user', 1);
                             promise.then(function(user) {
                                 // success
