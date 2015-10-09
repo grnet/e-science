@@ -46,6 +46,9 @@ def create_cluster(script):
     if script["cluster"].get("image") is not None:
         create_cluster_command += (" --image=" + script["cluster"]["image"])
 
+    if script["cluster"].get("personality") is not None:
+        create_cluster_command += (" --personality=" + script["cluster"]["personality"])
+
     if script.get("configuration") is not None:
         if script["configuration"].get("replication_factor") is not None:
             create_cluster_command += (" --replication_factor=" 
@@ -55,7 +58,8 @@ def create_cluster(script):
                                    + str(script["configuration"]["dfs_blocksize"]))
 
     # temp file to store cluster details
-    create_cluster_command += (" --personality=/home/developer/.ssh/id_rsa.pub | tee _tmp.txt")
+    tempfile = "_" + script["cluster"]["name"] + ".txt"
+    create_cluster_command += (" | tee " + tempfile)
  
     # create cluster
     print '--- Creating Cluster ---'
@@ -66,9 +70,12 @@ def create_cluster(script):
 
     print ''
     # retrieve cluster id and master IP
-    with open('_tmp.txt', 'r') as f:
+    with open(tempfile, 'r') as f:
         cluster_id = f.readline().strip().split(': ')[1]    
         master_IP = f.readline().strip().split(': ')[1]
+
+    # remove temp file
+    os.remove(tempfile)
     
     return cluster_id, master_IP
 

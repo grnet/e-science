@@ -112,6 +112,16 @@ class _ArgCheck(object):
         else:
             raise ArgumentTypeError(" %s must be at least 8 characters and contain only letters and numbers." % val)
 
+    def valid_file_is(self, val):
+        """
+        :param val: str
+        :return val if val is a valid filename
+        """
+        val = val.replace('~', os.path.expanduser('~'))
+        if os.path.isfile(val):
+            return val
+        else:
+            raise ArgumentTypeError(" %s file does not exist." % val)
 
 def task_message(task_id, escience_token, server_url, wait_timer, task='not_progress_bar'):
     """
@@ -261,21 +271,17 @@ class HadoopCluster(object):
                                                         result['master_VM_password']))
 
             # find the appropriate user based on the selected image
-            if 'CDH' in self.opts['image']:
-                user = 'hdfs'
-            else:
-                user = 'hduser'
+            user = 'hdfs' if 'CDH' in self.opts['image'] else 'hduser'
             
             # message for accessing Hue
             if self.opts['admin_password']:
                 logging.log(SUMMARY, "You can access Hue browser with username {0} and password: {1}\n".format(user, self.opts['admin_password']))
             
             # inject the public key to both root and user
-            if os.path.isfile(self.opts['personality']):
+            if self.opts['personality']:
                 command = "export SSHPASS=" + result['master_VM_password'] + " && cat " + self.opts['personality'] + " | sshpass -e " + "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@" + result['master_IP'] + " \'" + "cat >> .ssh/authorized_keys\'"
                 subprocess.call(command, stderr=FNULL, shell=True)
                 subprocess.call( "export SSHPASS=" + result['master_VM_password'] + " && sshpass -e " + "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + "root@" + result['master_IP'] + " \'" + "cat ~/.ssh/authorized_keys >> /home/" + user + "/.ssh/authorized_keys" + "\'", stderr=FNULL, shell=True)
-
             exit(SUCCESS)
 
         except Exception, e:
@@ -935,8 +941,8 @@ def main():
         parser_create.add_argument("--admin_password", metavar='admin_password', default=auto_generated_pass, type=checker.valid_admin_password_is,
                               help='Admin password for Hue login. Default is auto-generated')
 
-        parser_create.add_argument("--personality", metavar='personality', 
-                                   help='Defines a file that includes a public key to be injected to the master VM')
+        parser_create.add_argument("--personality", metavar='personality', type=checker.valid_file_is,
+                                   help='Defines a file that includes a public key to be injected to the master VM.')
 
         parser_destroy.add_argument('cluster_id',
                               help='The id of the Hadoop cluster', type=checker.positive_num_is)
