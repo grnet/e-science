@@ -336,7 +336,8 @@ class YarnCluster(object):
     def create_vre_server(self):
         """
         Create VRE server in ~okeanos
-        """        
+        """
+        vre_script_file_name = ''
         flavor_id = self.get_flavor_id('master')
         if flavor_id == 0:
             msg = 'Combination of cpu, ram, disk and disk_template do' \
@@ -352,20 +353,22 @@ class YarnCluster(object):
         task_id = current_task.request.id
         server_id = db_server_create(self.opts, task_id)
         self.server_name_postfix_id = '{0}-{1}-vre'.format(self.opts['server_name'], server_id)
-
-        # Check if user chose ssh keys or not.
+        # Check if a shell script is required to be copied to VRE server
+        if self.vre_req_script:
+            vre_script_file_name = 'scripts/{0}'.format(vre_script_name)
+         # Check if user chose ssh keys or not.
         if self.opts['ssh_key_selection'] is None or self.opts['ssh_key_selection'] == 'no_ssh_key_selected':
             self.ssh_file = 'no_ssh_key_selected'
         else:
             self.ssh_key_file(self.server_name_postfix_id)
             pub_keys_path = self.ssh_file
         try:
-            server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path, 'scripts/{0}'.format(vre_script_name)), project_id=self.project_id)
+            server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path,vre_script_file_name), project_id=self.project_id)
         except ClientError, e:
             # If no public IP is free, get a new one
             if e.status == status.HTTP_409_CONFLICT:
                 get_float_network_id(self.net_client, project_id=self.project_id)
-                server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path, 'scripts/{0}'.format(vre_script_name)), project_id=self.project_id)
+                server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path, vre_script_file_name), project_id=self.project_id)
             else:
                 msg = u'VRE server \"{0}\" creation failed due to error: {1}'.format(self.opts['server_name'], str(e.args[0]))
                 set_server_state(self.opts['token'], server_id, 'Error',status='Failed', error=msg)
