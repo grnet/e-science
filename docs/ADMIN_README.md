@@ -63,12 +63,12 @@ For example, if the access URL is https://< IP >:8080/xmlui, then:
 
     Image access url: 8080/xmlui
 
-If the VRE image requires a shell script to start its services and change the database and the admin password, then *requires_script* field should be checked.Otherwise, it should be unchecked, e.g. BigBlueButton. If the field is checked, the app expects to find a script in "e-science/webapp/scripts" folder.
+If the VRE image requires a shell script to start its services and change the database and the admin password, then *Requires shell script* field should be checked.Otherwise, it should be unchecked, e.g. BigBlueButton. If the field is checked, the app expects to find a script in "e-science/webapp/scripts" folder.
 
 ## Change database and login passwords for VREs
 
 In the "e-science/webapp/scripts" folder there are several shell scripts that change the VRE default database and login passwords. 
-**In case a new VRE image has been added and the *requires_script* field is checked, then the corresponding script filename should be exactly the same as the name of the image (case sensitive) minus the version.**
+**In case a new VRE image has been added and the *Requires shell script* field is checked, then the corresponding script filename should be exactly the same as the name of the image (case sensitive) minus the version.**
 
 
 It is possible to change the passwords of a VRE that has already its passwords changed from default (after it has been created). Replace the old default password to the corresponding script with the new given (before the creation) "admin password". Then copy the script to the VRE server and execute it by giving as parameter the new admin password. 

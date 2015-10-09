@@ -219,7 +219,7 @@ class VreImage(models.Model):
     image_access_url = TextArrayField() # array [:port]/path for accessing VRE, base url not included, absence of value assumes base url is access url
     image_category = models.ForeignKey(VreImageCategory, null=False,
                                        help_text="VreImageCategory")
-    requires_script = models.BooleanField("Requires shell script for starting VRE server", default=True)
+    requires_script = models.BooleanField("Requires shell script", default=True)
     
     class Meta:
         verbose_name = "VRE Image"
