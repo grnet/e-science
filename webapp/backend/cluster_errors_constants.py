@@ -82,8 +82,6 @@ const_hadoop_status_pending = const_hadoop_status_format
 
 # If celery message is bigger than following value, it truncates the message. We check if message length is bigger than const_truncate_limit, then add dots (..) at the end of message to indicate truncation. Used for orka cli mainly.
 const_truncate_limit = 350
-const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
-const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
 HADOOP_STATUS_ACTIONS = {"stop": ["0", "Stopping", "Stopped"],
                          "start": ["1", "Starting", "Started"],
                          "format": ["2", "Formatting", "Formatted"],

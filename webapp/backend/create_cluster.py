@@ -320,7 +320,10 @@ class YarnCluster(object):
         Return id of given image
         """
         # check image metadata in database and pithos and set vre_image_uuid accordingly
-        self.vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
+        chosen_vre_image = VreImage.objects.get(image_name=self.opts['os_choice'])
+        self.vre_image_uuid = chosen_vre_image.image_pithos_uuid
+        # check if VRE image requires shell script to initialize (e.g BigBlueButton does not require it)
+        self.vre_req_script = chosen_vre_image.requires_script
         # Find image id of the operating system arg given
         list_current_images = self.plankton.list_public(True, 'default')
         for image in list_current_images:
@@ -394,7 +397,8 @@ class YarnCluster(object):
         try:
             vre_image_uuid = self.vre_image_uuid
             if vre_image_uuid == server['image']['id']:
-                if vre_image_uuid is not '0d26fd55-31a4-46b3-955d-d94ecf04a323':
+                # Check if shell script is required for VRE server
+                if self.vre_req_script:
                     start_vre_script(server_ip,server_pass,self.opts['admin_password'], vre_script_name, self.opts['admin_email'])
             else:
                 msg = u'VRE server \"{0}\" creation failed. Created okeanos VM id does not match image {1} id'.format(self.opts['server_name'],
