@@ -58,11 +58,13 @@ def create_cluster(script):
     create_cluster_command += (" --personality=/home/developer/.ssh/id_rsa.pub | tee _tmp.txt")
  
     # create cluster
+    print '--- Creating Cluster ---'
     exit_status = os.system(create_cluster_command)
     if exit_status != 0:
         print 'Cluster (re-)creation failed with exit status %d' % exit_status
         sys.exit(0)
 
+    print ''
     # retrieve cluster id and master IP
     with open('_tmp.txt', 'r') as f:
         cluster_id = f.readline().strip().split(': ')[1]    
@@ -72,29 +74,35 @@ def create_cluster(script):
 
 def enforce_actions(script, cluster_id, master_IP):
 
+    print '--- Executing Actions ---'
     # Enforce actions
     for action in script["actions"]:
         if action in ["start", "stop", "format"]:
-#            print ("orka hadoop " + action + " " + str(cluster_id))
+            print ("- Action: Hadoop " + action)
             os.system("orka hadoop " + action + " " + str(cluster_id))
+            print ''
         if action.startswith("put"):
             params_string = action.strip('put')
             params = params_string.strip(' ()')
             action_params = params.split(',')
-#            print ("orka file put " + str(cluster_id) + " " + action_params[0] + " " + action_params[1])
+            print ("- Action: Uploading file to hdfs")
             os.system("orka file put " + str(cluster_id) + " " + action_params[0] + " " + action_params[1])
+            print ''
         if action.startswith("get"):
             params_string = action.strip('get')
             params = params_string.strip(' ()')
             action_params = params.split(',')
-#            print ("orka file get " + str(cluster_id) + " " + action_params[0] + " " + action_params[1])
+            print ("- Action: Retrieving file from hdfs")
             os.system("orka file get " + str(cluster_id) + " " + action_params[0] + " " + action_params[1])
+            print ''
         if action == 'node_add':
-#            print ("orka node add " + str(cluster_id))
+            print ("- Action: Adding node to hadoop")
             os.system("orka node add " + str(cluster_id))
+            print ''
         if action == 'node_remove':
-#            print ("orka node remove " + str(cluster_id))
-            os.system("orka node remove " + str(cluster_id))        
+            print ("- Action: Removing node from hadoop")
+            os.system("orka node remove " + str(cluster_id))
+            print ''
         if action.startswith("run_job"):
             run_job(action, master_IP)
             
@@ -107,15 +115,12 @@ def run_job(action, master_IP):
     user = action_params[0]
     job = action_params[1].strip('\" ')
     
-    # ssh and run job
-#    print ("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " 
-#                                + user + "@" + master_IP + " \'" 
-#                                + job + "\'")
+    print ("- Action: Running job")
     response = subprocess.call( "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " 
                                 + user + "@" + master_IP + " \'" 
                                 + job + "\'"
                                 , stderr=FNULL, shell=True)
-
+    print ''
 
 def replay(argv, token):
     
@@ -129,18 +134,19 @@ def replay(argv, token):
         url = pithos_url + "/" + uuid + remain
         headers = {'X-Auth-Token':'{0}'.format(token)}
         r=requests.get(url, headers=headers)
-        # load the experiment
+        # load the experiment from pithos file
         script = yaml.load(r.text)
     else:
-        # load the experiment
+        # load the experiment from local file
         with open(argv, 'r') as f:
             script = yaml.load(f)
 
-    # check if cluster info is given (this is mandatory)
+    # check if cluster info is given (cluster info is mandatory)
     if script.get("cluster") is None:
         print "Cluster information is missing."
         return
     
+    print '--- Reproducing Experiment ---'
     # check if the cluster will be created (no cluster id is given)
     # find the correct cluster id / master IP to be used later for actions
     if script["cluster"].get("cluster_id") is None:
@@ -149,6 +155,6 @@ def replay(argv, token):
         cluster_id = script["cluster"].get("cluster_id")
         master_IP = script["cluster"].get("master_IP")
 
-    # proceed to the list of actions
+    # proceed with the list of actions
     if script.get("actions") is not None:
         enforce_actions(script, cluster_id, master_IP)

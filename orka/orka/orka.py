@@ -273,7 +273,7 @@ class HadoopCluster(object):
             # inject the public key to both root and user
             if os.path.isfile(self.opts['personality']):
                 command = "export SSHPASS=" + result['master_VM_password'] + " && cat " + self.opts['personality'] + " | sshpass -e " + "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@" + result['master_IP'] + " \'" + "cat >> .ssh/authorized_keys\'"
-                subprocess.call(command, shell=True)
+                subprocess.call(command, stderr=FNULL, shell=True)
                 subprocess.call( "export SSHPASS=" + result['master_VM_password'] + " && sshpass -e " + "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + "root@" + result['master_IP'] + " \'" + "cat ~/.ssh/authorized_keys >> /home/" + user + "/.ssh/authorized_keys" + "\'", stderr=FNULL, shell=True)
 
             exit(SUCCESS)
