@@ -145,6 +145,26 @@ App.UserWelcomeController = Ember.Controller.extend({
             this.get('controllers.clusterManagement').send('setActiveTab','scale');
             this.transitionToRoute('cluster.management',cluster_id);
         },
+        visit_vreserver_base_url : function(vreserver){
+            var os_image = vreserver.get('os_image');
+            var server_ip = vreserver.get('server_IP');
+            var vreImages = this.get('vreImages');
+            var arrAccessUrls = [];
+            var base_url = null;
+            for (i=0;i<vreImages.length;i++){
+                if (vreImages[i].get('image_name') == os_image){
+                    var arrImageUrls = vreImages[i].get('image_access_url') || [];
+                    for (j=0;j<arrImageUrls.length;j++){
+                        arrAccessUrls.push('http://%@:%@'.fmt(server_ip,arrImageUrls[j]));
+                    }
+                    base_url = (Ember.isEmpty(arrAccessUrls) ? ['http://%@'.fmt(server_ip)] : arrAccessUrls)[0];
+                    break;
+                }
+            }
+            if (!Ember.isEmpty(base_url)){
+                window.open(base_url,'_blank');
+            }        
+        },
         setActiveTab : function(tab){
             this.set('content_tabs',tab);  
         },
