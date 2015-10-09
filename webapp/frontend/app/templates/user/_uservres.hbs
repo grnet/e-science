@@ -25,7 +25,7 @@
                 </td>
                 <td>{{vreserver.os_image}}</td>
                 {{#if vreserver.boolean_vre_status_active}}
-                	<td><a {{bind-attr href='vre_access_base_url' id='vreserver.id_server_ip'}} target="_blank">{{vreserver.server_IP}}</a></td>
+                	<td><a href='#' {{bind-attr id='vreserver.id_server_ip'}}{{action 'visit_vreserver_base_url' vreserver}}>{{vreserver.server_IP}}</a></td>
                 {{else}}
                 	<td><span class="text-muted">{{vreserver.server_IP}}</span></td>
                 {{/if}}
