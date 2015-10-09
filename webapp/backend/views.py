@@ -4,7 +4,7 @@
 """
 Views for django rest framework .
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 import logging
 from rest_framework import status
@@ -128,7 +128,7 @@ class StatisticsView(APIView):
 
 class HdfsView(APIView):
     """
-    View for handling requests for file transfer to Hdfs.
+    View for handling requests for file transfer to HDFS.
     """
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticated, )
@@ -137,7 +137,7 @@ class HdfsView(APIView):
 
     def post(self, request, *args, **kwargs):
         """
-        Put file in Hdfs from Ftp,Http,Https or Pithos.
+        Put file in HDFS from Ftp,Http,Https or Pithos.
         """
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():

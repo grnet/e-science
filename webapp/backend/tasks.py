@@ -4,7 +4,7 @@
 """
 This script contains the celery tasks that will be executed from django views.
 
-@author: George Tzelepis, Ioannis Stenos
+@author: e-science Dev-team
 """
 from celery.task import task
 from create_cluster import YarnCluster

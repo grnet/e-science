@@ -4,7 +4,7 @@
 """
 This script installs and configures a Hadoop-Yarn cluster using Ansible.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 import os
 import json
@@ -36,9 +36,9 @@ def install_yarn(*args):
     """
     from okeanos_utils import set_cluster_state
     list_of_hosts = args[1]
-    master_hostname = list_of_hosts[0]['fqdn'].split('.', 1)[0]
+    master_hostname = list_of_hosts[0]['fqdn'].split('.', 1)[0] # list_of_host[0]['fqdn'] is like this: snf-654916.vm.okeanos.grnet.gr and we only need the snf-654916 part
     cluster_size = len(list_of_hosts)
-    cluster_id = args[3].rsplit('-', 1)[1]
+    cluster_id = args[3].rsplit('-', 1)[1] # get the cluster's id
     # Create ansible_hosts file
     try:
         hosts_filename = create_ansible_hosts(args[3], list_of_hosts, args[2])
@@ -154,11 +154,13 @@ def get_image_category(image_name='', image_uuid=''):
     image_category = OrkaImageCategory.objects.filter(category_name=orka_image_category_id.category_name).values()
     return image_category[0]
 
+
 def decode_json(object):
     """
     Decode Json to python dictionary object
     """
     return json.loads(object)
+
 
 def ansible_manage_cluster(cluster_id, action):
     """

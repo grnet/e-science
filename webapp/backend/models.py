@@ -3,7 +3,7 @@
 
 """
  e-Science database model
- @author: Vassilis Foteinos, Ioannis Stenos, Nick Vrionis
+ @author: e-science Dev-team
 """
 
 import logging

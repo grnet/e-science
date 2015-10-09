@@ -5,7 +5,7 @@
 This script contains classes and functions that
 authenticate escience users.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 
 import logging
