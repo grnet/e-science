@@ -60,14 +60,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	selected_image : '',
 	selected_storage : '',
 	alert_mes_last_conf : '',	// alert message when resources are not enough to apply last configuration
-	flavor_settings : {'Small': {'cpu': 2, 'ram': 2048, 'disk': 10}, 'Medium': {'cpu': 4, 'ram': 4096, 'disk': 20}, 'Large': {'cpu': 4, 'ram': 6144, 'disk': 40}}, // Small Medium and Large predefined flavors	
-	reverse_storage_lookup : {'ext_vlmc': 'Archipelago','drbd': 'Standard'},
-	list_of_flavors : ['cpu', 'ram', 'disk'], // List of flavors from kamaki except storage space
-	number_of_flavors : 3,
-	list_of_flavor_sizes : ['Small', 'Medium', 'Large'], // List of sizes of the predefined flavors
-	number_of_flavor_sizes : 3,
 	list_of_roles : ['master', 'slaves'], // Possible roles for vms
-	number_of_roles : 2,
 	workflow_filter: false, // workflow_filter initial status
 	workflow_filter_empty : 'no images available',
 	admin_password: '', //password for hue superuser first login
@@ -349,23 +342,40 @@ App.ClusterCreateController = Ember.Controller.extend({
 		return max_cluster_size_limited_by_current_disks;
 	}.property('total_cpu_selection', 'total_ram_selection', 'total_disk_selection', 'disk_temp', 'cluster_size_var', 'cluster_size', 'project_details'),
 
-
-	// Function to set master and slaves vm_flavor_selection
- 	vm_flavor_buttons_response: function (){
- 		var index1;
- 		var index2;
- 		for ( index1 = 0; index1 < this.number_of_flavor_sizes; index1++){
- 			for ( index2 = 0; index2 < this.number_of_roles; index2++){				
- 				if ((this.flavor_settings[this.list_of_flavor_sizes[index1]]['cpu']==this.get(this.list_of_roles[index2] + '_cpu_selection')) && 
- 					(this.flavor_settings[this.list_of_flavor_sizes[index1]]['ram']==this.get(this.list_of_roles[index2] + '_ram_selection')) && 
- 					(this.flavor_settings[this.list_of_flavor_sizes[index1]]['disk']==this.get(this.list_of_roles[index2] + '_disk_selection'))){
-						this.set('vm_flavor_selection_' + this.list_of_roles[index2], this.list_of_flavor_sizes[index1]);
-				}
- 				
- 			}
- 		}
-	},
-
+    
+    flavor_settings : function(){
+        var orkaFlavors = this.get('AppSettings').filterBy('section','VM_Flavor').sortBy('id');
+        var objFlavors = {};
+        for (i=0;i<orkaFlavors.length;i++){
+            objFlavors[orkaFlavors[i].get('property_name')]=JSON.parse(orkaFlavors[i].get('property_value'));
+        }
+        return objFlavors;
+    }.property(),
+    list_of_flavors : ['cpu', 'ram', 'disk'], // List of flavors from kamaki except storage space
+    list_of_flavor_sizes : function(){
+        var orkaFlavors = this.get('AppSettings').filterBy('section','VM_Flavor').sortBy('id');
+        var arrFlavors = [];
+        var objFlavors = this.get('flavor_settings');
+        for (i=0;i<orkaFlavors.length;i++){
+            arrFlavors.push(orkaFlavors[i].get('property_name'));
+        }
+        return arrFlavors;
+    }.property(),
+    // Function to set master and slaves vm_flavor_selection
+    vm_flavor_buttons_response: function (){
+        var number_of_flavor_sizes = this.get('list_of_flavor_sizes').length;
+        var number_of_roles = this.get('list_of_roles').length;
+        for ( i = 0; i < this.number_of_flavor_sizes; i++){
+            for ( j = 0; j < this.number_of_roles; j++){                
+                if ((this.get('flavor_settings')[this.get('list_of_flavor_sizes')[i]]['cpu']==this.get(this.get('list_of_roles')[j] + '_cpu_selection')) && 
+                    (this.get('flavor_settings')[this.get('list_of_flavor_sizes')[i]]['ram']==this.get(this.get('list_of_roles')[j] + '_ram_selection')) && 
+                    (this.get('flavor_settings')[this.get('list_of_flavor_sizes')[i]]['disk']==this.get(this.get('list_of_roles')[j] + '_disk_selection'))){
+                        this.set('vm_flavor_selection_' + this.get('list_of_roles')[j], this.get('list_of_flavor_sizes')[i]);
+                }
+                
+            }
+        }
+    },
     // Functionality about coloring of the vm_flavor buttons and enable-disable responding to user events
 	// First, remove colors from all vm_flavor buttons and then color the role's(master/slaves) selection
     vm_flavor_buttons : function() {
@@ -391,25 +401,25 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				elements[2].disabled = false;
 			}
-			if ((this.get('vm_flavor_selection_master') !== undefined) && (this.get('vm_flavor_selection_master') !== null) && (this.get('vm_flavor_selection_master') !== '')) {
+			if (!Ember.isEmpty(this.get('vm_flavor_selection_master'))) {
 				var choice = document.getElementById("master_vm_flavors_".concat(this.get('vm_flavor_selection_master')));
-				if ((this.get('master_cpu_selection') == this.flavor_settings['Small']['cpu'])
-					&&(this.get('master_ram_selection') == this.flavor_settings['Small']['ram'])
-					&&(this.get('master_disk_selection') == this.flavor_settings['Small']['disk'])) {
+				if ((this.get('master_cpu_selection') == this.get('flavor_settings')['Small']['cpu'])
+					&&(this.get('master_ram_selection') == this.get('flavor_settings')['Small']['ram'])
+					&&(this.get('master_disk_selection') == this.get('flavor_settings')['Small']['disk'])) {
 					vm_flavor_newMaster_Id = "master_vm_flavors_Small";
 					choice = document.getElementById(vm_flavor_newMaster_Id);
 					choice.style.color = "white";
 				} 
-				if ((this.get('master_cpu_selection') == this.flavor_settings['Medium']['cpu'])
-					&&(this.get('master_ram_selection') == this.flavor_settings['Medium']['ram'])
-					&&(this.get('master_disk_selection') == this.flavor_settings['Medium']['disk'])) {
+				if ((this.get('master_cpu_selection') == this.get('flavor_settings')['Medium']['cpu'])
+					&&(this.get('master_ram_selection') == this.get('flavor_settings')['Medium']['ram'])
+					&&(this.get('master_disk_selection') == this.get('flavor_settings')['Medium']['disk'])) {
 					vm_flavor_newMaster_Id = "master_vm_flavors_Medium";
 					choice = document.getElementById(vm_flavor_newMaster_Id);
 					choice.style.color = "white";					
 				}
-				if ((this.get('master_cpu_selection') == this.flavor_settings['Large']['cpu'])
-					&&(this.get('master_ram_selection') == this.flavor_settings['Large']['ram'])
-					&&(this.get('master_disk_selection') == this.flavor_settings['Large']['disk'])) {
+				if ((this.get('master_cpu_selection') == this.get('flavor_settings')['Large']['cpu'])
+					&&(this.get('master_ram_selection') == this.get('flavor_settings')['Large']['ram'])
+					&&(this.get('master_disk_selection') == this.get('flavor_settings')['Large']['disk'])) {
 					vm_flavor_newMaster_Id = "master_vm_flavors_Large";
 					choice = document.getElementById(vm_flavor_newMaster_Id);
 					choice.style.color = "white";
@@ -436,25 +446,25 @@ App.ClusterCreateController = Ember.Controller.extend({
 			} else {
 				elements[2].disabled = false;
 			}
-			if ((this.get('vm_flavor_selection_slaves') !== undefined) && (this.get('vm_flavor_selection_slaves') !== null) && (this.get('vm_flavor_selection_slaves') !== '')) {
+			if (!Ember.isEmpty(this.get('vm_flavor_selection_slaves'))) {
 				var choice = document.getElementById("slave_vm_flavors_".concat(this.get('vm_flavor_selection_slaves')));
-				if ((this.get('slaves_cpu_selection') == this.flavor_settings['Small']['cpu'])
-					&&(this.get('slaves_ram_selection') == this.flavor_settings['Small']['ram'])
-					&&(this.get('slaves_disk_selection') == this.flavor_settings['Small']['disk'])) {
+				if ((this.get('slaves_cpu_selection') == this.get('flavor_settings')['Small']['cpu'])
+					&&(this.get('slaves_ram_selection') == this.get('flavor_settings')['Small']['ram'])
+					&&(this.get('slaves_disk_selection') == this.get('flavor_settings')['Small']['disk'])) {
 					vm_flavor_newSlave_Id = "slave_vm_flavors_Small";
 					choice = document.getElementById(vm_flavor_newSlave_Id);
 					choice.style.color = "white";
 				} 
-				if ((this.get('slaves_cpu_selection') == this.flavor_settings['Medium']['cpu'])
-					&&(this.get('slaves_ram_selection') == this.flavor_settings['Medium']['ram'])
-					&&(this.get('slaves_disk_selection') == this.flavor_settings['Medium']['disk'])) {
+				if ((this.get('slaves_cpu_selection') == this.get('flavor_settings')['Medium']['cpu'])
+					&&(this.get('slaves_ram_selection') == this.get('flavor_settings')['Medium']['ram'])
+					&&(this.get('slaves_disk_selection') == this.get('flavor_settings')['Medium']['disk'])) {
 					vm_flavor_newSlave_Id = "slave_vm_flavors_Medium";
 					choice = document.getElementById(vm_flavor_newSlave_Id);
 					choice.style.color = "white";					
 				}
-				if ((this.get('slaves_cpu_selection') == this.flavor_settings['Large']['cpu'])
-					&&(this.get('slaves_ram_selection') == this.flavor_settings['Large']['ram'])
-					&&(this.get('slaves_disk_selection') == this.flavor_settings['Large']['disk'])) {
+				if ((this.get('slaves_cpu_selection') == this.get('flavor_settings')['Large']['cpu'])
+					&&(this.get('slaves_ram_selection') == this.get('flavor_settings')['Large']['ram'])
+					&&(this.get('slaves_disk_selection') == this.get('flavor_settings')['Large']['disk'])) {
 					vm_flavor_newSlave_Id = "slave_vm_flavors_Large";
 					choice = document.getElementById(vm_flavor_newSlave_Id);
 					choice.style.color = "white";
@@ -684,6 +694,10 @@ App.ClusterCreateController = Ember.Controller.extend({
 		}
 	},
 
+    reverse_storage_lookup : function(){
+        var storage_lookup = this.get('AppSettings').filterBy('section','Cyclades').filterBy('property_name','Storage');
+        return JSON.parse(storage_lookup[0].get('property_value'));
+    }.property(),
 	// Functionality about storage buttons being colored when user selects one of them
 	storage_buttons : function() {
 		var elements = document.getElementsByName("storage_button");
@@ -729,7 +743,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 	
 	// Function which make the size of cluster equal or greater than minimum cluster
 	size_of_cluster : function() {
-		if ((this.get('cluster_size') === null) || (this.get('cluster_size') === undefined) || (this.get('cluster_size') === 0)) {
+		if ((Ember.isEmpty(this.get('cluster_size'))) || (this.get('cluster_size') === 0)) {
 			this.set('cluster_size_var', 2);
 		} else {
 			this.set('cluster_size_var', this.get('cluster_size'));
@@ -974,37 +988,37 @@ App.ClusterCreateController = Ember.Controller.extend({
 			if (name == "vm_flavor_button_master") {
 				this.set('vm_flavor_selection_master', value);
 				if (value == "Small") {
-					this.set('master_cpu_selection', this.flavor_settings['Small']['cpu']);
-				    this.set('master_ram_selection', this.flavor_settings['Small']['ram']);
-				    this.set('master_disk_selection', this.flavor_settings['Small']['disk']);
+					this.set('master_cpu_selection', this.get('flavor_settings')['Small']['cpu']);
+				    this.set('master_ram_selection', this.get('flavor_settings')['Small']['ram']);
+				    this.set('master_disk_selection', this.get('flavor_settings')['Small']['disk']);
 				} 				
 				if (value == "Medium") {
-					this.set('master_cpu_selection', this.flavor_settings['Medium']['cpu']);
-				    this.set('master_ram_selection', this.flavor_settings['Medium']['ram']);
-				    this.set('master_disk_selection', this.flavor_settings['Medium']['disk']);
+					this.set('master_cpu_selection', this.get('flavor_settings')['Medium']['cpu']);
+				    this.set('master_ram_selection', this.get('flavor_settings')['Medium']['ram']);
+				    this.set('master_disk_selection', this.get('flavor_settings')['Medium']['disk']);
 				}
 				if (value == "Large") {
-					this.set('master_cpu_selection', this.flavor_settings['Large']['cpu']);
-					this.set('master_ram_selection', this.flavor_settings['Large']['ram']);
-					this.set('master_disk_selection', this.flavor_settings['Large']['disk']);
+					this.set('master_cpu_selection', this.get('flavor_settings')['Large']['cpu']);
+					this.set('master_ram_selection', this.get('flavor_settings')['Large']['ram']);
+					this.set('master_disk_selection', this.get('flavor_settings')['Large']['disk']);
 				}
 			}
 			if (name == "vm_flavor_button_slaves") {
 				this.set('vm_flavor_selection_slaves', value);
 				if (value == "Small") {
-					this.set('slaves_cpu_selection', this.flavor_settings['Small']['cpu']);
-					this.set('slaves_ram_selection', this.flavor_settings['Small']['ram']);
-					this.set('slaves_disk_selection', this.flavor_settings['Small']['disk']);
+					this.set('slaves_cpu_selection', this.get('flavor_settings')['Small']['cpu']);
+					this.set('slaves_ram_selection', this.get('flavor_settings')['Small']['ram']);
+					this.set('slaves_disk_selection', this.get('flavor_settings')['Small']['disk']);
 				}
 				if (value == "Medium") {
-					this.set('slaves_cpu_selection', this.flavor_settings['Medium']['cpu']);
-					this.set('slaves_ram_selection', this.flavor_settings['Medium']['ram']);
-					this.set('slaves_disk_selection', this.flavor_settings['Medium']['disk']);
+					this.set('slaves_cpu_selection', this.get('flavor_settings')['Medium']['cpu']);
+					this.set('slaves_ram_selection', this.get('flavor_settings')['Medium']['ram']);
+					this.set('slaves_disk_selection', this.get('flavor_settings')['Medium']['disk']);
 				}
 				if (value == "Large") {				
-					this.set('slaves_cpu_selection', this.flavor_settings['Large']['cpu']);				
-					this.set('slaves_ram_selection', this.flavor_settings['Large']['ram']);				
-					this.set('slaves_disk_selection', this.flavor_settings['Large']['disk']);	
+					this.set('slaves_cpu_selection', this.get('flavor_settings')['Large']['cpu']);				
+					this.set('slaves_ram_selection', this.get('flavor_settings')['Large']['ram']);				
+					this.set('slaves_disk_selection', this.get('flavor_settings')['Large']['disk']);	
 				}
 			}			
 		},
