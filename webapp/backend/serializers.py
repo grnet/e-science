@@ -4,7 +4,7 @@
 """
 Serializers file for django rest framework.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 
 from rest_framework import serializers

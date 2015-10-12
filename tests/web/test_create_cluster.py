@@ -17,7 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from ConfigParser import RawConfigParser, NoSectionError
-from backend.okeanos_utils import check_quota, get_flavor_id, check_credentials
+from backend.okeanos_utils import check_quota, get_flavor_lists, check_credentials
 from random import randint
 import unittest, time, re
 
@@ -85,7 +85,7 @@ class test_create_cluster(unittest.TestCase):
             list_of_projects = auth.get_projects(state='active')
         except Exception:
             self.assertTrue(False,'Could not get list of projects')
-        kamaki_flavors = get_flavor_id(self.token)
+        kamaki_flavors = get_flavor_lists(self.token)
         user_quota = check_quota(self.token, self.project_id)
         list = Select(driver.find_element_by_id("project_id")).options
         no_project = True

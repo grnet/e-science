@@ -3,7 +3,7 @@
 
 """
  e-Science database model
- @author: Vassilis Foteinos, Ioannis Stenos, Nick Vrionis
+ @author: e-science Dev-team
 """
 
 import logging
@@ -219,6 +219,7 @@ class VreImage(models.Model):
     image_access_url = TextArrayField() # array [:port]/path for accessing VRE, base url not included, absence of value assumes base url is access url
     image_category = models.ForeignKey(VreImageCategory, null=False,
                                        help_text="VreImageCategory")
+    requires_script = models.BooleanField("Requires shell script", default=True)
     
     class Meta:
         verbose_name = "VRE Image"
@@ -454,9 +455,9 @@ class Setting(models.Model):
                                      help_text="Settings section label")
     property_name = models.CharField("Property Name", max_length=255, null=False, 
                                      help_text="Settings property name, must be unique for section")
-    property_value = models.CharField("Property Value", max_length=1020, null=False, 
+    property_value = models.CharField("Property Value", max_length=2040, null=False, 
                                      help_text="Settings property value")
-    comment = models.CharField("Comments", max_length=255, null=True, blank=True,
+    comment = models.CharField("Comments", max_length=1020, null=True, blank=True,
                                help_text="Setting comment")
     
     class Meta:

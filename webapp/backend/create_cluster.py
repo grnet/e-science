@@ -4,7 +4,7 @@
 """
 This script creates a HadoopYarn cluster on ~okeanos.
 
-@author: Ioannis Stenos, Nick Vrionis, George Tzelepis
+@author: e-science Dev-team
 """
 import datetime
 from time import sleep
@@ -140,7 +140,10 @@ class YarnCluster(object):
         project_usage_ips = dict_quotas[self.project_id]['cyclades.floating_ip']['project_usage']
 
         available_ips = limit_ips-usage_ips
-        if (available_ips > (project_limit_ips - project_usage_ips)):
+        if (available_ips > (project_limit_ips - project_usage_ips)): 
+            # Quotas are allocated per project and per user account. 
+            # So some  other account in the same project may have bind some of user quota since project_quota maybe be different than number_of_users*user_quota
+            # The result is user limit quota might be less than it seems so we have to consider project limit as well
             available_ips = project_limit_ips - project_usage_ips
         available_ips -= pending_ips
         for d in list_float_ips:
@@ -182,7 +185,7 @@ class YarnCluster(object):
         pending_ram = self.pending_quota['Ram']
         limit_ram = dict_quotas[self.project_id]['cyclades.ram']['limit']
         usage_ram = dict_quotas[self.project_id]['cyclades.ram']['usage']
-        available_ram = (limit_ram - usage_ram) / Bytes_to_MB - pending_ram
+        available_ram = (limit_ram - usage_ram) / Bytes_to_MiB - pending_ram # Convert limit_ram and usage_ram from bytes to MiB to do the subtraction
         ram_req = self.opts['ram_master'] + \
             self.opts['ram_slaves'] * (self.opts['cluster_size'] - 1)
         if available_ram < ram_req:
@@ -203,7 +206,7 @@ class YarnCluster(object):
         usage_cd = dict_quotas[self.project_id]['cyclades.disk']['usage']
         cyclades_disk_req = self.opts['disk_master'] + \
             self.opts['disk_slaves'] * (self.opts['cluster_size'] - 1)
-        available_cyclades_disk_GB = (limit_cd - usage_cd) / Bytes_to_GB - pending_cd
+        available_cyclades_disk_GB = (limit_cd - usage_cd) / Bytes_to_GiB - pending_cd # Convert limit_cd and usage_cd from bytes to GiB to do the subtraction
         if available_cyclades_disk_GB < cyclades_disk_req:
             msg = 'Cyclades disk out of limit'
             raise ClientError(msg, error_quotas_cyclades_disk)
@@ -216,22 +219,20 @@ class YarnCluster(object):
         Returns zero if everything available.
         """
         for checker in [func for (order, func) in sorted(self._DispatchCheckers.items())]:
-            # for k, checker in self._DispatchCheckers.iteritems():
             retval = checker()
-            # print checker.__name__ + ":" + str(retval) #debug
         return retval
 
     def get_flavor_id(self, role):
         """
-        Return the flavor id for a virtual machine based on cpu,ram,disk_size and
-        disk template.
+        Return the flavor id for a virtual machine based on cpu, ram, disk_size and
+        disk template for selected role (master or slave).
         """
         try:
-            flavor_list = self.cyclades.list_flavors(True)
+            flavor_list = self.cyclades.list_flavors(True) # Returns the list of available flavors from cyclades
         except ClientError:
             msg = 'Could not get list of flavors'
             raise ClientError(msg, error_flavor_list)
-        flavor_id = 0
+        flavor_id = 0 # non existing flavor id
         for flavor in flavor_list:
             if flavor['ram'] == self.opts['ram_{0}'.format(role)] and \
                                 flavor['SNF:disk_template'] == self.opts['disk_template'] and \
@@ -264,25 +265,30 @@ class YarnCluster(object):
         """
         Get the ssh_key dictionary of a user
         """   
-        command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' +  unmask_token(encrypt_key, self.opts['token']) + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
+        
+        command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' \
+                    +  unmask_token(encrypt_key, self.opts['token']) + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
+        # get ssh_keys from okeanos server
         p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
         out, err = p.communicate()
-        output = out[2:-2].split('}, {')
+         # out is in string format and it might have more than one entries so we manually convert it to a easier to use
+        output = out[2:-2].split('}, {') # [2:-2] removes [{ from the start of the string and }] from the end
+                                         # split('}, {') make the string into a list o of dictionaries if multiple entries exists  they are separated with }, { into different elements
         ssh_dict = list()
         ssh_counter = 0
         for dictionary in output:
             mydict = dict()
-            new_dictionary = dictionary.replace('"','')
-            dict1 = new_dictionary.split(', ')
+            new_dictionary = dictionary.replace('"','') # When returned from curl get request each key:value pair is inside  "" which we do not need so we remove those
+            dict1 = new_dictionary.split(', ') # create a list in which each element is key: value
             for each in dict1:
-                list__keys_values_in_dict = each.split(': ')
+                list__keys_values_in_dict = each.split(': ') # separate key from value as elements of a list
                 new_list_of_dict_elements = list()
                 for item in list__keys_values_in_dict:
-                    new_list_of_dict_elements.append(item)
+                    new_list_of_dict_elements.append(item) # create a list of lists with key value elements
                 if len(new_list_of_dict_elements) > 1:
                     for pair in new_list_of_dict_elements:
-                        mydict[new_list_of_dict_elements[0]] = new_list_of_dict_elements[1]
-            ssh_dict.append(mydict)          
+                        mydict[new_list_of_dict_elements[0]] = new_list_of_dict_elements[1] # create a dictionary with key calue pairs
+            ssh_dict.append(mydict)  # creates a list of ssh dictionaries       
         return ssh_dict
         
     def check_user_resources(self):
@@ -314,7 +320,10 @@ class YarnCluster(object):
         Return id of given image
         """
         # check image metadata in database and pithos and set vre_image_uuid accordingly
-        self.vre_image_uuid = VreImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
+        chosen_vre_image = VreImage.objects.get(image_name=self.opts['os_choice'])
+        self.vre_image_uuid = chosen_vre_image.image_pithos_uuid
+        # check if VRE image requires shell script to initialize (e.g BigBlueButton does not require it)
+        self.vre_req_script = chosen_vre_image.requires_script
         # Find image id of the operating system arg given
         list_current_images = self.plankton.list_public(True, 'default')
         for image in list_current_images:
@@ -327,7 +336,8 @@ class YarnCluster(object):
     def create_vre_server(self):
         """
         Create VRE server in ~okeanos
-        """        
+        """
+        vre_script_file_name = ''
         flavor_id = self.get_flavor_id('master')
         if flavor_id == 0:
             msg = 'Combination of cpu, ram, disk and disk_template do' \
@@ -343,20 +353,22 @@ class YarnCluster(object):
         task_id = current_task.request.id
         server_id = db_server_create(self.opts, task_id)
         self.server_name_postfix_id = '{0}-{1}-vre'.format(self.opts['server_name'], server_id)
-
-        # Check if user chose ssh keys or not.
+        # Check if a shell script is required to be copied to VRE server
+        if self.vre_req_script:
+            vre_script_file_name = 'scripts/{0}'.format(vre_script_name)
+         # Check if user chose ssh keys or not.
         if self.opts['ssh_key_selection'] is None or self.opts['ssh_key_selection'] == 'no_ssh_key_selected':
             self.ssh_file = 'no_ssh_key_selected'
         else:
             self.ssh_key_file(self.server_name_postfix_id)
             pub_keys_path = self.ssh_file
         try:
-            server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path, 'scripts/{0}'.format(vre_script_name)), project_id=self.project_id)
+            server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path,vre_script_file_name), project_id=self.project_id)
         except ClientError, e:
             # If no public IP is free, get a new one
             if e.status == status.HTTP_409_CONFLICT:
                 get_float_network_id(self.net_client, project_id=self.project_id)
-                server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path, 'scripts/{0}'.format(vre_script_name)), project_id=self.project_id)
+                server = self.cyclades.create_server(vre_server_name, flavor_id, image_id, personality=personality('', pub_keys_path, vre_script_file_name), project_id=self.project_id)
             else:
                 msg = u'VRE server \"{0}\" creation failed due to error: {1}'.format(self.opts['server_name'], str(e.args[0]))
                 set_server_state(self.opts['token'], server_id, 'Error',status='Failed', error=msg)
@@ -388,8 +400,8 @@ class YarnCluster(object):
         try:
             vre_image_uuid = self.vre_image_uuid
             if vre_image_uuid == server['image']['id']:
-                # TODO add property to VreImage model control VRE server start, set BigBlueButton to false
-                if vre_image_uuid is not '0d26fd55-31a4-46b3-955d-d94ecf04a323':
+                # Check if shell script is required for VRE server
+                if self.vre_req_script:
                     start_vre_script(server_ip,server_pass,self.opts['admin_password'], vre_script_name, self.opts['admin_email'])
             else:
                 msg = u'VRE server \"{0}\" creation failed. Created okeanos VM id does not match image {1} id'.format(self.opts['server_name'],

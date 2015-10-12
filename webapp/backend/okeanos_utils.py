@@ -4,7 +4,7 @@
 """
 This script contains useful classes and fuctions for orka package.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 import logging
 import re
@@ -29,6 +29,7 @@ from backend.models import UserInfo, ClusterInfo, VreServer, Dsl, OrkaImage, Vre
 
 def retrieve_pending_clusters(token, project_name):
     """Retrieve pending cluster info"""
+    
     uuid = get_user_id(token)
     pending_quota = {"VMs": 0, "Cpus": 0, "Ram": 0, "Disk": 0, 
                      "Ip": 0, "Network": 0}
@@ -52,11 +53,13 @@ def retrieve_pending_clusters(token, project_name):
 
     return pending_quota
 
+
 def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', password='', error=''):
     """
     Logs a cluster state message and updates the celery and escience database
     state.
     """
+    
     logging.log(SUMMARY, state)
     db_cluster_update(token, status, cluster_id, master_IP, state=state, password=password, error=error)
     if len(state) >= const_truncate_limit:
@@ -69,6 +72,7 @@ def set_server_state(token, id, state, status='Pending', server_IP='', okeanos_s
     Logs a VRE server state message and updates the celery and escience database
     state.
     """
+    
     logging.log(SUMMARY, state)
     db_server_update(token, status, id, server_IP, state=state, okeanos_server_id=okeanos_server_id, password=password, error=error)
     if len(state) >= const_truncate_limit:
@@ -80,6 +84,7 @@ def parse_hdfs_dest(regex, path):
     """
     Parses remote hdfs directory for the orka put command to check if directory exists.
     """
+    
     parsed_path = re.match(regex, path)
     if parsed_path:
         return parsed_path.group(1)
@@ -91,6 +96,7 @@ def get_project_id(token, project_name):
     """
     Return the id of an active ~okeanos project.
     """
+    
     auth = check_credentials(token)
     dict_quotas = auth.get_quotas()
     try:
@@ -107,6 +113,7 @@ def get_project_id(token, project_name):
 
 def destroy_server(token, id):
     """Destroys a VRE server in ~okeanos ."""
+    
     current_task.update_state(state="Started")
     vre_server = VreServer.objects.get(id=id)    
     auth = check_credentials(unmask_token(encrypt_key,token))
@@ -122,14 +129,15 @@ def destroy_server(token, id):
         set_server_state(token, id, state,status='Destroyed')
         raise ClientError('Error while deleting VRE server', error_fatal)
     ip_to_delete = get_public_ip_id(nc,vre_server.server_IP)
-    nc.delete_floatingip(ip_to_delete['id'])
-    
+    nc.delete_floatingip(ip_to_delete['id']) 
     state= 'VRE server {0} and its public IP {1} were deleted'.format(vre_server.server_name,vre_server.server_IP)
     set_server_state(token, id, state, status='Destroyed')
-
     return vre_server.server_name
 
+
 def create_dsl(choices):
+    """Creates a Reproducible Experiments Metadata  file in Pithos."""
+    
     if choices['pithos_path'].startswith('/'):
         choices['pithos_path'] = choices['pithos_path'][1:]
     if choices['pithos_path'].endswith('/'):
@@ -144,20 +152,22 @@ def create_dsl(choices):
     data = {'cluster': {'name': cluster.cluster_name, 'project_name': cluster.project_name, 'image': cluster.os_image, 'disk_template': u'{0}'.format(cluster.disk_template),
                         'size': cluster.cluster_size, 'flavor_master':[cluster.cpu_master, cluster.ram_master,cluster.disk_master], 'flavor_slaves': [cluster.cpu_slaves, cluster.ram_slaves, cluster.disk_slaves]}, 
             'configuration': {'replication_factor': cluster.replication_factor, 'dfs_blocksize': cluster.dfs_blocksize}}
-    if not (choices['dsl_name'].endswith('.yml') or choices['dsl_name'].endswith('.yaml')):
+    if not (choices['dsl_name'].endswith('.yml') or choices['dsl_name'].endswith('.yaml')): # give file proper type
         choices['dsl_name'] = '{0}.yaml'.format(choices['dsl_name'])
     task_id = current_task.request.id
     dsl_id = db_dsl_create(choices, task_id)
     yaml_data = yaml.safe_dump(data,default_flow_style=False)
     url = '{0}/{1}/{2}/{3}'.format(pithos_url, uuid, choices['pithos_path'], urllib.quote(choices['dsl_name']))
     headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,choices['token'])),'content-type':'text/plain'}
-    r = requests.put(url, headers=headers, data=yaml_data)
+    r = requests.put(url, headers=headers, data=yaml_data) # send file to Pithos
     response = r.status_code
     if response == pithos_put_success:
         db_dsl_update(choices['token'],dsl_id,state='Created')
         
         
 def destroy_dsl(token, id):
+    """Destroys a Reproducible Experiments Metadata file in Pithos."""
+    
     # TODO placeholders for actual implementation
     # just remove from our DB for now
     dsl = Dsl.objects.get(id=id)
@@ -166,6 +176,8 @@ def destroy_dsl(token, id):
 
 
 def get_pithos_container_info(uuid, pithos_path, token):
+    """Request to Pithos to see if container exists. """
+    
     if '/' in pithos_path:
         pithos_path = pithos_path.split("/", 1)[0]
     url = '{0}/{1}/{2}'.format(pithos_url, uuid, pithos_path)
@@ -174,20 +186,25 @@ def get_pithos_container_info(uuid, pithos_path, token):
     response = r.status_code
     return response
 
+
 def get_public_ip_id(cyclades_network_client,float_ip):  
     """Return IP dictionary of an ~okeanos public IP"""
+    
     list_of_ips = cyclades_network_client.list_floatingips()
     for ip in list_of_ips:
         if ip['floating_ip_address'] == float_ip:
             return ip
+
 
 def check_scale_cluster_up(token, cluster_id, cluster_to_scale):
     """
     Check user quota if new node can be added to existing cluster.
     Return tuple with message and value
     """
+    
     project_id = get_project_id(unmask_token(encrypt_key,token), cluster_to_scale.project_name)
     quotas = check_quota(unmask_token(encrypt_key,token), project_id)
+    # The new node will be a slave node and will have the same flavor combination with the existing nodes of the cluster
     if quotas['ram']['available'] < cluster_to_scale.ram_slaves:
         msg = 'Not enough ram for new node.'
         set_cluster_state(token, cluster_id, state=msg)
@@ -200,19 +217,20 @@ def check_scale_cluster_up(token, cluster_id, cluster_to_scale):
         msg = 'Not enough disk for new node.'
         set_cluster_state(token, cluster_id, state=msg)
         return (msg, error_quotas_cyclades_disk)
-    
     return ('SUCCESS',0)
+
     
 def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton, status):
     """
     Create a VM in ~okeanos and attach it to the network of the requested cluster.
     """
+    
     new_slave = {}
     server_home_path = expanduser('~')
     server_ssh_keys = join(server_home_path, ".ssh/id_rsa.pub")
     pub_keys_path = ''
     project_id = get_project_id(unmask_token(encrypt_key,token), cluster_to_scale.project_name)
-    node_name = cluster_to_scale.cluster_name + '-' + str(cluster_to_scale.cluster_size + 1)
+    node_name = cluster_to_scale.cluster_name + '-' + str(cluster_to_scale.cluster_size + 1) # name of new node should follow the naming convention of the rest nodes in the cluster
     state = "Adding new datanode {0}".format(node_name)
     set_cluster_state(token, cluster_id, state)
     try:
@@ -220,7 +238,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     except ClientError:
         msg = 'Could not get list of flavors'
         raise ClientError(msg, error_flavor_list)
-    for flavor in flavor_list:
+    for flavor in flavor_list: # The new node will be a slave node and will have the same flavor combination with the existing nodes of the cluster
         if flavor['ram'] == cluster_to_scale.ram_slaves and \
                             flavor['SNF:disk_template'] == cluster_to_scale.disk_template and \
                             flavor['vcpus'] == cluster_to_scale.cpu_slaves and \
@@ -229,14 +247,13 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     chosen_image = {}
     list_current_images = plankton.list_public(True, 'default')
     # Find image id of the operating system arg given
-    for lst in list_current_images:
+    for lst in list_current_images: # new node should have the same image as the other cluster nodes
         if lst['name'] == cluster_to_scale.os_image:
             chosen_image = lst
             chosen_image_id = chosen_image['id']
     if not chosen_image:
         msg = ' Image not found.'
         raise ClientError(msg, error_image_id)
-
     master_id = None
     network_to_edit_id = None
     new_status = 'placeholder'
@@ -247,21 +264,20 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     for attachment in master_server['attachments']:
         if (attachment['OS-EXT-IPS:type'] == 'fixed' and not attachment['ipv6']):
            network_to_edit_id = attachment['network_id']
-           break     
-
+           break
+    # Create new node with create server methode of cyclades     
     new_server = cyclades.create_server(node_name, flavor_id, chosen_image_id,
                                         personality=personality(server_ssh_keys,pub_keys_path),
                                         networks=[{"uuid": network_to_edit_id}], project_id=project_id)
-
     new_status = cyclades.wait_server(new_server['id'], max_wait=MAX_WAIT)
     if new_status != 'ACTIVE':
         msg = ' Status for server [%s] is %s. Server will be deleted' % \
             (servers[i]['name'], new_status)
         cyclades.delete_server(new_server['id'])
         raise ClientError(msg, error_create_server)
-    cluster_to_scale.cluster_size = cluster_to_scale.cluster_size + 1
+    cluster_to_scale.cluster_size = cluster_to_scale.cluster_size + 1 # new cluster size
     cluster_to_scale.save()
-    new_slave_private_ip = '192.168.0.{0}'.format(str(1 + cluster_to_scale.cluster_size))
+    new_slave_private_ip = '192.168.0.{0}'.format(str(1 + cluster_to_scale.cluster_size)) # Add new node to network
     new_slave_port = ADD_TO_GET_PORT + cluster_to_scale.cluster_size
     state = "New datanode {0} was added to cluster network".format(node_name)
     set_cluster_state(token, cluster_id, state, status='Active')
@@ -270,11 +286,13 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
                  'image_id':new_server['image']['id']}
     return new_slave
 
+
 def find_node_to_remove(cluster_to_scale, cyclades, netclient):
     """
-    Find highest node from cluster and return hostname
+    Find last node from cluster and return hostname
     and ~okeanos id of the node.
     """
+    
     node_id = None
     cluster_servers = []
     list_of_servers = cyclades.list_servers(detail=True)
@@ -293,11 +311,12 @@ def find_node_to_remove(cluster_to_scale, cyclades, netclient):
     for server in cluster_servers:
         node_id = server['id']
         node_fqdn = server['SNF:fqdn']
-    
     return node_fqdn,node_id
+
 
 def cluster_remove_node(node_fqdn, node_id, token, cluster_id, cluster_to_scale, cyclades, status):
     """Remove a node of a scaled down cluster."""
+    
     state = "Deleting Node %s from cluster %s (id:%d)" % (node_fqdn, cluster_to_scale.cluster_name, cluster_id)
     set_cluster_state(token, cluster_id, state)
     cyclades.delete_server(node_id)    
@@ -308,7 +327,7 @@ def cluster_remove_node(node_fqdn, node_id, token, cluster_id, cluster_to_scale,
         set_cluster_state(token, cluster_id, state=msg, status=status, error=msg)
         raise ClientError(msg, error_cluster_corrupt)
     state = 'Deleted Node %s from cluster %s (id:%d)' % (node_fqdn, cluster_to_scale.cluster_name, cluster_id)
-    cluster_to_scale.cluster_size -= 1
+    cluster_to_scale.cluster_size -= 1 # New cluster size.
     cluster_to_scale.save()
     set_cluster_state(token, cluster_id, state, status='Active')
     
@@ -318,6 +337,7 @@ def rollback_scale_cluster(list_of_slaves, cyclades, cluster_to_scale, size, ans
     Rollback cluster when scale add node fail. More rollback actions when ansible has failed during
     hadoop configurations for the new nodes.
     """
+    
     from run_ansible_playbooks import modify_ansible_hosts_file,ansible_scale_cluster
     cluster_name_suffix_id = '{0}-{1}'.format(cluster_to_scale.cluster_name, cluster_to_scale.id)
     for slave in list_of_slaves:
@@ -327,7 +347,6 @@ def rollback_scale_cluster(list_of_slaves, cyclades, cluster_to_scale, size, ans
             modify_ansible_hosts_file(cluster_name_suffix_id, action='remove_slaves', slave_hostname=slave['fqdn'])           
         ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, action='join_slaves')
         ansible_scale_cluster(ansible_hosts, action='rollback_scale_cluster')
-          
     cluster_to_scale.cluster_size = size
     cluster_to_scale.save()
 
@@ -335,10 +354,11 @@ def rollback_scale_cluster(list_of_slaves, cyclades, cluster_to_scale, size, ans
 def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     """
     Scales an active cluster by cluster_delta (signed int).
-    For scaling up finds the cluster settings and highest internal ip/port slave
+    For scaling up finds the cluster settings and last internal ip/port slave
     and "appends" cluster_delta nodes.
-    For scaling down it removes the highest slave. 
+    For scaling down it removes the last slave. 
     """
+    
     from reroute_ssh import reroute_ssh_to_slaves
     from run_ansible_playbooks import modify_ansible_hosts_file,ansible_scale_cluster,ansible_manage_cluster
     current_task.update_state(state="Started")
@@ -442,7 +462,6 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
         elif REVERSE_HADOOP_STATUS[previous_hadoop_status] == 'start':
             ansible_manage_cluster(cluster_id, 'stop')
             ansible_manage_cluster(cluster_id, 'start')
-    
     except Exception, e:
         msg = 'Restarting %s failed with %s. Try to restart it manually.'%(cluster_to_scale.cluster_name,str(e.args[0]))
         set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status], error=msg)
@@ -453,13 +472,13 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     return cluster_to_scale.cluster_name
         
 
-
 def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     """
     Destroys cluster and deletes network and floating IP. Finds the machines
     that belong to the cluster from the cluster id that is given. Cluster id
     is the unique integer that each cluster has in escience database.
     """
+    
     current_task.update_state(state="Started")
     servers_to_delete = []
     cluster_to_delete = ClusterInfo.objects.get(id=cluster_id)
@@ -484,7 +503,6 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
         msg = 'Could not get list of resources.'\
             'Cannot delete cluster'
         raise ClientError(msg, error_get_list_servers)
-
     # Get master virtual machine and network from IP   
     ip = get_public_ip_id(nc, float_ip_to_delete)
     float_ip_to_delete_id = ip['id']
@@ -494,20 +512,17 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
          if (attachment['OS-EXT-IPS:type'] == 'fixed' and not attachment['ipv6']):
             network_to_delete_id = attachment['network_id']
             break
-
     # Show an error message and exit if not valid IP or network
     if not master_id:
         msg = '[%s] is not the valid public IP of the master' % \
             float_ip_to_delete
         raise ClientError(msg, error_get_ip)
-
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
         set_cluster_state(token, cluster_id, "Deleted master VM", status=status)
         msg = 'A valid network of master and slaves was not found.'\
             'Deleting the master VM only'
         raise ClientError(msg, error_cluster_corrupt)
-
     # Get the servers of the cluster to be deleted
     for server in list_of_servers:
         for attachment in server['attachments']:
@@ -535,7 +550,6 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     except ClientError:
         logging.exception('Error in deleting server')
         list_of_errors.append(error_cluster_corrupt)
-
     try:
         nc.delete_network(network_to_delete_id)
         state= 'Network with id [%s] is deleted' % network_to_delete_id
@@ -544,7 +558,6 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     except ClientError:
         logging.exception('Error in deleting network')
         list_of_errors.append(error_cluster_corrupt)
-
     # Delete the floating IP of deleted cluster
     try:
         nc.delete_floatingip(float_ip_to_delete_id)
@@ -555,7 +568,6 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
         logging.exception('Error in deleting floating IP [%s]' %
                           float_ip_to_delete)
         list_of_errors.append(error_cluster_corrupt)
-
     state= 'Cluster with public IP [%s] was deleted ' % float_ip_to_delete
     set_cluster_state(token, cluster_id, state, status=status)
     # Everything deleted as expected
@@ -569,6 +581,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
 
 def check_credentials(token, auth_url=auth_url):
     """Identity,Account/Astakos. Test authentication credentials"""
+    
     logging.log(REPORT, ' Test the credentials')
     try:
         auth = AstakosClient(auth_url, token)
@@ -580,8 +593,9 @@ def check_credentials(token, auth_url=auth_url):
     return auth
 
 
-def get_flavor_id(token):
+def get_flavor_lists(token):
     """From kamaki flavor list get all possible flavors """
+    
     auth = check_credentials(token)
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
@@ -594,7 +608,6 @@ def get_flavor_id(token):
     ram_list = []
     disk_list = []
     disk_template_list = []
-
     for flavor in flavor_list:
         if flavor['SNF:allow_create']:
             if flavor['vcpus'] not in cpu_list:
@@ -615,6 +628,7 @@ def get_flavor_id(token):
 
 def get_user_quota(auth):
     """Return user quota"""
+    
     try:
         return auth.get_quotas()
     except ClientError:
@@ -628,6 +642,7 @@ def check_quota(token, project_id):
     Available = limit minus (~ okeanos used and escience pending).
     Also divides with 1024*1024*1024 to transform bytes to gigabytes.
     """
+    
     auth = check_credentials(token)
     dict_quotas = get_user_quota(auth)
     project_name = auth.get_project(project_id)['name']
@@ -635,11 +650,14 @@ def check_quota(token, project_id):
     net_client = init_cyclades_netclient(endpoints['network'],token)
     # Get pending quota for given project id
     pending_quota = retrieve_pending_clusters(token, project_name)
-
-    limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
-    usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GB
-    project_limit_cd = dict_quotas[project_id]['cyclades.disk']['project_limit'] / Bytes_to_GB
-    project_usage_cd = dict_quotas[project_id]['cyclades.disk']['project_usage'] / Bytes_to_GB
+    # Quotas are allocated per project and per user account. 
+    # So some  other account in the same project may have bind some of user quota since project_quota maybe be different than number_of_users*user_quota
+    # The result is user limit quota might be less than it seems so we have to consider project limit as well
+    
+    limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GiB # Convert bytes to GiB, 1 GiB = 1024*1024*1024  bytes 
+    usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GiB
+    project_limit_cd = dict_quotas[project_id]['cyclades.disk']['project_limit'] / Bytes_to_GiB
+    project_usage_cd = dict_quotas[project_id]['cyclades.disk']['project_usage'] / Bytes_to_GiB
     pending_cd = pending_quota['Disk']
     available_cyclades_disk_GB = limit_cd-usage_cd
     if (available_cyclades_disk_GB > (project_limit_cd - project_usage_cd)):
@@ -656,10 +674,10 @@ def check_quota(token, project_id):
         available_cpu = project_limit_cpu - project_usage_cpu
     available_cpu = available_cpu - pending_cpu
 
-    limit_ram = dict_quotas[project_id]['cyclades.ram']['limit'] / Bytes_to_MB
-    usage_ram = dict_quotas[project_id]['cyclades.ram']['usage'] / Bytes_to_MB
-    project_limit_ram = dict_quotas[project_id]['cyclades.ram']['project_limit'] / Bytes_to_MB
-    project_usage_ram = dict_quotas[project_id]['cyclades.ram']['project_usage'] / Bytes_to_MB
+    limit_ram = dict_quotas[project_id]['cyclades.ram']['limit'] / Bytes_to_MiB # Convert bytes to MiB, 1 MiB = 1024*1024 bytes 
+    usage_ram = dict_quotas[project_id]['cyclades.ram']['usage'] / Bytes_to_MiB
+    project_limit_ram = dict_quotas[project_id]['cyclades.ram']['project_limit'] / Bytes_to_MiB
+    project_usage_ram = dict_quotas[project_id]['cyclades.ram']['project_usage'] / Bytes_to_MiB
     pending_ram = pending_quota['Ram']
     available_ram = limit_ram-usage_ram
     if (available_ram > (project_limit_ram - project_usage_ram)):
@@ -702,8 +720,7 @@ def check_quota(token, project_id):
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
               'ram': {'limit': limit_ram, 'available': available_ram},
-              'disk': {'limit': limit_cd,
-                       'available': available_cyclades_disk_GB},
+              'disk': {'limit': limit_cd, 'available': available_cyclades_disk_GB},
               'cluster_size': {'limit': limit_vm, 'available': available_vm},
               'network': {'available': available_networks},
               'float_ips': {'available': available_ips}}
@@ -716,6 +733,7 @@ def check_images(token, project_id):
     Filter the ones that match with our uuid
     Return the available images
     """
+    
     auth = check_credentials(token)
     endpoints, user_id = endpoints_and_user_id(auth)    
     plankton = init_plankton(endpoints['plankton'], token)
@@ -736,6 +754,7 @@ def check_images(token, project_id):
             
     return available_images
 
+
 def endpoints_and_user_id(auth):
     """
     Get the endpoints
@@ -745,6 +764,7 @@ def endpoints_and_user_id(auth):
     Image --> plankton
     Network --> network
     """
+    
     logging.log(REPORT, ' Get the endpoints')
     try:
         endpoints = dict(
@@ -767,6 +787,7 @@ def init_cyclades_netclient(endpoint, token):
     Cyclades Network client needed for all network functions
     e.g. create network,create floating IP
     """
+    
     logging.log(REPORT, ' Initialize a cyclades network client')
     try:
         return CycladesNetworkClient(endpoint, token)
@@ -780,6 +801,7 @@ def init_plankton(endpoint, token):
     Plankton/Initialize Imageclient.
     ImageClient has all registered images.
     """
+    
     logging.log(REPORT, ' Initialize ImageClient')
     try:
         return ImageClient(endpoint, token)
@@ -793,6 +815,7 @@ def init_cyclades(endpoint, token):
     Compute / Initialize Cyclades client.CycladesClient is used
     to create virtual machines
     """
+    
     logging.log(REPORT, ' Initialize a cyclades client')
     try:
         return CycladesClient(endpoint, token)
@@ -805,6 +828,7 @@ def get_float_network_id(cyclades_network_client, project_id):
         """
         Gets an Ipv4 floating network id from the list of public networks Ipv4
         """
+        
         pub_net_list = cyclades_network_client.list_networks()
         float_net_id = 1
         i = 1
@@ -820,9 +844,11 @@ def get_float_network_id(cyclades_network_client, project_id):
                         i = i+1
 
         return error_get_ip
+
     
 def personality(ssh_keys_path='', pub_keys_path='', vre_script_path=''):
         """Personality injects ssh keys to the virtual machines we create"""
+        
         personality = []
         if vre_script_path:
             try:
@@ -871,6 +897,7 @@ class Cluster(object):
     their OS, the size of the cluster,a CycladesNetworkClient object, an
     AstakosClient object and the project_id.
     """
+    
     def __init__(self, cyclades, prefix, flavor_id_master, flavor_id_slave,
                  image_id, size, net_client, auth_cl, project_id):
         self.client = cyclades
@@ -882,6 +909,7 @@ class Cluster(object):
 
     def clean_up(self, servers=None, network=None):
         """Delete resources after a failed attempt to create a cluster"""
+        
         if not (network and servers):
             logging.error(' Nothing to delete')
             return
@@ -891,7 +919,6 @@ class Cluster(object):
         if servers:
             for server in servers:
                 status = self.client.get_server_details(server['id'])['status']
-
                 if status == 'BUILD':
                     status = self.client.wait_server(server['id'],
                                                      max_wait=MAX_WAIT)
@@ -912,6 +939,7 @@ class Cluster(object):
         Creates a cluster of virtual machines using the Create_server method of
         CycladesClient.
         """
+        
         logging.log(REPORT, ' Create %s servers prefixed as [%s]',
                     self.size, self.prefix)
         servers = []
@@ -1064,13 +1092,13 @@ def read_replication_factor(document):
     """
     Returns default replication factor from Hadoop xml config file.
     """
+    
     root = document.getroot()
     for child in root.iter("property"):
         name = child.find("name").text
         if name == "dfs.replication":
             replication_factor = int(child.find("value").text)
             break
-
     return replication_factor
 
 
@@ -1081,11 +1109,10 @@ def get_remote_server_file_size(url, user='', password=''):
     given or empty if not given. Then does a HEAD request for the
     content-length header which is the file size in bytes.
     """
+    
     url_in_list = url.split("://", 1)
     url_in_list.insert(1, "://" + user + ':' + password + '@')
-    new_url = ''.join(url_in_list)
-
+    new_url = ''.join(url_in_list) # creates url for curl command
     r = subprocess.call("curl -sI " + new_url +
                                 " | grep -i content-length | awk \'{print $2}\' | tr -d '\r\n'", shell=True)
-
     return int(r)
