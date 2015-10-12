@@ -60,7 +60,7 @@ def create_cluster(script):
     # temp file to store cluster details
     tempfile = "_" + script["cluster"]["name"] + ".txt"
     create_cluster_command += (" | tee " + tempfile)
- 
+
     # create cluster
     print '--- Creating Cluster ---'
     exit_status = os.system(create_cluster_command)
@@ -92,14 +92,14 @@ def enforce_actions(script, cluster_id, master_IP):
             params_string = action.strip('put')
             params = params_string.strip(' ()')
             action_params = params.split(',')
-            print ("- Action: Uploading file to hdfs")
+            print ("- Action: Uploading file to HDFS")
             os.system("orka file put " + str(cluster_id) + " " + action_params[0] + " " + action_params[1])
             print ''
         if action.startswith("get"):
             params_string = action.strip('get')
             params = params_string.strip(' ()')
             action_params = params.split(',')
-            print ("- Action: Retrieving file from hdfs")
+            print ("- Action: Retrieving file from HDFS")
             os.system("orka file get " + str(cluster_id) + " " + action_params[0] + " " + action_params[1])
             print ''
         if action == 'node_add':
