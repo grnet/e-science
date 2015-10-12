@@ -33,6 +33,7 @@ App.Dsl = DS.Model.extend({
     pithos_path : attr('string'),
     task_id : attr(), 
     state : attr(),
+    dsl_data : attr(),
     // user that created the VRE
     user : DS.belongsTo('user', {
         inverse : 'dsls'

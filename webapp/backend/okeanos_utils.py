@@ -12,6 +12,7 @@ import subprocess
 import yaml
 import urllib
 import requests
+from urllib2 import urlopen, Request
 from base64 import b64encode
 from os.path import abspath, join, expanduser, basename
 from kamaki.clients import ClientError
@@ -154,7 +155,7 @@ def create_dsl(choices):
     r = requests.put(url, headers=headers, data=yaml_data)
     response = r.status_code
     if response == pithos_put_success:
-        db_dsl_update(choices['token'],dsl_id,state='Created')
+        db_dsl_update(choices['token'],dsl_id,state='Created',dsl_data=yaml_data)
         
         
 def destroy_dsl(token, id):
@@ -163,6 +164,19 @@ def destroy_dsl(token, id):
     dsl = Dsl.objects.get(id=id)
     db_dsl_delete(token,id)
     return dsl.id
+
+
+def import_dsl(choices):
+    uuid = get_user_id(unmask_token(encrypt_key,choices['token']))
+    url = '{0}/{1}/{2}/{3}'.format(pithos_url, uuid, choices['pithos_path'], urllib.quote(choices['dsl_name']))
+    headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,choices['token']))}
+    request = Request(url, headers=headers)
+    try:
+        pithos_input_stream = urlopen(request).read()
+        db_dsl_update(choices['token'],choices['cluster_id'],dsl_data=pithos_input_stream)
+    except ClientError:
+        msg = 'Failed to import DSL'
+        raise ClientError(msg, error_import_dsl)
 
 
 def get_pithos_container_info(uuid, pithos_path, token):
