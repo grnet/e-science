@@ -9,24 +9,57 @@ Serializers file for django rest framework.
 
 from rest_framework import serializers
 from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, \
-PublicNewsItem, OrkaImage, VreServer, VreImage, Dsl
-  
+PublicNewsItem, OrkaImage, OrkaImageCategory, VreServer, VreImage, VreImageCategory, Dsl, Setting
+
+
+class PGArrayField(serializers.WritableField):
+    """
+    Override from_native and to_native methods for custom serializer
+    fields for ClusterCreationParams model.
+    """
+    def from_native(self, data):
+        if isinstance(data, list):
+            return data
+
+    def to_native(self, obj):
+        return obj
+      
+      
+class SettingsSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Settings
+    """
+    class Meta:
+        model = Setting
+        fields = ('id', 'section', 'property_name', 'property_value', 'comment')
 
 class VreImagesSerializer(serializers.ModelSerializer):
     """
     Serializer for VreImages metadata
-    """   
+    """
+    image_init_extra = PGArrayField(required=False)
+    image_access_url = PGArrayField(required=False)
+    image_category = serializers.SerializerMethodField("category_name")
     class Meta:
         model = VreImage
-        fields = ('id', 'image_name', 'image_pithos_uuid', 'image_components')
+        fields = ('id', 'image_name', 'image_pithos_uuid', 'image_components', 'image_min_reqs', 'image_faq_links', 'image_init_extra', 'image_access_url', 'image_category')
+    
+    def category_name(self,obj):
+        return VreImageCategory.objects.all().filter(id=obj.image_category_id).values()[0]['category_name']
 
 class OrkaImagesSerializer(serializers.ModelSerializer):
     """
     Serializer for OrkaImages metadata
-    """   
+    """
+    image_init_extra = PGArrayField(required=False)
+    image_access_url = PGArrayField(required=False)
+    image_category = serializers.SerializerMethodField("category_name")
     class Meta:
         model = OrkaImage
-        fields = ('id', 'image_name', 'image_pithos_uuid', 'image_components')
+        fields = ('id', 'image_name', 'image_pithos_uuid', 'image_components', 'image_min_reqs', 'image_faq_links', 'image_init_extra', 'image_access_url', 'image_category')
+    
+    def category_name(self,obj):
+        return OrkaImageCategory.objects.all().filter(id=obj.image_category_id).values()[0]['category_name']
 
 class NewsSerializer(serializers.ModelSerializer):
     """
@@ -50,19 +83,6 @@ class StatisticsSerializer(serializers.ModelSerializer):
     def get_ember_id(self, obj):
         """"Always returns id 1 for ember.js"""
         return 1
-
-
-class PGArrayField(serializers.WritableField):
-    """
-    Override from_native and to_native methods for custom serializer
-    fields for ClusterCreationParams model.
-    """
-    def from_native(self, data):
-        if isinstance(data, list):
-            return data
-
-    def to_native(self, obj):
-        return obj
 
 
 class HdfsSerializer(serializers.Serializer):

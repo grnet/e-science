@@ -123,6 +123,7 @@ class _ArgCheck(object):
         else:
             raise ArgumentTypeError(" %s file does not exist." % val)
 
+
 def task_message(task_id, escience_token, server_url, wait_timer, task='not_progress_bar'):
     """
     Function to check create and destroy celery tasks running from orka-CLI

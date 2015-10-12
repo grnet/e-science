@@ -15,7 +15,7 @@ from django_db_after_login import *
 from backend.models import ClusterCreationParams, ClusterInfo, UserInfo
 from cluster_errors_constants import *
 from okeanos_utils import get_flavor_id, check_credentials, check_quota, check_images
-
+from authenticate_user import unmask_token, encrypt_key
 
 def ssh_key_list(token):
     """

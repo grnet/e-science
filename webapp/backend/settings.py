@@ -48,6 +48,7 @@ ALLOWED_HOSTS = ['*',]
 # rest_framework_ember adapter is added for ember-django communication
 
 INSTALLED_APPS = (
+    'django_admin_bootstrapped',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

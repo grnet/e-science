@@ -31,6 +31,35 @@ App.VreserverManagementController = Ember.Controller.extend({
         }
         return tabs_object;
     }.property(),
+    
+    // computed properties
+    vre_faq_links : function(){
+        var os_image = this.get('content.os_image');
+        var vreImages = this.get('vreImages');
+        for (i=0;i<vreImages.length;i++){
+            if (vreImages[i].get('image_name') == os_image){
+                return vreImages[i].get('image_faq_links');
+            }
+        }
+    }.property('content.os_image'),
+    vre_access_url : function(){
+        var os_image = this.get('content.os_image');
+        var server_ip = this.get('content.server_IP');
+        var vreImages = this.get('vreImages');
+        var arrAccessUrls = [];
+        for (i=0;i<vreImages.length;i++){
+            if (vreImages[i].get('image_name') == os_image){
+                var arrImageUrls = vreImages[i].get('image_access_url') || [];
+                for (j=0;j<arrImageUrls.length;j++){
+                    arrAccessUrls.push('http://%@:%@'.fmt(server_ip,arrImageUrls[j]));
+                }
+                return Ember.isEmpty(arrAccessUrls) ? ['http://%@'.fmt(server_ip)] : arrAccessUrls;
+            }
+        }
+    }.property('content.server_IP','content.os_image'),
+    vre_access_base_url : function(){
+        return this.get('vre_access_url')[0];
+    }.property('vre_access_url'),
     	
 	actions : {
         setActiveTab : function(tab){

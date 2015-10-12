@@ -78,6 +78,7 @@
       - { name: 'Django' }
       - { name: 'rest_framework_ember' }
       - { name: 'djangorestframework==2.4.3' }
+      - { name: 'django-admin-bootstrapped==2.4.0' }
       - { name: 'markdown' }
       - { name: 'django-filter' }
       - { name: 'djorm-pgarray' }
