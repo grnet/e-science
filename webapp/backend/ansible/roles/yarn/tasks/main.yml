@@ -48,11 +48,11 @@
 
   - name: download hadoop-yarn src
     tags: preconfig
-    get_url: dest={{path_to_hadoop}} url={{yarn_common_url}}/{{ yarn_version }}/{{ yarn_version }}.tar.gz
+    get_url: dest={{path_to_hadoop}} url={{yarn_common_url}}/{{ hadoop_latest_stable }}.tar.gz
 
   - name: unzip hadoop-yarn src
     tags: preconfig
-    unarchive: src={{path_to_hadoop}}/{{ yarn_version }}.tar.gz dest=/usr/local copy=no owner=root group=root
+    unarchive: src={{path_to_hadoop}}/{{ hadoop_latest_stable }}.tar.gz dest=/usr/local copy=no owner=root group=root
 
   - name: Add virtual machine private ips in /etc/hosts
     template: src=hosts.j2 dest={{etchosts_filename}}
@@ -351,6 +351,21 @@
     tags: hueconfig
     when: is_master
 
+  - name: Revert pg_hba.conf, local to peer
+    lineinfile: line="local\tall\t\tpostgres\t\t\t\tpeer" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=trust)" backrefs=yes
+    tags: hueconfig
+    when: is_master
+
+  - name: Revert pg_hba.conf, host to md5
+    lineinfile: line="host\tall\t\tall\t\t127.0.0.1/32\t\tmd5" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="host(\s)+all(\s)+all(\s)+127.0.0.1/32(\s)+(?=trust)" backrefs=yes
+    tags: hueconfig
+    when: is_master
+
+  - name: Restart PostgreSql service
+    service: name=postgresql state=restarted
+    tags: hueconfig
+    when: is_master
+
   - name: Create folder zookeeper
     tags: ecoconfig
     file: path=/usr/local/zookeeper owner={{eco_db_user}} group=hadoop state=directory
@@ -364,6 +379,21 @@
       - { path: '/usr/local/oozie/', owner: '{{eco_db_user}}', group: 'hadoop' }
       - { path: '/usr/local/pig/', owner: '{{eco_db_user}}', group: 'hadoop' }
       - { path: '/usr/local/spark/', owner: '{{eco_db_user}}', group: 'hadoop' }
+
+  - name: Edit pg_hba.conf, local to trust
+    lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
+    tags: ecoconfig
+    when: is_master
+
+  - name: Edit pg_hba.conf, host to trust
+    lineinfile: line="host\tall\t\tall\t\t127.0.0.1/32\t\ttrust" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="host(\s)+all(\s)+all(\s)+127.0.0.1/32(\s)+(?=md5)" backrefs=yes
+    tags: ecoconfig
+    when: is_master
+
+  - name: Restart PostgreSql service
+    service: name=postgresql state=restarted
+    tags: ecoconfig
+    when: is_master
 
   - name: Create PostgreSql database for Hive
     tags: ecoconfig
@@ -386,6 +416,21 @@
   - name: Create Oozie Database
     tags: ecoconfig
     action: command sudo -u hduser ./ooziedb.sh create -sqlfile oozie.sql -run chdir=/usr/local/oozie/bin/
+    when: is_master
+
+  - name: Revert pg_hba.conf, local to peer
+    lineinfile: line="local\tall\t\tpostgres\t\t\t\tpeer" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=trust)" backrefs=yes
+    tags: ecoconfig
+    when: is_master
+
+  - name: Revert pg_hba.conf, host to md5
+    lineinfile: line="host\tall\t\tall\t\t127.0.0.1/32\t\tmd5" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="host(\s)+all(\s)+all(\s)+127.0.0.1/32(\s)+(?=trust)" backrefs=yes
+    tags: ecoconfig
+    when: is_master
+
+  - name: Restart PostgreSql service
+    service: name=postgresql state=restarted
+    tags: ecoconfig
     when: is_master
 
   - name: Copy Ecosystem services to /etc/init.d

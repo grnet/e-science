@@ -13,6 +13,8 @@ import os
 from django.db import models
 from djorm_pgarray.fields import IntegerArrayField, TextArrayField
 from django.utils import timezone
+from django.apps import apps as django_apps
+django_apps.get_app_config('backend').verbose_name = ' E-Science'
 
 class UserInfo(models.Model):
     """Definition of a User object model."""
@@ -40,10 +42,9 @@ class UserInfo(models.Model):
 
     class Meta:
         verbose_name = "User"
-        app_label = 'backend'
 
     def __unicode__(self):
-        return str(self.user_id)
+        return ('%s : %s') % (self.user_id, self.user_name)
 
 
 ACTION_STATUS_CHOICES = (
@@ -112,8 +113,7 @@ class ClusterCreationParams(models.Model):
 
 
     class Meta:
-        verbose_name = "Cluster"
-        app_label = 'backend'
+        verbose_name = "ClusterParam"
 
 
 class Token(models.Model):
@@ -147,7 +147,6 @@ class Token(models.Model):
 
     class Meta:
         verbose_name = "Token"
-        app_label = 'backend'
 
 
 class UserLogin(models.Model):
@@ -167,11 +166,11 @@ class UserLogin(models.Model):
                                      "OS, other info (lookup tables))")
 
     class Meta:
-        verbose_name = "Login"
-        app_label = 'backend'
+        verbose_name = "Login History"
+        verbose_name_plural = verbose_name
 
     def __unicode__(self):
-        return ("%s, %s") % (self.user_id.user_id, self.login_status)
+        return ("%s : %s : %s") % (self.action_date.strftime('%c'),self.user_id.user_name, ACTION_STATUS_CHOICES[int(self.login_status)][1])
 
 
 CLUSTER_STATUS_CHOICES = (
@@ -185,10 +184,25 @@ HADOOP_STATUS_CHOICES = (
      ("0", "Stopped"),
      ("1", "Started"),
      ("2", "Pending"),
+     ("3", "Undefined"),
  )
 
+class VreImageCategory(models.Model):
+    """
+    Definition of orka VRE image categories.
+    """
+    id = models.AutoField("VreImageCategory ID", primary_key=True, null=False,
+                          help_text="Auto-increment VreImageCategory id")
+    category_name = models.CharField("VreImageCategory name", max_length=255, unique=True, null=False,
+                                     help_text="VreImageCategory Name")
+    class Meta:
+        verbose_name_plural = "VRE Image Categories"
+    
+    def __unicode__(self):
+        return ('%s : %s') % (self.id, self.category_name)
+
 class VreImage(models.Model):
-    """Definition of orka VRE image Components."""
+    """Definition of orka VRE image information."""
     id = models.AutoField("VreImage ID", primary_key=True, null=False,
                                help_text="Auto-increment VreImage id")
     image_name = models.CharField("Pithos image name", max_length=255, null=False,
@@ -197,8 +211,37 @@ class VreImage(models.Model):
                                     help_text="Pithos Image UUID")
     image_components = models.CharField("VreImage components metadata", max_length=4080, null=True, blank=True,
                                         help_text="VreImage components metadata as a json dump")
+    image_min_reqs = models.CharField("VreImage minimum requirements", max_length=2040, null=True, blank=True,
+                                      help_text="VreImage minimum requirements {cpu:xx,ram:xxxx,disk:xx} as a json dump")
+    image_faq_links = models.CharField("VreImage F.A.Q. Links", max_length=2040, null=True, blank=True,
+                                      help_text="VreImage F.A.Q. Items {label1:url1,label2:url2} as a json dump") 
+    image_init_extra = TextArrayField() # extra property fields as field names applying to specific images
+    image_access_url = TextArrayField() # array [:port]/path for accessing VRE, base url not included, absence of value assumes base url is access url
+    image_category = models.ForeignKey(VreImageCategory, null=False,
+                                       help_text="VreImageCategory")
+    
+    class Meta:
+        verbose_name = "VRE Image"
     def __unicode__(self):
-        return ("%s : %s") % (self.image_pithos_uuid, self.image_name)
+        return ("%s : %s : %s") % (self.image_category.category_name, self.image_name, self.image_pithos_uuid)
+
+class OrkaImageCategory(models.Model):
+    """
+    Definition of orka Hadoop image categories.
+    """
+    id = models.AutoField("OrkaImageCategory ID", primary_key=True, null=False,
+                          help_text="Auto-increment OrkaImageCategory id")
+    category_name = models.CharField("OrkaImageCategory name", max_length=255, unique=True, null=False,
+                                     help_text="OrkaImageCategory Name")
+    ansible_cluster_config_tags = models.CharField("OrkaImage ansible cluster config tags", max_length=4080, null=True, blank=True,
+                                        help_text="OrkaImage Hadoop cluster configurations ansible tags as a json dump")
+    ansible_cluster_action_tags = models.CharField("OrkaImage ansible action tags", max_length=4080, null=True, blank=True,
+                                        help_text="OrkaImage Hadoop cluster action (e.g start/stop) ansible tags as a json dump")
+    class Meta:
+        verbose_name_plural = "Orka Image Categories"
+    
+    def __unicode__(self):
+        return ('%s : %s') % (self.id, self.category_name)
 
 class OrkaImage(models.Model):
     """Definition of orka VM image Components."""
@@ -210,8 +253,18 @@ class OrkaImage(models.Model):
                                     help_text="Pithos Image UUID")
     image_components = models.CharField("OrkaImage components metadata", max_length=4080, null=True, blank=True,
                                         help_text="OrkaImage components metadata as a json dump")
+    image_min_reqs = models.CharField("OrkaImage minimum requirements", max_length=2040, null=True, blank=True,
+                                      help_text="OrkaImage minimum requirements {cpu:xx,ram:xxxx,disk:xx} as a json dump")
+    image_faq_links = models.CharField("OrkaImage F.A.Q. Links", max_length=2040, null=True, blank=True,
+                                      help_text="OrkaImage F.A.Q. Items {label1:url1,label2:url2} as a json dump")
+    image_init_extra = TextArrayField() # extra property fields as field names applying to specific images
+    image_access_url = TextArrayField()
+    image_category = models.ForeignKey(OrkaImageCategory, null=False,
+                                       help_text="OrkaImageCategory")
+    class Meta:
+        verbose_name = "Orka Image"
     def __unicode__(self):
-        return ("%s : %s") % (self.image_pithos_uuid, self.image_name)
+        return ("%s : %s") % (self.image_name, self.image_pithos_uuid)
 
 class PublicNewsItem(models.Model):
     """Definition of homepage News Items."""
@@ -224,6 +277,10 @@ class PublicNewsItem(models.Model):
                                     help_text="News Item")
     news_category = models.IntegerField("News Item Category", null=True, blank=True,
                                      help_text="Category ID for News Item")
+    class Meta:
+        verbose_name = "Public News Item"
+    def __unicode__(self):
+        return ('%s : %s') % (self.news_date.strftime('%c'), self.news_message)
 
 class ClusterStatistics(models.Model):
     """Definition of Cluster statistics."""
@@ -299,12 +356,12 @@ class ClusterInfo(models.Model):
 
     class Meta:
         verbose_name = "Cluster"
-        app_label = 'backend'
 
     def __unicode__(self):
-
-        return ("%d, %s, %d, %s , %s") % (self.id, self.cluster_name, self.cluster_size,
-                                          self.cluster_status, self.hadoop_status)
+        return ("%d : %s : %s : size(%d) : status(%s) : hadoop(%s)") % (self.id, self.cluster_name, self.os_image, 
+                                                                        self.cluster_size,
+                                                                        CLUSTER_STATUS_CHOICES[int(self.cluster_status)][1],
+                                                                        HADOOP_STATUS_CHOICES[int(self.hadoop_status)][1])
        
 class VreServer(models.Model):
     """Definition of a VRE Server object model."""
@@ -351,12 +408,10 @@ class VreServer(models.Model):
                                blank=True, help_text="Celery task state")
     
     class Meta:
-        verbose_name = "VREserver"
-        app_label = 'backend'
+        verbose_name = "VRE Server"
 
     def __unicode__(self):
-
-        return ("%d, %s, %s") % (self.id, self.server_name, self.server_status)
+        return ("%d : %s : %s : %s") % (self.id, self.server_name, self.os_image, CLUSTER_STATUS_CHOICES[int(self.server_status)][1])
     
 class Dsl(models.Model):
     """Definition of a User Cluster DSL object model."""
@@ -381,9 +436,32 @@ class Dsl(models.Model):
                                blank=True, help_text="Celery task state")
     
     class Meta:
-        verbose_name = "DSL"
-        app_label = 'backend'
+        verbose_name = "Experiment"
 
     def __unicode__(self):
-
-        return ("%d, %s, %s") % (self.id, self.dsl_name, self.cluster_id)    
+        return ("%d : %s : cluster_id(%d)") % (self.id, self.dsl_name, self.cluster_id)
+    
+class Setting(models.Model):
+    """
+    Definition of an instance setting kept in backend DB to be managed through Django admin.
+    Roughly follows the .ini spec: section > property, where property is a key=value pair. 
+    property names are unique per section. Validation is done case insensitive but case is preserved. 
+    We also keep an optional comment column.
+    """
+    id = models.AutoField("Setting ID", primary_key=True, null=False, 
+                          help_text="Auto-increment setting id")
+    section = models.CharField("Section", max_length=255, null=False,
+                                     help_text="Settings section label")
+    property_name = models.CharField("Property Name", max_length=255, null=False, 
+                                     help_text="Settings property name, must be unique for section")
+    property_value = models.CharField("Property Value", max_length=1020, null=False, 
+                                     help_text="Settings property value")
+    comment = models.CharField("Comments", max_length=255, null=True, blank=True,
+                               help_text="Setting comment")
+    
+    class Meta:
+        verbose_name = "Application Setting"
+        unique_together = ("section","property_name")
+        
+    def __unicode__(self):
+        return ("%s : %s : %s") % (self.section, self.property_name, self.property_value)

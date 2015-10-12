@@ -13,7 +13,7 @@ import yaml
 import urllib
 import requests
 from base64 import b64encode
-from os.path import abspath, join, expanduser
+from os.path import abspath, join, expanduser, basename
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
@@ -22,8 +22,9 @@ from time import sleep
 from datetime import datetime
 from cluster_errors_constants import *
 from celery import current_task
+from authenticate_user import unmask_token, encrypt_key
 from django_db_after_login import db_cluster_update, get_user_id, db_server_update, db_hadoop_update, db_dsl_create, db_dsl_update, db_dsl_delete
-from backend.models import UserInfo, ClusterInfo, VreServer, Dsl
+from backend.models import UserInfo, ClusterInfo, VreServer, Dsl, OrkaImage, VreImage
 
 
 def retrieve_pending_clusters(token, project_name):
@@ -719,16 +720,16 @@ def check_images(token, project_id):
     endpoints, user_id = endpoints_and_user_id(auth)    
     plankton = init_plankton(endpoints['plankton'], token)
     list_current_images = plankton.list_public(True, 'default')
+    vre_images_in_db = VreImage.objects.values('image_pithos_uuid')
+    orka_images_in_db = OrkaImage.objects.values('image_pithos_uuid')
     available_images = []
     hadoop_images = []
     vre_images = []
     for image in list_current_images:
-        # owner of image will be checked based on the uuid
-        if image['owner'] == const_escience_uuid or image['owner'] == const_system_uuid:
-            if pithos_images_uuids_properties.has_key(image['id']):
-                hadoop_images.append(image['name'])
-            if pithos_vre_images_uuids_actions.has_key(image['id']):
-                vre_images.append(image['name'])
+        if any(d['image_pithos_uuid'] == image['id'] for d in vre_images_in_db):
+            vre_images.append(image['name'])
+        if any(d['image_pithos_uuid'] == image['id'] for d in orka_images_in_db):         
+            hadoop_images.append(image['name'])
     # hadoop images at ordinal 0, vre images at 1
     available_images.append(hadoop_images)
     available_images.append(vre_images)
@@ -820,9 +821,19 @@ def get_float_network_id(cyclades_network_client, project_id):
 
         return error_get_ip
     
-def personality(ssh_keys_path='', pub_keys_path=''):
+def personality(ssh_keys_path='', pub_keys_path='', vre_script_path=''):
         """Personality injects ssh keys to the virtual machines we create"""
         personality = []
+        if vre_script_path:
+            try:
+                with open(abspath(vre_script_path)) as vre_script:
+                    personality.append(dict(
+                        contents=b64encode(vre_script.read()),
+                        path='/root/{0}'.format(basename(vre_script.name)),
+                        owner='root'))
+            except IOError:
+                msg = " No valid VRE shell script in %s" %((abspath(vre_script_path)))
+                raise IOError(msg)
         if ssh_keys_path and pub_keys_path:
             try:
                 with open(abspath(ssh_keys_path)) as f1, open(abspath(pub_keys_path)) as f2:

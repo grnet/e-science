@@ -13,7 +13,7 @@ App.ClusterCreateRoute = App.RestrictedRoute.extend({
 			console.log(err['message']);
 			this.transitionTo('user.logout');
     	},
-    	didTransition: function(transition) {
+    	didTransition: function() {
 			// resets variables every time you go to the create cluster
 			this.controllerFor('clusterCreate').reset_variables();
 			this.controllerFor('clusterCreate').reset_project();

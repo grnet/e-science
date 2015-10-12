@@ -18,6 +18,7 @@ block
 orka-pithos.jardesc
 sonar-project.properties
 *.txt
+!LICENSE.txt
 *.pdf
 *.properties
 *.xml

@@ -1,6 +1,6 @@
 App.HomepageRoute = Ember.Route.extend({
     actions : {
-        didTransition : function(transition) {
+        didTransition : function() {
             var that = this;
             // Perform GET request for cluster statistics
             this.store.fetch('statistic', 1).then(function(statistic) {
