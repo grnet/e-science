@@ -187,6 +187,11 @@ HADOOP_STATUS_CHOICES = (
      ("3", "Undefined"),
  )
 
+DSL_STATUS_CHOICES = (
+    ("0", "At Rest"),
+    ("1", "Replaying"),
+)
+
 class VreImageCategory(models.Model):
     """
     Definition of orka VRE image categories.
@@ -422,6 +427,10 @@ class Dsl(models.Model):
     action_date = models.DateTimeField("Action Date", null=False,
                                        help_text="Date and time for"
                                        " the creation of this entry")
+    dsl_status = models.CharField("Experiment Status", max_length=1, default="0",
+                                      choices=DSL_STATUS_CHOICES,
+                                      null=False, help_text="At Rest/Replaying"
+                                      " status of the Experiment")
     cluster_id = models.IntegerField("Linked Cluster Id", null=True, blank=True,
                                      help_text="Cluster Id from which the DSL metadata was extracted.")
 
@@ -439,7 +448,7 @@ class Dsl(models.Model):
         verbose_name = "Experiment"
 
     def __unicode__(self):
-        return ("%d : %s : cluster_id(%d)") % (self.id, self.dsl_name, self.cluster_id)
+        return ("%s : cluster_id(%d) : %s") % (self.dsl_name, self.cluster_id, DSL_STATUS_CHOICES[int(self.dsl_status)][1])
     
 class Setting(models.Model):
     """

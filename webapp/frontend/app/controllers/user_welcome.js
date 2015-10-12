@@ -64,7 +64,7 @@ App.UserWelcomeController = Ember.Controller.extend({
     filtered_dsls : function(){
         return this.get('content.dsls').filterBy('id');
     }.property('content.dsls.[]','content.dsls.isLoaded'),
-    sorted_dsls_prop : ['action_date:desc'],
+    sorted_dsls_prop : ['resorted_status:asc','action_date:desc'],
     sorted_dsls_dir : true,
     sorted_dsls : Ember.computed.sort('filtered_dsls','sorted_dsls_prop'),
     sortable_dsls : function(){

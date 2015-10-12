@@ -91,6 +91,8 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
                     }
                 });
                 break;
+            case 'dsl_replay':
+                console.log('dsl_replay placeholder');
             }
         },
 		takeVreAction : function(vreserver){

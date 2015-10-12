@@ -29,6 +29,7 @@ App.User = DS.Model.extend({
 App.Dsl = DS.Model.extend({
     dsl_name : attr('string'),
     action_date : attr('isodate'),
+    dsl_status : attr('string'),
     cluster_id : attr('number'),
     pithos_path : attr('string'),
     task_id : attr(), 
@@ -38,6 +39,34 @@ App.Dsl = DS.Model.extend({
         inverse : 'dsls'
     }),
     // computed properties
+    class_dsl_status : function (){
+        var status = this.get('dsl_status');
+        switch (status) {
+        case "0":  //at rest
+            return "glyphicon glyphicon-ok text-success";
+        case "1":  //replaying
+            return "glyphicon glyphicon-time text-warning";
+        default:   //unknown
+            return "glyphicon glyphicon-question-sign text-muted";
+        }
+    }.property('dsl_status'),
+    description_dsl_status : function(){
+        var status = this.get('dsl_status');
+        switch (status) {
+        case "0":
+            return "AT REST";
+        case "1":
+            return "REPLAYING";
+        default:
+            return "UNKNOWN";
+        }
+    }.property('dsl_status'),
+    resorted_status : function(){
+        // replaying > at rest
+        // 0 < 1(replaying), 1 < 0 (at rest)
+        var priority = {"0":"1","1":"0"};
+        return priority[this.get('dsl_status')];
+    }.property('dsl_status'),    
     class_button_dsl_destroy : function(){
         return !Ember.isEmpty(this.get('pithos_path')) ? "glyphicon glyphicon-trash text-danger" : "";
     }.property('pithos_path'),
@@ -45,11 +74,28 @@ App.Dsl = DS.Model.extend({
         this.set('confirm_action', value);
         return this.get('confirm_action');
     }.property(),
+    class_button_dsl_replay : function(){
+        return !Ember.isEmpty(this.get('pithos_path')) ? "glyphicon glyphicon-repeat text-success" : "";
+    }.property('pithos_path'),
+    message_dsl_status_replay : function(){
+        var status = this.get('dsl_status');
+        if (status == '1'){ // replaying
+            return this.get('state') || 'Executing...'; // message from celery if set
+        }else{
+            return '';
+        }
+    }.property('server_status'),
+    action_dsl_replay : function(key, value){
+        this.set('confirm_action', value);
+        return this.get('confirm_action');
+    }.property(),
     description_action_dsl_confirm : function(key, value){
         var confirm_action = this.get('action_dsl_confirm');
         switch(confirm_action){
         case 'dsl_delete':
-            return 'Delete DSL';
+            return 'Delete Experiment';
+        case 'dsl_replay':
+            return 'Replay Experiment';
         default:
             return 'Confirm';
         }
@@ -68,6 +114,9 @@ App.Dsl = DS.Model.extend({
     }.property('dsl_name'),
     id_dsl_create : function(key) {
         return '%@%@'.fmt(key,this.get('dsl_name'));       
+    }.property('dsl_name'),
+    id_dsl_replay : function(key) {
+        return '%@%@'.fmt(key,this.get('dsl_name'));
     }.property('dsl_name')
 });
 
