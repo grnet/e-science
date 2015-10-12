@@ -3,7 +3,7 @@
 
 """
  e-Science database model
- @author: Vassilis Foteinos, Ioannis Stenos, Nick Vrionis
+ @author: e-science Dev-team
 """
 
 import logging
@@ -224,6 +224,7 @@ class VreImage(models.Model):
     image_access_url = TextArrayField() # array [:port]/path for accessing VRE, base url not included, absence of value assumes base url is access url
     image_category = models.ForeignKey(VreImageCategory, null=False,
                                        help_text="VreImageCategory")
+    requires_script = models.BooleanField("Requires shell script", default=True)
     
     class Meta:
         verbose_name = "VRE Image"

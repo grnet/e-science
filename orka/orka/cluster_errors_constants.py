@@ -4,7 +4,7 @@
 """
 This module contains the definitions of returned errors and package constants.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 import os
 
@@ -42,6 +42,7 @@ const_hadoop_status_started = "1"
 const_hadoop_status_stopped = "0"
 HADOOP_PATH = '/usr/local/hadoop/bin/hdfs'
 DEFAULT_HDFS_DIR = ['/user/hduser', '/user/hduser/']
+DEFAULT_HADOOP_USER ='hduser'
 FNULL = open(os.devnull, 'w')
 block_size = 67108864 # block size in bytes,used in division when transfering files from hdfs to pithos
 # Dictionaries with constants used in images list

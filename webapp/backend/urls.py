@@ -4,7 +4,7 @@
 """
 Urls for backend ember-django application.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 
 from django.conf import settings

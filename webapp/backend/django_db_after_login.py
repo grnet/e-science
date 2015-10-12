@@ -5,7 +5,7 @@
 Django script to update the database after a new login, logout,
 create, or destroy cluster action.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 
 import django

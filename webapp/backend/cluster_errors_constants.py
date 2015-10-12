@@ -4,7 +4,7 @@
 """
 This module contains the definitions of returned errors and package constants.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 import os
 import base64
@@ -37,6 +37,8 @@ error_container = -76 # Error pithos container not found while upload dsl file
 
 FNULL = open(os.devnull, 'w') # Redirects whatever is assigned to FNULL to nothingness (e.g. stderr=FNULL)
 
+DEFAULT_HADOOP_USER ='hduser' # Default hadoop user
+
 # Hadoop test command error return status
 error_hdfs_test_exit_status = 1 # 1 is error exit status returned from hadoop test commands (e.g. hadoop fs -test -e <some_path> )
 
@@ -48,8 +50,8 @@ MAX_WAIT = 300          # Max number of seconds for wait function of Cyclades
 
 # MiB <-> GiB easy conversion constants
 Mbytes_to_GB = 1024     # Global to convert megabytes to gigabytes
-Bytes_to_MB = 1048576   # Global to convert bytes to megabytes
-Bytes_to_GB = 1073741824  # Global to convert bytes to gigabytes
+Bytes_to_MiB = 1048576   # Global to convert bytes to megabytes
+Bytes_to_GiB = 1073741824  # Global to convert bytes to gigabytes
 
  # Used for storage template conversion in get_flavors_quotas, so user-friendly args can be used in cli and gui
 storage_template = {'ext_vlmc':'Archipelago','drbd':'Standard'} # ~okeanos available storage templates with user friendly name
@@ -60,9 +62,6 @@ auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 pithos_url = 'https://pithos.okeanos.grnet.gr/v1'
 pithos_put_success = 201  # Success pithos response
 pithos_container_not_found = 404
-
-# If no image is given in orka-cli, this is the default image. Not used in backed/cluster_errors_constants
-default_image = 'Debian Base'
 
 # Cluster status constants
 const_cluster_status_destroyed = "0"
@@ -80,8 +79,6 @@ const_hadoop_status_pending = const_hadoop_status_format
 
 # If celery message is bigger than following value, it truncates the message. We check if message length is bigger than const_truncate_limit, then add dots (..) at the end of message to indicate truncation. Used for orka cli mainly.
 const_truncate_limit = 350
-const_escience_uuid = "ec567bea-4fa2-433d-9935-261a0867ec60"
-const_system_uuid = "25ecced9-bf53-4145-91ee-cf47377e9fb2"
 HADOOP_STATUS_ACTIONS = {"stop": ["0", "Stopping", "Stopped"],
                          "start": ["1", "Starting", "Started"],
                          "format": ["2", "Formatting", "Formatted"],
