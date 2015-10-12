@@ -26,7 +26,7 @@
   - name: Install orka as a python package
     tags: postimage
     sudo: yes
-    pip: name={{project_path}}/orka chdir={{project_path}}
+    command: python setup.py install chdir={{project_path}}/orka
 
   - name: Change owner of conf and logs
     file: path={{user_home}}/{{item}} recurse=yes state=directory
@@ -41,7 +41,7 @@
 
   - name: Edit pg_hba.conf
     sudo: yes
-    lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
+    lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
     tags: postimage
 
   - name: Restart PostgreSql service
@@ -78,7 +78,7 @@
 
   - name: Revert pg_hba.conf to default
     sudo: yes
-    lineinfile: line="local\tall\t\tpostgres\t\t\t\tpeer" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=trust)" backrefs=yes
+    lineinfile: line="local\tall\t\tpostgres\t\t\t\tpeer" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=trust)" backrefs=yes
     tags: postimage
 
   - name: Restart PostgreSql service
