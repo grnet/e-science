@@ -3,6 +3,10 @@
     pip: name=passlib
     tags: preimage
 
+  - name: Copy sources.list file
+    copy: src=sources.list dest=/etc/apt/ owner=root mode=0644
+    tags: preimage
+
   - name: create orka group
     group: name=orkagroup state=present
     tags: postimage
@@ -32,16 +36,12 @@
     with_items:
       - { url: 'http://nginx.org/keys/nginx_signing.key' }
       - { url: 'http://packages.erlang-solutions.com/debian/erlang_solutions.asc' }
+      - { url: 'https://dev.grnet.gr/files/apt-grnetdev.pub'}
     tags: preimage
 
-  - name: Adding repos
-    apt_repository: repo='{{item}}' state=present update_cache=yes
-    with_items:
-      - deb http://ftp.debian.org/debian/ jessie-updates main contrib
-      - deb http://nginx.org/packages/debian/ wheezy nginx
-      - deb-src http://nginx.org/packages/debian/ wheezy nginx
-      - deb http://packages.erlang-solutions.com/debian wheezy contrib
+  - name: Update and Upgrade
     tags: preimage
+    shell: apt-get -y update && apt-get -y upgrade
 
   - name: Copy my_preferences file
     copy: src={{path_to_pref}} dest=/etc/apt/preferences.d/
@@ -65,6 +65,7 @@
       - python-flup
       - nginx
       - sshpass
+      - snf-image-creator
 
   - name: Install rabbitmq-server latest version
     tags: preimage

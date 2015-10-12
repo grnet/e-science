@@ -1,6 +1,6 @@
 ---
  # PostgreSql variables
- db_user: developer
+ db_user: orka_admin
  db_password: escience
  db_name: escience
  db_host: 127.0.0.1
@@ -12,7 +12,7 @@
  # Django admin variables
  django_admin_name: orka_admin
  django_admin_email: orka@example.com
- django_admin_password: lalakia
+ django_admin_password: esc1ence@2015
  ansible_sudo_pass: lalakia
  path_to_pref: roles/webserver/files/my_preferences
  

@@ -1,0 +1,20 @@
+
+deb http://ftp.gr.debian.org/debian/ jessie main
+deb-src http://ftp.gr.debian.org/debian/ jessie main
+
+deb http://security.debian.org/ jessie/updates main
+deb-src http://security.debian.org/ jessie/updates main
+
+# jessie-updates, previously known as 'volatile'
+deb http://ftp.gr.debian.org/debian/ jessie-updates main
+deb-src http://ftp.gr.debian.org/debian/ jessie-updates main
+deb http://apt.dev.grnet.gr jessie/
+
+# nginx for jessie
+deb http://nginx.org/packages/debian/ jessie nginx
+deb-src http://nginx.org/packages/debian/ jessie nginx
+
+# erlang
+deb http://packages.erlang-solutions.com/debian jessie contrib
+
+
