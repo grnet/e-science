@@ -33,13 +33,36 @@ App.DslManagementRoute = App.RestrictedRoute.extend({
 	    willTransition : function(transition) {
             // leaving this route
         },
-		
-		takeDslAction : function(experiment) {
+		didTransition : function(){
+		    // entered this route
+		},
+		takeDslAction : function(dsl) {
 			var self = this;
             var store = this.store;
+            var action = dsl.get('action_dsl_confirm');
+            dsl.set('action_dsl_confirm', false);
+            switch(action) {
+            case 'dsl_delete':
+                dsl.destroyRecord().then(function(data) {
+                    var count = self.controller.get('count');
+                    var extend = Math.max(5, count);
+                    self.controller.set('count', extend);
+                    self.controllerFor('userWelcome').set('create_cluster_start', true);
+                    self.controllerFor('userWelcome').send('timer', true, store);
+                }, function(reason) {
+                    console.log(reason.message);
+                    if (!Ember.isBlank(reason.message)){
+                        var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controllerFor('userWelcome').send('addMessage',msg);
+                    }
+                });
+                break;
+            case 'dsl_replay':
+                console.log('dsl_replay placeholder');
+            }
 		},
-		confirmDslAction : function(experiment, value) {
-            experiment.set('action_dsl_confirm', value);
+		confirmDslAction : function(dsl, value) {
+            dsl.set('action_dsl_confirm', value);
 		}	
 	},
 	deactivate : function() {

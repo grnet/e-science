@@ -34,11 +34,21 @@ App.Dsl = DS.Model.extend({
     pithos_path : attr('string'),
     task_id : attr(), 
     state : attr(),
+    dsl_data : attr(),
     // user that created the VRE
     user : DS.belongsTo('user', {
         inverse : 'dsls'
     }),
     // computed properties
+    dsl_data_safe : function(){
+        var dsl_data = this.get('dsl_data');
+        return Ember.String.htmlSafe('<pre class="prettyprint lang-yaml">%@</pre>'.fmt(dsl_data));
+    }.property('dsl_data'),
+    dsl_data_json : function(){
+        var yaml = this.get('dsl_data');
+        data_json = YAML.parse(yaml);
+        return data_json;
+    }.property('dsl_data'),
     class_dsl_status : function (){
         var status = this.get('dsl_status');
         switch (status) {

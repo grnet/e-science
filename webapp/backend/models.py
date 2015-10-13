@@ -445,6 +445,9 @@ class Dsl(models.Model):
     state = models.CharField("Task State", max_length=255,
                                blank=True, help_text="Celery task state")
     
+    dsl_data = models.TextField("DSL data", max_length=4090, null=True,
+                                     blank=True, help_text="DSL data in yaml format.")
+    
     class Meta:
         verbose_name = "Experiment"
 

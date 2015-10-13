@@ -154,7 +154,7 @@ def create_dsl(choices):
     r = requests.put(url, headers=headers, data=yaml_data) # send file to Pithos
     response = r.status_code
     if response == pithos_put_success:
-        db_dsl_update(choices['token'],dsl_id,state='Created')
+        db_dsl_update(choices['token'],dsl_id,state='Created',dsl_data=yaml_data)
         
         
 def destroy_dsl(token, id):

@@ -34,6 +34,7 @@ error_multiple_entries = -72 # Multiple entries in database for something unique
 error_project_quota = -73 # Zero user quota for a given project       
 error_authentication = -99 # Invalid token
 error_container = -76 # Error pithos container not found while upload dsl file
+error_import_dsl = -78 # Failed to import DSL file from pithos
 
 FNULL = open(os.devnull, 'w') # Redirects whatever is assigned to FNULL to nothingness (e.g. stderr=FNULL)
 

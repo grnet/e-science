@@ -31,7 +31,7 @@
                     Replay Experiment <b {{bind-attr class='model.class_button_dsl_replay'}}></b>
                 </button>
             {{/ifeq}}                                   
-            {{#ifeq model.action_dsl_confirm 'dsl_destroy'}}
+            {{#ifeq model.action_dsl_confirm 'dsl_delete'}}
             <div class='btn-toolbar-horizontal btn-toolbar-sm'>
                 <div class='btn-group btn-group-sm btn-block'>
                     <button {{bind-attr id='model.id_dsl_confirm'}} {{action 'takeDslAction' model}} class="btn btn-danger btn-sm active col-sm-10">Confirm</button>
@@ -39,17 +39,13 @@
                 </div>
             </div>
             {{else}}
-                <button {{bind-attr id='model.id_dsl_destroy'}} class="btn btn-sm btn-primary btn-block" {{action 'confirmDslAction' model 'dsl_destroy'}}>
+                <button {{bind-attr id='model.id_dsl_destroy'}} class="btn btn-sm btn-primary btn-block" {{action 'confirmDslAction' model 'dsl_delete'}}>
                     Delete Experiment <b {{bind-attr class='model.class_button_dsl_destroy'}}></b>
                 </button>                   
             {{/ifeq}}
         </div>        
-        <div class="col col-sm-8">
-            <pre>
-                <code>
-                    {{dsl.dsl_data}}
-                </code>
-            </pre>
+        <div id="id_experiment_readonly" class="col col-sm-10">
+            {{model.dsl_data_safe}}
         </div>
     </div>
 </div>
