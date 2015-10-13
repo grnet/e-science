@@ -174,7 +174,7 @@ class OrkaServer(object):
         host_vars = '[webserver:vars]'
         with open(hosts_filename, 'w+') as target:
             target.write(host + '\n')
-            target.write('ansible_ssh_host=127.0.0.1')
+            target.write('localhost ansible_ssh_host=127.0.0.1')
             target.write(' ansible_ssh_pass={0}\n'.format(self.ansible_sudo_pass))
             target.write(host_vars +'\n')
             target.write("db_user={0}\n".format(self.db_user))
