@@ -166,7 +166,7 @@ def enforce_actions(script, cluster_id, master_IP):
         if action.startswith("local_cmd"):
             params_string = action.strip('local_cmd')
             cmd = params_string.strip(' ()')
-            print ("- Action: Local command " + "(" + params + ")")
+            print ("- Action: Local command " + "(" + cmd + ")")
             try:
                 response = subprocess.check_output(cmd, shell=True)
                 print response  
@@ -195,10 +195,7 @@ def run_job(action, master_IP):
                                 + user + "@" + master_IP + " \'" 
                                 + job + "\'"
                                 , stderr=FNULL, shell=True)
-        print response  
-    except CalledProcessError, ce:
-        print 'Running job returned an error code'
-        exit(error_fatal)
+
     except Exception, e:
         print 'Running job failed'
         exit(error_fatal)
