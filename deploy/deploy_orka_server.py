@@ -266,7 +266,7 @@ class OrkaImage(object):
         self.create_ansible_hosts()
         logging.log(REPORT, " Starting software installations")
         subprocess.call('ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True" -t preimage', shell=True)
-        logging.log(REPORT, "Root password of server {0} is: {1}".format(self.server_ip, server_pass))
+        logging.log(REPORT, "Root password of server with public ip {0} is: {1}".format(self.server_ip, server_pass))
         
 def main():
     """

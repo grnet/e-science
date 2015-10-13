@@ -23,17 +23,21 @@
     tags: preimage
     command: cp -r {{path_to_java_dirs}}/lib/ {{settings_path}}/ansible/roles/cloudera/files
 
-  - name: Install orka as a python package
-    tags: preimage
-    sudo: yes
-    command: python setup.py install chdir={{project_path}}/orka
-
   - name: Change owner of conf and logs
     file: path={{user_home}}/{{item}} recurse=yes state=directory
     tags: preimage
     with_items:
       - conf
       - logs
+
+  - name: create orka_admin user ssh keys
+    user: name=orka_admin shell=/bin/bash generate_ssh_key=yes state=present
+    tags: postimage
+
+  - name: create root user ssh keys
+    sudo: yes
+    user: name=root shell=/bin/bash generate_ssh_key=yes state=present
+    tags: postimage
 
   - name: Rabbitmq-server vhost configuration
     tags: postimage
@@ -43,7 +47,7 @@
   - name: Rabbitmq-server user configuration
     tags: postimage
     sudo: yes
-    rabbitmq_user: user={{django_admin_name}} password={{django_admin_password}} vhost=/escience_tasks configure_priv=.* read_priv=.* write_priv=.* state=present
+    rabbitmq_user: user=orkarbmq password=orkapass vhost=/escience_tasks configure_priv=.* read_priv=.* write_priv=.* state=present
 
   - name: Copy settings.j2 file
     tags: postimage
@@ -127,19 +131,10 @@
     command: openssl req -x509 -nodes -days {{certificate_key_lifetime}} -newkey rsa:{{key_rsa}} -sha256 -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt -subj "/C=GR/ST=Athens/L=Athens/O= /OU= /CN={{ ansible_ssh_host }}"
     tags: postimage
 
-  - name: Copy encryption file for ~okeanos token
-    copy: src={{local_encrypt_file_path}} dest={{remote_encrypt_file_path}} owner=orka_admin
-    tags: postimage
-
   - name: Restart Nginx service
     sudo: yes
     service: name=nginx state=restarted
     tags: postimage
-
-  # - name: Install uwsgi-plugin-python
-    # apt: name=uwsgi-plugin-python state=present
-    # sudo: yes
-    # tags: postimage
 
   - name: Start uWSGI service
     tags: postimage
