@@ -70,10 +70,6 @@ App.Dsl = DS.Model.extend({
     class_button_dsl_destroy : function(){
         return !Ember.isEmpty(this.get('pithos_path')) ? "glyphicon glyphicon-trash text-danger" : "";
     }.property('pithos_path'),
-    action_dsl_confirm : function(key, value){
-        this.set('confirm_action', value);
-        return this.get('confirm_action');
-    }.property(),
     class_button_dsl_replay : function(){
         return !Ember.isEmpty(this.get('pithos_path')) ? "glyphicon glyphicon-repeat text-success" : "";
     }.property('pithos_path'),
@@ -85,7 +81,7 @@ App.Dsl = DS.Model.extend({
             return '';
         }
     }.property('server_status'),
-    action_dsl_replay : function(key, value){
+    action_dsl_confirm : function(key, value){
         this.set('confirm_action', value);
         return this.get('confirm_action');
     }.property(),

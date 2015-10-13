@@ -39,7 +39,7 @@ App.DslManagementRoute = App.RestrictedRoute.extend({
             var store = this.store;
 		},
 		confirmDslAction : function(experiment, value) {
-
+            experiment.set('action_dsl_confirm', value);
 		}	
 	},
 	deactivate : function() {
