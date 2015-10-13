@@ -49,6 +49,8 @@ App.DslManagementRoute = App.RestrictedRoute.extend({
                     self.controller.set('count', extend);
                     self.controllerFor('userWelcome').set('create_cluster_start', true);
                     self.controllerFor('userWelcome').send('timer', true, store);
+                    self.controllerFor('userWelcome').send('setActiveTab','dsls');
+                    self.transitionTo('user.welcome');
                 }, function(reason) {
                     console.log(reason.message);
                     if (!Ember.isBlank(reason.message)){

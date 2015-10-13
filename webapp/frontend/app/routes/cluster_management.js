@@ -80,6 +80,10 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 					var extend = Math.max(5, count);
 					self.controller.set('count', extend);
 					self.controller.send('timer', true, store);
+					self.controllerFor('userWelcome').set('create_cluster_start', true);
+                    self.controllerFor('userWelcome').send('timer', true, store);
+                    self.controllerFor('userWelcome').send('setActiveTab','clusters');
+                    self.transitionTo('user.welcome');
 				}, function(reason) {
 					console.log(reason.message);
 					if (!Ember.isBlank(reason.message)){
