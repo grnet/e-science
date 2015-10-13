@@ -14,8 +14,11 @@
  django_admin_email: orka@example.com
  django_admin_password: esc1ence@2015
  ansible_sudo_pass: lalakia
+ # rabbitmquser orkarbmq
+ # rabbitmq password=orkapass
  path_to_pref: roles/webserver/files/my_preferences
- 
+ path_to_sources_list: roles/webserver/files/sources.list
+
  # Django project variables
  user_home: /home/orka_admin
  my_project_dir: "{{user_home}}/projects"

@@ -1,98 +1,96 @@
 ---
-  - name: Install passlib
-    pip: name=passlib
-    tags: preimage
-
   - name: Copy sources.list file
-    copy: src=sources.list dest=/etc/apt/ owner=root mode=0644
+    copy: src={{path_to_sources_list}} dest=/etc/apt/
     tags: preimage
 
-  - name: create orka group
-    group: name=orkagroup state=present
-    tags: postimage
-
-  - name: create orka_admin user
-    user: name=orka_admin groups="orkagroup,sudo" generate_ssh_key=yes shell=/bin/bash update_password=always password=$1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20 state=present
-    tags: postimage
-
-  - name: create server root user ssh key
-    user: name=root generate_ssh_key=yes shell=/bin/bash state=present
-    tags: postimage
-
-  - name: copy local box master ssh key to orka_admin
-    tags: postimage
-    authorized_key: user=orka_admin key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
-
-  - name: Install curl
-    apt: name=curl
+  - name: Copy my_preferences file
+    copy: src={{path_to_pref}} dest=/etc/apt/preferences.d/
     tags: preimage
 
-  - name: Get rabbitmq-server latest version
+  - name: Update and Upgrade
+    shell: apt-get update && apt-get -y upgrade
     tags: preimage
-    get_url: url=https://www.rabbitmq.com/releases/rabbitmq-server/v3.4.3/rabbitmq-server_3.4.3-1_all.deb dest=./
+
+  - name: Install aptitude tasksel
+    shell: apt-get install -y aptitude tasksel;aptitude update
+    tags: preimage
+
+  - name: Install curl and wget
+    command: apt-get install -y curl wget
+    tags: preimage
 
   - name: Install apt keys
     apt_key: "url={{item.url}}"
     with_items:
       - { url: 'http://nginx.org/keys/nginx_signing.key' }
       - { url: 'http://packages.erlang-solutions.com/debian/erlang_solutions.asc' }
+      - { url: 'https://www.rabbitmq.com/rabbitmq-signing-key-public.asc'}
       - { url: 'https://dev.grnet.gr/files/apt-grnetdev.pub'}
     tags: preimage
 
-  - name: Update and Upgrade
-    tags: preimage
-    shell: apt-get -y update && apt-get -y upgrade
-
-  - name: Copy my_preferences file
-    copy: src={{path_to_pref}} dest=/etc/apt/preferences.d/
+  - name: Update after apt-key installations
+    command: apt-get update
     tags: preimage
 
-  - name: Assert that no old version of rabbitmq is on webserver
+  - name: Install pip
+    shell: wget https://bootstrap.pypa.io/get-pip.py;python get-pip.py
     tags: preimage
-    apt: name=rabbitmq-server purge=yes state=absent force=yes
+
+  - name: Install passlib
+    pip: name=passlib
+    tags: preimage
 
   - name: Install RabbitMQ broker, PostgreSQL and needed dependencies
     tags: preimage
     apt: "name={{item}}"
     with_items:
+      - gcc
+      - python-dev
+      - libpq-dev
       - erlang
+      - rabbitmq-server
       - postgresql
       - postgresql-client
       - python-psycopg2
-      - libpq-dev
-      - python-dev
       - git
       - python-flup
       - nginx
       - sshpass
+      - uwsgi-plugin-python
       - snf-image-creator
-
-  - name: Install rabbitmq-server latest version
-    tags: preimage
-    apt: deb=rabbitmq-server_3.4.3-1_all.deb
 
   - name: Install Celery, Django and Django rest framework
     tags: preimage
     pip: "name={{item.name}}"
     with_items:
-      - { name: 'celery' }
+      - { name: 'kamaki' }
+      - { name: 'ansible==1.9.2' }
+      - { name: 'celery==3.1.17' }
       - { name: 'Django' }
       - { name: 'rest_framework_ember' }
       - { name: 'djangorestframework==2.4.3' }
       - { name: 'django-admin-bootstrapped==2.4.0' }
       - { name: 'markdown' }
-      - { name: 'django-filter' }
-      - { name: 'djorm-pgarray' }
+      - { name: 'django-filter==0.9.2' }
+      - { name: 'djorm-pgarray==1.2' }
       - { name: 'paramiko' }
       - { name: 'uwsgi' }
       - { name: 'requests' }
-      - { name: 'django-celery' }
+      - { name: 'django-celery==3.1.16' }
       - { name: 'flower' }
 
-  - name: Rabbitmq-server vhost configuration
-    tags: postimage
-    rabbitmq_vhost: name=/escience_tasks state=present
+  - name: create orka group
+    group: name=orkagroup state=present
+    tags: preimage
 
-  - name: Rabbitmq-server user configuration
-    tags: postimage
-    rabbitmq_user: user=orkarbmq password=orkapass vhost=/escience_tasks configure_priv=.* read_priv=.* write_priv=.* state=present
+  - name: create orka_admin user
+    user: name=orka_admin groups="orkagroup,sudo" generate_ssh_key=yes shell=/bin/bash update_password=always password=$1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20 state=present
+    tags: preimage
+
+  - name: create server root user ssh key
+    user: name=root generate_ssh_key=yes shell=/bin/bash state=present
+    tags: preimage
+
+  - name: copy local box master ssh key to orka_admin
+    tags: preimage
+    authorized_key: user=orka_admin key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"

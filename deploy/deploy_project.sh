@@ -55,11 +55,7 @@ HOST="root@"$VM
 echo "Waiting a minute for VM to be reachable..."
 sleep 60
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
-'apt-get update;
-apt-get install -y git python python-dev python-pip;
-pip install ansible==1.9.2;
-pip install kamaki==0.13.4;
-pip install django-admin-bootstrapped==2.4.0;
+'apt-get install -y python;
 exit'
 echo "Information" > $SERVERNAME.txt
 echo "===========" >> $SERVERNAME.txt
@@ -82,12 +78,10 @@ echo "[defaults]" > ansible.cfg
 echo "host_key_checking = False" >> ansible.cfg
 echo ""
 echo "Setting up Servers (Ansible)"
-ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True" -t preimage,postimage
+ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True" -t preimage #,postimage
 END=$(date +"%s")
 DIFF=$(($END-$START))
 echo ""
 echo "ALL Done in:"
 date -u -d @"$DIFF" +'%-Mm %-Ss'
 echo "Info saved in $SERVERNAME.txt in current directory."
-URL="http://$IP"
-xdg-open $URL &
