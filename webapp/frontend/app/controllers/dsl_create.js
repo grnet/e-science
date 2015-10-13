@@ -97,11 +97,11 @@ App.DslCreateController = Ember.Controller.extend({
     },
     
     actions : {
-        dsl_create : function() {
+        dsl_create : function(create) {
             var self = this;
             var store = this.get('store');
             var model = this.get('content');
-            var cluster_id = this.get('selected_cluster_id');
+            var cluster_id = Ember.isEmpty(create) ? -1 : this.get('selected_cluster_id');
             var dsl_name = this.get('dsl_filename');
             var pithos_path = this.get('dsl_pithos_path');
             var new_dsl = {
@@ -118,7 +118,11 @@ App.DslCreateController = Ember.Controller.extend({
                 //success
                 var new_record = store.createRecord('dsl', new_dsl);
                 new_record.save().then(function(data) {
-                    var msg = {
+                    var msg = Ember.isEmpty(create) ? {
+                    	'msg_type' : 'success',
+                        'msg_text' : 'Metadata file %@ imported from pithos filesystem.'.fmt(dsl_name)
+                    } 
+                    : {
                         'msg_type' : 'success',
                         'msg_text' : 'Metadata saved as \"%@\" in %@'.fmt(dsl_name,pithos_path)
                     };
@@ -127,7 +131,11 @@ App.DslCreateController = Ember.Controller.extend({
                     self.get('controllers.userWelcome').send('setActiveTab','dsls');
                     Ember.run.next(function(){self.transitionToRoute('user.welcome');});
                 }, function(reason) {
-                    var msg = {
+                    var msg = Ember.isEmpty(create) ? {
+                    	'msg_type' : 'danger',
+                        'msg_text' : 'Failed to import file \"%@\" from %@ with error: %@'.fmt(dsl_name,pithos_path,reason.message)
+                    } 
+                    : {
                         'msg_type' : 'danger',
                         'msg_text' : 'Failed to create file \"%@\" in %@ with error: %@'.fmt(dsl_name,pithos_path,reason.message)
                     };

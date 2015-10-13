@@ -29,6 +29,7 @@ from tasks import create_cluster_async, destroy_cluster_async, scale_cluster_asy
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
 from reroute_ssh import HdfsRequest
+from okeanos_utils import check_pithos_path, get_pithos_container_info
 
 
 logging.addLevelName(REPORT, "REPORT")
@@ -433,10 +434,18 @@ class DslView(APIView):
             choices = dict()
             choices = serializer.data.copy()
             choices.update({'token': user.okeanos_token})
-            if serializer.data['import_dsl']:
-                r_dsl = import_dsl_async.delay(choices)
-                task_id = r_dsl.id
+            choices['pithos_path'] = check_pithos_path(choices['pithos_path'])
+            choices.update({'pithos_path': choices['pithos_path']})
+            uuid = get_user_id(unmask_token(encrypt_key, choices['token']))
+            if serializer.data['cluster_id'] == -1:
+                choices.update({'cluster_id': None})
+                i_dsl = import_dsl_async.delay(choices)
+                task_id = i_dsl.id
                 return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+            container_status_code = get_pithos_container_info(uuid, choices['pithos_path'], choices['token'])
+            if container_status_code == pithos_container_not_found:
+                return Response(serializer.errors,
+                            status=status.HTTP_404_NOT_FOUND)
             c_dsl = create_dsl_async.delay(choices)
             task_id = c_dsl.id
             return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)

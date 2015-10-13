@@ -222,7 +222,6 @@ class DslOptionsSerializer(serializers.Serializer):
     dsl_name = serializers.CharField(required=True)
     pithos_path = serializers.CharField(required=True)
     cluster_id = serializers.IntegerField(required=False)
-    import_dsl = serializers.BooleanField(required=False)
     
 class DslDeleteSerializer(serializers.Serializer):
     """
