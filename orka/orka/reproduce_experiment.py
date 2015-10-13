@@ -11,6 +11,8 @@ import subprocess
 import requests
 from cluster_errors_constants import *
 from utils import get_file_protocol, get_user_id
+from sys import stderr
+from subprocess import CalledProcessError
 FNULL = open(os.devnull, 'w')
 
 def create_cluster(script):
@@ -59,16 +61,23 @@ def create_cluster(script):
 
     # temp file to store cluster details
     tempfile = "_" + script["cluster"]["name"] + ".txt"
-    create_cluster_command += (" | tee " + tempfile)
 
     # create cluster
     print '--- Creating Cluster ---'
-    exit_status = os.system(create_cluster_command)
-    if exit_status != 0:
-        print 'Cluster (re-)creation failed with exit status %d' % exit_status
-        sys.exit(0)
-
-    print ''
+    try:
+        response = subprocess.check_output(create_cluster_command, shell=True)
+        print response
+        # store cluster details
+        f = open( tempfile, 'w' )
+        f.write( response )
+        f.close()
+    except CalledProcessError, ce:
+        print 'Cluster (re-)creation returned an error code'
+        exit(error_fatal)
+    except Exception, e:
+        print 'Cluster (re-)creation failed'
+        exit(error_fatal)
+    
     # retrieve cluster id and master IP
     with open(tempfile, 'r') as f:
         cluster_id = f.readline().strip().split(': ')[1]    
@@ -76,7 +85,6 @@ def create_cluster(script):
 
     # remove temp file
     os.remove(tempfile)
-    
     return cluster_id, master_IP
 
 def enforce_actions(script, cluster_id, master_IP):
@@ -86,29 +94,88 @@ def enforce_actions(script, cluster_id, master_IP):
     for action in script["actions"]:
         if action in ["start", "stop", "format"]:
             print ("- Action: Hadoop " + action)
-            os.system("orka hadoop " + action + " " + str(cluster_id))
+            cmd = "orka hadoop " + action + " " + str(cluster_id)
+            try:
+                response = subprocess.check_output(cmd, shell=True)
+                print response
+            except CalledProcessError, ce:
+                print 'Hadoop ' + action + ' returned an error code'
+                exit(error_fatal)
+            except Exception, e:
+                print 'Hadoop ' + action + ' failed'
+                exit(error_fatal)
             print ''
         if action.startswith("put"):
             params_string = action.strip('put')
             params = params_string.strip(' ()')
             action_params = params.split(',')
             print ("- Action: Uploading file to HDFS")
-            os.system("orka file put " + str(cluster_id) + " " + action_params[0] + " " + action_params[1])
+            cmd = "orka file put " + str(cluster_id) + " " + action_params[0] + " " + action_params[1]
+            try:
+                response = subprocess.check_output(cmd, shell=True)
+                print response  
+            except CalledProcessError, ce:
+                print 'Uploading file to HDFS returned an error code'
+                exit(error_fatal)
+            except Exception, e:
+                print 'Uploading file to HDFS failed'
+                exit(error_fatal)
             print ''
         if action.startswith("get"):
             params_string = action.strip('get')
             params = params_string.strip(' ()')
             action_params = params.split(',')
             print ("- Action: Retrieving file from HDFS")
-            os.system("orka file get " + str(cluster_id) + " " + action_params[0] + " " + action_params[1])
+            cmd = "orka file get " + str(cluster_id) + " " + action_params[0] + " " + action_params[1]
+            try:
+                response = subprocess.check_output(cmd, shell=True)
+                print response  
+            except CalledProcessError, ce:
+                print 'Retrieving file from HDFS returned an error code'
+                exit(error_fatal)
+            except Exception, e:
+                print 'Retrieving file from HDFS failed'
+                exit(error_fatal)
             print ''
         if action == 'node_add':
             print ("- Action: Adding node to hadoop")
-            os.system("orka node add " + str(cluster_id))
+            cmd = "orka node add " + str(cluster_id)
+            try:
+                response = subprocess.check_output(cmd, shell=True)
+                print response  
+            except CalledProcessError, ce:
+                print 'Adding node to hadoop returned an error code'
+                exit(error_fatal)
+            except Exception, e:
+                print 'Adding node to hadoop failed'
+                exit(error_fatal)
             print ''
         if action == 'node_remove':
             print ("- Action: Removing node from hadoop")
-            os.system("orka node remove " + str(cluster_id))
+            cmd = "orka node remove " + str(cluster_id)
+            try:
+                response = subprocess.check_output(cmd, shell=True)
+                print response  
+            except CalledProcessError, ce:
+                print 'Removing node from hadoop returned an error code'
+                exit(error_fatal)
+            except Exception, e:
+                print 'Removing node from hadoop failed'
+                exit(error_fatal)            
+            print ''
+        if action.startswith("local_cmd"):
+            params_string = action.strip('local_cmd')
+            cmd = params_string.strip(' ()')
+            print ("- Action: Local command " + "(" + params + ")")
+            try:
+                response = subprocess.check_output(cmd, shell=True)
+                print response  
+            except CalledProcessError, ce:
+                print 'Local command returned an error code'
+                exit(error_fatal)
+            except Exception, e:
+                print 'Local command failed'
+                exit(error_fatal)
             print ''
         if action.startswith("run_job"):
             run_job(action, master_IP)
@@ -123,10 +190,18 @@ def run_job(action, master_IP):
     job = action_params[1].strip('\" ')
     
     print ("- Action: Running job")
-    response = subprocess.call( "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " 
+    try:
+        response = subprocess.call( "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " 
                                 + user + "@" + master_IP + " \'" 
                                 + job + "\'"
                                 , stderr=FNULL, shell=True)
+        print response  
+    except CalledProcessError, ce:
+        print 'Running job returned an error code'
+        exit(error_fatal)
+    except Exception, e:
+        print 'Running job failed'
+        exit(error_fatal)
     print ''
 
 def replay(argv, token):
@@ -137,20 +212,28 @@ def replay(argv, token):
     # check files's protocol
     file_protocol, remain = get_file_protocol(argv, 'fileput', 'source')
 
-    if file_protocol == 'pithos':
-        url = pithos_url + "/" + uuid + remain
-        headers = {'X-Auth-Token':'{0}'.format(token)}
-        r=requests.get(url, headers=headers)
-        # load the experiment from pithos file
-        script = yaml.load(r.text)
-    else:
-        # load the experiment from local file
-        with open(argv, 'r') as f:
-            script = yaml.load(f)
+    try:
+        if file_protocol == 'pithos':
+            url = pithos_url + "/" + uuid + remain
+            headers = {'X-Auth-Token':'{0}'.format(token)}
+            r=requests.get(url, headers=headers)
+            if r.status_code == 200:
+                # load the experiment from pithos file
+                script = yaml.load(r.text)
+            else:
+                print 'File not found on Pithos'
+                exit(error_fatal)
+        else:
+            # load the experiment from local file
+            with open(argv, 'r') as f:
+                script = yaml.load(f)
+    except Exception, e:
+        print 'File (or protocol) not found'
+        exit(error_fatal)
 
     # check if cluster info is given (cluster info is mandatory)
     if script.get("cluster") is None:
-        print "Cluster information is missing."
+        print "Cluster information is missing"
         return
     
     print '--- Reproducing Experiment ---'
