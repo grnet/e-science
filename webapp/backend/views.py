@@ -410,16 +410,6 @@ class DslView(APIView):
     resource_name = 'dsl'
     serializer_class = DslsSerializer
     
-    def get(self, request, *args, **kwargs):
-        """
-        Return a serialized Cluster metadata model. User with corresponding status will be
-        found by the escience token.
-        """
-        user_token = Token.objects.get(key=request.auth)
-        self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
-        serializer = self.serializer_class(data=request.DATA, many=True)
-        return Response(serializer.data)
-    
     def post(self, request, *args, **kwargs):
         """
         Handles requests with user's Reproducible Experiments metadata file creation parameters.
@@ -440,6 +430,22 @@ class DslView(APIView):
         # This will be send if user's parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)
+    
+    def get(self, request, *args, **kwargs):
+        """
+        Return a serialized Cluster metadata model. User with corresponding status will be
+        found by the escience token.
+        """
+        user_token = Token.objects.get(key=request.auth)
+        self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
+        serializer = self.serializer_class(data=request.DATA, many=True)
+        return Response(serializer.data)
+    
+    def put(self, request, *args, **kwargs):
+        """
+        Use the experimentn metadata to replay an experiment. Create cluster if necessary, then perform the actions.
+        """
+        return Response("Not Yet Implemented",status=status.HTTP_501_NOT_IMPLEMENTED)
     
     def delete(self, request, *args, **kwargs):
         """

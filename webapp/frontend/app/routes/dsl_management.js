@@ -61,6 +61,15 @@ App.DslManagementRoute = App.RestrictedRoute.extend({
                 break;
             case 'dsl_replay':
                 console.log('dsl_replay placeholder');
+                dsl.save().then(function(data){
+                    console.log('update');
+                },function(reason){
+                    console.log(reason.message);
+                    if (!Ember.isBlank(reason.message)){
+                        var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controllerFor('userWelcome').send('addMessage',msg);
+                    }
+                });
             }
 		},
 		confirmDslAction : function(dsl, value) {
