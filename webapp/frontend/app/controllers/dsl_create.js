@@ -1,4 +1,3 @@
-safestr = Ember.Handlebars.SafeString;
 // escience reproducible experiments DSL Create controller
 App.DslCreateController = Ember.Controller.extend({
     needs : ['userWelcome'],
@@ -7,7 +6,7 @@ App.DslCreateController = Ember.Controller.extend({
     experiment_yaml_static : null,
     experiment_yaml : function(key, value){
         if (arguments.length > 1){//setter
-            var formatted = new safestr(value);
+            var formatted = Ember.String.htmlSafe(value);
             this.set('experiment_yaml_static',formatted);
         }
         return Ember.isEmpty(this.get('experiment_yaml_static')) ? '' : this.get('experiment_yaml_static');//getter
@@ -141,7 +140,7 @@ App.DslCreateController = Ember.Controller.extend({
         dsl_filename_default : function() {
             var model = this.get('content');
             var store = this.get('store');
-            var date_now = new safestr(moment(Date.now()).format('YYYY-MM-DD_HH-mm-ss'))['string'];
+            var date_now = Ember.String.htmlSafe(moment(Date.now()).format('YYYY-MM-DD_HH-mm-ss'))['string'];
             var cluster_id = null;
             var cluster_name = null;
             if (!Ember.isEmpty(this.get('selected_cluster'))){
