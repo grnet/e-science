@@ -29,7 +29,7 @@ from tasks import create_cluster_async, destroy_cluster_async, scale_cluster_asy
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
 from reroute_ssh import HdfsRequest
-from okeanos_utils import check_pithos_path, get_pithos_container_info
+from okeanos_utils import check_pithos_path, check_pithos_object_exists, get_pithos_container_info
 
 
 logging.addLevelName(REPORT, "REPORT")
@@ -439,10 +439,14 @@ class DslView(APIView):
             uuid = get_user_id(unmask_token(encrypt_key, choices['token']))
             if serializer.data['cluster_id'] == -1:
                 choices.update({'cluster_id': None})
+                dsl_file_status_code = check_pithos_object_exists(choices['pithos_path'], choices['dsl_name'], choices['token'])
+                if dsl_file_status_code == pithos_object_not_found:
+                    return Response(serializer.errors,
+                            status=status.HTTP_404_NOT_FOUND)
                 i_dsl = import_dsl_async.delay(choices)
                 task_id = i_dsl.id
                 return Response({"id":1, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
-            container_status_code = get_pithos_container_info(uuid, choices['pithos_path'], choices['token'])
+            container_status_code = get_pithos_container_info(choices['pithos_path'], choices['token'])
             if container_status_code == pithos_container_not_found:
                 return Response(serializer.errors,
                             status=status.HTTP_404_NOT_FOUND)

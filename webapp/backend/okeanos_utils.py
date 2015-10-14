@@ -150,8 +150,13 @@ def create_dsl(choices):
     response = r.status_code
     if response == pithos_put_success:
         db_dsl_update(choices['token'],dsl_id,state='Created',dsl_data=yaml_data)
-        
-        
+        return dsl_id, choices['pithos_path'], choices['dsl_name']
+    else:
+        db_dsl_update(choices['token'],dsl_id,state='Failed')
+        msg = 'Failed to reach Pithos filesystem.'
+        raise ClientError(msg, error_pithos_connection)
+
+
 def destroy_dsl(token, id):
     """Destroys a Reproducible Experiments Metadata file from Pithos."""
     # TODO placeholders for actual implementation
@@ -173,6 +178,7 @@ def import_dsl(choices):
         task_id = current_task.request.id
         dsl_id = db_dsl_create(choices, task_id)
         db_dsl_update(choices['token'],dsl_id,state='Created',dsl_data=pithos_input_stream)
+        return dsl_id, choices['pithos_path'], choices['dsl_name']
     except HTTPError, e:
         raise HTTPError(e, error_import_dsl)
 
@@ -187,11 +193,23 @@ def check_pithos_path(pithos_path):
     return pithos_path
 
 
-def get_pithos_container_info(uuid, pithos_path, token):
+def check_pithos_object_exists(pithos_path, dsl_name, token):
+    """Request to Pithos to see if object exists."""
+    
+    uuid = get_user_id(unmask_token(encrypt_key,token))
+    url = '{0}/{1}/{2}/{3}'.format(pithos_url, uuid, pithos_path, dsl_name)
+    headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,token))}
+    r = requests.head(url, headers=headers)
+    response = r.status_code
+    return response
+
+
+def get_pithos_container_info(pithos_path, token):
     """Request to Pithos to see if container exists."""
     
     if '/' in pithos_path:
         pithos_path = pithos_path.split("/", 1)[0]
+    uuid = get_user_id(unmask_token(encrypt_key,token))
     url = '{0}/{1}/{2}'.format(pithos_url, uuid, pithos_path)
     headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,token))}
     r = requests.head(url, headers=headers)

@@ -91,8 +91,9 @@ def import_dsl_async(choices):
     """
     Asynchronous retrieve Cluster DSL information.
     """
-    result = import_dsl(choices)
-    return result
+    new_dsl_id, pithos_path, dsl_name = import_dsl(choices)
+    task_result = {"dsl_name": dsl_name, "pithos_path": pithos_path, "dsl_id": new_dsl_id}
+    return task_result
 
 @task()
 def destroy_dsl_async(token, id):

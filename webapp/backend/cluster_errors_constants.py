@@ -33,8 +33,8 @@ error_project_id = -71 # No project id for given project name
 error_multiple_entries = -72 # Multiple entries in database for something unique
 error_project_quota = -73 # Zero user quota for a given project       
 error_authentication = -99 # Invalid token
-error_container = -76 # Error pithos container not found while upload dsl file
 error_import_dsl = -78 # Failed to import DSL file from pithos
+error_pithos_connection = -79 # Failed to reach Pithos filesystem
 
 FNULL = open(os.devnull, 'w') # Redirects whatever is assigned to FNULL to nothingness (e.g. stderr=FNULL)
 
@@ -61,6 +61,7 @@ auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 pithos_url = 'https://pithos.okeanos.grnet.gr/v1'
 pithos_put_success = 201  # Success pithos response
 pithos_container_not_found = 404
+pithos_object_not_found = pithos_container_not_found
 
 # If no image is given in orka-cli, this is the default image. Not used in backed/cluster_errors_constants
 default_image = 'Debian Base'

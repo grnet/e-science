@@ -49,7 +49,13 @@ App.DslCreateController = Ember.Controller.extend({
             this.set('alert_missing_input_dsl_source',null);
         }
     }.observes('selected_cluster_id','filtered_clusters'),
-    selectec_cluster_size : function(){
+    create_dsl_disabled : function(){
+    	return this.get('boolean_no_cluster') ? true : false;
+    }.property('boolean_no_cluster'),
+    import_dsl_disabled : function(){
+    	return !this.get('create_dsl_disabled');
+    }.property('create_dsl_disabled'),
+    selected_cluster_size : function(){
         return Ember.isEmpty(this.get('selected_cluster')) ? '' : this.get('selected_cluster').objectAt(0).get('cluster_size');
     }.property('selected_cluster'),
     selected_cluster_master_flavor : function(){
@@ -131,15 +137,19 @@ App.DslCreateController = Ember.Controller.extend({
                     self.get('controllers.userWelcome').send('setActiveTab','dsls');
                     Ember.run.next(function(){self.transitionToRoute('user.welcome');});
                 }, function(reason) {
+                	var error_msg = !Ember.isEmpty(reason.statusText) ? 'with error: %@'.fmt(reason.statusText) : '';
                     var msg = Ember.isEmpty(create) ? {
                     	'msg_type' : 'danger',
-                        'msg_text' : 'Failed to import file \"%@\" from %@ with error: %@'.fmt(dsl_name,pithos_path,reason.message)
+                        'msg_text' : 'Failed to import file \"%@\" from %@ %@'.fmt(dsl_name,pithos_path, error_msg)
                     } 
                     : {
                         'msg_type' : 'danger',
-                        'msg_text' : 'Failed to create file \"%@\" in %@ with error: %@'.fmt(dsl_name,pithos_path,reason.message)
+                        'msg_text' : 'Failed to create file \"%@\" in %@ %@'.fmt(dsl_name,pithos_path, error_msg)
                     };
                     self.get('controllers.userWelcome').send('addMessage', msg);
+                    self.set('controllers.userWelcome.create_cluster_start', true);
+                    self.get('controllers.userWelcome').send('setActiveTab','dsls');
+                    Ember.run.next(function(){self.transitionToRoute('user.welcome');});
                 });
             }, function(reason) {
                 //error
