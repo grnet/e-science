@@ -48,7 +48,7 @@ App.DslCreateController = Ember.Controller.extend({
             this.set('alert_missing_input_dsl_source',null);
         }
     }.observes('selected_cluster_id','filtered_clusters'),
-    selectec_cluster_size : function(){
+    selected_cluster_size : function(){
         return Ember.isEmpty(this.get('selected_cluster')) ? '' : this.get('selected_cluster').objectAt(0).get('cluster_size');
     }.property('selected_cluster'),
     selected_cluster_master_flavor : function(){

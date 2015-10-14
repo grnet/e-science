@@ -170,14 +170,43 @@ def destroy_dsl(token, id):
 
 def replay_dsl(token, id):
     """Replays an experiment with configuration parameters and actions in sequence"""
+    
     dsl = Dsl.objects.get(id=id)
     # pre execution checks
-    
+    dsl_data_yaml = dsl.dsl_data
+    dsl_data_dict = yaml.safe_load(dsl_data_yaml)
+    dslkeys_to_clusteroptions = {'name':'cluster_name','size':'cluster_size','image':'os_choice',\
+                                 'flavor_master':['cpu_master','ram_master','disk_master'],\
+                                 'flavor_slaves':['cpu_slaves','ram_slaves','disk_slaves']}
+    cluster_options = dsl_data_dict.get('cluster',{})
+    cluster_options.update(dsl_data_dict.get('configuration',{}))
+    for (key,value) in dslkeys_to_clusteroptions.iteritems():
+        option_val = cluster_options.pop(key,None)
+        if option_val is not None:  
+            if type(option_val) is list:
+                for i in range(len(value)):
+                    if option_val[i] is not None:
+                        cluster_options.setdefault(value[i],option_val[i])
+                    else:
+                        msg = "Mandatory cluster option %s is missing from %s/%s" % (value[i], dsl.dsl_name, key)
+                        raise ClientError(msg, error_fatal)
+            else:
+                if key=="name":
+                    option_val = option_val[7:] if option_val.startswith("[orka]-") else option_val
+                cluster_options.setdefault(value,option_val)
+        else:
+            msg = "Mandatory cluster option %s is missing from %" % (key, dsl.dsl_name)
+            raise ClientError(msg, error_fatal)
+    cluster_options.setdefault('token',token)
     # cluster section
-    
-    # configuration section 
+    # only need to import create cluster if we are going to be making a cluster
+    from backend.create_cluster import YarnCluster
+    c_cluster = YarnCluster(cluster_options)
+#     c_cluster.create_yarn_cluster()
     
     # actions section
+    
+    
     return dsl.id
     
 
