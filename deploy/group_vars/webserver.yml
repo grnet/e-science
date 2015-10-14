@@ -1,7 +1,11 @@
 ---
- # PostgreSql variables
+ # PostgreSql constants
  db_host: 127.0.0.1
+ db_user: orka_admin
+ db_name: escience
  choose_role: webserver
+ django_admin_name: orka_admin
+ django_admin_email: orka@example.com
 
  # setup_orka_admin variables
  create_orka_admin: False
@@ -24,4 +28,3 @@
  # Openssl variables
  certificate_key_lifetime: 3650
  key_rsa: 2048
- 

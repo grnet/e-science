@@ -7,13 +7,15 @@ This script manages an Orka server image.
 @author: e-science Dev-team
 """
 from sys import argv
+from datetime import datetime
 import os
+import random, string
 import base64
 from time import sleep
 import logging
 import subprocess
 from base64 import b64encode
-from os.path import abspath, join, expanduser, basename
+from os.path import abspath, join, expanduser, basename, dirname
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
 from kamaki.clients.astakos import AstakosClient
@@ -29,6 +31,8 @@ SUMMARY = 29
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 MAX_WAIT=300
 default_logging = 'report'
+UUID_FILE = 'permitted_uuids.txt'
+ENCRYPT_FILE = 'encrypt_key.py'
 
 
 class _logger(object):
@@ -156,13 +160,10 @@ class OrkaServer(object):
     def __init__(self, opts):
         """Initialization of OrkaServer data attributes"""
         self.opts = opts
-        self.db_user = self.opts['postgresql_username']
         self.db_password = self.opts['postgresql_password']
-        self.db_name = self.opts['postgresql_db_name']
-        self.django_admin_name = self.opts['django_admin_username']
-        self.django_admin_email = self.opts['django_admin_email']
         self.django_admin_password = self.opts['django_admin_password']
         self.ansible_sudo_pass = self.opts['orka_admin_password']
+        self.user_uuid = self.opts['okeanos_user_uuid']
         
     def create_ansible_hosts(self):
         """
@@ -177,22 +178,50 @@ class OrkaServer(object):
             target.write('localhost ansible_ssh_host=127.0.0.1')
             target.write(' ansible_ssh_pass={0}\n'.format(self.ansible_sudo_pass))
             target.write(host_vars +'\n')
-            target.write("db_user={0}\n".format(self.db_user))
             target.write("db_password={0}\n".format(self.db_password))
-            target.write("db_name={0}\n".format(self.db_name))
-            target.write("django_admin_name={0}\n".format(self.django_admin_name))
-            target.write("django_admin_email={0}\n".format(self.django_admin_email))
             target.write("django_admin_password={0}\n".format(self.django_admin_password))
             target.write("ansible_sudo_pass={0}\n".format(self.ansible_sudo_pass))
         return hosts_filename
+    
+    def create_permitted_uuids_file(self,uuid):
+        """
+        Create the file that contains the permitted ~okeanos uuids for orka login.
+        """
+        PROJECT_PATH = join(dirname(abspath(__file__)), '..')
+        FILE_PATH = join(PROJECT_PATH,UUID_FILE)
+        with open(FILE_PATH,'a+') as target:
+            target.write(uuid)
+        return 0
+        
+    def create_encrypt_file(self,uuid):
+        """
+        Create the file that is used for token encryption in database.
+        Key value is equal to timestamp plus okeanos user uuid plus six random chars.
+        """
+        random_chars = ''.join(random.choice(string.lowercase) for i in range(6))
+        timestamp = datetime.now().strftime('%Y/%m/%d%H:%M:%S')
+        random_key = timestamp + uuid + random_chars
+        PROJECT_BACKEND_PATH = join(dirname(abspath(__file__)), '../webapp/backend')
+        FILE_PATH = join(PROJECT_BACKEND_PATH,ENCRYPT_FILE)
+        with open(FILE_PATH,'a+') as target:
+            target.write('#!/usr/bin/env python\n')
+            target.write('# -*- coding: utf-8 -*-\n\n')
+            target.write('key = "{0}"'.format(random_key))
+        return 0
         
     def start(self):
         """
         Starts an orka server
         """
         self.create_ansible_hosts()
+        self.create_permitted_uuids_file(self.user_uuid)
+        self.create_encrypt_file(self.user_uuid)
         ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True" -t postimage'
         subprocess.call(ansible_command, shell=True)
+        logging.log(REPORT, 'Orka server has started.')
+        logging.log(REPORT, 'Django administration Username: {0}'.format('orka_admin'))
+        logging.log(REPORT, 'Django administration Password: {0}'.format(self.django_admin_password))
+        
         
 class OrkaImage(object):
     """
@@ -281,37 +310,29 @@ def main():
     parser_create = orka_subparsers.add_parser('create',
                                      help='Create an Orka management image'
                                    ' on ~okeanos.')
-    parser_start = orka_subparsers.add_parser('start', help='Start orka server locally')
+    parser_start = orka_subparsers.add_parser('start', help='Start orka server. User must give the correct'
+    ' "orka_admin_password" and "okeanos_user_uuid" arguments and anything he/she wants for arguments "postgresql_password" and "django_admin_password"')
     
     if len(argv) > 1:
         
-        parser_create.add_argument("--name", help='Name of VM to be created.',default="orka_server")
-        parser_create.add_argument("--flavor_id", help='Flavor id of VM to be created. Default is 145. Use kamaki flavor list',
+        parser_create.add_argument("--name", help='Name of VM to be created. Default is orka_server',default="orka_server")
+        parser_create.add_argument("--flavor_id", help='Flavor id of VM to be created. Default is 145. Use "kamaki flavor list" for more flavors',
                               default=145)
-        parser_create.add_argument("--project_id", help='~okeanos project uuid. Use kamaki project list',
-                                         default='10bdefe7-07dd-43ae-a32e-d9b569640717')
-        parser_create.add_argument("--image_id", help='OS for the VM. Use kamaki image list'
-                              ' Default is "Debian Base" id',
+        parser_create.add_argument("--project_id", help='~okeanos project uuid. Use "kamaki project list" for existing projects',required=True)
+        parser_create.add_argument("--image_id", help='OS for the VM. Use "kamaki image list" for existing images.'
+                              ' Default is "Debian Base 8" id and the script is tested on Debian 8',
                               default="d3782488-1b6d-479d-8b9b-363494064c52")
-        parser_create.add_argument("--git_repo", help='git repo to be cloned',
-                              default="https://github.com/ioannisstenos/e-science.git")
-        parser_create.add_argument("--git_repo_version", help='Version/branch of git repo to be cloned',
-                              default="develop")
-        parser_create.add_argument("--token", help='Authentication token for ~okeanos',
-                              default="AFy0lAkKYT6q9V3DUI8UD6kGCvd7Wil8gsvs99_061g")
+        parser_create.add_argument("--git_repo", help='git repo to be cloned.Default is grnet/e-science.',
+                              default="https://github.com/grnet/e-science.git")
+        parser_create.add_argument("--git_repo_version", help='Version/branch of git repo to be cloned.Default is master.',
+                              default="master")
+        parser_create.add_argument("--token", help='Authentication token for ~okeanos',required=True)
         
-        parser_start.add_argument("--postgresql_username", help='Name of postgresql user.',default="orka_admin")
-        parser_start.add_argument("--postgresql_password", help='Password of postgresql user',
-                              default='escience')
-        parser_start.add_argument("--postgresql_db_name", help='Name of postgresql database used in orka',
-                                        default='escience')
-        parser_start.add_argument("--django_admin_username", help='Django admin username',
-                              default="orka_admin")
-        parser_start.add_argument("--django_admin_email", help='Django admin email',
-                              default="orka_admin@example.com")
-        parser_start.add_argument("--django_admin_password", help='Django admin password',
-                              default="esc1ence@2015")
-        parser_start.add_argument("--orka_admin_password", help='Password of system orka_admin user.'
+        parser_start.add_argument("--postgresql_password", help='Password of postgresql user.',required=True)
+        parser_start.add_argument("--django_admin_password", help='Django admin password.',required=True)
+        parser_start.add_argument("--orka_admin_password", help='Password of system user orka_admin.'
+                                  ,required=True)
+        parser_start.add_argument("--okeanos_user_uuid", help='The okeanos uuid of the user who will login in the orka gui.'
                                   ,required=True)
           
         opts = vars(orka_parser.parse_args(argv[1:]))
