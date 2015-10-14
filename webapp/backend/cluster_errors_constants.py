@@ -62,7 +62,7 @@ auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 pithos_url = 'https://pithos.okeanos.grnet.gr/v1'
 pithos_put_success = 201  # Success pithos response
 pithos_container_not_found = 404
-
+UUID_FILE = 'permitted_uuids.txt'
 # Cluster status constants
 const_cluster_status_destroyed = "0"
 const_cluster_status_active = "1"
