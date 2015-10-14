@@ -72,7 +72,7 @@ def create_cluster(script):
         f.write( response )
         f.close()
     except CalledProcessError, ce:
-        print 'Cluster (re-)creation returned an error code'
+        print 'Cluster (re-)creation returned an error code ' + str(ce.returncode) 
         exit(error_fatal)
     except Exception, e:
         print 'Cluster (re-)creation failed'
@@ -99,7 +99,7 @@ def enforce_actions(script, cluster_id, master_IP):
                 response = subprocess.check_output(cmd, shell=True)
                 print response
             except CalledProcessError, ce:
-                print 'Hadoop ' + action + ' returned an error code'
+                print 'Hadoop ' + action + ' returned an error code ' + str(ce.returncode)
                 exit(error_fatal)
             except Exception, e:
                 print 'Hadoop ' + action + ' failed'
@@ -115,7 +115,7 @@ def enforce_actions(script, cluster_id, master_IP):
                 response = subprocess.check_output(cmd, shell=True)
                 print response  
             except CalledProcessError, ce:
-                print 'Uploading file to HDFS returned an error code'
+                print 'Uploading file to HDFS returned an error code ' + str(ce.returncode)
                 exit(error_fatal)
             except Exception, e:
                 print 'Uploading file to HDFS failed'
@@ -131,7 +131,7 @@ def enforce_actions(script, cluster_id, master_IP):
                 response = subprocess.check_output(cmd, shell=True)
                 print response  
             except CalledProcessError, ce:
-                print 'Retrieving file from HDFS returned an error code'
+                print 'Retrieving file from HDFS returned an error code ' + str(ce.returncode)
                 exit(error_fatal)
             except Exception, e:
                 print 'Retrieving file from HDFS failed'
@@ -144,7 +144,7 @@ def enforce_actions(script, cluster_id, master_IP):
                 response = subprocess.check_output(cmd, shell=True)
                 print response  
             except CalledProcessError, ce:
-                print 'Adding node to hadoop returned an error code'
+                print 'Adding node to hadoop returned an error code ' + str(ce.returncode)
                 exit(error_fatal)
             except Exception, e:
                 print 'Adding node to hadoop failed'
@@ -157,7 +157,7 @@ def enforce_actions(script, cluster_id, master_IP):
                 response = subprocess.check_output(cmd, shell=True)
                 print response  
             except CalledProcessError, ce:
-                print 'Removing node from hadoop returned an error code'
+                print 'Removing node from hadoop returned an error code ' + str(ce.returncode)
                 exit(error_fatal)
             except Exception, e:
                 print 'Removing node from hadoop failed'
@@ -171,7 +171,7 @@ def enforce_actions(script, cluster_id, master_IP):
                 response = subprocess.check_output(cmd, shell=True)
                 print response  
             except CalledProcessError, ce:
-                print 'Local command returned an error code'
+                print 'Local command returned an error code ' + str(ce.returncode)
                 exit(error_fatal)
             except Exception, e:
                 print 'Local command failed'
@@ -225,13 +225,13 @@ def replay(argv, token):
             with open(argv, 'r') as f:
                 script = yaml.load(f)
     except Exception, e:
-        print 'File (or protocol) not found'
+        print e.strerror
         exit(error_fatal)
 
     # check if cluster info is given (cluster info is mandatory)
     if script.get("cluster") is None:
         print "Cluster information is missing"
-        return
+        exit(error_fatal)
     
     print '--- Reproducing Experiment ---'
     # check if the cluster will be created (no cluster id is given)
