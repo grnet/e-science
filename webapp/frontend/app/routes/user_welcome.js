@@ -92,7 +92,19 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
                 });
                 break;
             case 'dsl_replay':
-                console.log('dsl_replay placeholder');
+                dsl.save().then(function(data){
+                    console.log('update');
+                    var count = self.controller.get('count');
+                    var extend = Math.max(5, count);
+                    self.controller.set('count', extend);
+                    self.controller.set('create_cluster_start', true);
+                    self.controller.send('timer', true, store);
+                },function(reason){
+                    if (!Ember.isBlank(reason.message)){
+                        var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+                    }
+                });
             }
         },
 		takeVreAction : function(vreserver){

@@ -25,7 +25,7 @@ from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async, scale_cluster_async, \
     hadoop_cluster_action_async, put_hdfs_async, create_server_async, destroy_server_async, \
-    create_dsl_async, destroy_dsl_async
+    create_dsl_async, destroy_dsl_async, replay_dsl_async
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
 from reroute_ssh import HdfsRequest
@@ -443,9 +443,17 @@ class DslView(APIView):
     
     def put(self, request, *args, **kwargs):
         """
-        Use the experimentn metadata to replay an experiment. Create cluster if necessary, then perform the actions.
+        Use the experiment metadata to replay an experiment. Create cluster if necessary, then perform the actions.
         """
-        return Response("Not Yet Implemented",status=status.HTTP_501_NOT_IMPLEMENTED)
+        serializer = DslDeleteSerializer(data=request.DATA)
+        if serializer.is_valid():
+            user_token = Token.objects.get(key=request.auth)
+            user = UserInfo.objects.get(user_id=user_token.user.user_id)
+            dsl_id = serializer.data['id']
+            r_dsl = replay_dsl_async.delay(user.okeanos_token, dsl_id)
+            task_id = r_dsl.id
+            return Response({"id":dsl_id, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors)  
     
     def delete(self, request, *args, **kwargs):
         """

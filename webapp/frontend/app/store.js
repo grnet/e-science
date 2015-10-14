@@ -229,11 +229,15 @@ App.UservreserverSerializer = DS.RESTSerializer.extend({
 
 App.DslSerializer = DS.RESTSerializer.extend({
 	attrs : {
-	    action_date : {serialize : false},
-	    task_id : {serialize : false},
+        //dsl_name : {serialize : false},
+        action_date : {serialize : false},
+        //dsl_status : {serialize : false},
+        //cluster_id : {serialize : false},
+        //pithos_path : {serialize : false},
+        task_id : {serialize : false},
         state : {serialize : false},
-		user : {serialize : false},
-		dsl_data : {serialize : false}
+        user : {serialize : false},
+        dsl_data : {serialize : false}
 	}
 });
 

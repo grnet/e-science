@@ -129,7 +129,6 @@ def destroy_server(token, id):
 
 def create_dsl(choices):
     """Creates a Reproducible Experiments Metadata  file in Pithos."""
-    
     if choices['pithos_path'].startswith('/'):
         choices['pithos_path'] = choices['pithos_path'][1:]
     if choices['pithos_path'].endswith('/'):
@@ -155,17 +154,32 @@ def create_dsl(choices):
     response = r.status_code
     if response == pithos_put_success:
         db_dsl_update(choices['token'],dsl_id,state='Created',dsl_data=yaml_data)
+        return dsl_id, choices['pithos_path'], choices['dsl_name']
+    else:
+        msg = "Failed to save experiment metadata %s to %s" % (choices['dsl_name'], choices['pithos_path'])
+        raise ClientError(msg, error_container)
         
         
 def destroy_dsl(token, id):
     """Destroys a Reproducible Experiments Metadata file in Pithos."""
     
-    # TODO placeholders for actual implementation
     # just remove from our DB for now
     dsl = Dsl.objects.get(id=id)
     db_dsl_delete(token,id)
     return dsl.id
 
+def replay_dsl(token, id):
+    """Replays an experiment with configuration parameters and actions in sequence"""
+    dsl = Dsl.objects.get(id=id)
+    # pre execution checks
+    
+    # cluster section
+    
+    # configuration section 
+    
+    # actions section
+    return dsl.id
+    
 
 def get_pithos_container_info(uuid, pithos_path, token):
     """Request to Pithos to see if container exists. """
