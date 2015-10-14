@@ -91,3 +91,4 @@ date -u -d @"$DIFF" +'%-Mm %-Ss'
 echo "Info saved in $SERVERNAME.txt in current directory."
 URL="http://$IP"
 xdg-open $URL &
+
