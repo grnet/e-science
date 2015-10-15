@@ -72,12 +72,12 @@
   - name: Edit pg_hba.conf
     sudo: yes
     lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
-    tags: postimage,update
+    tags: postimage
 
   - name: Restart PostgreSql service
     sudo: yes
     service: name=postgresql state=restarted
-    tags: postimage,update
+    tags: postimage
 
   - name: Create PostgreSql user
     sudo: yes
