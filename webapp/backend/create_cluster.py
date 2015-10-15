@@ -357,8 +357,7 @@ class YarnCluster(object):
         if self.vre_req_script:
             vre_script_file_name = 'scripts/{0}'.format(vre_script_name)
         # Check if user chose ssh keys or not.
-        ssh_key_selected = self.opts.get('ssh_key_selection','no_ssh_key_selected')
-        if ssh_key_selected == 'no_ssh_key_selected':
+        if self.opts['ssh_key_selection'] is None or self.opts['ssh_key_selection'] == 'no_ssh_key_selected':
             self.ssh_file = 'no_ssh_key_selected'
         else:
             self.ssh_key_file(self.server_name_postfix_id)
@@ -444,8 +443,7 @@ class YarnCluster(object):
         self.cluster_name_postfix_id = '%s%s%s' % (self.opts['cluster_name'], '-', self.cluster_id)
 
         # Check if user chose ssh keys or not.
-        ssh_key_selected = self.opts.get('ssh_key_selection','no_ssh_key_selected')
-        if ssh_key_selected == 'no_ssh_key_selected':
+        if self.opts['ssh_key_selection'] is None or self.opts['ssh_key_selection'] == 'no_ssh_key_selected':
             self.ssh_file = 'no_ssh_key_selected'
 
         else:

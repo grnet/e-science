@@ -3,25 +3,41 @@
     tags: preimage
     file: path={{my_project_dir}} state=directory
 
+  - name: Create backup for settings.py file
+    tags: update
+    copy: src={{settings_path}}/settings.py dest=/tmp/settings.py
+
   - name: Git clone e-science project in the git directory
-    tags: preimage
-    git: repo={{escience_repo}} dest={{my_project_dir}}/{{my_project_name}} version={{escience_version|default(origin)}}
+    tags:
+     - preimage
+     - update
+    git: repo={{escience_repo}} force=yes dest={{my_project_dir}}/{{my_project_name}} version={{escience_version|default(origin)}}
 
   - name: Copy Java dist directory in ansible folder for yarn role
-    tags: preimage
-    command: cp -r {{path_to_java_dirs}}/dist/ {{settings_path}}/ansible/roles/yarn/files
+    tags:
+     - preimage
+     - update
+    command: cp -rf {{path_to_java_dirs}}/dist/ {{settings_path}}/ansible/roles/yarn/files
 
   - name: Copy Java lib directory in ansible folder for yarn role
-    tags: preimage
-    command: cp -r {{path_to_java_dirs}}/lib/ {{settings_path}}/ansible/roles/yarn/files
+    tags:
+     - preimage
+     - update
+    command: cp -rf {{path_to_java_dirs}}/lib/ {{settings_path}}/ansible/roles/yarn/files
 
   - name: Copy Java dist directory in ansible folder for cloudera role
-    tags: preimage
-    command: cp -r {{path_to_java_dirs}}/dist/ {{settings_path}}/ansible/roles/cloudera/files
+    tags: preimage,update
+    command: cp -rf {{path_to_java_dirs}}/dist/ {{settings_path}}/ansible/roles/cloudera/files
 
   - name: Copy Java lib directory in ansible folder for cloudera role
-    tags: preimage
-    command: cp -r {{path_to_java_dirs}}/lib/ {{settings_path}}/ansible/roles/cloudera/files
+    tags:
+     - preimage
+     - update
+    command: cp -rf {{path_to_java_dirs}}/lib/ {{settings_path}}/ansible/roles/cloudera/files
+
+  - name: Copy correct settings.py
+    tags: update
+    copy: src=/tmp/settings.py dest={{settings_path}}/settings.py
 
   - name: Change owner of conf and logs
     file: path={{user_home}}/{{item}} recurse=yes state=directory
@@ -56,12 +72,12 @@
   - name: Edit pg_hba.conf
     sudo: yes
     lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
-    tags: postimage
+    tags: postimage,update
 
   - name: Restart PostgreSql service
     sudo: yes
     service: name=postgresql state=restarted
-    tags: postimage
+    tags: postimage,update
 
   - name: Create PostgreSql user
     sudo: yes

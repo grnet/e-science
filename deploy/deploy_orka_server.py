@@ -9,6 +9,8 @@ This script manages an Orka server image.
 from sys import argv
 from datetime import datetime
 import os
+import yaml
+import sys
 import random, string
 import base64
 from time import sleep
@@ -50,6 +52,17 @@ class _logger(object):
         }
         logging.addLevelName(REPORT, "REPORT")
         logging.addLevelName(SUMMARY, "SUMMARY")
+
+    def valid_file_is(self, val):
+        """
+        :param val: str
+        :return val if val is a valid filename
+        """
+        val = val.replace('~', os.path.expanduser('~'))
+        if os.path.isfile(val):
+            return val
+        else:
+            raise ArgumentTypeError(" %s file does not exist." % val)
         
 def check_credentials(token, auth_url=auth_url):
     """Identity,Account/Astakos. Test authentication credentials"""
@@ -152,7 +165,33 @@ def personality(ssh_keys_path=''):
                     path='/root/.ssh/config',
                     owner='root', group='root', mode=0600))
         return personality
-    
+
+def query_yes_no(question, default="yes"):
+    """Ask a yes/no question and return the answer.
+    "default" is the presumed answer if the user just hits <Enter>.
+    The "answer" return value is True for "yes" or False for "no".
+    """
+    valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
+    if default is None:
+        prompt = " [y/n] "
+    elif default == "yes":
+        prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
+    else:
+        raise ValueError("invalid default answer: '%s'" % default)
+
+    while True:
+        sys.stdout.write(question + prompt)
+        choice = raw_input().lower()
+        if default is not None and choice == '':
+            return valid[default]
+        elif choice in valid:
+            return valid[choice]
+        else:
+            sys.stdout.write("Please respond with 'yes' or 'no' "
+                             "(or 'y' or 'n').\n")
+
 class OrkaServer(object):
     """
     Class for starting an Orka Server
@@ -160,10 +199,24 @@ class OrkaServer(object):
     def __init__(self, opts):
         """Initialization of OrkaServer data attributes"""
         self.opts = opts
-        self.db_password = self.opts['postgresql_password']
-        self.django_admin_password = self.opts['django_admin_password']
-        self.ansible_sudo_pass = self.opts['orka_admin_password']
-        self.user_uuid = self.opts['okeanos_user_uuid']
+        # load the sensitive data from the yaml file
+        with open(self.opts['file'], 'r') as f:
+            self.script = yaml.load(f)     
+        # remove file
+        response = query_yes_no("The file " + self.opts['file'] + " will be deleted. Make sure you have taken the necessary steps to remember your passwords.")
+        if response:
+            os.remove(self.opts['file'])
+
+    def check_pass_length(self, password):
+        """
+        Function that checks the length of passwords.
+        Passwords should contain at least 8 characters
+        """
+        if len(password) < 8:
+            print 'Passwords should contain at least 8 characters'
+            exit(error_fatal)
+        else:
+            return password
         
     def create_ansible_hosts(self):
         """
@@ -172,15 +225,10 @@ class OrkaServer(object):
         """
         hosts_filename = os.getcwd() + '/ansible_hosts'
         host = '[webserver]'
-        host_vars = '[webserver:vars]'
         with open(hosts_filename, 'w+') as target:
             target.write(host + '\n')
             target.write('localhost ansible_ssh_host=127.0.0.1')
-            target.write(' ansible_ssh_pass={0}\n'.format(self.ansible_sudo_pass))
-            target.write(host_vars +'\n')
-            target.write("db_password={0}\n".format(self.db_password))
-            target.write("django_admin_password={0}\n".format(self.django_admin_password))
-            target.write("ansible_sudo_pass={0}\n".format(self.ansible_sudo_pass))
+            
         return hosts_filename
     
     def create_permitted_uuids_file(self,uuid):
@@ -213,12 +261,29 @@ class OrkaServer(object):
         """
         Starts an orka server
         """
+        # set passwords
+        self.db_password = self.check_pass_length(self.script.get("postgresql_password"))
+        self.django_admin_password = self.check_pass_length(self.script.get("django_admin_password"))
+        self.ansible_sudo_pass = self.script.get("orka_admin_password")
+        self.user_uuid = self.script.get("okeanos_user_uuid")
+
         self.create_ansible_hosts()
         self.create_permitted_uuids_file(self.user_uuid)
         self.create_encrypt_file(self.user_uuid)
-        ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True" -t postimage'
+        vars = 'ansible_ssh_pass={0} db_password={1} django_admin_password={2} ansible_sudo_pass={0}'.format(self.ansible_sudo_pass,
+                                                                                                             self.db_password,self.django_admin_password)
+        ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver {0}" -t postimage'.format(vars)
         subprocess.call(ansible_command, shell=True)
         logging.log(REPORT, 'Orka server has started.')
+        
+    def update(self):
+        """
+        Updates orka server
+        """
+        self.ansible_sudo_pass = self.script.get("orka_admin_password")
+        ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver ansible_ssh_pass={0}" -t update'.format(self.ansible_sudo_pass)
+        subprocess.call(ansible_command, shell=True)
+        logging.log(REPORT, 'Orka server has been updated.')
         
         
 class OrkaImage(object):
@@ -308,8 +373,9 @@ def main():
     parser_create = orka_subparsers.add_parser('create',
                                      help='Create an Orka management image'
                                    ' on ~okeanos.')
-    parser_start = orka_subparsers.add_parser('start', help='Start orka server. User must give the correct'
-    ' "orka_admin_password" and "okeanos_user_uuid" arguments and anything he/she wants for arguments "postgresql_password" and "django_admin_password"')
+    parser_start = orka_subparsers.add_parser('start', help='Start orka server. User must provide a yaml file with the correct properties')
+    
+    parser_update = orka_subparsers.add_parser('update', help='Update orka server')
     
     if len(argv) > 1:
         
@@ -325,22 +391,19 @@ def main():
         parser_create.add_argument("--git_repo_version", help='Version/branch of git repo to be cloned.Default is master.',
                               default="master")
         parser_create.add_argument("--token", help='Authentication token for ~okeanos',required=True)
-        
-        parser_start.add_argument("--postgresql_password", help='Password of postgresql user.',required=True)
-        parser_start.add_argument("--django_admin_password", help='Django admin password.',required=True)
-        parser_start.add_argument("--orka_admin_password", help='Password of system user orka_admin.'
-                                  ,required=True)
-        parser_start.add_argument("--okeanos_user_uuid", help='The okeanos uuid of the user who will login in the orka gui.'
-                                  ,required=True)
-          
+
+        parser_start.add_argument('file', type=checker.valid_file_is, 
+                                  help='A file containing sensitive info (e.g. passwords).')
+
         opts = vars(orka_parser.parse_args(argv[1:]))
         verb = argv[1]  # Main action, decision follows
         if verb == 'create':
             orka_image = OrkaImage(opts)
             orka_image.create()
-        elif verb == 'start':         
+        else:         
             orka_server = OrkaServer(opts)
-            orka_server.start()       
+            orka_server.__getattribute__(verb)()
+
     else:
         logging.error('No arguments were given')
         orka_parser.parse_args(' -h'.split())
