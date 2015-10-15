@@ -20,14 +20,21 @@
                         <div class="form-group">
                             <label class="control-label col-sm-5" for="id_dsl_cluster">Source Cluster</label>
                             <div class="col col-sm-7">
-                                {{view "select" 
-                                content=filtered_clusters
-                                optionValuePath="content.id"
-                                optionLabelPath="content.cluster_name_noprefix"
-                                value=selected_cluster_id
-                                prompt="*Select cluster*"
-                                id="id_dsl_cluster"
-                                class="btn-primary btn-sm btn-block text-left"}}
+                                <div class="input-group input-group-sm">
+	                                {{view "select" 
+	                                content=filtered_clusters
+	                                optionValuePath="content.id"
+	                                optionLabelPath="content.cluster_name_noprefix"
+	                                value=selected_cluster_id
+	                                prompt="*Select cluster*"
+	                                id="id_dsl_cluster"
+	                                class="btn-primary btn-sm btn-block text-left"}}
+	                                <span class="input-group-btn">
+	                                	<button id="id_select_cluster_reset" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" data-title='Reset to import Metadata' {{action "reset"}}>
+		                                    <i class="glyphicon glyphicon-refresh"></i>
+		                            	</button>
+	                                </span>
+                                </div>
                             </div>
                             <div class="row text-center text-danger col col-sm-12">
                                 {{alert_missing_input_dsl_source}}
@@ -45,12 +52,12 @@
                                 <div class="input-group input-group-sm">
                                     {{input type="text" 
                                     value=dsl_filename
-                                    placeholder="name_id_date_time-cluster-metadata"
+                                    placeholder="filename"
                                     required="true"
                                     id="id_dsl_filename"
                                     classNames="form-control"}}
                                     <span class="input-group-btn">
-                                        <button id="id_dsl_filename_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" data-title='Set Default' {{action "dsl_filename_default"}}>
+                                        <button id="id_dsl_filename_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" data-title='Set Default' {{bind-attr disabled="create_dsl_disabled"}} {{action "dsl_filename_default"}}>
                                             <i class="glyphicon glyphicon-pencil"></i>
                                         </button>
                                     </span>
@@ -59,17 +66,17 @@
                             <div class="row text-center text-danger col col-sm-12">
                                 {{alert_missing_input_dsl_name}}
                             </div>
-                            <label class="control-label col-sm-5" for="id_pithos_destination">Pithos destination </label>
+                            <label class="control-label col-sm-5" for="id_pithos_destination">Pithos path </label>
                             <div class="col col-sm-7">
                                 <div class="input-group input-group-sm">
                                     {{input type="text" 
                                     value=dsl_pithos_path
-                                    placeholder="container"
+                                    placeholder="path"
                                     required="true"
                                     id="id_pithos_destination"
                                     classNames="form-control"}}
                                     <span class="input-group-btn">
-                                        <button id="id_dsl_pithos_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" data-title='Set Default' {{action "dsl_pithospath_default"}}>
+                                        <button id="id_dsl_pithos_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" data-title='Set Default' {{bind-attr disabled="create_dsl_disabled"}} {{action "dsl_pithospath_default"}}>
                                             <i class="glyphicon glyphicon-pencil"></i>
                                         </button>
                                     </span>
@@ -80,8 +87,14 @@
                             </div>
                             <div class="col col-sm-5"></div>
                             <div class="col col-sm-7">
-                                <button {{bind-attr id='model.id_dsl_create'}} class="btn btn-sm btn-primary btn-block"{{action 'dsl_create'}}>
+                                <button {{bind-attr id='model.id_dsl_create'}} {{bind-attr disabled="create_dsl_disabled"}} class="btn btn-sm btn-primary btn-block"{{action 'dsl_create' "create"}}>
                                         Save Metadata <b class="glyphicon glyphicon-save-file text-success"></b>
+                                </button>
+                            </div>
+                            <div class="col col-sm-5"></div>
+                            <div class="col col-sm-7">
+                            	<button {{bind-attr id='model.id_import_dsl'}} {{bind-attr disabled="import_dsl_disabled"}} class="btn btn-sm btn-primary btn-block"{{action 'dsl_create'}}>
+                                        Import Metadata <b class="glyphicon glyphicon-import text-success"></b>
                                 </button>
                             </div>
                         </div>

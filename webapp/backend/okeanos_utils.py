@@ -12,6 +12,7 @@ import subprocess
 import yaml
 import urllib
 import requests
+from urllib2 import urlopen, Request, HTTPError
 from base64 import b64encode
 from os.path import abspath, join, expanduser, basename
 from kamaki.clients import ClientError
@@ -129,15 +130,8 @@ def destroy_server(token, id):
 
 def create_dsl(choices):
     """Creates a Reproducible Experiments Metadata  file in Pithos."""
-    if choices['pithos_path'].startswith('/'):
-        choices['pithos_path'] = choices['pithos_path'][1:]
-    if choices['pithos_path'].endswith('/'):
-        choices['pithos_path'] = choices['pithos_path'][:-1]
+    
     uuid = get_user_id(unmask_token(encrypt_key,choices['token']))
-    container_status_code = get_pithos_container_info(uuid, choices['pithos_path'], choices['token'])
-    if container_status_code == pithos_container_not_found:
-        msg = 'Container not found error {0}'.format(container_status_code)
-        raise ClientError(msg, error_container)
     action_date = datetime.now().replace(microsecond=0)
     cluster = ClusterInfo.objects.get(id=choices['cluster_id'])
     data = {'cluster': {'name': cluster.cluster_name, 'project_name': cluster.project_name, 'image': cluster.os_image, 'disk_template': u'{0}'.format(cluster.disk_template),
@@ -156,8 +150,9 @@ def create_dsl(choices):
         db_dsl_update(choices['token'],dsl_id,state='Created',dsl_data=yaml_data)
         return dsl_id, choices['pithos_path'], choices['dsl_name']
     else:
+        db_dsl_update(choices['token'],dsl_id,state='Failed')
         msg = "Failed to save experiment metadata %s to %s" % (choices['dsl_name'], choices['pithos_path'])
-        raise ClientError(msg, error_container)
+        raise ClientError(msg, error_pithos_connection)
         
         
 def destroy_dsl(token, id):
@@ -166,6 +161,57 @@ def destroy_dsl(token, id):
     dsl = Dsl.objects.get(id=id)
     db_dsl_delete(token,id)
     return dsl.id
+
+def import_dsl(choices):
+    """Imports a Reproducible Experiments Metadata file from Pithos."""
+    
+    uuid = get_user_id(unmask_token(encrypt_key,choices['token']))
+    url = '{0}/{1}/{2}/{3}'.format(pithos_url, uuid, choices['pithos_path'], urllib.quote(choices['dsl_name']))
+    headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,choices['token']))}
+    request = Request(url, headers=headers)
+    try:
+        pithos_input_stream = urlopen(request).read()
+        task_id = current_task.request.id
+        dsl_id = db_dsl_create(choices, task_id)
+        db_dsl_update(choices['token'],dsl_id,state='Created',dsl_data=pithos_input_stream)
+        return dsl_id, choices['pithos_path'], choices['dsl_name']
+    except HTTPError, e:
+        raise HTTPError(e, error_import_dsl)
+
+
+def check_pithos_path(pithos_path):
+    """Check given pithos path to be in a specific format."""
+    
+    if pithos_path.startswith('/'):
+        pithos_path = pithos_path[1:]
+    if pithos_path.endswith('/'):
+        pithos_path = pithos_path[:-1]
+    return pithos_path
+
+
+def check_pithos_object_exists(pithos_path, dsl_name, token):
+    """Request to Pithos to see if object exists."""
+    
+    uuid = get_user_id(unmask_token(encrypt_key,token))
+    url = '{0}/{1}/{2}/{3}'.format(pithos_url, uuid, pithos_path, dsl_name)
+    headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,token))}
+    r = requests.head(url, headers=headers)
+    response = r.status_code
+    return response
+
+
+def get_pithos_container_info(pithos_path, token):
+    """Request to Pithos to see if container exists."""
+    
+    if '/' in pithos_path:
+        pithos_path = pithos_path.split("/", 1)[0]
+    uuid = get_user_id(unmask_token(encrypt_key,token))
+    url = '{0}/{1}/{2}'.format(pithos_url, uuid, pithos_path)
+    headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,token))}
+    r = requests.head(url, headers=headers)
+    response = r.status_code
+    return response
+
 
 def replay_dsl(token, id):
     """Replays an experiment with configuration parameters and actions in sequence"""
@@ -224,17 +270,6 @@ def replay_dsl(token, id):
     
     return dsl.id
     
-
-def get_pithos_container_info(uuid, pithos_path, token):
-    """Request to Pithos to see if container exists. """
-    
-    if '/' in pithos_path:
-        pithos_path = pithos_path.split("/", 1)[0]
-    url = '{0}/{1}/{2}'.format(pithos_url, uuid, pithos_path)
-    headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,token))}
-    r = requests.head(url, headers=headers)
-    response = r.status_code
-    return response
 
 def get_public_ip_id(cyclades_network_client,float_ip):  
     """Return IP dictionary of an ~okeanos public IP"""
