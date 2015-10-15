@@ -373,9 +373,13 @@ def main():
     parser_create = orka_subparsers.add_parser('create',
                                      help='Create an Orka management image'
                                    ' on ~okeanos.')
-    parser_start = orka_subparsers.add_parser('start', help='Start orka server. User must provide a yaml file with the correct properties')
     
-    parser_update = orka_subparsers.add_parser('update', help='Update orka server')
+    parser_common = ArgumentParser(add_help=False)
+    parser_common.add_argument('file', type=checker.valid_file_is, 
+                                  help='A file containing sensitive info (e.g. passwords).')
+    parser_start = orka_subparsers.add_parser('start', parents=[parser_common], help='Start orka server. User must provide a yaml file with the correct properties')
+    
+    parser_update = orka_subparsers.add_parser('update', parents=[parser_common], help='Update orka server')
     
     if len(argv) > 1:
         
@@ -391,9 +395,7 @@ def main():
         parser_create.add_argument("--git_repo_version", help='Version/branch of git repo to be cloned.Default is master.',
                               default="master")
         parser_create.add_argument("--token", help='Authentication token for ~okeanos',required=True)
-
-        parser_start.add_argument('file', type=checker.valid_file_is, 
-                                  help='A file containing sensitive info (e.g. passwords).')
+        
 
         opts = vars(orka_parser.parse_args(argv[1:]))
         verb = argv[1]  # Main action, decision follows
