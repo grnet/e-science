@@ -22,6 +22,17 @@ from pipes import quote
 requests.packages.urllib3.disable_warnings()
 
 
+def get_user_id(token):
+    """Check kamaki and returns user uuid from matching ~okeanos token"""
+    auth = AstakosClient(auth_url, token)
+    try:
+        logging.info(' Get the uuid')
+        uuid = auth.user_info['id']
+        return uuid
+    except ClientError:
+        msg = 'Failed to get uuid from identity server'
+        raise ClientError(msg)
+
 def get_from_kamaki_conf(section, option, action=None):
     """ 
     Process option 'option' from section 'section' from .kamakirc file 

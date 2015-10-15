@@ -162,18 +162,77 @@ def create_dsl(choices):
     r = requests.put(url, headers=headers, data=yaml_data) # send file to Pithos
     response = r.status_code
     if response == pithos_put_success:
-        db_dsl_update(choices['token'],dsl_id,state='Created')
+        db_dsl_update(choices['token'],dsl_id,state='Created',dsl_data=yaml_data)
+        return dsl_id, choices['pithos_path'], choices['dsl_name']
+    else:
+        msg = "Failed to save experiment metadata %s to %s" % (choices['dsl_name'], choices['pithos_path'])
+        raise ClientError(msg, error_container)
         
         
 def destroy_dsl(token, id):
     """Destroys a Reproducible Experiments Metadata file in Pithos."""
-    
-    # TODO placeholders for actual implementation
     # just remove from our DB for now
     dsl = Dsl.objects.get(id=id)
     db_dsl_delete(token,id)
     return dsl.id
 
+def replay_dsl(token, id):
+    """Replays an experiment with configuration parameters and actions in sequence"""
+    dsl = Dsl.objects.get(id=id)
+    # pre execution checks
+    dsl_data_yaml = dsl.dsl_data
+    dsl_data_dict = yaml.safe_load(dsl_data_yaml)
+    # map yaml key names to cluster creation json payload keys
+    dslkeys_to_clusteroptions = {'name':'cluster_name','size':'cluster_size','image':'os_choice',\
+                                 'flavor_master':['cpu_master','ram_master','disk_master'],\
+                                 'flavor_slaves':['cpu_slaves','ram_slaves','disk_slaves']}
+    cluster_options = dsl_data_dict.get('cluster',{})
+    cluster_options.update(dsl_data_dict.get('configuration',{}))
+    for (key,value) in dslkeys_to_clusteroptions.iteritems():
+        option_val = cluster_options.pop(key,None)
+        if option_val is not None:  
+            if type(option_val) is list:
+                for i in range(len(value)):
+                    if option_val[i] is not None:
+                        cluster_options.setdefault(value[i],option_val[i])
+                    else:
+                        msg = "Mandatory cluster option %s is missing from %s/%s" % (value[i], dsl.dsl_name, key)
+                        raise ClientError(msg, error_fatal)
+            else:
+                if key=="name":
+                    # [orka]- prefix is added automatically in create cluster, remove it if found in name to avoid duplication
+                    option_val = option_val[7:] if option_val.startswith("[orka]-") else option_val
+                cluster_options.setdefault(value,option_val)
+        else:
+            msg = "Mandatory cluster option %s is missing from %" % (key, dsl.dsl_name)
+            raise ClientError(msg, error_fatal)
+    # inject options that are not not mandatory so might be missing but should have values
+    # only sets a default if a value has not already been parsed
+    cluster_options.setdefault('token',token) # inject the masked token in options.
+    cluster_options.setdefault('admin_password','') #inject an empty admin password value if none is parsed
+    cluster_options.setdefault('dfs_blocksize','128')
+    replication_factor_default = str(min(int(cluster_options['cluster_size'])-1,2))
+    cluster_options.setdefault('replication_factor',replication_factor_default)
+    # cluster section
+    # only need to import create cluster if we are going to be making a cluster
+    from backend.create_cluster import YarnCluster
+    state_msg = 'Started experiment cluster creation'
+    current_task.update_state(state=state_msg)
+    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
+    c_cluster = YarnCluster(cluster_options)
+    MASTER_IP, servers, password, cluster_id = c_cluster.create_yarn_cluster()
+    if cluster_id > 0:
+        state_msg = 'Experiment cluster created successfully'
+        db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=state_msg)
+    else:
+        state_msg = 'Experiment cluster creation failed'
+        db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
+    
+    # actions section (investigate how to queue in sequence)
+    
+    
+    return dsl.id
+    
 
 def get_pithos_container_info(uuid, pithos_path, token):
     """Request to Pithos to see if container exists. """
@@ -750,8 +809,7 @@ def check_images(token, project_id):
             hadoop_images.append(image['name'])
     # hadoop images at ordinal 0, vre images at 1
     available_images.append(hadoop_images)
-    available_images.append(vre_images)
-            
+    available_images.append(vre_images)        
     return available_images
 
 

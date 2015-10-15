@@ -26,6 +26,11 @@ App.UserWelcomeView = Ember.View.extend({
                 $("[data-toggle='tooltip']").tooltip();
             });
         });
+        this.addObserver('controller.filtered_dsls.[]', function(){
+            Ember.run.scheduleOnce('afterRender', self, function() {
+                $("[data-toggle='tooltip']").tooltip();
+            });
+        });
 		$(function() {
 			$("[data-toggle='tooltip']").tooltip();
 			var tab_element = $("#id_userclusters_tab");
@@ -37,5 +42,6 @@ App.UserWelcomeView = Ember.View.extend({
 		this.removeObserver('controller.count');
 		this.removeObserver('controller.filtered_clusters.[]');
 		this.removeObserver('controller.filtered_vreservers.[]');
+		this.removeObserver('controller.filtered_dsls.[]');
 	}
 });
