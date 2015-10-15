@@ -80,6 +80,7 @@ Optional arguments for create command:
 (available images can be found with **orka images** command)
     --replication_factor="HDFS replication factor. Default is 2",
     --dfs_blocksize="HDFS block size (in MB). Default is 128",
+    --personality="Defines a file that includes a public key to be injected to the master VM"
 
 ### Create Hadoop cluster from a pre-configured image
 
