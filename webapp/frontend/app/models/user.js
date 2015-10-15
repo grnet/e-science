@@ -90,7 +90,7 @@ App.Dsl = DS.Model.extend({
         }else{
             return '';
         }
-    }.property('server_status'),
+    }.property('dsl_status','state'),
     action_dsl_confirm : function(key, value){
         this.set('confirm_action', value);
         return this.get('confirm_action');
