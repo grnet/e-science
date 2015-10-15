@@ -10,6 +10,7 @@ from sys import argv
 from datetime import datetime
 import os
 import yaml
+import sys
 import random, string
 import base64
 from time import sleep
@@ -165,6 +166,32 @@ def personality(ssh_keys_path=''):
                     owner='root', group='root', mode=0600))
         return personality
 
+def query_yes_no(question, default="yes"):
+    """Ask a yes/no question and return the answer.
+    "default" is the presumed answer if the user just hits <Enter>.
+    The "answer" return value is True for "yes" or False for "no".
+    """
+    valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
+    if default is None:
+        prompt = " [y/n] "
+    elif default == "yes":
+        prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
+    else:
+        raise ValueError("invalid default answer: '%s'" % default)
+
+    while True:
+        sys.stdout.write(question + prompt)
+        choice = raw_input().lower()
+        if default is not None and choice == '':
+            return valid[default]
+        elif choice in valid:
+            return valid[choice]
+        else:
+            sys.stdout.write("Please respond with 'yes' or 'no' "
+                             "(or 'y' or 'n').\n")
+
 class OrkaServer(object):
     """
     Class for starting an Orka Server
@@ -180,6 +207,11 @@ class OrkaServer(object):
         self.django_admin_password = self.check_pass_length(script.get("django_admin_password"))
         self.ansible_sudo_pass = script.get("orka_admin_password")
         self.user_uuid = script.get("okeanos_user_uuid")
+        
+        # remove file
+        response = query_yes_no("The file " + self.opts['file'] + " will be deleted. Make sure you have taken the necessary steps to remember your passwords.")
+        if response:
+            os.remove(self.opts['file'])
 
     def check_pass_length(self, password):
         """
@@ -189,6 +221,8 @@ class OrkaServer(object):
         if len(password) < 8:
             print 'Passwords should contain at least 8 characters'
             exit(error_fatal)
+        else:
+            return password
         
     def create_ansible_hosts(self):
         """
