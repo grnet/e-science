@@ -190,7 +190,7 @@ class OrkaServer(object):
         PROJECT_PATH = join(dirname(abspath(__file__)), '..')
         FILE_PATH = join(PROJECT_PATH,UUID_FILE)
         with open(FILE_PATH,'a+') as target:
-            target.write(uuid)
+            target.write(uuid + '\n')
         return 0
         
     def create_encrypt_file(self,uuid):
@@ -219,8 +219,6 @@ class OrkaServer(object):
         ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True" -t postimage'
         subprocess.call(ansible_command, shell=True)
         logging.log(REPORT, 'Orka server has started.')
-        logging.log(REPORT, 'Django administration Username: {0}'.format('orka_admin'))
-        logging.log(REPORT, 'Django administration Password: {0}'.format(self.django_admin_password))
         
         
 class OrkaImage(object):
