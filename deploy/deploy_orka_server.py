@@ -9,6 +9,7 @@ This script manages an Orka server image.
 from sys import argv
 from datetime import datetime
 import os
+import yaml
 import random, string
 import base64
 from time import sleep
@@ -50,6 +51,17 @@ class _logger(object):
         }
         logging.addLevelName(REPORT, "REPORT")
         logging.addLevelName(SUMMARY, "SUMMARY")
+
+    def valid_file_is(self, val):
+        """
+        :param val: str
+        :return val if val is a valid filename
+        """
+        val = val.replace('~', os.path.expanduser('~'))
+        if os.path.isfile(val):
+            return val
+        else:
+            raise ArgumentTypeError(" %s file does not exist." % val)
         
 def check_credentials(token, auth_url=auth_url):
     """Identity,Account/Astakos. Test authentication credentials"""
@@ -152,7 +164,7 @@ def personality(ssh_keys_path=''):
                     path='/root/.ssh/config',
                     owner='root', group='root', mode=0600))
         return personality
-    
+
 class OrkaServer(object):
     """
     Class for starting an Orka Server
@@ -160,10 +172,23 @@ class OrkaServer(object):
     def __init__(self, opts):
         """Initialization of OrkaServer data attributes"""
         self.opts = opts
-        self.db_password = self.opts['postgresql_password']
-        self.django_admin_password = self.opts['django_admin_password']
-        self.ansible_sudo_pass = self.opts['orka_admin_password']
-        self.user_uuid = self.opts['okeanos_user_uuid']
+        # load the sensitive data from the yaml file
+        with open(self.opts['file'], 'r') as f:
+            script = yaml.load(f)
+        # set passwords
+        self.db_password = self.check_pass_length(script.get("postgresql_password"))
+        self.django_admin_password = self.check_pass_length(script.get("django_admin_password"))
+        self.ansible_sudo_pass = script.get("orka_admin_password")
+        self.user_uuid = script.get("okeanos_user_uuid")
+
+    def check_pass_length(self, password):
+        """
+        Function that checks the length of passwords.
+        Passwords should contain at least 8 characters
+        """
+        if len(password) < 8:
+            print 'Passwords should contain at least 8 characters'
+            exit(error_fatal)
         
     def create_ansible_hosts(self):
         """
@@ -325,14 +350,10 @@ def main():
         parser_create.add_argument("--git_repo_version", help='Version/branch of git repo to be cloned.Default is master.',
                               default="master")
         parser_create.add_argument("--token", help='Authentication token for ~okeanos',required=True)
-        
-        parser_start.add_argument("--postgresql_password", help='Password of postgresql user.',required=True)
-        parser_start.add_argument("--django_admin_password", help='Django admin password.',required=True)
-        parser_start.add_argument("--orka_admin_password", help='Password of system user orka_admin.'
-                                  ,required=True)
-        parser_start.add_argument("--okeanos_user_uuid", help='The okeanos uuid of the user who will login in the orka gui.'
-                                  ,required=True)
-          
+
+        parser_start.add_argument('file', type=checker.valid_file_is, 
+                                  help='A file containing sensitive info (e.g. passwords).')
+
         opts = vars(orka_parser.parse_args(argv[1:]))
         verb = argv[1]  # Main action, decision follows
         if verb == 'create':
