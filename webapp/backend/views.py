@@ -25,7 +25,7 @@ from django_db_after_login import *
 from cluster_errors_constants import *
 from tasks import create_cluster_async, destroy_cluster_async, scale_cluster_async, \
     hadoop_cluster_action_async, put_hdfs_async, create_server_async, destroy_server_async, \
-    create_dsl_async, destroy_dsl_async
+    create_dsl_async, destroy_dsl_async, replay_dsl_async
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
 from reroute_ssh import HdfsRequest
@@ -310,7 +310,7 @@ class SessionView(APIView):
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
             token = serializer.data['token']
-            if check_user_credentials(token) == AUTHENTICATED:
+            if check_user_credentials(token) == AUTHENTICATED and check_user_uuid(token) == 0:
                 self.user = db_after_login(token)
                 self.serializer_class = UserInfoSerializer(self.user)
                 return Response(self.serializer_class.data)
@@ -410,16 +410,6 @@ class DslView(APIView):
     resource_name = 'dsl'
     serializer_class = DslsSerializer
     
-    def get(self, request, *args, **kwargs):
-        """
-        Return a serialized Cluster metadata model. User with corresponding status will be
-        found by the escience token.
-        """
-        user_token = Token.objects.get(key=request.auth)
-        self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
-        serializer = self.serializer_class(data=request.DATA, many=True)
-        return Response(serializer.data)
-    
     def post(self, request, *args, **kwargs):
         """
         Handles requests with user's Reproducible Experiments metadata file creation parameters.
@@ -440,6 +430,30 @@ class DslView(APIView):
         # This will be send if user's parameters are not de-serialized
         # correctly.
         return Response(serializer.errors)
+    
+    def get(self, request, *args, **kwargs):
+        """
+        Return a serialized Cluster metadata model. User with corresponding status will be
+        found by the escience token.
+        """
+        user_token = Token.objects.get(key=request.auth)
+        self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
+        serializer = self.serializer_class(data=request.DATA, many=True)
+        return Response(serializer.data)
+    
+    def put(self, request, *args, **kwargs):
+        """
+        Use the experiment metadata to replay an experiment. Create cluster if necessary, then perform the actions.
+        """
+        serializer = DslDeleteSerializer(data=request.DATA)
+        if serializer.is_valid():
+            user_token = Token.objects.get(key=request.auth)
+            user = UserInfo.objects.get(user_id=user_token.user.user_id)
+            dsl_id = serializer.data['id']
+            r_dsl = replay_dsl_async.delay(user.okeanos_token, dsl_id)
+            task_id = r_dsl.id
+            return Response({"id":dsl_id, "task_id": task_id}, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors)  
     
     def delete(self, request, *args, **kwargs):
         """

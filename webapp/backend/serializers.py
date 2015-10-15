@@ -213,7 +213,7 @@ class DslsSerializer(serializers.ModelSerializer):
     """   
     class Meta:
         model = Dsl
-        fields = ('id', 'dsl_name', 'action_date', 'pithos_path', 'cluster_id', 'task_id', 'state')
+        fields = ('id', 'dsl_name', 'action_date', 'dsl_status', 'pithos_path', 'cluster_id', 'task_id', 'state', 'dsl_data')
 
 class DslOptionsSerializer(serializers.Serializer):
     """

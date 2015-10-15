@@ -10,7 +10,7 @@
     Reproducible Experiments metadata Example.
 </p></div>
 <div class="col col-sm-9">
-<pre style="margin: 0; line-height: 125%">
+<pre class="prettyprint lang-yaml">
 cluster:
   size: 2
   disk_template: drbd
@@ -23,15 +23,15 @@ cluster:
   - 2048
   - 10
   image: Hadoop-2.5.2
-  name: <span class="text-info">'[orka]-cluster_name'</span>
+  name: '[orka]-cluster_name'
   project_name: escience.grnet.gr
 configuration:
-  dfs_blocksize: <span class="text-info">'128'</span>
-  replication_factor: <span class="text-info">'1'</span>
+  dfs_blocksize: '128'
+  replication_factor: '1'
 actions:  
  - start
  - put (~/test.xml,/user/hduser/)
- - run_job (hduser, <span class="text-success">"/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi 2 10000"</span>)
+ - run_job (hduser, "/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi 2 10000")
  - get (/user/hduser/test.xml,~/test2.xml)
  - stop
  - format

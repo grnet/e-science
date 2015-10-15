@@ -14,8 +14,10 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			// success
 			var user_clusters = user.get('clusters');
 			var user_vreservers = user.get('vreservers');
+			var user_dsls = user.get('dsls');
 			var num_cluster_records = user_clusters.get('length');
 			var num_vre_records = user_vreservers.get('length');
+			var num_dsl_records = user_dsls.get('length');
 			// console.log('route > model > num_records ' + num_records);
 			var bPending = false;
 			for ( i = 0; i < num_cluster_records; i++) {
@@ -28,6 +30,13 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			}
 			for ( i = 0; i < num_vre_records; i++) {
                 if (user_vreservers.objectAt(i).get('server_status') == '2') {
+                    that.controllerFor('userWelcome').send('timer', true, that.store);
+                    bPending = true;
+                    break;
+                }
+            }
+            for ( i = 0; i < num_dsl_records; i++) {
+                if (user_dsls.objectAt(i).get('dsl_status') == '1') {
                     that.controllerFor('userWelcome').send('timer', true, that.store);
                     bPending = true;
                     break;
@@ -92,10 +101,18 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
                 });
                 break;
             case 'dsl_replay':
-
-                // retrieve parameters from yaml            
-                
-
+                dsl.save().then(function(data){
+                    var count = self.controller.get('count');
+                    var extend = Math.max(5, count);
+                    self.controller.set('count', extend);
+                    self.controller.set('create_cluster_start', true);
+                    self.controller.send('timer', true, store);
+                },function(reason){
+                    if (!Ember.isBlank(reason.message)){
+                        var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+                    }
+                });
             }
         },
 		takeVreAction : function(vreserver){

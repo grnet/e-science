@@ -10,7 +10,7 @@ Ember.Handlebars.helper('formatDate', function(date, options) {
     if (options.hash.format) {
         format = options.hash.format;
     }
-    return new Ember.Handlebars.SafeString(moment(date).format(DateFormats[format]));
+    return Ember.String.htmlSafe(moment(date).format(DateFormats[format]));
 });
 
 // use as {{ printBigNum num separator='.' decimal=','}} separator and decimal are optional

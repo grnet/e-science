@@ -38,7 +38,7 @@ if [ -z "$IP" ]
 fi
 sleep 5
 kamaki -k server create --project-id=$PROJECTGUID --name=$SERVERNAME \
---flavor-id=145 --image-id=6427b9cb-69b3-4012-8164-236ba7f29a90 \
+--flavor-id=145 --image-id=d3782488-1b6d-479d-8b9b-363494064c52 \
 --network=$NID,$IP \
 -p ~/.ssh/id_rsa.pub,/root/.ssh/authorized_keys,root,root,0700 --wait 2>&1 | tee tmp_vm.txt
 VM=$(cat tmp_vm.txt | grep "SNF:fqdn:" |cut -d' ' -f2)
@@ -55,11 +55,7 @@ HOST="root@"$VM
 echo "Waiting a minute for VM to be reachable..."
 sleep 60
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no $HOST \
-'apt-get update;
-apt-get install -y git python python-dev python-pip;
-pip install ansible==1.9.2;
-pip install kamaki==0.13.1;
-pip install django-admin-bootstrapped==2.4.0;
+'apt-get install -y python;
 exit'
 echo "Information" > $SERVERNAME.txt
 echo "===========" >> $SERVERNAME.txt
@@ -82,13 +78,17 @@ echo "[defaults]" > ansible.cfg
 echo "host_key_checking = False" >> ansible.cfg
 echo ""
 echo "Setting up Servers (Ansible)"
-ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True" -t postimage
+ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True" -t preimage #,postimage
 END=$(date +"%s")
 DIFF=$(($END-$START))
 echo ""
 echo "ALL Done in:"
 date -u -d @"$DIFF" +'%-Mm %-Ss'
+<<<<<<< HEAD
 echo "Info saved in $SERVERNAME.txt in current directory."
 URL="http://$IP"
 xdg-open $URL &
 
+=======
+echo "Info saved in $SERVERNAME.txt in current directory."
+>>>>>>> 4deccfc205e866fe4d8fbe06ad694598ab652660

@@ -187,6 +187,11 @@ HADOOP_STATUS_CHOICES = (
      ("3", "Undefined"),
  )
 
+DSL_STATUS_CHOICES = (
+    ("0", "At Rest"),
+    ("1", "Replaying"),
+)
+
 class VreImageCategory(models.Model):
     """
     Definition of orka VRE image categories.
@@ -351,8 +356,8 @@ class ClusterInfo(models.Model):
     replication_factor = models.CharField("Replication factor of HDFS", max_length=255, null=False,
                                       help_text="Replication factor of HDFS")
     
-    dfs_blocksize = models.CharField("HDFS blocksize in bytes", max_length=255, null=False,
-                                      help_text="HDFS blocksize in bytes")
+    dfs_blocksize = models.CharField("HDFS blocksize in megabytes", max_length=255, null=False,
+                                      help_text="HDFS blocksize in megabytes")
     
 
     class Meta:
@@ -423,6 +428,10 @@ class Dsl(models.Model):
     action_date = models.DateTimeField("Action Date", null=False,
                                        help_text="Date and time for"
                                        " the creation of this entry")
+    dsl_status = models.CharField("Experiment Status", max_length=1, default="0",
+                                      choices=DSL_STATUS_CHOICES,
+                                      null=False, help_text="At Rest/Replaying"
+                                      " status of the Experiment")
     cluster_id = models.IntegerField("Linked Cluster Id", null=True, blank=True,
                                      help_text="Cluster Id from which the DSL metadata was extracted.")
 
@@ -436,11 +445,14 @@ class Dsl(models.Model):
     state = models.CharField("Task State", max_length=255,
                                blank=True, help_text="Celery task state")
     
+    dsl_data = models.TextField("DSL data", max_length=4090, null=True,
+                                     blank=True, help_text="DSL data in yaml format.")
+    
     class Meta:
         verbose_name = "Experiment"
 
     def __unicode__(self):
-        return ("%d : %s : cluster_id(%d)") % (self.id, self.dsl_name, self.cluster_id)
+        return ("%s : cluster_id(%d) : %s") % (self.dsl_name, self.cluster_id, DSL_STATUS_CHOICES[int(self.dsl_status)][1])
     
 class Setting(models.Model):
     """

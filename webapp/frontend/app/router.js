@@ -28,7 +28,7 @@ App.Router.map(function() {
         this.route('create');
         // dsl management route
         // /dsl/dsl_id
-        // this.route('management', { path: "/:dsl.id" });
+        this.route('management', { path: "/:dsl.id" });
     });
 	this.resource('help', function() {
 		// /help/images

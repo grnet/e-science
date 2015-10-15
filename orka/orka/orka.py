@@ -272,7 +272,7 @@ class HadoopCluster(object):
                                                         result['master_VM_password']))
 
             # find the appropriate user based on the selected image
-            user = 'hdfs' if 'CDH' in self.opts['image'] else 'hduser'
+            user = 'hdfs' if 'CDH' in self.opts['image'] else DEFAULT_HADOOP_USER
             
             # message for accessing Hue
             if self.opts['admin_password']:
