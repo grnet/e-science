@@ -281,6 +281,7 @@ class OrkaServer(object):
         Updates orka server
         """
         self.ansible_sudo_pass = self.script.get("orka_admin_password")
+        self.create_ansible_hosts()
         ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver ansible_ssh_pass={0}" -t update'.format(self.ansible_sudo_pass)
         subprocess.call(ansible_command, shell=True)
         logging.log(REPORT, 'Orka server has been updated.')
