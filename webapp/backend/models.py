@@ -356,8 +356,8 @@ class ClusterInfo(models.Model):
     replication_factor = models.CharField("Replication factor of HDFS", max_length=255, null=False,
                                       help_text="Replication factor of HDFS")
     
-    dfs_blocksize = models.CharField("HDFS blocksize in bytes", max_length=255, null=False,
-                                      help_text="HDFS blocksize in bytes")
+    dfs_blocksize = models.CharField("HDFS blocksize in megabytes", max_length=255, null=False,
+                                      help_text="HDFS blocksize in megabytes")
     
 
     class Meta:

@@ -47,6 +47,7 @@ App.DslManagementRoute = App.RestrictedRoute.extend({
                     var count = self.controller.get('count');
                     var extend = Math.max(5, count);
                     self.controller.set('count', extend);
+                    self.controller.send('timer', true, store);
                     self.controllerFor('userWelcome').set('create_cluster_start', true);
                     self.controllerFor('userWelcome').send('timer', true, store);
                     self.controllerFor('userWelcome').send('setActiveTab','dsls');
@@ -61,7 +62,14 @@ App.DslManagementRoute = App.RestrictedRoute.extend({
                 break;
             case 'dsl_replay':
                 dsl.save().then(function(data){
-                    console.log('update');
+                    var count = self.controller.get('count');
+                    var extend = Math.max(5, count);
+                    self.controller.set('count', extend);
+                    self.controller.send('timer', true, store);
+                    self.controllerFor('userWelcome').set('create_cluster_start', true);
+                    self.controllerFor('userWelcome').send('timer', true, store);
+                    self.controllerFor('userWelcome').send('setActiveTab','dsls');
+                    self.transitionTo('user.welcome');
                 },function(reason){
                     if (!Ember.isBlank(reason.message)){
                         var msg = {'msg_type':'danger','msg_text':reason.message};

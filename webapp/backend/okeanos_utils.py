@@ -162,7 +162,6 @@ def create_dsl(choices):
         
 def destroy_dsl(token, id):
     """Destroys a Reproducible Experiments Metadata file in Pithos."""
-    
     # just remove from our DB for now
     dsl = Dsl.objects.get(id=id)
     db_dsl_delete(token,id)
@@ -170,11 +169,11 @@ def destroy_dsl(token, id):
 
 def replay_dsl(token, id):
     """Replays an experiment with configuration parameters and actions in sequence"""
-    
     dsl = Dsl.objects.get(id=id)
     # pre execution checks
     dsl_data_yaml = dsl.dsl_data
     dsl_data_dict = yaml.safe_load(dsl_data_yaml)
+    # map yaml key names to cluster creation json payload keys
     dslkeys_to_clusteroptions = {'name':'cluster_name','size':'cluster_size','image':'os_choice',\
                                  'flavor_master':['cpu_master','ram_master','disk_master'],\
                                  'flavor_slaves':['cpu_slaves','ram_slaves','disk_slaves']}
@@ -192,19 +191,35 @@ def replay_dsl(token, id):
                         raise ClientError(msg, error_fatal)
             else:
                 if key=="name":
+                    # [orka]- prefix is added automatically in create cluster, remove it if found in name to avoid duplication
                     option_val = option_val[7:] if option_val.startswith("[orka]-") else option_val
                 cluster_options.setdefault(value,option_val)
         else:
             msg = "Mandatory cluster option %s is missing from %" % (key, dsl.dsl_name)
             raise ClientError(msg, error_fatal)
-    cluster_options.setdefault('token',token)
+    # inject options that are not not mandatory so might be missing but should have values
+    # only sets a default if a value has not already been parsed
+    cluster_options.setdefault('token',token) # inject the masked token in options.
+    cluster_options.setdefault('admin_password','') #inject an empty admin password value if none is parsed
+    cluster_options.setdefault('dfs_blocksize','128')
+    replication_factor_default = str(min(int(cluster_options['cluster_size'])-1,2))
+    cluster_options.setdefault('replication_factor',replication_factor_default)
     # cluster section
     # only need to import create cluster if we are going to be making a cluster
     from backend.create_cluster import YarnCluster
+    state_msg = 'Started experiment cluster creation'
+    current_task.update_state(state=state_msg)
+    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
     c_cluster = YarnCluster(cluster_options)
-#     c_cluster.create_yarn_cluster()
+    MASTER_IP, servers, password, cluster_id = c_cluster.create_yarn_cluster()
+    if cluster_id > 0:
+        state_msg = 'Experiment cluster created successfully'
+        db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=state_msg)
+    else:
+        state_msg = 'Experiment cluster creation failed'
+        db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
     
-    # actions section
+    # actions section (investigate how to queue in sequence)
     
     
     return dsl.id

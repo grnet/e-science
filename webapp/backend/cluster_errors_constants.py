@@ -74,6 +74,9 @@ const_hadoop_status_stopped = "0"
 const_hadoop_status_started = "1"
 const_hadoop_status_format = "2"
 const_hadoop_status_undefined = "3"
+# Experiment status constants
+const_experiment_status_atrest = "0"
+const_experiment_status_replay = "1"
 
 #Set hadoop pending status to 2 (same as hadoop status format and cluster status pending)
 const_hadoop_status_pending = const_hadoop_status_format
