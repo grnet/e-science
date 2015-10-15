@@ -5,7 +5,7 @@
 This script configures the communication between VMs in a ~okeanos
  cluster and installs python in every VM.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 import os
 import logging
@@ -13,7 +13,7 @@ import paramiko
 from time import sleep
 import select
 from celery import current_task
-from cluster_errors_constants import error_hdfs_test_exit_status, const_truncate_limit, FNULL
+from cluster_errors_constants import error_hdfs_test_exit_status, const_truncate_limit, FNULL, DEFAULT_HADOOP_USER
 import xml.etree.ElementTree as ET
 import subprocess
 
@@ -26,6 +26,7 @@ MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
 CHAN_TIMEOUT = 3600  # Paramiko channel timeout
 CONNECTION_TRIES = 9    # Max number(+1) of connection attempts to a VM
 HADOOP_HOME = '/usr/local/hadoop/bin/'
+HADOOP_CONF_DIR = '/usr/local/hadoop/etc/hadoop/'
 
 
 class HdfsRequest(object):
@@ -34,15 +35,15 @@ class HdfsRequest(object):
     """
     def __init__(self, opts):
         self.opts = opts
-        self.ssh_client = establish_connect(self.opts['master_IP'], 'hduser', '',
+        self.ssh_client = establish_connect(self.opts['master_IP'], DEFAULT_HADOOP_USER, '',
                                    MASTER_SSH_PORT)
 
     def check_size(self):
         """
-        Checks file size in remote server and compares it with Hdfs available space.
+        Checks file size in remote server and compares it with HDFS available space.
         """
         from okeanos_utils import read_replication_factor,get_remote_server_file_size
-        report = subprocess.check_output("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no hduser@"
+        report = subprocess.check_output("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "+ DEFAULT_HADOOP_USER + "@"
                                           + self.opts['master_IP'] + " \"" + HADOOP_HOME + 'hdfs' +
                                           " dfsadmin -report /" + "\"", stderr=FNULL, shell=True).splitlines()
         for line in report:
@@ -50,13 +51,13 @@ class HdfsRequest(object):
                 tokens = line.split(' ')
                 dfs_remaining = tokens[2]
                 break
-        hdfs_xml = subprocess.check_output("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no hduser@"
+        hdfs_xml = subprocess.check_output("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "+ DEFAULT_HADOOP_USER + "@"
                                            + self.opts['master_IP'] + " \"" +
-                                           "cat /usr/local/hadoop/etc/hadoop/hdfs-site.xml\"", shell=True)
+                                           "cat "+ HADOOP_CONF_DIR +"hdfs-site.xml\"", shell=True)
 
         document = ET.ElementTree(ET.fromstring(hdfs_xml))
         replication_factor = read_replication_factor(document)
-        # check if file can be uploaded to Hdfs
+        # check if file can be uploaded to HDFS
         file_size = get_remote_server_file_size(self.opts['source'], user=self.opts['user'], password=self.opts['password'])
         if file_size * replication_factor > int(dfs_remaining):
             msg = ' File too big to be uploaded'
@@ -66,7 +67,7 @@ class HdfsRequest(object):
 
     def exec_hadoop_command(self, dest, option, check=''):
         """
-        Execute a Hdfs test command depending on args given.
+        Execute a HDFS test command depending on args given.
         """
         check_cmd = HADOOP_HOME + 'hadoop fs -test' + option + dest
         try:
@@ -85,8 +86,9 @@ class HdfsRequest(object):
 
     def put_file_hdfs(self):
         """
-        Put a file from ftp/http/https/Pithos to Hdfs
+        Put a file from ftp/http/https/Pithos to HDFS
         """
+        
         try:
             self.check_size()
             put_cmd = ' wget --user=' + self.opts['user'] + ' --password=' + self.opts['password'] + ' ' +\
@@ -102,6 +104,7 @@ def start_vre_script(server_ip, password, admin_password, vre_script, admin_emai
     """
     Change vre image's database and login password to user admin_password
     """
+    
     ssh_client = establish_connect(server_ip, 'root', password, MASTER_SSH_PORT)
     command = ". {0} {1} {2} >> logs".format(vre_script, admin_password, admin_email)
     exec_command(ssh_client, command)
@@ -111,6 +114,7 @@ def reroute_ssh_prep(server, master_ip):
     """
     Creates list of host and ip-tables for reroute ssh to all slaves
     """
+    
     hostname_master = master_ip
     list_of_hosts = []  # List of dicts with VM hostnames and their private IPs
     dict_s = {}  # Dictionary that will contain fully qualified domain names
@@ -160,7 +164,7 @@ def get_ready_for_reroute(hostname_master, password):
                                  '--out-interface eth2 -j MASQUERADE')
         exec_command(ssh_client, 'iptables --append FORWARD --in-interface '
                                  'eth2 -j ACCEPT')
-        # iptables commands to route Hdfs 9000 port traffic from master_VM public ip to
+        # iptables commands to route HDFS 9000 port traffic from master_VM public ip to
         # 192.168.0.2, which is the ip used in core-site.xml configuration.
         exec_command(ssh_client, 'iptables -t nat -A PREROUTING -p tcp --dport 9000'
                                  ' -j DNAT --to-destination 192.168.0.2:9000')

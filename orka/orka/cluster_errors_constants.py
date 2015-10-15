@@ -4,7 +4,7 @@
 """
 This module contains the definitions of returned errors and package constants.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 import os
 
@@ -22,6 +22,7 @@ REPORT = 25  # Define logging level of REPORT
 SUMMARY = 29  # Define logging level of SUMMARY
 DEFAULT_SSL_VALUE = False
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
+pithos_url = 'https://pithos.okeanos.grnet.gr/v1'
 default_image = 'Debian Base'
 images_without_hue = ['Debian Base', 'Hadoop-2.5.2']
 default_logging = 'summary'
@@ -42,6 +43,7 @@ const_hadoop_status_started = "1"
 const_hadoop_status_stopped = "0"
 HADOOP_PATH = '/usr/local/hadoop/bin/hdfs'
 DEFAULT_HDFS_DIR = ['/user/hduser', '/user/hduser/']
+DEFAULT_HADOOP_USER ='hduser'
 FNULL = open(os.devnull, 'w')
 block_size = 67108864 # block size in bytes,used in division when transfering files from hdfs to pithos
 # Dictionaries with constants used in images list

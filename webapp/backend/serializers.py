@@ -4,7 +4,7 @@
 """
 Serializers file for django rest framework.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 
 from rest_framework import serializers
@@ -213,7 +213,7 @@ class DslsSerializer(serializers.ModelSerializer):
     """   
     class Meta:
         model = Dsl
-        fields = ('id', 'dsl_name', 'action_date', 'pithos_path', 'cluster_id', 'task_id', 'state', 'dsl_data')
+        fields = ('id', 'dsl_name', 'action_date', 'dsl_status', 'pithos_path', 'cluster_id', 'task_id', 'state', 'dsl_data')
 
 class DslOptionsSerializer(serializers.Serializer):
     """

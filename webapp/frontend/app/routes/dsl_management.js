@@ -33,13 +33,53 @@ App.DslManagementRoute = App.RestrictedRoute.extend({
 	    willTransition : function(transition) {
             // leaving this route
         },
-		
-		takeDslAction : function(experiment) {
+		didTransition : function(){
+		    // entered this route
+		},
+		takeDslAction : function(dsl) {
 			var self = this;
             var store = this.store;
+            var action = dsl.get('action_dsl_confirm');
+            dsl.set('action_dsl_confirm', false);
+            switch(action) {
+            case 'dsl_delete':
+                dsl.destroyRecord().then(function(data) {
+                    var count = self.controller.get('count');
+                    var extend = Math.max(5, count);
+                    self.controller.set('count', extend);
+                    self.controller.send('timer', true, store);
+                    self.controllerFor('userWelcome').set('create_cluster_start', true);
+                    self.controllerFor('userWelcome').send('timer', true, store);
+                    self.controllerFor('userWelcome').send('setActiveTab','dsls');
+                    self.transitionTo('user.welcome');
+                }, function(reason) {
+                    console.log(reason.message);
+                    if (!Ember.isBlank(reason.message)){
+                        var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controllerFor('userWelcome').send('addMessage',msg);
+                    }
+                });
+                break;
+            case 'dsl_replay':
+                dsl.save().then(function(data){
+                    var count = self.controller.get('count');
+                    var extend = Math.max(5, count);
+                    self.controller.set('count', extend);
+                    self.controller.send('timer', true, store);
+                    self.controllerFor('userWelcome').set('create_cluster_start', true);
+                    self.controllerFor('userWelcome').send('timer', true, store);
+                    self.controllerFor('userWelcome').send('setActiveTab','dsls');
+                    self.transitionTo('user.welcome');
+                },function(reason){
+                    if (!Ember.isBlank(reason.message)){
+                        var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controllerFor('userWelcome').send('addMessage',msg);
+                    }
+                });
+            }
 		},
-		confirmDslAction : function(experiment, value) {
-
+		confirmDslAction : function(dsl, value) {
+            dsl.set('action_dsl_confirm', value);
 		}	
 	},
 	deactivate : function() {

@@ -10,7 +10,7 @@
 
 <div class="panel panel-primary">
     <div id="id_project_selection" class="panel-heading text-center v-center">
-        <h3 class="panel-title">Reproducible Experiment Metadata</h3>
+        <h3 class="panel-title">Reproducible Experiment Creation</h3>
     </div>
     <div class="panel-body">
         <div class="col col-sm-12">
@@ -49,7 +49,11 @@
                             </div>
                             <label class="control-label col-sm-5" for="id_dsl_filename">Metadata Filename </label>
                             <div class="col col-sm-7">
-                                <div class="input-group input-group-sm">
+                                <div class="input-group input-group-sm"
+                                    data-toggle="tooltip"
+                                    data-placement="top"
+                                    data-html=true
+                                    data-title="<p>When <strong>saving</strong> type in or generate a destination filename</p><p>When <strong>importing</strong> type in the source filename(exact)</p>">
                                     {{input type="text" 
                                     value=dsl_filename
                                     placeholder="filename"
@@ -68,7 +72,10 @@
                             </div>
                             <label class="control-label col-sm-5" for="id_pithos_destination">Pithos path </label>
                             <div class="col col-sm-7">
-                                <div class="input-group input-group-sm">
+                                <div class="input-group input-group-sm"data-toggle="tooltip"
+                                    data-placement="top"
+                                    data-html=true
+                                    data-title="<p>When <strong>saving</strong> type in a pithos container or generate the default</p><p>When <strong>importing</strong> type in the container/path holding the pithos file(exact)</p>">
                                     {{input type="text" 
                                     value=dsl_pithos_path
                                     placeholder="path"
@@ -100,24 +107,17 @@
                         </div>
                     </div>
                     <div class="col-sm-6">
-                        <div class="form-group">
-                            <label class="control-label col-sm-5 text-center">Help </label>
-                        </div>
-                        <div class="col-sm-9">
-                            <p class="form-control-static"><span class="text text-center text-info">Insert the name of the DSL file to be imported and the pithos path to it <b>or</b> select a cluster and create a new DSL file by typing in the desirable filename and the pithos destination to be saved </span></p>
+                        <div class="col-sm-12">
+                            <dl class="dl-horizontal">
+                                <dt class="text-left">Save Metadata</dt>
+                                    <dd class="text-info text-left">Select a hadoop cluster as source for experiment configuration metadata, then type in or prefill default filename and pithos container and press Save.</dd>
+                                <dt class="text-left">Import Metadata</dt>
+                                    <dd class="text-info text-left"><strong>Alternatively</strong> de-select cluster and fill in a pre-uploaded or shared experiment filename and pithos path to the fields and press Import.</dd>
+                            </dl>
                         </div>
                     </div> 
-                    <!--<div class="form col-sm-6" role="form">
-                        <div class="form-group">
-                            <div class="col-sm-12">
-                                {{!--textarea rows="8" value=experiment_yaml class="textarea form-control textarea_100" classNames="textarea form-control textarea_100"--}}
-                            </div>
-                            <label class="control-label">{{!--dsl_filename--}}</label>
-                        </div>
-                    </div>-->
                 </form>
             </div>
-        
         </div>
     </div>
     <div class="panel-footer text-center">
@@ -133,4 +133,3 @@
         </div>
     </div>    
 </div>
-

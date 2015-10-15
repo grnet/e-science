@@ -4,7 +4,7 @@
 """
 This script contains useful classes and fuctions for orka package.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 import logging
 import re
@@ -123,11 +123,9 @@ def destroy_server(token, id):
         set_server_state(token, id, state,status='Destroyed')
         raise ClientError('Error while deleting VRE server', error_fatal)
     ip_to_delete = get_public_ip_id(nc,vre_server.server_IP)
-    nc.delete_floatingip(ip_to_delete['id'])
-    
+    nc.delete_floatingip(ip_to_delete['id']) 
     state= 'VRE server {0} and its public IP {1} were deleted'.format(vre_server.server_name,vre_server.server_IP)
     set_server_state(token, id, state, status='Destroyed')
-
     return vre_server.server_name
 
 def create_dsl(choices):
@@ -139,32 +137,30 @@ def create_dsl(choices):
     data = {'cluster': {'name': cluster.cluster_name, 'project_name': cluster.project_name, 'image': cluster.os_image, 'disk_template': u'{0}'.format(cluster.disk_template),
                         'size': cluster.cluster_size, 'flavor_master':[cluster.cpu_master, cluster.ram_master,cluster.disk_master], 'flavor_slaves': [cluster.cpu_slaves, cluster.ram_slaves, cluster.disk_slaves]}, 
             'configuration': {'replication_factor': cluster.replication_factor, 'dfs_blocksize': cluster.dfs_blocksize}}
-    if not (choices['dsl_name'].endswith('.yml') or choices['dsl_name'].endswith('.yaml')):
+    if not (choices['dsl_name'].endswith('.yml') or choices['dsl_name'].endswith('.yaml')): # give file proper type
         choices['dsl_name'] = '{0}.yaml'.format(choices['dsl_name'])
     task_id = current_task.request.id
     dsl_id = db_dsl_create(choices, task_id)
     yaml_data = yaml.safe_dump(data,default_flow_style=False)
     url = '{0}/{1}/{2}/{3}'.format(pithos_url, uuid, choices['pithos_path'], urllib.quote(choices['dsl_name']))
     headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,choices['token'])),'content-type':'text/plain'}
-    r = requests.put(url, headers=headers, data=yaml_data)
+    r = requests.put(url, headers=headers, data=yaml_data) # send file to Pithos
     response = r.status_code
     if response == pithos_put_success:
         db_dsl_update(choices['token'],dsl_id,state='Created',dsl_data=yaml_data)
         return dsl_id, choices['pithos_path'], choices['dsl_name']
     else:
         db_dsl_update(choices['token'],dsl_id,state='Failed')
-        msg = 'Failed to reach Pithos filesystem.'
+        msg = "Failed to save experiment metadata %s to %s" % (choices['dsl_name'], choices['pithos_path'])
         raise ClientError(msg, error_pithos_connection)
-
-
+        
+        
 def destroy_dsl(token, id):
-    """Destroys a Reproducible Experiments Metadata file from Pithos."""
-    # TODO placeholders for actual implementation
+    """Destroys a Reproducible Experiments Metadata file in Pithos."""
     # just remove from our DB for now
     dsl = Dsl.objects.get(id=id)
     db_dsl_delete(token,id)
     return dsl.id
-
 
 def import_dsl(choices):
     """Imports a Reproducible Experiments Metadata file from Pithos."""
@@ -216,6 +212,65 @@ def get_pithos_container_info(pithos_path, token):
     response = r.status_code
     return response
 
+
+def replay_dsl(token, id):
+    """Replays an experiment with configuration parameters and actions in sequence"""
+    dsl = Dsl.objects.get(id=id)
+    # pre execution checks
+    dsl_data_yaml = dsl.dsl_data
+    dsl_data_dict = yaml.safe_load(dsl_data_yaml)
+    # map yaml key names to cluster creation json payload keys
+    dslkeys_to_clusteroptions = {'name':'cluster_name','size':'cluster_size','image':'os_choice',\
+                                 'flavor_master':['cpu_master','ram_master','disk_master'],\
+                                 'flavor_slaves':['cpu_slaves','ram_slaves','disk_slaves']}
+    cluster_options = dsl_data_dict.get('cluster',{})
+    cluster_options.update(dsl_data_dict.get('configuration',{}))
+    for (key,value) in dslkeys_to_clusteroptions.iteritems():
+        option_val = cluster_options.pop(key,None)
+        if option_val is not None:  
+            if type(option_val) is list:
+                for i in range(len(value)):
+                    if option_val[i] is not None:
+                        cluster_options.setdefault(value[i],option_val[i])
+                    else:
+                        msg = "Mandatory cluster option %s is missing from %s/%s" % (value[i], dsl.dsl_name, key)
+                        raise ClientError(msg, error_fatal)
+            else:
+                if key=="name":
+                    # [orka]- prefix is added automatically in create cluster, remove it if found in name to avoid duplication
+                    option_val = option_val[7:] if option_val.startswith("[orka]-") else option_val
+                cluster_options.setdefault(value,option_val)
+        else:
+            msg = "Mandatory cluster option %s is missing from %" % (key, dsl.dsl_name)
+            raise ClientError(msg, error_fatal)
+    # inject options that are not not mandatory so might be missing but should have values
+    # only sets a default if a value has not already been parsed
+    cluster_options.setdefault('token',token) # inject the masked token in options.
+    cluster_options.setdefault('admin_password','') #inject an empty admin password value if none is parsed
+    cluster_options.setdefault('dfs_blocksize','128')
+    replication_factor_default = str(min(int(cluster_options['cluster_size'])-1,2))
+    cluster_options.setdefault('replication_factor',replication_factor_default)
+    # cluster section
+    # only need to import create cluster if we are going to be making a cluster
+    from backend.create_cluster import YarnCluster
+    state_msg = 'Started experiment cluster creation'
+    current_task.update_state(state=state_msg)
+    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
+    c_cluster = YarnCluster(cluster_options)
+    MASTER_IP, servers, password, cluster_id = c_cluster.create_yarn_cluster()
+    if cluster_id > 0:
+        state_msg = 'Experiment cluster created successfully'
+        db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=state_msg)
+    else:
+        state_msg = 'Experiment cluster creation failed'
+        db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
+    
+    # actions section (investigate how to queue in sequence)
+    
+    
+    return dsl.id
+    
+
 def get_public_ip_id(cyclades_network_client,float_ip):  
     """Return IP dictionary of an ~okeanos public IP"""
     list_of_ips = cyclades_network_client.list_floatingips()
@@ -230,6 +285,7 @@ def check_scale_cluster_up(token, cluster_id, cluster_to_scale):
     """
     project_id = get_project_id(unmask_token(encrypt_key,token), cluster_to_scale.project_name)
     quotas = check_quota(unmask_token(encrypt_key,token), project_id)
+    # The new node will be a slave node and will have the same flavor combination with the existing nodes of the cluster
     if quotas['ram']['available'] < cluster_to_scale.ram_slaves:
         msg = 'Not enough ram for new node.'
         set_cluster_state(token, cluster_id, state=msg)
@@ -242,7 +298,6 @@ def check_scale_cluster_up(token, cluster_id, cluster_to_scale):
         msg = 'Not enough disk for new node.'
         set_cluster_state(token, cluster_id, state=msg)
         return (msg, error_quotas_cyclades_disk)
-    
     return ('SUCCESS',0)
     
 def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton, status):
@@ -254,7 +309,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     server_ssh_keys = join(server_home_path, ".ssh/id_rsa.pub")
     pub_keys_path = ''
     project_id = get_project_id(unmask_token(encrypt_key,token), cluster_to_scale.project_name)
-    node_name = cluster_to_scale.cluster_name + '-' + str(cluster_to_scale.cluster_size + 1)
+    node_name = cluster_to_scale.cluster_name + '-' + str(cluster_to_scale.cluster_size + 1) # name of new node should follow the naming convention of the rest nodes in the cluster
     state = "Adding new datanode {0}".format(node_name)
     set_cluster_state(token, cluster_id, state)
     try:
@@ -262,7 +317,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     except ClientError:
         msg = 'Could not get list of flavors'
         raise ClientError(msg, error_flavor_list)
-    for flavor in flavor_list:
+    for flavor in flavor_list: # The new node will be a slave node and will have the same flavor combination with the existing nodes of the cluster
         if flavor['ram'] == cluster_to_scale.ram_slaves and \
                             flavor['SNF:disk_template'] == cluster_to_scale.disk_template and \
                             flavor['vcpus'] == cluster_to_scale.cpu_slaves and \
@@ -271,7 +326,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     chosen_image = {}
     list_current_images = plankton.list_public(True, 'default')
     # Find image id of the operating system arg given
-    for lst in list_current_images:
+    for lst in list_current_images: # new node should have the same image as the other cluster nodes
         if lst['name'] == cluster_to_scale.os_image:
             chosen_image = lst
             chosen_image_id = chosen_image['id']
@@ -289,8 +344,8 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     for attachment in master_server['attachments']:
         if (attachment['OS-EXT-IPS:type'] == 'fixed' and not attachment['ipv6']):
            network_to_edit_id = attachment['network_id']
-           break     
-
+           break
+    # Create new node with create server methode of cyclades     
     new_server = cyclades.create_server(node_name, flavor_id, chosen_image_id,
                                         personality=personality(server_ssh_keys,pub_keys_path),
                                         networks=[{"uuid": network_to_edit_id}], project_id=project_id)
@@ -301,9 +356,9 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
             (servers[i]['name'], new_status)
         cyclades.delete_server(new_server['id'])
         raise ClientError(msg, error_create_server)
-    cluster_to_scale.cluster_size = cluster_to_scale.cluster_size + 1
+    cluster_to_scale.cluster_size = cluster_to_scale.cluster_size + 1 # new cluster size
     cluster_to_scale.save()
-    new_slave_private_ip = '192.168.0.{0}'.format(str(1 + cluster_to_scale.cluster_size))
+    new_slave_private_ip = '192.168.0.{0}'.format(str(1 + cluster_to_scale.cluster_size)) # Add new node to network
     new_slave_port = ADD_TO_GET_PORT + cluster_to_scale.cluster_size
     state = "New datanode {0} was added to cluster network".format(node_name)
     set_cluster_state(token, cluster_id, state, status='Active')
@@ -314,7 +369,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
 
 def find_node_to_remove(cluster_to_scale, cyclades, netclient):
     """
-    Find highest node from cluster and return hostname
+    Find last node from cluster and return hostname
     and ~okeanos id of the node.
     """
     node_id = None
@@ -335,7 +390,6 @@ def find_node_to_remove(cluster_to_scale, cyclades, netclient):
     for server in cluster_servers:
         node_id = server['id']
         node_fqdn = server['SNF:fqdn']
-    
     return node_fqdn,node_id
 
 def cluster_remove_node(node_fqdn, node_id, token, cluster_id, cluster_to_scale, cyclades, status):
@@ -350,7 +404,7 @@ def cluster_remove_node(node_fqdn, node_id, token, cluster_id, cluster_to_scale,
         set_cluster_state(token, cluster_id, state=msg, status=status, error=msg)
         raise ClientError(msg, error_cluster_corrupt)
     state = 'Deleted Node %s from cluster %s (id:%d)' % (node_fqdn, cluster_to_scale.cluster_name, cluster_id)
-    cluster_to_scale.cluster_size -= 1
+    cluster_to_scale.cluster_size -= 1 # New cluster size.
     cluster_to_scale.save()
     set_cluster_state(token, cluster_id, state, status='Active')
     
@@ -369,7 +423,6 @@ def rollback_scale_cluster(list_of_slaves, cyclades, cluster_to_scale, size, ans
             modify_ansible_hosts_file(cluster_name_suffix_id, action='remove_slaves', slave_hostname=slave['fqdn'])           
         ansible_hosts = modify_ansible_hosts_file(cluster_name_suffix_id, action='join_slaves')
         ansible_scale_cluster(ansible_hosts, action='rollback_scale_cluster')
-          
     cluster_to_scale.cluster_size = size
     cluster_to_scale.save()
 
@@ -377,9 +430,9 @@ def rollback_scale_cluster(list_of_slaves, cyclades, cluster_to_scale, size, ans
 def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     """
     Scales an active cluster by cluster_delta (signed int).
-    For scaling up finds the cluster settings and highest internal ip/port slave
+    For scaling up finds the cluster settings and last internal ip/port slave
     and "appends" cluster_delta nodes.
-    For scaling down it removes the highest slave. 
+    For scaling down it removes the last slave. 
     """
     from reroute_ssh import reroute_ssh_to_slaves
     from run_ansible_playbooks import modify_ansible_hosts_file,ansible_scale_cluster,ansible_manage_cluster
@@ -622,7 +675,7 @@ def check_credentials(token, auth_url=auth_url):
     return auth
 
 
-def get_flavor_id(token):
+def get_flavor_lists(token):
     """From kamaki flavor list get all possible flavors """
     auth = check_credentials(token)
     endpoints, user_id = endpoints_and_user_id(auth)
@@ -677,11 +730,14 @@ def check_quota(token, project_id):
     net_client = init_cyclades_netclient(endpoints['network'],token)
     # Get pending quota for given project id
     pending_quota = retrieve_pending_clusters(token, project_name)
-
-    limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GB
-    usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GB
-    project_limit_cd = dict_quotas[project_id]['cyclades.disk']['project_limit'] / Bytes_to_GB
-    project_usage_cd = dict_quotas[project_id]['cyclades.disk']['project_usage'] / Bytes_to_GB
+    # Quotas are allocated per project and per user account. 
+    # So some  other account in the same project may have bind some of user quota since project_quota maybe be different than number_of_users*user_quota
+    # The result is user limit quota might be less than it seems so we have to consider project limit as well
+    
+    limit_cd = dict_quotas[project_id]['cyclades.disk']['limit'] / Bytes_to_GiB # Convert bytes to GiB, 1 GiB = 1024*1024*1024  bytes 
+    usage_cd = dict_quotas[project_id]['cyclades.disk']['usage'] / Bytes_to_GiB
+    project_limit_cd = dict_quotas[project_id]['cyclades.disk']['project_limit'] / Bytes_to_GiB
+    project_usage_cd = dict_quotas[project_id]['cyclades.disk']['project_usage'] / Bytes_to_GiB
     pending_cd = pending_quota['Disk']
     available_cyclades_disk_GB = limit_cd-usage_cd
     if (available_cyclades_disk_GB > (project_limit_cd - project_usage_cd)):
@@ -698,10 +754,10 @@ def check_quota(token, project_id):
         available_cpu = project_limit_cpu - project_usage_cpu
     available_cpu = available_cpu - pending_cpu
 
-    limit_ram = dict_quotas[project_id]['cyclades.ram']['limit'] / Bytes_to_MB
-    usage_ram = dict_quotas[project_id]['cyclades.ram']['usage'] / Bytes_to_MB
-    project_limit_ram = dict_quotas[project_id]['cyclades.ram']['project_limit'] / Bytes_to_MB
-    project_usage_ram = dict_quotas[project_id]['cyclades.ram']['project_usage'] / Bytes_to_MB
+    limit_ram = dict_quotas[project_id]['cyclades.ram']['limit'] / Bytes_to_MiB # Convert bytes to MiB, 1 MiB = 1024*1024 bytes 
+    usage_ram = dict_quotas[project_id]['cyclades.ram']['usage'] / Bytes_to_MiB
+    project_limit_ram = dict_quotas[project_id]['cyclades.ram']['project_limit'] / Bytes_to_MiB
+    project_usage_ram = dict_quotas[project_id]['cyclades.ram']['project_usage'] / Bytes_to_MiB
     pending_ram = pending_quota['Ram']
     available_ram = limit_ram-usage_ram
     if (available_ram > (project_limit_ram - project_usage_ram)):
@@ -744,8 +800,7 @@ def check_quota(token, project_id):
 
     quotas = {'cpus': {'limit': limit_cpu, 'available': available_cpu},
               'ram': {'limit': limit_ram, 'available': available_ram},
-              'disk': {'limit': limit_cd,
-                       'available': available_cyclades_disk_GB},
+              'disk': {'limit': limit_cd, 'available': available_cyclades_disk_GB},
               'cluster_size': {'limit': limit_vm, 'available': available_vm},
               'network': {'available': available_networks},
               'float_ips': {'available': available_ips}}
@@ -774,8 +829,7 @@ def check_images(token, project_id):
             hadoop_images.append(image['name'])
     # hadoop images at ordinal 0, vre images at 1
     available_images.append(hadoop_images)
-    available_images.append(vre_images)
-            
+    available_images.append(vre_images)        
     return available_images
 
 def endpoints_and_user_id(auth):
@@ -860,7 +914,6 @@ def get_float_network_id(cyclades_network_client, project_id):
                 except ClientError:
                     if i < len(pub_net_list):
                         i = i+1
-
         return error_get_ip
     
 def personality(ssh_keys_path='', pub_keys_path='', vre_script_path=''):
@@ -933,7 +986,6 @@ class Cluster(object):
         if servers:
             for server in servers:
                 status = self.client.get_server_details(server['id'])['status']
-
                 if status == 'BUILD':
                     status = self.client.wait_server(server['id'],
                                                      max_wait=MAX_WAIT)
@@ -1112,7 +1164,6 @@ def read_replication_factor(document):
         if name == "dfs.replication":
             replication_factor = int(child.find("value").text)
             break
-
     return replication_factor
 
 
@@ -1125,9 +1176,7 @@ def get_remote_server_file_size(url, user='', password=''):
     """
     url_in_list = url.split("://", 1)
     url_in_list.insert(1, "://" + user + ':' + password + '@')
-    new_url = ''.join(url_in_list)
-
+    new_url = ''.join(url_in_list) # creates url for curl command
     r = subprocess.call("curl -sI " + new_url +
                                 " | grep -i content-length | awk \'{print $2}\' | tr -d '\r\n'", shell=True)
-
     return int(r)

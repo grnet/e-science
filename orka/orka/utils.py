@@ -93,7 +93,7 @@ class ClusterRequest(object):
         """
         self.escience_token = escience_token
         self.payload = payload
-        self.url = get_from_kamaki_conf('orka','base_url',action)
+        self.url = get_from_kamaki_conf('orka','base_url',action) # Get the url of the server where the application is running from .kamakirc
         self.url = server_url + re.split('http[s]?://[^/]+',self.url)[-1]
         try:
             ssl_property = get_from_kamaki_conf('orka','verify_ssl')
@@ -145,7 +145,7 @@ def get_user_clusters(token, server_url, choice='clusters'):
         msg = ' Authentication error: Invalid Token'
         raise ClientError(msg, error_authentication)
     except Exception, e:
-        print ' ' + str(e.args[0])
+        logging.error(' ' + str(e.args[0]))
 
     payload = {"user": {"id": 1}}
     orka_request = ClusterRequest(escience_token, server_url, payload, action='login')
@@ -549,7 +549,7 @@ def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
     "\"kamaki file create \'{0}\'\"".format(dest_path)
     
     subprocess.call(str_command, shell=True)   
-    if file_size < block_size:
+    if file_size < block_size:  #In case file is smaller than block size, file is uploaded as a whole.
         str_command = "ssh {0}@{1} ".format(user,master_IP) + \
         "\"{0} dfs -get ".format(HADOOP_PATH) + \
         "\'{0}\' temp_file\"".format(hdfs_path)
@@ -573,7 +573,7 @@ def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
         
         response_append_to_pithos_2 = subprocess.call(str_command, shell=True)
         counter +=1 
-        while ((counter+1) * block_size) < file_size :
+        while ((counter+1) * block_size) < file_size : # upload file block by clock to pithos. Append each block at destination file.
             str_command = "ssh {0}@{1} ".format(user,master_IP) + \
             "\"{0} dfs -cat ".format(HADOOP_PATH) + \
             "\'{0}\' ".format(hdfs_path) + \
@@ -586,7 +586,7 @@ def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
             
             response_append_to_pithos_3 = subprocess.call(str_command, shell=True)
             counter +=1 
-        if file_left !=0:
+        if file_left !=0:   # In case file size is not perfectly divided in block size the remainder is uploaded separately.
             str_command = "ssh {0}@{1} ".format(user,master_IP) + \
             "\"{0} ".format(HADOOP_PATH) + \
             "dfs -cat \'{0}\' ".format(hdfs_path) + \
@@ -615,7 +615,7 @@ def is_period(checked_string):
 
 def is_default_dir(checked_string):
     """
-    Check if string is default Hdfs directory
+    Check if string is default HDFS directory
     """
     if checked_string in DEFAULT_HDFS_DIR:
         return True

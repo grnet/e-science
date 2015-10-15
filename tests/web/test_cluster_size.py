@@ -15,7 +15,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 import unittest, time, re
-from okeanos_utils import check_quota, get_flavor_id, destroy_cluster
+from okeanos_utils import check_quota, get_flavor_lists, destroy_cluster
 from create_cluster import YarnCluster
 from ClusterTest import ClusterTest
 

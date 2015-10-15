@@ -1,4 +1,3 @@
-safestr = Ember.Handlebars.SafeString;
 // escience reproducible experiments DSL Create controller
 App.DslCreateController = Ember.Controller.extend({
     needs : ['userWelcome'],
@@ -7,7 +6,7 @@ App.DslCreateController = Ember.Controller.extend({
     experiment_yaml_static : null,
     experiment_yaml : function(key, value){
         if (arguments.length > 1){//setter
-            var formatted = new safestr(value);
+            var formatted = Ember.String.htmlSafe(value);
             this.set('experiment_yaml_static',formatted);
         }
         return Ember.isEmpty(this.get('experiment_yaml_static')) ? '' : this.get('experiment_yaml_static');//getter
@@ -125,12 +124,11 @@ App.DslCreateController = Ember.Controller.extend({
                 var new_record = store.createRecord('dsl', new_dsl);
                 new_record.save().then(function(data) {
                     var msg = Ember.isEmpty(create) ? {
-                    	'msg_type' : 'success',
-                        'msg_text' : 'Metadata file %@ imported from pithos filesystem.'.fmt(dsl_name)
-                    } 
-                    : {
                         'msg_type' : 'success',
-                        'msg_text' : 'Metadata saved as \"%@\" in %@'.fmt(dsl_name,pithos_path)
+                        'msg_text' : 'Experiment file \"%@\" imported from %@'.fmt(dsl_name,pithos_path)
+                    } : {
+                        'msg_type' : 'success',
+                        'msg_text' : 'Experiment metadata saved as \"%@\" in %@'.fmt(dsl_name,pithos_path)
                     };
                     self.get('controllers.userWelcome').send('addMessage', msg);
                     self.set('controllers.userWelcome.create_cluster_start', true);
@@ -138,16 +136,15 @@ App.DslCreateController = Ember.Controller.extend({
                     Ember.run.next(function(){self.transitionToRoute('user.welcome');});
                 }, function(reason) {
                 	var error_msg = !Ember.isEmpty(reason.statusText) ? 'with error: %@'.fmt(reason.statusText) : '';
-                    var msg = Ember.isEmpty(create) ? {
+                        var msg = Ember.isEmpty(create) ? {
                     	'msg_type' : 'danger',
                         'msg_text' : 'Failed to import file \"%@\" from %@ %@'.fmt(dsl_name,pithos_path, error_msg)
-                    } 
-                    : {
+                    } : {
                         'msg_type' : 'danger',
                         'msg_text' : 'Failed to create file \"%@\" in %@ %@'.fmt(dsl_name,pithos_path, error_msg)
                     };
                     self.get('controllers.userWelcome').send('addMessage', msg);
-                    self.set('controllers.userWelcome.create_cluster_start', true);
+                    self.get('controllers.userWelcome').set('create_cluster_start', true);
                     self.get('controllers.userWelcome').send('setActiveTab','dsls');
                     Ember.run.next(function(){self.transitionToRoute('user.welcome');});
                 });
@@ -159,7 +156,7 @@ App.DslCreateController = Ember.Controller.extend({
         dsl_filename_default : function() {
             var model = this.get('content');
             var store = this.get('store');
-            var date_now = new safestr(moment(Date.now()).format('YYYY-MM-DD_HH-mm-ss'))['string'];
+            var date_now = Ember.String.htmlSafe(moment(Date.now()).format('YYYY-MM-DD_HH-mm-ss'))['string'];
             var cluster_id = null;
             var cluster_name = null;
             if (!Ember.isEmpty(this.get('selected_cluster'))){
