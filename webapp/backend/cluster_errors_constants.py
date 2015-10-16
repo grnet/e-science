@@ -35,6 +35,7 @@ error_project_quota = -73 # Zero user quota for a given project
 error_authentication = -99 # Invalid token
 error_container = -76 # Error pithos container not found while upload dsl file
 error_import_dsl = -78 # Failed to import DSL file from pithos
+error_pithos_connection = -79 # Failed to reach Pithos filesystem
 
 FNULL = open(os.devnull, 'w') # Redirects whatever is assigned to FNULL to nothingness (e.g. stderr=FNULL)
 
@@ -48,6 +49,7 @@ ADD_TO_GET_PORT = 9998  # Value offset in order to get slave port numbers, START
 REPORT = 25             # Define logging level of REPORT
 SUMMARY = 29            # Define logging level of SUMMARY
 MAX_WAIT = 300          # Max number of seconds for wait function of Cyclades
+UUID_FILE = 'permitted_uuids.txt'
 
 # MiB <-> GiB easy conversion constants
 Mbytes_to_GB = 1024     # Global to convert megabytes to gigabytes
@@ -63,7 +65,8 @@ auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
 pithos_url = 'https://pithos.okeanos.grnet.gr/v1'
 pithos_put_success = 201  # Success pithos response
 pithos_container_not_found = 404
-UUID_FILE = 'permitted_uuids.txt'
+pithos_object_not_found = pithos_container_not_found
+
 # Cluster status constants
 const_cluster_status_destroyed = "0"
 const_cluster_status_active = "1"

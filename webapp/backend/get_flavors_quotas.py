@@ -17,7 +17,6 @@ from cluster_errors_constants import *
 from okeanos_utils import get_flavor_lists, check_credentials, check_quota, check_images
 from authenticate_user import unmask_token, encrypt_key
 
-
 def ssh_key_list(token):
     """
     Get the ssh_key dictionary of a user
