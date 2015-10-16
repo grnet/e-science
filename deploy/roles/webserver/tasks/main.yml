@@ -147,23 +147,73 @@
     command: openssl req -x509 -nodes -days {{certificate_key_lifetime}} -newkey rsa:{{key_rsa}} -sha256 -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt -subj "/C=GR/ST=Athens/L=Athens/O= /OU= /CN={{ ansible_ssh_host }}"
     tags: postimage
 
+  - name: Stop Nginx service
+    sudo: yes
+    tags: restart
+    service: name=nginx state=stopped
+
+  - name: Stop uwsgi
+    tags: restart
+    sudo: yes
+    command: uwsgi --stop /tmp/uwsgi.pid
+
+  - name: Stop celery
+    tags: restart
+    command: celery multi stopwait celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%h.log
+    args:
+      chdir: "{{project_path}}/{{webapp_dir}}"
+
+  - name: Stop rabbitmq
+    tags: restart
+    sudo: yes
+    command: rabbitmqctl stop
+
+  - name: Remove pyc files
+    tags: restart
+    shell: find . -name "*.pyc" -type f -delete
+
+  - name: Remove static files
+    tags: restart
+    shell: find . -not -name "human.txt" -not -name ".gitignore" -type f -delete
+    args:
+      chdir: "{{project_path}}/{{webapp_dir}}/static"
+
+  - name: Remove media files
+    tags: restart
+    shell: find . -not -name "human.txt" -not -name ".gitignore" -type f -delete
+    args:
+      chdir: "{{project_path}}/{{webapp_dir}}/media"
+
+  - name: Restart rabbitmq
+    tags: restart
+    sudo: yes
+    service: name=rabbitmq-server state=restarted
+
   - name: Restart Nginx service
     sudo: yes
     service: name=nginx state=restarted
-    tags: postimage
+    tags:
+     - postimage
+     - restart
 
   - name: Start uWSGI service
-    tags: postimage
+    tags:
+     - postimage
+     - restart
     command: uwsgi --ini {{user_home}}/conf/uwsgi.ini
     args:
       chdir: "{{project_path}}/{{webapp_dir}}"
 
   - name: Run collectstatic command
-    tags: postimage
+    tags:
+     - postimage
+     - restart
     django_manage: command=collectstatic app_path={{project_path}}/{{webapp_dir}}
 
   - name: Run celery as a daemon
-    tags: postimage
+    tags:
+     - postimage
+     - restart
     command: celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%h.log
     args:
       chdir: "{{project_path}}/{{webapp_dir}}"

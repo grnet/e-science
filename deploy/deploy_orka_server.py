@@ -203,7 +203,7 @@ class OrkaServer(object):
         with open(self.opts['file'], 'r') as f:
             self.script = yaml.load(f)     
         # remove file
-        response = query_yes_no("The file " + self.opts['file'] + " will be deleted. Make sure you have taken the necessary steps to remember your passwords.")
+        response = query_yes_no("Should the file " + self.opts['file'] + " be deleted ?. If you choose yes, make sure you have taken the necessary steps to remember your passwords.")
         if response:
             os.remove(self.opts['file'])
 
@@ -257,36 +257,30 @@ class OrkaServer(object):
             target.write('key = "{0}"'.format(random_key))
         return 0
         
-    def start(self):
+    def action(self,verb):
         """
-        Starts an orka server
+        Executes an action on orka server
         """
-        # set passwords
-        self.db_password = self.check_pass_length(self.script.get("postgresql_password"))
-        self.django_admin_password = self.check_pass_length(self.script.get("django_admin_password"))
         self.ansible_sudo_pass = self.script.get("orka_admin_password")
-        self.user_uuid = self.script.get("okeanos_user_uuid")
+        self.create_ansible_hosts()
+        vars = 'ansible_ssh_pass={0} ansible_sudo_pass={0}'.format(self.ansible_sudo_pass)
+        tag = verb
+        if verb == 'start':
+            self.db_password = self.check_pass_length(self.script.get("postgresql_password"))
+            self.django_admin_password = self.check_pass_length(self.script.get("django_admin_password"))
+            self.user_uuid = self.script.get("okeanos_user_uuid")
+            self.create_permitted_uuids_file(self.user_uuid)
+            self.create_encrypt_file(self.user_uuid)
+            tag = 'postimage'
+            vars = '{0} db_password={1} django_admin_password={2}'.format(vars,self.db_password,self.django_admin_password)
+ 
+        ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver {0}" -t {1}'.format(vars,tag)
+        exit_status = subprocess.call(ansible_command, shell=True)
+        if exit_status > 0:
+            return error_fatal
+        logging.log(REPORT, 'Orka server successfully {0}ed.'.format(verb))
 
-        self.create_ansible_hosts()
-        self.create_permitted_uuids_file(self.user_uuid)
-        self.create_encrypt_file(self.user_uuid)
-        vars = 'ansible_ssh_pass={0} db_password={1} django_admin_password={2} ansible_sudo_pass={0}'.format(self.ansible_sudo_pass,
-                                                                                                             self.db_password,self.django_admin_password)
-        ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver {0}" -t postimage'.format(vars)
-        subprocess.call(ansible_command, shell=True)
-        logging.log(REPORT, 'Orka server has started.')
-        
-    def update(self):
-        """
-        Updates orka server
-        """
-        self.ansible_sudo_pass = self.script.get("orka_admin_password")
-        self.create_ansible_hosts()
-        ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver ansible_ssh_pass={0}" -t update'.format(self.ansible_sudo_pass)
-        subprocess.call(ansible_command, shell=True)
-        logging.log(REPORT, 'Orka server has been updated.')
-        
-        
+ 
 class OrkaImage(object):
     """
     Class for Orka management image creation
@@ -363,14 +357,14 @@ class OrkaImage(object):
         
 def main():
     """
-    Entry point of deploy/create orka server utility script.
+    Entry point of deploy/create/update/restart orka server utility script.
     """
     orka_parser = ArgumentParser(description='Create an orka management image or start a server created by an ~okeanos orka management image')
     checker = _logger()
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                                 level=checker.logging_levels[default_logging],
                                 datefmt='%Y-%m-%d %H:%M:%S')
-    orka_subparsers = orka_parser.add_subparsers(help='Create orka management image or Start orka management server')
+    orka_subparsers = orka_parser.add_subparsers(help='Create orka management image or start orka management server')
     parser_create = orka_subparsers.add_parser('create',
                                      help='Create an Orka management image'
                                    ' on ~okeanos.')
@@ -380,7 +374,9 @@ def main():
                                   help='A file containing sensitive info (e.g. passwords).')
     parser_start = orka_subparsers.add_parser('start', parents=[parser_common], help='Start orka server. User must provide a yaml file with the correct properties')
     
-    parser_update = orka_subparsers.add_parser('update', parents=[parser_common], help='Update orka server')
+    parser_update = orka_subparsers.add_parser('update', parents=[parser_common], help='Update orka server. User must provide a yaml file with the correct properties')
+    
+    parser_restart = orka_subparsers.add_parser('restart', parents=[parser_common], help='Restart orka server. User must provide a yaml file with the correct properties')
     
     if len(argv) > 1:
         
@@ -400,12 +396,15 @@ def main():
 
         opts = vars(orka_parser.parse_args(argv[1:]))
         verb = argv[1]  # Main action, decision follows
-        if verb == 'create':
-            orka_image = OrkaImage(opts)
-            orka_image.create()
-        else:         
-            orka_server = OrkaServer(opts)
-            orka_server.__getattribute__(verb)()
+        try:
+            if verb == 'create':
+                orka_image = OrkaImage(opts)
+                orka_image.create()
+            else:         
+                orka_server = OrkaServer(opts)
+                orka_server.action(verb)
+        except Exception, e:
+            logging.error('{0} action failed due to {1}'.format(verb,e.args[0]))
 
     else:
         logging.error('No arguments were given')
