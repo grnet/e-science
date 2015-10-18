@@ -6,6 +6,10 @@ App.DslManagementController = Ember.Controller.extend({
     initial_timer_active : function(){
         return this.get('count')>0;
     }.property('count'),
+    user_theme_changed : function(){
+        var new_theme = this.get('controllers.application').get('user_theme');
+        this.set('user_theme',new_theme);
+    }.observes('controllers.application.user_theme'),
     actions_dsl_disabled : function(){
         return this.get('content.dsl_status') == "1" || this.get('initial_timer_active');
     }.property('content.dsl_status','initial_timer_active'),

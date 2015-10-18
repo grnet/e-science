@@ -1,7 +1,7 @@
-// DslManagement View
-App.DslManagementView = Ember.View.extend({
-	didInsertElement : function(data) {
-	    var self = this;
+// Experiments Help View
+App.HelpExperimentsView = Ember.View.extend({
+    didInsertElement : function(data) {
+        var self = this;
         // add delayed initialization or manual observers
         this.addObserver('controller.user_theme', function(data){
             Ember.run.scheduleOnce('afterRender', self, function() {
@@ -11,9 +11,9 @@ App.DslManagementView = Ember.View.extend({
         Ember.run.once(this, function(){
             PR.prettyPrint();
         },200);
-	},
-	willDestroyElement : function() {
+    },
+    willDestroyElement : function() {
         // remove manual observers here
         this.removeObserver('controller.user_theme');
     }
-}); 
+});
