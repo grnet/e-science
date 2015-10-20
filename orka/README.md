@@ -9,11 +9,14 @@ orka is a command-line tool, and also a client development library, for creating
 
     sudo apt-get update
     sudo apt-get install -y git
-    sudo apt-get install -y python python-dev python-pip
+    sudo apt-get install -y python python-dev gcc 
+    wget https://bootstrap.pypa.io/get-pip.py;
+    sudo python get-pip.py
+    sudo pip install kamaki
 
 ##Adding [orka]      section to kamaki config file
 
-User should open ~/.kamakirc and append these two lines:
+User must open ~/.kamakirc and append these two lines:
     
     [orka]                                                              
     base_url = < e-science -IP- or -url address- >
@@ -30,8 +33,7 @@ Optional but highly recommended is to install and use the orka package in a virt
     (with deactivate from command line you exit the virtual env)
     
 Following commands download and install orka (either directly or in virtual environment):
-
-    [sudo if not using virtualenv] pip install ansible==1.7.2
+    
     cd
     git clone <escience git repo> <project_name> 
     cd to <project_name>/orka
