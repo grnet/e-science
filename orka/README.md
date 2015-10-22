@@ -1,13 +1,25 @@
 #Orka service
 
-Orka service is provided by a personal Orka server. Every ~okeanos user can build a personal Orka server by following the instructions [here](#create-personal-orka-server-in-~okeanos-for-users).
+Orka service is provided by a personal Orka server. Every ~okeanos user can build a personal Orka server by following the instructions [here](#create-personal-orka-server-in-okeanos-for-users).
 
 
 ## Create ~okeanos image for personal Orka server (for administrators)
 
+Setup the user environment to run the python deploy script (tested in Debian 8 ~okeanos bare image):
 
+    sudo apt-get update
+    sudo apt-get install -y git
+    sudo apt-get install -y python python-dev gcc 
+    wget https://bootstrap.pypa.io/get-pip.py;
+    sudo python get-pip.py
+    sudo pip install kamaki
+
+For running the script, a public ssh key must exist locally as ~/.ssh/id_rsa.pub
+Clone the e-Science project and run the script:
+
+    git clone <escience git repo>
     cd <project_root>/deploy/
-    python deploy_orka_server.py create --name=orka_image --flavor_id=~okeanos_flavor_number --project_id=~okeanos_project_id --image_id=~okeanos_image_id --git_repo=project_repo_in_github --git_repo_version=version_or_branch_of_repo --token=~okeanos_token
+    python deploy_orka_server.py create --name=orka_image --flavor_id=~okeanos_flavor_number --project_id=~okeanos_project_id --image_id=~okeanos_debian_image_id --git_repo=project_repo_in_github --git_repo_version=version_or_branch_of_repo --token=~okeanos_token
 
 This will create a VM in ~okeanos and install everything that is needed for the orka server to function with Debian 8.2 but without configuring sensitive parameters and passwords.
 After VM becomes active, the user/image-creator can ssh to the VM and after removing authorized_keys files:
@@ -17,7 +29,7 @@ After VM becomes active, the user/image-creator can ssh to the VM and after remo
 
 run:
 
-    run snf-mkimage --public --print-syspreps -f -u name_of_Orka_server_image -t ~okeanos_token -a auth_url -r name_of_Orka_server_image /
+    snf-mkimage --public --print-syspreps -f -u name_of_Orka_server_image -t ~okeanos_token -a auth_url -r name_of_Orka_server_image /
 
 After snf-image-creator finishes, the image will be ready for building Orka servers.
 More information about the software that is installed for the creation of the image can be found in the following Ansible playbooks:
@@ -28,7 +40,9 @@ More information about the software that is installed for the creation of the im
 
 ## Create personal Orka server in ~okeanos (for users)
 
-###Orka server Flavor Info
+Users should read the following section, regarding Orka server requirements, before starting the creation of their personal Orka server.
+
+###Orka server Flavor Requirements
 
 Minimum Requirements: 1 CPU, 1 GB of Ram and 5 GB of disksize.
 
@@ -45,7 +59,8 @@ User creates VM in ~okeanos with Orka Server-on-Debian 8 image, then:
     su - orka_admin
     cd projects/e-science/deploy
 
-In deploy directory there is a sample file (deploy_sample_file.yml) which can be used as a template for the user-created file.
+The python script that starts the Orka server reads critical information from a user-created yaml file.
+In deploy directory there is a sample file (deploy_sample_file.yml) which can be used as a template for the user-created yaml file.
 A user can do (inside projects/e-science/deploy):
 
     cp deploy_sample_file.yml <user_created_yaml_file>.yml
@@ -70,7 +85,7 @@ Alternatively, by running:
     
 in an environment that kamaki is [set up](https://www.synnefo.org/docs/kamaki/latest/installation.html).
 
-Finally, after done editing the <user_created_yaml_file>.yml, run the deploy script:
+Finally, after done editing the user-created yml file, run the deploy script:
 
     python deploy_orka_server.py start <path_to_user_created_yaml_file>
 

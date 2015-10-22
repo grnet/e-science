@@ -319,14 +319,10 @@ class OrkaImage(object):
         """
         hosts_filename = os.getcwd() + '/ansible_hosts'
         host = '[webserver]'
-        host_vars = '[webserver:vars]'
         with open(hosts_filename, 'w+') as target:
             target.write(host + '\n')
             target.write(self.server['SNF:fqdn'])
             target.write(' ansible_ssh_host=' + self.server_ip + '\n')
-            target.write(host_vars +'\n')
-            target.write("escience_repo={0}\n".format(self.escience_repo))
-            target.write("escience_version={0}\n".format(self.escience_version))
         return hosts_filename
         
         
@@ -335,6 +331,7 @@ class OrkaImage(object):
         Create Orka image
         """
         ssh_pub_path = join(expanduser('~'), ".ssh/id_rsa.pub")
+        vars = 'escience_repo={0} escience_version={1}'.format(self.escience_repo,self.escience_version) 
         self.server = self.cyclades.create_server(self.server_name, self.flavor_id, self.image_id,
                                                   personality=personality(ssh_pub_path),
                                                   project_id=self.project_id)
@@ -352,7 +349,7 @@ class OrkaImage(object):
         subprocess.call("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@{0} 'apt-get install -y python;'".format(self.server_ip),shell=True)
         self.create_ansible_hosts()
         logging.log(REPORT, " Starting software installations")
-        subprocess.call('ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True" -t preimage', shell=True)
+        subprocess.call('ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True {0}" -t preimage'.format(vars), shell=True)
         logging.log(REPORT, "Root password of server with public ip {0} is: {1}".format(self.server_ip, server_pass))
         
 def main():
