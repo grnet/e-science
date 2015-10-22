@@ -203,7 +203,7 @@ class OrkaServer(object):
         with open(self.opts['file'], 'r') as f:
             self.script = yaml.load(f)     
         # remove file
-        response = query_yes_no("Should the file " + self.opts['file'] + " be deleted ?. If you choose yes, make sure you have taken the necessary steps to remember your passwords.")
+        response = query_yes_no("Should the file " + self.opts['file'] + " be deleted? If you choose yes, make sure you have taken the necessary steps to remember your passwords.")
         if response:
             os.remove(self.opts['file'])
 
