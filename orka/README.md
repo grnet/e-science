@@ -5,7 +5,9 @@ Orka service is provided by a personal Orka server. Every ~okeanos user can buil
 
 ## Create ~okeanos image for personal Orka server (for administrators)
 
-Setup the user environment to run the python deploy script (tested in Debian 8 ~okeanos bare image):
+The python script deploy_orka_server.py can be used either for creating an ~okeanos Orka server image
+or starting an Orka server created by such an image. Before using the script as image creator, the following packages must be installed
+(tested in Debian 8 ~okeanos bare image):
 
     sudo apt-get update
     sudo apt-get install -y git
@@ -13,16 +15,18 @@ Setup the user environment to run the python deploy script (tested in Debian 8 ~
     wget https://bootstrap.pypa.io/get-pip.py;
     sudo python get-pip.py
     sudo pip install kamaki
+    sudo pip install ansible
 
-For running the script, a public ssh key must exist locally as ~/.ssh/id_rsa.pub
-Clone the e-Science project and run the script:
+**Important**: a public ssh key must exist locally as ~/.ssh/id_rsa.pub. If not, the python script will exit.
+
+Clone the e-Science project and run the python script:
 
     git clone <escience git repo>
     cd <project_root>/deploy/
     python deploy_orka_server.py create --name=orka_image --flavor_id=~okeanos_flavor_number --project_id=~okeanos_project_id --image_id=~okeanos_debian_image_id --git_repo=project_repo_in_github --git_repo_version=version_or_branch_of_repo --token=~okeanos_token
 
-This will create a VM in ~okeanos and install everything that is needed for the orka server to function with Debian 8.2 but without configuring sensitive parameters and passwords.
-After VM becomes active, the user/image-creator can ssh to the VM and after removing authorized_keys files:
+This will create a virtual machine in ~okeanos and install everything that is needed for the orka server to function with Debian 8.2 but without configuring sensitive parameters and passwords.
+After VM becomes active, the admin/image-creator can ssh to the virtual machine and after removing authorized_keys files:
 
     rm /root/.ssh/authorized_keys
     rm /home/orka_admin/.ssh/authorized_keys
@@ -52,9 +56,9 @@ Number of CPUs dictate the amount of long running tasks the Orka server execute 
 
 ### Create and start Orka server
 
-User creates VM in ~okeanos with Orka Server-on-Debian 8 image, then:
+User creates a virtual machine in ~okeanos with Orka Server-on-Debian 8 image, then:
 
-    ssh root@VM_public_ip
+    ssh root@virtual_machine_public_ip
     passwd orka_admin
     su - orka_admin
     cd projects/e-science/deploy
@@ -93,7 +97,7 @@ When python script finishes successfully, user can open in a browser the public 
 
 ### Example of starting a personal Orka server
 
-After creation of VM in ~okeanos with Orka Server-on-Debian 8 image, then:
+After creation of a virtual machine in ~okeanos with Orka Server-on-Debian 8 image, then:
 
     ssh root@12.345.678.123
     passwd orka_admin
