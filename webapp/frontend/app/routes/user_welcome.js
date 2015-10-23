@@ -168,10 +168,10 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
                 break;
             }
 		},
-		takeClusterAction : function(cluster) {
+		takeClusterAction : function(cluster,action_passed) {
 			var self = this;
 			var store = this.store;
-			var action = cluster.get('cluster_confirm_action');
+			var action = !Ember.isEmpty(action_passed) ? action_passed : cluster.get('cluster_confirm_action');
 			cluster.set('cluster_confirm_action', false);
 			switch(action) {
 			case 'cluster_delete':
@@ -247,6 +247,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
         },
 		confirmClusterAction : function(cluster, value) {
 			cluster.set('cluster_confirm_action', value);
+			this.controller.set('cluster_confirm_action_changed',value);
 			// remove following line comment for easy message panel debug
 			// this.controller.send('addMessage',{'msg_type':'info','msg_text':'Lorem ipsum dolor sit amet.'+ String(Math.floor(Math.random() * 11))});
 		},
