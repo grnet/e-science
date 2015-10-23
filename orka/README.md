@@ -175,3 +175,4 @@ after the update is done, server should be restarted with:
     python deploy_orka_server.py restart examplefile.yml
     
 The default github repo that deploy_orka_server.py will look for updates is https://github.com/grnet/e-science.git and the master branch.
+The github repo and branch/version is set in e-science/deploy/group_vars/webserver.yml file and can be changed.
