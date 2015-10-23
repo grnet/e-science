@@ -64,7 +64,7 @@ User creates a virtual machine in ~okeanos with Orka Server-on-Debian 8 image, t
     cd projects/e-science/deploy
 
 The python script that starts the Orka server reads critical information from a user-created yaml file.
-In deploy directory there is a sample file (deploy_sample_file.yml) which can be used as a template for the user-created yaml file.
+In deploy directory there is a sample file (deploy_sample_file.yml) which can be used as a template for the user-created deploy yaml file.
 A user can do (inside projects/e-science/deploy):
 
     cp deploy_sample_file.yml <user_created_yaml_file>.yml
@@ -95,6 +95,7 @@ Finally, after done editing the user-created yml file, run the deploy script:
 
 When python script finishes successfully, user can open in a browser the public IP of Orka server and start using the Orka services.
 
+
 ### Example of starting a personal Orka server
 
 After creation of a virtual machine in ~okeanos with Orka Server-on-Debian 8 image, then:
@@ -124,3 +125,53 @@ and then edit examplefile.yml:
 and run the deploy script:
 
     python deploy_orka_server.py start examplefile.yml
+
+
+### Example of restarting a personal Orka server
+
+After starting an Orka server, the deploy_orka_server.py script can be used for restarting the server, in case of an error or after
+an update. User must access the server:
+
+    ssh root@orka_server_ip
+    su - orka_admin
+    cd projects/e-science/deploy
+    
+and run the python script again with restart argument and the deploy file used for starting the server.
+**In case of deletion of the deploy file used in starting the orka server**, user must create it again but now the only mandatory entry in the file
+is the `orka_admin_password`. So, a user creates the file:
+
+    nano examplefile.yml
+
+and adds only the following entry:
+
+    # Password of system user orka_admin
+    orka_admin_password: <orka_admin linux password e.g. orkaadmintestpassword>
+
+
+If the user have kept his deploy file used in starting the server, he can use it again for restarting or updating the server.
+In any case, Orka server will be restarted with the following command:
+
+    python deploy_orka_server.py restart examplefile.yml
+
+
+### Example of updating a personal Orka server
+
+Users can update their personal Orka servers, if there are updates in main e-Science github repo, by running the python script
+deploy_orka_server.py with the update argument and the deploy file used for starting the server. If the deploy file was deleted,
+the user must create it again, as shown in [restarting the server section](#example-of-restarting-a-personal-orka-server).
+
+So, for updating the server, the following steps are required:
+
+    ssh root@orka_server_ip
+    su - orka_admin
+    cd projects/e-science/deploy
+    
+and run the script:
+
+    python deploy_orka_server.py update examplefile.yml
+
+after the update is done, server should be restarted with:
+
+    python deploy_orka_server.py restart examplefile.yml
+    
+The default github repo that deploy_orka_server.py will look for updates is https://github.com/grnet/e-science.git and the master branch.
