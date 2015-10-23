@@ -212,62 +212,201 @@ def get_pithos_container_info(pithos_path, token):
     response = r.status_code
     return response
 
-
-def replay_dsl(token, id):
-    """Replays an experiment with configuration parameters and actions in sequence"""
-    dsl = Dsl.objects.get(id=id)
-    # pre execution checks
-    dsl_data_yaml = dsl.dsl_data
-    dsl_data_dict = yaml.safe_load(dsl_data_yaml)
+def check_cluster_options(cluster_options,dsl,token,map_dsl_to_cluster):
+    """Used in replay experiment. Check the passed cluster options have mandatory keys, inject defaults for optionals where necessary."""
     # map yaml key names to cluster creation json payload keys
     dslkeys_to_clusteroptions = {'name':'cluster_name','size':'cluster_size','image':'os_choice',\
                                  'flavor_master':['cpu_master','ram_master','disk_master'],\
                                  'flavor_slaves':['cpu_slaves','ram_slaves','disk_slaves']}
-    cluster_options = dsl_data_dict.get('cluster',{})
-    cluster_options.update(dsl_data_dict.get('configuration',{}))
-    for (key,value) in dslkeys_to_clusteroptions.iteritems():
-        option_val = cluster_options.pop(key,None)
-        if option_val is not None:  
-            if type(option_val) is list:
-                for i in range(len(value)):
-                    if option_val[i] is not None:
-                        cluster_options.setdefault(value[i],option_val[i])
-                    else:
-                        msg = "Mandatory cluster option %s is missing from %s/%s" % (value[i], dsl.dsl_name, key)
-                        raise ClientError(msg, error_fatal)
+    if map_dsl_to_cluster:
+        for (key,value) in dslkeys_to_clusteroptions.iteritems():
+            option_val = cluster_options.pop(key,None)
+            if option_val is not None:  
+                if type(option_val) is list:
+                    for i in range(len(value)):
+                        if option_val[i] is not None:
+                            cluster_options.setdefault(value[i],option_val[i])
+                        else:
+                            msg = "Mandatory cluster option %s is missing from %s/%s" % (value[i], dsl.dsl_name, key)
+                            raise ClientError(msg, error_fatal)
+                else:
+                    if key=="name":
+                        # [orka]- prefix is added automatically in create cluster, remove it if found in name to avoid duplication
+                        option_val = option_val[7:] if option_val.startswith("[orka]-") else option_val
+                    cluster_options.setdefault(value,option_val)
             else:
-                if key=="name":
-                    # [orka]- prefix is added automatically in create cluster, remove it if found in name to avoid duplication
-                    option_val = option_val[7:] if option_val.startswith("[orka]-") else option_val
-                cluster_options.setdefault(value,option_val)
-        else:
-            msg = "Mandatory cluster option %s is missing from %" % (key, dsl.dsl_name)
-            raise ClientError(msg, error_fatal)
-    # inject options that are not not mandatory so might be missing but should have values
+                msg = "Mandatory cluster option %s is missing from %s" % (key, dsl.dsl_name)
+                raise ClientError(msg, error_fatal)
+    # inject options that are not mandatory but should have default values
     # only sets a default if a value has not already been parsed
     cluster_options.setdefault('token',token) # inject the masked token in options.
     cluster_options.setdefault('admin_password','') #inject an empty admin password value if none is parsed
     cluster_options.setdefault('dfs_blocksize','128')
     replication_factor_default = str(min(int(cluster_options['cluster_size'])-1,2))
     cluster_options.setdefault('replication_factor',replication_factor_default)
-    # cluster section
-    # only need to import create cluster if we are going to be making a cluster
-    from backend.create_cluster import YarnCluster
-    state_msg = 'Started experiment cluster creation'
+    return cluster_options
+
+def check_actions(actions,dsl,token):
+    """
+    Used in replay experiment. Check that actions are valid verbs in our domain.
+    Update the queue with pairs of verb, args preserving order, and return it.
+    """
+    # start hadoop, stop hadoop, format HDFS, add cluster node, remove cluster node, put file on HDFS, get file from HDFS, run command on cluster
+    valid_verbs = ["start","stop","format","node_add","node_remove","put","get","run_job"]
+    verb_regex = re.compile("^(\w+)(?:\s*)(.*)",re.IGNORECASE) # use a non-capturing group to remove the whitespace between verb, args
+    for i in range(len(actions)):
+        action_parse = verb_regex.match(actions[i])
+        if action_parse:
+            verb = action_parse.group(1)
+            args = action_parse.group(2)
+            if verb not in valid_verbs:
+                msg = '\"%s\" is not a valid action for Experiment Replay through orka Web.' % verb
+                raise ClientError(msg, error_fatal) 
+            actions.pop(i)
+            actions.insert(i,{verb:args})
+        else:
+            msg = 'Could not parse an action out of %s' % actions[i]
+            raise ClientError(msg, error_fatal)
+    return actions
+
+def replay_dsl(token, id):
+    """Replays an experiment on cluster defined or created through parameters and plays actions in sequence"""
+    dsl = Dsl.objects.get(id=id)
+    # pre execution checks
+    dsl_data_yaml = dsl.dsl_data
+    state_msg = 'Checking experiment metadata'
     current_task.update_state(state=state_msg)
     db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
-    c_cluster = YarnCluster(cluster_options)
-    MASTER_IP, servers, password, cluster_id = c_cluster.create_yarn_cluster()
-    if cluster_id > 0:
-        state_msg = 'Experiment cluster created successfully'
-        db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=state_msg)
-    else:
-        state_msg = 'Experiment cluster creation failed'
+    try:
+        dsl_data_dict = yaml.safe_load(dsl_data_yaml)
+    except yaml.YAMLError, e:
+        msg = 'Error parsing experiment .yaml file %s' % e
+        current_task.update_state(state=msg)
+        db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+        raise ClientError(msg,error_fatal)
+    cluster_options = dsl_data_dict.get('cluster',{})
+    if len(cluster_options)<=0:
+        msg = 'No cluster options found in %s. Cannot proceed.' % dsl.dsl_name
+        current_task.update_state(state=msg)
+        db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+        raise ClientError(msg,error_fatal)
+    cluster_options.update(dsl_data_dict.get('configuration',{}))
+    # check if there are cluster_id, master_IP cluster options in the yaml, verify cluster exists and is active, 
+    # if exists and active skip creation, if not active get specs and replicate then proceed with created cluster, else abort.
+    skip_cluster_create = False
+    map_dsl_to_cluster = True
+    cluster_id_for_replay = None
+    if "cluster_id" in cluster_options:
+        if ClusterInfo.objects.filter(id=cluster_options['cluster_id']).exists():
+            cluster_to_check = ClusterInfo.objects.filter(id=cluster_options['cluster_id'])
+            if cluster_to_check.values_list('cluster_status',flat=True)[0]==const_cluster_status_active:
+                skip_cluster_create = True
+                cluster_id_for_replay = cluster_options['cluster_id']
+                msg = 'Cluster exists and is active, skipping cluster creation'
+                current_task.update_state(state=msg)
+                db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+            else:
+                cluster_options = cluster_to_check.values('cluster_name','cluster_size',\
+                                                          'cpu_master','ram_master','disk_master',\
+                                                          'cpu_slaves','ram_slaves','disk_slaves',\
+                                                          'disk_template','os_image','project_name',\
+                                                          'replication_factor','dfs_blocksize')[0]
+                os_choice = cluster_options.pop('os_image',None)
+                cluster_options.setdefault('os_choice',os_choice)
+                cluster_name = cluster_options.pop('cluster_name',None)
+                cluster_name = cluster_name[7:] if cluster_name.startswith("[orka]-") else cluster_name
+                cluster_options.setdefault('cluster_name',cluster_name)
+                cluster_options.pop('cluster_id',None)
+                cluster_options.pop('master_IP',None)
+                map_dsl_to_cluster = False
+                msg = 'Cluster exists but is not active. Using it as blueprint for a new one.'
+                current_task.update_state(state=msg)
+                db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+        else:
+            msg = 'Cluster id and master IP given do not match any clusters. Cannot proceed.'
+            current_task.update_state(state=msg)
+            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+            raise ClientError(msg,error_fatal)
+            
+    if not skip_cluster_create:
+        try:
+            cluster_options = check_cluster_options(cluster_options,dsl,token,map_dsl_to_cluster)
+        except ClientError,e:
+            msg = str(e.args[0])
+            current_task.update_state(state=msg)
+            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+            raise e
+        # cluster section
+        # only need to import create cluster if we are going to be making a cluster
+        from backend.create_cluster import YarnCluster
+        state_msg = 'Started experiment cluster creation'
+        current_task.update_state(state=state_msg)
         db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
+        c_cluster = YarnCluster(cluster_options)
+        MASTER_IP, servers, password, cluster_id = c_cluster.create_yarn_cluster()
+        if cluster_id > 0:
+            state_msg = 'Experiment cluster created successfully'
+            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=state_msg)
+            cluster_id_for_replay = cluster_id
+        else:
+            state_msg = 'Experiment cluster creation failed'
+            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=state_msg)
     
-    # actions section (investigate how to queue in sequence)
+    # actions section
+    actions = dsl_data_dict.get('actions',[])
+    if len(actions)>0 and cluster_id_for_replay is not None:
+        try:
+            actions = check_actions(actions, dsl, token)
+        except ClientError,e:
+            msg = str(e.args[0])
+            current_task.update_state(state=msg)
+            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+            raise e
+        # we have actions back in an array with cmd:params pairs
+        # import cluster management and methods
+        from backend.run_ansible_playbooks import ansible_manage_cluster
+        for action in actions:
+            cluster = ClusterInfo.objects.get(id=cluster_id_for_replay)
+            for cmd,params in action.iteritems():
+                if cmd in ["start","stop","format"]: # TODO skip action based on current cluster.cluster_status, cluster.hadoop_status?
+                    msg = 'Action: Hadoop %s' % cmd
+                    current_task.update_state(state=msg)
+                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    ansible_manage_cluster(cluster_id_for_replay,cmd)
+                elif cmd == "node_add": # TODO current cluster_status, hadoop_status checking
+                    msg = 'Action: Cluster %s' % cmd
+                    current_task.update_state(state=msg)
+                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    scale_cluster(token, cluster_id_for_replay, 1)
+                elif cmd == "node_remove": # TODO current cluster_status, hadoop_status checking
+                    msg = 'Action: Cluster %s' % cmd
+                    current_task.update_state(state=msg)
+                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    scale_cluster(token, cluster_id_for_replay, -1)
+                elif cmd == "put": # TODO check source is valid for orka-Web (pithos or other online source)
+                    source, destination = params.strip('()').split(',')
+                    msg = 'Action: HDFS %s with source %s and destination %s' % (cmd,source,destination)
+                    current_task.update_state(state=msg)
+                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    print "put from %s to %s" % (source,destination) # TODO pending implementation
+                    sleep(10)
+                elif cmd == "get": # TODO check destination is valid for orka-web (pithos only)
+                    source, destination = params.strip('()').split(',')
+                    msg = 'Action: HDFS %s with source %s and destination %s' % (cmd,source,destination)
+                    current_task.update_state(state=msg)
+                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    print "get from %s to %s" % (source,destination) # TODO pending implementation
+                    sleep(10)
+                elif cmd == "run_job":
+                    remote_user, remote_cmd = params.strip('()').split(',')
+                    msg = 'Action: Hadoop %s with command %s as remote user %s' % (cmd,remote_cmd,remote_user)
+                    current_task.update_state(state=msg)
+                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    print "run cmd %s as remote user: %s" % (remote_cmd, remote_user) # TODO pending implementation
+                    sleep(10)
     
-    
+    current_task.update_state(state='')
+    db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state='')
     return dsl.id
     
 

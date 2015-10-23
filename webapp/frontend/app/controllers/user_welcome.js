@@ -5,6 +5,9 @@ App.UserWelcomeController = Ember.Controller.extend({
     // flag to denote transition from a create action
     create_cluster_start : false,
     count : 0,
+    initial_timer_active : function(){
+        return this.get('count')>0;
+    }.property('count'),    
     orkaImages: [],
     vreImages: [],
     user_messages : [],
@@ -162,7 +165,6 @@ App.UserWelcomeController = Ember.Controller.extend({
                 }
             }
             if (!Ember.isEmpty(base_url)){
-                console.log(base_url);
                 window.open(base_url,'_blank');
             }        
         },
@@ -277,11 +279,13 @@ App.UserWelcomeController = Ember.Controller.extend({
                                         that.set('count', that.get('count') - 1);
                                     } else {
                                         that.get('timer').stop();
+                                        that.set('count',0);
                                         status = false;
                                     }
                                 }
                             }, function(reason) {
                                 that.get('timer').stop();
+                                that.set('count',0);
                                 status = false;
                                 console.log(reason.message);
                             });
@@ -294,12 +298,14 @@ App.UserWelcomeController = Ember.Controller.extend({
                     that.get('timer').start();
                 } else {
                     that.get('timer').stop();
+                    that.set('count',0);
                 }
             }
             if (status) {
                 this.get('timer').start();
             } else {
                 this.get('timer').stop();
+                this.set('count',0);
             }
         },
     }
