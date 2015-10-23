@@ -9,7 +9,12 @@
 					<span class="icon-bar"></span>
 				</button>
 				<div id="logo_overlay">
-			        <a {{bind-attr href='homeURL'}} class="navbar-brand">
+			        <a {{bind-attr href='homeURL'}} class="navbar-brand" data-container="body" 
+                        data-toggle="popover" 
+                        data-placement="bottom"
+                        data-trigger='hover focus'
+                        data-html=true
+                        data-content='<i class="glyphicon glyphicon-home">Home</i>'>
                         <img class="img-responsive" src="{{unbound STATIC_URL}}images/orka.png" alt="Orka" width="65"/>
                     </a>
                 </div>

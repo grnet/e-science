@@ -45,8 +45,9 @@ App.UserWelcomeController = Ember.Controller.extend({
     }.property(),
     // userclusters block
     filtered_clusters : function(){
-        return this.get('content.clusters').filterBy('id');
-    }.property('content.clusters.[]','content.clusters.isLoaded'),
+        var clusters = this.get('content.clusters').filterBy('id');
+        return this.get('cluster_active_filter') ? clusters.filterBy('cluster_status_active_pending') : clusters;
+    }.property('content.clusters.[]','content.clusters.isLoaded','cluster_active_filter'),
     sorted_clusters_prop : ['resorted_status:asc','action_date:desc'],
     sorted_clusters_dir : true,
     sorted_clusters : Ember.computed.sort('filtered_clusters','sorted_clusters_prop'),
@@ -170,6 +171,9 @@ App.UserWelcomeController = Ember.Controller.extend({
         },
         setActiveTab : function(tab){
             this.set('content_tabs',tab);  
+        },
+        setActiveFilter : function(val){
+            this.set('cluster_active_filter',val);  
         },
         addMessage : function(obj) {
             // routes/controllers > controller.send('addMessage',{'msg_type':'default|info|success|warning|danger', 'msg_text':'Lorem ipsum dolor sit amet, consectetur adipisicing elit'})

@@ -420,7 +420,7 @@ class VreServer(models.Model):
         return ("%d : %s : %s : %s") % (self.id, self.server_name, self.os_image, CLUSTER_STATUS_CHOICES[int(self.server_status)][1])
     
 class Dsl(models.Model):
-    """Definition of a User Cluster DSL object model."""
+    """Definition of a User Reproducible Experiment model."""
     dsl_name = models.CharField("DSL Name", max_length=255, null=False,
                                     help_text="Name of the DSL")
     pithos_path = models.CharField("Pithos path", max_length=255, null=False,

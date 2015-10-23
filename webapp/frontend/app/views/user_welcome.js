@@ -16,6 +16,11 @@ App.UserWelcomeView = Ember.View.extend({
 				$("[data-toggle='tooltip']").tooltip();
 			});
 		});
+		this.addObserver('controller.cluster_active_filter', function(){
+            Ember.run.scheduleOnce('afterRender', self, function() {
+                $("[data-toggle='tooltip']").tooltip();
+            });
+        });
 		this.addObserver('controller.filtered_clusters.[]', function(){
             Ember.run.scheduleOnce('afterRender', self, function() {
                 $("[data-toggle='tooltip']").tooltip();
@@ -40,6 +45,7 @@ App.UserWelcomeView = Ember.View.extend({
 	willDestroyElement : function() {
 		this.removeObserver('controller.sorting_info');
 		this.removeObserver('controller.count');
+		this.removeObserver('controller.cluster_active_filter');
 		this.removeObserver('controller.filtered_clusters.[]');
 		this.removeObserver('controller.filtered_vreservers.[]');
 		this.removeObserver('controller.filtered_dsls.[]');

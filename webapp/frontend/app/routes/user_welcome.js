@@ -72,11 +72,19 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		},
 		didTransition : function() {
 			// arrived at this route
+			var self = this;
 			var from_create = this.controller.get('create_cluster_start');
 			if (from_create) {
 				this.controller.set('count', 15);
 				this.controller.send('timer', true, this.store);
 			}
+			Ember.run.later(function(){
+			    var active_checkbox = $("#id_label_only_active_filter");
+                active_checkbox.removeClass('active');
+                if (self.controller.get('cluster_active_filter')){
+                    active_checkbox.addClass('active');
+                } 
+			},250);
 			return true;
 		},
 		takeDslAction : function(dsl){
