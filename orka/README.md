@@ -137,6 +137,7 @@ an update. User must access the server:
     cd projects/e-science/deploy
     
 and run the python script again with restart argument and the deploy file used for starting the server.
+
 **In case of deletion of the deploy file used in starting the orka server**, user must create it again but now the only mandatory entry in the file
 is the `orka_admin_password`. So, a user creates the file:
 
