@@ -22,13 +22,6 @@ urlpatterns = patterns('', url(r'^$', MainPageView.as_view()),
                        url(r'^api/orkaimages', OrkaImagesView.as_view()),
                        url(r'^api/vreimages', VreImagesView.as_view()),
                        url(r'^admin', include(admin.site.urls)),
-                       url(r'^api/users', SessionView.as_view()),
-                       url(r'^api/clusters', StatusView.as_view()),
-                       url(r'^api/clusterchoices', StatusView.as_view()),
-                       url(r'^api/jobs', JobsView.as_view()),
-                       url(r'^api/vreservers', VreServerView.as_view()),
-                       url(r'^api/dsls', DslView.as_view()),
-                       url(r'^api/hdfs', HdfsView.as_view()),
                        url(r'^api/settings', SettingsView.as_view()),
                        )
 
