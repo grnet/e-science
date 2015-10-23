@@ -1,0 +1,8 @@
+# Password of system user orka_admin
+orka_admin_password: orka_admin_user_system_pass
+# Django admin password
+django_admin_password: django_pass
+# Password of postgresql user
+postgresql_password: postgres_pass
+# The okeanos uuid of the user who will login in the orka gui
+okeanos_user_uuid: okeanos_uuid

@@ -5,8 +5,7 @@ python:
 addons:
 - postgresql: '9.1'
 before_install:
-- openssl aes-256-cbc -K $encrypted_b7bd3aa10e46_key -iv $encrypted_b7bd3aa10e46_iv
-  -in .private/private_data.tar.enc -out private_data.tar -d
+- openssl aes-256-cbc -K $encrypted_7dca1dac1171_key -iv $encrypted_7dca1dac1171_iv -in .private/private_data.tar.enc -out private_data.tar -d
 install:
 - pip install kamaki==0.13.1
 - pip install paramiko
@@ -16,13 +15,13 @@ install:
 - pip install psycopg2
 - pip install djangorestframework
 - pip install rest_framework_ember
-- pip install django-admin-bootstrapped
 - pip install selenium
 - pip install mock
 - pip install rednose
 - pip install nose-cov
 - pip install requests
 - pip install django-celery
+- pip install django-admin-bootstrapped
 - sudo apt-get install sshpass
 - sudo apt-get install shunit2
 before_script:

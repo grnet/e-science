@@ -311,7 +311,7 @@ class SessionView(APIView):
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
             token = serializer.data['token']
-            if check_user_credentials(token) == AUTHENTICATED:
+            if check_user_credentials(token) == AUTHENTICATED and check_user_uuid(token) == 0:
                 self.user = db_after_login(token)
                 self.serializer_class = UserInfoSerializer(self.user)
                 return Response(self.serializer_class.data)

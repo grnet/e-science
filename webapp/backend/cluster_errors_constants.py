@@ -49,6 +49,7 @@ ADD_TO_GET_PORT = 9998  # Value offset in order to get slave port numbers, START
 REPORT = 25             # Define logging level of REPORT
 SUMMARY = 29            # Define logging level of SUMMARY
 MAX_WAIT = 300          # Max number of seconds for wait function of Cyclades
+UUID_FILE = 'permitted_uuids.txt'
 
 # MiB <-> GiB easy conversion constants
 Mbytes_to_GB = 1024     # Global to convert megabytes to gigabytes
