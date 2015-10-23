@@ -229,6 +229,18 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
     user.save()
     cluster.save()
 
+def db_cluster_delete(token, id):
+    """
+    Removes a cluster record from DB
+    """
+    try:
+        user = UserInfo.objects.get(okeanos_token=token)
+        cluster = ClusterInfo.objects.get(id=id)
+    except ObjectDoesNotExist:
+        msg = 'Cluster %s was not found' % id
+        raise ObjectDoesNotExist(msg)
+    cluster.delete()
+
 def db_dsl_update(token, id, **kwargs):
     """
     Updates DB when reproducible DSL status or metadata is changed.

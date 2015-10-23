@@ -24,7 +24,7 @@ from datetime import datetime
 from cluster_errors_constants import *
 from celery import current_task
 from authenticate_user import unmask_token, encrypt_key
-from django_db_after_login import db_cluster_update, get_user_id, db_server_update, db_hadoop_update, db_dsl_create, db_dsl_update, db_dsl_delete
+from django_db_after_login import db_cluster_update, db_cluster_delete, get_user_id, db_server_update, db_hadoop_update, db_dsl_create, db_dsl_update, db_dsl_delete
 from backend.models import UserInfo, ClusterInfo, VreServer, Dsl, OrkaImage, VreImage
 
 
@@ -694,9 +694,21 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     that belong to the cluster from the cluster id that is given. Cluster id
     is the unique integer that each cluster has in escience database.
     """
+    cluster_to_delete = ClusterInfo.objects.get(id=cluster_id)
+    cluster_name = cluster_to_delete.cluster_name
+    # status is already destroyed or failed, only clean up database 
+    if cluster_to_delete.cluster_status not in [const_cluster_status_active,const_cluster_status_pending]:
+        current_task.update_state(state="Removing Record")
+        try:
+            db_cluster_delete(token,cluster_id)
+            current_task.update_state(state="Cluster Record Removed")
+            return cluster_name
+        except Exception,e:
+            msg = str(e.args[0])
+            raise ClientError(msg, error_cluster_corrupt)
+    # cluster exists on cyclades, operate on ~okeanos infrastructure for removal, update database
     current_task.update_state(state="Started")
     servers_to_delete = []
-    cluster_to_delete = ClusterInfo.objects.get(id=cluster_id)
     if cluster_to_delete.master_IP:
         float_ip_to_delete = cluster_to_delete.master_IP
     else:
@@ -748,7 +760,6 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
             if attachment['network_id'] == network_to_delete_id:
                 servers_to_delete.append(server)
                 break
-    cluster_name = cluster_to_delete.cluster_name
     number_of_nodes = len(servers_to_delete)
     set_cluster_state(token, cluster_id, "Starting deletion of requested cluster")
     # Start cluster deleting

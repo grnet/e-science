@@ -87,6 +87,28 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 			},250);
 			return true;
 		},
+		clearFailedClusters : function(clusters){
+		    var self = this;
+            clusters.forEach(function(cluster){
+                var cluster_description = "%@(id:%@)".fmt(cluster.get('cluster_name'),cluster.get('id'));
+                cluster.destroyRecord().then(function(data){
+                    var msg = {'msg_type':'info','msg_text':"%@ record removed.".fmt(cluster_description)};
+                    self.controller.send('addMessage',msg);
+                },function(reason){
+                    if (!Ember.isBlank(reason.message)){
+                        var msg = {'msg_type':'danger','msg_text':reason.message};
+                        self.controller.send('addMessage',msg);
+                    }
+                });
+            });
+            if (clusters.get('length')>0){
+                var count = self.controller.get('count');
+                var extend = Math.max(5, count);
+                self.controller.set('count', extend);
+                self.controller.set('create_cluster_start', true);
+                self.controller.send('timer', true, store);
+            }
+		},
 		takeDslAction : function(dsl){
             var self = this;
             var store = this.store;

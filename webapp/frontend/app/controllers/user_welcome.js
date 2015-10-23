@@ -54,6 +54,14 @@ App.UserWelcomeController = Ember.Controller.extend({
     sortable_clusters : function(){
         return this.get('sorted_clusters');
     }.property('filtered_clusters.[]'),
+    failed_clusters : function(){
+        var clusters = this.get('content.clusters').filterBy('id');
+        return clusters.filterBy('cluster_status_verbose','FAILED');
+    }.property('content.clusters.[]','content.clusters.isLoaded'),
+    boolean_no_failed_clusters : function(){
+        var failed_clusters = this.get('failed_clusters');
+        return Ember.isEmpty(failed_clusters) || failed_clusters.get('length') == 0; 
+    }.property('failed_clusters.[]'),
     // uservreservers block
     filtered_vreservers : function(){
         return this.get('content.vreservers').filterBy('id');
