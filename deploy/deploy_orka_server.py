@@ -201,15 +201,9 @@ class OrkaServer(object):
         self.opts = opts
         # load the sensitive data from the yaml file
         with open(self.opts['file'], 'r') as f:
-            script = yaml.load(f)
-        # set passwords
-        self.db_password = self.check_pass_length(script.get("postgresql_password"))
-        self.django_admin_password = self.check_pass_length(script.get("django_admin_password"))
-        self.ansible_sudo_pass = script.get("orka_admin_password")
-        self.user_uuid = script.get("okeanos_user_uuid")
-        
+            self.script = yaml.load(f)     
         # remove file
-        response = query_yes_no("The file " + self.opts['file'] + " will be deleted. Make sure you have taken the necessary steps to remember your passwords.")
+        response = query_yes_no("Should the file " + self.opts['file'] + " be deleted ?. If you choose yes, make sure you have taken the necessary steps to remember your passwords.")
         if response:
             os.remove(self.opts['file'])
 
@@ -231,15 +225,10 @@ class OrkaServer(object):
         """
         hosts_filename = os.getcwd() + '/ansible_hosts'
         host = '[webserver]'
-        host_vars = '[webserver:vars]'
         with open(hosts_filename, 'w+') as target:
             target.write(host + '\n')
             target.write('localhost ansible_ssh_host=127.0.0.1')
-            target.write(' ansible_ssh_pass={0}\n'.format(self.ansible_sudo_pass))
-            target.write(host_vars +'\n')
-            target.write("db_password={0}\n".format(self.db_password))
-            target.write("django_admin_password={0}\n".format(self.django_admin_password))
-            target.write("ansible_sudo_pass={0}\n".format(self.ansible_sudo_pass))
+            
         return hosts_filename
     
     def create_permitted_uuids_file(self,uuid):
@@ -268,18 +257,30 @@ class OrkaServer(object):
             target.write('key = "{0}"'.format(random_key))
         return 0
         
-    def start(self):
+    def action(self,verb):
         """
-        Starts an orka server
+        Executes an action on orka server
         """
+        self.ansible_sudo_pass = self.script.get("orka_admin_password")
         self.create_ansible_hosts()
-        self.create_permitted_uuids_file(self.user_uuid)
-        self.create_encrypt_file(self.user_uuid)
-        ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True" -t postimage'
-        subprocess.call(ansible_command, shell=True)
-        logging.log(REPORT, 'Orka server has started.')
-        
-        
+        vars = 'ansible_ssh_pass={0} ansible_sudo_pass={0}'.format(self.ansible_sudo_pass)
+        tag = verb
+        if verb == 'start':
+            self.db_password = self.check_pass_length(self.script.get("postgresql_password"))
+            self.django_admin_password = self.check_pass_length(self.script.get("django_admin_password"))
+            self.user_uuid = self.script.get("okeanos_user_uuid")
+            self.create_permitted_uuids_file(self.user_uuid)
+            self.create_encrypt_file(self.user_uuid)
+            tag = 'postimage'
+            vars = '{0} db_password={1} django_admin_password={2}'.format(vars,self.db_password,self.django_admin_password)
+ 
+        ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver {0}" -t {1}'.format(vars,tag)
+        exit_status = subprocess.call(ansible_command, shell=True)
+        if exit_status > 0:
+            return error_fatal
+        logging.log(REPORT, 'Orka server successfully {0}ed.'.format(verb))
+
+ 
 class OrkaImage(object):
     """
     Class for Orka management image creation
@@ -318,14 +319,10 @@ class OrkaImage(object):
         """
         hosts_filename = os.getcwd() + '/ansible_hosts'
         host = '[webserver]'
-        host_vars = '[webserver:vars]'
         with open(hosts_filename, 'w+') as target:
             target.write(host + '\n')
             target.write(self.server['SNF:fqdn'])
             target.write(' ansible_ssh_host=' + self.server_ip + '\n')
-            target.write(host_vars +'\n')
-            target.write("escience_repo={0}\n".format(self.escience_repo))
-            target.write("escience_version={0}\n".format(self.escience_version))
         return hosts_filename
         
         
@@ -334,6 +331,7 @@ class OrkaImage(object):
         Create Orka image
         """
         ssh_pub_path = join(expanduser('~'), ".ssh/id_rsa.pub")
+        vars = 'escience_repo={0} escience_version={1}'.format(self.escience_repo,self.escience_version) 
         self.server = self.cyclades.create_server(self.server_name, self.flavor_id, self.image_id,
                                                   personality=personality(ssh_pub_path),
                                                   project_id=self.project_id)
@@ -351,24 +349,31 @@ class OrkaImage(object):
         subprocess.call("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@{0} 'apt-get install -y python;'".format(self.server_ip),shell=True)
         self.create_ansible_hosts()
         logging.log(REPORT, " Starting software installations")
-        subprocess.call('ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True" -t preimage', shell=True)
+        subprocess.call('ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True {0}" -t preimage'.format(vars), shell=True)
         logging.log(REPORT, "Root password of server with public ip {0} is: {1}".format(self.server_ip, server_pass))
         
 def main():
     """
-    Entry point of deploy/create orka server utility script.
+    Entry point of deploy/create/update/restart orka server utility script.
     """
     orka_parser = ArgumentParser(description='Create an orka management image or start a server created by an ~okeanos orka management image')
     checker = _logger()
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                                 level=checker.logging_levels[default_logging],
                                 datefmt='%Y-%m-%d %H:%M:%S')
-    orka_subparsers = orka_parser.add_subparsers(help='Create orka management image or Start orka management server')
+    orka_subparsers = orka_parser.add_subparsers(help='Create orka management image or start orka management server')
     parser_create = orka_subparsers.add_parser('create',
                                      help='Create an Orka management image'
                                    ' on ~okeanos.')
-    parser_start = orka_subparsers.add_parser('start', help='Start orka server. User must give the correct'
-    ' "orka_admin_password" and "okeanos_user_uuid" arguments and anything he/she wants for arguments "postgresql_password" and "django_admin_password"')
+    
+    parser_common = ArgumentParser(add_help=False)
+    parser_common.add_argument('file', type=checker.valid_file_is, 
+                                  help='A file containing sensitive info (e.g. passwords).')
+    parser_start = orka_subparsers.add_parser('start', parents=[parser_common], help='Start orka server. User must provide a yaml file with the correct properties')
+    
+    parser_update = orka_subparsers.add_parser('update', parents=[parser_common], help='Update orka server. User must provide a yaml file with the correct properties')
+    
+    parser_restart = orka_subparsers.add_parser('restart', parents=[parser_common], help='Restart orka server. User must provide a yaml file with the correct properties')
     
     if len(argv) > 1:
         
@@ -377,25 +382,27 @@ def main():
                               default=145)
         parser_create.add_argument("--project_id", help='~okeanos project uuid. Use "kamaki project list" for existing projects',required=True)
         parser_create.add_argument("--image_id", help='OS for the VM. Use "kamaki image list" for existing images.'
-                              ' Default is "Debian Base 8" id and the script is tested on Debian 8',
-                              default="d3782488-1b6d-479d-8b9b-363494064c52")
+                              ' Default is "Debian Base 8.2" id and the script is tested on Debian 8.2',
+                              default="d6847eb8-8fa1-4ab3-bb30-dfcf770f89a0")       
         parser_create.add_argument("--git_repo", help='git repo to be cloned.Default is grnet/e-science.',
                               default="https://github.com/grnet/e-science.git")
         parser_create.add_argument("--git_repo_version", help='Version/branch of git repo to be cloned.Default is master.',
                               default="master")
         parser_create.add_argument("--token", help='Authentication token for ~okeanos',required=True)
-
-        parser_start.add_argument('file', type=checker.valid_file_is, 
-                                  help='A file containing sensitive info (e.g. passwords).')
+        
 
         opts = vars(orka_parser.parse_args(argv[1:]))
         verb = argv[1]  # Main action, decision follows
-        if verb == 'create':
-            orka_image = OrkaImage(opts)
-            orka_image.create()
-        elif verb == 'start':         
-            orka_server = OrkaServer(opts)
-            orka_server.start()       
+        try:
+            if verb == 'create':
+                orka_image = OrkaImage(opts)
+                orka_image.create()
+            else:         
+                orka_server = OrkaServer(opts)
+                orka_server.action(verb)
+        except Exception, e:
+            logging.error('{0} action failed due to {1}'.format(verb,e.args[0]))
+
     else:
         logging.error('No arguments were given')
         orka_parser.parse_args(' -h'.split())

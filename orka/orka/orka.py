@@ -246,6 +246,7 @@ class HadoopCluster(object):
         elif opt_vre_destroy == True:
             self.destroy_vre_machine()
         
+
     def create(self):
         """ Method for creating Hadoop clusters in ~okeanos."""
         try:
@@ -290,6 +291,7 @@ class HadoopCluster(object):
             logging.error(str(e.args[0]))
             exit(error_fatal)
 
+
     def destroy(self):
         """ Method for deleting Hadoop clusters in ~okeanos."""
         
@@ -313,6 +315,7 @@ class HadoopCluster(object):
             stderr.write('{0}'.format('\r'))
             logging.error(str(e.args[0]))
             exit(error_fatal)
+            
             
     def node_action(self):
         """ Method for performing node actions in a Hadoop cluster in~okeanos."""
@@ -359,6 +362,7 @@ class HadoopCluster(object):
                 else:
                     logging.error('You can perform node actions only on an active cluster.')
                     exit(error_fatal)
+
 
     def hadoop_action(self):
         """ Method for performing an action on a Hadoop cluster"""
@@ -518,7 +522,6 @@ class HadoopCluster(object):
         """
         Method checking the HDFS destination argument for existence and type (directory or file).
         """
- 
         parsed_path = parse_hdfs_dest("(.+/)[^/]+$", self.opts['destination'])
         if parsed_path:
             # if directory path ends with filename, checking if both exist
@@ -548,10 +551,10 @@ class HadoopCluster(object):
         else:
             self.check_hdfs_path(cluster['master_IP'], self.opts['destination'], '-e')
 
+
     def put_from_pithos(self, cluster, sourcefile):
         """ Method for transferring Pithos files to HDFS """
         """ Streaming """
- 
         logging.log(SUMMARY, 'Start transferring pithos file to hdfs' )
         pithos_url = ssh_pithos_stream_to_hadoop(DEFAULT_HADOOP_USER, cluster['master_IP'],
                               sourcefile, self.opts['destination'])
@@ -565,6 +568,7 @@ class HadoopCluster(object):
             # cleanup
             ssh_pithos_stream_to_hadoop(DEFAULT_HADOOP_USER, cluster['master_IP'],
                               sourcefile, self.opts['destination'], False)
+
 
     def check_hdfs_path(self, master_IP, dest, option):
         """
@@ -596,7 +600,6 @@ class HadoopCluster(object):
                 tokens = line.split(' ')
                 dfs_remaining = tokens[2]
                 break
- 
         # read replication factor
         replication_factor = read_replication_factor(DEFAULT_HADOOP_USER, cluster['master_IP'])
 
@@ -618,7 +621,6 @@ class HadoopCluster(object):
         Put files from ftp/http server to HDFS. Send a POST request to orka app server to
         copy the ftp/http file to the requested
         """
-
         payload = {"hdfs":{"id": self.opts['cluster_id'], "source": "\'{0}\'".format(self.opts['source']),
                                         "dest": "\'{0}\'".format(self.opts['destination']), "user": self.opts['user'],
                                         "password": self.opts['password']}}
@@ -693,9 +695,11 @@ class HadoopCluster(object):
                 logging.log(SUMMARY, 'Start downloading file from HDFS')
                 ssh_stream_from_hadoop(DEFAULT_HADOOP_USER, cluster['master_IP'], # stream file from HDFS to the destination in os.path
                                        source, destination)
+                
             else:
                 logging.error('Source file does not exist.')
                 exit(error_fatal) 
+
             if os.path.exists(destination):
                 logging.log(SUMMARY, 'File downloaded from HDFS.')
             else:
@@ -711,7 +715,6 @@ class UserClusterVreInfo(object):
     sortlist: input a clusters or VREs list of cluster or VRE dictionaries, output a clusters or VREs list respectively sorted according to cluster or VRE key
     list: pretty printer
     """
-
     def __init__(self, opts):
         self.opts = opts
         self.data = list()

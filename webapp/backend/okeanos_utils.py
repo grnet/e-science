@@ -12,6 +12,7 @@ import subprocess
 import yaml
 import urllib
 import requests
+from urllib2 import urlopen, Request, HTTPError
 from base64 import b64encode
 from os.path import abspath, join, expanduser, basename
 from kamaki.clients import ClientError
@@ -29,7 +30,6 @@ from backend.models import UserInfo, ClusterInfo, VreServer, Dsl, OrkaImage, Vre
 
 def retrieve_pending_clusters(token, project_name):
     """Retrieve pending cluster info"""
-    
     uuid = get_user_id(token)
     pending_quota = {"VMs": 0, "Cpus": 0, "Ram": 0, "Disk": 0, 
                      "Ip": 0, "Network": 0}
@@ -53,13 +53,11 @@ def retrieve_pending_clusters(token, project_name):
 
     return pending_quota
 
-
 def set_cluster_state(token, cluster_id, state, status='Pending', master_IP='', password='', error=''):
     """
     Logs a cluster state message and updates the celery and escience database
     state.
     """
-    
     logging.log(SUMMARY, state)
     db_cluster_update(token, status, cluster_id, master_IP, state=state, password=password, error=error)
     if len(state) >= const_truncate_limit:
@@ -72,7 +70,6 @@ def set_server_state(token, id, state, status='Pending', server_IP='', okeanos_s
     Logs a VRE server state message and updates the celery and escience database
     state.
     """
-    
     logging.log(SUMMARY, state)
     db_server_update(token, status, id, server_IP, state=state, okeanos_server_id=okeanos_server_id, password=password, error=error)
     if len(state) >= const_truncate_limit:
@@ -84,7 +81,6 @@ def parse_hdfs_dest(regex, path):
     """
     Parses remote hdfs directory for the orka put command to check if directory exists.
     """
-    
     parsed_path = re.match(regex, path)
     if parsed_path:
         return parsed_path.group(1)
@@ -96,7 +92,6 @@ def get_project_id(token, project_name):
     """
     Return the id of an active ~okeanos project.
     """
-    
     auth = check_credentials(token)
     dict_quotas = auth.get_quotas()
     try:
@@ -113,7 +108,6 @@ def get_project_id(token, project_name):
 
 def destroy_server(token, id):
     """Destroys a VRE server in ~okeanos ."""
-    
     current_task.update_state(state="Started")
     vre_server = VreServer.objects.get(id=id)    
     auth = check_credentials(unmask_token(encrypt_key,token))
@@ -134,19 +128,10 @@ def destroy_server(token, id):
     set_server_state(token, id, state, status='Destroyed')
     return vre_server.server_name
 
-
 def create_dsl(choices):
     """Creates a Reproducible Experiments Metadata  file in Pithos."""
     
-    if choices['pithos_path'].startswith('/'):
-        choices['pithos_path'] = choices['pithos_path'][1:]
-    if choices['pithos_path'].endswith('/'):
-        choices['pithos_path'] = choices['pithos_path'][:-1]
     uuid = get_user_id(unmask_token(encrypt_key,choices['token']))
-    container_status_code = get_pithos_container_info(uuid, choices['pithos_path'], choices['token'])
-    if container_status_code == pithos_container_not_found:
-        msg = 'Container not found error {0}'.format(container_status_code)
-        raise ClientError(msg, error_container)
     action_date = datetime.now().replace(microsecond=0)
     cluster = ClusterInfo.objects.get(id=choices['cluster_id'])
     data = {'cluster': {'name': cluster.cluster_name, 'project_name': cluster.project_name, 'image': cluster.os_image, 'disk_template': u'{0}'.format(cluster.disk_template),
@@ -165,8 +150,9 @@ def create_dsl(choices):
         db_dsl_update(choices['token'],dsl_id,state='Created',dsl_data=yaml_data)
         return dsl_id, choices['pithos_path'], choices['dsl_name']
     else:
+        db_dsl_update(choices['token'],dsl_id,state='Failed')
         msg = "Failed to save experiment metadata %s to %s" % (choices['dsl_name'], choices['pithos_path'])
-        raise ClientError(msg, error_container)
+        raise ClientError(msg, error_pithos_connection)
         
         
 def destroy_dsl(token, id):
@@ -176,91 +162,266 @@ def destroy_dsl(token, id):
     db_dsl_delete(token,id)
     return dsl.id
 
-def replay_dsl(token, id):
-    """Replays an experiment with configuration parameters and actions in sequence"""
-    dsl = Dsl.objects.get(id=id)
-    # pre execution checks
-    dsl_data_yaml = dsl.dsl_data
-    dsl_data_dict = yaml.safe_load(dsl_data_yaml)
-    # map yaml key names to cluster creation json payload keys
-    dslkeys_to_clusteroptions = {'name':'cluster_name','size':'cluster_size','image':'os_choice',\
-                                 'flavor_master':['cpu_master','ram_master','disk_master'],\
-                                 'flavor_slaves':['cpu_slaves','ram_slaves','disk_slaves']}
-    cluster_options = dsl_data_dict.get('cluster',{})
-    cluster_options.update(dsl_data_dict.get('configuration',{}))
-    for (key,value) in dslkeys_to_clusteroptions.iteritems():
-        option_val = cluster_options.pop(key,None)
-        if option_val is not None:  
-            if type(option_val) is list:
-                for i in range(len(value)):
-                    if option_val[i] is not None:
-                        cluster_options.setdefault(value[i],option_val[i])
-                    else:
-                        msg = "Mandatory cluster option %s is missing from %s/%s" % (value[i], dsl.dsl_name, key)
-                        raise ClientError(msg, error_fatal)
-            else:
-                if key=="name":
-                    # [orka]- prefix is added automatically in create cluster, remove it if found in name to avoid duplication
-                    option_val = option_val[7:] if option_val.startswith("[orka]-") else option_val
-                cluster_options.setdefault(value,option_val)
-        else:
-            msg = "Mandatory cluster option %s is missing from %" % (key, dsl.dsl_name)
-            raise ClientError(msg, error_fatal)
-    # inject options that are not not mandatory so might be missing but should have values
-    # only sets a default if a value has not already been parsed
-    cluster_options.setdefault('token',token) # inject the masked token in options.
-    cluster_options.setdefault('admin_password','') #inject an empty admin password value if none is parsed
-    cluster_options.setdefault('dfs_blocksize','128')
-    replication_factor_default = str(min(int(cluster_options['cluster_size'])-1,2))
-    cluster_options.setdefault('replication_factor',replication_factor_default)
-    # cluster section
-    # only need to import create cluster if we are going to be making a cluster
-    from backend.create_cluster import YarnCluster
-    state_msg = 'Started experiment cluster creation'
-    current_task.update_state(state=state_msg)
-    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
-    c_cluster = YarnCluster(cluster_options)
-    MASTER_IP, servers, password, cluster_id = c_cluster.create_yarn_cluster()
-    if cluster_id > 0:
-        state_msg = 'Experiment cluster created successfully'
-        db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=state_msg)
-    else:
-        state_msg = 'Experiment cluster creation failed'
-        db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
+def import_dsl(choices):
+    """Imports a Reproducible Experiments Metadata file from Pithos."""
     
-    # actions section (investigate how to queue in sequence)
-    
-    
-    return dsl.id
-    
+    uuid = get_user_id(unmask_token(encrypt_key,choices['token']))
+    url = '{0}/{1}/{2}/{3}'.format(pithos_url, uuid, choices['pithos_path'], urllib.quote(choices['dsl_name']))
+    headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,choices['token']))}
+    request = Request(url, headers=headers)
+    try:
+        pithos_input_stream = urlopen(request).read()
+        task_id = current_task.request.id
+        dsl_id = db_dsl_create(choices, task_id)
+        db_dsl_update(choices['token'],dsl_id,state='Created',dsl_data=pithos_input_stream)
+        return dsl_id, choices['pithos_path'], choices['dsl_name']
+    except HTTPError, e:
+        raise HTTPError(e, error_import_dsl)
 
-def get_pithos_container_info(uuid, pithos_path, token):
-    """Request to Pithos to see if container exists. """
+
+def check_pithos_path(pithos_path):
+    """Check given pithos path to be in a specific format."""
     
-    if '/' in pithos_path:
-        pithos_path = pithos_path.split("/", 1)[0]
-    url = '{0}/{1}/{2}'.format(pithos_url, uuid, pithos_path)
+    if pithos_path.startswith('/'):
+        pithos_path = pithos_path[1:]
+    if pithos_path.endswith('/'):
+        pithos_path = pithos_path[:-1]
+    return pithos_path
+
+
+def check_pithos_object_exists(pithos_path, dsl_name, token):
+    """Request to Pithos to see if object exists."""
+    
+    uuid = get_user_id(unmask_token(encrypt_key,token))
+    url = '{0}/{1}/{2}/{3}'.format(pithos_url, uuid, pithos_path, dsl_name)
     headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,token))}
     r = requests.head(url, headers=headers)
     response = r.status_code
     return response
 
 
+def get_pithos_container_info(pithos_path, token):
+    """Request to Pithos to see if container exists."""
+    
+    if '/' in pithos_path:
+        pithos_path = pithos_path.split("/", 1)[0]
+    uuid = get_user_id(unmask_token(encrypt_key,token))
+    url = '{0}/{1}/{2}'.format(pithos_url, uuid, pithos_path)
+    headers = {'X-Auth-Token':'{0}'.format(unmask_token(encrypt_key,token))}
+    r = requests.head(url, headers=headers)
+    response = r.status_code
+    return response
+
+def check_cluster_options(cluster_options,dsl,token,map_dsl_to_cluster):
+    """Used in replay experiment. Check the passed cluster options have mandatory keys, inject defaults for optionals where necessary."""
+    # map yaml key names to cluster creation json payload keys
+    dslkeys_to_clusteroptions = {'name':'cluster_name','size':'cluster_size','image':'os_choice',\
+                                 'flavor_master':['cpu_master','ram_master','disk_master'],\
+                                 'flavor_slaves':['cpu_slaves','ram_slaves','disk_slaves']}
+    if map_dsl_to_cluster:
+        for (key,value) in dslkeys_to_clusteroptions.iteritems():
+            option_val = cluster_options.pop(key,None)
+            if option_val is not None:  
+                if type(option_val) is list:
+                    for i in range(len(value)):
+                        if option_val[i] is not None:
+                            cluster_options.setdefault(value[i],option_val[i])
+                        else:
+                            msg = "Mandatory cluster option %s is missing from %s/%s" % (value[i], dsl.dsl_name, key)
+                            raise ClientError(msg, error_fatal)
+                else:
+                    if key=="name":
+                        # [orka]- prefix is added automatically in create cluster, remove it if found in name to avoid duplication
+                        option_val = option_val[7:] if option_val.startswith("[orka]-") else option_val
+                    cluster_options.setdefault(value,option_val)
+            else:
+                msg = "Mandatory cluster option %s is missing from %s" % (key, dsl.dsl_name)
+                raise ClientError(msg, error_fatal)
+    # inject options that are not mandatory but should have default values
+    # only sets a default if a value has not already been parsed
+    cluster_options.setdefault('token',token) # inject the masked token in options.
+    cluster_options.setdefault('admin_password','') #inject an empty admin password value if none is parsed
+    cluster_options.setdefault('dfs_blocksize','128')
+    replication_factor_default = str(min(int(cluster_options['cluster_size'])-1,2))
+    cluster_options.setdefault('replication_factor',replication_factor_default)
+    return cluster_options
+
+def check_actions(actions,dsl,token):
+    """
+    Used in replay experiment. Check that actions are valid verbs in our domain.
+    Update the queue with pairs of verb, args preserving order, and return it.
+    """
+    # start hadoop, stop hadoop, format HDFS, add cluster node, remove cluster node, put file on HDFS, get file from HDFS, run command on cluster
+    valid_verbs = ["start","stop","format","node_add","node_remove","put","get","run_job"]
+    verb_regex = re.compile("^(\w+)(?:\s*)(.*)",re.IGNORECASE) # use a non-capturing group to remove the whitespace between verb, args
+    for i in range(len(actions)):
+        action_parse = verb_regex.match(actions[i])
+        if action_parse:
+            verb = action_parse.group(1)
+            args = action_parse.group(2)
+            if verb not in valid_verbs:
+                msg = '\"%s\" is not a valid action for Experiment Replay through orka Web.' % verb
+                raise ClientError(msg, error_fatal) 
+            actions.pop(i)
+            actions.insert(i,{verb:args})
+        else:
+            msg = 'Could not parse an action out of %s' % actions[i]
+            raise ClientError(msg, error_fatal)
+    return actions
+
+def replay_dsl(token, id):
+    """Replays an experiment on cluster defined or created through parameters and plays actions in sequence"""
+    dsl = Dsl.objects.get(id=id)
+    # pre execution checks
+    dsl_data_yaml = dsl.dsl_data
+    state_msg = 'Checking experiment metadata'
+    current_task.update_state(state=state_msg)
+    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
+    try:
+        dsl_data_dict = yaml.safe_load(dsl_data_yaml)
+    except yaml.YAMLError, e:
+        msg = 'Error parsing experiment .yaml file %s' % e
+        current_task.update_state(state=msg)
+        db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+        raise ClientError(msg,error_fatal)
+    cluster_options = dsl_data_dict.get('cluster',{})
+    if len(cluster_options)<=0:
+        msg = 'No cluster options found in %s. Cannot proceed.' % dsl.dsl_name
+        current_task.update_state(state=msg)
+        db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+        raise ClientError(msg,error_fatal)
+    cluster_options.update(dsl_data_dict.get('configuration',{}))
+    # check if there are cluster_id, master_IP cluster options in the yaml, verify cluster exists and is active, 
+    # if exists and active skip creation, if not active get specs and replicate then proceed with created cluster, else abort.
+    skip_cluster_create = False
+    map_dsl_to_cluster = True
+    cluster_id_for_replay = None
+    if "cluster_id" in cluster_options:
+        if ClusterInfo.objects.filter(id=cluster_options['cluster_id']).exists():
+            cluster_to_check = ClusterInfo.objects.filter(id=cluster_options['cluster_id'])
+            if cluster_to_check.values_list('cluster_status',flat=True)[0]==const_cluster_status_active:
+                skip_cluster_create = True
+                cluster_id_for_replay = cluster_options['cluster_id']
+                msg = 'Cluster exists and is active, skipping cluster creation'
+                current_task.update_state(state=msg)
+                db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+            else:
+                cluster_options = cluster_to_check.values('cluster_name','cluster_size',\
+                                                          'cpu_master','ram_master','disk_master',\
+                                                          'cpu_slaves','ram_slaves','disk_slaves',\
+                                                          'disk_template','os_image','project_name',\
+                                                          'replication_factor','dfs_blocksize')[0]
+                os_choice = cluster_options.pop('os_image',None)
+                cluster_options.setdefault('os_choice',os_choice)
+                cluster_name = cluster_options.pop('cluster_name',None)
+                cluster_name = cluster_name[7:] if cluster_name.startswith("[orka]-") else cluster_name
+                cluster_options.setdefault('cluster_name',cluster_name)
+                cluster_options.pop('cluster_id',None)
+                cluster_options.pop('master_IP',None)
+                map_dsl_to_cluster = False
+                msg = 'Cluster exists but is not active. Using it as blueprint for a new one.'
+                current_task.update_state(state=msg)
+                db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+        else:
+            msg = 'Cluster id and master IP given do not match any clusters. Cannot proceed.'
+            current_task.update_state(state=msg)
+            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+            raise ClientError(msg,error_fatal)
+            
+    if not skip_cluster_create:
+        try:
+            cluster_options = check_cluster_options(cluster_options,dsl,token,map_dsl_to_cluster)
+        except ClientError,e:
+            msg = str(e.args[0])
+            current_task.update_state(state=msg)
+            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+            raise e
+        # cluster section
+        # only need to import create cluster if we are going to be making a cluster
+        from backend.create_cluster import YarnCluster
+        state_msg = 'Started experiment cluster creation'
+        current_task.update_state(state=state_msg)
+        db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
+        c_cluster = YarnCluster(cluster_options)
+        MASTER_IP, servers, password, cluster_id = c_cluster.create_yarn_cluster()
+        if cluster_id > 0:
+            state_msg = 'Experiment cluster created successfully'
+            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=state_msg)
+            cluster_id_for_replay = cluster_id
+        else:
+            state_msg = 'Experiment cluster creation failed'
+            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=state_msg)
+    
+    # actions section
+    actions = dsl_data_dict.get('actions',[])
+    if len(actions)>0 and cluster_id_for_replay is not None:
+        try:
+            actions = check_actions(actions, dsl, token)
+        except ClientError,e:
+            msg = str(e.args[0])
+            current_task.update_state(state=msg)
+            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+            raise e
+        # we have actions back in an array with cmd:params pairs
+        # import cluster management and methods
+        from backend.run_ansible_playbooks import ansible_manage_cluster
+        for action in actions:
+            cluster = ClusterInfo.objects.get(id=cluster_id_for_replay)
+            for cmd,params in action.iteritems():
+                if cmd in ["start","stop","format"]: # TODO skip action based on current cluster.cluster_status, cluster.hadoop_status?
+                    msg = 'Action: Hadoop %s' % cmd
+                    current_task.update_state(state=msg)
+                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    ansible_manage_cluster(cluster_id_for_replay,cmd)
+                elif cmd == "node_add": # TODO current cluster_status, hadoop_status checking
+                    msg = 'Action: Cluster %s' % cmd
+                    current_task.update_state(state=msg)
+                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    scale_cluster(token, cluster_id_for_replay, 1)
+                elif cmd == "node_remove": # TODO current cluster_status, hadoop_status checking
+                    msg = 'Action: Cluster %s' % cmd
+                    current_task.update_state(state=msg)
+                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    scale_cluster(token, cluster_id_for_replay, -1)
+                elif cmd == "put": # TODO check source is valid for orka-Web (pithos or other online source)
+                    source, destination = params.strip('()').split(',')
+                    msg = 'Action: HDFS %s with source %s and destination %s' % (cmd,source,destination)
+                    current_task.update_state(state=msg)
+                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    print "put from %s to %s" % (source,destination) # TODO pending implementation
+                    sleep(10)
+                elif cmd == "get": # TODO check destination is valid for orka-web (pithos only)
+                    source, destination = params.strip('()').split(',')
+                    msg = 'Action: HDFS %s with source %s and destination %s' % (cmd,source,destination)
+                    current_task.update_state(state=msg)
+                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    print "get from %s to %s" % (source,destination) # TODO pending implementation
+                    sleep(10)
+                elif cmd == "run_job":
+                    remote_user, remote_cmd = params.strip('()').split(',')
+                    msg = 'Action: Hadoop %s with command %s as remote user %s' % (cmd,remote_cmd,remote_user)
+                    current_task.update_state(state=msg)
+                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    print "run cmd %s as remote user: %s" % (remote_cmd, remote_user) # TODO pending implementation
+                    sleep(10)
+    
+    current_task.update_state(state='')
+    db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state='')
+    return dsl.id
+    
+
 def get_public_ip_id(cyclades_network_client,float_ip):  
     """Return IP dictionary of an ~okeanos public IP"""
-    
     list_of_ips = cyclades_network_client.list_floatingips()
     for ip in list_of_ips:
         if ip['floating_ip_address'] == float_ip:
             return ip
-
 
 def check_scale_cluster_up(token, cluster_id, cluster_to_scale):
     """
     Check user quota if new node can be added to existing cluster.
     Return tuple with message and value
     """
-    
     project_id = get_project_id(unmask_token(encrypt_key,token), cluster_to_scale.project_name)
     quotas = check_quota(unmask_token(encrypt_key,token), project_id)
     # The new node will be a slave node and will have the same flavor combination with the existing nodes of the cluster
@@ -277,13 +438,11 @@ def check_scale_cluster_up(token, cluster_id, cluster_to_scale):
         set_cluster_state(token, cluster_id, state=msg)
         return (msg, error_quotas_cyclades_disk)
     return ('SUCCESS',0)
-
     
 def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, plankton, status):
     """
     Create a VM in ~okeanos and attach it to the network of the requested cluster.
     """
-    
     new_slave = {}
     server_home_path = expanduser('~')
     server_ssh_keys = join(server_home_path, ".ssh/id_rsa.pub")
@@ -313,6 +472,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     if not chosen_image:
         msg = ' Image not found.'
         raise ClientError(msg, error_image_id)
+
     master_id = None
     network_to_edit_id = None
     new_status = 'placeholder'
@@ -328,6 +488,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
     new_server = cyclades.create_server(node_name, flavor_id, chosen_image_id,
                                         personality=personality(server_ssh_keys,pub_keys_path),
                                         networks=[{"uuid": network_to_edit_id}], project_id=project_id)
+
     new_status = cyclades.wait_server(new_server['id'], max_wait=MAX_WAIT)
     if new_status != 'ACTIVE':
         msg = ' Status for server [%s] is %s. Server will be deleted' % \
@@ -345,13 +506,11 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
                  'image_id':new_server['image']['id']}
     return new_slave
 
-
 def find_node_to_remove(cluster_to_scale, cyclades, netclient):
     """
     Find last node from cluster and return hostname
     and ~okeanos id of the node.
     """
-    
     node_id = None
     cluster_servers = []
     list_of_servers = cyclades.list_servers(detail=True)
@@ -372,10 +531,8 @@ def find_node_to_remove(cluster_to_scale, cyclades, netclient):
         node_fqdn = server['SNF:fqdn']
     return node_fqdn,node_id
 
-
 def cluster_remove_node(node_fqdn, node_id, token, cluster_id, cluster_to_scale, cyclades, status):
     """Remove a node of a scaled down cluster."""
-    
     state = "Deleting Node %s from cluster %s (id:%d)" % (node_fqdn, cluster_to_scale.cluster_name, cluster_id)
     set_cluster_state(token, cluster_id, state)
     cyclades.delete_server(node_id)    
@@ -396,7 +553,6 @@ def rollback_scale_cluster(list_of_slaves, cyclades, cluster_to_scale, size, ans
     Rollback cluster when scale add node fail. More rollback actions when ansible has failed during
     hadoop configurations for the new nodes.
     """
-    
     from run_ansible_playbooks import modify_ansible_hosts_file,ansible_scale_cluster
     cluster_name_suffix_id = '{0}-{1}'.format(cluster_to_scale.cluster_name, cluster_to_scale.id)
     for slave in list_of_slaves:
@@ -417,7 +573,6 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     and "appends" cluster_delta nodes.
     For scaling down it removes the last slave. 
     """
-    
     from reroute_ssh import reroute_ssh_to_slaves
     from run_ansible_playbooks import modify_ansible_hosts_file,ansible_scale_cluster,ansible_manage_cluster
     current_task.update_state(state="Started")
@@ -521,6 +676,7 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
         elif REVERSE_HADOOP_STATUS[previous_hadoop_status] == 'start':
             ansible_manage_cluster(cluster_id, 'stop')
             ansible_manage_cluster(cluster_id, 'start')
+    
     except Exception, e:
         msg = 'Restarting %s failed with %s. Try to restart it manually.'%(cluster_to_scale.cluster_name,str(e.args[0]))
         set_cluster_state(token, cluster_id, state=msg, status=status_map[previous_cluster_status], error=msg)
@@ -531,13 +687,13 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     return cluster_to_scale.cluster_name
         
 
+
 def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     """
     Destroys cluster and deletes network and floating IP. Finds the machines
     that belong to the cluster from the cluster id that is given. Cluster id
     is the unique integer that each cluster has in escience database.
     """
-    
     current_task.update_state(state="Started")
     servers_to_delete = []
     cluster_to_delete = ClusterInfo.objects.get(id=cluster_id)
@@ -562,6 +718,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
         msg = 'Could not get list of resources.'\
             'Cannot delete cluster'
         raise ClientError(msg, error_get_list_servers)
+
     # Get master virtual machine and network from IP   
     ip = get_public_ip_id(nc, float_ip_to_delete)
     float_ip_to_delete_id = ip['id']
@@ -571,17 +728,20 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
          if (attachment['OS-EXT-IPS:type'] == 'fixed' and not attachment['ipv6']):
             network_to_delete_id = attachment['network_id']
             break
+
     # Show an error message and exit if not valid IP or network
     if not master_id:
         msg = '[%s] is not the valid public IP of the master' % \
             float_ip_to_delete
         raise ClientError(msg, error_get_ip)
+
     if not network_to_delete_id:
         cyclades.delete_server(master_id)
         set_cluster_state(token, cluster_id, "Deleted master VM", status=status)
         msg = 'A valid network of master and slaves was not found.'\
             'Deleting the master VM only'
         raise ClientError(msg, error_cluster_corrupt)
+
     # Get the servers of the cluster to be deleted
     for server in list_of_servers:
         for attachment in server['attachments']:
@@ -609,6 +769,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     except ClientError:
         logging.exception('Error in deleting server')
         list_of_errors.append(error_cluster_corrupt)
+
     try:
         nc.delete_network(network_to_delete_id)
         state= 'Network with id [%s] is deleted' % network_to_delete_id
@@ -617,6 +778,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     except ClientError:
         logging.exception('Error in deleting network')
         list_of_errors.append(error_cluster_corrupt)
+
     # Delete the floating IP of deleted cluster
     try:
         nc.delete_floatingip(float_ip_to_delete_id)
@@ -627,6 +789,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
         logging.exception('Error in deleting floating IP [%s]' %
                           float_ip_to_delete)
         list_of_errors.append(error_cluster_corrupt)
+
     state= 'Cluster with public IP [%s] was deleted ' % float_ip_to_delete
     set_cluster_state(token, cluster_id, state, status=status)
     # Everything deleted as expected
@@ -640,7 +803,6 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
 
 def check_credentials(token, auth_url=auth_url):
     """Identity,Account/Astakos. Test authentication credentials"""
-    
     logging.log(REPORT, ' Test the credentials')
     try:
         auth = AstakosClient(auth_url, token)
@@ -654,7 +816,6 @@ def check_credentials(token, auth_url=auth_url):
 
 def get_flavor_lists(token):
     """From kamaki flavor list get all possible flavors """
-    
     auth = check_credentials(token)
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
@@ -667,6 +828,7 @@ def get_flavor_lists(token):
     ram_list = []
     disk_list = []
     disk_template_list = []
+
     for flavor in flavor_list:
         if flavor['SNF:allow_create']:
             if flavor['vcpus'] not in cpu_list:
@@ -687,7 +849,6 @@ def get_flavor_lists(token):
 
 def get_user_quota(auth):
     """Return user quota"""
-    
     try:
         return auth.get_quotas()
     except ClientError:
@@ -701,7 +862,6 @@ def check_quota(token, project_id):
     Available = limit minus (~ okeanos used and escience pending).
     Also divides with 1024*1024*1024 to transform bytes to gigabytes.
     """
-    
     auth = check_credentials(token)
     dict_quotas = get_user_quota(auth)
     project_name = auth.get_project(project_id)['name']
@@ -792,7 +952,6 @@ def check_images(token, project_id):
     Filter the ones that match with our uuid
     Return the available images
     """
-    
     auth = check_credentials(token)
     endpoints, user_id = endpoints_and_user_id(auth)    
     plankton = init_plankton(endpoints['plankton'], token)
@@ -812,7 +971,6 @@ def check_images(token, project_id):
     available_images.append(vre_images)        
     return available_images
 
-
 def endpoints_and_user_id(auth):
     """
     Get the endpoints
@@ -822,7 +980,6 @@ def endpoints_and_user_id(auth):
     Image --> plankton
     Network --> network
     """
-    
     logging.log(REPORT, ' Get the endpoints')
     try:
         endpoints = dict(
@@ -845,7 +1002,6 @@ def init_cyclades_netclient(endpoint, token):
     Cyclades Network client needed for all network functions
     e.g. create network,create floating IP
     """
-    
     logging.log(REPORT, ' Initialize a cyclades network client')
     try:
         return CycladesNetworkClient(endpoint, token)
@@ -859,7 +1015,6 @@ def init_plankton(endpoint, token):
     Plankton/Initialize Imageclient.
     ImageClient has all registered images.
     """
-    
     logging.log(REPORT, ' Initialize ImageClient')
     try:
         return ImageClient(endpoint, token)
@@ -873,7 +1028,6 @@ def init_cyclades(endpoint, token):
     Compute / Initialize Cyclades client.CycladesClient is used
     to create virtual machines
     """
-    
     logging.log(REPORT, ' Initialize a cyclades client')
     try:
         return CycladesClient(endpoint, token)
@@ -886,7 +1040,6 @@ def get_float_network_id(cyclades_network_client, project_id):
         """
         Gets an Ipv4 floating network id from the list of public networks Ipv4
         """
-        
         pub_net_list = cyclades_network_client.list_networks()
         float_net_id = 1
         i = 1
@@ -900,13 +1053,10 @@ def get_float_network_id(cyclades_network_client, project_id):
                 except ClientError:
                     if i < len(pub_net_list):
                         i = i+1
-
         return error_get_ip
-
     
 def personality(ssh_keys_path='', pub_keys_path='', vre_script_path=''):
         """Personality injects ssh keys to the virtual machines we create"""
-        
         personality = []
         if vre_script_path:
             try:
@@ -955,7 +1105,6 @@ class Cluster(object):
     their OS, the size of the cluster,a CycladesNetworkClient object, an
     AstakosClient object and the project_id.
     """
-    
     def __init__(self, cyclades, prefix, flavor_id_master, flavor_id_slave,
                  image_id, size, net_client, auth_cl, project_id):
         self.client = cyclades
@@ -967,7 +1116,6 @@ class Cluster(object):
 
     def clean_up(self, servers=None, network=None):
         """Delete resources after a failed attempt to create a cluster"""
-        
         if not (network and servers):
             logging.error(' Nothing to delete')
             return
@@ -997,7 +1145,6 @@ class Cluster(object):
         Creates a cluster of virtual machines using the Create_server method of
         CycladesClient.
         """
-        
         logging.log(REPORT, ' Create %s servers prefixed as [%s]',
                     self.size, self.prefix)
         servers = []
@@ -1150,7 +1297,6 @@ def read_replication_factor(document):
     """
     Returns default replication factor from Hadoop xml config file.
     """
-    
     root = document.getroot()
     for child in root.iter("property"):
         name = child.find("name").text
@@ -1167,7 +1313,6 @@ def get_remote_server_file_size(url, user='', password=''):
     given or empty if not given. Then does a HEAD request for the
     content-length header which is the file size in bytes.
     """
-    
     url_in_list = url.split("://", 1)
     url_in_list.insert(1, "://" + user + ':' + password + '@')
     new_url = ''.join(url_in_list) # creates url for curl command

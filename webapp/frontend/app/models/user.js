@@ -95,6 +95,10 @@ App.Dsl = DS.Model.extend({
         this.set('confirm_action', value);
         return this.get('confirm_action');
     }.property(),
+    disabled_action_replay : function(){
+        var status = this.get('dsl_status');
+        return status != "0";
+    }.property('dsl_status'),
     description_action_dsl_confirm : function(key, value){
         var confirm_action = this.get('action_dsl_confirm');
         switch(confirm_action){

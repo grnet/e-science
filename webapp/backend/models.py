@@ -452,7 +452,7 @@ class Dsl(models.Model):
         verbose_name = "Experiment"
 
     def __unicode__(self):
-        return ("%s : cluster_id(%d) : %s") % (self.dsl_name, self.cluster_id, DSL_STATUS_CHOICES[int(self.dsl_status)][1])
+        return ("%s : cluster_id(%s) : %s") % (self.dsl_name, (self.cluster_id or ''), DSL_STATUS_CHOICES[int(self.dsl_status)][1])
     
 class Setting(models.Model):
     """
