@@ -278,6 +278,7 @@ class OrkaServer(object):
         exit_status = subprocess.call(ansible_command, shell=True)
         if exit_status > 0:
             return error_fatal
+        verb = verb.rstrip('e')
         logging.log(REPORT, 'Orka server successfully {0}ed.'.format(verb))
 
  
