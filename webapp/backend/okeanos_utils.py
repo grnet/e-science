@@ -383,7 +383,7 @@ def replay_dsl(token, id):
                     current_task.update_state(state=msg)
                     db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
                     scale_cluster(token, cluster_id_for_replay, -1)
-                elif cmd == "put": # TODO check source is valid for orka-Web (pithos or other online source)
+                elif cmd == "put": # TODO check source is valid for orka-Web (pithos only)
                     source, destination = params.strip('()').split(',')
                     msg = 'Action: HDFS %s with source %s and destination %s' % (cmd,source,destination)
                     current_task.update_state(state=msg)
