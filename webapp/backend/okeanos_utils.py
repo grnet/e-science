@@ -398,13 +398,30 @@ def replay_dsl(token, id):
                     print "get from %s to %s" % (source,destination) # TODO pending implementation
                     sleep(10)
                 elif cmd == "run_job":
+                    from backend.reroute_ssh import establish_connect, exec_command, MASTER_SSH_PORT
                     remote_user, remote_cmd = params.strip('()').split(',')
+                    remote_cmd = remote_cmd.strip('\" ')
+                    try:
+                        ssh_client = establish_connect(cluster.master_IP,remote_user,'',MASTER_SSH_PORT)
+                    except RuntimeError, e:
+                        msg = 'Failed connecting to %s as %s' % (cluster.master_IP, remote_user)
+                        current_task.update_state(state=msg)
+                        db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+                        raise ClientError(msg,error_ssh_client)
                     msg = 'Action: Hadoop %s with command %s as remote user %s' % (cmd,remote_cmd,remote_user)
                     current_task.update_state(state=msg)
                     db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
-                    print "run cmd %s as remote user: %s" % (remote_cmd, remote_user) # TODO pending implementation
-                    sleep(10)
-    
+                    try:
+                        ex_status = exec_command(ssh_client,remote_cmd, command_state='celery task')
+                    except Exception, e:
+                        msg = 'Action Error: %s' % str(e.args[0])
+                        current_task.update_state(state=msg)
+                        db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+                        raise ClientError(msg,error_ssh_client)
+                    msg = 'Action Succeeded'
+                    current_task.update_state(state=msg)
+                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    
     current_task.update_state(state='')
     db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state='')
     return dsl.id

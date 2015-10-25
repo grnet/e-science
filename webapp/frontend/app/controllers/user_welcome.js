@@ -83,6 +83,15 @@ App.UserWelcomeController = Ember.Controller.extend({
         return this.get('sorted_dsls');
     }.property('filtered_dsls.[]'),
     // messages / feedback
+    dsl_replay_msg : function(self,key){
+        var replaying_dsls = self.get('sortable_dsls').filterBy('dsl_status','1');
+        for (i=0; i<replaying_dsls.get('length'); i++){
+            if (!Ember.isEmpty(replaying_dsls.objectAt(i).get('message_dsl_status_replay'))){
+                var msg = {'msg_type':'default','msg_text': replaying_dsls.objectAt(i).get('message_dsl_status_replay')};
+                self.send('addMessage',msg);
+            }
+        }
+    }.observes('sortable_dsls.@each.state'),
     master_vm_password_msg : function() {
         var pwd_message = this.get('content.master_vm_password');
         if (!Ember.isBlank(pwd_message)) {
@@ -226,7 +235,7 @@ App.UserWelcomeController = Ember.Controller.extend({
             }
         },
         removeMessage : function(id, all) {
-            // routes/controllers > controller.send('removeMessage', id, [all=false]) optional 3rd parameter to true will clear all messages
+            // routes/controllers > controller.send('removeMessage', id, [all=false] all=true > clear all
             // templates > {{action 'removeMessage' message_id}} / {{action 'removeMessage' 1 true}}
             var self = this;
             var store = this.store;
@@ -273,6 +282,8 @@ App.UserWelcomeController = Ember.Controller.extend({
                                 var num_cluster_records = user_clusters.get('length');
                                 var user_vreservers = user.get('vreservers');
                                 var num_vre_records = user_vreservers.get('length');
+                                var user_dsls = user.get('dsls');
+                                var num_dsl_records = user_dsls.get('length');
                                 var bPending = false;
                                 for ( i = 0; i < num_cluster_records; i++) {
                                     if ((user_clusters.objectAt(i).get('cluster_status') == '2') || (user_clusters.objectAt(i).get('hadoop_status') == '2')) {
@@ -282,6 +293,12 @@ App.UserWelcomeController = Ember.Controller.extend({
                                 }
                                 for ( i = 0; i < num_vre_records; i++ ) {
                                     if (user_vreservers.objectAt(i).get('server_status') == '2'){
+                                        bPending = true;
+                                        break;
+                                    }
+                                }
+                                for ( i = 0; i < num_dsl_records; i++ ) {
+                                    if (user_dsls.objectAt(i).get('dsl_status') == '1'){
                                         bPending = true;
                                         break;
                                     }
