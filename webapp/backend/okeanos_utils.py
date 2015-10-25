@@ -368,17 +368,17 @@ def replay_dsl(token, id):
         for action in actions:
             cluster = ClusterInfo.objects.get(id=cluster_id_for_replay)
             for cmd,params in action.iteritems():
-                if cmd in ["start","stop","format"]: # TODO skip action based on current cluster.cluster_status, cluster.hadoop_status?
+                if cmd in ["start","stop","format"]:
                     msg = 'Action: Hadoop %s' % cmd
                     current_task.update_state(state=msg)
                     db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
                     ansible_manage_cluster(cluster_id_for_replay,cmd)
-                elif cmd == "node_add": # TODO current cluster_status, hadoop_status checking
+                elif cmd == "node_add":
                     msg = 'Action: Cluster %s' % cmd
                     current_task.update_state(state=msg)
                     db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
                     scale_cluster(token, cluster_id_for_replay, 1)
-                elif cmd == "node_remove": # TODO current cluster_status, hadoop_status checking
+                elif cmd == "node_remove":
                     msg = 'Action: Cluster %s' % cmd
                     current_task.update_state(state=msg)
                     db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
@@ -575,12 +575,17 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     """
     from reroute_ssh import reroute_ssh_to_slaves
     from run_ansible_playbooks import modify_ansible_hosts_file,ansible_scale_cluster,ansible_manage_cluster
-    current_task.update_state(state="Started")
     cluster_to_scale = ClusterInfo.objects.get(id=cluster_id)
     pre_scale_size = cluster_to_scale.cluster_size
     previous_cluster_status = cluster_to_scale.cluster_status
     previous_hadoop_status = cluster_to_scale.hadoop_status
     status_map = {"0":"Destroyed","1":"Active","2":"Pending","3":"Failed"}
+    # pre-flight checks. If cluster status is pending or hadoop status formatting abort.
+    if (previous_cluster_status == const_cluster_status_pending) or (previous_hadoop_status == const_hadoop_status_format):
+        current_task.update_state(state="Skipping")
+        return cluster_to_scale.cluster_name
+    # pre-flight checks done
+    current_task.update_state(state="Started")
     auth = check_credentials(unmask_token(encrypt_key,token))
     current_task.update_state(state="Authenticated")
     endpoints, user_id = endpoints_and_user_id(auth)
