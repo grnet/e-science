@@ -9,6 +9,8 @@ App.Router.map(function() {
 		this.route('vreimages');
 		// /help/experiments
 		this.route('experiments');
+		// /help/personalorka
+		this.route('personalorka');
 	});
 
 });
