@@ -6,8 +6,8 @@
  choose_role: webserver
  django_admin_name: orka_admin
  django_admin_email: orka@example.com
- escience_repo: https://github.com/grnet/e-science.git
- escience_version: master
+ escience_repo: https://github.com/ioannisstenos/e-science.git
+ escience_version: es475
 
  # setup_orka_admin variables
  create_orka_admin: False
