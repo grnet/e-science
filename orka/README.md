@@ -43,7 +43,7 @@ More information about the software that is installed for the creation of the im
 
 ### Example of creating an ~okeanos image for personal Orka server
 
-Assuming the administrator's Linux working environment is a bare ~okeanos Debian Base 8 without a pair of SSH keys. The following steps can be executed as root or as a user with sudo privileges:
+Assuming the administrator's Linux working environment is ~okeanos Debian Base 8.2 without a pair of SSH keys. The following steps can be executed as root or as a user with sudo privileges:
 
     sudo apt-get update
     sudo apt-get install -y git
