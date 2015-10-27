@@ -245,4 +245,4 @@ def replay(argv, token):
     # proceed with the list of actions
     if script.get("actions") is not None:
         enforce_actions(script, cluster_id, master_IP)
-    print "[ORKA-REPLAY] Finished."
+    print REPLAY_ACTIONS_PREFIX + " Finished."
