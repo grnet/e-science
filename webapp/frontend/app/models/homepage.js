@@ -16,7 +16,7 @@ App.Faqitem = DS.Model.extend({
     faq_date : attr('date'),
     faq_question : attr('string'),
     faq_answer : attr('string'),
-    faq_category : attr('number')
+    faq_category : attr('string') // resolves to foreign key category_name in the backend serializer
 });
 // Model for application settings
 App.Setting = DS.Model.extend({

@@ -287,6 +287,19 @@ class PublicNewsItem(models.Model):
         verbose_name = "Public News Item"
     def __unicode__(self):
         return ('%s : %s') % (self.news_date.strftime('%c'), self.news_message)
+
+class FaqItemCategory(models.Model):
+    """Definition of FAQ Item Categories"""
+    id = models.AutoField("FaqItemCategory ID", primary_key=True, null=False,
+                          help_text="Auto-increment FaqItemCategory id")
+    category_name = models.CharField("FaqItemCategory name", max_length=255, unique=True, null=False,
+                                     help_text="FaqItemCategory Name")
+    class Meta:
+        verbose_name = "Frequently Asked Questions Category"
+        verbose_name_plural = "Frequently Asked Questions Categories"
+    
+    def __unicode__(self):
+        return ('%s : %s') % (self.id, self.category_name)
     
 class FaqItem(models.Model):
     """Definition of Frequently Asked Questions Items."""
@@ -296,16 +309,16 @@ class FaqItem(models.Model):
                                        help_text="Date and time for"
                                        " the creation of this entry")
     faq_question = models.CharField("Faq Item Question", max_length=1020, null=False,
-                                    help_text="Faq Answer")
+                                    help_text="Question")
     faq_answer = models.CharField("Faq Item Answer", max_length=2040, null=False,
-                                    help_text="Faq Answer")
-    faq_category = models.IntegerField("Faq Item Category", null=True, blank=True,
-                                     help_text="Category ID for Faq Item")
+                                    help_text="Answer")
+    faq_category = models.ForeignKey(FaqItemCategory, null=True, 
+                                       help_text="Faq Item Category")
     class Meta:
         verbose_name = "Frequently Asked Question"
         #verbose_name_plural = "Frequently Asked Questions"
     def __unicode__(self):
-        return ('%s : %s') % (self.faq_date.strftime('%c'), self.faq_question)
+        return ('Q:%s > A:%s') % (self.faq_question, self.faq_answer)
 
 class ClusterStatistics(models.Model):
     """Definition of Cluster statistics."""

@@ -39,4 +39,5 @@ SELECT setval('backend_vreimagecategory_id_seq', (SELECT MAX(id) FROM backend_vr
 SELECT setval('backend_orkaimagecategory_id_seq', (SELECT MAX(id) FROM backend_orkaimagecategory)+1);
 SELECT setval('backend_publicnewsitem_id_seq', (SELECT MAX(id) FROM backend_publicnewsitem)+1);
 SELECT setval('backend_faqitem_id_seq', (SELECT MAX(id) FROM backend_faqitem_id_seq)+1);
+SELECT setval('backend_faqitemcategory_id_seq', (SELECT MAX(id) FROM backend_faqitemcategory_id_seq)+1);
 SELECT setval('backend_setting_id_seq', (SELECT MAX(id) FROM backend_setting)+1);

@@ -7,3 +7,27 @@
 	</div>
 </div>
 
+<div class="col col-sm-12">
+    {{#unless boolean_no_faqitems}}
+    <div class="panel-group" id="id_faq_accordion">
+        {{#each category in faq_by_category}}
+        <div class="h4 text-left">{{category.category}}</div>
+            {{#eachidx faqitem in category.faqitems}}
+            <div class="panel panel-default">
+                <div class="panel-heading panel-heading-sm" data-toggle="collapse" data-parent="#id_faq_accordion" {{bind-attr href=faqitem.collapse_href}}>
+                    <h4 class="panel-title text-default">
+                        <a class="accordion-toggle collapsed nounder" data-toggle="collapse" data-parent="#id_faq_accordion" {{bind-attr href=faqitem.collapse_href}}>{{index_1}}. {{faqitem.faq_question}}</a>
+                        <i class="indicator glyphicon glyphicon-chevron-down text-default  pull-right"></i>
+                    </h4>
+                </div>
+                <div {{bind-attr id=faqitem.collapse_id}} class="panel-collapse collapse">
+                    <div class="panel-body panel-body-sm text-info">
+                        {{faqitem.faq_answer}} 
+                    </div>
+                </div>
+            </div>
+            {{/eachidx}}
+        {{/each}}
+    </div>
+    {{/unless}}
+</div>

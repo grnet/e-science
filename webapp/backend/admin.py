@@ -7,11 +7,13 @@ administrator backend of Django.
 """
 
 from django.contrib import admin
+from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django import forms
 from django.forms import Textarea
 from django.core import validators
 from django.core.validators import MaxLengthValidator
 from django.core.exceptions import ValidationError
+from django.db.models import ManyToOneRel
 from json import loads
 from backend.models import *
 
@@ -78,13 +80,32 @@ class SettingAdminForm(forms.ModelForm):
 class SettingAdmin(admin.ModelAdmin):
     form = SettingAdminForm
 
+# need to explicitly state not required as admin doesn't follow model convention
+# need a related field wrapper to reproduce the default functionality of being able to add new category from faqitem form
+class FaqItemForm(forms.ModelForm):
+    faq_category = forms.ModelChoiceField(queryset=FaqItemCategory.objects.all(), required=False, help_text='FAQ Item Category')
+    def __init__(self, *args, **kwargs):
+        super(FaqItemForm, self).__init__(*args, **kwargs)
+        rel = ManyToOneRel(self.instance._meta.get_field('faq_category'), FaqItemCategory, 'id') # Django 1.6+
+        self.fields['faq_category'].widget = RelatedFieldWidgetWrapper(self.fields['faq_category'].widget, rel, self.admin_site)
+    class Meta:
+        model = FaqItem
+        fields = '__all__'
+
+class FaqItemAdmin(admin.ModelAdmin):
+    form = FaqItemForm
+    def __init__(self, model, admin_site):
+        self.form.admin_site = admin_site 
+        super(FaqItemAdmin, self).__init__(model, admin_site)
+
 
 admin.site.register(UserInfo)
 admin.site.register(UserLogin)
 admin.site.register(Setting,SettingAdmin)
 admin.site.register(ClusterInfo)
 admin.site.register(PublicNewsItem)
-admin.site.register(FaqItem)
+admin.site.register(FaqItem,FaqItemAdmin)
+admin.site.register(FaqItemCategory)
 admin.site.register(OrkaImage,OrkaImageAdmin)
 admin.site.register(OrkaImageCategory)
 admin.site.register(VreImage,VreImageAdmin)
