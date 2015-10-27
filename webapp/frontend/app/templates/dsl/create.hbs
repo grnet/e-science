@@ -69,7 +69,7 @@
                                     data-toggle="tooltip"
                                     data-placement="top"
                                     data-html=true
-                                    data-title="<p>Type in a Pithos container or generate the default</p>">
+                                    data-title="<p>Type in a or generate a Pithos container</p>">
                                     {{input type="text" 
                                     value=dsl_pithos_path
                                     placeholder="Path"
@@ -98,9 +98,18 @@
                         <div class="col-sm-12">
                             <dl class="dl-horizontal">
                                 <dt class="text-left">Save Metadata</dt>
-                                    <dd class="text-info text-left">Select a Hadoop cluster as source for experiment configuration metadata, then type in or prefill default filename and Pithos container and press Save.</dd>
+                                    <dd class="text-info text-left">Select a Hadoop cluster as metadata source, fill in a filename and Pithos path and press Save.</dd>
                             </dl>
                         </div>
+                        {{#unless boolean_no_cluster}}
+                        <table class="table table-bordered table-condensed">
+                            <thead class="h5 strong"><tr><td></td><td>CPU (cores)</td><td>RAM (MiB)</td><td>DISK (GiB)</td></tr></thead>
+                            <tbody>
+                               <tr><td class="h5 strong">Master</td><td class="text text-info">{{selected_cluster.[0].cpu_master}}</td><td class="text text-info">{{selected_cluster.[0].ram_master}}</td><td class="text text-info">{{selected_cluster.[0].disk_master}}</td></tr>
+                               <tr><td class="h5 strong">Slaves</td><td class="text text-info">{{selected_cluster.[0].cpu_slaves}}</td><td class="text text-info">{{selected_cluster.[0].ram_slaves}}</td><td class="text text-info">{{selected_cluster.[0].disk_slaves}}</td></tr>
+                            </tbody>
+                        </table>
+                        {{/unless}}
                     </div> 
                 </form>
             </div>
@@ -108,13 +117,12 @@
     </div>
     <div class="panel-footer text-center">
         <div class="row">
-            <div class="col col-sm-12">
+            <div class="col col-sm-6"></div>
+            <div class="col col-sm-6">
                 {{#unless boolean_no_cluster}}
-                    <span class="h5 strong">(Cluster Info) </span>
+                    <span class="h5 strong">(Cluster Info) </span>&nbsp;
+                        <span class="h5">Project: </span><span class="text text-info strong">{{selected_cluster_project}}</span>&nbsp;
                         <span class="h5">Size: </span><span class="text text-info strong">{{selected_cluster_size}}</span>
-                        <span class="h5">Master Flavor: </span><span class="text text-info strong">{{selected_cluster_master_flavor}}</span>
-                        <span class="h5">Slaves Flavor: </span><span class="text text-info strong">{{selected_cluster_slaves_flavor}}</span>
-                        <span class="h5">Project: </span><span class="text text-info strong">{{selected_cluster_project}}</span>
                 {{else}}
                     <span class="h5 strong">(Cluster Info) </span>
                 {{/unless}}
@@ -178,7 +186,7 @@
                         <div class="col-sm-12">
                             <dl class="dl-horizontal">
                                 <dt class="text-left">Import Metadata</dt>
-                                    <dd class="text-info text-left">Fill in an existing experiment metadata filename and Pithos path to the fields and press Import.</dd>
+                                    <dd class="text-info text-left">Fill in an existing experiment metadata filename and Pithos path and press Import.</dd>
                             </dl>
                         </div>
                     </div> 
@@ -188,10 +196,11 @@
     </div>
     <div class="panel-footer text-center">
         <div class="row">
-            <div class="col col-sm-12">
-                    <span class="h5 strong">(Full Pithos Path) </span>
+            <div class="col col-sm-6 text-right">
+                    <span class="h5 strong">(Full Pithos Path) </span>&nbsp;
                         <span class="text text-info strong">{{#unless import_dsl_disabled}}pithos://{{dsl_pithos_path_import}}/{{dsl_filename_import}}{{/unless}}</span>
             </div>
+            <div class="col col-sm-6"></div>
         </div>
     </div>    
 </div>
