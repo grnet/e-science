@@ -81,6 +81,10 @@ App.DslCreateController = Ember.Controller.extend({
         var cluster = Ember.isEmpty(this.get('selected_cluster')) ? null : this.get('selected_cluster').objectAt(0);
         return cluster && '[CPUx%@, RAM:%@MiB, DISK:%@GiB]'.fmt(cluster.get('cpu_slaves'),cluster.get('ram_slaves'),cluster.get('disk_slaves')) || '';
     }.property('selected_cluster'),
+    selected_cluster_slaves_number : function(){
+        var cluster_slaves = Ember.isEmpty(this.get('selected_cluster')) ? null : this.get('selected_cluster').objectAt(0).get('cluster_slaves_num');
+        return cluster_slaves && cluster_slaves > 1 ? 'x%@'.fmt(cluster_slaves) : '';
+    }.property('selected_cluster'),
     selected_cluster_project : function(){
         return Ember.isEmpty(this.get('selected_cluster')) ? '' : this.get('selected_cluster').objectAt(0).get('project_name');
     }.property('selected_cluster'),
