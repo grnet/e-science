@@ -313,7 +313,7 @@ def check_actions(actions,dsl,token):
             verb = action_parse.group(1)
             args = action_parse.group(2)
             if verb not in valid_verbs:
-                msg = '\"%s\" is not a valid action for Experiment Replay through orka Web.' % verb
+                msg = '%s is not a valid action for Experiment Replay through orka Web.' % verb
                 raise ClientError(msg, error_fatal)
             if verb in ['put','get']:
                 source, destination = args.strip('()').split(',')
@@ -453,9 +453,9 @@ def replay_dsl(token, id):
                         msg = 'Action Error: HDFS operations are only possible on an active cluster with Hadoop started.'
                         action_stop(token, id, current_task, msg)
                         raise ClientError(msg, error_fatal)
-                    msg = 'Action: HDFS \"%s\" with source \"%s\" and destination \"%s\"' % (cmd,source,destination)
+                    msg = 'Action: HDFS %s with source %s and destination %s' % (cmd,source,destination)
                     action_continue(token, id, current_task, msg)
-                    if cmd == "put":
+                    if cmd == "put": # put from pithos to hdfs
                         from backend.reroute_ssh import HdfsRequest
                         new_source = action_put_prepare(DEFAULT_HADOOP_USER, cluster.master_IP, source, True)
                         source_path = source.split("/")
@@ -469,17 +469,31 @@ def replay_dsl(token, id):
                                 msg = str(e.args[0])
                                 action_stop(token, id, current_task, msg)
                                 raise ClientError(msg,error_fatal)
+                            action_put_prepare(DEFAULT_HADOOP_USER, cluster.master_IP, source)
                             if result == 0:
-                                action_put_prepare(DEFAULT_HADOOP_USER, cluster.master_IP, source)
                                 msg = "Action Result: Success"
                                 action_continue(token, id, current_task, msg)
                             else:
-                                msg = "Action Error: \"%s\" \"%s\" \"%s\"" % (cmd, source, destination)
+                                msg = "Action Error: %s %s %s" % (cmd, source, destination)
                                 action_stop(token, id, current_task, msg)
-                                action_put_prepare(DEFAULT_HADOOP_USER, cluster.master_IP, source)
                                 raise ClientError(msg,error_ssh_client)
-                    elif cmd == "get":
-                        print "get", source, destination
+                    elif cmd == "get": # get from hdfs to pithos
+                        try:
+                            file_exists = subprocess.call("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + \
+                                                           "{0}@{1}".format(DEFAULT_HADOOP_USER,cluster['master_IP']) + \
+                                                           " \'/usr/local/hadoop/bin/hdfs dfs -test -e " + "\'{0}\'".format(source) + "\'", \
+                                                           stderr=open(devnull,'w'), shell=True)
+                            if file_exists == 0:
+                                from orka.utils import from_hdfs_to_pithos
+                                from_hdfs_to_pithos(DEFAULT_HADOOP_USER, cluster['master_IP'],source, destination)
+                            else:
+                                msg = 'Action Error: Source file %s not found.' % source
+                                action_stop(token, id, current_task, msg)
+                                raise ClientError(msg, error_fatal)
+                        except Exception, e:
+                            msg = str(e.args[0])
+                            action_stop(token, id, current_task, msg)
+                            raise ClientError(msg, error_fatal)
                 elif cmd == "run_job":
                     from backend.reroute_ssh import establish_connect, exec_command, MASTER_SSH_PORT
                     remote_user, remote_cmd = params.strip('()').split(',')

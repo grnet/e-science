@@ -83,7 +83,7 @@ App.UserWelcomeController = Ember.Controller.extend({
         return this.get('sorted_dsls');
     }.property('filtered_dsls.[]'),
     // messages / feedback
-    dsl_replay_msg : function(self,key){
+    /*dsl_replay_msg : function(self,key){
         var replaying_dsls = self.get('sortable_dsls').filterBy('dsl_status','1');
         for (i=0; i<replaying_dsls.get('length'); i++){
             if (!Ember.isEmpty(replaying_dsls.objectAt(i).get('message_dsl_status_replay'))){
@@ -91,7 +91,7 @@ App.UserWelcomeController = Ember.Controller.extend({
                 self.send('addMessage',msg);
             }
         }
-    }.observes('sortable_dsls.@each.state'),
+    }.observes('sortable_dsls.@each.state'),*/
     master_vm_password_msg : function() {
         var pwd_message = this.get('content.master_vm_password');
         if (!Ember.isBlank(pwd_message)) {

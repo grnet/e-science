@@ -51,8 +51,8 @@
                 <td>
                 {{#if usercluster.cluster_status_active}}
                 {{#if usercluster.cluster_confirm_action}}
-                <div class="btn-group  btn-block">
-				    <a role="button" data-toggle="popover" data-container="body" data-trigger="hover" data-html=true data-placement="top" data-content='<b class="glyphicon glyphicon-warning-sign text-danger"> WARNING</b><p>Possible loss of data</p>' {{bind-attr id='usercluster.cluster_confirm_id'}} {{action 'takeClusterAction' usercluster}} class="btn btn-danger btn-xs active">{{usercluster.cluster_confirm_action_verbose}}</a>
+                <div id="id_confirm_action_btn" class="btn-group  btn-block">
+				    <a role="button" data-toggle="popover" data-trigger="hover focus click" data-html=true data-placement="left" data-content='<b class="glyphicon glyphicon-warning-sign text-danger"> WARNING</b><p>Possible loss of data</p>' {{bind-attr id='usercluster.cluster_confirm_id'}} {{action 'takeClusterAction' usercluster}} class="btn btn-danger btn-xs active">{{usercluster.cluster_confirm_action_verbose}}</a>
 				    <a role="button" {{action 'confirmClusterAction' usercluster false}} class="btn btn-danger btn-xs active">x</a>
 				</div>
                 {{else}}

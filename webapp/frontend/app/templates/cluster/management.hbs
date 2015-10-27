@@ -149,7 +149,7 @@
 			{{#ifeq model.cluster_confirm_action 'hadoop_start'}}
 			<div class='btn-toolbar-horizontal btn-toolbar-sm'>
                 <div class='btn-group btn-group-sm btn-block'>
-					<button data-toggle="popover" data-container="body" data-trigger="hover click" data-html=true data-placement="right" data-content='<b class="glyphicon glyphicon-warning-sign text-danger"> WARNING</b><p>Possible loss of data</p>' 
+					<button data-toggle="popover" data-trigger="hover focus click" data-html=true data-placement="right auto" data-content='<b class="glyphicon glyphicon-warning-sign text-danger"> WARNING</b><p>Possible loss of data</p>' 
 					    {{bind-attr id='model.cluster_confirm_id'}} {{action 'takeClusterAction' model}} class="btn btn-danger btn-sm active col-sm-10">Confirm</button>
 					<button {{action 'confirmClusterAction' model false}} class="btn btn-danger btn-sm active col-sm-2">x</button>
 				</div>

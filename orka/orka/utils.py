@@ -573,7 +573,7 @@ def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
         
         response_append_to_pithos_2 = subprocess.call(str_command, shell=True)
         counter +=1 
-        while ((counter+1) * block_size) < file_size : # upload file block by clock to pithos. Append each block at destination file.
+        while ((counter+1) * block_size) < file_size : # upload file block by block to pithos. Append each block at destination file.
             str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} ".format(user,master_IP) + \
             "\"{0} dfs -cat ".format(HADOOP_PATH) + \
             "\'{0}\' ".format(hdfs_path) + \
