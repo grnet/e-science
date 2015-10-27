@@ -9,9 +9,19 @@
 <div class="col col-sm-12">
 <h1>Orka service</h1>
 
-<p>Orka service is deployed and accessed by a personal Orka server. Every ~okeanos user can build a personal Orka server by following the instructions <a href="#/help/personalorka/orkaserverinfo">here</a>.</p>
+<p>Orka service is deployed and accessed by a personal Orka server. Every ~okeanos user can build a personal Orka server by following the instructions in Start Orka server.</p>
 
-<h2>Create ~okeanos image for personal Orka server (for administrators)</h2>
+<ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" class="active"><a href="#createorkaimage" role="tab" data-toggle="tab">Create Orka image</a></li>
+    <li role="presentation"><a href="#startorkaserver" role="tab" data-toggle="tab">Start Orka server</a></li>
+    <li role="presentation"><a href="#restartorkaserver"  role="tab" data-toggle="tab">Restart Orka server</a></li>
+    <li role="presentation"><a href="#updateorkaserver"  role="tab" data-toggle="tab">Update Orka server</a></li>
+  </ul>
+
+  <!-- Tab panes -->
+  <div class="tab-content">
+       <div role="tabpanel" class="tab-pane active" id="createorkaimage">
+           <h3>Create ~okeanos image for personal Orka server (for administrators)</h3>
 
 <p>The python script deploy_orka_server.py can be used either for creating an ~okeanos Orka server image
 or starting an Orka server created by such an image. Before using the script as image creator, the following packages must be installed
@@ -85,8 +95,8 @@ snf-mkimage --public --print-syspreps -f -u Orka_on_Debian_8_image -t AAa1aAaAAA
 </code></pre>
 
 <p>After snf-image-creator is finished, the new image can be used for the creation of Orka servers.</p>
-
-<a name="/help/personalorka/orkaserverinfo"><h2>Create a personal Orka server in ~okeanos (for users)</h2></a>
+       </div>
+    <div role="tabpanel" class="tab-pane" id="startorkaserver"><h3>Create a personal Orka server in ~okeanos (for users)</h3>
 
 <p>Users should read the following section, regarding Orka server requirements, before starting the creation of their personal Orka server.</p>
 
@@ -142,9 +152,8 @@ okeanos_user_uuid: &lt;~okeanos_user_uuid. Below follows info on how to find the
 <pre><code>python deploy_orka_server.py start &lt;path_to_user_created_yaml_file&gt;
 </code></pre>
 
-<p>When python script finishes successfully, user can open in a browser the public IP of Orka server and start using the Orka services.</p>
-
-<h3><a name="/help/personalorka/restartorkaserver">Example of restarting a personal Orka server</a></h3>
+<p>When python script finishes successfully, user can open in a browser the public IP of Orka server and start using the Orka services.</p></div>
+    <div role="tabpanel" class="tab-pane" id="restartorkaserver"><h3>Example of restarting a personal Orka server</h3>
 
 <p>After starting an Orka server, the deploy_orka_server.py script can be used for restarting the server, in case of an error or after
 an update. User must access the server:</p>
@@ -172,9 +181,8 @@ orka_admin_password: &lt;orka_admin linux password e.g. orkaadmintestpassword&gt
 In any case, Orka server will be restarted with the following command:</p>
 
 <pre><code>python deploy_orka_server.py restart examplefile.yml
-</code></pre>
-
-<h3>Example of updating a personal Orka server</h3>
+</code></pre></div>
+    <div role="tabpanel" class="tab-pane" id="updateorkaserver"><h3>Example of updating a personal Orka server</h3>
 
 <p>Users can update their personal Orka servers, if there are updates in the main e-Science github repo, by running the python script
 deploy_orka_server.py with the 'update' argument and the deploy file used for starting the server. If the deploy file was deleted,
@@ -198,7 +206,9 @@ cd projects/e-science/deploy
 </code></pre>
 
 <p>The default github repo that deploy_orka_server.py will look for updates is https://github.com/grnet/e-science.git at the master branch.
-The github repo and branch/version is set in e-science/deploy/group_vars/webserver.yml file and can be changed.</p>
+The github repo and branch/version is set in e-science/deploy/group_vars/webserver.yml file and can be changed.</p></div>
+
+
 
 </div>
 
