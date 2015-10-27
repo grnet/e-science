@@ -480,12 +480,12 @@ def replay_dsl(token, id):
                     elif cmd == "get": # get from hdfs to pithos
                         try:
                             file_exists = subprocess.call("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + \
-                                                           "{0}@{1}".format(DEFAULT_HADOOP_USER,cluster['master_IP']) + \
+                                                           "{0}@{1}".format(DEFAULT_HADOOP_USER,cluster.master_IP) + \
                                                            " \'/usr/local/hadoop/bin/hdfs dfs -test -e " + "\'{0}\'".format(source) + "\'", \
                                                            stderr=open(devnull,'w'), shell=True)
                             if file_exists == 0:
                                 from orka.utils import from_hdfs_to_pithos
-                                from_hdfs_to_pithos(DEFAULT_HADOOP_USER, cluster['master_IP'],source, destination)
+                                from_hdfs_to_pithos(DEFAULT_HADOOP_USER, cluster.master_IP,source, destination)
                             else:
                                 msg = 'Action Error: Source file %s not found.' % source
                                 action_stop(token, id, current_task, msg)
