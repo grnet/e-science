@@ -11,6 +11,13 @@ App.Newsitem = DS.Model.extend({
     news_message : attr('string'),
     news_category : attr('number')
 });
+// Model for e-science Faq Items
+App.Faqitem = DS.Model.extend({
+    faq_date : attr('date'),
+    faq_question : attr('string'),
+    faq_answer : attr('string'),
+    faq_category : attr('number')
+});
 // Model for application settings
 App.Setting = DS.Model.extend({
    section : attr('string'),

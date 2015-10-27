@@ -279,7 +279,7 @@ class PublicNewsItem(models.Model):
     news_date = models.DateTimeField("News Item Date", null=False,
                                        help_text="Date and time for"
                                        " the creation of this entry")
-    news_message = models.CharField("News Item Text", max_length=255, null=False,
+    news_message = models.CharField("News Item Text", max_length=1020, null=False,
                                     help_text="News Item")
     news_category = models.IntegerField("News Item Category", null=True, blank=True,
                                      help_text="Category ID for News Item")
@@ -287,6 +287,25 @@ class PublicNewsItem(models.Model):
         verbose_name = "Public News Item"
     def __unicode__(self):
         return ('%s : %s') % (self.news_date.strftime('%c'), self.news_message)
+    
+class FaqItem(models.Model):
+    """Definition of Frequently Asked Questions Items."""
+    id = models.AutoField("FaqItem ID", primary_key=True, null=False,
+                               help_text="Auto-increment faqitem id")
+    faq_date = models.DateTimeField("News Item Date", null=False,
+                                       help_text="Date and time for"
+                                       " the creation of this entry")
+    faq_question = models.CharField("Faq Item Question", max_length=1020, null=False,
+                                    help_text="Faq Answer")
+    faq_answer = models.CharField("Faq Item Answer", max_length=2040, null=False,
+                                    help_text="Faq Answer")
+    faq_category = models.IntegerField("Faq Item Category", null=True, blank=True,
+                                     help_text="Category ID for Faq Item")
+    class Meta:
+        verbose_name = "Frequently Asked Question"
+        #verbose_name_plural = "Frequently Asked Questions"
+    def __unicode__(self):
+        return ('%s : %s') % (self.faq_date.strftime('%c'), self.faq_question)
 
 class ClusterStatistics(models.Model):
     """Definition of Cluster statistics."""

@@ -9,7 +9,7 @@ Serializers file for django rest framework.
 
 from rest_framework import serializers
 from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, \
-PublicNewsItem, OrkaImage, OrkaImageCategory, VreServer, VreImage, VreImageCategory, Dsl, Setting
+PublicNewsItem, FaqItem, OrkaImage, OrkaImageCategory, VreServer, VreImage, VreImageCategory, Dsl, Setting
 
 
 class PGArrayField(serializers.WritableField):
@@ -68,7 +68,14 @@ class NewsSerializer(serializers.ModelSerializer):
     class Meta:
         model = PublicNewsItem
         fields = ('id', 'news_date', 'news_message', 'news_category')
-        
+
+class FaqSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Faqs
+    """
+    class Meta:
+        model = FaqItem
+        fields = ('id', 'faq_date', 'faq_question', 'faq_answer', 'faq_category')
 
 class StatisticsSerializer(serializers.ModelSerializer):
     """
