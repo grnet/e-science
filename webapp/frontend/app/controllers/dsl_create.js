@@ -11,7 +11,8 @@ App.DslCreateController = Ember.Controller.extend({
         }
         return Ember.isEmpty(this.get('experiment_yaml_static')) ? '' : this.get('experiment_yaml_static');//getter
     }.property('experiment_yaml_static'),
-       
+    
+    // create from cluster, saves metadata to pithos and registers in our DB
     dsl_filename_static : null,
     dsl_filename : function(key, value) {
         if (arguments.length > 1) {//setter
@@ -26,6 +27,21 @@ App.DslCreateController = Ember.Controller.extend({
         }
         return Ember.isEmpty(this.get('dsl_pithos_path_static')) ? '' : this.get('dsl_pithos_path_static');//getter
     }.property('dsl_pithos_path_static'),
+    // import from pithos, registers existing metadata from pithos to our DB
+    dsl_filename_import_static : null,
+    dsl_filename_import : function(key, value) {
+        if (arguments.length > 1) {//setter
+            this.set('dsl_filename_import_static', value);
+        }
+        return Ember.isEmpty(this.get('dsl_filename_import_static')) ? '' : this.get('dsl_filename_import_static');//getter
+    }.property('dsl_filename_import_static'),
+    dsl_pithos_path_import_static : null,
+    dsl_pithos_path_import : function(key, value) {
+        if (arguments.length > 1) {//setter
+            this.set('dsl_pithos_path_import_static', value);
+        }
+        return Ember.isEmpty(this.get('dsl_pithos_path_import_static')) ? '' : this.get('dsl_pithos_path_import_static');//getter
+    }.property('dsl_pithos_path_import_static'),
     
     // userclusters block
     filtered_clusters : function(){
@@ -52,8 +68,8 @@ App.DslCreateController = Ember.Controller.extend({
     	return this.get('boolean_no_cluster') ? true : false;
     }.property('boolean_no_cluster'),
     import_dsl_disabled : function(){
-    	return !this.get('create_dsl_disabled');
-    }.property('create_dsl_disabled'),
+    	return Ember.isEmpty(this.get('dsl_filename_import')) || Ember.isEmpty(this.get('dsl_pithos_path_import'));
+    }.property('dsl_filename_import','dsl_pithos_path_import'),
     selected_cluster_size : function(){
         return Ember.isEmpty(this.get('selected_cluster')) ? '' : this.get('selected_cluster').objectAt(0).get('cluster_size');
     }.property('selected_cluster'),
@@ -64,6 +80,10 @@ App.DslCreateController = Ember.Controller.extend({
     selected_cluster_slaves_flavor : function(){
         var cluster = Ember.isEmpty(this.get('selected_cluster')) ? null : this.get('selected_cluster').objectAt(0);
         return cluster && '[CPUx%@, RAM:%@MiB, DISK:%@GiB]'.fmt(cluster.get('cpu_slaves'),cluster.get('ram_slaves'),cluster.get('disk_slaves')) || '';
+    }.property('selected_cluster'),
+    selected_cluster_slaves_number : function(){
+        var cluster_slaves = Ember.isEmpty(this.get('selected_cluster')) ? null : this.get('selected_cluster').objectAt(0).get('cluster_slaves_num');
+        return cluster_slaves && cluster_slaves > 1 ? 'x%@'.fmt(cluster_slaves) : '';
     }.property('selected_cluster'),
     selected_cluster_project : function(){
         return Ember.isEmpty(this.get('selected_cluster')) ? '' : this.get('selected_cluster').objectAt(0).get('project_name');
@@ -106,7 +126,7 @@ App.DslCreateController = Ember.Controller.extend({
             var self = this;
             var store = this.get('store');
             var model = this.get('content');
-            var cluster_id = Ember.isEmpty(create) ? -1 : this.get('selected_cluster_id');
+            var cluster_id = this.get('selected_cluster_id');
             var dsl_name = this.get('dsl_filename');
             var pithos_path = this.get('dsl_pithos_path');
             var new_dsl = {
@@ -123,10 +143,7 @@ App.DslCreateController = Ember.Controller.extend({
                 //success
                 var new_record = store.createRecord('dsl', new_dsl);
                 new_record.save().then(function(data) {
-                    var msg = Ember.isEmpty(create) ? {
-                        'msg_type' : 'success',
-                        'msg_text' : 'Experiment file \"%@\" imported from %@'.fmt(dsl_name,pithos_path)
-                    } : {
+                    var msg = {
                         'msg_type' : 'success',
                         'msg_text' : 'Experiment metadata saved as \"%@\" in %@'.fmt(dsl_name,pithos_path)
                     };
@@ -136,10 +153,7 @@ App.DslCreateController = Ember.Controller.extend({
                     Ember.run.next(function(){self.transitionToRoute('user.welcome');});
                 }, function(reason) {
                 	var error_msg = !Ember.isEmpty(reason.statusText) ? 'with error: %@'.fmt(reason.statusText) : '';
-                        var msg = Ember.isEmpty(create) ? {
-                    	'msg_type' : 'danger',
-                        'msg_text' : 'Failed to import file \"%@\" from %@ %@'.fmt(dsl_name,pithos_path, error_msg)
-                    } : {
+                    var msg = {
                         'msg_type' : 'danger',
                         'msg_text' : 'Failed to create file \"%@\" in %@ %@'.fmt(dsl_name,pithos_path, error_msg)
                     };
@@ -147,6 +161,49 @@ App.DslCreateController = Ember.Controller.extend({
                     self.get('controllers.userWelcome').set('create_cluster_start', true);
                     self.get('controllers.userWelcome').send('setActiveTab','dsls');
                     Ember.run.next(function(){self.transitionToRoute('user.welcome');});
+                });
+            }, function(reason) {
+                //error
+                console.log(reason.message);
+            });
+        },
+        dsl_import : function(){
+            var self = this;
+            var store = this.get('store');
+            var model = this.get('content');
+            var cluster_id = -1;
+            var dsl_name = this.get('dsl_filename_import');
+            var pithos_path = this.get('dsl_pithos_path_import');
+            var new_dsl = {
+                'cluster_id' : cluster_id,
+                'dsl_name' : dsl_name,
+                'pithos_path' : pithos_path
+            }; 
+            this.set('alert_error_import_file',null);
+            // unload cached records
+            store.unloadAll('dsl');
+            store.fetch('user', 1).then(function(user) {
+                //success
+                var new_record = store.createRecord('dsl', new_dsl);
+                new_record.save().then(function(data) {
+                    var msg = {
+                        'msg_type' : 'success',
+                        'msg_text' : 'Experiment file \"%@\" imported from %@'.fmt(dsl_name,pithos_path)
+                    };
+                    self.get('controllers.userWelcome').send('addMessage', msg);
+                    self.set('controllers.userWelcome.create_cluster_start', true);
+                    self.get('controllers.userWelcome').send('setActiveTab','dsls');
+                    Ember.run.next(function(){self.transitionToRoute('user.welcome');});
+                }, function(reason) {
+                    var error_msg = !Ember.isEmpty(reason.statusText) ? 'with error: %@'.fmt(reason.statusText) : '';
+                    var msg = {
+                        'msg_type' : 'danger',
+                        'msg_text' : 'Failed to import file \"%@\" from %@ %@'.fmt(dsl_name,pithos_path, error_msg)
+                    };
+                    self.get('controllers.userWelcome').send('addMessage', msg);
+                    self.get('controllers.userWelcome').set('create_cluster_start', true);
+                    self.get('controllers.userWelcome').send('setActiveTab','dsls');
+                    self.set('alert_error_import_file',msg['msg_text']);
                 });
             }, function(reason) {
                 //error
@@ -183,6 +240,9 @@ App.DslCreateController = Ember.Controller.extend({
             this.set('dsl_pithos_path','');
             this.set('selected_cluster_id',null);
             this.set('cluster_active_filter',null);
+            this.set('dsl_filename_import','');
+            this.set('dsl_pithos_path_import','');
+            this.set('alert_error_import_file',null);
             for (alert in self.get('alert_input_missing_text')){
                 self.set(alert,null);
             }

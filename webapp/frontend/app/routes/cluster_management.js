@@ -68,10 +68,10 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
             this.controller.send('setActiveTab','info');
         },
 		
-		takeClusterAction : function(cluster) {
+		takeClusterAction : function(cluster,action_passed) {
 			var self = this;
 			var store = this.store;
-			var action = cluster.get('cluster_confirm_action');
+			var action = !Ember.isEmpty(action_passed) ? action_passed : cluster.get('cluster_confirm_action');
 			cluster.set('cluster_confirm_action', false);
 			switch(action) {
 			case 'cluster_delete':
@@ -142,6 +142,7 @@ App.ClusterManagementRoute = App.RestrictedRoute.extend({
 		
 		confirmClusterAction : function(cluster, value) {
 			cluster.set('cluster_confirm_action', value);
+			this.controller.set('cluster_confirm_action_changed',value);
 		}	
 	},
 	deactivate : function() {

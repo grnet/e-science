@@ -13,8 +13,15 @@ App.ClusterManagementView = Ember.View.extend({
                 $("[data-toggle='tooltip']").tooltip();
             });
         });
+        this.addObserver('controller.cluster_confirm_action_changed', function(){
+            Ember.run.scheduleOnce('afterRender', self, function() {
+                $("[data-toggle='tooltip']").tooltip();
+                $("[data-toggle='popover']").popover();
+            });
+        });
 	},
 	willDestroyElement : function() {
         this.removeObserver('controller.slaves_increment_loader');
+        this.removeObserver('controller.cluster_confirm_action_changed');
     }
 }); 

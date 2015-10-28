@@ -17,7 +17,7 @@
 		<p class="h4">
 			WELCOME TO ORKA!
 		</p>
-		<h5>This is GRNET's Hadoop service, for the Greek Research and Academic Community. With ~orka you are one click away from your own Virtual Hadoop environment.</h5>
+		<h5>This is GRNET's big data service (code-named orka), for the Greek Research and Academic Community. With ~orka you are one click away from your own Virtual Hadoop and Research environments.</h5>
 	</div>
 	<div class="col-lg-6">
 		<p class="h4">
@@ -32,20 +32,20 @@
 	</div>
 </div>
 <div class="row">
-    {{#if news_items.length}}
         <div class="col-lg-12">
             <hr/>
             <div class="col-lg-6">
+            {{#if news_items.length}}
                 <p class="h4">
                     LATEST NEWS
                </p>
                 {{#each newsitem in news_items}}
                 <p>{{formatDate newsitem.news_date format='shortdatemon'}} : {{newsitem.news_message}}</p>
              {{/each}}
+            {{/if}}
             </div>
             <div class="col-lg-6">
 
             </div>
        </div>      
-    {{/if}}
 </div>

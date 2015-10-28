@@ -362,6 +362,10 @@ App.Usercluster = DS.Model.extend({
 			return "UNKNOWN";
 		}
 	}.property('cluster_status'),
+	cluster_status_active_pending : function(){
+	    var status = this.get('cluster_status');
+	    return ['1','2'].contains(status);
+	}.property('cluster_status'),
 	cluster_status_class : function()
 	{
 		var status = this.get('cluster_status');

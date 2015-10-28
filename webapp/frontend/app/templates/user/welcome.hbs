@@ -53,7 +53,14 @@
     <div class="col col-sm-12">
         <ul id="id_user_tabs" class="nav nav-tabs">
             <li {{bind-attr class="content_tabs.clusters.active:active"}}>
-                <a data-toggle="tab" {{bind-attr href="content_tabs.clusters.href"}}><span class="h4 text-left">{{content_tabs.clusters.name}} (<span class="text text-success">{{model.cluster}}</span>/<span class="text text-muted small">{{model.clusters.length}}</span>)</span></a>
+                <a data-toggle="tab" {{bind-attr href="content_tabs.clusters.href"}}>
+                    <span class="h4 text-left">{{content_tabs.clusters.name}} (<span class="text text-success">{{model.cluster}}</span>/
+                    <span class="text text-muted small">{{model.clusters.length}}</span>)</span>
+                    &nbsp;<div class="btn-group pull-right" data-toggle="buttons">
+                        <label id="id_label_only_active_filter" for="id_only_active_filter" class="control-label btn btn-xs btn-default" data-toggle="tooltip" data-trigger="hover" data-container="body" data-placement="top" data-title='ACTIVE/PENDING FILTER'>
+                        {{input type="checkbox" name="show_active" id="id_only_active_filter" class="checkbox" checked=cluster_active_filter}}
+                        <i class="glyphicon glyphicon-filter text-success"></i></label></div>
+                </a>
             </li>
             <li {{bind-attr class="content_tabs.vreservers.active:active"}}>
                 <a data-toggle="tab" href="#id_uservres_tab"><span class="h4 text-left">{{content_tabs.vreservers.name}} (<span class="text text-success">{{model.vrenum}}</span>/<span class="text text-muted small">{{model.vreservers.length}}</span>)</span></a>

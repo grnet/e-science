@@ -10,7 +10,7 @@
 
 <div class="panel panel-primary">
     <div id="id_project_selection" class="panel-heading text-center v-center">
-        <h3 class="panel-title">Reproducible Experiment Creation</h3>
+        <h3 class="panel-title">Create Experiment Metadata</h3>
     </div>
     <div class="panel-body">
         <div class="col col-sm-12">
@@ -20,21 +20,14 @@
                         <div class="form-group">
                             <label class="control-label col-sm-5" for="id_dsl_cluster">Source Cluster</label>
                             <div class="col col-sm-7">
-                                <div class="input-group input-group-sm">
-	                                {{view "select" 
-	                                content=filtered_clusters
-	                                optionValuePath="content.id"
-	                                optionLabelPath="content.cluster_name_noprefix"
-	                                value=selected_cluster_id
-	                                prompt="*Select cluster*"
-	                                id="id_dsl_cluster"
-	                                class="btn-primary btn-sm btn-block text-left"}}
-	                                <span class="input-group-btn">
-	                                	<button id="id_select_cluster_reset" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" data-title='Reset to import Metadata' {{action "reset"}}>
-		                                    <i class="glyphicon glyphicon-refresh"></i>
-		                            	</button>
-	                                </span>
-                                </div>
+                                {{view "select" 
+                                content=filtered_clusters
+                                optionValuePath="content.id"
+                                optionLabelPath="content.cluster_name_noprefix"
+                                value=selected_cluster_id
+                                prompt="*Select cluster*"
+                                id="id_dsl_cluster"
+                                class="btn-primary btn-sm btn-block text-left"}}
                             </div>
                             <div class="row text-center text-danger col col-sm-12">
                                 {{alert_missing_input_dsl_source}}
@@ -47,21 +40,21 @@
                                     {{input type="checkbox" name="active_filter" id="id_dsl_cluster_filter" class="checkbox" checked=cluster_active_filter}}
                                 </div>
                             </div>
-                            <label class="control-label col-sm-5" for="id_dsl_filename">Metadata Filename </label>
+                            <label class="control-label col-sm-5" for="id_dsl_filename">Metadata Destination</label>
                             <div class="col col-sm-7">
                                 <div class="input-group input-group-sm"
                                     data-toggle="tooltip"
                                     data-placement="top"
                                     data-html=true
-                                    data-title="<p>When <strong>saving</strong> type in or generate a destination filename</p><p>When <strong>importing</strong> type in the source filename(exact)</p>">
+                                    data-title="<p>Type in or generate a destination filename</p>">
                                     {{input type="text" 
                                     value=dsl_filename
-                                    placeholder="filename"
+                                    placeholder="Filename"
                                     required="true"
                                     id="id_dsl_filename"
                                     classNames="form-control"}}
                                     <span class="input-group-btn">
-                                        <button id="id_dsl_filename_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" data-title='Set Default' {{bind-attr disabled="create_dsl_disabled"}} {{action "dsl_filename_default"}}>
+                                        <button id="id_dsl_filename_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" data-title='Set Default' {{action "dsl_filename_default"}}>
                                             <i class="glyphicon glyphicon-pencil"></i>
                                         </button>
                                     </span>
@@ -70,20 +63,21 @@
                             <div class="row text-center text-danger col col-sm-12">
                                 {{alert_missing_input_dsl_name}}
                             </div>
-                            <label class="control-label col-sm-5" for="id_pithos_destination">Pithos path </label>
+                            <label class="control-label col-sm-5" for="id_pithos_destination">Pithos Destination</label>
                             <div class="col col-sm-7">
-                                <div class="input-group input-group-sm"data-toggle="tooltip"
+                                <div class="input-group input-group-sm" 
+                                    data-toggle="tooltip"
                                     data-placement="top"
                                     data-html=true
-                                    data-title="<p>When <strong>saving</strong> type in a pithos container or generate the default</p><p>When <strong>importing</strong> type in the container/path holding the pithos file(exact)</p>">
+                                    data-title="<p>Type in a or generate a Pithos container</p>">
                                     {{input type="text" 
                                     value=dsl_pithos_path
-                                    placeholder="path"
+                                    placeholder="Path"
                                     required="true"
                                     id="id_pithos_destination"
                                     classNames="form-control"}}
                                     <span class="input-group-btn">
-                                        <button id="id_dsl_pithos_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" data-title='Set Default' {{bind-attr disabled="create_dsl_disabled"}} {{action "dsl_pithospath_default"}}>
+                                        <button id="id_dsl_pithos_default" type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="right" data-title='Set Default' {{action "dsl_pithospath_default"}}>
                                             <i class="glyphicon glyphicon-pencil"></i>
                                         </button>
                                     </span>
@@ -94,14 +88,8 @@
                             </div>
                             <div class="col col-sm-5"></div>
                             <div class="col col-sm-7">
-                                <button {{bind-attr id='model.id_dsl_create'}} {{bind-attr disabled="create_dsl_disabled"}} class="btn btn-sm btn-primary btn-block"{{action 'dsl_create' "create"}}>
+                                <button {{bind-attr id='model.id_dsl_create'}} {{bind-attr disabled="create_dsl_disabled"}} class="btn btn-sm btn-primary btn-block"{{action 'dsl_create'}}>
                                         Save Metadata <b class="glyphicon glyphicon-save-file text-success"></b>
-                                </button>
-                            </div>
-                            <div class="col col-sm-5"></div>
-                            <div class="col col-sm-7">
-                            	<button {{bind-attr id='model.id_import_dsl'}} {{bind-attr disabled="import_dsl_disabled"}} class="btn btn-sm btn-primary btn-block"{{action 'dsl_create'}}>
-                                        Import Metadata <b class="glyphicon glyphicon-import text-success"></b>
                                 </button>
                             </div>
                         </div>
@@ -110,9 +98,81 @@
                         <div class="col-sm-12">
                             <dl class="dl-horizontal">
                                 <dt class="text-left">Save Metadata</dt>
-                                    <dd class="text-info text-left">Select a hadoop cluster as source for experiment configuration metadata, then type in or prefill default filename and pithos container and press Save.</dd>
+                                    <dd class="text-info text-left">Select a Hadoop cluster as metadata source, fill in a filename and Pithos path and press Save.</dd>
+                            </dl>
+                        </div>
+                        {{#unless boolean_no_cluster}}
+                        <table class="table table-bordered table-condensed">
+                            <thead class="h5 strong"><tr><td></td><td>CPU (cores)</td><td>RAM (MiB)</td><td>DISK (GiB)</td></tr></thead>
+                            <tbody>
+                               <tr><td class="h5 strong">Master</td><td class="text text-info">{{selected_cluster.[0].cpu_master}}</td><td class="text text-info">{{selected_cluster.[0].ram_master}}</td><td class="text text-info">{{selected_cluster.[0].disk_master}}</td></tr>
+                               <tr><td class="h5 strong">Slaves <span class="clear text text-info">{{selected_cluster_slaves_number}}</span></td><td class="text text-info">{{selected_cluster.[0].cpu_slaves}}</td><td class="text text-info">{{selected_cluster.[0].ram_slaves}}</td><td class="text text-info">{{selected_cluster.[0].disk_slaves}}</td></tr>
+                            </tbody>
+                        </table>
+                        {{/unless}}
+                    </div> 
+                </form>
+            </div>
+        </div>
+    </div>    
+</div>
+<div class="panel panel-primary">
+    <div id="id_project_selection" class="panel-heading text-center v-center">
+        <h3 class="panel-title">Import Experiment Metadata</h3>
+    </div>
+    <div class="panel-body">
+        <div class="col col-sm-12">
+            <div class="text-center" style="vertical-align: middle">
+                <form class="form-horizontal" role="form">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <div class="row">
+                            </div>
+                            <label class="control-label col-sm-5" for="id_dsl_filename_import">Metadata Source</label>
+                            <div class="col col-sm-7"
+                                    data-toggle="tooltip"
+                                    data-placement="top"
+                                    data-html=true
+                                    data-title="<p>Type in the source filename - case sensitive</p>">
+                                    {{input type="text" 
+                                    value=dsl_filename_import
+                                    placeholder="Filename"
+                                    required="true"
+                                    id="id_dsl_filename_import"
+                                    classNames="input-sm form-control"}}
+                            </div>
+                            <div class="row text-center text-danger col col-sm-12">
+                                
+                            </div>
+                            <label class="control-label col-sm-5" for="id_pithos_path_import">Pithos Source</label>
+                            <div class="col col-sm-7"
+                                    data-toggle="tooltip"
+                                    data-placement="top"
+                                    data-html=true
+                                    data-title="<p>Type in the location (container/path) of the Pithos file - case sensitive</p>">
+                                    {{input type="text" 
+                                    value=dsl_pithos_path_import
+                                    placeholder="Path"
+                                    required="true"
+                                    id="id_pithos_path_import"
+                                    classNames="input-sm form-control"}}
+                            </div>
+                            <div class="row text-center text-danger col col-sm-12">
+                                {{alert_error_import_file}}
+                            </div>
+                            <div class="col col-sm-5"></div>
+                            <div class="col col-sm-7">
+                                <button {{bind-attr id='model.id_import_dsl'}} {{bind-attr disabled="import_dsl_disabled"}} class="btn btn-sm btn-primary btn-block"{{action 'dsl_import'}}>
+                                        Import Metadata <b class="glyphicon glyphicon-import text-success"></b>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="col-sm-12">
+                            <dl class="dl-horizontal">
                                 <dt class="text-left">Import Metadata</dt>
-                                    <dd class="text-info text-left"><strong>Alternatively</strong> de-select cluster and fill in a pre-uploaded or shared experiment filename and pithos path to the fields and press Import.</dd>
+                                    <dd class="text-info text-left">Fill in an existing experiment metadata filename and Pithos path and press Import.</dd>
                             </dl>
                         </div>
                     </div> 
@@ -122,14 +182,11 @@
     </div>
     <div class="panel-footer text-center">
         <div class="row">
-            <div class="col col-sm-12">
-                {{#unless boolean_no_cluster}}
-                Cluster Size: {{selected_cluster_size}} Master Flavor: {{selected_cluster_master_flavor}} 
-                Slaves Flavor: {{selected_cluster_slaves_flavor}} Project: {{selected_cluster_project}}
-                {{else}}
-                <span class="text text-muted">selected cluster info</span>
-                {{/unless}}
+            <div class="col col-sm-6 text-right">
+                    <span class="h5 strong">(Full Pithos Path) </span>&nbsp;
+                        <span class="text text-info strong">{{#unless import_dsl_disabled}}pithos://{{dsl_pithos_path_import}}/{{dsl_filename_import}}{{/unless}}</span>
             </div>
+            <div class="col col-sm-6"></div>
         </div>
     </div>    
 </div>

@@ -14,6 +14,7 @@ import urllib
 import requests
 from urllib2 import urlopen, Request, HTTPError
 from base64 import b64encode
+from os import devnull
 from os.path import abspath, join, expanduser, basename
 from kamaki.clients import ClientError
 from kamaki.clients.image import ImageClient
@@ -24,7 +25,7 @@ from datetime import datetime
 from cluster_errors_constants import *
 from celery import current_task
 from authenticate_user import unmask_token, encrypt_key
-from django_db_after_login import db_cluster_update, get_user_id, db_server_update, db_hadoop_update, db_dsl_create, db_dsl_update, db_dsl_delete
+from django_db_after_login import db_cluster_update, db_cluster_delete, get_user_id, db_server_update, db_hadoop_update, db_dsl_create, db_dsl_update, db_dsl_delete
 from backend.models import UserInfo, ClusterInfo, VreServer, Dsl, OrkaImage, VreImage
 
 
@@ -246,12 +247,64 @@ def check_cluster_options(cluster_options,dsl,token,map_dsl_to_cluster):
     cluster_options.setdefault('replication_factor',replication_factor_default)
     return cluster_options
 
+
+def actions_check_filespec(verb, source, destination):
+    """
+    Supporting method for replay experiment. Verifies that path is a "pithos protocol" according to action and direction.
+    """
+    pithos_regex = re.compile("(?iu)((?:^pithos)+?:/)(.+)")
+    msg = ''
+    filespec = ''
+    valid = False
+    if verb=="put": # only pithos source supported for orka-Web
+        result = pithos_regex.match(source)
+        if not result:
+            valid = False
+            msg = "%s is not a valid source for put action. Only Pithos sources are supported for orka-Web." % source
+        else:
+            source = result.group(2)
+            valid = True
+    elif verb=="get": # only pithos destination supported for orka-Web
+        result = pithos_regex.match(destination)
+        if not result:
+            valid = False
+            msg = "%s is not a valid destination for get action. Only Pithos destinations are supported for orka-Web." % destination
+        else:
+            destination = result.group(2)
+            valid = True
+    return valid, msg, source, destination
+
+def action_put_prepare(user, master_IP, source_file, pub=False):
+    """
+    Supporting method for replay experiment. 
+    Temporary publish a pithos file so we can leverage existing backend methods for remote > hdfs functionality.
+    """
+    if pub==False:
+        str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + \
+        "{0}@{1} ".format(user, master_IP) + \
+        "\"kamaki file unpublish \'{0}\'\"".format(source_file)
+        response = subprocess.call(str_command, stderr=open(devnull,'w'), stdout=open(devnull,'w'), shell=True)
+        return response
+    
+    str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + \
+    "{0}@{1} ".format(user,master_IP) + \
+    "\"kamaki file publish \'{0}\'\"".format(source_file)
+    str_link = subprocess.check_output(str_command, stderr=open(devnull,'w'), shell=True)
+    remote_regex = re.compile("(?iu)((?:^ht|^f)+?tps?://)(.+)")
+    result = remote_regex.match(str_link)
+    if result:
+        return result.group(0)
+    else:
+        return None
+    
+
 def check_actions(actions,dsl,token):
     """
     Used in replay experiment. Check that actions are valid verbs in our domain.
     Update the queue with pairs of verb, args preserving order, and return it.
     """
-    # start hadoop, stop hadoop, format HDFS, add cluster node, remove cluster node, put file on HDFS, get file from HDFS, run command on cluster
+    # start hadoop, stop hadoop, format HDFS, add cluster node, remove cluster node, 
+    # put file on HDFS, get file from HDFS, run command on cluster
     valid_verbs = ["start","stop","format","node_add","node_remove","put","get","run_job"]
     verb_regex = re.compile("^(\w+)(?:\s*)(.*)",re.IGNORECASE) # use a non-capturing group to remove the whitespace between verb, args
     for i in range(len(actions)):
@@ -260,8 +313,14 @@ def check_actions(actions,dsl,token):
             verb = action_parse.group(1)
             args = action_parse.group(2)
             if verb not in valid_verbs:
-                msg = '\"%s\" is not a valid action for Experiment Replay through orka Web.' % verb
-                raise ClientError(msg, error_fatal) 
+                msg = '%s is not a valid action for Experiment Replay through orka Web.' % verb
+                raise ClientError(msg, error_fatal)
+            if verb in ['put','get']:
+                source, destination = args.strip('()').split(',')
+                valid, msg, source, destination = actions_check_filespec(verb, source, destination)
+                if not valid:
+                    raise ClientError(msg, error_fatal)
+                args = [source,destination]
             actions.pop(i)
             actions.insert(i,{verb:args})
         else:
@@ -269,26 +328,39 @@ def check_actions(actions,dsl,token):
             raise ClientError(msg, error_fatal)
     return actions
 
+def action_continue(token, dsl_id, task, msg):
+    """
+    Replay experiment helper function.
+    Wrap task and db updates for success in an easy call.
+    """
+    task.update_state(state=msg)
+    db_dsl_update(token,dsl_id,dsl_status=const_experiment_status_replay,state=msg)
+
+def action_stop(token, dsl_id, task, msg):
+    """
+    Replay experiment helper function.
+    Wrap task and db update for failure in an easy call.
+    """
+    task.update_state(state=msg)
+    db_dsl_update(token,dsl_id,dsl_status=const_experiment_status_atrest,state=msg)
+
 def replay_dsl(token, id):
     """Replays an experiment on cluster defined or created through parameters and plays actions in sequence"""
     dsl = Dsl.objects.get(id=id)
     # pre execution checks
     dsl_data_yaml = dsl.dsl_data
     state_msg = 'Checking experiment metadata'
-    current_task.update_state(state=state_msg)
-    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
+    action_continue(token, id, current_task, state_msg)
     try:
         dsl_data_dict = yaml.safe_load(dsl_data_yaml)
     except yaml.YAMLError, e:
         msg = 'Error parsing experiment .yaml file %s' % e
-        current_task.update_state(state=msg)
-        db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+        action_stop(token, id, current_task, msg)
         raise ClientError(msg,error_fatal)
     cluster_options = dsl_data_dict.get('cluster',{})
     if len(cluster_options)<=0:
         msg = 'No cluster options found in %s. Cannot proceed.' % dsl.dsl_name
-        current_task.update_state(state=msg)
-        db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+        action_stop(token, id, current_task, msg)
         raise ClientError(msg,error_fatal)
     cluster_options.update(dsl_data_dict.get('configuration',{}))
     # check if there are cluster_id, master_IP cluster options in the yaml, verify cluster exists and is active, 
@@ -303,8 +375,7 @@ def replay_dsl(token, id):
                 skip_cluster_create = True
                 cluster_id_for_replay = cluster_options['cluster_id']
                 msg = 'Cluster exists and is active, skipping cluster creation'
-                current_task.update_state(state=msg)
-                db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                action_continue(token, id, current_task, msg)
             else:
                 cluster_options = cluster_to_check.values('cluster_name','cluster_size',\
                                                           'cpu_master','ram_master','disk_master',\
@@ -320,12 +391,10 @@ def replay_dsl(token, id):
                 cluster_options.pop('master_IP',None)
                 map_dsl_to_cluster = False
                 msg = 'Cluster exists but is not active. Using it as blueprint for a new one.'
-                current_task.update_state(state=msg)
-                db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                action_continue(token, id, current_task, msg)
         else:
             msg = 'Cluster id and master IP given do not match any clusters. Cannot proceed.'
-            current_task.update_state(state=msg)
-            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+            action_stop(token, id, current_task, msg)
             raise ClientError(msg,error_fatal)
             
     if not skip_cluster_create:
@@ -333,24 +402,23 @@ def replay_dsl(token, id):
             cluster_options = check_cluster_options(cluster_options,dsl,token,map_dsl_to_cluster)
         except ClientError,e:
             msg = str(e.args[0])
-            current_task.update_state(state=msg)
-            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+            action_stop(token, id, current_task, msg)
             raise e
         # cluster section
         # only need to import create cluster if we are going to be making a cluster
         from backend.create_cluster import YarnCluster
         state_msg = 'Started experiment cluster creation'
-        current_task.update_state(state=state_msg)
-        db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=state_msg)
+        action_continue(token, id, current_task, state_msg)
         c_cluster = YarnCluster(cluster_options)
         MASTER_IP, servers, password, cluster_id = c_cluster.create_yarn_cluster()
         if cluster_id > 0:
             state_msg = 'Experiment cluster created successfully'
-            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=state_msg)
+            action_continue(token, id, current_task, state_msg)
             cluster_id_for_replay = cluster_id
         else:
             state_msg = 'Experiment cluster creation failed'
-            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=state_msg)
+            action_stop(token, id, current_task, state_msg)
+            raise ClientError(state_msg, error_fatal)
     
     # actions section
     actions = dsl_data_dict.get('actions',[])
@@ -359,54 +427,96 @@ def replay_dsl(token, id):
             actions = check_actions(actions, dsl, token)
         except ClientError,e:
             msg = str(e.args[0])
-            current_task.update_state(state=msg)
-            db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state=msg)
+            action_stop(token, id, current_task, msg)
             raise e
         # we have actions back in an array with cmd:params pairs
-        # import cluster management and methods
-        from backend.run_ansible_playbooks import ansible_manage_cluster
         for action in actions:
             cluster = ClusterInfo.objects.get(id=cluster_id_for_replay)
             for cmd,params in action.iteritems():
-                if cmd in ["start","stop","format"]: # TODO skip action based on current cluster.cluster_status, cluster.hadoop_status?
+                if cmd in ["start","stop","format"]:
+                    # import cluster management methods
+                    from backend.run_ansible_playbooks import ansible_manage_cluster
                     msg = 'Action: Hadoop %s' % cmd
-                    current_task.update_state(state=msg)
-                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    action_continue(token, id, current_task, msg)
                     ansible_manage_cluster(cluster_id_for_replay,cmd)
-                elif cmd == "node_add": # TODO current cluster_status, hadoop_status checking
+                elif cmd == "node_add":
                     msg = 'Action: Cluster %s' % cmd
-                    current_task.update_state(state=msg)
-                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    action_continue(token, id, current_task, msg)
                     scale_cluster(token, cluster_id_for_replay, 1)
-                elif cmd == "node_remove": # TODO current cluster_status, hadoop_status checking
+                elif cmd == "node_remove":
                     msg = 'Action: Cluster %s' % cmd
-                    current_task.update_state(state=msg)
-                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
+                    action_continue(token, id, current_task, msg)
                     scale_cluster(token, cluster_id_for_replay, -1)
-                elif cmd == "put": # TODO check source is valid for orka-Web (pithos or other online source)
-                    source, destination = params.strip('()').split(',')
+                elif cmd in ['put','get']:
+                    source, destination = params[0], params[1]
+                    if (cluster.cluster_status != const_cluster_status_active) or (cluster.hadoop_status != const_hadoop_status_started):
+                        msg = 'Action Error: HDFS operations are only possible on an active cluster with Hadoop started.'
+                        action_stop(token, id, current_task, msg)
+                        raise ClientError(msg, error_fatal)
                     msg = 'Action: HDFS %s with source %s and destination %s' % (cmd,source,destination)
-                    current_task.update_state(state=msg)
-                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
-                    print "put from %s to %s" % (source,destination) # TODO pending implementation
-                    sleep(10)
-                elif cmd == "get": # TODO check destination is valid for orka-web (pithos only)
-                    source, destination = params.strip('()').split(',')
-                    msg = 'Action: HDFS %s with source %s and destination %s' % (cmd,source,destination)
-                    current_task.update_state(state=msg)
-                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
-                    print "get from %s to %s" % (source,destination) # TODO pending implementation
-                    sleep(10)
+                    action_continue(token, id, current_task, msg)
+                    if cmd == "put": # put from pithos to hdfs
+                        from backend.reroute_ssh import HdfsRequest
+                        new_source = action_put_prepare(DEFAULT_HADOOP_USER, cluster.master_IP, source, True)
+                        source_path = source.split("/")
+                        source_filename = source_path[len(source_path)-1]
+                        new_destination = destination.endswith("/") and "%s%s" % (destination,source_filename) or destination
+                        if new_source:
+                            file_put_request = HdfsRequest({'user':'','password':'','master_IP':cluster.master_IP,'source':new_source,'dest':new_destination})
+                            try: 
+                                result = file_put_request.put_file_hdfs()
+                            except RuntimeError, e:
+                                msg = str(e.args[0])
+                                action_stop(token, id, current_task, msg)
+                                raise ClientError(msg,error_fatal)
+                            action_put_prepare(DEFAULT_HADOOP_USER, cluster.master_IP, source)
+                            if result == 0:
+                                msg = "Action Result: Success"
+                                action_continue(token, id, current_task, msg)
+                            else:
+                                msg = "Action Error: %s %s %s" % (cmd, source, destination)
+                                action_stop(token, id, current_task, msg)
+                                raise ClientError(msg,error_ssh_client)
+                    elif cmd == "get": # get from hdfs to pithos
+                        try:
+                            file_exists = subprocess.call("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + \
+                                                           "{0}@{1}".format(DEFAULT_HADOOP_USER,cluster.master_IP) + \
+                                                           " \'/usr/local/hadoop/bin/hdfs dfs -test -e " + "\'{0}\'".format(source) + "\'", \
+                                                           stderr=open(devnull,'w'), shell=True)
+                            if file_exists == 0:
+                                from orka.utils import from_hdfs_to_pithos
+                                from_hdfs_to_pithos(DEFAULT_HADOOP_USER, cluster.master_IP, source, destination)
+                            else:
+                                msg = 'Action Error: Source file %s not found.' % source
+                                action_stop(token, id, current_task, msg)
+                                raise ClientError(msg, error_fatal)
+                        except Exception, e:
+                            msg = str(e.args[0])
+                            action_stop(token, id, current_task, msg)
+                            raise ClientError(msg, error_fatal)
                 elif cmd == "run_job":
+                    from backend.reroute_ssh import establish_connect, exec_command, MASTER_SSH_PORT
                     remote_user, remote_cmd = params.strip('()').split(',')
+                    remote_cmd = remote_cmd.strip('\" ')
+                    try:
+                        ssh_client = establish_connect(cluster.master_IP,remote_user,'',MASTER_SSH_PORT)
+                    except RuntimeError, e:
+                        msg = 'Failed connecting to %s as %s' % (cluster.master_IP, remote_user)
+                        action_stop(token, id, current_task, msg)
+                        raise ClientError(msg,error_ssh_client)
                     msg = 'Action: Hadoop %s with command %s as remote user %s' % (cmd,remote_cmd,remote_user)
-                    current_task.update_state(state=msg)
-                    db_dsl_update(token,id,dsl_status=const_experiment_status_replay,state=msg)
-                    print "run cmd %s as remote user: %s" % (remote_cmd, remote_user) # TODO pending implementation
-                    sleep(10)
-    
-    current_task.update_state(state='')
-    db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state='')
+                    action_continue(token, id, current_task, msg)
+                    try:
+                        ex_status = exec_command(ssh_client, remote_cmd, command_state='celery task')
+                    except Exception, e:
+                        msg = 'Action Error: %s' % str(e.args[0])
+                        action_stop(token, id, current_task, msg)
+                        raise ClientError(msg,error_ssh_client)
+                    msg = 'Action Succeeded'
+                    action_continue(token, id, current_task, msg)
+                   
+    current_task.update_state(state='Finished')
+    db_dsl_update(token,id,dsl_status=const_experiment_status_atrest,state='Finished')
     return dsl.id
     
 
@@ -575,12 +685,17 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
     """
     from reroute_ssh import reroute_ssh_to_slaves
     from run_ansible_playbooks import modify_ansible_hosts_file,ansible_scale_cluster,ansible_manage_cluster
-    current_task.update_state(state="Started")
     cluster_to_scale = ClusterInfo.objects.get(id=cluster_id)
     pre_scale_size = cluster_to_scale.cluster_size
     previous_cluster_status = cluster_to_scale.cluster_status
     previous_hadoop_status = cluster_to_scale.hadoop_status
     status_map = {"0":"Destroyed","1":"Active","2":"Pending","3":"Failed"}
+    # pre-flight checks. If cluster status is pending or hadoop status formatting abort.
+    if (previous_cluster_status == const_cluster_status_pending) or (previous_hadoop_status == const_hadoop_status_format):
+        current_task.update_state(state="Skipping")
+        return cluster_to_scale.cluster_name
+    # pre-flight checks done
+    current_task.update_state(state="Started")
     auth = check_credentials(unmask_token(encrypt_key,token))
     current_task.update_state(state="Authenticated")
     endpoints, user_id = endpoints_and_user_id(auth)
@@ -694,9 +809,21 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     that belong to the cluster from the cluster id that is given. Cluster id
     is the unique integer that each cluster has in escience database.
     """
+    cluster_to_delete = ClusterInfo.objects.get(id=cluster_id)
+    cluster_name = cluster_to_delete.cluster_name
+    # status is already destroyed or failed, only clean up database 
+    if cluster_to_delete.cluster_status not in [const_cluster_status_active,const_cluster_status_pending]:
+        current_task.update_state(state="Removing Record")
+        try:
+            db_cluster_delete(token,cluster_id)
+            current_task.update_state(state="Cluster Record Removed")
+            return cluster_name
+        except Exception,e:
+            msg = str(e.args[0])
+            raise ClientError(msg, error_cluster_corrupt)
+    # cluster exists on cyclades, operate on ~okeanos infrastructure for removal, update database
     current_task.update_state(state="Started")
     servers_to_delete = []
-    cluster_to_delete = ClusterInfo.objects.get(id=cluster_id)
     if cluster_to_delete.master_IP:
         float_ip_to_delete = cluster_to_delete.master_IP
     else:
@@ -748,7 +875,6 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
             if attachment['network_id'] == network_to_delete_id:
                 servers_to_delete.append(server)
                 break
-    cluster_name = cluster_to_delete.cluster_name
     number_of_nodes = len(servers_to_delete)
     set_cluster_state(token, cluster_id, "Starting deletion of requested cluster")
     # Start cluster deleting
