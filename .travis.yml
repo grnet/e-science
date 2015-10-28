@@ -4,6 +4,9 @@ python:
 - '2.7'
 addons:
 - postgresql: '9.1'
+before_install:
+- openssl aes-256-cbc -K $encrypted_b7bd3aa10e46_key -iv $encrypted_b7bd3aa10e46_iv
+  -in .private/private_data.tar.enc -out private_data.tar -d
 install:
 - pip install kamaki==0.13.1
 - pip install paramiko
@@ -22,6 +25,7 @@ install:
 before_script:
 - psql -c 'create user developer with createdb;' -U postgres
 - psql -c 'create database portal with owner developer;' -U postgres
+- tar -xvf private_data.tar
 - python webapp/manage.py syncdb --noinput
 - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile
   --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1920x1080x16
