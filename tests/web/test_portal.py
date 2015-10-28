@@ -13,22 +13,18 @@ from os import environ
 class PortalTest(unittest.TestCase):
     def setUp(self):
         if ("TRAVIS" in environ) or ("CONTINUOUS_INTEGRATION" in environ):
-            print "on Travis CI"
             self.driver = webdriver.PhantomJS('phantomjs')
         else:
-            print "locally"
             self.driver = webdriver.Firefox()
     
     def test_homepage(self):
         '''
-        Open orka portal homepage and check rendering 
+        Check orka portal homepage opened and welcome text rendered. 
         '''
         driver = self.driver
         # open base url and check title
         driver.get("http://localhost:8000/")
-        print driver.find_element_by_id('summary').text
         self.assertIn('GRNET e-Science', driver.title)
-        
         # find the welcome text to verify the page has rendered
         self.assertTrue(driver.find_element_by_class_name('h2').is_displayed())
         self.assertIn('Welcome to ORKA!',driver.find_element_by_class_name('h2').text)
