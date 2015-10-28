@@ -12,5 +12,10 @@ App.Router.map(function() {
 		// /help/personalorka
 		this.route('personalorka');
 	});
-
+	this.resource('about', function() {
+        // /about/orka
+        this.route('orka');
+        // /about/faq
+        this.route('faq');
+    });
 });

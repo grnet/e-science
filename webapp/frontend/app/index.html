@@ -10,6 +10,8 @@
 		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/bootstrap.united.orka.css"/>
 		<link rel="stylesheet" href="{{ STATIC_URL }}styles/style.css">
 		<link rel="stylesheet" href="{{ STATIC_URL }}libs/prettify.css">
+		<link rel="shortcut icon" href="{{ STATIC_URL }}favicon.ico">
+		<link rel="icon" href="{{ STATIC_URL }}favicon.ico" type="image/x-icon">
 	</head>
 	<body class="" style="" onload="set_style_from_cookie()">
 		{% verbatim %}
@@ -51,16 +53,20 @@
 		<script src="{{ STATIC_URL }}controllers/help_vreimages.js"></script>
 		<script src="{{ STATIC_URL }}controllers/help_experiments.js"></script>
 		<script src="{{ STATIC_URL }}controllers/help_personalorka.js"></script>
+		<script src="{{ STATIC_URL }}controllers/about_faq.js"></script>
 
 		<!--routers-->
 		<script src="{{ STATIC_URL }}router.js"></script>
 		<script src="{{ STATIC_URL }}routes/application.js"></script>
 		<script src="{{ STATIC_URL }}routes/index.js"></script>
 		<script src="{{ STATIC_URL }}routes/homepage.js"></script>
+		<script src="{{ STATIC_URL }}routes/about_faq.js"></script>
 		
 		<!--views-->
+		<script src="{{ STATIC_URL }}views/application.js"></script>
 		<script src="{{ STATIC_URL }}views/homepage.js"></script>
 		<script src="{{ STATIC_URL }}views/help_experiments.js"></script>
+		<script src="{{ STATIC_URL }}views/about_faq.js"></script>
 
 		<!--store for ember-->
 		<script src="{{ STATIC_URL }}store.js"></script> 
@@ -72,9 +78,9 @@
 		<!--load templates-->
 		<script>EmberHandlebarsLoader.loadTemplates([
 			'application', 'homepage',
-			'help/images', 'help/vreimages', 'help/experiments','help/personalorka'
-		]);</script>
-		
+			'help/images', 'help/vreimages', 'help/experiments','help/personalorka',
+			'about/orka', 'about/faq'
+		]);</script>	
 	
 	</body>
 </html>
