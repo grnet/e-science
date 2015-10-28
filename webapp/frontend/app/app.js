@@ -13,13 +13,13 @@ window.App = Ember.Application.create({
     ready : function() {
         var that = this;
         var store = this.__container__.lookup('store:main');
-        var vrecreatecontroller = this.__container__.lookup('controller:vreserverCreate');
-        var clustercreatecontroller = this.__container__.lookup('controller:clusterCreate');
+        // var vrecreatecontroller = this.__container__.lookup('controller:vreserverCreate');
+        // var clustercreatecontroller = this.__container__.lookup('controller:clusterCreate');
         store.fetch('setting', {}).then(function(data) {
             var settings = data.get('content');
             that.set('AppSettings',settings);
-            Ember.set(vrecreatecontroller, 'AppSettings', settings);
-            Ember.set(clustercreatecontroller, 'AppSettings', settings);
+            // Ember.set(vrecreatecontroller, 'AppSettings', settings);
+            // Ember.set(clustercreatecontroller, 'AppSettings', settings);
         }, function(reason) {
             console.log(reason);
         }); 
