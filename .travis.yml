@@ -4,9 +4,6 @@ python:
 - '2.7'
 addons:
 - postgresql: '9.1'
-before_install:
-- openssl aes-256-cbc -K $encrypted_b7bd3aa10e46_key -iv $encrypted_b7bd3aa10e46_iv
-  -in .private/private_data.tar.enc -out private_data.tar -d
 install:
 - pip install kamaki==0.13.1
 - pip install paramiko
@@ -17,30 +14,20 @@ install:
 - pip install djangorestframework
 - pip install rest_framework_ember
 - pip install selenium
-- pip install mock
-- pip install rednose
 - pip install nose-cov
 - pip install requests
 - pip install django-celery
 - pip install django-admin-bootstrapped
-- sudo apt-get install sshpass
 - sudo apt-get install shunit2
 before_script:
 - psql -c 'create user developer with createdb;' -U postgres
-- psql -c 'create database escience with owner developer;' -U postgres
-- tar -xvf private_data.tar
+- psql -c 'create database portal with owner developer;' -U postgres
 - python webapp/manage.py syncdb --noinput
-- cd orka
-- python setup.py install
-- cd ..
-- npm install testem -g
 - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile
   --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1920x1080x16
-- ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+- python webapp/manage.py runserver 0.0.0.0:8000 --noreload &
+- sleep 10s
 script:
-- nosetests -sv tests/test_create_cluster.py
-- bash tests/integration/test_integration_hdpbase.sh
-- bash tests/integration/test_integration_hue.sh
-- bash tests/integration/test_integration_ecosystem.sh
-- bash tests/integration/test_integration_cdh.sh
-- bash tests/integration/test_integration_vre_server.sh
+- nosetests tests/web/test_portal.py
+after_script:
+- sudo killall -s INT python
