@@ -26,7 +26,7 @@ class PortalTest(unittest.TestCase):
         driver = self.driver
         # open base url and check title
         driver.get("http://localhost:8000/")
-        print driver.get_element_by_id('summary').text
+        print driver.find_element_by_id('summary').text
         self.assertIn('GRNET e-Science', driver.title)
         
         # find the welcome text to verify the page has rendered
