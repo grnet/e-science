@@ -19,7 +19,7 @@
   </ul>
 
   <!-- Tab panes -->
-  <div class="tab-content">
+<div class="tab-content">
        <div role="tabpanel" class="tab-pane active" id="createorkaimage">
            <h3>Create ~okeanos image for personal Orka server (for administrators)</h3>
 
@@ -138,14 +138,14 @@ postgresql_password: &lt;A password at least 8 characters long for postgresql da
 okeanos_user_uuid: &lt;~okeanos_user_uuid. Below follows info on how to find the uuid&gt;
 </code></pre>
 
-<p>Users can find their unique ~okeanos_user_uuid from ~okeanos <a href="https://accounts.okeanos.grnet.gr/ui/api_access">webpage</a>. It is under <code>username</code> in Other clients section.</p>
+<p>Users can find their unique ~okeanos_user_uuid from ~okeanos <a href="https://accounts.okeanos.grnet.gr/ui/api_access" target="_blank">webpage</a>. It is under <code>username</code> in Other clients section.</p>
 
 <p>Alternatively, by running:</p>
 
 <pre><code>kamaki user info
 </code></pre>
 
-<p>in an environment that kamaki is <a href="https://www.synnefo.org/docs/kamaki/latest/installation.html">set up</a>.</p>
+<p>in an environment that kamaki is <a href="https://www.synnefo.org/docs/kamaki/latest/installation.html" target="_blank">set up</a>.</p>
 
 <p>Finally, after done editing the user-created yml file, run the deploy script:</p>
 
@@ -186,7 +186,7 @@ In any case, Orka server will be restarted with the following command:</p>
 
 <p>Users can update their personal Orka servers, if there are updates in the main e-Science github repo, by running the python script
 deploy_orka_server.py with the 'update' argument and the deploy file used for starting the server. If the deploy file was deleted,
-the user must create it again, as shown in <a href="#/help/personalorka/restartorkaserver">restarting the server section</a>.</p>
+the user must create it again, as shown in <a href="#/help/personalorka" {{action 'selectTab' '#restartorkaserver'}}>restarting the server section</a>.</p>
 
 <p>So, for updating the server, the following steps are required:</p>
 
@@ -208,7 +208,4 @@ cd projects/e-science/deploy
 <p>The default github repo that deploy_orka_server.py will look for updates is https://github.com/grnet/e-science.git at the master branch.
 The github repo and branch/version is set in e-science/deploy/group_vars/webserver.yml file and can be changed.</p></div>
 
-
-
 </div>
-

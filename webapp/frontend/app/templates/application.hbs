@@ -18,7 +18,10 @@
 				<ul class="nav navbar-nav">
 					<li class="dropdown">
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_info_dd">Information <b class="caret"></b></a>
-						<ul class="dropdown-menu">							
+						<ul class="dropdown-menu">
+						    <li>
+                                {{#link-to 'help.personalorka' id="id_help_personalorka"}}<i class="glyphicon glyphicon-list-alt"></i> Create Your Personal Orka Server</a>{{/link-to}}
+                            </li>						
 							<li>
 								{{#link-to 'help.images' id="id_help_images"}}<i class="glyphicon glyphicon-list-alt"></i> Hadoop Images Components</a>{{/link-to}}
 							</li>
@@ -28,9 +31,6 @@
                             <li>
                                 {{#link-to 'help.experiments' id="id_help_experiments"}}<i class="glyphicon glyphicon-list-alt"></i> Reproducible Experiments Metadata</a>{{/link-to}}
                             </li>
-                            <li>
-                                {{#link-to 'help.personalorka' id="id_help_personalorka"}}<i class="glyphicon glyphicon-list-alt"></i> Create Your Personal Orka Server</a>{{/link-to}}
-                            </li>		
 						</ul>
 					</li>
 				</ul>
@@ -54,9 +54,7 @@
 			<div class="col-lg-12">
 				<ul class="list-inline list-unstyled">
 					<li class="termslink pull-right text-muted">
-						<a href="https://accounts.okeanos.grnet.gr/ui/approval_terms" target="_blank">Terms
-						of
-						use</a>
+						<a href="https://accounts.okeanos.grnet.gr/ui/approval_terms" target="_blank">Terms of use</a>
 					</li>
 					<li>
 						<a href="http://europa.eu/" target="_blank" title="European Union"><img src="{{unbound STATIC_URL}}images/european_union.png"
