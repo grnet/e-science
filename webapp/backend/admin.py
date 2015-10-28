@@ -99,10 +99,7 @@ class FaqItemAdmin(admin.ModelAdmin):
         super(FaqItemAdmin, self).__init__(model, admin_site)
 
 
-admin.site.register(UserInfo)
-admin.site.register(UserLogin)
 admin.site.register(Setting,SettingAdmin)
-admin.site.register(ClusterInfo)
 admin.site.register(PublicNewsItem)
 admin.site.register(FaqItem,FaqItemAdmin)
 admin.site.register(FaqItemCategory)
@@ -110,5 +107,3 @@ admin.site.register(OrkaImage,OrkaImageAdmin)
 admin.site.register(OrkaImageCategory)
 admin.site.register(VreImage,VreImageAdmin)
 admin.site.register(VreImageCategory)
-admin.site.register(VreServer)
-admin.site.register(Dsl)
