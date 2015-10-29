@@ -320,12 +320,16 @@ class FaqItem(models.Model):
     def __unicode__(self):
         return ('Q:%s > A:%s') % (self.faq_question, self.faq_answer)
 
-class ClusterStatistics(models.Model):
+class OrkaStatistics(models.Model):
     """Definition of Cluster statistics."""
     spawned_clusters = models.IntegerField("Spawned Clusters", null=True,
                                      help_text="Total number of spawned clusters")
     active_clusters = models.IntegerField("Active Clusters", null=True,
                                      help_text="Total number of active clusters")
+    spawned_vres = models.IntegerField("Spawned VREs", null=True,
+                                       help_text="Total number of spawned Virtual Research Environments")
+    active_vres = models.IntegerField("Active VREs", null=True,
+                                      help_text="Total number of active Virtual Research Environments")
 
 class ClusterInfo(models.Model):
     """Definition of a Hadoop Cluster object model."""

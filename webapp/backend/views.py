@@ -138,9 +138,14 @@ class StatisticsView(APIView):
         destroyed_clusters = ClusterInfo.objects.all().filter(cluster_status=0).count()
         active_clusters = ClusterInfo.objects.all().filter(cluster_status=1).count()
         spawned_clusters = active_clusters + destroyed_clusters
-        cluster_statistics = ClusterStatistics.objects.create(spawned_clusters=spawned_clusters,
-                                                             active_clusters=active_clusters)
-        serializer_class = StatisticsSerializer(cluster_statistics)
+        destroyed_vres = VreServer.objects.all().filter(server_status=0).count()
+        active_vres = VreServer.objects.all().filter(server_status=1).count()
+        spawned_vres = active_vres + destroyed_vres
+        orka_statistics = OrkaStatistics.objects.create(spawned_clusters=spawned_clusters,
+                                                             active_clusters=active_clusters,
+                                                             spawned_vres=spawned_vres,
+                                                             active_vres=active_vres)
+        serializer_class = StatisticsSerializer(orka_statistics)
         return Response(serializer_class.data)
 
 
