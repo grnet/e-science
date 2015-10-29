@@ -21,5 +21,7 @@ App.Router.map(function() {
     this.resource('features', function() {
         // /features/screenshots
         this.route('screenshots');
+        // /features/videos
+        this.route('videos');
     });
 });
