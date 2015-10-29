@@ -897,7 +897,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 				var length = projects.length;
 				for (var i = 0; i < length; i++) {
 					// check based on the name of the project (at screen we have both project name and quotas)
-					if (projects.objectAt(i).lastIndexOf(clusterdata.project_name, 0) === 0) {
+					if (projects.objectAt(i).string.lastIndexOf(clusterdata.project_name) > 0) {
 						this.set('selected_project', projects.objectAt(i));
 						break;
 					}
