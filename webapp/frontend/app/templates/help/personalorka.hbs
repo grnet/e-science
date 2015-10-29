@@ -9,94 +9,17 @@
 <div class="col col-sm-12">
 <h1>Orka service</h1>
 
-<p>Orka service is deployed and accessed by a personal Orka server. Every ~okeanos user can build a personal Orka server by following the instructions in Start Orka server.</p>
+<p>Orka service is deployed and accessed by a personal Orka server. Every ~okeanos user can build a personal Orka server by following the instructions in Create personal Orka server VM.</p>
 
 <ul class="nav nav-tabs" role="tablist">
-    <li role="presentation" class="active"><a href="#createorkaimage" role="tab" data-toggle="tab">Create Orka image</a></li>
-    <li role="presentation"><a href="#startorkaserver" role="tab" data-toggle="tab">Start Orka server</a></li>
-    <li role="presentation"><a href="#restartorkaserver" role="tab" data-toggle="tab">Restart Orka server</a></li>
-    <li role="presentation"><a href="#updateorkaserver" role="tab" data-toggle="tab">Update Orka server</a></li>
+    <li role="presentation" class="active"><a href="#startorkaserver" role="tab" data-toggle="tab">Create personal Orka server VM</a></li>
+    <li role="presentation"><a href="#restartorkaserver" role="tab" data-toggle="tab">Restart personal Orka server VM</a></li>
+    <li role="presentation"><a href="#updateorkaserver" role="tab" data-toggle="tab">Update personal Orka server VM</a></li>
   </ul>
 
   <!-- Tab panes -->
 <div class="tab-content">
-       <div role="tabpanel" class="tab-pane active" id="createorkaimage">
-           <h3>Create ~okeanos image for personal Orka server (for administrators)</h3>
-
-<p>The python script deploy_orka_server.py can be used either for creating an ~okeanos Orka server image
-or starting an Orka server created by such an image. Before using the script as image creator, the following packages must be installed
-(tested in Debian 8 ~okeanos bare image):</p>
-
-<pre><code>sudo apt-get update
-sudo apt-get install -y git
-sudo apt-get install -y python python-dev gcc 
-wget https://bootstrap.pypa.io/get-pip.py;
-sudo python get-pip.py
-sudo pip install kamaki
-sudo pip install ansible
-</code></pre>
-
-<p><strong>Important</strong>: a public ssh key must exist locally as ~/.ssh/id_rsa.pub. If not, the python script will exit.</p>
-
-<p>Clone the e-Science project and run the python script:</p>
-
-<pre><code>git clone &lt;escience git repo&gt;
-cd &lt;project_root&gt;/deploy/
-python deploy_orka_server.py create --name=\{{orka_image}} --flavor_id=\{{~okeanos_flavor_number}} --project_id=\{{~okeanos_project_id}} --image_id=\{{~okeanos_debian_image_id}} --git_repo=\{{project_repo_in_github}} --git_repo_version=\{{version_or_branch_of_repo}} --token=\{{~okeanos_token}}
-</code></pre>
-
-<p>This will create a virtual machine in ~okeanos and install everything that is needed for the orka server to function with Debian 8.2, but without configuring sensitive parameters and passwords.
-After VM becomes active, the admin/image-creator can ssh to the virtual machine and after removing authorized_keys files:</p>
-
-<pre><code>rm /root/.ssh/authorized_keys
-rm /home/orka_admin/.ssh/authorized_keys
-</code></pre>
-
-<p>run:</p>
-
-<pre><code>snf-mkimage --public --print-syspreps -f -u \{{name_of_Orka_server_image}} -t \{{~okeanos_token}} -a \{{auth_url}} -r \{{name_of_Orka_server_image}} /
-</code></pre>
-
-<p>After snf-image-creator finishes, the image will be ready for building Orka servers.
-More information about the software that is installed for the creation of the image can be found in the following Ansible playbooks:</p>
-
-<pre><code>deploy/setup_orka_admin.yml
-deploy/roles/webserver/tasks/main.yml
-</code></pre>
-
-<h3>Example of creating an ~okeanos image for personal Orka server</h3>
-
-<p>Assuming the administrator's Linux working environment is ~okeanos Debian Base 8.2 without a pair of SSH keys. The following steps can be executed as root or as a user with sudo privileges:</p>
-
-<pre><code>sudo apt-get update
-sudo apt-get install -y git
-sudo apt-get install -y python python-dev gcc 
-wget https://bootstrap.pypa.io/get-pip.py;
-sudo python get-pip.py
-sudo pip install kamaki
-sudo pip install ansible
-ssh-keygen -t rsa (rest of the arguments can be left to default)
-</code></pre>
-
-<p>Clone the e-Science project and run the python script:</p>
-
-<pre><code>git clone https://github.com/grnet/e-science.git
-cd e-science/deploy/
-python deploy_orka_server.py create --name=orka_image_vm --flavor_id=39 --project_id=11aaaaa1-11dd-11ae-a11e-a1a211111111 --image_id=a1111aa1-1aa1-1aa1-aa11-aaaa111a11aa --git_repo=https://github.com/grnet/e-science.git --git_repo_version=master --token=AAa1aAaAAA1a1A1ABA1AA1aAAaa1aaaaaaaa11_111a
-</code></pre>
-
-<p>This will create a virtual machine in ~okeanos and install everything that is needed for the server to provide the Orka services.
-After VM becomes active, the administrator must do the following:</p>
-
-<pre><code>ssh root@\{{virtual_machine_public_IPv4}}
-rm /root/.ssh/authorized_keys
-rm /home/orka_admin/.ssh/authorized_keys
-snf-mkimage --public --print-syspreps -f -u Orka_on_Debian_8_image -t AAa1aAaAAA1a1A1ABA1AA1aAAaa1aaaaaaaa11_111a -a https://accounts.okeanos.grnet.gr/identity/v2.0 -r Orka_on_Debian_8_image /
-</code></pre>
-
-<p>After snf-image-creator is finished, the new image can be used for the creation of Orka servers.</p>
-       </div>
-    <div role="tabpanel" class="tab-pane" id="startorkaserver"><h3>Create a personal Orka server in ~okeanos (for users)</h3>
+    <div role="tabpanel" class="tab-pane active" id="startorkaserver"><h3>Create a personal Orka server in ~okeanos (for users)</h3>
 
 <p>Users should read the following section, regarding Orka server requirements, before starting the creation of their personal Orka server.</p>
 

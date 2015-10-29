@@ -18,4 +18,8 @@ App.Router.map(function() {
         // /about/faq
         this.route('faq');
     });
+    this.resource('features', function() {
+        // /features/screenshots
+        this.route('screenshots');
+    });
 });
