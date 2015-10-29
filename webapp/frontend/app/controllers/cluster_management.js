@@ -1,7 +1,6 @@
-safestr = Ember.Handlebars.SafeString;
 App.ClusterManagementController = Ember.Controller.extend({
 	
-	needs : ['clusterCreate','helpImages','userWelcome'],
+	needs : ['application','clusterCreate','helpImages','userWelcome'],
 	hue_login_message : '',
 	hue_message : '',
     count : 0,
@@ -95,11 +94,11 @@ App.ClusterManagementController = Ember.Controller.extend({
 	cluster_slaves_delta_decorated : function(){
 	    var num_delta = Number(this.get('cluster_slaves_delta'));
 	    if (num_delta>0){
-	        return new safestr('<span class="text-success">+%@</span>'.fmt(num_delta));
+	        return Ember.String.htmlSafe('<span class="text-success">+%@</span>'.fmt(num_delta));
 	    }else if (num_delta<0){
-	        return new safestr('<span class="text-danger">%@</span'.fmt(num_delta));
+	        return Ember.String.htmlSafe('<span class="text-danger">%@</span'.fmt(num_delta));
 	    }else{
-	        return new safestr('<b class="glyphicon glyphicon-resize-full"></b>');   
+	        return Ember.String.htmlSafe('<b class="glyphicon glyphicon-resize-full"></b>');   
 	    }
 	}.property('cluster_slaves_delta'),
 	cluster_action_destroy_disable : function(){
@@ -179,7 +178,7 @@ App.ClusterManagementController = Ember.Controller.extend({
                         if (!store) {
                             store = that.store;
                         }
-                        if (store && that.controllerFor('application').get('loggedIn')) {
+                        if (store && that.get('controllers.application').get('loggedIn')) {
                             var promise = store.fetch('user', 1);
                             promise.then(function(user) {
                                 // success

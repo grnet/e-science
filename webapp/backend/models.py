@@ -3,7 +3,7 @@
 
 """
  e-Science database model
- @author: Vassilis Foteinos, Ioannis Stenos, Nick Vrionis
+ @author: e-science Dev-team
 """
 
 import logging
@@ -187,6 +187,11 @@ HADOOP_STATUS_CHOICES = (
      ("3", "Undefined"),
  )
 
+DSL_STATUS_CHOICES = (
+    ("0", "At Rest"),
+    ("1", "Replaying"),
+)
+
 class VreImageCategory(models.Model):
     """
     Definition of orka VRE image categories.
@@ -219,6 +224,7 @@ class VreImage(models.Model):
     image_access_url = TextArrayField() # array [:port]/path for accessing VRE, base url not included, absence of value assumes base url is access url
     image_category = models.ForeignKey(VreImageCategory, null=False,
                                        help_text="VreImageCategory")
+    requires_script = models.BooleanField("Requires shell script", default=True)
     
     class Meta:
         verbose_name = "VRE Image"
@@ -273,7 +279,7 @@ class PublicNewsItem(models.Model):
     news_date = models.DateTimeField("News Item Date", null=False,
                                        help_text="Date and time for"
                                        " the creation of this entry")
-    news_message = models.CharField("News Item Text", max_length=255, null=False,
+    news_message = models.CharField("News Item Text", max_length=1020, null=False,
                                     help_text="News Item")
     news_category = models.IntegerField("News Item Category", null=True, blank=True,
                                      help_text="Category ID for News Item")
@@ -282,12 +288,48 @@ class PublicNewsItem(models.Model):
     def __unicode__(self):
         return ('%s : %s') % (self.news_date.strftime('%c'), self.news_message)
 
-class ClusterStatistics(models.Model):
+class FaqItemCategory(models.Model):
+    """Definition of FAQ Item Categories"""
+    id = models.AutoField("FaqItemCategory ID", primary_key=True, null=False,
+                          help_text="Auto-increment FaqItemCategory id")
+    category_name = models.CharField("FaqItemCategory name", max_length=255, unique=True, null=False,
+                                     help_text="FaqItemCategory Name")
+    class Meta:
+        verbose_name = "Frequently Asked Questions Category"
+        verbose_name_plural = "Frequently Asked Questions Categories"
+    
+    def __unicode__(self):
+        return ('%s : %s') % (self.id, self.category_name)
+    
+class FaqItem(models.Model):
+    """Definition of Frequently Asked Questions Items."""
+    id = models.AutoField("FaqItem ID", primary_key=True, null=False,
+                               help_text="Auto-increment faqitem id")
+    faq_date = models.DateTimeField("News Item Date", null=False,
+                                       help_text="Date and time for"
+                                       " the creation of this entry")
+    faq_question = models.CharField("Faq Item Question", max_length=1020, null=False,
+                                    help_text="Question")
+    faq_answer = models.CharField("Faq Item Answer", max_length=2040, null=False,
+                                    help_text="Answer")
+    faq_category = models.ForeignKey(FaqItemCategory, null=True, 
+                                       help_text="Faq Item Category")
+    class Meta:
+        verbose_name = "Frequently Asked Question"
+        #verbose_name_plural = "Frequently Asked Questions"
+    def __unicode__(self):
+        return ('Q:%s > A:%s') % (self.faq_question, self.faq_answer)
+
+class OrkaStatistics(models.Model):
     """Definition of Cluster statistics."""
     spawned_clusters = models.IntegerField("Spawned Clusters", null=True,
                                      help_text="Total number of spawned clusters")
     active_clusters = models.IntegerField("Active Clusters", null=True,
                                      help_text="Total number of active clusters")
+    spawned_vres = models.IntegerField("Spawned VREs", null=True,
+                                       help_text="Total number of spawned Virtual Research Environments")
+    active_vres = models.IntegerField("Active VREs", null=True,
+                                      help_text="Total number of active Virtual Research Environments")
 
 class ClusterInfo(models.Model):
     """Definition of a Hadoop Cluster object model."""
@@ -350,8 +392,8 @@ class ClusterInfo(models.Model):
     replication_factor = models.CharField("Replication factor of HDFS", max_length=255, null=False,
                                       help_text="Replication factor of HDFS")
     
-    dfs_blocksize = models.CharField("HDFS blocksize in bytes", max_length=255, null=False,
-                                      help_text="HDFS blocksize in bytes")
+    dfs_blocksize = models.CharField("HDFS blocksize in megabytes", max_length=255, null=False,
+                                      help_text="HDFS blocksize in megabytes")
     
 
     class Meta:
@@ -414,7 +456,7 @@ class VreServer(models.Model):
         return ("%d : %s : %s : %s") % (self.id, self.server_name, self.os_image, CLUSTER_STATUS_CHOICES[int(self.server_status)][1])
     
 class Dsl(models.Model):
-    """Definition of a User Cluster DSL object model."""
+    """Definition of a User Reproducible Experiment model."""
     dsl_name = models.CharField("DSL Name", max_length=255, null=False,
                                     help_text="Name of the DSL")
     pithos_path = models.CharField("Pithos path", max_length=255, null=False,
@@ -422,6 +464,10 @@ class Dsl(models.Model):
     action_date = models.DateTimeField("Action Date", null=False,
                                        help_text="Date and time for"
                                        " the creation of this entry")
+    dsl_status = models.CharField("Experiment Status", max_length=1, default="0",
+                                      choices=DSL_STATUS_CHOICES,
+                                      null=False, help_text="At Rest/Replaying"
+                                      " status of the Experiment")
     cluster_id = models.IntegerField("Linked Cluster Id", null=True, blank=True,
                                      help_text="Cluster Id from which the DSL metadata was extracted.")
 
@@ -435,11 +481,14 @@ class Dsl(models.Model):
     state = models.CharField("Task State", max_length=255,
                                blank=True, help_text="Celery task state")
     
+    dsl_data = models.TextField("DSL data", max_length=4090, null=True,
+                                     blank=True, help_text="DSL data in yaml format.")
+    
     class Meta:
         verbose_name = "Experiment"
 
     def __unicode__(self):
-        return ("%d : %s : cluster_id(%d)") % (self.id, self.dsl_name, self.cluster_id)
+        return ("%s : cluster_id(%s) : %s") % (self.dsl_name, (self.cluster_id or ''), DSL_STATUS_CHOICES[int(self.dsl_status)][1])
     
 class Setting(models.Model):
     """
@@ -454,9 +503,9 @@ class Setting(models.Model):
                                      help_text="Settings section label")
     property_name = models.CharField("Property Name", max_length=255, null=False, 
                                      help_text="Settings property name, must be unique for section")
-    property_value = models.CharField("Property Value", max_length=1020, null=False, 
+    property_value = models.CharField("Property Value", max_length=2040, null=False, 
                                      help_text="Settings property value")
-    comment = models.CharField("Comments", max_length=255, null=True, blank=True,
+    comment = models.CharField("Comments", max_length=1020, null=True, blank=True,
                                help_text="Setting comment")
     
     class Meta:

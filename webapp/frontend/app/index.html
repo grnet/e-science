@@ -6,10 +6,12 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="description" content="e-Science Orka the hadoop cluster creator">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-
-		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/bootstrap.orka.css"/>
-
+        
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/bootstrap.orka.css">
 		<link rel="stylesheet" href="{{ STATIC_URL }}styles/style.css">
+		<link rel="stylesheet" href="{{ STATIC_URL }}libs/prettify.css">
+		<link rel="shortcut icon" href="{{ STATIC_URL }}favicon.ico">
+		<link rel="icon" href="{{ STATIC_URL }}favicon.ico" type="image/x-icon">
 	</head>
 	<body class="" style="" onload="set_style_from_cookie()">
 		{% verbatim %}
@@ -28,11 +30,13 @@
         <script src="{{ STATIC_URL }}libs/theme-switcher.js"></script>
 		<script src="{{ STATIC_URL }}libs/jquery-loader.js"></script>
 		<script src="{{ STATIC_URL }}libs/moment-2.9.0.js"></script>
+		<script src="{{ STATIC_URL }}libs/passgen.js"></script>
+        <script src="{{ STATIC_URL }}libs/yaml-0.2.4.js"></script>
+        <script src="{{ STATIC_URL }}libs/prettify.js"></script>
 		<script src="{{ STATIC_URL }}libs/handlebars-v2.0.0.js"></script>
 		<script src="{{ STATIC_URL }}libs/ember-1.9.1.js"></script>
 		<script src="{{ STATIC_URL }}libs/ember-data-1.0.0-beta.14.1.js"></script>
 		<script src="{{ STATIC_URL }}libs/ember-handlebars-loader-0.0.1.js"></script>
-		<script src="{{ STATIC_URL }}libs/passgen.js"></script>
 		<script src="{{ STATIC_URL }}styles/bootstrap.js"></script>
 	
 		<!--main app-->
@@ -52,8 +56,11 @@
 		<script src="{{ STATIC_URL }}controllers/vreserver_create.js"></script>
 		<script src="{{ STATIC_URL }}controllers/vreserver_management.js"></script>
 		<script src="{{ STATIC_URL }}controllers/dsl_create.js"></script>
+		<script src="{{ STATIC_URL }}controllers/dsl_management.js"></script>
 		<script src="{{ STATIC_URL }}controllers/help_images.js"></script>
 		<script src="{{ STATIC_URL }}controllers/help_vreimages.js"></script>
+		<script src="{{ STATIC_URL }}controllers/help_experiments.js"></script>
+		<script src="{{ STATIC_URL }}controllers/about_faq.js"></script>
 
 		<!--routers-->
 		<script src="{{ STATIC_URL }}router.js"></script>
@@ -68,9 +75,12 @@
 		<script src="{{ STATIC_URL }}routes/vreserver_create.js"></script>
 		<script src="{{ STATIC_URL }}routes/vreserver_management.js"></script>
 		<script src="{{ STATIC_URL }}routes/dsl_create.js"></script>
+		<script src="{{ STATIC_URL }}routes/dsl_management.js"></script>
 		<script src="{{ STATIC_URL }}routes/homepage.js"></script>
+		<script src="{{ STATIC_URL }}routes/about_faq.js"></script>
 		
 		<!--views-->
+		<script src="{{ STATIC_URL }}views/application.js"></script>
 		<script src="{{ STATIC_URL }}views/homepage.js"></script>
 		<script src="{{ STATIC_URL }}views/user_login.js"></script>
 		<script src="{{ STATIC_URL }}views/user_welcome.js"></script>
@@ -85,6 +95,9 @@
 		<script src="{{ STATIC_URL }}views/destroy_cluster_button.js"></script>
 		<script src="{{ STATIC_URL }}views/vm_flavor_selection_button.js"></script>
 		<script src="{{ STATIC_URL }}views/cluster_management.js"></script>
+		<script src="{{ STATIC_URL }}views/dsl_management.js"></script>
+		<script src="{{ STATIC_URL }}views/help_experiments.js"></script>
+		<script src="{{ STATIC_URL }}views/about_faq.js"></script>
 
 		<!--store for ember-->
 		<script src="{{ STATIC_URL }}store.js"></script> 
@@ -103,8 +116,9 @@
 			'user/login', 'user/welcome',  'user/_userclusters', 'user/_uservres',  'user/_userdsls',
 			'cluster/create', 'cluster/management',
 			'vreserver/create', 'vreserver/management',
-			'dsl/create',
-			'help/images', 'help/vreimages', 'help/experiments'
+			'dsl/create', 'dsl/management',
+			'help/images', 'help/vreimages', 'help/experiments',
+			'about/orka', 'about/faq'
 		]);</script>
 	
 	</body>

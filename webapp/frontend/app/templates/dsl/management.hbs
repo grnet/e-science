@@ -1,0 +1,51 @@
+<p></p>
+
+<div class="well well-lg text-center v-center">
+	<div class="row">
+		<h2 id = 'id_title_dsl_manage_route'>Experiment Management</h2>
+		<h3 id = 'id_title_dsl_name'>{{model.dsl_name}}</h3>
+	</div>
+</div>
+<div>
+    <div class="row">
+        <div class="col col-sm-12">
+        <table class="table table-condensed table-bordered">
+            <tr><td class="h5 col-sm-3"><b>Experiment Status</b></td>
+                <td class="text text-info col-sm-3"><i {{bind-attr class="content.class_dsl_status"}}></i>{{content.description_dsl_status}}</td>
+                <td class="text text-warning text-center">{{content.message_dsl_status_replay}}</td>
+            </tr>
+        </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class='btn-group-vertical btn-group-sm col col-sm-2'>
+            {{#ifeq model.action_dsl_confirm 'dsl_replay'}}
+            <div class='btn-toolbar-horizontal btn-toolbar-sm'>
+                <div class='btn-group btn-group-sm btn-block'>
+                    <button {{bind-attr id='model.id_dsl_confirm'}} {{action 'takeDslAction' model}} class="btn btn-danger btn-sm active col-sm-10">Confirm</button>
+                    <button {{action 'confirmDslAction' model false}} class="btn btn-danger btn-sm active col-sm-2">x</button>
+                </div>
+            </div>
+            {{else}}
+                <button {{bind-attr id='model.id_dsl_destroy'}} class="btn btn-sm btn-primary btn-block" {{action 'confirmDslAction' model 'dsl_replay'}}{{bind-attr disabled=actions_dsl_disabled}}>
+                    Replay Experiment <b {{bind-attr class='model.class_button_dsl_replay'}}></b>
+                </button>
+            {{/ifeq}}                                   
+            {{#ifeq model.action_dsl_confirm 'dsl_delete'}}
+            <div class='btn-toolbar-horizontal btn-toolbar-sm'>
+                <div class='btn-group btn-group-sm btn-block'>
+                    <button {{bind-attr id='model.id_dsl_confirm'}} {{action 'takeDslAction' model}} class="btn btn-danger btn-sm active col-sm-10">Confirm</button>
+                    <button {{action 'confirmDslAction' model false}} class="btn btn-danger btn-sm active col-sm-2">x</button>
+                </div>
+            </div>
+            {{else}}
+                <button {{bind-attr id='model.id_dsl_destroy'}} class="btn btn-sm btn-primary btn-block" {{action 'confirmDslAction' model 'dsl_delete'}}{{bind-attr disabled=actions_dsl_disabled}}>
+                    Delete Experiment <b {{bind-attr class='model.class_button_dsl_destroy'}}></b>
+                </button>                   
+            {{/ifeq}}
+        </div>        
+        <div id="id_experiment_readonly" class="col col-sm-10">
+            {{model.dsl_data_safe}}
+        </div>
+    </div>
+</div>

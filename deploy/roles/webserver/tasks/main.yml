@@ -1,39 +1,69 @@
 ---
   - name: create directory for projects
-    tags: postimage
+    tags: preimage
     file: path={{my_project_dir}} state=directory
 
+  - name: Create backup for settings.py file
+    tags: update
+    copy: src={{settings_path}}/settings.py dest=/tmp/settings.py
+
   - name: Git clone e-science project in the git directory
-    tags: postimage
-    git: repo={{escience_repo}} dest={{my_project_dir}}/{{my_project_name}} version={{escience_version|default(origin)}}
+    tags:
+     - preimage
+     - update
+    git: repo={{escience_repo}} force=yes dest={{my_project_dir}}/{{my_project_name}} version={{escience_version|default(origin)}}
 
   - name: Copy Java dist directory in ansible folder for yarn role
-    tags: postimage
-    command: cp -r {{path_to_java_dirs}}/dist/ {{settings_path}}/ansible/roles/yarn/files
+    tags:
+     - preimage
+     - update
+    command: cp -rf {{path_to_java_dirs}}/dist/ {{settings_path}}/ansible/roles/yarn/files
 
   - name: Copy Java lib directory in ansible folder for yarn role
-    tags: postimage
-    command: cp -r {{path_to_java_dirs}}/lib/ {{settings_path}}/ansible/roles/yarn/files
+    tags:
+     - preimage
+     - update
+    command: cp -rf {{path_to_java_dirs}}/lib/ {{settings_path}}/ansible/roles/yarn/files
 
   - name: Copy Java dist directory in ansible folder for cloudera role
-    tags: postimage
-    command: cp -r {{path_to_java_dirs}}/dist/ {{settings_path}}/ansible/roles/cloudera/files
+    tags: preimage,update
+    command: cp -rf {{path_to_java_dirs}}/dist/ {{settings_path}}/ansible/roles/cloudera/files
 
   - name: Copy Java lib directory in ansible folder for cloudera role
-    tags: postimage
-    command: cp -r {{path_to_java_dirs}}/lib/ {{settings_path}}/ansible/roles/cloudera/files
+    tags:
+     - preimage
+     - update
+    command: cp -rf {{path_to_java_dirs}}/lib/ {{settings_path}}/ansible/roles/cloudera/files
 
-  - name: Install orka as a python package
-    tags: postimage
-    sudo: yes
-    pip: name={{project_path}}/orka chdir={{project_path}}
+  - name: Copy correct settings.py
+    tags: update
+    copy: src=/tmp/settings.py dest={{settings_path}}/settings.py
 
   - name: Change owner of conf and logs
     file: path={{user_home}}/{{item}} recurse=yes state=directory
-    tags: postimage
+    tags: preimage
     with_items:
       - conf
       - logs
+
+  - name: create orka_admin user ssh keys
+    user: name=orka_admin shell=/bin/bash generate_ssh_key=yes state=present
+    tags: postimage
+
+  - name: create root user ssh keys
+    sudo: yes
+    user: name=root shell=/bin/bash generate_ssh_key=yes state=present
+    tags: postimage
+
+  - name: Rabbitmq-server vhost configuration
+    tags: postimage
+    sudo: yes
+    rabbitmq_vhost: name=/escience_tasks state=present
+
+  - name: Rabbitmq-server user configuration
+    tags: postimage
+    sudo: yes
+    rabbitmq_user: user=orkarbmq password=orkapass vhost=/escience_tasks configure_priv=.* read_priv=.* write_priv=.* state=present
 
   - name: Copy settings.j2 file
     tags: postimage
@@ -41,7 +71,7 @@
 
   - name: Edit pg_hba.conf
     sudo: yes
-    lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
+    lineinfile: line="local\tall\t\tpostgres\t\t\t\ttrust" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=peer)" backrefs=yes
     tags: postimage
 
   - name: Restart PostgreSql service
@@ -78,7 +108,7 @@
 
   - name: Revert pg_hba.conf to default
     sudo: yes
-    lineinfile: line="local\tall\t\tpostgres\t\t\t\tpeer" dest=/etc/postgresql/9.1/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=trust)" backrefs=yes
+    lineinfile: line="local\tall\t\tpostgres\t\t\t\tpeer" dest=/etc/postgresql/9.4/main/pg_hba.conf state=present regexp="local(\s)+all(\s)+postgres(\s)+(?=trust)" backrefs=yes
     tags: postimage
 
   - name: Restart PostgreSql service
@@ -117,32 +147,73 @@
     command: openssl req -x509 -nodes -days {{certificate_key_lifetime}} -newkey rsa:{{key_rsa}} -sha256 -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt -subj "/C=GR/ST=Athens/L=Athens/O= /OU= /CN={{ ansible_ssh_host }}"
     tags: postimage
 
-  - name: Copy encryption file for ~okeanos token
-    copy: src={{local_encrypt_file_path}} dest={{remote_encrypt_file_path}} owner=orka_admin
-    tags: postimage
+  - name: Stop Nginx service
+    sudo: yes
+    tags: restart
+    service: name=nginx state=stopped
+
+  - name: Stop uwsgi
+    tags: restart
+    sudo: yes
+    command: uwsgi --stop /tmp/uwsgi.pid
+
+  - name: Stop celery
+    tags: restart
+    command: celery multi stopwait celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%h.log
+    args:
+      chdir: "{{project_path}}/{{webapp_dir}}"
+
+  - name: Stop rabbitmq
+    tags: restart
+    sudo: yes
+    command: rabbitmqctl stop
+
+  - name: Remove pyc files
+    tags: restart
+    shell: find . -name "*.pyc" -type f -delete
+
+  - name: Remove static files
+    tags: restart
+    shell: find . -not -name "human.txt" -not -name ".gitignore" -type f -delete
+    args:
+      chdir: "{{project_path}}/{{webapp_dir}}/static"
+
+  - name: Remove media files
+    tags: restart
+    shell: find . -not -name "human.txt" -not -name ".gitignore" -type f -delete
+    args:
+      chdir: "{{project_path}}/{{webapp_dir}}/media"
+
+  - name: Restart rabbitmq
+    tags: restart
+    sudo: yes
+    service: name=rabbitmq-server state=restarted
 
   - name: Restart Nginx service
     sudo: yes
     service: name=nginx state=restarted
-    tags: postimage
-
-  - name: Install uwsgi-plugin-python
-    apt: name=uwsgi-plugin-python state=present
-    sudo: yes
-    tags: postimage
+    tags:
+     - postimage
+     - restart
 
   - name: Start uWSGI service
-    tags: postimage
+    tags:
+     - postimage
+     - restart
     command: uwsgi --ini {{user_home}}/conf/uwsgi.ini
     args:
       chdir: "{{project_path}}/{{webapp_dir}}"
 
   - name: Run collectstatic command
-    tags: postimage
+    tags:
+     - postimage
+     - restart
     django_manage: command=collectstatic app_path={{project_path}}/{{webapp_dir}}
 
   - name: Run celery as a daemon
-    tags: postimage
+    tags:
+     - postimage
+     - restart
     command: celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%h.log
     args:
       chdir: "{{project_path}}/{{webapp_dir}}"

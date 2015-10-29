@@ -1,6 +1,6 @@
 App.VreserverManagementController = Ember.Controller.extend({
 	
-	needs : ['vreserverCreate','helpVreimages'],
+	needs : ['application', 'vreserverCreate','helpVreimages'],
     count : 0,
     vreImages : [],
     // tabs info for template
@@ -85,7 +85,7 @@ App.VreserverManagementController = Ember.Controller.extend({
                         if (!store) {
                             store = that.store;
                         }
-                        if (store && that.controllerFor('application').get('loggedIn')) {
+                        if (store && that.get('controllers.application').get('loggedIn')) {
                             var promise = store.fetch('user', 1);
                             promise.then(function(user) {
                                 // success

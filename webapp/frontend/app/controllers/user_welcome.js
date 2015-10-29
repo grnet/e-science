@@ -1,10 +1,13 @@
 // User Welcome controller
 App.UserWelcomeController = Ember.Controller.extend({
 
-    needs : ['clusterCreate','vreserverCreate','clusterManagement','dslCreate'],
+    needs : ['application', 'clusterCreate','vreserverCreate','clusterManagement','dslCreate'],
     // flag to denote transition from a create action
     create_cluster_start : false,
     count : 0,
+    initial_timer_active : function(){
+        return this.get('count')>0;
+    }.property('count'),    
     orkaImages: [],
     vreImages: [],
     user_messages : [],
@@ -42,14 +45,23 @@ App.UserWelcomeController = Ember.Controller.extend({
     }.property(),
     // userclusters block
     filtered_clusters : function(){
-        return this.get('content.clusters').filterBy('id');
-    }.property('content.clusters.[]','content.clusters.isLoaded'),
+        var clusters = this.get('content.clusters').filterBy('id');
+        return this.get('cluster_active_filter') ? clusters.filterBy('cluster_status_active_pending') : clusters;
+    }.property('content.clusters.[]','content.clusters.isLoaded','cluster_active_filter'),
     sorted_clusters_prop : ['resorted_status:asc','action_date:desc'],
     sorted_clusters_dir : true,
     sorted_clusters : Ember.computed.sort('filtered_clusters','sorted_clusters_prop'),
     sortable_clusters : function(){
         return this.get('sorted_clusters');
     }.property('filtered_clusters.[]'),
+    failed_clusters : function(){
+        var clusters = this.get('content.clusters').filterBy('id');
+        return clusters.filterBy('cluster_status_verbose','FAILED');
+    }.property('content.clusters.[]','content.clusters.isLoaded'),
+    boolean_no_failed_clusters : function(){
+        var failed_clusters = this.get('failed_clusters');
+        return Ember.isEmpty(failed_clusters) || failed_clusters.get('length') == 0; 
+    }.property('failed_clusters.[]'),
     // uservreservers block
     filtered_vreservers : function(){
         return this.get('content.vreservers').filterBy('id');
@@ -64,13 +76,22 @@ App.UserWelcomeController = Ember.Controller.extend({
     filtered_dsls : function(){
         return this.get('content.dsls').filterBy('id');
     }.property('content.dsls.[]','content.dsls.isLoaded'),
-    sorted_dsls_prop : ['action_date:desc'],
+    sorted_dsls_prop : ['resorted_status:asc','action_date:desc'],
     sorted_dsls_dir : true,
     sorted_dsls : Ember.computed.sort('filtered_dsls','sorted_dsls_prop'),
     sortable_dsls : function(){
         return this.get('sorted_dsls');
     }.property('filtered_dsls.[]'),
     // messages / feedback
+    /*dsl_replay_msg : function(self,key){
+        var replaying_dsls = self.get('sortable_dsls').filterBy('dsl_status','1');
+        for (i=0; i<replaying_dsls.get('length'); i++){
+            if (!Ember.isEmpty(replaying_dsls.objectAt(i).get('message_dsl_status_replay'))){
+                var msg = {'msg_type':'default','msg_text': replaying_dsls.objectAt(i).get('message_dsl_status_replay')};
+                self.send('addMessage',msg);
+            }
+        }
+    }.observes('sortable_dsls.@each.state'),*/
     master_vm_password_msg : function() {
         var pwd_message = this.get('content.master_vm_password');
         if (!Ember.isBlank(pwd_message)) {
@@ -145,8 +166,31 @@ App.UserWelcomeController = Ember.Controller.extend({
             this.get('controllers.clusterManagement').send('setActiveTab','scale');
             this.transitionToRoute('cluster.management',cluster_id);
         },
+        visit_vreserver_base_url : function(vreserver){
+            var os_image = vreserver.get('os_image');
+            var server_ip = vreserver.get('server_IP');
+            var vreImages = this.get('vreImages');
+            var arrAccessUrls = [];
+            var base_url = null;
+            for (i=0;i<vreImages.length;i++){
+                if (vreImages[i].get('image_name') == os_image){
+                    var arrImageUrls = vreImages[i].get('image_access_url') || [];
+                    for (j=0;j<arrImageUrls.length;j++){
+                        arrAccessUrls.push('http://%@:%@'.fmt(server_ip,arrImageUrls[j]));
+                    }
+                    base_url = (Ember.isEmpty(arrAccessUrls) ? ['http://%@'.fmt(server_ip)] : arrAccessUrls)[0];
+                    break;
+                }
+            }
+            if (!Ember.isEmpty(base_url)){
+                window.open(base_url,'_blank');
+            }        
+        },
         setActiveTab : function(tab){
             this.set('content_tabs',tab);  
+        },
+        setActiveFilter : function(val){
+            this.set('cluster_active_filter',val);  
         },
         addMessage : function(obj) {
             // routes/controllers > controller.send('addMessage',{'msg_type':'default|info|success|warning|danger', 'msg_text':'Lorem ipsum dolor sit amet, consectetur adipisicing elit'})
@@ -191,7 +235,7 @@ App.UserWelcomeController = Ember.Controller.extend({
             }
         },
         removeMessage : function(id, all) {
-            // routes/controllers > controller.send('removeMessage', id, [all=false]) optional 3rd parameter to true will clear all messages
+            // routes/controllers > controller.send('removeMessage', id, [all=false] all=true > clear all
             // templates > {{action 'removeMessage' message_id}} / {{action 'removeMessage' 1 true}}
             var self = this;
             var store = this.store;
@@ -230,7 +274,7 @@ App.UserWelcomeController = Ember.Controller.extend({
                         if (!store) {
                             store = that.store;
                         }
-                        if (store && that.controllerFor('application').get('loggedIn')) {
+                        if (store && that.get('controllers.application').get('loggedIn')) {
                             var promise = store.fetch('user', 1);
                             promise.then(function(user) {
                                 // success
@@ -238,6 +282,8 @@ App.UserWelcomeController = Ember.Controller.extend({
                                 var num_cluster_records = user_clusters.get('length');
                                 var user_vreservers = user.get('vreservers');
                                 var num_vre_records = user_vreservers.get('length');
+                                var user_dsls = user.get('dsls');
+                                var num_dsl_records = user_dsls.get('length');
                                 var bPending = false;
                                 for ( i = 0; i < num_cluster_records; i++) {
                                     if ((user_clusters.objectAt(i).get('cluster_status') == '2') || (user_clusters.objectAt(i).get('hadoop_status') == '2')) {
@@ -251,16 +297,24 @@ App.UserWelcomeController = Ember.Controller.extend({
                                         break;
                                     }
                                 }
+                                for ( i = 0; i < num_dsl_records; i++ ) {
+                                    if (user_dsls.objectAt(i).get('dsl_status') == '1'){
+                                        bPending = true;
+                                        break;
+                                    }
+                                }
                                 if (!bPending) {
                                     if (that.get('count') > 0) {
                                         that.set('count', that.get('count') - 1);
                                     } else {
                                         that.get('timer').stop();
+                                        that.set('count',0);
                                         status = false;
                                     }
                                 }
                             }, function(reason) {
                                 that.get('timer').stop();
+                                that.set('count',0);
                                 status = false;
                                 console.log(reason.message);
                             });
@@ -273,12 +327,14 @@ App.UserWelcomeController = Ember.Controller.extend({
                     that.get('timer').start();
                 } else {
                     that.get('timer').stop();
+                    that.set('count',0);
                 }
             }
             if (status) {
                 this.get('timer').start();
             } else {
                 this.get('timer').stop();
+                this.set('count',0);
             }
         },
     }

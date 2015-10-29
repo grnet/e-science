@@ -4,14 +4,14 @@
 """
 Urls for backend ember-django application.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 
 from django.conf import settings
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from views import SessionView, StatusView, JobsView, HdfsView, MainPageView, SettingsView, \
-StatisticsView, NewsView, OrkaImagesView, VreServerView, VreImagesView, DslView
+StatisticsView, NewsView, FaqView, OrkaImagesView, VreServerView, VreImagesView, DslView
 admin.site.site_header = "GRNET e-Science Administration"
 admin.site.site_title = admin.site.site_header
 admin.site.index_title = ''
@@ -19,6 +19,7 @@ admin.site.index_title = ''
 urlpatterns = patterns('', url(r'^$', MainPageView.as_view()),
                        url(r'^api/statistics', StatisticsView.as_view()),
                        url(r'^api/newsitems', NewsView.as_view()),
+                       url(r'^api/faqitems', FaqView.as_view()),
                        url(r'^api/orkaimages', OrkaImagesView.as_view()),
                        url(r'^api/vreimages', VreImagesView.as_view()),
                        url(r'^admin', include(admin.site.urls)),

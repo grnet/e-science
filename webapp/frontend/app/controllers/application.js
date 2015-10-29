@@ -83,7 +83,11 @@ App.ApplicationController = Ember.Controller.extend({
                     self.store.push('user', self.store.normalize('user', {
                         'id' : 1,
                         'user_theme' : user.get('user_theme')
-                    })).save();
+                    })).save().then(function(user){
+                        self.set('user_theme',cssUrl);
+                    },function(reason){
+                        console.log(reason);
+                    });
                 });
             }
         },

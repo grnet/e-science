@@ -4,12 +4,12 @@
 """
 Serializers file for django rest framework.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 
 from rest_framework import serializers
-from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, \
-PublicNewsItem, OrkaImage, OrkaImageCategory, VreServer, VreImage, VreImageCategory, Dsl, Setting
+from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, OrkaStatistics, \
+PublicNewsItem, FaqItem, FaqItemCategory, OrkaImage, OrkaImageCategory, VreServer, VreImage, VreImageCategory, Dsl, Setting
 
 
 class PGArrayField(serializers.WritableField):
@@ -68,7 +68,19 @@ class NewsSerializer(serializers.ModelSerializer):
     class Meta:
         model = PublicNewsItem
         fields = ('id', 'news_date', 'news_message', 'news_category')
+
+class FaqSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Faqs
+    """
+    faq_category = serializers.SerializerMethodField("category_name")
+    class Meta:
+        model = FaqItem
+        fields = ('id', 'faq_date', 'faq_question', 'faq_answer', 'faq_category')
         
+    def category_name(self,obj): # not a mandatory field, take into account null
+        exists = FaqItemCategory.objects.all().filter(id=obj.faq_category_id).first() is not None
+        return FaqItemCategory.objects.all().filter(id=obj.faq_category_id).values()[0]['category_name'] if exists else ''
 
 class StatisticsSerializer(serializers.ModelSerializer):
     """
@@ -77,8 +89,8 @@ class StatisticsSerializer(serializers.ModelSerializer):
     id = serializers.SerializerMethodField('get_ember_id')
     
     class Meta:
-        model = ClusterStatistics
-        fields = ('id','spawned_clusters', 'active_clusters')
+        model = OrkaStatistics
+        fields = ('id','spawned_clusters', 'active_clusters', 'spawned_vres', 'active_vres')
     
     def get_ember_id(self, obj):
         """"Always returns id 1 for ember.js"""
@@ -213,7 +225,7 @@ class DslsSerializer(serializers.ModelSerializer):
     """   
     class Meta:
         model = Dsl
-        fields = ('id', 'dsl_name', 'action_date', 'pithos_path', 'cluster_id', 'task_id', 'state')
+        fields = ('id', 'dsl_name', 'action_date', 'dsl_status', 'pithos_path', 'cluster_id', 'task_id', 'state', 'dsl_data')
 
 class DslOptionsSerializer(serializers.Serializer):
     """

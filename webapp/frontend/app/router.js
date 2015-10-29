@@ -28,7 +28,7 @@ App.Router.map(function() {
         this.route('create');
         // dsl management route
         // /dsl/dsl_id
-        // this.route('management', { path: "/:dsl.id" });
+        this.route('management', { path: "/:dsl.id" });
     });
 	this.resource('help', function() {
 		// /help/images
@@ -38,6 +38,12 @@ App.Router.map(function() {
 		// /help/experiments
 		this.route('experiments');
 	});
+	this.resource('about', function() {
+        // /about/orka
+        this.route('orka');
+        // /about/faq
+        this.route('faq');
+    });
 	// Route to enforce login policy
 	// other routes that require login extend this
 	this.route('restricted');

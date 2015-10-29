@@ -5,9 +5,9 @@
 Django script to update the database after a new login, logout,
 create, or destroy cluster action.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
-
+from os.path import dirname,join,abspath
 import django
 import logging
 from kamaki.clients.astakos import AstakosClient, CachedAstakosClient
@@ -20,6 +20,21 @@ from django.utils import timezone
 from cluster_errors_constants import *
 django.setup()
 
+
+def check_user_uuid(token):
+    """
+    Read permitted_uuids.txt file in project root folder and checks if user uuid is permitted.
+    """
+    list_of_uuids = []
+    PROJECT_PATH = join(dirname(abspath(__file__)), '../..')
+    FILE_PATH = join(PROJECT_PATH,UUID_FILE)
+    with open(FILE_PATH,'r') as target:
+        for line in target:
+            list_of_uuids.append(line.rstrip('\n'))
+    given_uuid = get_user_id(token)
+    if given_uuid not in list_of_uuids:
+        return error_authentication
+    return 0
 
 def get_user_id(token):
     """Check kamaki and returns user uuid from matching ~okeanos token"""
@@ -228,6 +243,18 @@ def db_cluster_update(token, status, cluster_id, master_IP='', state='', passwor
         cluster.master_IP = master_IP
     user.save()
     cluster.save()
+
+def db_cluster_delete(token, id):
+    """
+    Removes a cluster record from DB
+    """
+    try:
+        user = UserInfo.objects.get(okeanos_token=token)
+        cluster = ClusterInfo.objects.get(id=id)
+    except ObjectDoesNotExist:
+        msg = 'Cluster %s was not found' % id
+        raise ObjectDoesNotExist(msg)
+    cluster.delete()
 
 def db_dsl_update(token, id, **kwargs):
     """
