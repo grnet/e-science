@@ -8,7 +8,7 @@ Serializers file for django rest framework.
 """
 
 from rest_framework import serializers
-from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, \
+from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, OrkaStatistics, \
 PublicNewsItem, FaqItem, FaqItemCategory, OrkaImage, OrkaImageCategory, VreServer, VreImage, VreImageCategory, Dsl, Setting
 
 
@@ -89,8 +89,8 @@ class StatisticsSerializer(serializers.ModelSerializer):
     id = serializers.SerializerMethodField('get_ember_id')
     
     class Meta:
-        model = ClusterStatistics
-        fields = ('id','spawned_clusters', 'active_clusters')
+        model = OrkaStatistics
+        fields = ('id','spawned_clusters', 'active_clusters', 'spawned_vres', 'active_vres')
     
     def get_ember_id(self, obj):
         """"Always returns id 1 for ember.js"""
