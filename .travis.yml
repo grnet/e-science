@@ -33,12 +33,11 @@ before_script:
 - cd orka
 - python setup.py install
 - cd ..
-- npm install testem -g
 - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile
   --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1920x1080x16
 - ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
 script:
-- nosetests -sv tests/test_create_cluster.py
+- nosetests tests/test_create_cluster.py
 - bash tests/integration/test_integration_hdpbase.sh
 - bash tests/integration/test_integration_hue.sh
 - bash tests/integration/test_integration_ecosystem.sh
