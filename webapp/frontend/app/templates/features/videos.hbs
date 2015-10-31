@@ -6,7 +6,6 @@
 		<p>~ORKA in Action!</p>
 	</div>
 </div>
-
 <div class="container col col-sm-12">
     <div class="col col-xs-12 visible-xs text-center">
         <br /><br /> 
@@ -14,41 +13,23 @@
         Resize your browser or use another media device.</span>
     </div>
     <!-- embedded media use <iframe/> tags -->
+    {{#each row in videos_by_row}}
     <div class="row">
         <!-- hide on extra small size -->
-        <div class="col col-sm-6 hidden-xs">
+        {{#each video in row.videos}}
+        <div {{bind-attr class=row.colspec}}>
             <!-- wrap the video in a panel so we can easily put a legend on it-->
             <div class="panel panel-default">
               <div class="panel-body">
-                <div class="embed-responsive embed-responsive-16by9">
-                    <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/y2Ky3Wo37AY" allowfullscreen></iframe>
+                <div {{bind-attr class=video.aspect}}>
+                    <iframe class="embed-responsive-item" {{bind-attr src="video.video_src"}} allowfullscreen></iframe>
                 </div>
               </div>
-              <div id="id_video_legend" class="panel-footer">Video 1, Row 1, 16x9 Aspect</div>
+              <div id="id_video_legend" class="panel-footer">{{video.video_title}}</div>
             </div>
         </div>
-        <div class="col col-sm-6 hidden-xs">
-            <div class="panel panel-default">
-              <div class="panel-body">
-                <div class="embed-responsive embed-responsive-16by9">
-                    <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/y2Ky3Wo37AY" allowfullscreen></iframe>
-                </div>
-              </div>
-              <div id="id_video_legend" class="panel-footer">Video 2, Row 1, 16x9 Aspect</div>
-            </div>
-        </div>
+        {{/each}}
     </div>
     <hr />
-    <div class="row">
-        <div class="col col-sm-6 hidden-xs">
-            <div class="panel panel-default">
-              <div class="panel-body">
-                <div class="embed-responsive embed-responsive-4by3">
-                    <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/y2Ky3Wo37AY" allowfullscreen></iframe>
-                </div>
-              </div>
-              <div id="id_video_legend" class="panel-footer">Video 3, Row 2, 4x3 Aspect</div>
-            </div>
-        </div>
-    </div>
+    {{/each}}
 </div>

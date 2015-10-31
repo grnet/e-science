@@ -1,23 +1,30 @@
 // Features/videos controller
 App.FeaturesVideosController = Ember.Controller.extend({
 	STATIC_URL : DJANGO_STATIC_URL,
-	orka_ui_videos : function(){
-	    var arrVideos = [];
-	    var vids_by_row = 2;
-	    arrVideos.pushObject(Ember.create.object({
-	        src : 'https://www.youtube.com/embed/y2Ky3Wo37AY',
-	        aspect : '16by9', // options: 16by9 , 4by3
-	        footer : 'Video 1, Row 1, 16x9 Aspect',
-	    }));
-	    arrVideos.pushObject(Ember.create.object({
-            src : 'https://www.youtube.com/embed/y2Ky3Wo37AY',
-            aspect : '16by9', // options: 16by9 , 4by3
-            footer : 'Video 1, Row 1, 16x9 Aspect',
-        }));
-        arrVideos.pushObject(Ember.create.object({
-            src : 'https://www.youtube.com/embed/y2Ky3Wo37AY',
-            aspect : '4by3', // options: 16by9 , 4by3
-            footer : 'Video 1, Row 1, 16x9 Aspect',
-        }));
-	}.property()
+	videos_by_row : function(){
+	    /*
+         *  [{'row':row_index, 'colspec': 'col-sm-x', 'videos':[item1,item2,item3,..]},...]
+         *  1,2,3,4,6,12 are valid options for vids_per_row (12/vids_per_row must be a whole number).
+         */
+        var result = [];
+        var content = this.get('content').sortBy('video_aspect');
+        var row_index = null;
+        var vids_per_row = 2;
+        var bootstrap_cols = ((12/vids_per_row) | 0);
+        content.forEach(function(item,index) {
+            row_index = ((index/vids_per_row) | 0);
+            var colspec = 'col col-sm-%@ hidden-xs'.fmt(bootstrap_cols);
+            var found = result.findBy('row', row_index);
+            if (!found) {
+                result.pushObject(Ember.Object.create({
+                    row : row_index,
+                    colspec : colspec,
+                    videos : []
+                }));
+            }
+            Ember.set(item,'aspect','embed-responsive embed-responsive-%@'.fmt(item.get('video_aspect')));
+            result.findBy('row',row_index).get('videos').pushObject(item);
+        });
+        return result;
+	}.property('content.[]','content.@each','content.isLoaded')
 });
