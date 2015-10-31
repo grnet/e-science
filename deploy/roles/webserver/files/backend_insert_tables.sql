@@ -34,12 +34,11 @@ INSERT INTO backend_setting (id, section, property_name, property_value, comment
 INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (6, 'VRE_Flavor', 'Medium', '{"cpu":2,"ram":4096,"disk":10}', 'cpu in cores, ram in MiB, disk in GiB');
 INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (7, 'VRE_Flavor', 'Large', '{"cpu":4,"ram":6144,"disk":20}', 'cpu in cores, ram in MiB, disk in GiB');
 INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (8, 'Ansible', 'Errors', '{"1":"Ansible playbook error","2":"Ansible Failed to contact a host","3":"Host is dark, not accepting connections"}', 'Reference (v1.9x): https://github.com/ansible/ansible/blob/stable-1.9/bin/ansible, https://github.com/ansible/ansible/blob/stable-1.9/lib/ansible/errors.py');
+INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (9, 'Features', 'Videos', '{"videos_per_row":2}', '1,2,3,4,6,12 (a factor of 12 due to bootstrap gridsize)');
 
 SELECT setval('backend_vreimage_id_seq', (SELECT MAX(id) FROM backend_vreimage)+1);
 SELECT setval('backend_orkaimage_id_seq', (SELECT MAX(id) FROM backend_orkaimage)+1);
 SELECT setval('backend_vreimagecategory_id_seq', (SELECT MAX(id) FROM backend_vreimagecategory)+1);
 SELECT setval('backend_orkaimagecategory_id_seq', (SELECT MAX(id) FROM backend_orkaimagecategory)+1);
 SELECT setval('backend_publicnewsitem_id_seq', (SELECT MAX(id) FROM backend_publicnewsitem)+1);
-SELECT setval('backend_faqitem_id_seq', (SELECT MAX(id) FROM backend_faqitem_id_seq)+1);
-SELECT setval('backend_faqitemcategory_id_seq', (SELECT MAX(id) FROM backend_faqitemcategory_id_seq)+1);
 SELECT setval('backend_setting_id_seq', (SELECT MAX(id) FROM backend_setting)+1);
