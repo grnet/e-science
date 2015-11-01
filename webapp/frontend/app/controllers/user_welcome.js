@@ -83,7 +83,7 @@ App.UserWelcomeController = Ember.Controller.extend({
         return this.get('sorted_dsls');
     }.property('filtered_dsls.[]'),
     // messages / feedback
-    /*dsl_replay_msg : function(self,key){
+    dsl_replay_msg : function(self,key){
         var replaying_dsls = self.get('sortable_dsls').filterBy('dsl_status','1');
         for (i=0; i<replaying_dsls.get('length'); i++){
             if (!Ember.isEmpty(replaying_dsls.objectAt(i).get('message_dsl_status_replay'))){
@@ -91,7 +91,7 @@ App.UserWelcomeController = Ember.Controller.extend({
                 self.send('addMessage',msg);
             }
         }
-    }.observes('sortable_dsls.@each.state'),*/
+    }.observes('sortable_dsls.@each.state'),
     master_vm_password_msg : function() {
         var pwd_message = this.get('content.master_vm_password');
         if (!Ember.isBlank(pwd_message)) {
@@ -234,10 +234,11 @@ App.UserWelcomeController = Ember.Controller.extend({
                 this.set('user_messages', messages);
             }
         },
-        removeMessage : function(id, all) {
+        removeMessage : function(id, all, auto) {
             // routes/controllers > controller.send('removeMessage', id, [all=false] all=true > clear all
             // templates > {{action 'removeMessage' message_id}} / {{action 'removeMessage' 1 true}}
             var self = this;
+            var user = self.get('content');
             var store = this.store;
             var messages = store.all('usermessages');
             var aryMessages = messages.toArray();
@@ -250,6 +251,13 @@ App.UserWelcomeController = Ember.Controller.extend({
                 });
                 store.unloadAll('usermessages');
                 messages.compact();
+                if (!auto){
+                    user.set('error_message', '');
+                    self.store.push('user', self.store.normalize('user', {
+                        'id' : 1,
+                        'error_message' : user.get('error_message')
+                    })).save();
+                }
             } else {
                 var record = store.getById('usermessages', id);
                 if (!Ember.isEmpty(record)) {
@@ -257,6 +265,14 @@ App.UserWelcomeController = Ember.Controller.extend({
                     aryBlacklist[message] = true;
                     store.deleteRecord(record);
                     messages.compact();
+                    var user = self.get('content');
+                    if (user.get('error_message') == message){
+                        user.set('error_message', '');
+                        self.store.push('user', self.store.normalize('user', {
+                            'id' : 1,
+                            'error_message' : user.get('error_message')
+                        })).save();
+                    }
                 }
             }
             this.set('user_messages', messages);
