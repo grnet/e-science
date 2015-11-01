@@ -42,6 +42,12 @@ App.DslCreateController = Ember.Controller.extend({
         }
         return Ember.isEmpty(this.get('dsl_pithos_path_import_static')) ? '' : this.get('dsl_pithos_path_import_static');//getter
     }.property('dsl_pithos_path_import_static'),
+    dsl_filename_import_placeholder : function(){
+        return Ember.isEmpty(this.get('dsl_filename_import')) ? '<placeholder>' : this.get('dsl_filename_import');
+    }.property('dsl_filename_import'),
+    dsl_pithos_path_import_placeholder : function(){
+        return Ember.isEmpty(this.get('dsl_pithos_path_import')) ? '<placeholder>' : this.get('dsl_pithos_path_import');
+    }.property('dsl_pithos_path_import'),
     
     // userclusters block
     filtered_clusters : function(){
@@ -68,7 +74,7 @@ App.DslCreateController = Ember.Controller.extend({
     	return this.get('boolean_no_cluster') ? true : false;
     }.property('boolean_no_cluster'),
     import_dsl_disabled : function(){
-    	return Ember.isEmpty(this.get('dsl_filename_import')) || Ember.isEmpty(this.get('dsl_pithos_path_import'));
+    	return Ember.isEmpty(this.get('dsl_filename_import')) && Ember.isEmpty(this.get('dsl_pithos_path_import'));
     }.property('dsl_filename_import','dsl_pithos_path_import'),
     selected_cluster_size : function(){
         return Ember.isEmpty(this.get('selected_cluster')) ? '' : this.get('selected_cluster').objectAt(0).get('cluster_size');
@@ -83,7 +89,7 @@ App.DslCreateController = Ember.Controller.extend({
     }.property('selected_cluster'),
     selected_cluster_slaves_number : function(){
         var cluster_slaves = Ember.isEmpty(this.get('selected_cluster')) ? null : this.get('selected_cluster').objectAt(0).get('cluster_slaves_num');
-        return cluster_slaves && cluster_slaves > 1 ? 'x%@'.fmt(cluster_slaves) : '';
+        return '%@x '.fmt(cluster_slaves);
     }.property('selected_cluster'),
     selected_cluster_project : function(){
         return Ember.isEmpty(this.get('selected_cluster')) ? '' : this.get('selected_cluster').objectAt(0).get('project_name');
