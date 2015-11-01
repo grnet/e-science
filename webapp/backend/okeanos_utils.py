@@ -335,6 +335,7 @@ def action_continue(token, dsl_id, task, msg):
     """
     task.update_state(state=msg)
     db_dsl_update(token,dsl_id,dsl_status=const_experiment_status_replay,state=msg)
+    sleep(6)
 
 def action_stop(token, dsl_id, task, msg):
     """
@@ -342,7 +343,8 @@ def action_stop(token, dsl_id, task, msg):
     Wrap task and db update for failure in an easy call.
     """
     task.update_state(state=msg)
-    db_dsl_update(token,dsl_id,dsl_status=const_experiment_status_atrest,state=msg)
+    db_dsl_update(token,dsl_id,dsl_status=const_experiment_status_atrest,state=msg,error=msg)
+    sleep(6)
 
 def replay_dsl(token, id):
     """Replays an experiment on cluster defined or created through parameters and plays actions in sequence"""

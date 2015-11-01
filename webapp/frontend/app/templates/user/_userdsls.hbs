@@ -19,7 +19,7 @@
                 <td {{bind-attr id='dsl.id_dsl_name'}}>{{#link-to 'dsl.management' dsl.id}}{{dsl.dsl_name}}{{/link-to}}</td>
                 <td>{{formatDate dsl.action_date format='shortdatetime'}}</td>
                 <td><span data-toggle="tooltip" data-placement="top" data-trigger='hover focus click' data-animation=false {{bind-attr data-title='dsl.description_dsl_status'}}> 
-                    <i {{bind-attr id='dsl.id_dsl_status' class='dsl.class_dsl_status'}}></i> {{dsl.message_dsl_status_replay}}</span>
+                    <i {{bind-attr id='dsl.id_dsl_status' class='dsl.class_dsl_status'}}></i> {{dsl.dsl_status_replay_short}}</span>
                 </td>
                	<td>{{dsl.pithos_path}}</td>
                	<td>
