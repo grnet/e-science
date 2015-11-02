@@ -74,7 +74,7 @@ App.DslCreateController = Ember.Controller.extend({
     	return this.get('boolean_no_cluster') ? true : false;
     }.property('boolean_no_cluster'),
     import_dsl_disabled : function(){
-    	return Ember.isEmpty(this.get('dsl_filename_import')) && Ember.isEmpty(this.get('dsl_pithos_path_import'));
+    	return Ember.isEmpty(this.get('dsl_filename_import')) || Ember.isEmpty(this.get('dsl_pithos_path_import'));
     }.property('dsl_filename_import','dsl_pithos_path_import'),
     selected_cluster_size : function(){
         return Ember.isEmpty(this.get('selected_cluster')) ? '' : this.get('selected_cluster').objectAt(0).get('cluster_size');
