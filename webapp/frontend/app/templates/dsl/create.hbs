@@ -2,7 +2,7 @@
 <p></p>
 <div class="well well-lg text-center v-center">
 	<div class="row">
-	<h3 id = 'id_title_cluster_create_route'>Reproducible Experiments</h3>
+	<h3 id='id_title_cluster_create_route'>Reproducible Experiments</h3>
 	<div class="col col-sm-3"></div>
 	<div class="col col-sm-3"></div>
 	</div>    
@@ -16,6 +16,12 @@
         <div class="col col-sm-12">
             <div class="text-center" style="vertical-align: middle">
                 <form class="form-horizontal" role="form">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Save Metadata</label>
+                        <div class="col-sm-9">
+                          <p class="form-control-static text-info text-left">Select a Hadoop cluster as metadata source, fill in a filename and Pithos path and press Save.</p>
+                        </div>
+                    </div>
                     <div class="col-sm-6">
                         <div class="form-group">
                             <label class="control-label col-sm-5" for="id_dsl_cluster">Source Cluster</label>
@@ -95,18 +101,12 @@
                         </div>
                     </div>
                     <div class="col-sm-6">
-                        <div class="col-sm-12">
-                            <dl class="dl-horizontal">
-                                <dt class="text-left">Save Metadata</dt>
-                                    <dd class="text-info text-left">Select a Hadoop cluster as metadata source, fill in a filename and Pithos path and press Save.</dd>
-                            </dl>
-                        </div>
                         {{#unless boolean_no_cluster}}
                         <table class="table table-bordered table-condensed">
                             <thead class="h5 strong"><tr><td></td><td>CPU (cores)</td><td>RAM (MiB)</td><td>DISK (GiB)</td></tr></thead>
                             <tbody>
                                <tr><td class="h5 strong">Master</td><td class="text text-info">{{selected_cluster.[0].cpu_master}}</td><td class="text text-info">{{selected_cluster.[0].ram_master}}</td><td class="text text-info">{{selected_cluster.[0].disk_master}}</td></tr>
-                               <tr><td class="h5 strong">Slaves <span class="clear text text-info">{{selected_cluster_slaves_number}}</span></td><td class="text text-info">{{selected_cluster.[0].cpu_slaves}}</td><td class="text text-info">{{selected_cluster.[0].ram_slaves}}</td><td class="text text-info">{{selected_cluster.[0].disk_slaves}}</td></tr>
+                               <tr><td class="h5 strong"><span class="clear text text-info">{{selected_cluster_slaves_number}}</span>Slaves</td><td class="text text-info">{{selected_cluster.[0].cpu_slaves}}</td><td class="text text-info">{{selected_cluster.[0].ram_slaves}}</td><td class="text text-info">{{selected_cluster.[0].disk_slaves}}</td></tr>
                             </tbody>
                         </table>
                         {{/unless}}
@@ -124,6 +124,12 @@
         <div class="col col-sm-12">
             <div class="text-center" style="vertical-align: middle">
                 <form class="form-horizontal" role="form">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Import Metadata</label>
+                        <div class="col-sm-9">
+                          <p class="form-control-static text-info text-left">Fill in an existing experiment metadata filename and Pithos path and press Import.</p>
+                        </div>
+                    </div>
                     <div class="col-sm-6">
                         <div class="form-group">
                             <div class="row">
@@ -168,25 +174,16 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6">
-                        <div class="col-sm-12">
-                            <dl class="dl-horizontal">
-                                <dt class="text-left">Import Metadata</dt>
-                                    <dd class="text-info text-left">Fill in an existing experiment metadata filename and Pithos path and press Import.</dd>
-                            </dl>
-                        </div>
-                    </div> 
                 </form>
             </div>
         </div>
     </div>
     <div class="panel-footer text-center">
         <div class="row">
-            <div class="col col-sm-6 text-right">
-                    <span class="h5 strong">(Full Pithos Path) </span>&nbsp;
-                        <span class="text text-info strong">{{#unless import_dsl_disabled}}pithos://{{dsl_pithos_path_import}}/{{dsl_filename_import}}{{/unless}}</span>
+            <div class="col col-sm-12">
+                <div class="col col-sm-4 text-right"><span class="h5 strong">(Full Pithos Path) </span></div>
+                <div class="col col-sm-8 text-left"><span class="text text-info strong">{{#unless import_dsl_disabled}}pithos://{{dsl_pithos_path_import_placeholder}}/{{dsl_filename_import_placeholder}}{{/unless}}</span></div>
             </div>
-            <div class="col col-sm-6"></div>
         </div>
     </div>    
 </div>
