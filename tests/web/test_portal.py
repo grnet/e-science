@@ -27,7 +27,7 @@ class PortalTest(unittest.TestCase):
         self.assertIn('GRNET e-Science', driver.title)
         # find the welcome text to verify the page has rendered
         self.assertTrue(driver.find_element_by_class_name('h2').is_displayed())
-        self.assertIn('Welcome to ORKA!',driver.find_element_by_class_name('h2').text)
+        self.assertIn('Welcome to ',driver.find_element_by_class_name('h2').text)
     
     def tearDown(self):
         self.driver.quit()
