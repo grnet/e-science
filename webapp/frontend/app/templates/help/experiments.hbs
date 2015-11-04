@@ -6,12 +6,23 @@
 		<p>Reproducible Research Metadata for saving and replaying experiments</p>
 	</div>
 </div>
-<div class="col col-sm-3 text-left"><p>
-    Reproducible Experiments metadata Example.
-</p></div>
+<div class="col col-sm-3 text-left">
+    <h4>Reproducible Experiments Specification</h4>
+    <p>The <b>cluster</b> section can hold either: 
+        <ul><li><span class="text-info strong">cluster_id</span> and <span class="text-info strong">master_IP</span> values uniquely identifying an existing active Hadoop cluster for actions</li>
+        <li>a full set of keys/values to describe a new cluster for creation</li></ul>
+        <em>An Experiment yaml file without one of the above valid cluster sections is also invalid, and replay will not attempt any actions.</em>
+    </p>
+    <p>The <b>configuration</b> section is optional. It can hold extra parameters for Hadoop. Default values are used if omitted.</p>
+    <p>The <b>actions</b> section accepts a limited set of verbs.
+        <ul><li>all valid action verbs are presented on the example template</li>
+        <li>actions marked <span class="text-warning strong">#orka-CLI</span> are not valid for replay through orka Web GUI</li></ul>
+    </p>
+</div>
 <div class="col col-sm-9">
-<pre style="margin: 0; line-height: 125%">
+<pre class="prettyprint lang-yaml">
 cluster:
+# full Hadoop cluster specification
   size: 2
   disk_template: drbd
   flavor_master:
@@ -23,19 +34,24 @@ cluster:
   - 2048
   - 10
   image: Hadoop-2.5.2
-  name: <span class="text-info">'[orka]-cluster_name'</span>
+  name: '[orka]-cluster_name'
   project_name: escience.grnet.gr
 configuration:
-  dfs_blocksize: <span class="text-info">'128'</span>
-  replication_factor: <span class="text-info">'1'</span>
+  dfs_blocksize: '128'
+  replication_factor: '1'
+# alternatively cluster_id and master node IPv4 of an existing cluster
+  cluster_id: 5
+  master_IP: 83.212.0.0
 actions:  
- - start
- - put (~/test.xml,/user/hduser/)
- - run_job (hduser, <span class="text-success">"/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi 2 10000"</span>)
- - get (/user/hduser/test.xml,~/test2.xml)
- - stop
- - format
- - start
+ - start # starts Hadoop
+ - stop  # stops Hadoop
+ - format # formats HDFS
+ - node_add # add a datanode
+ - node_remove # remove a datanode
+ - put (~/test.xml,/user/hduser/) # only valid for orka-web when source is a pithos URL
+ - run_job (hduser, "/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi 2 10000")
+ - get (/user/hduser/test.xml,~/test2.xml) # only valid for orka-web when destination is a pithos URL
+ - local_cmd (cat ~/results.txt) # only valid for orka-CLI
 </pre>
 </div>
 

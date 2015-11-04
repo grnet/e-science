@@ -1,0 +1,134 @@
+<p></p>
+<div class="well well-lg text-center v-center">
+    <div class="row">
+        <h2 id = 'id_title_help_experiments'>Create Your Personal Orka Server</h2>
+        <p></p>
+        <p>Information on creating a personal server for providing the Orka services</p>
+    </div>
+</div>
+<div class="col col-sm-12">
+<h1>Orka service</h1>
+
+<p>Orka service is deployed and accessed by a personal Orka server. Every ~okeanos user can build a personal Orka server by following the instructions in Create personal Orka server VM.</p>
+
+<ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" class="active"><a href="#startorkaserver" role="tab" data-toggle="tab">Create personal Orka server VM</a></li>
+    <li role="presentation"><a href="#restartorkaserver" role="tab" data-toggle="tab">Restart personal Orka server VM</a></li>
+    <li role="presentation"><a href="#updateorkaserver" role="tab" data-toggle="tab">Update personal Orka server VM</a></li>
+  </ul>
+
+  <!-- Tab panes -->
+<div class="tab-content">
+    <div role="tabpanel" class="tab-pane active" id="startorkaserver"><h3>Create a personal Orka server in ~okeanos (for users)</h3>
+
+<p>Users should read the following section, regarding Orka server requirements, before starting the creation of their personal Orka server.</p>
+
+<h3>Orka server Hardware Requirements</h3>
+
+<p>Minimum Requirements: 1 CPU, 1 GB RAM and 5 GB for disk size.</p>
+
+<p>Recommended: 2 CPUs, 2 GB RAM and 10 GB for disk size.</p>
+
+<p>Number of CPUs dictate the amount of long running tasks the Orka server executes at the same time. With 1 CPU for example, a user will not be able to build two different Hadoop clusters at the same time. </p>
+
+<h3>Create and start personal Orka server</h3>
+
+<p>User creates a virtual machine in ~okeanos based on "Orka Server-on-Debian 8" image, with a public IPv4 attached, and then types in console:</p>
+
+<pre><code>ssh root@\{{virtual_machine_public_IPv4}}
+passwd orka_admin
+su - orka_admin
+cd projects/e-science/deploy
+</code></pre>
+
+<p>The python script that starts the Orka server reads critical information from a user-created yaml file.
+In deploy directory there is a sample file (deploy_sample_file.yml) which can be used as a template for the user-created deploy yaml file.
+A user can copy the template file (inside projects/e-science/deploy):</p>
+
+<pre><code>cp deploy_sample_file.yml &lt;user_created_yaml_file&gt;.yml
+nano &lt;user_created_yaml_file&gt;.yml
+</code></pre>
+
+<p>and then edit the file:</p>
+
+<pre><code># Password of system user orka_admin
+orka_admin_password: &lt;the Linux password of orka_admin user. It is the password the user gave just after the first ssh before, when ran passwd orka_admin&gt;
+# Django admin password
+django_admin_password: &lt;A password at least 8 characters long for administrator login in Orka server&gt;
+# Password of postgresql user
+postgresql_password: &lt;A password at least 8 characters long for postgresql database&gt;
+# The okeanos uuid of the user who will login in the orka gui
+okeanos_user_uuid: &lt;~okeanos_user_uuid. Below follows info on how to find the uuid&gt;
+</code></pre>
+
+<p>Users can find their unique ~okeanos_user_uuid from ~okeanos <a href="https://accounts.okeanos.grnet.gr/ui/api_access" target="_blank">webpage</a>. It is under <code>username</code> in Other clients section.</p>
+
+<p>Alternatively, by running:</p>
+
+<pre><code>kamaki user info
+</code></pre>
+
+<p>in an environment that kamaki is <a href="https://www.synnefo.org/docs/kamaki/latest/installation.html" target="_blank">set up</a>.</p>
+
+<p>Finally, after done editing the user-created yml file, run the deploy script:</p>
+
+<pre><code>python deploy_orka_server.py start &lt;path_to_user_created_yaml_file&gt;
+</code></pre>
+
+<p>When python script finishes successfully, user can open in a browser the public IP of Orka server and start using the Orka services.</p></div>
+    <div role="tabpanel" class="tab-pane" id="restartorkaserver"><h3>Example of restarting a personal Orka server</h3>
+
+<p>After starting an Orka server, the deploy_orka_server.py script can be used for restarting the server, in case of an error or after
+an update. User must access the server:</p>
+
+<pre><code>ssh root@\{{orka_server_ip}}
+su - orka_admin
+cd projects/e-science/deploy
+</code></pre>
+
+<p>and run the python script again with the 'restart' argument and the deploy file used for starting the server.</p>
+
+<p><strong>In case of deletion of the deploy file used in starting the orka server</strong>, user must create it again but now the only mandatory entry in the file
+is the <code>orka_admin_password</code>. So, a user creates the file:</p>
+
+<pre><code>nano examplefile.yml
+</code></pre>
+
+<p>and adds only the following entry:</p>
+
+<pre><code># Password of system user orka_admin
+orka_admin_password: &lt;orka_admin linux password e.g. orkaadmintestpassword&gt;
+</code></pre>
+
+<p>If the user has kept his deploy file used in starting the server, the same file can be used again for restarting or updating the server.
+In any case, Orka server will be restarted with the following command:</p>
+
+<pre><code>python deploy_orka_server.py restart examplefile.yml
+</code></pre></div>
+    <div role="tabpanel" class="tab-pane" id="updateorkaserver"><h3>Example of updating a personal Orka server</h3>
+
+<p>Users can update their personal Orka servers, if there are updates in the main e-Science github repo, by running the python script
+deploy_orka_server.py with the 'update' argument and the deploy file used for starting the server. If the deploy file was deleted,
+the user must create it again, as shown in <a href="#/help/personalorka" {{action 'selectTab' '#restartorkaserver'}}>restarting the server section</a>.</p>
+
+<p>So, for updating the server, the following steps are required:</p>
+
+<pre><code>ssh root@\{{orka_server_ip}}
+su - orka_admin
+cd projects/e-science/deploy
+</code></pre>
+
+<p>and run the script:</p>
+
+<pre><code>python deploy_orka_server.py update examplefile.yml
+</code></pre>
+
+<p>after the update is done, server should be restarted with:</p>
+
+<pre><code>python deploy_orka_server.py restart examplefile.yml
+</code></pre>
+
+<p>The default github repo that deploy_orka_server.py will look for updates is https://github.com/grnet/e-science.git at the master branch.
+The github repo and branch/version is set in e-science/deploy/group_vars/webserver.yml file and can be changed.</p></div>
+
+</div>

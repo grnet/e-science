@@ -1,21 +1,19 @@
 ---
- # PostgreSql variables
- db_user: developer
- db_password: escience
- db_name: escience
+ # PostgreSql constants
  db_host: 127.0.0.1
+ db_user: orka_admin
+ db_name: escience
  choose_role: webserver
-
- # setup_orka_admin variables
- orka_admin_password: $1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20
- create_orka_admin: False
- # Django admin variables
  django_admin_name: orka_admin
  django_admin_email: orka@example.com
- django_admin_password: lalakia
- ansible_sudo_pass: lalakia
+ escience_repo: https://github.com/ioannisstenos/e-science.git
+ escience_version: es475
+
+ # setup_orka_admin variables
+ create_orka_admin: False
  path_to_pref: roles/webserver/files/my_preferences
- 
+ path_to_sources_list: roles/webserver/files/sources.list
+
  # Django project variables
  user_home: /home/orka_admin
  my_project_dir: "{{user_home}}/projects"
@@ -32,4 +30,3 @@
  # Openssl variables
  certificate_key_lifetime: 3650
  key_rsa: 2048
- 

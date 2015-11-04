@@ -4,18 +4,18 @@
 """
 This script installs and configures a Hadoop-Yarn cluster using Ansible.
 
-@author: Ioannis Stenos, Nick Vrionis
+@author: e-science Dev-team
 """
 import os
 import json
 from os.path import dirname, abspath, isfile
 import logging
 import subprocess
-from backend.models import ClusterInfo, UserInfo, OrkaImage, OrkaImageCategory
+from backend.models import ClusterInfo, UserInfo, OrkaImage, OrkaImageCategory, Setting
 from django_db_after_login import db_hadoop_update
 from celery import current_task
 from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS, REPORT, SUMMARY, \
-    error_ansible_playbook, const_hadoop_status_started
+    error_ansible_playbook, const_cluster_status_pending, const_hadoop_status_format, const_hadoop_status_started, const_hadoop_status_stopped
 from authenticate_user import unmask_token, encrypt_key
 from ansible import errors
 
@@ -36,9 +36,9 @@ def install_yarn(*args):
     """
     from okeanos_utils import set_cluster_state
     list_of_hosts = args[1]
-    master_hostname = list_of_hosts[0]['fqdn'].split('.', 1)[0]
+    master_hostname = list_of_hosts[0]['fqdn'].split('.', 1)[0] # list_of_host[0]['fqdn'] is like this: snf-654916.vm.okeanos.grnet.gr and we only need the snf-654916 part
     cluster_size = len(list_of_hosts)
-    cluster_id = args[3].rsplit('-', 1)[1]
+    cluster_id = args[3].rsplit('-', 1)[1] # get the cluster's id
     # Create ansible_hosts file
     try:
         hosts_filename = create_ansible_hosts(args[3], list_of_hosts, args[2])
@@ -154,11 +154,13 @@ def get_image_category(image_name='', image_uuid=''):
     image_category = OrkaImageCategory.objects.filter(category_name=orka_image_category_id.category_name).values()
     return image_category[0]
 
+
 def decode_json(object):
     """
     Decode Json to python dictionary object
     """
     return json.loads(object)
+
 
 def ansible_manage_cluster(cluster_id, action):
     """
@@ -167,6 +169,16 @@ def ansible_manage_cluster(cluster_id, action):
     """
     cluster = ClusterInfo.objects.get(id=cluster_id)
     pre_action_status = cluster.hadoop_status
+    cluster_status = cluster.cluster_status
+    # pre-flight checks: If cluster on pending or hadoop is formatting, abort. 
+    if (cluster_status == const_cluster_status_pending) or (pre_action_status == const_hadoop_status_format):
+        msg = 'Cluster %s (%s) action already in progress' % (cluster.cluster_name,cluster_id)
+        return msg
+    # If current hadoop status is same as action status skip.
+    if (action == 'start' and pre_action_status == const_hadoop_status_started) or (action == 'stop' and pre_action_status == const_hadoop_status_stopped):
+        msg = 'Cluster %s (%s) is already %sed' % (cluster.cluster_name,cluster_id,action)
+        return msg
+    # pre-flight checks done, proceed
     if action == 'format':
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
@@ -271,10 +283,20 @@ def execute_ansible_playbook(ansible_command):
     """
     Executes ansible command given as argument
     """
+    # get any verbose codes we might have saved in our backend
+    # .first() will helpfully return None if no match found instead of throwing an exception
+    ansible_known_codes = Setting.objects.filter(section='Ansible',property_name='Errors').first() 
+    if ansible_known_codes is not None:
+        ansible_known_codes = decode_json(ansible_known_codes.serializable_value('property_value'))
+        if type(ansible_known_codes) is not dict:
+            ansible_known_codes = {}
+    else:
+        ansible_known_codes = {}
     try:
         exit_status = subprocess.call(ansible_command, shell=True)
         if exit_status > 0:
-            msg = 'Ansible failed with exit status %d' % exit_status
+            exist_status_verbose = ansible_known_codes.get(str(exit_status),'error description is unknown')
+            msg = 'Ansible failed with exit status %d: %s' % (exit_status,exist_status_verbose)
             raise RuntimeError(msg, exit_status)
     except OSError as e:
         msg = 'Ansible command execution failed %s' % e

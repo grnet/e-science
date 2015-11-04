@@ -5,7 +5,7 @@ App.ApplicationController = Ember.Controller.extend({
     APP_VERSION : App.VERSION,
     // other controllers that need to be accessible from this one
     // for .set or .get
-    needs : ['homepage', 'userLogin', 'userWelcome', 'clusterCreate', 'clusterManagement', 'helpImages', 'vreserverCreate', 'vreserverManagement', 'helpVreimages'],
+    needs : ['homepage', 'helpImages', 'helpVreimages'],
     loggedIn : false,
     name_of_user : '',
     userTheme : user_themes,
@@ -83,7 +83,11 @@ App.ApplicationController = Ember.Controller.extend({
                     self.store.push('user', self.store.normalize('user', {
                         'id' : 1,
                         'user_theme' : user.get('user_theme')
-                    })).save();
+                    })).save().then(function(user){
+                        self.set('user_theme',cssUrl);
+                    },function(reason){
+                        console.log(reason);
+                    });
                 });
             }
         },
@@ -102,12 +106,9 @@ App.ApplicationController = Ember.Controller.extend({
                 that.set('orkaImageData', data.get('content'));
                 var handlebarsData = that.get('dataTransformImages')(that.get('orkaImageData'),'handlebars');
                 that.get('controllers.homepage').set('orkaImages', handlebarsData);
-                that.get('controllers.userWelcome').set('orkaImages', handlebarsData);
-                that.get('controllers.clusterManagement').set('orkaImages', handlebarsData);
                 that.get('controllers.helpImages').set('orkaImages', handlebarsData);
                 // decorate the model with an active_image property and set it to the first image loaded
                 that.get('controllers.helpImages').send('setActiveImage', handlebarsData.objectAt(0).get('image_pithos_uuid'));
-                that.get('controllers.clusterCreate').set('orkaImages', handlebarsData);
             }, function(reason) {
                 console.log(reason.message);
             });
@@ -118,12 +119,9 @@ App.ApplicationController = Ember.Controller.extend({
                 that.set('vreImageData', data.get('content'));
                 var handlebarsData = that.get('dataTransformImages')(that.get('vreImageData'),'handlebars');
                 that.get('controllers.homepage').set('vreImages', handlebarsData);
-                that.get('controllers.userWelcome').set('vreImages', handlebarsData);
-                that.get('controllers.vreserverManagement').set('vreImages', handlebarsData);
                 that.get('controllers.helpVreimages').set('vreImages', handlebarsData);
                 // decorate the model with an active_image property and set it to the first image loaded
                 that.get('controllers.helpVreimages').send('setActiveImage', handlebarsData.objectAt(0).get('image_pithos_uuid'));
-                that.get('controllers.vreserverCreate').set('vreImages', handlebarsData);
             }, function(reason) {
                 console.log(reason.message);
             });

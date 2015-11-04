@@ -16,7 +16,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 import unittest, time, re
-from okeanos_utils import check_quota, get_flavor_id, destroy_cluster
+from okeanos_utils import check_quota, get_flavor_lists, destroy_cluster
 from create_cluster import YarnCluster
 from ClusterTest import ClusterTest
 
@@ -29,7 +29,7 @@ class TestClusterCpu(ClusterTest):
         driver = self.login()
         # Get user quota from kamaki
         user_quota = check_quota(self.token, self.project_id)
-        flavors = get_flavor_id(self.token)
+        flavors = get_flavor_lists(self.token)
         # List of cpu choices
         cpu_list = flavors['cpus']
         # Avalable user cpu
