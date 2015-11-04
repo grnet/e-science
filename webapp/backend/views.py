@@ -18,7 +18,7 @@ from get_flavors_quotas import project_list_flavor_quota
 from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
-    DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, \
+    DeleteClusterSerializer, TaskSerializer, UserPutSerializer, \
     HdfsSerializer, StatisticsSerializer, NewsSerializer, FaqSerializer, SettingsSerializer, \
     OrkaImagesSerializer, VreImagesSerializer, DslsSerializer, DslOptionsSerializer, DslDeleteSerializer
 from django_db_after_login import *
@@ -304,8 +304,7 @@ class StatusView(APIView):
 
 class SessionView(APIView):
     """
-    View to handle requests from ember for user login and logout and
-    user theme update
+    View to handle requests from ember for user metadata updates
     """
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticatedOrIsCreation, )
@@ -349,11 +348,12 @@ class SessionView(APIView):
         """
         user_token = Token.objects.get(key=request.auth)
         self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
-        self.serializer_class = UserThemeSerializer
+        self.serializer_class = UserPutSerializer
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
-            if serializer.data['user_theme']:
-                self.user.user_theme = serializer.data['user_theme']
+            if serializer.data['user_theme'] or serializer.data['error_message']:
+                self.user.user_theme = serializer.data.get('user_theme','')
+                self.user.error_message = serializer.data.get('error_message','')
                 self.user.save()
             else:
                 db_logout_entry(self.user)

@@ -288,9 +288,10 @@ class UserInfoSerializer(serializers.ModelSerializer):
         return 1
 
 
-class UserThemeSerializer(serializers.Serializer):
+class UserPutSerializer(serializers.Serializer):
     """
     Serializer for ember request with user's
-    choices for theme.
+    choices for theme or error_message update.
     """
     user_theme = serializers.CharField(required=False)
+    error_message = serializers.CharField(required=False)

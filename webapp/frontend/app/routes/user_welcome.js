@@ -67,7 +67,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
 		willTransition : function(transition) {
 			// leaving this route
 			this.controller.send('timer', false);
-			this.controller.send('removeMessage',1,true);
+			this.controller.send('removeMessage',1,true,true);
 			this.controller.send('setActiveTab','clusters');
 		},
 		didTransition : function() {
@@ -136,6 +136,7 @@ App.UserWelcomeRoute = App.RestrictedRoute.extend({
                     var extend = Math.max(5, count);
                     self.controller.set('count', extend);
                     self.controller.set('create_cluster_start', true);
+                    self.controller.set('blacklist_messages',{});
                     self.controller.send('timer', true, store);
                 },function(reason){
                     if (!Ember.isBlank(reason.message)){
