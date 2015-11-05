@@ -170,15 +170,6 @@ def ansible_manage_cluster(cluster_id, action):
     cluster = ClusterInfo.objects.get(id=cluster_id)
     pre_action_status = cluster.hadoop_status
     cluster_status = cluster.cluster_status
-    # pre-flight checks: If cluster on pending or hadoop is formatting, abort. 
-    if (cluster_status == const_cluster_status_pending) or (pre_action_status == const_hadoop_status_format):
-        msg = 'Cluster %s (%s) action already in progress' % (cluster.cluster_name,cluster_id)
-        return msg
-    # If current hadoop status is same as action status skip.
-    if (action == 'start' and pre_action_status == const_hadoop_status_started) or (action == 'stop' and pre_action_status == const_hadoop_status_stopped):
-        msg = 'Cluster %s (%s) is already %sed' % (cluster.cluster_name,cluster_id,action)
-        return msg
-    # pre-flight checks done, proceed
     if action == 'format':
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
