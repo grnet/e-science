@@ -16,6 +16,8 @@ install:
 - pip install djangorestframework==2.4.8
 - pip install rest_framework_ember
 - pip install selenium
+- pip install mock
+- pip install rednose
 - pip install nose-cov
 - pip install requests
 - pip install django-celery
