@@ -27,7 +27,7 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
@@ -37,7 +37,7 @@ BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'some_key'
+SECRET_KEY = os.environ['SECRET_KEY']
 
 TEMPLATE_DEBUG = DEBUG
 
