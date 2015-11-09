@@ -15,6 +15,9 @@ from sys import stderr
 from subprocess import CalledProcessError
 FNULL = open(os.devnull, 'w')
 
+def replay_prefix():
+    return datetime.now().strftime('%Y/%m/%d%H:%M:%S')+" "+REPLAY_ACTIONS_PREFIX
+
 def create_cluster(script):
 
     # create the appropriate command based on the given info
@@ -94,7 +97,7 @@ def enforce_actions(script, cluster_id, master_IP):
     for action in script["actions"]:
         if action in ["start", "stop", "format"]:
             cmd = "orka hadoop " + action + " " + str(cluster_id)
-            print (REPLAY_ACTIONS_PREFIX + " Action: Hadoop " + action + ' ( ' + cmd +' )')
+            print (replay_prefix() + " Action: Hadoop " + action + ' ( ' + cmd +' )')
             try:
                 response = subprocess.check_output(cmd, shell=True)
                 print response
