@@ -16,8 +16,12 @@ from sys import stderr
 from subprocess import CalledProcessError
 FNULL = open(os.devnull, 'w')
 
+
 def replay_prefix():
-    return datetime.now().strftime('%Y/%m/%d%H:%M:%S')+" "+REPLAY_ACTIONS_PREFIX
+
+    # prefix each replay command with datestamp and "REPLAY"
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')+" "+REPLAY_ACTIONS_PREFIX
+
 
 def create_cluster(script):
 
@@ -91,6 +95,7 @@ def create_cluster(script):
     os.remove(tempfile)
     return cluster_id, master_IP
 
+
 def enforce_actions(script, cluster_id, master_IP):
 
     print '--- Executing Actions ---'
@@ -114,7 +119,7 @@ def enforce_actions(script, cluster_id, master_IP):
             params = params_string.strip(' ()')
             action_params = params.split(',')
             cmd = "orka file put " + str(cluster_id) + " " + action_params[0] + " " + action_params[1]
-            print (REPLAY_ACTIONS_PREFIX + " Action: Uploading file to HDFS"  + ' ( ' + cmd +' )')
+            print (replay_prefix() + " Action: Uploading file to HDFS"  + ' ( ' + cmd +' )')
             try:
                 response = subprocess.check_output(cmd, shell=True)
                 print response  
@@ -130,7 +135,7 @@ def enforce_actions(script, cluster_id, master_IP):
             params = params_string.strip(' ()')
             action_params = params.split(',')
             cmd = "orka file get " + str(cluster_id) + " " + action_params[0] + " " + action_params[1]
-            print (REPLAY_ACTIONS_PREFIX + " Action: Retrieving file from HDFS" + ' ( ' + cmd +' )')
+            print (replay_prefix() + " Action: Retrieving file from HDFS" + ' ( ' + cmd +' )')
             try:
                 response = subprocess.check_output(cmd, shell=True)
                 print response  
@@ -143,7 +148,7 @@ def enforce_actions(script, cluster_id, master_IP):
             print ''
         if action == 'node_add':            
             cmd = "orka node add " + str(cluster_id)
-            print (REPLAY_ACTIONS_PREFIX + " Action: Adding node to hadoop" + ' ( ' + cmd +' )')
+            print (replay_prefix() + " Action: Adding node to hadoop" + ' ( ' + cmd +' )')
             try:
                 response = subprocess.check_output(cmd, shell=True)
                 print response  
@@ -156,7 +161,7 @@ def enforce_actions(script, cluster_id, master_IP):
             print ''
         if action == 'node_remove':
             cmd = "orka node remove " + str(cluster_id)
-            print (REPLAY_ACTIONS_PREFIX + " Action: Removing node from hadoop" + ' ( ' + cmd +' )')
+            print (replay_prefix() + " Action: Removing node from hadoop" + ' ( ' + cmd +' )')
             try:
                 response = subprocess.check_output(cmd, shell=True)
                 print response  
@@ -170,7 +175,7 @@ def enforce_actions(script, cluster_id, master_IP):
         if action.startswith("local_cmd"):
             params_string = action.strip('local_cmd')
             cmd = params_string.strip(' ()')
-            print (REPLAY_ACTIONS_PREFIX + " Action: Local command " + " ( " + cmd + " )")
+            print (replay_prefix() + " Action: Local command " + " ( " + cmd + " )")
             try:
                 response = subprocess.check_output(cmd, shell=True)
                 print response  
@@ -183,7 +188,8 @@ def enforce_actions(script, cluster_id, master_IP):
             print ''
         if action.startswith("run_job"):
             run_job(action, master_IP)
-            
+ 
+
 def run_job(action, master_IP):
 
     # retrieve user and job
@@ -193,7 +199,7 @@ def run_job(action, master_IP):
     user = action_params[0]
     job = action_params[1].strip('\" ')
     
-    print (REPLAY_ACTIONS_PREFIX + " Action: Running job" + " ( " + job + " )")
+    print (replay_prefix() + " Action: Running job" + " ( " + job + " )")
     try:
         response = subprocess.call( "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " 
                                 + user + "@" + master_IP + " \'" 
@@ -204,6 +210,7 @@ def run_job(action, master_IP):
         print 'Running job failed'
         exit(error_fatal)
     print ''
+
 
 def replay(argv, token):
     
@@ -249,4 +256,4 @@ def replay(argv, token):
     # proceed with the list of actions
     if script.get("actions") is not None:
         enforce_actions(script, cluster_id, master_IP)
-    print REPLAY_ACTIONS_PREFIX + " Finished."
+    print replay_prefix()+ " Finished."
