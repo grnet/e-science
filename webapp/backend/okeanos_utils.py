@@ -242,8 +242,8 @@ def check_cluster_options(cluster_options,dsl,token,map_dsl_to_cluster):
     # only sets a default if a value has not already been parsed
     cluster_options.setdefault('token',token) # inject the masked token in options.
     cluster_options.setdefault('admin_password','') #inject an empty admin password value if none is parsed
-    cluster_options.setdefault('dfs_blocksize','128')
-    replication_factor_default = str(min(int(cluster_options['cluster_size'])-1,2))
+    cluster_options.setdefault('dfs_blocksize', DEFAULT_HADOOP_CONF_VALUES['dfs_blocksize'])
+    replication_factor_default = str(min(int(cluster_options['cluster_size'])-1, DEFAULT_HADOOP_CONF_VALUES['replication_factor']))
     cluster_options.setdefault('replication_factor',replication_factor_default)
     return cluster_options
 
