@@ -59,8 +59,6 @@ Bytes_to_GiB = 1073741824  	# Global to convert bytes to gigabytes
 
 # Used for storage template conversion in get_flavors_quotas, so user-friendly args can be used in cli and gui
 storage_template = {'ext_vlmc':'Archipelago','drbd':'Standard'} # ~okeanos available storage templates with friendly name
-# Reverse storage template not used anywhere
-reverse_storage_template = {v: k for k, v in storage_template.items()} # reverse ~okeanos available storage templates with friendly name
 
 # Default ~okeanos endpoints and responses
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
