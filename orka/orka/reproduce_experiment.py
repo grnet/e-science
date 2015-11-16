@@ -113,7 +113,6 @@ def enforce_actions(script, cluster_id, master_IP):
             except Exception, e:
                 print 'Hadoop ' + action + ' failed'
                 exit(error_fatal)
-            print ''
         if action.startswith("put"):
             params_string = action.strip('put')
             params = params_string.strip(' ()')
@@ -129,7 +128,6 @@ def enforce_actions(script, cluster_id, master_IP):
             except Exception, e:
                 print 'Uploading file to HDFS failed'
                 exit(error_fatal)
-            print ''
         if action.startswith("get"):
             params_string = action.strip('get')
             params = params_string.strip(' ()')
@@ -145,7 +143,6 @@ def enforce_actions(script, cluster_id, master_IP):
             except Exception, e:
                 print 'Retrieving file from HDFS failed'
                 exit(error_fatal)
-            print ''
         if action == 'node_add':            
             cmd = "orka node add " + str(cluster_id)
             print (replay_prefix() + " Action: Adding node to hadoop" + ' ( ' + cmd +' )')
@@ -158,7 +155,6 @@ def enforce_actions(script, cluster_id, master_IP):
             except Exception, e:
                 print 'Adding node to hadoop failed'
                 exit(error_fatal)
-            print ''
         if action == 'node_remove':
             cmd = "orka node remove " + str(cluster_id)
             print (replay_prefix() + " Action: Removing node from hadoop" + ' ( ' + cmd +' )')
@@ -171,7 +167,6 @@ def enforce_actions(script, cluster_id, master_IP):
             except Exception, e:
                 print 'Removing node from hadoop failed'
                 exit(error_fatal)            
-            print ''
         if action.startswith("local_cmd"):
             params_string = action.strip('local_cmd')
             cmd = params_string.strip(' ()')
@@ -185,7 +180,6 @@ def enforce_actions(script, cluster_id, master_IP):
             except Exception, e:
                 print 'Local command failed'
                 exit(error_fatal)
-            print ''
         if action.startswith("run_job"):
             run_job(action, master_IP)
  
@@ -209,7 +203,6 @@ def run_job(action, master_IP):
     except Exception, e:
         print 'Running job failed'
         exit(error_fatal)
-    print ''
 
 
 def replay(argv, token):
