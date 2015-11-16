@@ -74,7 +74,6 @@ def create_cluster(script):
     print '--- Creating Cluster ---'
     try:
         response = subprocess.check_output(create_cluster_command, shell=True)
-        print response
         # store cluster details
         f = open( tempfile, 'w' )
         f.write( response )
@@ -106,7 +105,6 @@ def enforce_actions(script, cluster_id, master_IP):
             print (replay_prefix() + " Action: Hadoop " + action + ' ( ' + cmd +' )')
             try:
                 response = subprocess.check_output(cmd, shell=True)
-                print response
             except CalledProcessError, ce:
                 print 'Hadoop ' + action + ' returned an error code ' + str(ce.returncode)
                 exit(error_fatal)
@@ -121,7 +119,6 @@ def enforce_actions(script, cluster_id, master_IP):
             print (replay_prefix() + " Action: Uploading file to HDFS"  + ' ( ' + cmd +' )')
             try:
                 response = subprocess.check_output(cmd, shell=True)
-                print response  
             except CalledProcessError, ce:
                 print 'Uploading file to HDFS returned an error code ' + str(ce.returncode)
                 exit(error_fatal)
@@ -136,7 +133,6 @@ def enforce_actions(script, cluster_id, master_IP):
             print (replay_prefix() + " Action: Retrieving file from HDFS" + ' ( ' + cmd +' )')
             try:
                 response = subprocess.check_output(cmd, shell=True)
-                print response  
             except CalledProcessError, ce:
                 print 'Retrieving file from HDFS returned an error code ' + str(ce.returncode)
                 exit(error_fatal)
@@ -148,7 +144,6 @@ def enforce_actions(script, cluster_id, master_IP):
             print (replay_prefix() + " Action: Adding node to hadoop" + ' ( ' + cmd +' )')
             try:
                 response = subprocess.check_output(cmd, shell=True)
-                print response  
             except CalledProcessError, ce:
                 print 'Adding node to hadoop returned an error code ' + str(ce.returncode)
                 exit(error_fatal)
@@ -160,7 +155,6 @@ def enforce_actions(script, cluster_id, master_IP):
             print (replay_prefix() + " Action: Removing node from hadoop" + ' ( ' + cmd +' )')
             try:
                 response = subprocess.check_output(cmd, shell=True)
-                print response  
             except CalledProcessError, ce:
                 print 'Removing node from hadoop returned an error code ' + str(ce.returncode)
                 exit(error_fatal)
@@ -173,7 +167,6 @@ def enforce_actions(script, cluster_id, master_IP):
             print (replay_prefix() + " Action: Local command " + " ( " + cmd + " )")
             try:
                 response = subprocess.check_output(cmd, shell=True)
-                print response  
             except CalledProcessError, ce:
                 print 'Local command returned an error code ' + str(ce.returncode)
                 exit(error_fatal)
