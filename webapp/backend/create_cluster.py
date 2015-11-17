@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This script creates a HadoopYarn cluster on ~okeanos.
+This script creates a Hadoop (YARN) cluster on ~okeanos.
 
 @author: e-science Dev-team
 """
@@ -474,7 +474,7 @@ class YarnCluster(object):
         return self.HOSTNAME_MASTER_IP, self.server_dict
 
     def create_yarn_cluster(self):
-        """Create Yarn cluster"""
+        """Create YARN cluster on a bare ~okeanos cluster """
         try:
             current_task.update_state(state="Started")
             self.HOSTNAME_MASTER_IP, self.server_dict = self.create_bare_cluster()
@@ -487,11 +487,12 @@ class YarnCluster(object):
                           password=self.master_root_pass)
 
         try:
+            # Configuring YARN cluster node communication
             list_of_hosts = reroute_ssh_prep(self.server_dict,
                                              self.HOSTNAME_MASTER_IP)
             set_cluster_state(self.opts['token'], self.cluster_id,
                           'Installing and configuring YARN (3/3)')
-
+            # Installing and configuring YARN
             install_yarn(self.opts['token'], list_of_hosts, self.HOSTNAME_MASTER_IP,
                          self.cluster_name_postfix_id, self.orka_image_uuid, self.ssh_file, self.opts['replication_factor'], self.opts['dfs_blocksize'], self.opts['admin_password'])
 
@@ -511,4 +512,4 @@ class YarnCluster(object):
 
     def destroy(self, status):
         """Destroy Cluster"""
-        destroy_cluster(self.opts['token'], self.cluster_id, master_IP=self.HOSTNAME_MASTER_IP, status=status)
+        return destroy_cluster(self.opts['token'], self.cluster_id, master_IP=self.HOSTNAME_MASTER_IP, status=status)
