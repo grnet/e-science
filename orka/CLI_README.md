@@ -35,8 +35,8 @@ Optional but highly recommended is to install and use the orka package in a virt
 Following commands download and install orka (either directly or in virtual environment):
     
     cd
-    git clone <escience git repo> <project_name> 
-    cd to <project_name>/orka
+    git clone <escience git repo> 
+    cd e-science/orka
     [sudo if not using virtualenv] python setup.py install
  
   Now orka commands are usable from anywhere.
@@ -157,7 +157,7 @@ example for destroy cluster:
 
 ## "node" command
 
-orka node command provides sub-commands for adding or deleting a node to/from a Hadoop-Yarn cluster.
+orka node command provides sub-commands for adding or deleting a node to/from a Hadoop-YARN cluster.
 
 ### "node add" command
 

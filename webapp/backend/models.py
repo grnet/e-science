@@ -279,7 +279,7 @@ class PublicNewsItem(models.Model):
     news_date = models.DateTimeField("News Item Date", null=False,
                                        help_text="Date and time for"
                                        " the creation of this entry")
-    news_message = models.CharField("News Item Text", max_length=255, null=False,
+    news_message = models.CharField("News Item Text", max_length=1020, null=False,
                                     help_text="News Item")
     news_category = models.IntegerField("News Item Category", null=True, blank=True,
                                      help_text="Category ID for News Item")
@@ -288,12 +288,48 @@ class PublicNewsItem(models.Model):
     def __unicode__(self):
         return ('%s : %s') % (self.news_date.strftime('%c'), self.news_message)
 
-class ClusterStatistics(models.Model):
+class FaqItemCategory(models.Model):
+    """Definition of FAQ Item Categories"""
+    id = models.AutoField("FaqItemCategory ID", primary_key=True, null=False,
+                          help_text="Auto-increment FaqItemCategory id")
+    category_name = models.CharField("FaqItemCategory name", max_length=255, unique=True, null=False,
+                                     help_text="FaqItemCategory Name")
+    class Meta:
+        verbose_name = "Frequently Asked Questions Category"
+        verbose_name_plural = "Frequently Asked Questions Categories"
+    
+    def __unicode__(self):
+        return ('%s : %s') % (self.id, self.category_name)
+    
+class FaqItem(models.Model):
+    """Definition of Frequently Asked Questions Items."""
+    id = models.AutoField("FaqItem ID", primary_key=True, null=False,
+                               help_text="Auto-increment faqitem id")
+    faq_date = models.DateTimeField("News Item Date", null=False,
+                                       help_text="Date and time for"
+                                       " the creation of this entry")
+    faq_question = models.CharField("Faq Item Question", max_length=1020, null=False,
+                                    help_text="Question")
+    faq_answer = models.CharField("Faq Item Answer", max_length=2040, null=False,
+                                    help_text="Answer")
+    faq_category = models.ForeignKey(FaqItemCategory, null=True, 
+                                       help_text="Faq Item Category")
+    class Meta:
+        verbose_name = "Frequently Asked Question"
+        #verbose_name_plural = "Frequently Asked Questions"
+    def __unicode__(self):
+        return ('Q:%s > A:%s') % (self.faq_question, self.faq_answer)
+
+class OrkaStatistics(models.Model):
     """Definition of Cluster statistics."""
     spawned_clusters = models.IntegerField("Spawned Clusters", null=True,
                                      help_text="Total number of spawned clusters")
     active_clusters = models.IntegerField("Active Clusters", null=True,
                                      help_text="Total number of active clusters")
+    spawned_vres = models.IntegerField("Spawned VREs", null=True,
+                                       help_text="Total number of spawned Virtual Research Environments")
+    active_vres = models.IntegerField("Active VREs", null=True,
+                                      help_text="Total number of active Virtual Research Environments")
 
 class ClusterInfo(models.Model):
     """Definition of a Hadoop Cluster object model."""
@@ -420,7 +456,7 @@ class VreServer(models.Model):
         return ("%d : %s : %s : %s") % (self.id, self.server_name, self.os_image, CLUSTER_STATUS_CHOICES[int(self.server_status)][1])
     
 class Dsl(models.Model):
-    """Definition of a User Cluster DSL object model."""
+    """Definition of a User Reproducible Experiment model."""
     dsl_name = models.CharField("DSL Name", max_length=255, null=False,
                                     help_text="Name of the DSL")
     pithos_path = models.CharField("Pithos path", max_length=255, null=False,

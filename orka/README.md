@@ -85,7 +85,7 @@ Number of CPUs dictate the amount of long running tasks the Orka server executes
 
 ### Create and start personal Orka server
 
-User creates a virtual machine in ~okeanos based on "Orka Server-on-Debian 8" image, with a public IPv4 attached, and then types in console:
+User creates a virtual machine in ~okeanos based on "Personal Orka Server" image, with a public IPv4 attached, and then types in console:
 
     ssh root@{{virtual_machine_public_IPv4}}
     passwd orka_admin

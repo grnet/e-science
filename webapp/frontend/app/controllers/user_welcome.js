@@ -45,14 +45,23 @@ App.UserWelcomeController = Ember.Controller.extend({
     }.property(),
     // userclusters block
     filtered_clusters : function(){
-        return this.get('content.clusters').filterBy('id');
-    }.property('content.clusters.[]','content.clusters.isLoaded'),
+        var clusters = this.get('content.clusters').filterBy('id');
+        return this.get('cluster_active_filter') ? clusters.filterBy('cluster_status_active_pending') : clusters;
+    }.property('content.clusters.[]','content.clusters.isLoaded','cluster_active_filter'),
     sorted_clusters_prop : ['resorted_status:asc','action_date:desc'],
     sorted_clusters_dir : true,
     sorted_clusters : Ember.computed.sort('filtered_clusters','sorted_clusters_prop'),
     sortable_clusters : function(){
         return this.get('sorted_clusters');
     }.property('filtered_clusters.[]'),
+    failed_clusters : function(){
+        var clusters = this.get('content.clusters').filterBy('id');
+        return clusters.filterBy('cluster_status_verbose','FAILED');
+    }.property('content.clusters.[]','content.clusters.isLoaded'),
+    boolean_no_failed_clusters : function(){
+        var failed_clusters = this.get('failed_clusters');
+        return Ember.isEmpty(failed_clusters) || failed_clusters.get('length') == 0; 
+    }.property('failed_clusters.[]'),
     // uservreservers block
     filtered_vreservers : function(){
         return this.get('content.vreservers').filterBy('id');
@@ -74,6 +83,15 @@ App.UserWelcomeController = Ember.Controller.extend({
         return this.get('sorted_dsls');
     }.property('filtered_dsls.[]'),
     // messages / feedback
+    dsl_replay_msg : function(self,key){
+        var replaying_dsls = self.get('sortable_dsls').filterBy('dsl_status','1');
+        for (i=0; i<replaying_dsls.get('length'); i++){
+            if (!Ember.isEmpty(replaying_dsls.objectAt(i).get('message_dsl_status_replay'))){
+                var msg = {'msg_type':'default','msg_text': replaying_dsls.objectAt(i).get('message_dsl_status_replay')};
+                self.send('addMessage',msg);
+            }
+        }
+    }.observes('sortable_dsls.@each.state'),
     master_vm_password_msg : function() {
         var pwd_message = this.get('content.master_vm_password');
         if (!Ember.isBlank(pwd_message)) {
@@ -171,6 +189,9 @@ App.UserWelcomeController = Ember.Controller.extend({
         setActiveTab : function(tab){
             this.set('content_tabs',tab);  
         },
+        setActiveFilter : function(val){
+            this.set('cluster_active_filter',val);  
+        },
         addMessage : function(obj) {
             // routes/controllers > controller.send('addMessage',{'msg_type':'default|info|success|warning|danger', 'msg_text':'Lorem ipsum dolor sit amet, consectetur adipisicing elit'})
             // templates > {{#each message in user_messages}}{{message.msg_text}}{{/each}}
@@ -213,10 +234,11 @@ App.UserWelcomeController = Ember.Controller.extend({
                 this.set('user_messages', messages);
             }
         },
-        removeMessage : function(id, all) {
-            // routes/controllers > controller.send('removeMessage', id, [all=false]) optional 3rd parameter to true will clear all messages
+        removeMessage : function(id, all, auto) {
+            // routes/controllers > controller.send('removeMessage', id, [all=false] all=true > clear all
             // templates > {{action 'removeMessage' message_id}} / {{action 'removeMessage' 1 true}}
             var self = this;
+            var user = self.get('content');
             var store = this.store;
             var messages = store.all('usermessages');
             var aryMessages = messages.toArray();
@@ -229,6 +251,13 @@ App.UserWelcomeController = Ember.Controller.extend({
                 });
                 store.unloadAll('usermessages');
                 messages.compact();
+                if (!auto){
+                    user.set('error_message', '');
+                    self.store.push('user', self.store.normalize('user', {
+                        'id' : 1,
+                        'error_message' : user.get('error_message')
+                    })).save();
+                }
             } else {
                 var record = store.getById('usermessages', id);
                 if (!Ember.isEmpty(record)) {
@@ -236,6 +265,14 @@ App.UserWelcomeController = Ember.Controller.extend({
                     aryBlacklist[message] = true;
                     store.deleteRecord(record);
                     messages.compact();
+                    var user = self.get('content');
+                    if (user.get('error_message') == message){
+                        user.set('error_message', '');
+                        self.store.push('user', self.store.normalize('user', {
+                            'id' : 1,
+                            'error_message' : user.get('error_message')
+                        })).save();
+                    }
                 }
             }
             this.set('user_messages', messages);
@@ -261,6 +298,8 @@ App.UserWelcomeController = Ember.Controller.extend({
                                 var num_cluster_records = user_clusters.get('length');
                                 var user_vreservers = user.get('vreservers');
                                 var num_vre_records = user_vreservers.get('length');
+                                var user_dsls = user.get('dsls');
+                                var num_dsl_records = user_dsls.get('length');
                                 var bPending = false;
                                 for ( i = 0; i < num_cluster_records; i++) {
                                     if ((user_clusters.objectAt(i).get('cluster_status') == '2') || (user_clusters.objectAt(i).get('hadoop_status') == '2')) {
@@ -270,6 +309,12 @@ App.UserWelcomeController = Ember.Controller.extend({
                                 }
                                 for ( i = 0; i < num_vre_records; i++ ) {
                                     if (user_vreservers.objectAt(i).get('server_status') == '2'){
+                                        bPending = true;
+                                        break;
+                                    }
+                                }
+                                for ( i = 0; i < num_dsl_records; i++ ) {
+                                    if (user_dsls.objectAt(i).get('dsl_status') == '1'){
                                         bPending = true;
                                         break;
                                     }

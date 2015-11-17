@@ -6,10 +6,12 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="description" content="e-Science Orka the hadoop cluster creator">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-
-		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/bootstrap.orka.css"/>
+        
+		<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/bootstrap.orka.css">
 		<link rel="stylesheet" href="{{ STATIC_URL }}styles/style.css">
 		<link rel="stylesheet" href="{{ STATIC_URL }}libs/prettify.css">
+		<link rel="shortcut icon" href="{{ STATIC_URL }}favicon.ico">
+		<link rel="icon" href="{{ STATIC_URL }}favicon.ico" type="image/x-icon">
 	</head>
 	<body class="" style="" onload="set_style_from_cookie()">
 		{% verbatim %}
@@ -58,6 +60,7 @@
 		<script src="{{ STATIC_URL }}controllers/help_images.js"></script>
 		<script src="{{ STATIC_URL }}controllers/help_vreimages.js"></script>
 		<script src="{{ STATIC_URL }}controllers/help_experiments.js"></script>
+		<script src="{{ STATIC_URL }}controllers/about_faq.js"></script>
 
 		<!--routers-->
 		<script src="{{ STATIC_URL }}router.js"></script>
@@ -74,8 +77,10 @@
 		<script src="{{ STATIC_URL }}routes/dsl_create.js"></script>
 		<script src="{{ STATIC_URL }}routes/dsl_management.js"></script>
 		<script src="{{ STATIC_URL }}routes/homepage.js"></script>
+		<script src="{{ STATIC_URL }}routes/about_faq.js"></script>
 		
 		<!--views-->
+		<script src="{{ STATIC_URL }}views/application.js"></script>
 		<script src="{{ STATIC_URL }}views/homepage.js"></script>
 		<script src="{{ STATIC_URL }}views/user_login.js"></script>
 		<script src="{{ STATIC_URL }}views/user_welcome.js"></script>
@@ -92,6 +97,7 @@
 		<script src="{{ STATIC_URL }}views/cluster_management.js"></script>
 		<script src="{{ STATIC_URL }}views/dsl_management.js"></script>
 		<script src="{{ STATIC_URL }}views/help_experiments.js"></script>
+		<script src="{{ STATIC_URL }}views/about_faq.js"></script>
 
 		<!--store for ember-->
 		<script src="{{ STATIC_URL }}store.js"></script> 
@@ -111,7 +117,8 @@
 			'cluster/create', 'cluster/management',
 			'vreserver/create', 'vreserver/management',
 			'dsl/create', 'dsl/management',
-			'help/images', 'help/vreimages', 'help/experiments'
+			'help/images', 'help/vreimages', 'help/experiments',
+			'about/orka', 'about/faq'
 		]);</script>
 	
 	</body>
