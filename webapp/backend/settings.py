@@ -38,7 +38,7 @@ BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 import random, string
-SECRET_KEY = ''.join(random.choice(string.lowercase) for i in range(50))
+SECRET_KEY = 'bdkenplosklajyibzuuewezirreuxchpvsklir'
 
 TEMPLATE_DEBUG = DEBUG
 
