@@ -256,7 +256,13 @@ class OrkaServer(object):
             target.write('# -*- coding: utf-8 -*-\n\n')
             target.write('key = "{0}"'.format(random_key))
         return 0
-        
+       
+   def create_secret_key(self):
+        """
+        Return a string of 50 random chars to be used as secret key in django.
+        """
+        return ''.join(random.choice(string.lowercase) for i in range(50))
+ 
     def action(self,verb):
         """
         Executes an action on orka server
@@ -271,16 +277,19 @@ class OrkaServer(object):
             self.user_uuid = self.script.get("okeanos_user_uuid")
             self.create_permitted_uuids_file(self.user_uuid)
             self.create_encrypt_file(self.user_uuid)
+            self.django_secret_key = self.create_secret_key()
             tag = 'postimage'
-            vars = '{0} db_password={1} django_admin_password={2}'.format(vars,self.db_password,self.django_admin_password)
+            vars = '{0} db_password={1} django_admin_password={2} secret_key={3}'.format(vars,self.db_password,
+                                                                                         self.django_admin_password,
+                                                                                         self.django_secret_key)
  
         ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver {0}" -t {1}'.format(vars,tag)
         exit_status = subprocess.call(ansible_command, shell=True)
         if exit_status > 0:
             return error_fatal
-        verb = verb.rstrip('e')
-        logging.log(REPORT, 'Orka server successfully {0}ed.'.format(verb))
-
+        logging.log(REPORT, 'Orka server successfully {0}ed.'.format(verb.rstrip('e')))
+        if verb == 'update':
+            self.action('restart')
  
 class OrkaImage(object):
     """
