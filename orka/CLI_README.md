@@ -157,7 +157,7 @@ example for destroy cluster:
 
 ## "node" command
 
-orka node command provides sub-commands for adding or deleting a node to/from a Hadoop-Yarn cluster.
+orka node command provides sub-commands for adding or deleting a node to/from a Hadoop-YARN cluster.
 
 ### "node add" command
 

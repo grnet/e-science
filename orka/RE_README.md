@@ -77,7 +77,7 @@ In this example, the cluster is created from scratch:
         - 20
         image: Hadoop-2.5.2
         name: 'test'
-        personality: /workspace/.ssh/id_rsa.pub
+        personality: /{{home_dir}}/.ssh/id_rsa.pub
         project_name: escience.grnet.gr
         size: 3
     configuration:
@@ -89,7 +89,7 @@ In this example, the cluster is created from scratch:
         - local_cmd (ls)
         - node_add
         - put (source,destination(hdfs))
-        - run_job (user, "/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi 2 10000")
+        - run_job (hduser, "/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi 2 10000")
         - get (source(hdfs),destination)
         - stop
         - format
@@ -110,7 +110,7 @@ Re-use of the same cluster:
         - local_cmd (ls)
         - node_add
         - put (source,destination(hdfs))
-        - run_job (user, "/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi 2 10000")
+        - run_job (hduser, "/usr/local/hadoop/bin/hadoop jar /usr/local/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar pi 2 10000")
         - get (source(hdfs),destination)
         - stop
         - format
