@@ -23,12 +23,12 @@ Below are available in tables, the ansible deploy webserver files and folders wi
 |    File     | Description
 |------------ |:---
 |    files    |  It includes the files that are necessary for the execution of specific services. They are transferred unchanged to the remote or local machine where commands from the ansible playbooks are executed
-|    tasks    |  It is called from deploy_orka_server.py script for various tasks. Generally, it clones the git repo for personal orka server, does the necessary configurations to postgresql, nginx, celery, rabbitmq, uwsgi and django and starts/restarts/updates the personal orka server.    
+|    tasks/main.yml    |  It is called from deploy_orka_server.py script for various tasks. Generally, it clones the git repo for personal orka server, does the necessary configurations to postgresql, nginx, celery, rabbitmq, uwsgi and django and starts/restarts/updates the personal orka server.    
 |  templates  |  It includes files with variables, which offers dynamic content. These files are transferred, with the appropriate additions, to the remote or local machine where commands from the ansible playbooks are executed
 
 In case of *commons* role there is a subfolder whose description is available below:
 
 |    File     | Description
 |------------ |:---
-|    tasks    | Installs sudo and fixes missing locale for every host.
+|    tasks/main.yml    | Installs sudo and fixes missing locale for every host.
 
