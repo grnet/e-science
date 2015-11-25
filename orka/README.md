@@ -85,7 +85,7 @@ Number of CPUs dictate the amount of long running tasks the Orka server executes
 
 ### Create and start personal Orka server
 
-User creates a virtual machine in ~okeanos based on "Orka Server-on-Debian 8" image, with a public IPv4 attached, and then types in console:
+User creates a virtual machine in ~okeanos based on "Personal Orka Server" image, with a public IPv4 attached, and then types in console:
 
     ssh root@{{virtual_machine_public_IPv4}}
     passwd orka_admin
@@ -169,9 +169,5 @@ and run the script:
 
     python deploy_orka_server.py update examplefile.yml
 
-after the update is done, server should be restarted with:
-
-    python deploy_orka_server.py restart examplefile.yml
-    
 The default github repo that deploy_orka_server.py will look for updates is https://github.com/grnet/e-science.git at the master branch.
 The github repo and branch/version is set in e-science/deploy/group_vars/webserver.yml file and can be changed.
