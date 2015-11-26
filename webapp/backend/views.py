@@ -18,7 +18,7 @@ from get_flavors_quotas import project_list_flavor_quota
 from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
-    DeleteClusterSerializer, TaskSerializer, UserPutSerializer, \
+    DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, \
     HdfsSerializer, StatisticsSerializer, NewsSerializer, FaqSerializer, SettingsSerializer, \
     ScreensSerializer, VideosSerializer, \
     OrkaImagesSerializer, VreImagesSerializer, DslsSerializer, DslOptionsSerializer, DslDeleteSerializer
@@ -170,14 +170,9 @@ class StatisticsView(APIView):
         destroyed_clusters = ClusterInfo.objects.all().filter(cluster_status=0).count()
         active_clusters = ClusterInfo.objects.all().filter(cluster_status=1).count()
         spawned_clusters = active_clusters + destroyed_clusters
-        destroyed_vres = VreServer.objects.all().filter(server_status=0).count()
-        active_vres = VreServer.objects.all().filter(server_status=1).count()
-        spawned_vres = active_vres + destroyed_vres
-        orka_statistics = OrkaStatistics.objects.create(spawned_clusters=spawned_clusters,
-                                                             active_clusters=active_clusters,
-                                                             spawned_vres=spawned_vres,
-                                                             active_vres=active_vres)
-        serializer_class = StatisticsSerializer(orka_statistics)
+        cluster_statistics = ClusterStatistics.objects.create(spawned_clusters=spawned_clusters,
+                                                             active_clusters=active_clusters)
+        serializer_class = StatisticsSerializer(cluster_statistics)
         return Response(serializer_class.data)
 
 
@@ -336,7 +331,8 @@ class StatusView(APIView):
 
 class SessionView(APIView):
     """
-    View to handle requests from ember for user metadata updates
+    View to handle requests from ember for user login and logout and
+    user theme update
     """
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticatedOrIsCreation, )
@@ -380,12 +376,11 @@ class SessionView(APIView):
         """
         user_token = Token.objects.get(key=request.auth)
         self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
-        self.serializer_class = UserPutSerializer
+        self.serializer_class = UserThemeSerializer
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
-            if serializer.data['user_theme'] or serializer.data['error_message']:
-                self.user.user_theme = serializer.data.get('user_theme','')
-                self.user.error_message = serializer.data.get('error_message','')
+            if serializer.data['user_theme']:
+                self.user.user_theme = serializer.data['user_theme']
                 self.user.save()
             else:
                 db_logout_entry(self.user)

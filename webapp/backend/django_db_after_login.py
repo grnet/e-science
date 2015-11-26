@@ -275,10 +275,9 @@ def db_dsl_update(token, id, **kwargs):
                 field = Dsl._meta.get_field_by_name(key)
                 setattr(dsl, key, value)
                 model_dirty = True
-            except FieldDoesNotExist,e:
-                if key == 'error':
-                    user.error_message = value
-                    user.save()
+            except FieldDoesNotExist:
+                #ignore keyword arguments not present on the model
+                pass
         if model_dirty:
             dsl.save()
 

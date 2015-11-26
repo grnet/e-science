@@ -8,8 +8,7 @@ This script contains the celery tasks that will be executed from django views.
 """
 from celery.task import task
 from create_cluster import YarnCluster
-from okeanos_utils import destroy_cluster, destroy_server, scale_cluster
-from replay_support import create_dsl, import_dsl, destroy_dsl, replay_dsl
+from okeanos_utils import destroy_cluster, destroy_server, scale_cluster, create_dsl, import_dsl, destroy_dsl, replay_dsl
 from run_ansible_playbooks import ansible_manage_cluster
 from reroute_ssh import HdfsRequest
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This script installs and configures a Hadoop-YARN cluster using Ansible.
+This script installs and configures a Hadoop-Yarn cluster using Ansible.
 
 @author: e-science Dev-team
 """
@@ -46,7 +46,7 @@ def install_yarn(*args):
         ansible_create_cluster(hosts_filename, cluster_size, args[4], args[5], args[0], args[6], args[7], args[8])
         # Format and start Hadoop cluster
         set_cluster_state(args[0], cluster_id,
-                          'YARN Cluster is active', status='Active',
+                          'Yarn Cluster is active', status='Active',
                           master_IP=args[2])
         ansible_manage_cluster(cluster_id, 'format')
         ansible_manage_cluster(cluster_id, 'start')
@@ -56,7 +56,7 @@ def install_yarn(*args):
         raise RuntimeError(msg, error_ansible_playbook)
     finally:
         subprocess.call('rm /tmp/master_' + master_hostname + '_pub_key_* ', shell=True)
-    logging.log(SUMMARY, 'YARN Cluster is active. You can access it through '
+    logging.log(SUMMARY, 'Yarn Cluster is active. You can access it through '
                 + args[2] + ':8088/cluster')
 
 
@@ -170,6 +170,15 @@ def ansible_manage_cluster(cluster_id, action):
     cluster = ClusterInfo.objects.get(id=cluster_id)
     pre_action_status = cluster.hadoop_status
     cluster_status = cluster.cluster_status
+    # pre-flight checks: If cluster on pending or hadoop is formatting, abort. 
+    if (cluster_status == const_cluster_status_pending) or (pre_action_status == const_hadoop_status_format):
+        msg = 'Cluster %s (%s) action already in progress' % (cluster.cluster_name,cluster_id)
+        return msg
+    # If current hadoop status is same as action status skip.
+    if (action == 'start' and pre_action_status == const_hadoop_status_started) or (action == 'stop' and pre_action_status == const_hadoop_status_stopped):
+        msg = 'Cluster %s (%s) is already %sed' % (cluster.cluster_name,cluster_id,action)
+        return msg
+    # pre-flight checks done, proceed
     if action == 'format':
         current_hadoop_status = REVERSE_HADOOP_STATUS[cluster.hadoop_status]
     else:
@@ -215,10 +224,10 @@ def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_fi
     hadoop and everything needed for hadoop to be functional.
     hosts_filename is the name of ansible_hosts file.
     If a specific hadoop image was used in the VMs creation, ansible
-    playbook will not install Hadoop-YARN and will only perform
+    playbook will not install Hadoop-Yarn and will only perform
     the appropriate configuration.
     """
-    logging.log(REPORT, ' Ansible starts YARN installation on master and '
+    logging.log(REPORT, ' Ansible starts Yarn installation on master and '
                         'slave nodes')
     level = logging.getLogger().getEffectiveLevel()
     # chosen image includes role and tags properties
