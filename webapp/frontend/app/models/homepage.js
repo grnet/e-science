@@ -3,9 +3,7 @@ attr = App.attr;
 // Active and Spawned clusters
 App.Statistic = DS.Model.extend({
     spawned_clusters : attr('number'),
-    active_clusters : attr('number'),
-    spawned_vres : attr('number'),
-    active_vres : attr('number')
+    active_clusters : attr('number')
 });
 // Model for e-science News Items
 App.Newsitem = DS.Model.extend({

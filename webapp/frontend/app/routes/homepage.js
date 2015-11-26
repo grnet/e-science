@@ -6,8 +6,6 @@ App.HomepageRoute = Ember.Route.extend({
             this.store.fetch('statistic', 1).then(function(statistic) {
                 that.controller.set('spawned_clusters', statistic.get('spawned_clusters'));
                 that.controller.set('active_clusters', statistic.get('active_clusters'));
-                that.controller.set('spawned_vres', statistic.get('spawned_vres'));
-                that.controller.set('active_vres', statistic.get('active_vres'));
             }, function(reason) {
                 console.log(reason.message);
             });

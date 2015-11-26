@@ -26,9 +26,7 @@
     command: cp -rf {{path_to_java_dirs}}/lib/ {{settings_path}}/ansible/roles/yarn/files
 
   - name: Copy Java dist directory in ansible folder for cloudera role
-    tags:
-     - preimage
-     - update
+    tags: preimage,update
     command: cp -rf {{path_to_java_dirs}}/dist/ {{settings_path}}/ansible/roles/cloudera/files
 
   - name: Copy Java lib directory in ansible folder for cloudera role

@@ -256,7 +256,7 @@ class OrkaServer(object):
             target.write('# -*- coding: utf-8 -*-\n\n')
             target.write('key = "{0}"'.format(random_key))
         return 0
-    
+       
     def create_secret_key(self):
         """
         Return a string of 50 random chars to be used as secret key in django.

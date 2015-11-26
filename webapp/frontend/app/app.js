@@ -1,6 +1,6 @@
 // Ember application for e-science.
 window.App = Ember.Application.create({
-    VERSION : '0.3.0',
+    VERSION : '0.2',
     // Basic logging
     LOG_TRANSITIONS : true,
     // LOG_TRANSITIONS_INTERNAL: true,
