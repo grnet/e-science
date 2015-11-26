@@ -320,9 +320,6 @@ class FaqItem(models.Model):
     def __unicode__(self):
         return ('Q:%s > A:%s') % (self.faq_question, self.faq_answer)
 
-<<<<<<< HEAD
-class OrkaStatistics(models.Model):
-=======
 class ScreenItemCategory(models.Model):
     """ Definition of Screenshot Categories """
     id = models.AutoField("ScreenItemCategory ID", primary_key=True, null=False,
@@ -370,16 +367,11 @@ class VideoItem(models.Model):
         return ('%s : %s') % (self.video_title, self.VIDEO_ASPECT_CHOICES[int(self.video_aspect)][1])
 
 class ClusterStatistics(models.Model):
->>>>>>> 0e411e6b8d31f166dc436da46bce572aab00d80b
     """Definition of Cluster statistics."""
     spawned_clusters = models.IntegerField("Spawned Clusters", null=True,
                                      help_text="Total number of spawned clusters")
     active_clusters = models.IntegerField("Active Clusters", null=True,
                                      help_text="Total number of active clusters")
-    spawned_vres = models.IntegerField("Spawned VREs", null=True,
-                                       help_text="Total number of spawned Virtual Research Environments")
-    active_vres = models.IntegerField("Active VREs", null=True,
-                                      help_text="Total number of active Virtual Research Environments")
 
 class ClusterInfo(models.Model):
     """Definition of a Hadoop Cluster object model."""
