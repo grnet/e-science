@@ -8,8 +8,9 @@ Serializers file for django rest framework.
 """
 
 from rest_framework import serializers
-from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, OrkaStatistics, \
-PublicNewsItem, FaqItem, FaqItemCategory, OrkaImage, OrkaImageCategory, VreServer, VreImage, VreImageCategory, Dsl, Setting
+from backend.models import UserInfo, ClusterInfo, ClusterCreationParams, ClusterStatistics, \
+PublicNewsItem, FaqItem, FaqItemCategory, OrkaImage, ScreenItem, ScreenItemCategory, VideoItem, \
+OrkaImageCategory, VreServer, VreImage, VreImageCategory, Dsl, Setting
 
 
 class PGArrayField(serializers.WritableField):
@@ -82,6 +83,30 @@ class FaqSerializer(serializers.ModelSerializer):
         exists = FaqItemCategory.objects.all().filter(id=obj.faq_category_id).first() is not None
         return FaqItemCategory.objects.all().filter(id=obj.faq_category_id).values()[0]['category_name'] if exists else ''
 
+class ScreensSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Screenshot metadata
+    """
+    screen_category = serializers.SerializerMethodField("category_name")
+    class Meta:
+        model = ScreenItem
+        fields = ('id', 'screen_src', 'screen_title', 'screen_category')
+        
+    def category_name(self,obj):
+        return ScreenItemCategory.objects.all().filter(id=obj.screen_category_id).values()[0]['category_name']
+    
+class VideosSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Video metadata
+    """  
+    video_aspect = serializers.SerializerMethodField("get_aspect")
+    class Meta:
+        model = VideoItem
+        fields = ('id', 'video_src', 'video_title', 'video_aspect')
+    
+    def get_aspect(self,obj):
+        return obj.VIDEO_ASPECT_CHOICES[int(obj.video_aspect)][1]
+
 class StatisticsSerializer(serializers.ModelSerializer):
     """
     Serializer for spawned and active clusters
@@ -89,8 +114,8 @@ class StatisticsSerializer(serializers.ModelSerializer):
     id = serializers.SerializerMethodField('get_ember_id')
     
     class Meta:
-        model = OrkaStatistics
-        fields = ('id','spawned_clusters', 'active_clusters', 'spawned_vres', 'active_vres')
+        model = ClusterStatistics
+        fields = ('id','spawned_clusters', 'active_clusters')
     
     def get_ember_id(self, obj):
         """"Always returns id 1 for ember.js"""
@@ -288,10 +313,9 @@ class UserInfoSerializer(serializers.ModelSerializer):
         return 1
 
 
-class UserPutSerializer(serializers.Serializer):
+class UserThemeSerializer(serializers.Serializer):
     """
     Serializer for ember request with user's
-    choices for theme or error_message update.
+    choices for theme.
     """
     user_theme = serializers.CharField(required=False)
-    error_message = serializers.CharField(required=False)

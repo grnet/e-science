@@ -17,6 +17,7 @@ App.AboutFaqController = Ember.Controller.extend({
             }
             Ember.set(item,'collapse_id','collapse%@'.fmt(item.get('id')));
             Ember.set(item,'collapse_href','#collapse%@'.fmt(item.get('id')));
+            Ember.set(item,'faq_answer',Ember.String.htmlSafe(item.get('faq_answer')));
             result.findBy('category',category).get('faqitems').pushObject(item);
         });
         return result;

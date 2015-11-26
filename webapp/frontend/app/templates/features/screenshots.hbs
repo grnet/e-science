@@ -1,0 +1,59 @@
+<p></p>
+<div class="well well-lg text-center v-center">
+    <div class="row">
+        <h2 id = 'id_title_features_screenshots'>Screenshots</h2>
+        <p></p>
+        <p>~ORKA Web-GUI Screens</p>
+    </div>
+</div>
+<div class="container col col-sm-12">
+    <div class="col col-xs-12 visible-xs text-center">
+        <br /><br /> 
+        <span class="h4">These Screenshots require a higher analysis. <br />
+        Resize your browser or use another media device.</span>
+    </div>
+    {{#each category in screens_by_category}}
+    <div class="row">
+        <!-- hide on extra small size -->
+        <div class="col col-sm-12 hidden-xs">
+            <div class="panel panel-default">
+              <div class="panel-body">
+                <div {{bind-attr id="category.category_id"}} class="carousel slide" data-pause=false data-interval="6000">
+                  <!-- Indicators -->
+                  <ol class="carousel-indicators">
+                     {{#each screen in category.screens}}
+                        <li {{bind-attr data-target="category.category_href" data-slide-to="screen.slide_to" class="screen.active:active"}}></li>
+                     {{/each}}
+                  </ol>
+                  <!-- Wrapper for slides -->
+                  <div class="carousel-inner" role="listbox">
+                    {{#each screen in category.screens}}
+                    <div {{bind-attr class=":item screen.active:active"}}>
+                      <img {{bind-attr src="screen.src" alt="screen.alt"}}>
+                      <div class="carousel-caption">
+                      <h4> </h4>
+                        <p class="text strong">{{screen.screen_title}}</p>
+                      </div>
+                    </div>
+                    {{/each}}
+                  </div>
+                  <!-- Controls -->
+                  <a class="left carousel-control" {{bind-attr href="category.category_href"}} role="button" data-slide="prev">
+                    <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                  </a>
+                  <a class="right carousel-control" {{bind-attr href="category.category_href"}} role="button" data-slide="next">
+                    <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                  </a>
+                </div>                
+              </div>
+              <div id="id_carousel_legend" class="panel-footer text-center">{{category.category}} 
+                  <a href="#" {{action 'carouselPlay' category.category_href}}><i class="glyphicon glyphicon-play nounder"></i></a>
+                  <a href="#" {{action 'carouselPause' category.category_href}}><i class="glyphicon glyphicon-pause nounder"></i></a>
+              </div>
+            </div>
+        </div>
+    </div>
+    {{/each}}
+</div>

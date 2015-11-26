@@ -16,29 +16,21 @@ install:
 - pip install djangorestframework==2.4.8
 - pip install rest_framework_ember
 - pip install selenium
-- pip install mock
-- pip install rednose
 - pip install nose-cov
 - pip install requests
 - pip install django-celery
 - pip install django-admin-bootstrapped
-- sudo apt-get install sshpass
 - sudo apt-get install shunit2
 before_script:
 - psql -c 'create user developer with createdb;' -U postgres
-- psql -c 'create database escience with owner developer;' -U postgres
+- psql -c 'create database portal with owner developer;' -U postgres
 - tar -xvf private_data.tar
 - python webapp/manage.py syncdb --noinput
-- cd orka
-- python setup.py install
-- cd ..
 - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile
   --background --exec /usr/bin/Xvfb -- :99 -ac -screen 0 1920x1080x16
-- ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+- python webapp/manage.py runserver 0.0.0.0:8000 --noreload &
+- sleep 10s
 script:
-- nosetests -v tests/test_create_cluster.py
-- bash tests/integration/test_integration_hdpbase.sh
-- bash tests/integration/test_integration_hue.sh
-- bash tests/integration/test_integration_ecosystem.sh
-- bash tests/integration/test_integration_cdh.sh
-- bash tests/integration/test_integration_vre_server.sh
+- nosetests tests/web/test_portal.py
+after_script:
+- sudo killall -s INT python

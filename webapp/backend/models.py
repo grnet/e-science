@@ -320,7 +320,57 @@ class FaqItem(models.Model):
     def __unicode__(self):
         return ('Q:%s > A:%s') % (self.faq_question, self.faq_answer)
 
+<<<<<<< HEAD
 class OrkaStatistics(models.Model):
+=======
+class ScreenItemCategory(models.Model):
+    """ Definition of Screenshot Categories """
+    id = models.AutoField("ScreenItemCategory ID", primary_key=True, null=False,
+                          help_text="Auto-increment ScreenItemCategory id")
+    category_name = models.CharField("ScreenItemCategory name", max_length=255, unique=True, null=False,
+                                     help_text="ScreenItemCategory Name")
+    class Meta:
+        verbose_name = "Feature Screenshot Category"
+        verbose_name_plural = "Feature Screenshot Categories"
+    
+    def __unicode__(self):
+        return ('%s : %s') % (self.id, self.category_name)
+
+class ScreenItem(models.Model):
+    """ Definition of Feature Screenshot items """
+    id = models.AutoField("Screenshot ID", primary_key=True, null=False,
+                               help_text="Auto-increment faqitem id")
+    screen_src = models.CharField("Screenshot Source", max_length=255, null=False,
+                                    help_text="Screenshot image filename including extension (imagename.ext)")
+    screen_title = models.CharField("Screenshot Title", max_length=100, null=False,
+                                    help_text="Will appear carousel caption")
+    screen_category = models.ForeignKey(ScreenItemCategory, null=False,
+                                       help_text="Screenshot Category")
+    class Meta:
+        verbose_name = "Feature Screenshot"
+    def __unicode__(self):
+        return ('%s') % (self.screen_title)
+
+    
+class VideoItem(models.Model):
+    """ Definition of Feature Video items """
+    VIDEO_ASPECT_CHOICES = (("0", "16by9"),("1", "4by3"),)
+    id = models.AutoField("VideoItem ID", primary_key=True, null=False,
+                               help_text="Auto-increment VideoItem id")
+    video_src = models.CharField("VideoItem Source url", max_length=255, null=False,
+                                    help_text="Full Source url as it would appear in the src= tag")
+    video_title = models.CharField("VideoItem Title", max_length=100, null=False,
+                                    help_text="Will appear at the video panel footer")
+    video_aspect = models.CharField("VideoItem aspect ratio", choices=VIDEO_ASPECT_CHOICES, 
+                                max_length=50, null=False,
+                                help_text="Select 16by9 or 4by3")
+    class Meta:
+        verbose_name = "Feature Video"
+    def __unicode__(self):
+        return ('%s : %s') % (self.video_title, self.VIDEO_ASPECT_CHOICES[int(self.video_aspect)][1])
+
+class ClusterStatistics(models.Model):
+>>>>>>> 0e411e6b8d31f166dc436da46bce572aab00d80b
     """Definition of Cluster statistics."""
     spawned_clusters = models.IntegerField("Spawned Clusters", null=True,
                                      help_text="Total number of spawned clusters")

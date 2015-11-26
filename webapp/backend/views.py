@@ -20,6 +20,7 @@ from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
     DeleteClusterSerializer, TaskSerializer, UserPutSerializer, \
     HdfsSerializer, StatisticsSerializer, NewsSerializer, FaqSerializer, SettingsSerializer, \
+    ScreensSerializer, VideosSerializer, \
     OrkaImagesSerializer, VreImagesSerializer, DslsSerializer, DslOptionsSerializer, DslDeleteSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
@@ -121,7 +122,38 @@ class FaqView(APIView):
         faq_items = FaqItem.objects.all()
         serializer_class = FaqSerializer(faq_items, many=True)
         return Response(serializer_class.data)
+
+class ScreensView(APIView):
+    """
+    View to handle requests for Screenshots metadata
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (AllowAny, )
+    resource_name = 'screen'
     
+    def get(self, request, *args, **kwargs):
+        """
+        Return screenshot item.
+        """
+        screens = ScreenItem.objects.all()
+        serializer_class = ScreensSerializer(screens, many=True)
+        return Response(serializer_class.data)
+    
+class VideosView(APIView):
+    """
+    View to handle requests for Videos metadata
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (AllowAny, )
+    resource_name = 'video'
+    
+    def get(self, request, *args, **kwargs):
+        """
+        Return screenshot item.
+        """
+        videos = VideoItem.objects.all()
+        serializer_class = VideosSerializer(videos, many=True)
+        return Response(serializer_class.data)    
 
 class StatisticsView(APIView):
     """

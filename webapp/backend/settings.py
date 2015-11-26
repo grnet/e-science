@@ -37,7 +37,7 @@ BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'some_key'
+SECRET_KEY = 's0me-key'
 
 TEMPLATE_DEBUG = DEBUG
 
@@ -57,8 +57,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_ember',
-    'rest_framework.authtoken',
-    'djcelery',
     'backend',
 )
 
@@ -82,9 +80,9 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'escience',
+        'NAME': 'portal',
         'USER': 'developer',
-        'PASSWORD': 'escience',
+        'PASSWORD': 'portal',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }

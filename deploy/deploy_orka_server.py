@@ -262,8 +262,7 @@ class OrkaServer(object):
         Return a string of 50 random chars to be used as secret key in django.
         """
         return ''.join(random.choice(string.lowercase) for i in range(50))
-
-        
+ 
     def action(self,verb):
         """
         Executes an action on orka server
@@ -291,7 +290,6 @@ class OrkaServer(object):
         logging.log(REPORT, 'Orka server successfully {0}ed.'.format(verb.rstrip('e')))
         if verb == 'update':
             self.action('restart')
-
  
 class OrkaImage(object):
     """

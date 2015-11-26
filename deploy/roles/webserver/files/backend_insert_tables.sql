@@ -23,6 +23,8 @@ INSERT INTO backend_vreimage (id, image_name, image_pithos_uuid, image_component
 INSERT INTO backend_vreimage (id, image_name, image_pithos_uuid, image_components, image_min_reqs, image_init_extra, image_category_id, image_access_url, image_faq_links, requires_script) VALUES (4, 'DSpace-5.3', 'c5850bc1-255d-4847-9b89-ce8e86667250', '{"Debian":{"version":"8.0","help":"https://www.debian.org/"},"DSpace":{"version":"5.3","help":"http://www.dspace.org/introducing"},"Docker":{"version":"1.6.2","help":"https://docs.docker.com/"},"PostgreSQL":{"version":"9.4","help":"http://www.postgresql.org/"},"Maven":{"version":"3.2.1","help":"https://maven.apache.org/"},"Ant":{"version":"1.9.4","help":"http://ant.apache.org/"},"Tomcat":{"version":"8.0.9","help":"http://tomcat.apache.org/"}}', '{"ram":2048}', '{admin_password,admin_email}', 4, '{8080/xmlui,8080/jspui}', '{"~Okeanos info for email port setup":"https://okeanos.grnet.gr/support/faq/cyclades-why-is-port-x-closed-is-it-blocked-by-design/","Info for docker operations":"https://github.com/grnet/e-science/blob/master/orka/VRE_README.md#general-docker-info"}',True);
 INSERT INTO backend_vreimage (id, image_name, image_pithos_uuid, image_components, image_min_reqs, image_init_extra, image_category_id, image_access_url, image_faq_links, requires_script) VALUES (5, 'BigBlueButton-0.81', '0d26fd55-31a4-46b3-955d-d94ecf04a323', '{"Debian":{"version":"8.0","help":"https://www.debian.org/"},"BigBlueButton":{"version":"0.81","help":"http://docs.bigbluebutton.org/"},"Docker":{"version":"1.6.2","help":"https://docs.docker.com/"}, "Tomcat":{"version":"6.0.24","help":"http://tomcat.apache.org/"}}', '{"cpu":2,"ram":2048}', '{}', 5, '{}', '{"~Okeanos info for email port setup":"https://okeanos.grnet.gr/support/faq/cyclades-why-is-port-x-closed-is-it-blocked-by-design/","Info for docker operations":"https://github.com/grnet/e-science/blob/master/orka/VRE_README.md#general-docker-info"}',False);
 
+INSERT INTO backend_publicnewsitem (id, news_date, news_message, news_category) VALUES (1, '2015-06-29 15:35:24+03', 'Flume installed on all existing pre-cooked Hadoop images', NULL);
+INSERT INTO backend_publicnewsitem (id, news_date, news_message, news_category) VALUES (2, '2015-06-15 15:35:31+03', 'Ecosystem, Hue, Cloudera images available', NULL);
 
 INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (1, 'Cyclades', 'Storage', '{"ext_vlmc":"Archipelago","drbd":"Standard"}', 'disk templates returned by Cyclades api matched to friendly name');
 INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (2, 'VM_Flavor', 'Small', '{"cpu":2,"ram":2048,"disk":10}', 'cpu in cores, ram in MiB, disk in GiB');
@@ -32,12 +34,11 @@ INSERT INTO backend_setting (id, section, property_name, property_value, comment
 INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (6, 'VRE_Flavor', 'Medium', '{"cpu":2,"ram":4096,"disk":10}', 'cpu in cores, ram in MiB, disk in GiB');
 INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (7, 'VRE_Flavor', 'Large', '{"cpu":4,"ram":6144,"disk":20}', 'cpu in cores, ram in MiB, disk in GiB');
 INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (8, 'Ansible', 'Errors', '{"1":"Ansible playbook error","2":"Ansible Failed to contact a host","3":"Host is dark, not accepting connections"}', 'Reference (v1.9x): https://github.com/ansible/ansible/blob/stable-1.9/bin/ansible, https://github.com/ansible/ansible/blob/stable-1.9/lib/ansible/errors.py');
+INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (9, 'Features', 'Videos', '{"videos_per_row":2}', '1,2,3,4,6,12 (a factor of 12 due to bootstrap gridsize)');
 
 SELECT setval('backend_vreimage_id_seq', (SELECT MAX(id) FROM backend_vreimage)+1);
 SELECT setval('backend_orkaimage_id_seq', (SELECT MAX(id) FROM backend_orkaimage)+1);
 SELECT setval('backend_vreimagecategory_id_seq', (SELECT MAX(id) FROM backend_vreimagecategory)+1);
 SELECT setval('backend_orkaimagecategory_id_seq', (SELECT MAX(id) FROM backend_orkaimagecategory)+1);
 SELECT setval('backend_publicnewsitem_id_seq', (SELECT MAX(id) FROM backend_publicnewsitem)+1);
-SELECT setval('backend_faqitem_id_seq', (SELECT MAX(id) FROM backend_faqitem_id_seq)+1);
-SELECT setval('backend_faqitemcategory_id_seq', (SELECT MAX(id) FROM backend_faqitemcategory_id_seq)+1);
 SELECT setval('backend_setting_id_seq', (SELECT MAX(id) FROM backend_setting)+1);
