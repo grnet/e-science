@@ -29,7 +29,7 @@ from tasks import create_cluster_async, destroy_cluster_async, scale_cluster_asy
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
 from reroute_ssh import HdfsRequest
-from okeanos_utils import check_pithos_path, check_pithos_object_exists, get_pithos_container_info
+from replay_support import check_pithos_path, check_pithos_object_exists, get_pithos_container_info
 
 
 logging.addLevelName(REPORT, "REPORT")

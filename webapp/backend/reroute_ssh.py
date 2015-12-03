@@ -163,7 +163,7 @@ def get_ready_for_reroute(hostname_master, password):
     These commands are executed only.
     """
     ssh_client = establish_connect(hostname_master, 'root', password,
-                                   MASTER_SSH_PORT)   
+                                   MASTER_SSH_PORT)
     try:
         copy_file_to_remote(ssh_client, "{0}/sources.list".format(FILES_DIR), "/etc/apt/sources.list")
         exec_command(ssh_client, 'apt-get update')
@@ -272,7 +272,7 @@ def reroute_ssh_to_slaves(dport, slave_ip, hostname_master, password, master_VM_
     finally:
         ssh_client.close()
 
-    ssh_client = establish_connect(hostname_master, 'root', password, dport)    
+    ssh_client = establish_connect(hostname_master, 'root', password, dport)
     try:
         copy_file_to_remote(ssh_client, "{0}/sources.list".format(FILES_DIR), "/etc/apt/sources.list")
         exec_command(ssh_client, 'echo "route add default gw 192.168.0.2 &>/dev/null" >> ~/.bashrc; . ~/.bashrc')
