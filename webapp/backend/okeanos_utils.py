@@ -30,7 +30,7 @@ from backend.models import UserInfo, ClusterInfo, VreServer, Dsl, OrkaImage, Vre
 
 
 def retrieve_pending_clusters(token, project_name):
-    """Retrieve pending cluster info"""
+    """ Retrieve pending cluster info """
     uuid = get_user_id(token)
     pending_quota = {"VMs": 0, "Cpus": 0, "Ram": 0, "Disk": 0, 
                      "Ip": 0, "Network": 0}
@@ -108,7 +108,7 @@ def get_project_id(token, project_name):
 
 
 def destroy_server(token, id):
-    """Destroys a VRE server in ~okeanos ."""
+    """ Destroys a VRE server in ~okeanos """
     current_task.update_state(state="Started")
     vre_server = VreServer.objects.get(id=id)    
     auth = check_credentials(unmask_token(encrypt_key,token))
@@ -523,7 +523,7 @@ def replay_dsl(token, id):
     
 
 def get_public_ip_id(cyclades_network_client,float_ip):  
-    """Return IP dictionary of an ~okeanos public IP"""
+    """ Return IP dictionary of an ~okeanos public IP """
     list_of_ips = cyclades_network_client.list_floatingips()
     for ip in list_of_ips:
         if ip['floating_ip_address'] == float_ip:
@@ -644,7 +644,7 @@ def find_node_to_remove(cluster_to_scale, cyclades, netclient):
     return node_fqdn,node_id
 
 def cluster_remove_node(node_fqdn, node_id, token, cluster_id, cluster_to_scale, cyclades, status):
-    """Remove a node of a scaled down cluster."""
+    """ Remove a node of a scaled down cluster. """
     state = "Deleting Node %s from cluster %s (id:%d)" % (node_fqdn, cluster_to_scale.cluster_name, cluster_id)
     set_cluster_state(token, cluster_id, state)
     cyclades.delete_server(node_id)    
@@ -929,7 +929,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
 
 
 def check_credentials(token, auth_url=auth_url):
-    """Identity,Account/Astakos. Test authentication credentials"""
+    """ Identity,Account/Astakos. Test authentication credentials """
     logging.log(REPORT, ' Test the credentials')
     try:
         auth = AstakosClient(auth_url, token)
@@ -942,7 +942,7 @@ def check_credentials(token, auth_url=auth_url):
 
 
 def get_flavor_lists(token):
-    """From kamaki flavor list get all possible flavors """
+    """ From kamaki flavor list get all possible flavors """
     auth = check_credentials(token)
     endpoints, user_id = endpoints_and_user_id(auth)
     cyclades = init_cyclades(endpoints['cyclades'], token)
@@ -975,7 +975,7 @@ def get_flavor_lists(token):
 
 
 def get_user_quota(auth):
-    """Return user quota"""
+    """ Return user quota """
     try:
         return auth.get_quotas()
     except ClientError:
@@ -1183,7 +1183,7 @@ def get_float_network_id(cyclades_network_client, project_id):
         return error_get_ip
     
 def personality(ssh_keys_path='', pub_keys_path='', vre_script_path=''):
-        """Personality injects ssh keys to the virtual machines we create"""
+        """ Personality injects ssh keys to the virtual machines we create """
         personality = []
         if vre_script_path:
             try:
@@ -1226,11 +1226,17 @@ def personality(ssh_keys_path='', pub_keys_path='', vre_script_path=''):
 
 class Cluster(object):
     """
-    Cluster class represents an entire ~okeanos cluster.Instantiation of
-    cluster gets the following arguments: A CycladesClient object,a name-prefix
-    for the cluster,the flavors of master and slave machines,the image id of
-    their OS, the size of the cluster,a CycladesNetworkClient object, an
-    AstakosClient object and the project_id.
+    Cluster class represents an entire ~okeanos cluster. 
+    Instantiation of cluster gets the following arguments: 
+    
+    A CycladesClient object,
+    the name-prefix for the cluster,
+    the flavors of master and slave machines,
+    the image id of their OS, 
+    the size of the cluster,
+    a CycladesNetworkClient object, 
+    an AstakosClient object and 
+    the project_id.
     """
     def __init__(self, cyclades, prefix, flavor_id_master, flavor_id_slave,
                  image_id, size, net_client, auth_cl, project_id):
