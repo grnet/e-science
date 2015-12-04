@@ -8,6 +8,7 @@ This module contains the definitions of returned errors and package constants.
 """
 import os
 import base64
+from os.path import join, abspath, dirname
 # Definitions of return value errors
 
 
@@ -51,6 +52,7 @@ REPORT = 25             		# Define logging level of REPORT
 SUMMARY = 29            		# Define logging level of SUMMARY
 MAX_WAIT = 300          		# Max number of seconds for wait function of Cyclades
 UUID_FILE = 'permitted_uuids.txt'	# File of ~okeanos uuid's allowed to login
+FILES_DIR = join(dirname(abspath(__file__)), "files") # Location of files directory. This is where files that will be copied to a Hadoop cluster without using ansible playbooks are stored.
 
 # MiB <-> GiB easy conversion constants
 Mbytes_to_GB = 1024     	# Global to convert megabytes to gigabytes

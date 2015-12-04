@@ -3,6 +3,4 @@ master_domain_name private_ip=192.168.0.2 ansible_ssh_host=some_public_ip
 
 [slaves]
 slave_1_domain_name private_ip=192.168.0.3 ansible_ssh_port=10000 ansible_ssh_host=master_domain_name
-
-[webserver]
-webserver_domain_name ansible_ssh_host=some_public_ip
+slave_2_domain_name private_ip=192.168.0.4 ansible_ssh_port=10001 ansible_ssh_host=master_domain_name

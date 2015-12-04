@@ -19,7 +19,7 @@ import subprocess
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ssh_client, REPORT, \
-    SUMMARY, ADD_TO_GET_PORT
+    SUMMARY, ADD_TO_GET_PORT, FILES_DIR
 
 # Global constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
@@ -147,6 +147,16 @@ def reroute_ssh_prep(server, master_ip):
     return list_of_hosts
 
 
+def copy_file_to_remote(ssh_client, source, destination):
+    """
+    Copy a file to a remote server using a paramiko connection.
+    """
+    sftp = ssh_client.open_sftp()
+    sftp.put(source, destination)
+    sftp.close()
+    return 0
+
+
 def get_ready_for_reroute(hostname_master, password):
     """
     Runs pre-setup commands for port forwarding in master virtual machine.
@@ -155,6 +165,7 @@ def get_ready_for_reroute(hostname_master, password):
     ssh_client = establish_connect(hostname_master, 'root', password,
                                    MASTER_SSH_PORT)
     try:
+        copy_file_to_remote(ssh_client, "{0}/sources.list".format(FILES_DIR), "/etc/apt/sources.list")
         exec_command(ssh_client, 'apt-get update')
         exec_command(ssh_client, 'apt-get -y install python-pip')
         exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv4/ip_forward')
@@ -263,6 +274,7 @@ def reroute_ssh_to_slaves(dport, slave_ip, hostname_master, password, master_VM_
 
     ssh_client = establish_connect(hostname_master, 'root', password, dport)
     try:
+        copy_file_to_remote(ssh_client, "{0}/sources.list".format(FILES_DIR), "/etc/apt/sources.list")
         exec_command(ssh_client, 'echo "route add default gw 192.168.0.2 &>/dev/null" >> ~/.bashrc; . ~/.bashrc')
         exec_command(ssh_client, 'echo "route add default gw 192.168.0.2 &>/dev/null" >> ~/.profile')
         exec_command(ssh_client, 'apt-get update')
