@@ -172,10 +172,6 @@ So, for updating the server, the following steps are required:
 and run the script:
 
     python deploy_orka_server.py update examplefile.yml
-
-after the update is done, server should be restarted with:
-
-    python deploy_orka_server.py restart examplefile.yml
-    
+  
 The default github repo that deploy_orka_server.py will look for updates is `https://github.com/grnet/e-science.git` at the master branch.
 The github repo and branch/version is set in `e-science/deploy/group_vars/webserver.yml` file and can be changed to point to another location.
