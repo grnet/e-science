@@ -19,7 +19,7 @@ from run_ansible_playbooks import install_yarn
 from okeanos_utils import Cluster, check_credentials, endpoints_and_user_id, \
     init_cyclades, init_cyclades_netclient, init_plankton, get_project_id, \
     destroy_cluster, get_user_quota, set_cluster_state, retrieve_pending_clusters, get_float_network_id, \
-    set_server_state, personality
+    set_server_state, personality, get_system_dist
 from django_db_after_login import db_cluster_create, db_server_create
 from cluster_errors_constants import *
 from celery import current_task
@@ -304,7 +304,7 @@ class YarnCluster(object):
                 ' not match an existing id'
             raise ClientError(msg, error_flavor_id)
         retval = self.check_all_resources()
-         # check image metadata in database and pithos and set orka_image_uuid accordingly
+        # check image metadata in database and pithos and set orka_image_uuid accordingly
         self.orka_image_uuid = OrkaImage.objects.get(image_name=self.opts['os_choice']).image_pithos_uuid
         list_current_images = self.plankton.list_public(True, 'default')
         for image in list_current_images:
@@ -488,8 +488,8 @@ class YarnCluster(object):
 
         try:
             # Configuring YARN cluster node communication
-            list_of_hosts = reroute_ssh_prep(self.server_dict,
-                                             self.HOSTNAME_MASTER_IP)
+            list_of_hosts = reroute_ssh_prep(self.server_dict,self.HOSTNAME_MASTER_IP,
+                                             linux_dist=get_system_dist(self.opts['os_choice']))
             set_cluster_state(self.opts['token'], self.cluster_id,
                           'Installing and configuring YARN (3/3)')
             # Installing and configuring YARN
