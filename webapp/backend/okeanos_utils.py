@@ -364,9 +364,11 @@ def scale_cluster(token, cluster_id, cluster_delta, status='Pending'):
         master_ip = cluster_to_scale.master_IP
         user_id = new_slave['uuid']
         image_id = new_slave['image_id']
+        linux_dist = get_system_dist(cluster_to_scale.os_image)
         try:
             for new_slave in list_of_new_slaves:
-                reroute_ssh_to_slaves(new_slave['port'], new_slave['private_ip'], master_ip, new_slave['password'], '')
+                reroute_ssh_to_slaves(new_slave['port'], new_slave['private_ip'], master_ip, new_slave['password'],
+                                      '',linux_dist)
         except Exception, e:
             msg = '{0}. Scale action failed. Cluster rolled back'.format(str(e.args[0]))
             set_cluster_state(token, cluster_id, msg)
@@ -534,6 +536,17 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     else:
         msg = 'Error while deleting cluster'
         raise ClientError(msg, list_of_errors[0])
+
+
+def get_system_dist(name):
+    """
+    Get the Debian distribution given the name or id of an orka image.
+    """   
+    # Check if orka image is in Cloudera category which means Debian wheezy distribution.
+    if OrkaImage.objects.get(image_name=name).image_category.category_name == 'Cloudera':
+        return 'wheezy'
+    # Else return Debian jessie distribution.
+    return 'jessie'
 
 
 def check_credentials(token, auth_url=auth_url):
