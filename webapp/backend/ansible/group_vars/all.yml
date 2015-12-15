@@ -1,7 +1,4 @@
 ---
-  # setup_orca_admin variables
-  orka_admin_password: $1$SomeSalt$W98.5N4Mc2EpxOTlI9MI20
-  create_orka_admin: False
   # PostgreSql variables
   eco_db_user: hduser
   eco_db_password: hdpass

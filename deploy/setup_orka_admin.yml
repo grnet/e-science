@@ -63,7 +63,7 @@
     tags: preimage
     pip: "name={{item.name}}"
     with_items:
-      - { name: 'kamaki' }
+      - { name: 'kamaki==0.13.5' }
       - { name: 'ansible==1.9.2' }
       - { name: 'celery==3.1.17' }
       - { name: 'Django' }
