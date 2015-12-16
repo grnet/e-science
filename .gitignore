@@ -17,7 +17,9 @@ node_modules/
 block
 orka-pithos.jardesc
 sonar-project.properties
-*/*.txt
+*.txt
+!LICENSE.txt
+*.pdf
 *.properties
 *.xml
 !workflow_ecosystem.xml
