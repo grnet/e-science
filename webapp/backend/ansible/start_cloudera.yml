@@ -37,13 +37,17 @@
       - sudo -u hdfs hadoop fs -mkdir -p /user
       - sudo -u hdfs hadoop fs -mkdir -p /user/yarn
       - sudo -u hdfs hadoop fs -chown yarn /user/yarn
+      - sudo -u hdfs hadoop fs -chmod -R 1777 /user/yarn
       - sudo -u hdfs hadoop fs -mkdir -p /user/root
       - sudo -u hdfs hadoop fs -chown root /user/root
       - sudo -u hdfs hadoop fs -mkdir -p /user/mapred
       - sudo -u hdfs hadoop fs -chown mapred /user/mapred
+      - sudo -u hdfs hadoop fs -chmod -R 1777 /user/mapred
       - sudo -u hdfs hadoop fs -mkdir -p /user/hdfs
       - sudo -u hdfs hadoop fs -chown hdfs /user/hdfs
+      - sudo -u hdfs hadoop fs -chmod -R 1777 /user/hdfs
       - sudo -u hdfs hadoop fs -mkdir -p /user/flume
+      - sudo -u hdfs hadoop fs -chmod -R 1777 /user/flume
       - sudo -u hdfs hadoop fs -chown flume:flume /user/flume
       - sudo -u hdfs hadoop fs -mkdir -p /tmp
       - sudo -u hdfs hadoop fs -chmod -R 1777 /tmp
@@ -58,6 +62,7 @@
       - sudo -u hdfs hadoop fs -mkdir -p /user/hive/warehouse
       - sudo -u hdfs hadoop fs -chmod 1777 /user/hive/warehouse
       - sudo -u hdfs hadoop fs -mkdir -p /user/oozie
+      - sudo -u hdfs hadoop fs -chmod -R 1777 /user/oozie
       - sudo -u hdfs hadoop fs -chown oozie:oozie /user/oozie
       - sudo -u hdfs hadoop fs -mkdir -p /var/log/oozie
       - sudo -u hdfs hadoop fs -chown oozie:oozie /var/log/oozie
