@@ -104,7 +104,7 @@ Re-use of the same cluster:
     cluster:
         # cluster information
         cluster_id: 1
-        master_IP: 83.212.116.30
+        master_IP: 12.345.678.90
     actions:
         # list of actions
         - local_cmd (ls)
