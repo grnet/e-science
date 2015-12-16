@@ -30,7 +30,7 @@
 
   - name: Chmod to hduser directory
     tags: start
-    action: command sudo -u hduser ./hadoop fs -chmod -R 1777 /user/hduser
+    action: command sudo -u hduser ./hadoop fs -chmod 1777 /user/hduser chdir={{hadoop_home}}/bin
     when: is_master
 
   - name: Enable flume-agent to run by default
