@@ -334,19 +334,16 @@ public class PithosFileSystem extends FileSystem {
 
         // - Process the given path
         pithosPath = new PithosPath(targetPath);
-
-        // - Check if it is the final call from outputstream and perform the
-        // final action for the result file(s) movement
         if (PithosOutputStream.isClosed() && !isCommitCalled()) {
             // - Set the current path as the one that constitutes the commit
-            // directory for Hadoop outpustream
+            // directory for Hadoop outputstream
             setCommitPithosPath(pithosPath);
 
             // - Perform the final commit by moving the result files to the root
             // output folder
             commitFinalResult();
         }
-
+        
         urlEsc = null;
         try {
             urlEsc = Utils.urlEscape(null, null,
@@ -391,6 +388,10 @@ public class PithosFileSystem extends FileSystem {
             pithosFileStatus = new PithosFileStatus(length, hdfsBlockSize,
                     Utils.dateTimeToEpoch(modificationTime, ""), targetPath);
         }
+        // - Check if it is the final call from outputstream and perform the
+        // final action for the result file(s) movement
+       
+
         return pithosFileStatus;
     }
 
@@ -560,11 +561,23 @@ public class PithosFileSystem extends FileSystem {
         fromAttemptDirectory = getCommitPithosPath().getObjectAbsolutePath();
 
         // - Get the root folder
+        try
+        {
         toOutputRootDirectory = getCommitPithosPath().getObjectAbsolutePath()
                 .substring(
                         0,
                         getCommitPithosPath().getObjectAbsolutePath().indexOf(
                                 "/_temporary"));
+        
+        }
+        // - Catch the exception thrown when PithosPath used with commitFinalResult has no
+        // _temporary folders. This happens due to a bug.
+        catch (StringIndexOutOfBoundsException e)
+        {
+            this.commitCalled = false;
+            return;
+        }
+             
 
         try {
             // - Get the file status by all available files into selected
