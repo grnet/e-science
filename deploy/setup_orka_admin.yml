@@ -8,7 +8,7 @@
     tags: preimage
 
   - name: Update and Upgrade
-    shell: apt-get update && apt-get -y upgrade
+    shell: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
     tags: preimage
 
   - name: Install aptitude tasksel
