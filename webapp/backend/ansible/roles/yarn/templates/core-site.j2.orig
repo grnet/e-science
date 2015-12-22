@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!-- Put site-specific property overrides in this file. -->
+<configuration>
+<property>
+  <name>hadoop.tmp.dir</name>
+  <value>/app/hadoop/tmp</value>
+  <final>true</final>
+  <description>A base for other temporary directories.</description>
+</property>
+<property>
+  <name>fs.default.name</name>
+  <value>hdfs://{{ hostvars[groups['master'][0]].inventory_hostname_short}}:9000</value>
+  <final>true</final>
+  <description>The name of the default file system.  A URI whose
+  scheme and authority determine the FileSystem implementation.  The
+  uri's scheme determines the config property (fs.SCHEME.impl) naming
+  the FileSystem implementation class.  The uri's authority is used to
+  determine the host, port, etc. for a filesystem.</description>
+</property>
+<property>
+  <name>fs.pithos.impl</name>
+  <value>gr.grnet.escience.fs.pithos.PithosFileSystem</value>
+  <description>fqn of class</description>
+</property>
+<property>
+  <name>fs.pithos.url</name>
+  <value>https://pithos.okeanos.grnet.gr/v1</value>
+  <description>pithos url</description>
+</property>
+<property>
+  <name>hadoop.proxyuser.hduser.hosts</name>
+  <value>*</value>
+</property>
+<property>
+  <name>hadoop.proxyuser.hduser.groups</name>
+  <value>*</value>
+</property>
+<property>
+  <name>hadoop.http.staticuser.user</name>
+  <value>hduser</value>
+</property>
+</configuration>

@@ -17,13 +17,10 @@ node_modules/
 block
 orka-pithos.jardesc
 sonar-project.properties
-*.txt
-!LICENSE.txt
-*.pdf
+*/*.txt
 *.properties
 *.xml
 !workflow_ecosystem.xml
 !workflow.xml
 *.tar
 *encrypt_key.py
-tests/integration/*swp
