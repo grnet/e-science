@@ -48,6 +48,29 @@
       - conf
       - logs
 
+  - name: Copy uwsgi and celery daemon files to /etc/init.d
+    tags: restart
+    sudo: yes
+    copy: "src={{item.src}} dest={{item.dest}} mode={{item.mode}}"
+    with_items:
+      - { src: 'celery.sh', dest: '/etc/init.d/celery.sh', mode: '0755' }
+      - { src: 'uwsgi.sh', dest: '/etc/init.d/uwsgi.sh', mode: '0755' }
+      - { src: 'celery.service', dest: '/lib/systemd/system/celery.service', mode: '644' }
+      - { src: 'uwsgi.service', dest: '/lib/systemd/system/uwsgi.service', mode: '644' }
+
+  - name: Reload services files in systemd folder 
+    tags: restart
+    sudo: yes
+    shell: systemctl daemon-reload
+
+  - name: Enable uwsgi and celery services after reboot
+    tags: restart
+    sudo: yes
+    shell: systemctl enable {{item}}
+    with_items:
+      - celery.service
+      - uwsgi.service
+
   - name: create orka_admin user ssh keys
     user: name=orka_admin shell=/bin/bash generate_ssh_key=yes state=present
     tags: postimage
@@ -157,13 +180,12 @@
   - name: Stop uwsgi
     tags: restart
     sudo: yes
-    command: uwsgi --stop /tmp/uwsgi.pid
+    shell: systemctl stop uwsgi
 
   - name: Stop celery
     tags: restart
-    command: celery multi stopwait celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%h.log
-    args:
-      chdir: "{{project_path}}/{{webapp_dir}}"
+    sudo: yes
+    shell: systemctl stop celery
 
   - name: Stop rabbitmq
     tags: restart
@@ -199,12 +221,11 @@
      - restart
 
   - name: Start uWSGI service
+    sudo: yes
     tags:
      - postimage
      - restart
-    command: uwsgi --ini {{user_home}}/conf/uwsgi.ini
-    args:
-      chdir: "{{project_path}}/{{webapp_dir}}"
+    shell: systemctl start uwsgi
 
   - name: Run collectstatic command
     tags:
@@ -213,9 +234,8 @@
     django_manage: command=collectstatic app_path={{project_path}}/{{webapp_dir}}
 
   - name: Run celery as a daemon
+    sudo: yes
     tags:
      - postimage
      - restart
-    command: celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=$HOME/logs/\%h.log
-    args:
-      chdir: "{{project_path}}/{{webapp_dir}}"
+    shell: systemctl start celery
