@@ -49,7 +49,9 @@
       - logs
 
   - name: Copy uwsgi and celery daemon files to /etc/init.d
-    tags: restart
+    tags:
+     - postimage
+     - restart
     sudo: yes
     copy: "src={{item.src}} dest={{item.dest}} mode={{item.mode}}"
     with_items:
@@ -59,12 +61,16 @@
       - { src: 'uwsgi.service', dest: '/lib/systemd/system/uwsgi.service', mode: '644' }
 
   - name: Reload services files in systemd folder 
-    tags: restart
+    tags:
+     - postimage
+     - restart
     sudo: yes
     shell: systemctl daemon-reload
 
   - name: Enable uwsgi and celery services after reboot
-    tags: restart
+    tags:
+     - postimage
+     - restart
     sudo: yes
     shell: systemctl enable {{item}}
     with_items:
