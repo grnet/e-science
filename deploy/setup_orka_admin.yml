@@ -74,7 +74,7 @@
       - { name: 'django-filter==0.9.2' }
       - { name: 'djorm-pgarray==1.2' }
       - { name: 'paramiko==1.16.0' }
-      - { name: 'uwsgi' }
+      - { name: 'uwsgi==2.0.11.2' }
       - { name: 'requests' }
       - { name: 'django-celery==3.1.16' }
       - { name: 'flower' }

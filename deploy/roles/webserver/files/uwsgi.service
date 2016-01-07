@@ -1,0 +1,12 @@
+[Unit]
+Description=uwsgi
+
+[Service]
+Type=oneshot
+ExecStart=/etc/init.d/uwsgi.sh start
+ExecStop=/etc/init.d/uwsgi.sh stop
+ExecReload=/etc/init.d/uwsgi.sh restart
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
