@@ -19,7 +19,7 @@ import subprocess
 
 # Definitions of return value errors
 from cluster_errors_constants import error_ssh_client, REPORT, \
-    SUMMARY, ADD_TO_GET_PORT
+    SUMMARY, ADD_TO_GET_PORT, FILES_DIR
 
 # Global constants
 MASTER_SSH_PORT = 22  # Port of master virtual machine for ssh connection
@@ -110,7 +110,7 @@ def start_vre_script(server_ip, password, admin_password, vre_script, admin_emai
     exec_command(ssh_client, command)
     
     
-def reroute_ssh_prep(server, master_ip):
+def reroute_ssh_prep(server, master_ip, linux_dist='jessie'):
     """
     Creates list of host and ip-tables for reroute ssh to all slaves
     """
@@ -129,7 +129,7 @@ def reroute_ssh_prep(server, master_ip):
                       'port': 22, 'password': s['adminPass']}
             list_of_hosts.append(dict_s)
             # Pre-setup the port forwarding that will happen later
-            get_ready_for_reroute(hostname_master, master_VM_password)
+            get_ready_for_reroute(hostname_master, master_VM_password, linux_dist)
         else:
             # Every slave ip is increased by 1 from the private ip of the
             # previous slave.The first slave is increased by 1 from the
@@ -142,12 +142,23 @@ def reroute_ssh_prep(server, master_ip):
 
     # Port-forwarding now for every slave machine
     for vm in list_of_hosts[1:]:
-        reroute_ssh_to_slaves(vm['port'], vm['private_ip'], hostname_master, vm['password'], master_VM_password)
+        reroute_ssh_to_slaves(vm['port'], vm['private_ip'], hostname_master, vm['password'], master_VM_password,
+                              linux_dist)
 
     return list_of_hosts
 
 
-def get_ready_for_reroute(hostname_master, password):
+def copy_file_to_remote(ssh_client, source, destination):
+    """
+    Copy a file to a remote server using a paramiko connection.
+    """
+    sftp = ssh_client.open_sftp()
+    sftp.put(source, destination)
+    sftp.close()
+    return 0
+
+
+def get_ready_for_reroute(hostname_master, password, linux_dist):
     """
     Runs pre-setup commands for port forwarding in master virtual machine.
     These commands are executed only.
@@ -155,6 +166,7 @@ def get_ready_for_reroute(hostname_master, password):
     ssh_client = establish_connect(hostname_master, 'root', password,
                                    MASTER_SSH_PORT)
     try:
+        copy_file_to_remote(ssh_client, "{0}/{1}_sources.list".format(FILES_DIR,linux_dist), "/etc/apt/sources.list")
         exec_command(ssh_client, 'apt-get update')
         exec_command(ssh_client, 'apt-get -y install python-pip')
         exec_command(ssh_client, 'echo 1 > /proc/sys/net/ipv4/ip_forward')
@@ -239,7 +251,7 @@ def check_command_exit_status(ex_status, command):
                     command, ex_status)
 
 
-def reroute_ssh_to_slaves(dport, slave_ip, hostname_master, password, master_VM_password):
+def reroute_ssh_to_slaves(dport, slave_ip, hostname_master, password, master_VM_password, linux_dist):
     """
     For every slave vm in the cluster this function is called.
     Finishes the port forwarding and installs python for ansible
@@ -263,6 +275,7 @@ def reroute_ssh_to_slaves(dport, slave_ip, hostname_master, password, master_VM_
 
     ssh_client = establish_connect(hostname_master, 'root', password, dport)
     try:
+        copy_file_to_remote(ssh_client, "{0}/{1}_sources.list".format(FILES_DIR,linux_dist), "/etc/apt/sources.list")
         exec_command(ssh_client, 'echo "route add default gw 192.168.0.2 &>/dev/null" >> ~/.bashrc; . ~/.bashrc')
         exec_command(ssh_client, 'echo "route add default gw 192.168.0.2 &>/dev/null" >> ~/.profile')
         exec_command(ssh_client, 'apt-get update')

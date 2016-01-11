@@ -376,7 +376,7 @@ def read_replication_factor(user, master_IP):
         and read the replication factor
         from the hdfs-site.xml 
     """
-    hdfs_xml = subprocess.check_output("ssh " + user + "@" + master_IP 
+    hdfs_xml = subprocess.check_output("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + user + "@" + master_IP 
                                             + " \"" + "cat /usr/local/hadoop/etc/hadoop/hdfs-site.xml\"", 
                                             shell=True)
 
@@ -396,7 +396,7 @@ def ssh_stream_from_hadoop(user, master_IP, source_file, dest_dir):
         SSH to master VM and
         stream files from hadoop to local
     """
-    str_command = "ssh {0}@{1} ".format(user, master_IP) + \
+    str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} ".format(user, master_IP) + \
     "\"{0} dfs -text ".format(HADOOP_PATH) + \
     "\'{0}\'\"".format(source_file) + \
     " > \'{0}\'".format(dest_dir)
@@ -513,7 +513,7 @@ def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
         SSH to master VM and 
         stream file from hdfs to pithos block by block
     """
-    str_command = "ssh {0}@{1} ".format(user,master_IP) + \
+    str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} ".format(user,master_IP) + \
     "\"kamaki container list --output-format json\""
     containers = subprocess.check_output(str_command, shell=True)
     list_of_pithos_containers = json.loads(containers)  
@@ -528,11 +528,11 @@ def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
             container_project = item["x_container_policy"]["project"]
     if not container_exists:
         return -1
-    str_command = "ssh {0}@{1} ".format(user,master_IP) + \
+    str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} ".format(user,master_IP) + \
     "\"kamaki quota list --project-id {0} --output-format json --resource pithos.diskspace\"".format(container_project)
     quota = subprocess.check_output(str_command, shell=True)
     container_quota_list =json.loads(quota)
-    str_command = "ssh {0}@{1} ".format(user,master_IP) + \
+    str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} ".format(user,master_IP) + \
     "\"{0}".format(HADOOP_PATH) + " dfs -du \'{0}\'\"".format(hdfs_path)
     size_of_file = subprocess.check_output(str_command, shell=True).split()[0]
     file_size = int(size_of_file)   
@@ -545,22 +545,22 @@ def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
         available_pithos = project_limit_pithos - project_usage_vmpithos
     if file_size > available_pithos: # check pithos quota for file upload
         return -2
-    str_command = "ssh {0}@{1} ".format(user,master_IP) + \
+    str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} ".format(user,master_IP) + \
     "\"kamaki file create \'{0}\'\"".format(dest_path)
     
     subprocess.call(str_command, shell=True)   
     if file_size < block_size:  #In case file is smaller than block size, file is uploaded as a whole.
-        str_command = "ssh {0}@{1} ".format(user,master_IP) + \
+        str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} ".format(user,master_IP) + \
         "\"{0} dfs -get ".format(HADOOP_PATH) + \
         "\'{0}\' temp_file\"".format(hdfs_path)
         
         response_save_temp_file_1 = subprocess.call(str_command, shell=True )
-        response_append_to_pithos_1 = subprocess.call("ssh " + user + "@"
+        response_append_to_pithos_1 = subprocess.call("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no " + user + "@"
                                     + master_IP +" kamaki file append temp_file " + dest_path , shell=True)
     else:
         file_left = file_size % block_size
         counter = 0
-        str_command = "ssh {0}@{1} ".format(user,master_IP) + \
+        str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} ".format(user,master_IP) + \
         "\"{0} dfs -cat ".format(HADOOP_PATH) + \
         "\'{0}\' ".format(hdfs_path) + \
         "| dd bs=1 skip=\'{0}\' ".format(counter * block_size) + \
@@ -568,26 +568,26 @@ def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
         "> temp_file\""
                 
         response_save_temp_file_2 = subprocess.call(str_command, shell=True )
-        str_command = "ssh {0}@{1} ".format(user,master_IP) + \
+        str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} ".format(user,master_IP) + \
         "\"kamaki file append temp_file \'{0}\'\"".format(dest_path)
         
         response_append_to_pithos_2 = subprocess.call(str_command, shell=True)
         counter +=1 
-        while ((counter+1) * block_size) < file_size : # upload file block by clock to pithos. Append each block at destination file.
-            str_command = "ssh {0}@{1} ".format(user,master_IP) + \
+        while ((counter+1) * block_size) < file_size : # upload file block by block to pithos. Append each block at destination file.
+            str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} ".format(user,master_IP) + \
             "\"{0} dfs -cat ".format(HADOOP_PATH) + \
             "\'{0}\' ".format(hdfs_path) + \
             "| dd bs=\'{0}\' skip=1 iflag=fullblock ".format(counter * block_size) + \
             "| dd bs=\'{0}\' count=\'1\' > temp_file\"".format(block_size)
             
             response_save_temp_file_3 = subprocess.call(str_command, shell=True )
-            str_command = "ssh {0}@{1} ".format(user,master_IP) + \
+            str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} ".format(user,master_IP) + \
             "\"kamaki file append temp_file \'{0}\'\"".format(dest_path)
             
             response_append_to_pithos_3 = subprocess.call(str_command, shell=True)
             counter +=1 
         if file_left !=0:   # In case file size is not perfectly divided in block size the remainder is uploaded separately.
-            str_command = "ssh {0}@{1} ".format(user,master_IP) + \
+            str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} ".format(user,master_IP) + \
             "\"{0} ".format(HADOOP_PATH) + \
             "dfs -cat \'{0}\' ".format(hdfs_path) + \
             "| dd bs=1 skip=\'{0}\' ".format(counter * block_size) + \
@@ -595,11 +595,11 @@ def from_hdfs_to_pithos(user, master_IP, hdfs_path, dest_path):
             "> temp_file\""
             
             response_save_temp_file_4 = subprocess.call(str_command, shell=True )
-            str_command = "ssh {0}@{1} ".format(user,master_IP) + \
+            str_command = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} ".format(user,master_IP) + \
             "\"kamaki file append temp_file \'{0}\'\"".format(dest_path)
             
             response_append_to_pithos_4 = subprocess.call(str_command, shell=True)
-    response_delete_temp = subprocess.call("ssh {0}@{1} \"rm temp_file\"".format(user,master_IP), shell=True)
+    response_delete_temp = subprocess.call("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {0}@{1} \"rm temp_file\"".format(user,master_IP), shell=True)
     return
 
 

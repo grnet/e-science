@@ -834,7 +834,7 @@ def main():
     Entry point of orka package. Parses user arguments and return
     appropriate messages for success or error.
     """
-    orka_parser = ArgumentParser(description='Manage a Hadoop-Yarn'
+    orka_parser = ArgumentParser(description='Manage a Hadoop-YARN'
                                         ' cluster or a Virtual Research Environment server in ~okeanos ')
     checker = _ArgCheck()
     logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
@@ -872,7 +872,7 @@ def main():
                                      help='List available Hadoop images.')
     # cluster actions group
     parser_create = orka_subparsers.add_parser('create', parents=[common_parser, common_create_parser],
-                                     help='Create a Hadoop-Yarn cluster'
+                                     help='Create a Hadoop-YARN cluster'
                                    ' on ~okeanos.')
     parser_vre = orka_subparsers.add_parser('vre', help='Operations for Virtual Research Environment machines'
                                      ' on ~okeanos.')
@@ -889,19 +889,19 @@ def main():
     parser_vre_list = vre_subparsers.add_parser('list', parents=[common_parser],
                                                   help='List user Virtual Research Environment servers')
     parser_destroy = orka_subparsers.add_parser('destroy', parents=[common_parser],
-                                     help='Destroy a Hadoop-Yarn cluster'
+                                     help='Destroy a Hadoop-YARN cluster'
                                      ' on ~okeanos.')
     parser_node = orka_subparsers.add_parser('node', parents=[common_parser],
-                                     help='Operations on a Hadoop-Yarn cluster for adding or deleting a node.')
+                                     help='Operations on a Hadoop-YARN cluster for adding or deleting a node.')
     parser_replay = orka_subparsers.add_parser('replay', parents=[common_parser],
                                      help='Replay an experiment.')
     parser_list = orka_subparsers.add_parser('list', parents=[common_parser],
                                      help='List user clusters.')
     parser_info = orka_subparsers.add_parser('info', parents=[common_parser],
-                                     help='Information for a specific Hadoop-Yarn cluster.')
+                                     help='Information for a specific Hadoop-YARN Cluster.')
     # Hadoop actions group
     parser_hadoop = orka_subparsers.add_parser('hadoop',parents=[common_parser],
-                                     help='Start, Stop or Format a Hadoop-Yarn cluster.')
+                                     help='Start, Stop or Format a Hadoop-YARN cluster.')
     # HDFS actions group
     parser_file = orka_subparsers.add_parser('file', parents=[common_parser],
                                         help='File operations between various file sources and HDFS.')
@@ -916,9 +916,9 @@ def main():
                                              help='List pithos+ files.')
     parser_node_subparsers = parser_node.add_subparsers(help='Choose node action add or delete')
     parser_addnode = parser_node_subparsers.add_parser('add',
-                                                       help='Add a node in a Hadoop-Yarn cluster on ~okeanos.')
+                                                       help='Add a node in a Hadoop-YARN cluster on ~okeanos.')
     parser_removenode = parser_node_subparsers.add_parser('remove',
-                                                          help='Remove a node from a Hadoop-Yarn cluster on ~okeanos.')
+                                                          help='Remove a node from a Hadoop-YARN cluster on ~okeanos.')
     
     if len(argv) > 1:
         

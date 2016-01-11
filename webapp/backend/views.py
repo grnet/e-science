@@ -18,8 +18,8 @@ from get_flavors_quotas import project_list_flavor_quota
 from backend.models import *
 from serializers import OkeanosTokenSerializer, UserInfoSerializer, \
     ClusterCreationParamsSerializer, ClusterchoicesSerializer, \
-    DeleteClusterSerializer, TaskSerializer, UserThemeSerializer, \
-    HdfsSerializer, StatisticsSerializer, NewsSerializer, SettingsSerializer, \
+    DeleteClusterSerializer, TaskSerializer, UserPutSerializer, \
+    HdfsSerializer, StatisticsSerializer, NewsSerializer, FaqSerializer, SettingsSerializer, \
     OrkaImagesSerializer, VreImagesSerializer, DslsSerializer, DslOptionsSerializer, DslDeleteSerializer
 from django_db_after_login import *
 from cluster_errors_constants import *
@@ -29,7 +29,7 @@ from tasks import create_cluster_async, destroy_cluster_async, scale_cluster_asy
 from create_cluster import YarnCluster
 from celery.result import AsyncResult
 from reroute_ssh import HdfsRequest
-from okeanos_utils import check_pithos_path, check_pithos_object_exists, get_pithos_container_info
+from replay_support import check_pithos_path, check_pithos_object_exists, get_pithos_container_info
 
 
 logging.addLevelName(REPORT, "REPORT")
@@ -105,6 +105,23 @@ class NewsView(APIView):
         public_news = PublicNewsItem.objects.all()
         serializer_class = NewsSerializer(public_news, many=True)
         return Response(serializer_class.data)
+    
+class FaqView(APIView):
+    """
+    View to handle requests for Frequently Asked Question items
+    """
+    authentication_classes = (EscienceTokenAuthentication, )
+    permission_classes = (AllowAny, )
+    resource_name = 'faqitem'
+    
+    def get(self, request, *args, **kwargs):
+        """
+        Return faq items.
+        """
+        faq_items = FaqItem.objects.all()
+        serializer_class = FaqSerializer(faq_items, many=True)
+        return Response(serializer_class.data)
+    
 
 class StatisticsView(APIView):
     """
@@ -121,9 +138,14 @@ class StatisticsView(APIView):
         destroyed_clusters = ClusterInfo.objects.all().filter(cluster_status=0).count()
         active_clusters = ClusterInfo.objects.all().filter(cluster_status=1).count()
         spawned_clusters = active_clusters + destroyed_clusters
-        cluster_statistics = ClusterStatistics.objects.create(spawned_clusters=spawned_clusters,
-                                                             active_clusters=active_clusters)
-        serializer_class = StatisticsSerializer(cluster_statistics)
+        destroyed_vres = VreServer.objects.all().filter(server_status=0).count()
+        active_vres = VreServer.objects.all().filter(server_status=1).count()
+        spawned_vres = active_vres + destroyed_vres
+        orka_statistics = OrkaStatistics.objects.create(spawned_clusters=spawned_clusters,
+                                                             active_clusters=active_clusters,
+                                                             spawned_vres=spawned_vres,
+                                                             active_vres=active_vres)
+        serializer_class = StatisticsSerializer(orka_statistics)
         return Response(serializer_class.data)
 
 
@@ -282,8 +304,7 @@ class StatusView(APIView):
 
 class SessionView(APIView):
     """
-    View to handle requests from ember for user login and logout and
-    user theme update
+    View to handle requests from ember for user metadata updates
     """
     authentication_classes = (EscienceTokenAuthentication, )
     permission_classes = (IsAuthenticatedOrIsCreation, )
@@ -327,11 +348,12 @@ class SessionView(APIView):
         """
         user_token = Token.objects.get(key=request.auth)
         self.user = UserInfo.objects.get(user_id=user_token.user.user_id)
-        self.serializer_class = UserThemeSerializer
+        self.serializer_class = UserPutSerializer
         serializer = self.serializer_class(data=request.DATA)
         if serializer.is_valid():
-            if serializer.data['user_theme']:
-                self.user.user_theme = serializer.data['user_theme']
+            if serializer.data['user_theme'] or serializer.data['error_message']:
+                self.user.user_theme = serializer.data.get('user_theme','')
+                self.user.error_message = serializer.data.get('error_message','')
                 self.user.save()
             else:
                 db_logout_entry(self.user)

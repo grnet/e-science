@@ -86,11 +86,15 @@ App.Dsl = DS.Model.extend({
     message_dsl_status_replay : function(){
         var status = this.get('dsl_status');
         if (status == '1'){ // replaying
-            return this.get('state') || 'Executing...'; // message from celery if set
+            return this.get('state') || 'Replaying..'; // message from celery if set
         }else{
             return '';
         }
     }.property('dsl_status','state'),
+    dsl_status_replay_short : function(){
+        var status = this.get('dsl_status');
+        return (Ember.isEmpty(status) || status != '1') ? '' : 'Replaying..';
+    }.property('dsl_status'),
     action_dsl_confirm : function(key, value){
         this.set('confirm_action', value);
         return this.get('confirm_action');
@@ -361,6 +365,10 @@ App.Usercluster = DS.Model.extend({
 		default:
 			return "UNKNOWN";
 		}
+	}.property('cluster_status'),
+	cluster_status_active_pending : function(){
+	    var status = this.get('cluster_status');
+	    return ['1','2'].contains(status);
 	}.property('cluster_status'),
 	cluster_status_class : function()
 	{

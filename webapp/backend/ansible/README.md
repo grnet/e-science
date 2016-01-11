@@ -1,72 +1,39 @@
-How to run the Ansible playbook
----
+# Ansible playbooks
 
-This Ansible playbook has two distinct roles: 
- - yarn. Install and configure hadoop-2.5.2 yarn on ~okeanos cluster.
- - webserver. Install and setup a Django webserver running our ember application on a ~okeanos virtual machine.
+The following ansible playbooks are called by run_ansible_playbooks.py python script. Depending on the action executed by the python script, ansible will perform different tasks. The actions of run_ansible_playbooks.py and their corresponding ansible tasks are:
 
-and one common for all hosts:
- - commons. Install sudo and fix missing locale for every host.
+- Hadoop Cluster creation. For this action, ansible configures the Hadoop files, adds a Hadoop user and does whatever configuration is required for the cluster to function correctly. Also, formats the cluster and starts all Hadoop processes, depending on the ~okeanos image used.<br>If the image is a bare Debian Base 8, it also installs every software package required by Hadoop.</br>
+- Format Hadoop Cluster. For this action, ansible formats the Hadoop Dsistributed File System, erasing all data  stored there.
+- Start Hadoop Cluster. For this action, ansible starts every Hadoop process.
+- Stop Hadoop Cluster. For this action, ansible stops every Hadoop process.
+- Scale Hadoop Cluster, by adding or removing a node. For this action, ansible does file and user configurations, so the cluster utilize correctly the node(s) added or remain functional if a node is removed.
+- Rollback a cluster after failure in scale action. For this action, ansible reverts file configurations to the state they were before the scale cluster failure.
 
-How to run yarn role
---
-Before running an Ansible playbook for a bare vm in ~okeanos, following commands must be executed in the bare vm:
+Below are available in tables, the ansible files and folders with their corresponding description:
 
-    apt-get update
-    apt-get install -y python
-Choice of role must be given as argument from command line or else playbook wont run. For example
+|    File     | Description
+|------------ |:---
+|  group_vars/all.yml |  It includes constants and default values for variables used by ansible playbooks.
+|  roles      |  It includes the Ansible roles: yarn, cloudera, commons and their corresponding subfolders.
+|  site.yml   |  It is the entry point of Ansible and distributes the Ansible tasks based on the input arguments.
+|  rollback_scale_cluster.yml    | It is called when the scaling of the cluster fails, so as to rollback the procedure and revert the cluster to the previous functional state.
+|  scale_cluster_add_node.yml    | It is called for file and user configurations when adding a node to the Hadoop cluster.
+|  scale_cluster_remove_node.yml | It is called for file and user configurations when removing a node from the Hadoop cluster.
+|  start_cloudera.yml | It is called so as to start or stop the Cloudera services (Hadoop daemons, Hue, Oozie, Hive, Hbase, Spark) and create mandatory folders in HDFS. <br>Used when role is cloudera.</br>
+|  start_yarn.yml     | It is called so as to start or stop Hadoop, Hue and the rest of the Hadoop ecosystem services, depending on the ansible tag used. Also creates mandatory folders in HDFS.<br>Used when role is yarn.</br>
+|  ansible.cfg     | Ansible configuration file. Has entries regarding ansible ssh connections.
+|  hosts_example   | Example file, serving as a template for the ansible hosts file.
 
-    ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "choose_role=yarn"
+Every Ansible role is in a separate subfolder. In the cases of *yarn* and *cloudera* roles, there are three subfolders, whose description is common and is available below:
 
-will run the playbook role yarn. As a default, it wont start its daemons or format the cluster.
+|    File     | Description
+|------------ |:---
+|    files    |  It includes the files that are necessary for the execution of specific services. They are transferred unchanged to the remote machine where commands from the ansible playbooks are executed
+|    tasks/main.yml    |  In case of yarn it installs and configures the Apache Hadoop distribution on the cluster. Depending on the ansible tag used, the Hadoop distribution will be Hadoop Base or Hadoop with Hue or Hadoop Ecosystem. <br><br>In case of cloudera it installs and configures, from the cloudera repositories, the cloudera distribution on the cluster.</br></br>
+|  templates  |  It includes files with variables, which offers dynamic content. These files are transferred, with the appropriate additions, to the remote machine where commands from the ansible playbooks are executed
 
-If these functions are wanted, it can be enabled with variable [start_yarn=True]. Also, if it is run
-for the first time, the yarn cluster needs formating so the variable format should be  [format=True].
+In case of *commons* role there is a subfolder whose description is available below:
 
-For example, 
-
-    ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "choose_role=yarn start_yarn=True format=True"
-will install and configure yarn cluster,format it and start its daemons.
-
-We can change the hadoop yarn version the playbook installs
-by giving a different value to variable [yarn_version]. Default value is hadoop-2.5.2.
-
-How to run webserver role
---
-
-This role can be executed as:
-
-    ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "choose_role=webserver create_orka_admin=True"
-
-The [create_orka_admin=True] is needed the first time we run webserver role because it creates the orka_admin user that is needed in
-install and setup of the Django webserver.
-
-Giving values to other webserver variables is optional but necessary. Especially the following Webserver role variables 
-
-    [db_password, db_user, db_name, django_admin_name, django_admin_password, orka_admin_password, ansible_sudo_pass] 
-    
-should always be given from command line or in the all.yml and webserver.yml files in group_vars folder. 
-
-If not given, the playbook will run with the default settings which is not recommended.
-The [orka_admin_password] encrypted value is created by the user with 
-
-    [python -c 'import crypt; print crypt.crypt("mypassword", "$1$SomeSalt$")'] 
-
-and the ansible_sudo_pass is the unecrypted [orka_admin_password] value.
-
-So, the optimal execution of webserver role for the first time from the command line would be:
-
-    ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "db_password=xxxxx db_user=xxxxx db_name=xxxxx django_admin_name=xxxxx django_admin_password=xxxxx choose_role=webserver create_orka_admin=True orka_admin_password=encrypted(orka_admin_password) ansible_sudo_pass=orka_admin_password"
-
-It is easier though to change the default values in the ansible/group_vars/all.yml and ansible/group_vars/webserver.yml and run 
-
-    ansible-playbook -i [path/ansible_hosts] [path/ansible/site.yml] -e "choose_role=webserver create_orka_admin=True"
-
-Also, the variables [my_project_dir] [my_project_name] are the directory name where django projects will be created and a django project name and can be changed from their default values.
-
-Other useful variables are :
-- [escience_repo], which is the github repo from where webserver role will clone the django project. Default is gtzelepis.
-
-- [path_to_folder_to_minify], which is the path of the app folder to minify/uglify the .js files.
-
-- [path_to_folder_to_removelogging], which is the path of the app folder to removelogging the .js files	
+|    File     | Description
+|------------ |:---
+|    tasks/main.yml    | Installs sudo and fixes missing locale for every host.
