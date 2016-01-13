@@ -1,0 +1,12 @@
+[Unit]
+Description=Celery
+
+[Service]
+Type=forking
+ExecStart=/etc/init.d/celery.sh start
+ExecStop=/etc/init.d/celery.sh stop
+ExecReload=/etc/init.d/celery.sh restart
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

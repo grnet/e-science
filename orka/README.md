@@ -1,6 +1,6 @@
 #Orka service
 
-Orka service is deployed and accessed by a personal Orka server. Every ~okeanos user can build a personal Orka server by following the instructions [here](#create-personal-orka-server-in-okeanos-for-users).
+Orka service is deployed and accessed by a personal Orka server. Every ~okeanos user can build a personal Orka server by following the instructions [here](#create-a-personal-orka-server-in-okeanos-for-users).
 
 
 ## Create ~okeanos image for personal Orka server (for administrators)
