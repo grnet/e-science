@@ -132,7 +132,7 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void write(int b) throws IOException {
 
-        if (closed()) {
+        if (closed) {
             throw new IOException(ERR_STREAM_CLOSED);
         }
 
@@ -151,15 +151,16 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void write(byte[] b, int off, int len)
             throws IOException {
-        if (closed()) {
+        if (closed) {
             throw new IOException(ERR_STREAM_CLOSED);
         }
         while (len > 0) {
 
             remaining = bufferSize - pos;
             toWrite = Math.min(remaining, len);
-
-            outBuf[pos] = b[off];
+            // Commented out for causing ArrayIndexOutOfBoundsException
+            // when writing to Pithos.
+            //outBuf[pos] = b[off];
 
             System.arraycopy(b, off, outBuf, pos, toWrite);
 
@@ -182,7 +183,7 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void flush() throws IOException {
 
-        if (closed()) {
+        if (closed) {
             throw new IOException(ERR_STREAM_CLOSED);
         }
 
@@ -286,7 +287,7 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void close() throws IOException {
 
-        if (closed()) {
+        if (closed) {
             return;
         }
 
