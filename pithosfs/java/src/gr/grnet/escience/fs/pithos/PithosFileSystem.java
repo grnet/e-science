@@ -337,7 +337,6 @@ public class PithosFileSystem extends FileSystem {
 
         // - Check if it is the final call from outputstream and perform the
         // final action for the result file(s) movement
-        // old if (PithosOutputStream.isClosed() && !isCommitCalled())
         if (PithosOutputStream.getStreamStatus() && !isCommitCalled()) {
             // - Set the current path as the one that constitutes the commit
             // directory for Hadoop outputstream
