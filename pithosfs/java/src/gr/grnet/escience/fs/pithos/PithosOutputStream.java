@@ -36,7 +36,10 @@ public class PithosOutputStream extends OutputStream {
     private OutputStream backupStream;
 
     /** holds the state of the backupFile stream. */
-    private static boolean closed;
+    private boolean closed = false;
+    
+    /** static variable used by setter and getter that holds the state of the backupFile stream*/
+    private static boolean streamStatus = false;
 
     /** current position. */
     private int pos = 0;
@@ -129,7 +132,7 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void write(int b) throws IOException {
 
-        if (isClosed()) {
+        if (closed) {
             throw new IOException(ERR_STREAM_CLOSED);
         }
 
@@ -148,15 +151,16 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void write(byte[] b, int off, int len)
             throws IOException {
-        if (isClosed()) {
+        if (closed) {
             throw new IOException(ERR_STREAM_CLOSED);
         }
         while (len > 0) {
 
             remaining = bufferSize - pos;
             toWrite = Math.min(remaining, len);
-
-            outBuf[pos] = b[off];
+            // Commented out for causing ArrayIndexOutOfBoundsException
+            // when writing to Pithos.
+            //outBuf[pos] = b[off];
 
             System.arraycopy(b, off, outBuf, pos, toWrite);
 
@@ -179,7 +183,7 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void flush() throws IOException {
 
-        if (isClosed()) {
+        if (closed) {
             throw new IOException(ERR_STREAM_CLOSED);
         }
 
@@ -283,7 +287,7 @@ public class PithosOutputStream extends OutputStream {
     @Override
     public synchronized void close() throws IOException {
 
-        if (isClosed()) {
+        if (closed) {
             return;
         }
 
@@ -296,15 +300,22 @@ public class PithosOutputStream extends OutputStream {
         backupFile.delete();
 
         super.close();
-        setClosed(true);
+        closed = true;
+        setStreamStatus(closed);
     }
 
-    public static boolean isClosed() {
-        return closed;
+    /*
+     * sets the stream status to get used by another class
+     */
+    public synchronized static void setStreamStatus(boolean closed) {
+        streamStatus = closed;
     }
-
-    public static void setClosed(boolean flag) {
-        closed = flag;
+    
+    /*
+     * returns the stream status when asked from another class
+     */
+    public synchronized static boolean getStreamStatus() {
+        return streamStatus;
     }
 
 }

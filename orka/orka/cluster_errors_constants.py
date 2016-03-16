@@ -52,4 +52,4 @@ VRE_IMAGES = {'action':'vre_images','resource_name':'vreimage'}
 vre_ram_min = 1024
 dspace_bbb_ram_min = 2048
 bbb_cpu_min = 2
-REPLAY_ACTIONS_PREFIX = '[ORKA-REPLAY]'
+REPLAY_ACTIONS_PREFIX = 'REPLAY'

@@ -18,6 +18,7 @@ block
 orka-pithos.jardesc
 sonar-project.properties
 *.txt
+!LICENSE.txt
 *.pdf
 *.properties
 *.xml
@@ -25,3 +26,4 @@ sonar-project.properties
 !workflow.xml
 *.tar
 *encrypt_key.py
+tests/integration/*swp
