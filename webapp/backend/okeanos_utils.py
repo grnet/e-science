@@ -423,6 +423,16 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
     """
     cluster_to_delete = ClusterInfo.objects.get(id=cluster_id)
     cluster_name = cluster_to_delete.cluster_name
+    # status is already destroyed or failed, only clean up database 
+    if cluster_to_delete.cluster_status not in [const_cluster_status_active,const_cluster_status_pending]:
+        current_task.update_state(state="Removing Record")
+        try:
+            db_cluster_delete(token,cluster_id)
+            current_task.update_state(state="Cluster Record Removed")
+        except Exception,e:
+            msg = str(e.args[0])
+            raise ClientError(msg, error_cluster_corrupt)
+        return cluster_name
     # cluster exists on cyclades, operate on ~okeanos infrastructure for removal, update database
     current_task.update_state(state="Started")
     servers_to_delete = []
@@ -520,15 +530,6 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
 
     state= 'Cluster with public IP [%s] was deleted ' % float_ip_to_delete
     set_cluster_state(token, cluster_id, state, status=status)
-    # status is already destroyed or failed, only clean up database 
-    if cluster_to_delete.cluster_status not in [const_cluster_status_active,const_cluster_status_pending]:
-        current_task.update_state(state="Removing Record")
-        try:
-            db_cluster_delete(token,cluster_id)
-            current_task.update_state(state="Cluster Record Removed")
-        except Exception,e:
-            msg = str(e.args[0])
-            raise ClientError(msg, error_cluster_corrupt)
     # Everything deleted as expected
     if not list_of_errors:
         return cluster_name
