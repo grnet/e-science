@@ -49,8 +49,7 @@
       - libpq-dev
       - erlang
       - rabbitmq-server
-      - postgresql
-      - postgresql-client
+      - postgresql-9.4
       - python-psycopg2
       - git
       - python-flup
