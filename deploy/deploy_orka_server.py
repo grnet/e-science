@@ -393,9 +393,7 @@ def main():
         parser_create.add_argument("--flavor_id", help='Flavor id of VM to be created. Default is 145. Use "kamaki flavor list" for more flavors',
                               default=145)
         parser_create.add_argument("--project_id", help='~okeanos project uuid. Use "kamaki project list" for existing projects',required=True)
-        parser_create.add_argument("--image_id", help='OS for the VM. Use "kamaki image list" for existing images.'
-                              ' Default is "Debian Base 8.2" id and the script is tested on Debian 8.2',
-                              default="d6847eb8-8fa1-4ab3-bb30-dfcf770f89a0")       
+        parser_create.add_argument("--image_id", help='OS for the VM. Use "kamaki image list" for existing images.',required=True)       
         parser_create.add_argument("--git_repo", help='git repo to be cloned.Default is grnet/e-science.',
                               default="https://github.com/grnet/e-science.git")
         parser_create.add_argument("--git_repo_version", help='Version/branch of git repo to be cloned.Default is master.',

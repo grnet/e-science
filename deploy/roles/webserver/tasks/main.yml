@@ -11,7 +11,7 @@
     tags:
      - preimage
      - update
-    git: repo={{escience_repo}} force=yes dest={{my_project_dir}}/{{my_project_name}} version={{escience_version|default(origin)}}
+    git: repo={{escience_repo}} depth=1 force=yes dest={{my_project_dir}}/{{my_project_name}} version={{escience_version|default(origin)}}
 
   - name: Copy Java dist directory in ansible folder for yarn role
     tags:

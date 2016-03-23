@@ -15,7 +15,7 @@ from backend.models import ClusterInfo, UserInfo, OrkaImage, OrkaImageCategory, 
 from django_db_after_login import db_hadoop_update
 from celery import current_task
 from cluster_errors_constants import HADOOP_STATUS_ACTIONS, REVERSE_HADOOP_STATUS, REPORT, SUMMARY, \
-    error_ansible_playbook, const_cluster_status_pending, const_hadoop_status_format, const_hadoop_status_started, const_hadoop_status_stopped
+    error_ansible_playbook, const_cluster_status_pending, const_hadoop_status_format, const_hadoop_status_started, const_hadoop_status_stopped, LOGS_PATH
 from authenticate_user import unmask_token, encrypt_key
 from ansible import errors
 
@@ -186,7 +186,7 @@ def ansible_manage_cluster(cluster_id, action):
         current_task.update_state(state=state)
         db_hadoop_update(cluster_id, 'Pending', state)
         debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
-        ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
+        ansible_log = " >> " + os.path.join(LOGS_PATH, debug_file_name)#change
         ansible_code_generic = 'ansible-playbook -i {0} {1} {2} -e "choose_role={3} manage_cluster={3}" -t'.format(hosts_filename, ansible_playbook, ansible_verbosity, role)
 
         for hadoop_action in ANSIBLE_SEQUENCE:
@@ -226,7 +226,7 @@ def ansible_create_cluster(hosts_filename, cluster_size, orka_image_uuid, ssh_fi
     decoded_image_tags = decode_json(image_tags['ansible_cluster_config_tags'])
     # Create debug file for ansible
     debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
-    ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
+    ansible_log = " >> " + os.path.join(LOGS_PATH, debug_file_name)
     # find ansible playbook (site.yml)
     uuid = UserInfo.objects.get(okeanos_token=token).uuid
     # Create command that executes ansible playbook
@@ -256,7 +256,7 @@ def ansible_scale_cluster(hosts_filename, new_slaves_size=1, orka_image_uuid='',
         tags = '-t rollback_cluster'
     # Create debug file for ansible
     debug_file_name = "create_cluster_debug_" + hosts_filename.split(ansible_hosts_prefix, 1)[1] + ".log"
-    ansible_log = " >> " + os.path.join(os.getcwd(), debug_file_name)
+    ansible_log = " >> " + os.path.join(LOGS_PATH, debug_file_name)
     
     # -t postconfigscale
     ansible_code = 'ansible-playbook -i {0} {1} {2} '.format(hosts_filename, ansible_playbook, ansible_verbosity) + \

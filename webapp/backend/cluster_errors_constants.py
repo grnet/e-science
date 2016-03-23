@@ -53,7 +53,7 @@ SUMMARY = 29            		# Define logging level of SUMMARY
 MAX_WAIT = 300          		# Max number of seconds for wait function of Cyclades
 UUID_FILE = 'permitted_uuids.txt'	# File of ~okeanos uuid's allowed to login
 FILES_DIR = join(dirname(abspath(__file__)), "files") # Location of files directory. This is where files that will be copied to a Hadoop cluster without using ansible playbooks are stored.
-
+LOGS_PATH = join(os.path.expanduser('~'),"logs")# Location of personal orka server and ansible log files
 # MiB <-> GiB easy conversion constants
 Mbytes_to_GB = 1024     	# Global to convert megabytes to gigabytes
 Bytes_to_MiB = 1048576   	# Global to convert bytes to megabytes
