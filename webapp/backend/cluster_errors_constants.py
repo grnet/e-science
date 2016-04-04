@@ -48,8 +48,8 @@ error_hdfs_test_exit_status = 1 	# 1 is error exit status returned from hadoop t
 
 # Package constants
 ADD_TO_GET_PORT = 9998  		# Value offset in order to get slave port numbers, STARTING FROM?...
-REPORT = 25             		# Define logging level of REPORT
-SUMMARY = 29            		# Define logging level of SUMMARY
+REPORT = 31             		# Define logging level of REPORT
+SUMMARY = 32            		# Define logging level of SUMMARY
 MAX_WAIT = 300          		# Max number of seconds for wait function of Cyclades
 UUID_FILE = 'permitted_uuids.txt'	# File of ~okeanos uuid's allowed to login
 FILES_DIR = join(dirname(abspath(__file__)), "files") # Location of files directory. This is where files that will be copied to a Hadoop cluster without using ansible playbooks are stored.
