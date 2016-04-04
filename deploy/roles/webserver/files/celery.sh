@@ -1,9 +1,9 @@
 #!/bin/sh
 
 USER="orka_admin"
-CMD_CELERY_STOP="celery multi stopwait celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=/home/orka_admin/logs/\%h.log"
-CMD_CELERY_START="celery multi start celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=/home/orka_admin/logs/\%h.log"
-CMD_CELERY_RESTART="celery multi restart celeryworker1 --loglevel=INFO --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=/home/orka_admin/logs/\%h.log"
+CMD_CELERY_STOP="celery multi stopwait celeryworker1 --loglevel=WARNING --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=/home/orka_admin/logs/\%h.log"
+CMD_CELERY_START="celery multi start celeryworker1 --loglevel=WARNING --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=/home/orka_admin/logs/\%h.log"
+CMD_CELERY_RESTART="celery multi restart celeryworker1 --loglevel=WARNING --app=backend.celeryapp --pidfile=/tmp/\%n.pid --logfile=/home/orka_admin/logs/\%h.log"
 ORKA_WEBAPP="/home/orka_admin/projects/e-science/webapp"
 SERVICE=`basename $0`
 PID_CELERY="/tmp/\%n.pid"

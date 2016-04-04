@@ -40,7 +40,7 @@
     pip: name=passlib
     tags: preimage
 
-  - name: Install RabbitMQ broker, PostgreSQL and needed dependencies
+  - name: Install RabbitMQ broker, PostgreSQLi, nginx and needed dependencies
     tags: preimage
     apt: "name={{item}}"
     with_items:
@@ -53,12 +53,12 @@
       - python-psycopg2
       - git
       - python-flup
-      - nginx
+      - nginx=1.8*
       - sshpass
       - uwsgi-plugin-python
       - snf-image-creator
 
-  - name: Install Celery, Django and Django rest framework
+  - name: Install kamaki, Celery, Django and Django rest framework
     tags: preimage
     pip: "name={{item.name}}"
     with_items:
