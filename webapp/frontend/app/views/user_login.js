@@ -7,6 +7,7 @@ App.UserLoginView = Ember.View.extend({
 		var text = this.get('controller.token');
 		// send it to the login action of the login controller
 		this.get('controller').send('login', text);
+		return false; // to avoid re-fresh to homepage
 	},
 	didInsertElement : function() {
 		$('#token').focus();
