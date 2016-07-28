@@ -78,8 +78,11 @@ class YarnCluster(object):
         self._DispatchCheckers = {}
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_cluster_size_quotas
-        self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
-            self.check_network_quotas
+        # Check for private network availability only when cluster is created
+        # and not for Vre server creation
+        if self.opts['cluster_size'] > 1:
+            self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
+                self.check_network_quotas
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
             self.check_ip_quotas
         self._DispatchCheckers[len(self._DispatchCheckers) + 1] =\
