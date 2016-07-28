@@ -5,7 +5,7 @@
 eScience is a cloud-based integrated service platform for big data analytics offered by GRNET and the associated [~okeanos](http://okeanos.grnet.gr) IaaS.
 
 ## Orka overview
-Currently the codenamed *orka* (ver 0.3.0) CLI and Web interfaces enable ~okeanos users to create Hadoop 2.x \(YARN\) multi-node clusters (http://apache.hadoop.org) in order to run their big data algorithms. Researchers, university students and teachers can fully exploit the MapReduce (as well as others) programming paradigm without wasting time and resources in hardware maintenance, software setup, etc.
+Currently the codenamed *orka* (ver 0.3.1) CLI and Web interfaces enable ~okeanos users to create Hadoop 2.x \(YARN\) multi-node clusters (http://apache.hadoop.org) in order to run their big data algorithms. Researchers, university students and teachers can fully exploit the MapReduce (as well as others) programming paradigm without wasting time and resources in hardware maintenance, software setup, etc.
 
 ## Features
 Orka software platform provides the following functionality to ~okeanos users:
@@ -36,4 +36,4 @@ Running orka commands from your terminal is documented in orka/CLI_README.md.
 After creating a local orka server, login to create Hadoop-YARN clusters and VRE servers with your ~okeanos token. Note: You need at least 2 VMs in an ~okeanos project to build the minimum YARN cluster.
 
 ### ~Orka portal
-Useful information about orka features, news, media content, and installation steps can be found at the [orka portal](https://escience.grnet.gr)
+Useful information about orka features, news, media content, and installation steps can be found at the [orka portal](https://okeanos.grnet.gr/platforms/orka/)
