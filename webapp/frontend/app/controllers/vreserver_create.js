@@ -242,7 +242,13 @@ App.VreserverCreateController = Ember.Controller.extend({
 	// CPU
     selected_project_available_cpu : function(){
         var selected_cpu_value = Ember.isEmpty(this.get('selected_cpu_value')) ? 0 : Number(this.get('selected_cpu_value'));
-        return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('cpu_av')-selected_cpu_value : 0;
+        this.set('alert_no_project_resources',null);
+        if (!this.get('boolean_no_project')){
+            var avail_cpu = this.get('content').objectAt(this.get('selected_project_id')-1).get('cpu_av');
+            if(avail_cpu === 0) this.set('alert_no_project_resources','Insufficient project resources for VRE server creation');
+            return avail_cpu-selected_cpu_value;
+        }
+        return 0;
     }.property('selected_cpu_value','selected_project_id'),
     selected_project_cpu_choices : function(){
         return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('cpu_choices') : [];
@@ -265,7 +271,13 @@ App.VreserverCreateController = Ember.Controller.extend({
     // RAM
     selected_project_available_ram : function(){
         var selected_ram_value = Ember.isEmpty(this.get('selected_ram_value')) ? 0 : Number(this.get('selected_ram_value'));
-        return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('ram_av')-selected_ram_value : 0;
+        this.set('alert_no_project_resources',null);
+        if(!this.get('boolean_no_project')){
+            var avail_ram = this.get('content').objectAt(this.get('selected_project_id')-1).get('ram_av');
+            if(avail_ram === 0) this.set('alert_no_project_resources','Insufficient project resources for VRE server creation');
+            return avail_ram-selected_ram_value;
+        }
+        return 0;
     }.property('selected_ram_value','selected_project_id'),
     selected_project_ram_choices : function(){
         return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('ram_choices') : [];
@@ -288,7 +300,13 @@ App.VreserverCreateController = Ember.Controller.extend({
     // DISK 
     selected_project_available_disk : function(){
         var selected_disk_value = Ember.isEmpty(this.get('selected_disk_value')) ? 0 : Number(this.get('selected_disk_value'));
-        return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('disk_av')-selected_disk_value : 0;
+        this.set('alert_no_project_resources',null);
+        if (!this.get('boolean_no_project')){
+            var avail_disk = this.get('content').objectAt(this.get('selected_project_id')-1).get('disk_av');
+            if(avail_disk === 0) this.set('alert_no_project_resources','Insufficient project resources for VRE server creation');
+            return avail_disk-selected_disk_value;
+        }
+        return 0;
     }.property('selected_disk_value','selected_project_id'),
     selected_project_disk_choices : function(){
         return !this.get('boolean_no_project') ? this.get('content').objectAt(this.get('selected_project_id')-1).get('disk_choices') : [];
@@ -632,6 +650,7 @@ App.VreserverCreateController = Ember.Controller.extend({
             this.set('vre_admin_pass',null);
             this.set('vre_admin_email',null);
             this.set('message',null);
+            this.set('alert_no_project_resources',null);
         },
         reset : function(){ // invalidate selected project (data linked to project cascades)
             this.set('selected_project_id',null);
