@@ -336,7 +336,7 @@ App.ClusterCreateController = Ember.Controller.extend({
 			}
 		}
 		if (max_cluster_size_limited_by_current_disks.length == 0) {
-			this.set('alert_mes_cluster_size', 'Your cpus quota are not enough to build the minimum cluster');
+			this.set('alert_mes_cluster_size', 'Your disk size quota are not enough to build the minimum cluster');
 			this.set('cluster_size_zero',true);
 		}
 		return max_cluster_size_limited_by_current_disks;
