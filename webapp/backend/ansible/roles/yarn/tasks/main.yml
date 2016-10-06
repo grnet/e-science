@@ -23,7 +23,7 @@
     tags: preconfig
 
   - name: Install kamaki
-    pip: name=kamaki version=0.13.4 state=present
+    pip: name=kamaki version=0.13.5 state=present
     tags: preconfig
 
   - name: Disable ipv6
