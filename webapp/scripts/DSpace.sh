@@ -18,7 +18,7 @@ docker exec -d dspace /dspace/bin/dspace user -d -m a@b.gr
 sleep $WAIT_TIME
 docker exec -d dspace sv start tomcat8
 sleep $WAIT_TIME
-docker exec -ti dspace bash -c 'sudo -u postgres psql -U postgres -d dspace -c "alter user dspace password $1;"' -- \'$1\'
+docker exec -ti dspace bash -c 'apt-get update; apt-get install -y sudo; sudo -u postgres psql -U postgres -d dspace -c "alter user dspace password $1;"' -- \'$1\'
 sleep $WAIT_TIME
 docker exec -ti dspace bash -c 'sed -i "s/db.password *= * *dspace/db.password=$1/g" /dspace/config/dspace.cfg' -- $1\
 && docker start dspace\
