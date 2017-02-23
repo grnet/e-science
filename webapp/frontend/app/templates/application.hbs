@@ -22,24 +22,11 @@
 			<div class="navbar-collapse collapse navbar-responsive-collapse">
 				<ul class="nav navbar-nav">
 					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_services_dd">Services <b class="caret"></b></a>
-						<ul class="dropdown-menu">
-							<li>
-							    {{#link-to 'cluster.create' id="id_create_cluster"}}<i class="glyphicon glyphicon-cloud"></i> Create Cluster</a>{{/link-to}}
-							</li>
-							<li>
-							    {{#link-to 'vreserver.create' id="id_create_vre"}}<i class="glyphicon glyphicon-blackboard"></i> Create VRE</a>{{/link-to}}
-							</li>
-							<li>
-                                {{#link-to 'dsl.create' id="id_create_dsl"}}<i class="glyphicon glyphicon-share"></i> Create Experiment Metadata</a>{{/link-to}}
-                            </li>
-						</ul>
-					</li>
-				</ul>
-				<ul class="nav navbar-nav">
-					<li class="dropdown">
 						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_info_dd">Information <b class="caret"></b></a>
-						<ul class="dropdown-menu">							
+						<ul class="dropdown-menu">
+						    <li>
+                                {{#link-to 'help.personalorka' id="id_help_personalorka"}}<i class="glyphicon glyphicon-list-alt"></i> Create Your Personal Orka Server</a>{{/link-to}}
+                            </li>						
 							<li>
 								{{#link-to 'help.images' id="id_help_images"}}<i class="glyphicon glyphicon-list-alt"></i> Hadoop Images Components</a>{{/link-to}}
 							</li>
@@ -48,40 +35,36 @@
                             </li>
                             <li>
                                 {{#link-to 'help.experiments' id="id_help_experiments"}}<i class="glyphicon glyphicon-list-alt"></i> Reproducible Experiments Metadata</a>{{/link-to}}
-                            </li>				
+                            </li>
 						</ul>
 					</li>
 				</ul>
-				<ul class="nav navbar-nav navbar-right">
-					{{#if loggedIn}}
-					<li class="dropdown">
-						<a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_login_dd">
-                            <i class="glyphicon glyphicon-user"></i> {{user_name}}{{name_of_user}}<b class="caret"></b>
-                        </a>
-                        <ul class="dropdown-menu">
+                <ul class="nav navbar-nav">
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_features_dd">Features<b class="caret"></b></a>
+                        <ul class="dropdown-menu">                          
                             <li>
-                                {{#link-to 'user.logout' id="id_logout"}}<i class="glyphicon glyphicon-log-out"></i> Logout{{/link-to}}
+                                {{#link-to 'features.screenshots' id="id_features_screenshots"}}<i class="glyphicon glyphicon-picture"></i> Screenshots</a>{{/link-to}}
                             </li>
+                            <li>
+                                {{#link-to 'features.videos' id="id_features_videos"}}<i class="glyphicon glyphicon-film"></i> Videos</a>{{/link-to}}
+                            </li>          
                         </ul>
                     </li>
-					{{else}}
-					    {{#link-to 'user.login' id="id_login" class="btn btn-primary navbar-btn"}}<i class="glyphicon glyphicon-log-in"></i> Login{{/link-to}}	
-					{{/if}}
-				</ul>
-				{{#if loggedIn}}                
-                <ul class="nav navbar-nav navbar-right">
+                </ul>				
+				<ul class="nav navbar-nav">
                     <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_themes_dd">Theme <b class="caret"></b></a>
-                        <ul class="dropdown-menu">
-                            {{#each theme in userTheme}}
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" id="id_about_dd">About <b class="caret"></b></a>
+                        <ul class="dropdown-menu">                          
                             <li>
-                                <a href="#" id="myCurrentPage" {{action "change_theme" theme.url}}>{{theme.name}}</a>
+                                {{#link-to 'about.orka' id="id_about_orka"}}<img src="{{unbound STATIC_URL}}images/orkaicon.png" width="14em" height="auto"/>ORKA</a>{{/link-to}}
                             </li>
-                            {{/each}}                                                   
+                            <li>
+                                {{#link-to 'about.faq' id="id_about_faq"}}<i class="glyphicon glyphicon-question-sign"></i> Frequently Asked Questions</a>{{/link-to}}
+                            </li>              
                         </ul>
                     </li>
                 </ul>
-                {{/if}}
 			</div>
 		</div>
 	</div>
@@ -103,14 +86,14 @@
 				<ul class="list-inline list-unstyled">
 					<li class="pull-right text-muted">
 						<a href="https://accounts.okeanos.grnet.gr/ui/approval_terms" target="_blank">Terms of use</a>
-                                        </li>
-                                        <span class="pull-right text text-muted" style="vertical-align: middle">&#124;</span>
+					</li>
+					<span class="pull-right text text-muted" style="vertical-align: middle">&#124;</span>
                     <li class="pull-right text-muted">
                         <a href="https://github.com/grnet/e-science" target="_blank">Github Repo</a>
                     </li>
                     <span class="pull-right text text-muted" style="vertical-align: middle">&#124;</span>
                     <li class="pull-right text-muted">
-                        <a href="https://escience.grnet.gr/static/mkdocs/site/introduction/index.html" target="_blank">Documentation</a>
+                         <a href="{{unbound STATIC_URL}}mkdocs/site/introduction/index.html" target="_blank">Documentation</a>
                     </li>
 					<li>
 						<a href="http://europa.eu/" target="_blank" title="European Union"><img src="{{unbound STATIC_URL}}images/european_union.png"
