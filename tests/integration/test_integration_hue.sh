@@ -52,7 +52,7 @@ testClusterCreate(){
 	# act
 	if [ "$DO_INTEGRATION_TEST" = "$THIS_TEST" ] || [ "$FULL_TESTSUITE" = "true" ]; then
 		# orka create name_of_cluster size_of_cluster master_cpus master_ram master_disksize slave_cpus slave_ram slave_disksize disk_template project_name
-		local COMMAND='orka create hue_integration_test 3 4 6144 10 4 6144 10 standard '"${OKEANOS_PROJECT}"' --image Hue\-3\.9\.0 >_tmp.txt 2> /dev/null'
+		local COMMAND='orka create hue_integration_test 3 4 6144 10 4 6144 10 standard '"${OKEANOS_PROJECT}"' --image Hue\-3\.11\.0 >_tmp.txt 2> /dev/null'
 		( $(eval $COMMAND) ) & keepAlive $! " Working"
 		declare -a ARR_RESULT=($(cat _tmp.txt))
 		CLUSTER_ID=${ARR_RESULT[1]}
