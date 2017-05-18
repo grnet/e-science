@@ -25,7 +25,7 @@
   filename: /home/hduser/.ssh/id_rsa
   etchosts_filename: /etc/hosts_2 
   yarn_common_url: http://apache.tsl.gr/hadoop/common/stable/
-  hadoop_latest_stable: hadoop-2.7.1
+  hadoop_latest_stable: hadoop-2.7.3
   yarn_version: hadoop-*
   path_to_hadoop: /usr/local
   hadoop_home: "{{path_to_hadoop}}/hadoop"
