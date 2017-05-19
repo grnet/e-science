@@ -349,7 +349,7 @@ class OrkaImage(object):
                                                   project_id=self.project_id)
         logging.log(REPORT,' Creating ~okeanos VM...')
         server_pass = self.server['adminPass']
-        new_status = self.cyclades.wait_server(self.server['id'], max_wait=MAX_WAIT)
+        new_status = self.cyclades.wait_server(self.server['id'], max_wait=MAX_WAIT)['status']
         
         if new_status == 'ACTIVE':
             server_details = self.cyclades.get_server_details(self.server['id'])
