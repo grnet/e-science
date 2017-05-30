@@ -23,7 +23,9 @@
     tags: preconfig
 
   - name: Install kamaki
-    pip: name=kamaki version=0.13.5 state=present
+    apt: pkg={{ item }} state=latest update_cache=yes
+    with_items:
+       - kamaki
     tags: preconfig
 
   - name: Disable ipv6

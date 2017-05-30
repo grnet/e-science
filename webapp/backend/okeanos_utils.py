@@ -118,7 +118,7 @@ def destroy_server(token, id):
     cyclades = init_cyclades(endpoints['cyclades'], unmask_token(encrypt_key,token))
     nc = init_cyclades_netclient(endpoints['network'], unmask_token(encrypt_key,token))
     cyclades.delete_server(vre_server.server_id)
-    new_status = cyclades.wait_server(vre_server.server_id,current_status='ACTIVE',max_wait=MAX_WAIT)
+    new_status = cyclades.wait_server(vre_server.server_id,current_status='ACTIVE',max_wait=MAX_WAIT)['status']
     if new_status != 'DELETED':
         state = 'Error while deleting VRE server'
         set_server_state(token, id, state,status='Destroyed')
@@ -209,7 +209,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
                                         personality=personality(server_ssh_keys,pub_keys_path),
                                         networks=[{"uuid": network_to_edit_id}], project_id=project_id)
 
-    new_status = cyclades.wait_server(new_server['id'], max_wait=MAX_WAIT)
+    new_status = cyclades.wait_server(new_server['id'], max_wait=MAX_WAIT)['status']
     if new_status != 'ACTIVE':
         msg = ' Status for server [%s] is %s. Server will be deleted' % \
             (servers[i]['name'], new_status)
@@ -256,7 +256,7 @@ def cluster_remove_node(node_fqdn, node_id, token, cluster_id, cluster_to_scale,
     state = "Deleting Node %s from cluster %s (id:%d)" % (node_fqdn, cluster_to_scale.cluster_name, cluster_id)
     set_cluster_state(token, cluster_id, state)
     cyclades.delete_server(node_id)    
-    new_status = cyclades.wait_server(node_id,current_status='ACTIVE',max_wait=MAX_WAIT)
+    new_status = cyclades.wait_server(node_id,current_status='ACTIVE',max_wait=MAX_WAIT)['status']
     if new_status != 'DELETED':
         msg = 'Error deleting server [%s]' % node_fqdn
         logging.error(msg)
@@ -499,7 +499,7 @@ def destroy_cluster(token, cluster_id, master_IP='', status='Destroyed'):
         for server in servers_to_delete:
             new_status = cyclades.wait_server(server['id'],
                                               current_status='ACTIVE',
-                                              max_wait=MAX_WAIT)
+                                              max_wait=MAX_WAIT)['status']
             if new_status != 'DELETED':
                 logging.error('Error deleting server [%s]' % server['name'])
                 list_of_errors.append(error_cluster_corrupt)
@@ -874,8 +874,7 @@ class Cluster(object):
         if not (network and servers):
             logging.error(' Nothing to delete')
             return
-        logging.error(' An unrecoverable error occured in ~okeanos.'
-                      'Cleaning up and shutting down')
+        logging.error(' An unrecoverable error occured in ~okeanos. Cleaning up and shutting down')
         status = ''
         if servers:
             for server in servers:
@@ -887,7 +886,7 @@ class Cluster(object):
 
                 new_status = self.client.wait_server(server['id'],
                                                      current_status=status,
-                                                     max_wait=MAX_WAIT)
+                                                     max_wait=MAX_WAIT)['status']
                 logging.log(REPORT, ' Server [%s] is being %s', server['name'],
                             new_status)
                 if new_status != 'DELETED':
@@ -986,8 +985,7 @@ class Cluster(object):
         # server id later and the slave start their building without
         # waiting for the master to finish building
         try:
-            new_status = self.client.wait_server(servers[0]['id'],
-                                                 max_wait=MAX_WAIT)
+            new_status = self.client.wait_server(servers[0]['id'], max_wait=MAX_WAIT)['status']
             if new_status != 'ACTIVE':
                 msg = ' Status for server [%s] is %s' % \
                     (servers[i]['name'], new_status)
@@ -1000,8 +998,7 @@ class Cluster(object):
                                   enable_dhcp=True)
             port_details = self.nc.create_port(new_network['id'],
                                                servers[0]['id'])
-            port_status = self.nc.wait_port(port_details['id'],
-                                            max_wait=MAX_WAIT)
+            port_status = self.nc.wait_port(port_details['id'], max_wait=MAX_WAIT)['status']
             if port_status != 'ACTIVE':
                 msg = ' Status for port [%s] is %s' % \
                     (port_details['id'], port_status)
@@ -1010,7 +1007,7 @@ class Cluster(object):
             # in port creation
             for i in range(1, self.size):
                 new_status = self.client.wait_server(servers[i]['id'],
-                                                     max_wait=MAX_WAIT)
+                                                     max_wait=MAX_WAIT)['status']
                 if new_status != 'ACTIVE':
                     msg = ' Status for server [%s] is %s' % \
                         (servers[i]['name'], new_status)
@@ -1025,7 +1022,7 @@ class Cluster(object):
                 port_status = self.nc.get_port_details(port['id'])['status']
                 if port_status == 'BUILD':
                     port_status = self.nc.wait_port(port['id'],
-                                                    max_wait=MAX_WAIT)
+                                                    max_wait=MAX_WAIT)['status']
                 if port_status != 'ACTIVE':
                     msg = ' Status for port [%s] is %s' % \
                         (port['id'], port_status)
