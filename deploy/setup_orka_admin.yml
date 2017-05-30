@@ -58,7 +58,7 @@
       - uwsgi-plugin-python
       - snf-image-creator
       - ansible
-      - kamaki
+      - kamaki=0.15*
       - markdown
 
   - name: Install Celery, Django and Django rest framework
