@@ -63,8 +63,8 @@ Bytes_to_GiB = 1073741824  	# Global to convert bytes to gigabytes
 storage_template = {'ext_vlmc':'Archipelago','drbd':'Standard'} # ~okeanos available storage templates with friendly name
 
 # Default ~okeanos endpoints and responses
-auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
-pithos_url = 'https://pithos.okeanos.grnet.gr/v1'
+auth_url = 'https://astakos.okeanos-knossos.grnet.gr/identity/v2.0'
+pithos_url = 'https://pithos.okeanos-knossos.grnet.gr/v1'
 pithos_put_success = 201  		# Success pithos response
 pithos_container_not_found = 404
 pithos_object_not_found = pithos_container_not_found

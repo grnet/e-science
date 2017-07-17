@@ -93,7 +93,7 @@ def mock_endpoints_userid(arg1):
 def mock_init_cyclades(*args):
     """ No implementation, just declaration. """
     print 'in mock cyclades' 
-    return 'https://cyclades.okeanos.grnet.gr/compute/v2.0'
+    return 'https://cyclades.okeanos-knossos.grnet.gr/compute/v2.0'
 
 
 def mock_get_flavorid(*args):

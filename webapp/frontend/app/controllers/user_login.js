@@ -3,7 +3,7 @@ App.UserLoginController = Ember.Controller.extend({
 	needs: 'application',
 	token : '',
 	runLater : null,
-	okeanos_api_url : 'https://accounts.okeanos.grnet.gr/ui/api_access',
+	okeanos_api_url : 'https://astakos.okeanos-knossos.grnet.gr/ui/api_access',
 	logout_time_limit : 7200000, //time in milliseconds after which user will be logged out
 	isLoggedIn : function() {
 		// Check local storage auth token for user login status.

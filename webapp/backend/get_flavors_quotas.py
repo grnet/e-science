@@ -23,7 +23,7 @@ def ssh_key_list(token):
     """   
     
     command = 'curl -X GET -H "Content-Type: application/json" -H "Accept: application/json" -H "X-Auth-Token: ' \
-                +  token + '" https://cyclades.okeanos.grnet.gr/userdata/keys'
+                +  token + '" https://cyclades.okeanos-knossos.grnet.gr/userdata/keys'
     # get ssh_keys from okeanos server
     p = subprocess.Popen(command, stdout=subprocess.PIPE,stderr=subprocess.PIPE , shell = True)
     out, err = p.communicate()

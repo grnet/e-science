@@ -30,7 +30,7 @@ https.patch_ignore_ssl()
 error_fatal = -1
 REPORT = 25
 SUMMARY = 29
-auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
+auth_url = 'https://astakos.okeanos-knossos.grnet.gr/identity/v2.0'
 MAX_WAIT=300
 default_logging = 'report'
 UUID_FILE = 'permitted_uuids.txt'
