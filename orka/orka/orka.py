@@ -735,7 +735,7 @@ class UserClusterVreInfo(object):
         self.status_id_to_status_desc = {'1':'ACTIVE', '2':'PENDING', '0':'DESTROYED', '3':'FAILED'}
         self.hdp_status_id_to_status_desc = {'0':'STOPPED','1':'STARTED','2':'FORMAT'}
         self.hdp_status_desc_to_status_id = {'STOPPED':'0','STARTED':'1','FORMAT':'2'}
-        self.disk_template_to_label = {'ext_vlmc':'Archipelago', 'drbd':'Standard'}
+        self.disk_template_to_label = {"ext_rbd":"Kernelspace RBD","ext_urbd":"Userspace RBD"}
         self.list_order = ['id']
 
     def sortdict(self, cluster_or_vre):
@@ -938,7 +938,7 @@ def main():
         parser_create.add_argument("disk_slave", help='Disk size (GB) for the slave node(s)',
                               type=checker.five_or_larger_is)
         parser_create.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
-                              metavar='disk_template', choices=['Standard', 'Archipelago'], 
+                              metavar='disk_template', choices=['Kernelspace RBD', 'Userspace RBD'], 
                               type=str.capitalize)
         parser_create.add_argument("project_name", help='~okeanos project name'
                               ' to request resources from ', type=checker.a_string_is)
@@ -968,7 +968,7 @@ def main():
         parser_vre_create.add_argument("disk", help='Disk size (GB) for VRE server',
                                    type=checker.five_or_larger_is)
         parser_vre_create.add_argument("disk_template", help='Disk template (choices: {%(choices)s})',
-                              metavar='disk_template', choices=['Standard', 'Archipelago'], 
+                              metavar='disk_template', choices=['Kernelspace RBD', 'Userspace RBD'], 
                               type=str.capitalize)
         parser_vre_create.add_argument("project_name", help='~okeanos project name'
                               ' to request resources from ', type=checker.a_string_is)

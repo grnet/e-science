@@ -45,10 +45,10 @@ def create_cluster(script):
         create_cluster_command += (" " + str(script["cluster"].get("flavor_slaves")[2]))
 
     if script["cluster"].get("disk_template") is not None:
-        if script["cluster"]["disk_template"] == 'drbd':
-            create_cluster_command += (" Standard")
-        if script["cluster"]["disk_template"] == 'ext_vlmc':
-            create_cluster_command += (" Archipelago")
+        if script["cluster"]["disk_template"] == 'ext_rbd':
+            create_cluster_command += (" Kernelspace RBD")
+        if script["cluster"]["disk_template"] == 'ext_urbd':
+            create_cluster_command += (" Userspace RBD")
 
     if script["cluster"].get("project_name") is not None:
         create_cluster_command += (" " + script["cluster"]["project_name"])        
