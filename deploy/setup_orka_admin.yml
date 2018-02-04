@@ -11,12 +11,19 @@
     shell: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
     tags: preimage
 
-  - name: Install aptitude tasksel
-    shell: apt-get install -y aptitude tasksel;aptitude update
+  - name: Install packages 
+    action: apt name={{item}} state=installed
+    with_items:
+      - aptitude
+      - tasksel
+      - curl
+      - wget
     tags: preimage
 
-  - name: Install curl and wget
-    command: apt-get install -y curl wget
+  - name: Ensure the RabbitMQ APT repo GPG key is present
+    apt_key:
+      url: https://www.rabbitmq.com/rabbitmq-release-signing-key.asc
+      state: present
     tags: preimage
 
   - name: Install apt keys
@@ -24,8 +31,21 @@
     with_items:
       - { url: 'http://nginx.org/keys/nginx_signing.key' }
       - { url: 'http://packages.erlang-solutions.com/debian/erlang_solutions.asc' }
-      - { url: 'https://www.rabbitmq.com/rabbitmq-signing-key-public.asc'}
-      - { url: 'https://dev.grnet.gr/files/apt-grnetdev.pub'}
+      - { url: 'http://dev.grnet.gr/files/apt-grnetdev.pub'}
+    tags: preimage
+
+  - name: Ensure the RabbitMQ APT repo is present
+    apt_repository:
+      repo: 'deb http://www.rabbitmq.com/debian/ testing main'
+      state: present
+      update_cache: true
+    tags: preimage
+
+  - name: Ensure RabbitMQ is installed
+    apt:
+      name: rabbitmq-server
+      state: present
+      update_cache: true
     tags: preimage
 
   - name: Update after apt-key installations
@@ -40,16 +60,14 @@
     pip: name=passlib
     tags: preimage
 
-  - name: Install RabbitMQ broker, PostgreSQLi, nginx and needed dependencies
-    tags: preimage
-    apt: "name={{item}}"
+  - name: Install PostgreSQL, nginx and needed dependencies
+    apt: name={{ item }} update_cache=yes state=installed
     with_items:
       - gcc
       - python-dev
       - libpq-dev
       - erlang
-      - rabbitmq-server
-      - postgresql-9.4
+      - postgresql
       - python-psycopg2
       - git
       - python-flup
@@ -60,6 +78,7 @@
       - ansible
       - kamaki=0.15*
       - markdown
+    tags: preimage
 
   - name: Install Celery, Django and Django rest framework
     tags: preimage
