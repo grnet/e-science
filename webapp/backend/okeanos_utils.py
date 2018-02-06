@@ -1021,7 +1021,7 @@ class Cluster(object):
             for port in list_of_ports:
                 port_status = self.nc.get_port_details(port['id'])['status']
                 if port_status == 'BUILD':
-                    port_status = self.nc.wait_port(port['id'],
+                    port_status = self.nc.wait_port_until(port['id'], "ACTIVE", 
                                                     max_wait=MAX_WAIT)['status']
                 if port_status != 'ACTIVE':
                     msg = ' Status for port [%s] is %s' % \
