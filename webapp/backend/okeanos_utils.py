@@ -998,7 +998,7 @@ class Cluster(object):
                                   enable_dhcp=True)
             port_details = self.nc.create_port(new_network['id'],
                                                servers[0]['id'])
-            port_status = self.nc.wait_port(port_details['id'], max_wait=MAX_WAIT)['status']
+            port_status = self.nc.wait_port_until(port_details['id'], "ACTIVE", max_wait=MAX_WAIT)['status']
             if port_status != 'ACTIVE':
                 msg = ' Status for port [%s] is %s' % \
                     (port_details['id'], port_status)
@@ -1006,7 +1006,7 @@ class Cluster(object):
             # Wait server for the slaves, so we can use their server id
             # in port creation
             for i in range(1, self.size):
-                new_status = self.client.wait_server(servers[i]['id'],
+                new_status = self.client.wait_server_until(servers[i]['id'], "ACTIVE",
                                                      max_wait=MAX_WAIT)['status']
                 if new_status != 'ACTIVE':
                     msg = ' Status for server [%s] is %s' % \

@@ -430,7 +430,7 @@ class YarnCluster(object):
         server_home_path = expanduser('~')
         server_ssh_keys = join(server_home_path, ".ssh/id_rsa.pub")
         pub_keys_path = ''
-        logging.log(SUMMARY, 'Authentication verified')
+        logging.log(SUMMARY, ' Authentication verified')
         current_task.update_state(state="Authenticated")
 
         flavor_master, flavor_slaves, image_id = self.check_user_resources()
