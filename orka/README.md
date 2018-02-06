@@ -24,7 +24,7 @@ Clone the e-Science project and run the python script:
     cd <project_root>/deploy/
     python deploy_orka_server.py create --name={{orka_image}} --flavor_id={{~okeanos_flavor_number}} --project_id={{~okeanos_project_id}} --image_id={{~okeanos_debian_image_id}} --git_repo={{project_repo_in_github}} --git_repo_version={{version_or_branch_of_repo}} --token={{~okeanos_token}}
 
-This will create a virtual machine in ~okeanos and install everything that is needed for the orka server to function with Debian 8.2, but without configuring sensitive parameters and passwords.
+This will create a virtual machine in ~okeanos and install everything that is needed for the orka server to function with Debian 8.10, but without configuring sensitive parameters and passwords.
 After VM becomes active, the admin/image-creator should ssh to the virtual machine and after removing authorized_keys files:
 
     rm /root/.ssh/authorized_keys

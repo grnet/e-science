@@ -358,7 +358,7 @@ class OrkaImage(object):
             self.server_ip = new_ip
         sleep(90) # For VM to be pingable
         logging.log(REPORT," ~okeanos VM created, installing python...")
-        subprocess.call("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@{0} 'apt-get update && apt-get -y upgrade; apt-get install -y python;'".format(self.server_ip),shell=True)
+        subprocess.call("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@{0} 'apt-get update && apt-get -y upgrade; apt-get install -y python;export LC_ALL=en_US.UTF-8;'".format(self.server_ip),shell=True)
         self.create_ansible_hosts()
         logging.log(REPORT, " Starting software installations")
         subprocess.call('ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver create_orka_admin=True {0}" -t preimage'.format(vars), shell=True)
