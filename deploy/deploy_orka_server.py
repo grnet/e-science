@@ -24,14 +24,14 @@ from kamaki.clients.astakos import AstakosClient
 from kamaki.clients.cyclades import CycladesClient, CycladesNetworkClient
 from kamaki.clients.utils import https
 from argparse import ArgumentParser, ArgumentTypeError, SUPPRESS
-
+from inspect import getcallargs
 # Globals and errors
 https.patch_ignore_ssl()
 error_fatal = -1
 REPORT = 25
 SUMMARY = 29
 auth_url = 'https://accounts.okeanos.grnet.gr/identity/v2.0'
-MAX_WAIT=300
+MAX_WAIT=600
 default_logging = 'report'
 UUID_FILE = 'permitted_uuids.txt'
 ENCRYPT_FILE = 'encrypt_key.py'
@@ -283,7 +283,7 @@ class OrkaServer(object):
             vars = '{0} db_password={1} django_admin_password={2} secret_key={3}'.format(vars,self.db_password,
                                                                                          self.django_admin_password,
                                                                                          self.django_secret_key)
- 
+
         ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver {0}" -t {1}'.format(vars,tag)
         exit_status = subprocess.call(ansible_command, shell=True)
         if exit_status > 0:
@@ -349,14 +349,14 @@ class OrkaImage(object):
                                                   project_id=self.project_id)
         logging.log(REPORT,' Creating ~okeanos VM...')
         server_pass = self.server['adminPass']
-        new_status = self.cyclades.wait_server(self.server['id'], max_wait=MAX_WAIT)['status']
-        
-        if new_status == 'ACTIVE':
+        new_status = self.cyclades.wait_server_until(self.server['id'], "ACTIVE", max_wait=MAX_WAIT)
+        if new_status['status'] == "ACTIVE":
             server_details = self.cyclades.get_server_details(self.server['id'])
-            for attachment in server_details['attachments']:
-                if attachment['OS-EXT-IPS:type'] == 'floating':
-                        self.server_ip = attachment['ipv4']
-        sleep(120) # For VM to be pingable
+            nics = filter(lambda nic: bool(nic["ipv4"]), server_details["attachments"])
+            new_ip = nics[0]["ipv4"]
+            #  Connect IP to server
+            self.server_ip = new_ip
+        sleep(90) # For VM to be pingable
         logging.log(REPORT," ~okeanos VM created, installing python...")
         subprocess.call("ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@{0} 'apt-get update && apt-get -y upgrade; apt-get install -y python;'".format(self.server_ip),shell=True)
         self.create_ansible_hosts()
@@ -411,7 +411,7 @@ def main():
                 orka_server = OrkaServer(opts)
                 orka_server.action(verb)
         except Exception, e:
-            logging.error('{0} action failed due to {1}'.format(verb,e.args[0]))
+            logging.error('\"{0}\" action failed due to {1}'.format(verb, e.args[0]))
 
     else:
         logging.error('No arguments were given')

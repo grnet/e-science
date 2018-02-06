@@ -76,7 +76,7 @@
       - uwsgi-plugin-python
       - snf-image-creator
       - ansible
-      - kamaki=0.15*
+      - kamaki=0.16*
       - markdown
     tags: preimage
 
