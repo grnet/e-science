@@ -209,7 +209,7 @@ def cluster_add_node(token, cluster_id, cluster_to_scale, cyclades, netclient, p
                                         personality=personality(server_ssh_keys,pub_keys_path),
                                         networks=[{"uuid": network_to_edit_id}], project_id=project_id)
 
-    new_status = cyclades.wait_server(new_server['id'], max_wait=MAX_WAIT)['status']
+    new_status = cyclades.wait_server_while(new_server['id'], 'BUILD', max_wait=MAX_WAIT)['status']
     if new_status != 'ACTIVE':
         msg = ' Status for server [%s] is %s. Server will be deleted' % \
             (servers[i]['name'], new_status)
@@ -985,7 +985,7 @@ class Cluster(object):
         # server id later and the slave start their building without
         # waiting for the master to finish building
         try:
-            new_status = self.client.wait_server(servers[0]['id'], max_wait=MAX_WAIT)['status']
+            new_status = self.client.wait_server_while(servers[0]['id'], 'BUILD', max_wait=MAX_WAIT)['status']
             if new_status != 'ACTIVE':
                 msg = ' Status for server [%s] is %s' % \
                     (servers[i]['name'], new_status)
@@ -998,7 +998,7 @@ class Cluster(object):
                                   enable_dhcp=True)
             port_details = self.nc.create_port(new_network['id'],
                                                servers[0]['id'])
-            port_status = self.nc.wait_port_until(port_details['id'], "ACTIVE", max_wait=MAX_WAIT)['status']
+            port_status = self.nc.wait_port_while(port_details['id'], 'BUILD')['status']
             if port_status != 'ACTIVE':
                 msg = ' Status for port [%s] is %s' % \
                     (port_details['id'], port_status)
@@ -1006,7 +1006,7 @@ class Cluster(object):
             # Wait server for the slaves, so we can use their server id
             # in port creation
             for i in range(1, self.size):
-                new_status = self.client.wait_server_until(servers[i]['id'], "ACTIVE",
+                new_status = self.client.wait_server_while(servers[i]['id'], 'BUILD',
                                                      max_wait=MAX_WAIT)['status']
                 if new_status != 'ACTIVE':
                     msg = ' Status for server [%s] is %s' % \
@@ -1021,7 +1021,7 @@ class Cluster(object):
             for port in list_of_ports:
                 port_status = self.nc.get_port_details(port['id'])['status']
                 if port_status == 'BUILD':
-                    port_status = self.nc.wait_port_until(port['id'], "ACTIVE", 
+                    port_status = self.nc.wait_port_while(port['id'], "BUILD",
                                                     max_wait=MAX_WAIT)['status']
                 if port_status != 'ACTIVE':
                     msg = ' Status for port [%s] is %s' % \
