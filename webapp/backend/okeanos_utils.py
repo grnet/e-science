@@ -998,7 +998,7 @@ class Cluster(object):
                                   enable_dhcp=True)
             port_details = self.nc.create_port(new_network['id'],
                                                servers[0]['id'])
-            port_status = self.nc.wait_port_while(port_details['id'], 'BUILD')['status']
+            port_status = self.nc.wait_port_while(port_details['id'], 'BUILD', max_wait=MAX_WAIT)['status']
             if port_status != 'ACTIVE':
                 msg = ' Status for port [%s] is %s' % \
                     (port_details['id'], port_status)
