@@ -27,3 +27,4 @@ sonar-project.properties
 *.tar
 *encrypt_key.py
 tests/integration/*swp
+deploy/staging.retry
