@@ -274,6 +274,7 @@ class OrkaServer(object):
         tag = verb
         if verb == 'update':
             self.db_password = self.check_pass_length(self.script.get("postgresql_password"))
+            vars = '{0} db_password={1}'.format(vars,self.db_password)
         if verb == 'start':
             self.db_password = self.check_pass_length(self.script.get("postgresql_password"))
             self.django_admin_password = self.check_pass_length(self.script.get("django_admin_password"))
@@ -286,7 +287,7 @@ class OrkaServer(object):
                                                                                          self.django_admin_password,
                                                                                          self.django_secret_key)
 
-        ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver {0}" -t {1}'.format(vars,tag)
+	ansible_command = 'ansible-playbook -i ansible_hosts staging.yml -e "choose_role=webserver {0}" -t {1}'.format(vars,tag)
         exit_status = subprocess.call(ansible_command, shell=True)
         if exit_status > 0:
             return error_fatal
