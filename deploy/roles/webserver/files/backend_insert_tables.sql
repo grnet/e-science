@@ -1,3 +1,7 @@
+DELETE FROM backend_vreimage;
+DELETE FROM backend_orkaimage;
+
+DELETE FROM backend_vreimagecategory;
 INSERT INTO backend_vreimagecategory (id, category_name) VALUES (1, 'Portal/Cms');
 INSERT INTO backend_vreimagecategory (id, category_name) VALUES (2, 'Wiki');
 INSERT INTO backend_vreimagecategory (id, category_name) VALUES (3, 'Project Management');
@@ -5,6 +9,7 @@ INSERT INTO backend_vreimagecategory (id, category_name) VALUES (4, 'Digital Rep
 INSERT INTO backend_vreimagecategory (id, category_name) VALUES (5, 'Web Conferencing');
 INSERT INTO backend_vreimagecategory (id, category_name) VALUES (6, 'Composite');
 
+DELETE FROM backend_orkaimagecategory;
 INSERT INTO backend_orkaimagecategory (id, category_name, ansible_cluster_config_tags, ansible_cluster_action_tags) VALUES (1, 'Debian Base','{"role":"yarn", "tags":"-t preconfig,postconfig"}','{"stop": "stop", "start": "start"}');
 INSERT INTO backend_orkaimagecategory (id, category_name, ansible_cluster_config_tags, ansible_cluster_action_tags) VALUES (2, 'Hadoop Base','{"role":"yarn", "tags":"-t postconfig"}','{"stop": "stop,FLUMEstop", "start": "start,FLUMEstart"}');
 INSERT INTO backend_orkaimagecategory (id, category_name, ansible_cluster_config_tags, ansible_cluster_action_tags) VALUES (3, 'Hue','{"role":"yarn", "tags":"-t postconfig,hueconfig"}','{"start": "start,FLUMEstart,HUEstart", "stop": "stop,FLUMEstop,HUEstop"}');
@@ -29,7 +34,7 @@ INSERT INTO backend_vreimage (id, image_name, image_pithos_uuid, image_component
 INSERT INTO backend_vreimage (id, image_name, image_pithos_uuid, image_components, image_min_reqs, image_init_extra, image_category_id, image_access_url, image_faq_links, requires_script) VALUES (5, 'BigBlueButton-0.81', '0d26fd55-31a4-46b3-955d-d94ecf04a323', '{"Debian":{"version":"8.0","help":"https://www.debian.org/"},"BigBlueButton":{"version":"0.81","help":"http://docs.bigbluebutton.org/"},"Docker":{"version":"1.6.2","help":"https://docs.docker.com/"}, "Tomcat":{"version":"6.0.24","help":"http://tomcat.apache.org/"}}', '{"cpu":2,"ram":2048}', '{}', 5, '{}', '{"~Okeanos info for email port setup":"https://okeanos.grnet.gr/support/faq/cyclades-why-is-port-x-closed-is-it-blocked-by-design/","Info for docker operations":"https://github.com/grnet/e-science/blob/master/orka/VRE_README.md#general-docker-info"}',False);
 INSERT INTO backend_vreimage (id, image_name, image_pithos_uuid, image_components, image_min_reqs, image_init_extra, image_category_id, image_access_url, image_faq_links, requires_script) VALUES (6, 'DSpace-6.0', '08929ca7-98f6-46f3-913c-9be2d6c9e757', '{"Debian":{"version":"8.3","help":"https://www.debian.org/"},"DSpace":{"version":"6.0","help":"http://www.dspace.org/introducing"},"Docker":{"version":"1.12.3","help":"https://docs.docker.com/"},"PostgreSQL":{"version":"9.4","help":"http://www.postgresql.org/"},"Maven":{"version":"3.2.1","help":"https://maven.apache.org/"},"Ant":{"version":"1.9.4","help":"http://ant.apache.org/"},"Tomcat":{"version":"8.0.9","help":"http://tomcat.apache.org/"}}', '{"ram":2048}', '{admin_password,admin_email}', 4, '{8080/xmlui,8080/jspui}', '{"~Okeanos info for email port setup":"https://okeanos.grnet.gr/support/faq/cyclades-why-is-port-x-closed-is-it-blocked-by-design/","Info for docker operations":"https://github.com/grnet/e-science/blob/master/orka/VRE_README.md#general-docker-info"}',True);
 
-
+DELETE FROM backend_setting;
 INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (1, 'Cyclades', 'Storage', '{"ext_vlmc":"Archipelago","drbd":"Standard"}', 'disk templates returned by Cyclades api matched to friendly name');
 INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (2, 'VM_Flavor', 'Small', '{"cpu":2,"ram":2048,"disk":10}', 'cpu in cores, ram in MiB, disk in GiB');
 INSERT INTO backend_setting (id, section, property_name, property_value, comment) VALUES (3, 'VM_Flavor', 'Medium', '{"cpu":4,"ram":4096,"disk":20}', 'cpu in cores, ram in MiB, disk in GiB');
