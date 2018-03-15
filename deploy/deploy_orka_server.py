@@ -272,6 +272,8 @@ class OrkaServer(object):
         self.create_ansible_hosts()
         vars = 'ansible_ssh_pass={0} ansible_sudo_pass={0}'.format(self.ansible_sudo_pass)
         tag = verb
+        if verb == 'update':
+            self.db_password = self.check_pass_length(self.script.get("postgresql_password"))
         if verb == 'start':
             self.db_password = self.check_pass_length(self.script.get("postgresql_password"))
             self.django_admin_password = self.check_pass_length(self.script.get("django_admin_password"))
