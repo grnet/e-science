@@ -7,7 +7,7 @@
  django_admin_name: orka_admin
  django_admin_email: orka@example.com
  escience_repo: https://github.com/grnet/e-science.git
- escience_version: master
+ escience_version: update_images_sql
 
  # setup_orka_admin variables
  create_orka_admin: False
